@@ -8,22 +8,22 @@ using ArgoBooks.Core.Models.Telemetry;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// OpenAI API service for AI-powered supplier and category suggestions.
+/// Gemini API service for AI-powered supplier and category suggestions.
 /// Routes requests through the argorobots.com server proxy.
 /// </summary>
-public class OpenAiService : IOpenAiService
+public class GeminiService : IGeminiService, IDisposable
 {
-    private const string DefaultModel = "gpt-4o-mini";
-    private const string ApiEndpoint = "https://argorobots.com/api/ai/completions.php";
+    private const string DefaultModel = "gemini-2.5-flash";
+    private static readonly string ApiEndpoint = $"{ApiConfig.BaseUrl}/api/ai/completions.php";
 
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
 
     /// <summary>
-    /// Creates a new instance of the OpenAI service.
+    /// Creates a new instance of the Gemini service.
     /// </summary>
-    public OpenAiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public GeminiService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
         _httpClient = new HttpClient();
         _errorLogger = errorLogger;
@@ -54,7 +54,7 @@ public class OpenAiService : IOpenAiService
                 prompt,
                 500,
                 0.3,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -64,14 +64,14 @@ public class OpenAiService : IOpenAiService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini API call failed");
             return null;
         }
         finally
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenAI,
+                ApiName.Gemini,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 model,
@@ -96,7 +96,7 @@ public class OpenAiService : IOpenAiService
 
         try
         {
-            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken);
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken: cancellationToken);
             if (!string.IsNullOrEmpty(response))
                 success = true;
             return response;
@@ -104,14 +104,57 @@ public class OpenAiService : IOpenAiService
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "OpenAI API call failed");
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini API call failed");
             return null;
         }
         finally
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenAI,
+                ApiName.Gemini,
+                stopwatch.ElapsedMilliseconds,
+                success,
+                model,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> SendVisionChatAsync(
+        string systemPrompt,
+        string userPrompt,
+        string base64Image,
+        string mimeType,
+        int maxTokens = 4000,
+        double temperature = 0.1,
+        string? model = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+            return null;
+
+        var stopwatch = Stopwatch.StartNew();
+        model ??= DefaultModel;
+        var success = false;
+
+        try
+        {
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, base64Image, mimeType, model, cancellationToken);
+            if (!string.IsNullOrEmpty(response))
+                success = true;
+            return response;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini Vision API call failed");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.Gemini,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 model,
@@ -189,16 +232,15 @@ Respond with JSON only.";
         string userPrompt,
         int maxTokens = 500,
         double temperature = 0.3,
+        string? base64Image = null,
+        string? mimeType = null,
+        string? model = null,
         CancellationToken cancellationToken = default)
     {
-        var requestBody = new
-        {
-            systemPrompt,
-            userPrompt,
-            model = DefaultModel,
-            maxTokens,
-            temperature
-        };
+        var effectiveModel = model ?? DefaultModel;
+        object requestBody = base64Image != null
+            ? new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, base64Image, mimeType }
+            : new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature };
 
         var json = JsonSerializer.Serialize(requestBody);
 
@@ -231,17 +273,7 @@ Respond with JSON only.";
     {
         try
         {
-            // Clean up response - remove markdown code blocks if present
-            var cleanResponse = response.Trim();
-            if (cleanResponse.StartsWith("```"))
-            {
-                var startIndex = cleanResponse.IndexOf('\n') + 1;
-                var endIndex = cleanResponse.LastIndexOf("```", StringComparison.Ordinal);
-                if (endIndex > startIndex)
-                {
-                    cleanResponse = cleanResponse[startIndex..endIndex].Trim();
-                }
-            }
+            var cleanResponse = JsonResponseHelper.StripMarkdownCodeBlock(response);
 
             using var doc = JsonDocument.Parse(cleanResponse);
             var root = doc.RootElement;
@@ -354,7 +386,7 @@ Respond with JSON only.";
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse OpenAI response");
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse Gemini response");
             return null;
         }
     }
@@ -369,5 +401,10 @@ Respond with JSON only.";
         // Catch compound vague names like "general expenses", "other purchases", "miscellaneous items"
         var words = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return words.Length >= 1 && words.All(w => vagueExact.Contains(w));
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
     }
 }

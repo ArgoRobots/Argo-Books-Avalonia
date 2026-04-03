@@ -39,6 +39,9 @@ public partial class ChartContextMenu : UserControl
     public static readonly StyledProperty<bool> ShowExportOptionsProperty =
         AvaloniaProperty.Register<ChartContextMenu, bool>(nameof(ShowExportOptions), true);
 
+    public static readonly StyledProperty<bool> ShowGoogleSheetsExportProperty =
+        AvaloniaProperty.Register<ChartContextMenu, bool>(nameof(ShowGoogleSheetsExport), true);
+
     public static readonly StyledProperty<ICommand?> CloseCommandProperty =
         AvaloniaProperty.Register<ChartContextMenu, ICommand?>(nameof(CloseCommand));
 
@@ -119,12 +122,21 @@ public partial class ChartContextMenu : UserControl
     }
 
     /// <summary>
-    /// Gets or sets whether to show export options (hide for geomaps).
+    /// Gets or sets whether to show export options.
     /// </summary>
     public bool ShowExportOptions
     {
         get => GetValue(ShowExportOptionsProperty);
         set => SetValue(ShowExportOptionsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether to show the Google Sheets export option (hide for geomaps).
+    /// </summary>
+    public bool ShowGoogleSheetsExport
+    {
+        get => GetValue(ShowGoogleSheetsExportProperty);
+        set => SetValue(ShowGoogleSheetsExportProperty, value);
     }
 
     /// <summary>

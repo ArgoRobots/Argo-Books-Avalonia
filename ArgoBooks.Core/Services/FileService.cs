@@ -17,7 +17,8 @@ public class FileService(
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     /// <inheritdoc />
@@ -181,16 +182,27 @@ public class FileService(
                 footer.CreatedAt = existingFooter.CreatedAt;
         }
 
-        // Write to file
-        await using var fileStream = new FileStream(
-            filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
-
-        // Write content
-        contentStream.Position = 0;
-        await contentStream.CopyToAsync(fileStream, cancellationToken);
-
-        // Write footer
-        await footerService.WriteFooterAsync(fileStream, footer, cancellationToken);
+        // Write to file (atomic: write to temp, then move)
+        var tempPath = filePath + ".tmp";
+        try
+        {
+            await using (var fileStream = new FileStream(
+                tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true))
+            {
+                contentStream.Position = 0;
+                await contentStream.CopyToAsync(fileStream, cancellationToken);
+                await footerService.WriteFooterAsync(fileStream, footer, cancellationToken);
+            }
+            File.Move(tempPath, filePath, overwrite: true);
+        }
+        catch
+        {
+            if (File.Exists(tempPath))
+            {
+                try { File.Delete(tempPath); } catch { /* best effort */ }
+            }
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -283,7 +295,8 @@ public class FileService(
             ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? [],
             InvoiceTemplates = await ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken) ?? [],
             EventLog = await ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? [],
-            PendingConversions = await ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken) ?? []
+            PendingConversions = await ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken) ?? [],
+            ForecastRecords = await ReadJsonAsync<List<Models.Insights.ForecastAccuracyRecord>>(tempDirectory, "forecastRecords.json", cancellationToken) ?? []
         };
 
         return data;
@@ -329,6 +342,7 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "invoiceTemplates.json", data.InvoiceTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
         await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "forecastRecords.json", data.ForecastRecords, cancellationToken);
 
         data.MarkAsSaved();
     }
@@ -507,13 +521,17 @@ public class FileService(
                 canvas.DrawBitmap(bitmap, new SKRect(0, 0, newWidth, newHeight));
             }
 
-            using var image = SKImage.FromBitmap(target);
-            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            string result;
+            using (var image = SKImage.FromBitmap(target))
+            using (var encoded = image.Encode(SKEncodedImageFormat.Png, 100))
+            {
+                result = Convert.ToBase64String(encoded.ToArray());
+            }
 
             if (!ReferenceEquals(target, bitmap))
                 target.Dispose();
 
-            return Convert.ToBase64String(data.ToArray());
+            return result;
         }
         catch
         {

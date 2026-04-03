@@ -459,6 +459,7 @@ $RECYCLE.BIN/
 .env
 .env.local
 .env.*.local
+/.claude
 
 # Draw.io
 *.bkp

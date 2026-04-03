@@ -194,14 +194,6 @@ public class ChangeTrackingService
         }
     }
 
-    /// <summary>
-    /// Notifies that change state has changed.
-    /// </summary>
-    public void NotifyChangeStateChanged()
-    {
-        OnChangeStateChanged();
-    }
-
     private void OnChangeStateChanged()
     {
         ChangeStateChanged?.Invoke(this, EventArgs.Empty);

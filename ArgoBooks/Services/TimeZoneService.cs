@@ -168,17 +168,4 @@ public static class TimeZoneService
         };
     }
 
-    /// <summary>
-    /// Gets the display name for a timezone using the TimeZones data class.
-    /// </summary>
-    public static string GetTimeZoneDisplayName(string timeZoneId)
-    {
-        if (string.IsNullOrEmpty(timeZoneId) || timeZoneId == "UTC")
-        {
-            return "(UTC+00:00) UTC";
-        }
-
-        var tzItem = TimeZones.FindById(timeZoneId);
-        return tzItem.DisplayName;
-    }
 }

@@ -12,8 +12,8 @@ namespace ArgoBooks.Core.Services;
 public class LicenseService
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-    private const string LicenseValidateUrl = "https://argorobots.com/api/license/validate.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static readonly string LicenseValidateUrl = $"{ApiConfig.BaseUrl}/api/license/validate.php";
+    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly IEncryptionService _encryptionService;
     private readonly IGlobalSettingsService _settingsService;
@@ -58,7 +58,7 @@ public class LicenseService
         _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
         _connectivityService = connectivityService ?? throw new ArgumentNullException(nameof(connectivityService));
         _errorLogger = errorLogger;
-        Instance = this;
+        Instance ??= this;
     }
 
     /// <summary>
@@ -224,9 +224,9 @@ public class LicenseService
             var deviceId = GetDeviceId();
             var requestBody = new { license_key = licenseKey, device_id = deviceId };
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await HttpClient.PostAsync(LicenseValidateUrl, content, cancellationToken);
+            using var response = await HttpClient.PostAsync(LicenseValidateUrl, content, cancellationToken);
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
             var result = JsonSerializer.Deserialize<LicenseValidateResponse>(responseJson);
 

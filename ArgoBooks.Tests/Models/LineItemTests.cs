@@ -48,7 +48,7 @@ public class LineItemTests
     }
 
     [Fact]
-    public void Subtotal_ZeroPrice_ReturnsNegativeDiscount()
+    public void Subtotal_ZeroPrice_ReturnsZeroWhenClamped()
     {
         var lineItem = new LineItem
         {
@@ -57,7 +57,7 @@ public class LineItemTests
             Discount = 10.00m
         };
 
-        Assert.Equal(-10.00m, lineItem.Subtotal);
+        Assert.Equal(0m, lineItem.Subtotal);
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class LineItemTests
             Discount = 2.50m
         };
 
-        Assert.Equal(47.475m, lineItem.Subtotal);
+        Assert.Equal(47.48m, lineItem.Subtotal);
     }
 
     [Fact]
@@ -217,13 +217,12 @@ public class LineItemTests
             TaxRate = 0.0625m
         };
 
-        var expectedSubtotal = (3 * 29.99m) - 10.00m; // 79.97
-        var expectedTax = expectedSubtotal * 0.0625m; // 4.998125
-        var expectedAmount = expectedSubtotal + expectedTax; // 84.968125
-
-        Assert.Equal(expectedSubtotal, lineItem.Subtotal);
-        Assert.Equal(expectedTax, lineItem.TaxAmount);
-        Assert.Equal(expectedAmount, lineItem.Amount);
+        // Subtotal = (3 * 29.99) - 10.00 = 79.97
+        // TaxAmount = Round(79.97 * 0.0625, 2) = 5.00
+        // Amount = Round(79.97 + 5.00, 2) = 84.97
+        Assert.Equal(79.97m, lineItem.Subtotal);
+        Assert.Equal(5.00m, lineItem.TaxAmount);
+        Assert.Equal(84.97m, lineItem.Amount);
     }
 
     #endregion
@@ -231,7 +230,7 @@ public class LineItemTests
     #region Edge Cases
 
     [Fact]
-    public void Calculations_NegativeQuantity_CalculatesWithNegative()
+    public void Calculations_NegativeQuantity_ClampedToZero()
     {
         var lineItem = new LineItem
         {
@@ -240,13 +239,13 @@ public class LineItemTests
             TaxRate = 0.10m
         };
 
-        Assert.Equal(-50.00m, lineItem.Subtotal);
-        Assert.Equal(-5.00m, lineItem.TaxAmount);
-        Assert.Equal(-55.00m, lineItem.Amount);
+        Assert.Equal(0m, lineItem.Subtotal);
+        Assert.Equal(0m, lineItem.TaxAmount);
+        Assert.Equal(0m, lineItem.Amount);
     }
 
     [Fact]
-    public void Calculations_DiscountGreaterThanSubtotal_NegativeSubtotal()
+    public void Calculations_DiscountGreaterThanSubtotal_ClampedToZero()
     {
         var lineItem = new LineItem
         {
@@ -256,13 +255,13 @@ public class LineItemTests
             TaxRate = 0.10m
         };
 
-        Assert.Equal(-50.00m, lineItem.Subtotal);
-        Assert.Equal(-5.00m, lineItem.TaxAmount);
-        Assert.Equal(-55.00m, lineItem.Amount);
+        Assert.Equal(0m, lineItem.Subtotal);
+        Assert.Equal(0m, lineItem.TaxAmount);
+        Assert.Equal(0m, lineItem.Amount);
     }
 
     [Fact]
-    public void Calculations_VerySmallValues_HandlesDecimalPrecision()
+    public void Calculations_VerySmallValues_RoundedToCents()
     {
         var lineItem = new LineItem
         {
@@ -271,8 +270,8 @@ public class LineItemTests
             TaxRate = 0.05m
         };
 
-        Assert.Equal(0.00001m, lineItem.Subtotal);
-        Assert.Equal(0.0000005m, lineItem.TaxAmount);
+        Assert.Equal(0.00m, lineItem.Subtotal);
+        Assert.Equal(0.00m, lineItem.TaxAmount);
     }
 
     #endregion

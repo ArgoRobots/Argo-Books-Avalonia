@@ -41,15 +41,10 @@
                 <StackPanel HorizontalAlignment="Center"
                             Margin="0,0,0,48">
                     <!-- App Logo -->
-                    <Border Width="80" Height="80"
-                            CornerRadius="16"
-                            Background="{DynamicResource PrimaryBrush}"
-                            HorizontalAlignment="Center"
-                            Margin="0,0,0,24">
-                        <PathIcon Data="{x:Static icons:Icons.DocumentNotes}"
-                                  Width="40" Height="40"
-                                  Foreground="White" />
-                    </Border>
+                    <Image Source="avares://ArgoBooks/Assets/Argo Books icon.png"
+                           Width="80" Height="80"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,24" />
 
                     <!-- Welcome Text -->
                     <TextBlock Text="{loc:Loc 'Welcome to Argo Books'}"
@@ -232,7 +227,7 @@
                                                     Margin="0,0,16,0">
                                                 <Panel>
                                                     <Image Source="{Binding Logo}"
-                                                           Stretch="UniformToFill"
+                                                           Stretch="Uniform"
                                                            IsVisible="{Binding HasLogo}" />
                                                     <PathIcon Data="{x:Static local:Icons.Departments}"
                                                               Width="22" Height="22"
@@ -349,6 +344,22 @@
                            Foreground="{DynamicResource TextTertiaryBrush}"
                            HorizontalAlignment="Center"
                            Margin="0,16,0,0" />
+
+                <!-- Sandbox Mode Indicator (developer-only) -->
+                <Border Background="#FEF3C7"
+                        BorderBrush="#F59E0B"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,6"
+                        HorizontalAlignment="Center"
+                        Margin="0,12,0,0"
+                        IsVisible="{Binding IsSandboxMode}">
+                    <TextBlock Text="SANDBOX MODE — Using dev.argorobots.com"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#92400E"
+                               HorizontalAlignment="Center" />
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>

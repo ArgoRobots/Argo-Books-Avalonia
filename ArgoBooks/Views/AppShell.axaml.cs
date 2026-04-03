@@ -125,6 +125,8 @@ public partial class AppShell : UserControl
     {
         try
         {
+            if (App.ReceiptsModalsViewModel == null) return;
+
             var topLevel = TopLevel.GetTopLevel(this);
             if (topLevel == null) return;
 

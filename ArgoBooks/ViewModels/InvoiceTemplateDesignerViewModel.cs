@@ -64,6 +64,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private readonly UndoRedoManager _undoRedoManager = new();
     private bool _suppressUndoRecording;
 
+    // Cached services
+    private readonly InvoiceEmailService _emailService = new();
+
     public UndoRedoButtonGroupViewModel UndoRedoViewModel { get; }
 
     public bool HasUnsavedChanges => !_undoRedoManager.IsAtSavedState;
@@ -288,6 +291,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showDueDateProminent = true;
 
+    [ObservableProperty]
+    private bool _passProcessingFee = true;
+
     // Preview HTML
     [ObservableProperty]
     private string _previewHtml = string.Empty;
@@ -399,13 +405,13 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 () =>
                 {
                     companyData.InvoiceTemplates.Add(deletedTemplate);
-                    companyData.MarkAsModified();
+                    App.CompanyManager?.MarkAsChanged();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
                     companyData.InvoiceTemplates.Remove(deletedTemplate);
-                    companyData.MarkAsModified();
+                    App.CompanyManager?.MarkAsChanged();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 }));
 
@@ -456,7 +462,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         _undoRedoManager.Clear();
         IsEditMode = true;
         IsTemplateListMode = false;
-        ModalTitle = $"Edit Template: {template.Name}".Translate();
+        ModalTitle = "Edit Template: {0}".TranslateFormat(template.Name);
         UpdatePreview();
         IsOpen = true;
         IsPreviewVisible = true;
@@ -972,6 +978,12 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         UpdatePreview();
     }
 
+    partial void OnPassProcessingFeeChanged(bool oldValue, bool newValue)
+    {
+        RecordChange("Toggle processing fee", v => PassProcessingFee = v, oldValue, newValue);
+        UpdatePreview();
+    }
+
     partial void OnLogoBase64Changed(string? oldValue, string? newValue)
     {
         HasLogo = !string.IsNullOrEmpty(newValue);
@@ -999,8 +1011,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         var template = BuildTemplateFromForm();
         var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
-        var emailService = new InvoiceEmailService();
-        PreviewHtml = emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);
+        PreviewHtml = _emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);
     }
 
     private InvoiceTemplate BuildTemplateFromForm()
@@ -1034,7 +1045,8 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             ShowItemDescriptions = ShowItemDescriptions,
             ShowNotes = ShowNotes,
             ShowPaymentInstructions = ShowPaymentInstructions,
-            ShowDueDateProminent = ShowDueDateProminent
+            ShowDueDateProminent = ShowDueDateProminent,
+            PassProcessingFee = PassProcessingFee
         };
     }
 
@@ -1067,6 +1079,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         template.ShowNotes = ShowNotes;
         template.ShowPaymentInstructions = ShowPaymentInstructions;
         template.ShowDueDateProminent = ShowDueDateProminent;
+        template.PassProcessingFee = PassProcessingFee;
         template.UpdatedAt = DateTime.UtcNow;
     }
 
@@ -1099,6 +1112,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         target.ShowNotes = snapshot.ShowNotes;
         target.ShowPaymentInstructions = snapshot.ShowPaymentInstructions;
         target.ShowDueDateProminent = snapshot.ShowDueDateProminent;
+        target.PassProcessingFee = snapshot.PassProcessingFee;
         target.ThumbnailBase64 = snapshot.ThumbnailBase64;
         target.UpdatedAt = snapshot.UpdatedAt;
     }
@@ -1134,6 +1148,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ShowNotes = template.ShowNotes;
         ShowPaymentInstructions = template.ShowPaymentInstructions;
         ShowDueDateProminent = template.ShowDueDateProminent;
+        PassProcessingFee = template.PassProcessingFee;
         HasLogo = !string.IsNullOrEmpty(template.LogoBase64);
     }
 
@@ -1172,6 +1187,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ShowNotes = true;
         ShowPaymentInstructions = true;
         ShowDueDateProminent = true;
+        PassProcessingFee = true;
         HasLogo = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;

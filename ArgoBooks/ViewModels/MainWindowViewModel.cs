@@ -64,6 +64,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private CancellationTokenSource? _loadingCts;
     private Func<Task<bool>>? _cancelConfirmation;
+    private CancellationTokenSource? _savedFeedbackCts;
 
     public bool IsLoadingIndeterminate => LoadingProgress < 0;
 
@@ -236,20 +237,30 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         try
         {
+            // Cancel any previous feedback animation
+            _savedFeedbackCts?.Cancel();
+            _savedFeedbackCts?.Dispose();
+            var cts = new CancellationTokenSource();
+            _savedFeedbackCts = cts;
+
             HasUnsavedChanges = false;
             ShowSavedIndicator = true;
             SavedIndicatorOpacity = 1.0;
 
             // Wait 3 seconds then fade out
-            await Task.Delay(3000);
+            await Task.Delay(3000, cts.Token);
 
             // Fade out by setting opacity to 0 (animation handled in XAML)
             SavedIndicatorOpacity = 0;
 
             // Wait for fade animation
-            await Task.Delay(300);
+            await Task.Delay(300, cts.Token);
 
             ShowSavedIndicator = false;
+        }
+        catch (TaskCanceledException)
+        {
+            // Superseded by a newer call — do nothing
         }
         catch (Exception ex)
         {
@@ -339,12 +350,9 @@ public partial class MainWindowViewModel : ViewModelBase
         LoadingMessage = message ?? "Loading...";
         LoadingDetail = detail;
         LoadingProgress = progress;
-        if (cts != null)
-        {
-            _loadingCts = cts;
-            _cancelConfirmation = cancelConfirmation;
-            IsLoadingCancellable = true;
-        }
+        _loadingCts = cts;
+        _cancelConfirmation = cancelConfirmation;
+        IsLoadingCancellable = cts != null;
         IsLoading = true;
     }
 

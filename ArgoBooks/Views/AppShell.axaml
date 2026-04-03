@@ -177,9 +177,6 @@
             </Grid>
         </Border>
 
-        <!-- User Panel -->
-        <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
-
         <!-- Help Panel -->
         <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
 
@@ -188,9 +185,6 @@
 
         <!-- Chart Expand Overlay (full-window modal for expanded chart viewing) -->
         <controls:ChartExpandOverlay />
-
-        <!-- Profile Modal -->
-        <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
 
         <!-- Upgrade Modal -->
         <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />

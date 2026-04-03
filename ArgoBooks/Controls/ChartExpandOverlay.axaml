@@ -39,6 +39,36 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
+
+        <!-- GeoMap toggle style (matches AnalyticsPage segmented-button) -->
+        <Style Selector="RadioButton.geomap-toggle-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="RadioButton.geomap-toggle-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="RadioButton.geomap-toggle-button:checked">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
     </UserControl.Styles>
 
     <Panel>
@@ -99,6 +129,35 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- GeoMap Header (title + origin/destination toggle) -->
+                        <StackPanel Grid.Column="0" Grid.ColumnSpan="3"
+                                    x:Name="GeoMapHeaderPanel"
+                                    IsVisible="False"
+                                    Orientation="Horizontal"
+                                    Spacing="16"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                            <TextBlock x:Name="GeoMapTitle"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="6"
+                                    Padding="4">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <RadioButton x:Name="GeoMapOriginButton"
+                                                 GroupName="OverlayMapMode"
+                                                 Classes="geomap-toggle-button"
+                                                 Click="OnGeoMapModeChanged" />
+                                    <RadioButton x:Name="GeoMapDestinationButton"
+                                                 GroupName="OverlayMapMode"
+                                                 Classes="geomap-toggle-button"
+                                                 Click="OnGeoMapModeChanged" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
                         <!-- Close Button -->
                         <Button Grid.Column="2"
                                 HorizontalAlignment="Right"
@@ -122,6 +181,7 @@
                                                MenuY="{Binding ChartContextMenuY}"
                                                ShowResetZoom="{Binding ShowChartResetZoom}"
                                                ShowExportOptions="{Binding ShowChartExportOptions}"
+                                               ShowGoogleSheetsExport="{Binding ShowGoogleSheetsExport}"
                                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                                ExportToExcelCommand="{Binding ExportToExcelCommand}"

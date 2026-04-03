@@ -14,9 +14,20 @@ namespace ArgoBooks.Core.Services;
 /// Service for communicating with the payment portal API on argorobots.com.
 /// Handles publishing invoices, syncing payments, and checking portal status.
 /// </summary>
-public class PaymentPortalService
+public class PaymentPortalService : IDisposable
 {
+    private static readonly JsonSerializerOptions SerializeOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private static readonly JsonSerializerOptions DeserializeOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly HttpClient _httpClient;
+    private bool _disposed;
 
     public PaymentPortalService()
     {
@@ -134,6 +145,7 @@ public class PaymentPortalService
                 Notes = invoice.Notes,
                 Status = invoice.Status.ToString().ToLowerInvariant(),
                 SendEmail = !string.IsNullOrWhiteSpace(customer.Email),
+                PassProcessingFee = template?.PassProcessingFee ?? true,
                 LineItems = invoice.LineItems.Select(li => new PortalLineItem
                 {
                     Description = li.Description,
@@ -151,10 +163,7 @@ public class PaymentPortalService
                     invoice, template, companyData, currencySymbol);
             }
 
-            var json = JsonSerializer.Serialize(publishRequest, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var json = JsonSerializer.Serialize(publishRequest, SerializeOptions);
 
             using var request = CreateRequest(HttpMethod.Post, "/invoices");
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -272,10 +281,7 @@ public class PaymentPortalService
         try
         {
             var confirmRequest = new PortalSyncConfirmRequest { PaymentIds = paymentIds };
-            var json = JsonSerializer.Serialize(confirmRequest, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var json = JsonSerializer.Serialize(confirmRequest, SerializeOptions);
 
             using var request = CreateRequest(HttpMethod.Post, "/payments/sync/confirm");
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -330,18 +336,21 @@ public class PaymentPortalService
             // Generate payment ID
             var nextId = companyData.IdCounters.Payment + 1;
             companyData.IdCounters.Payment = nextId;
-            var paymentId = $"PAY-{DateTime.Now:yyyy}-{nextId:D5}";
+            var paymentId = $"PAY-{DateTime.UtcNow:yyyy}-{nextId:D5}";
+
+            // The invoice amount is the total charged minus any processing fee
+            var invoiceAmount = Math.Max(0m, portalPayment.Amount - portalPayment.ProcessingFee);
 
             // Convert non-USD payment amount to USD using the invoice's conversion ratio
             decimal amountUSD;
             if (portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase))
             {
-                amountUSD = portalPayment.Amount;
+                amountUSD = invoiceAmount;
             }
             else if (invoice.TotalUSD > 0 && invoice.Total > 0)
             {
                 // Use invoice's known USD conversion ratio
-                amountUSD = Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2);
+                amountUSD = Math.Round(invoiceAmount * (invoice.TotalUSD / invoice.Total), 2);
             }
             else
             {
@@ -349,16 +358,21 @@ public class PaymentPortalService
                 amountUSD = 0m;
             }
 
+            // Build payment notes with fee info if applicable
+            var notes = portalPayment.ProcessingFee > 0
+                ? $"Online payment via {providerName} (processing fee: {portalPayment.Currency} {portalPayment.ProcessingFee:N2})"
+                : $"Online payment via {providerName}";
+
             var payment = new Payment
             {
                 Id = paymentId,
                 InvoiceId = portalPayment.InvoiceId,
                 CustomerId = invoice.CustomerId,
                 Date = portalPayment.CreatedAt,
-                Amount = portalPayment.Amount,
+                Amount = invoiceAmount,
                 PaymentMethod = method,
                 ReferenceNumber = portalPayment.ReferenceNumber,
-                Notes = $"Online payment via {providerName}",
+                Notes = notes,
                 CreatedAt = DateTime.UtcNow,
                 OriginalCurrency = portalPayment.Currency,
                 AmountUSD = amountUSD,
@@ -376,13 +390,18 @@ public class PaymentPortalService
                 .Sum(p => p.EffectiveAmountUSD);
 
             // Also track original-currency paid for display
+            // Normalize currency comparison: treat null/empty as "USD" and compare case-insensitively
+            var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency;
             var totalPaidOriginal = companyData.Payments
                 .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0
-                    && p.OriginalCurrency == invoice.OriginalCurrency)
+                    && string.Equals(
+                        string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
+                        invoiceCurrency,
+                        StringComparison.OrdinalIgnoreCase))
                 .Sum(p => p.Amount);
 
             invoice.AmountPaid = totalPaidOriginal;
-            invoice.Balance = invoice.Total - totalPaidOriginal;
+            invoice.Balance = Math.Max(0, invoice.Total - totalPaidOriginal);
 
             // Keep USD fields in sync
             if (invoice.TotalUSD > 0)
@@ -445,7 +464,7 @@ public class PaymentPortalService
 
         try
         {
-            using var request = CreateRequest(HttpMethod.Post, $"/connect/{provider}");
+            using var request = CreateRequest(HttpMethod.Post, $"/connect/{Uri.EscapeDataString(provider)}");
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -502,7 +521,7 @@ public class PaymentPortalService
 
         try
         {
-            using var request = CreateRequest(HttpMethod.Delete, $"/connect/{provider}");
+            using var request = CreateRequest(HttpMethod.Delete, $"/connect/{Uri.EscapeDataString(provider)}");
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -549,10 +568,7 @@ public class PaymentPortalService
             using var request = new HttpRequestMessage(HttpMethod.Post, url);
 
             var body = new { licenseKey, deviceId, companyName, ownerEmail };
-            var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var json = JsonSerializer.Serialize(body, SerializeOptions);
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -563,8 +579,8 @@ public class PaymentPortalService
                 var result = DeserializeResponse<PortalRegisterResponse>(content);
                 if (result != null && !string.IsNullOrEmpty(result.ApiKey))
                 {
-                    // Persist the API key to .env
-                    DotEnv.Set(PortalSettings.ApiKeyEnvVar, result.ApiKey);
+                    // Activate the key in-memory for immediate use (persisted to .argo by caller)
+                    DotEnv.SetInMemory(PortalSettings.ApiKeyEnvVar, result.ApiKey);
                     return result;
                 }
 
@@ -591,6 +607,58 @@ public class PaymentPortalService
         catch (HttpRequestException ex)
         {
             return new PortalRegisterResponse { Success = false, Message = $"Network error: {ex.Message}" };
+        }
+    }
+
+    #endregion
+
+    #region Company Name
+
+    /// <summary>
+    /// Updates the company display name on the payment portal.
+    /// </summary>
+    public async Task<PortalCompanyNameResponse> UpdateCompanyNameAsync(
+        string companyName,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalCompanyNameResponse { Success = false, Message = "Portal not configured." };
+        }
+
+        try
+        {
+            var json = JsonSerializer.Serialize(new { companyName }, SerializeOptions);
+            using var request = CreateRequest(HttpMethod.Put, "/company-name");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalCompanyNameResponse>(content) ?? new PortalCompanyNameResponse
+                {
+                    Success = true,
+                    CompanyName = companyName,
+                    Message = "Company name updated."
+                };
+            }
+
+            var errorResponse = DeserializeResponse<PortalCompanyNameResponse>(content);
+            return errorResponse ?? new PortalCompanyNameResponse
+            {
+                Success = false,
+                Message = $"Update failed with status {(int)response.StatusCode}"
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalCompanyNameResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException ex)
+        {
+            return new PortalCompanyNameResponse { Success = false, Message = $"Network error: {ex.Message}" };
         }
     }
 
@@ -734,10 +802,7 @@ public class PaymentPortalService
     {
         try
         {
-            return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            return JsonSerializer.Deserialize<T>(json, DeserializeOptions);
         }
         catch
         {
@@ -746,4 +811,22 @@ public class PaymentPortalService
     }
 
     #endregion
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _httpClient.Dispose();
+            }
+            _disposed = true;
+        }
+    }
 }

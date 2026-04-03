@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -88,24 +89,30 @@ public partial class ReceiptViewerModal : UserControl
     {
         if (sender is not ReceiptViewerModalViewModel vm) return;
 
-        // Fit to window when fullscreen is toggled or modal opens
         if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsFullscreen))
         {
-            // Delay to allow layout to update after fullscreen change
-            _ = FitToWindowAfterLayoutAsync();
+            // Modal is already visible — layout is valid, fit directly
+            ZoomToFit();
         }
         else if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsOpen) && vm.IsOpen)
         {
-            // Delay to allow layout to update and image to load
-            _ = FitToWindowAfterLayoutAsync();
+            // Modal just opened — layout hasn't completed yet, need to defer
+            _ = FitToWindowOnOpenAsync();
         }
     }
 
-    private async Task FitToWindowAfterLayoutAsync()
+    private async Task FitToWindowOnOpenAsync()
     {
-        // Wait for layout to update
-        await Task.Delay(100);
+        // Hide content while calculating fit to prevent flash of unzoomed image
+        if (_zoomTransformControl != null)
+            _zoomTransformControl.Opacity = 0;
+
+        // Wait for layout and rendering passes to complete
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         ZoomToFit();
+
+        if (_zoomTransformControl != null)
+            _zoomTransformControl.Opacity = 1;
     }
 
     private void FindControls()
@@ -260,17 +267,25 @@ public partial class ReceiptViewerModal : UserControl
     /// </summary>
     private void ZoomToFit()
     {
-        if (_imageScrollViewer == null || _receiptImage?.Source == null) return;
+        if (_imageScrollViewer == null || _receiptImage?.Source == null || _zoomTransformControl == null) return;
 
-        // Get the actual image dimensions
-        var imageSource = _receiptImage.Source;
-        double imageWidth = 0;
-        double imageHeight = 0;
+        // Measure image at zoom 1.0 to get its natural DIP size
+        // (using pixel size would be wrong on HiDPI displays)
+        _zoomLevel = 1.0;
+        ApplyZoom();
+        _zoomTransformControl.UpdateLayout();
 
-        if (imageSource is Bitmap bitmap)
+        var imageWidth = _receiptImage.Bounds.Width;
+        var imageHeight = _receiptImage.Bounds.Height;
+
+        // Fallback to pixel size if bounds aren't available yet
+        if (imageWidth <= 0 || imageHeight <= 0)
         {
-            imageWidth = bitmap.PixelSize.Width;
-            imageHeight = bitmap.PixelSize.Height;
+            if (_receiptImage.Source is Bitmap bitmap)
+            {
+                imageWidth = bitmap.PixelSize.Width;
+                imageHeight = bitmap.PixelSize.Height;
+            }
         }
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
@@ -281,11 +296,12 @@ public partial class ReceiptViewerModal : UserControl
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 
-        // Calculate zoom to fit
+        // Calculate zoom to fit both width and height
         var scaleX = viewportWidth / imageWidth;
         var scaleY = viewportHeight / imageHeight;
 
-        _zoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
+        // Use a very low minimum so fit-to-window works for any image size/orientation
+        _zoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), 0.01, MaxZoom);
         ApplyZoom();
     }
 
@@ -301,16 +317,15 @@ public partial class ReceiptViewerModal : UserControl
     private void OnScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         var delta = e.Delta.Y;
-        if (delta != 0 && _zoomTransformControl != null)
+        if (delta != 0)
         {
             var viewportPoint = e.GetPosition(_imageScrollViewer);
-            var contentPoint = e.GetPosition(_zoomTransformControl);
-            ZoomAtPoint(delta > 0, viewportPoint, contentPoint);
+            ZoomAtPoint(delta > 0, viewportPoint);
         }
         e.Handled = true;
     }
 
-    private void ZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
+    private void ZoomAtPoint(bool zoomIn, Point viewportPoint)
     {
         if (_imageScrollViewer == null || _zoomTransformControl == null) return;
 

@@ -41,6 +41,11 @@ public class ReceiptScanResult
     public decimal? TotalAmount { get; set; }
 
     /// <summary>
+    /// Extracted discount amount (coupons, promos, loyalty discounts).
+    /// </summary>
+    public decimal? Discount { get; set; }
+
+    /// <summary>
     /// Extracted line items from the receipt.
     /// </summary>
     public List<ScannedLineItem> LineItems { get; set; } = [];
@@ -124,6 +129,12 @@ public interface IReceiptScannerService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The scan result containing extracted data.</returns>
     Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Scans a receipt image with an option to skip preprocessing if the caller has already
+    /// run <see cref="ReceiptImageHelper.PreprocessForOcr"/> on the image data.
+    /// </summary>
+    Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, bool skipPreprocessing, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Scans a receipt from a file path.

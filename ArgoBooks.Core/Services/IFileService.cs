@@ -67,7 +67,7 @@ public interface IFileService
 
     /// <summary>
     /// Extracts the company logo from a .argo file without fully opening it.
-    /// Returns null for encrypted files or files without a logo.
+    /// Returns null for files without a logo.
     /// </summary>
     /// <param name="filePath">Path to the .argo file</param>
     /// <param name="cancellationToken">Cancellation token</param>

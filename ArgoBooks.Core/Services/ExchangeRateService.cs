@@ -12,14 +12,15 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ExchangeRateService
 {
-    private const string BaseUrl = "https://argorobots.com/api/exchange-rates.php";
-    private const string BatchUrl = "https://argorobots.com/api/exchange-rates-batch.php";
+    private static readonly string BaseUrl = $"{ApiConfig.BaseUrl}/api/exchange-rates.php";
+    private static readonly string BatchUrl = $"{ApiConfig.BaseUrl}/api/exchange-rates-batch.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
 
     private readonly ExchangeRateCache _cache;
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
     private bool _isInitialized;
 
     /// <summary>
@@ -57,9 +58,17 @@ public class ExchangeRateService
     public async Task InitializeAsync()
     {
         if (_isInitialized) return;
-
-        await _cache.LoadAsync();
-        _isInitialized = true;
+        await _initLock.WaitAsync();
+        try
+        {
+            if (_isInitialized) return;
+            await _cache.LoadAsync();
+            _isInitialized = true;
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     /// <summary>
@@ -320,7 +329,7 @@ public class ExchangeRateService
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
-                var response = await _httpClient.SendAsync(request, cancellationToken);
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
                     _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");

@@ -180,6 +180,14 @@ public class InvoiceTemplate
     public bool ShowDueDateProminent { get; set; } = true;
 
     /// <summary>
+    /// Whether to pass payment processing fees to customers on portal invoices.
+    /// When enabled, a card processing fee is added to online payments
+    /// and clearly labeled as a third-party charge from the payment provider.
+    /// </summary>
+    [JsonPropertyName("passProcessingFee")]
+    public bool PassProcessingFee { get; set; } = true;
+
+    /// <summary>
     /// When this template was created.
     /// </summary>
     [JsonPropertyName("createdAt")]
@@ -204,7 +212,7 @@ public class InvoiceTemplate
     {
         return new InvoiceTemplate
         {
-            Id = Id,
+            Id = $"custom-{Guid.NewGuid():N}",
             Name = Name,
             BaseTemplate = BaseTemplate,
             IsDefault = IsDefault,
@@ -233,7 +241,8 @@ public class InvoiceTemplate
             ShowNotes = ShowNotes,
             ShowPaymentInstructions = ShowPaymentInstructions,
             ShowDueDateProminent = ShowDueDateProminent,
-            CreatedAt = CreatedAt,
+            PassProcessingFee = PassProcessingFee,
+            CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             ThumbnailBase64 = ThumbnailBase64
         };

@@ -6,11 +6,11 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Receipt scanning service that proxies requests through the argorobots.com server.
-/// The server handles communication with Azure Document Intelligence.
+/// The server handles receipt scanning via Gemini 2.5 Flash vision.
 /// </summary>
-public class AzureReceiptScannerService : IReceiptScannerService
+public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
 {
-    private const string ScanEndpoint = "https://argorobots.com/api/receipt/scan.php";
+    private static readonly string ScanEndpoint = $"{ApiConfig.BaseUrl}/api/receipt/scan.php";
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
@@ -20,16 +20,20 @@ public class AzureReceiptScannerService : IReceiptScannerService
     /// <summary>
     /// Creates a new instance of the receipt scanner service.
     /// </summary>
-    public AzureReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
+    public ProxyReceiptScannerService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null)
     {
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for Azure processing
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) }; // Long timeout for server-side processing
         _licenseService = licenseService;
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => _licenseService?.GetLicenseKey() != null;
+    public bool IsConfigured => _licenseService?.GetLicenseKey() != null || _licenseService?.GetDeviceId() != null;
+
+    /// <inheritdoc />
+    public Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, bool skipPreprocessing, CancellationToken cancellationToken = default)
+        => ScanReceiptAsync(imageData, fileName, cancellationToken);
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
@@ -40,20 +44,27 @@ public class AzureReceiptScannerService : IReceiptScannerService
         try
         {
             var licenseKey = _licenseService?.GetLicenseKey();
-            if (string.IsNullOrEmpty(licenseKey))
+            var deviceId = _licenseService?.GetDeviceId();
+            if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
             {
-                return ReceiptScanResult.Failed("No active license key found. Please activate your premium subscription.");
+                return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
 
-            // Validate file size (4MB limit)
+            // Preprocess image to improve OCR accuracy (contrast, sharpen)
+            imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
+
+            // Compress image if needed to fit within the size limit
             const int maxFileSizeBytes = 4 * 1024 * 1024;
+            (imageData, fileName) = ReceiptImageHelper.CompressImageForScanning(imageData, fileName, maxFileSizeBytes);
+
+            // Validate file size after compression
             if (imageData.Length > maxFileSizeBytes)
             {
-                return ReceiptScanResult.Failed("File size exceeds the 4MB limit. Please use a smaller image.");
+                return ReceiptScanResult.Failed("File is too large even after compression. Please use a smaller image.");
             }
 
             // Validate file type
-            var contentType = GetContentType(fileName);
+            var contentType = ReceiptImageHelper.GetContentType(fileName);
             if (contentType == null)
             {
                 return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, or PDF files.");
@@ -67,8 +78,15 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
             using var request = new HttpRequestMessage(HttpMethod.Post, ScanEndpoint);
             request.Content = content;
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", licenseKey);
-            request.Headers.Add("X-License-Key", licenseKey);
+            if (!string.IsNullOrEmpty(licenseKey))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", licenseKey);
+                request.Headers.Add("X-License-Key", licenseKey);
+            }
+            if (!string.IsNullOrEmpty(deviceId))
+            {
+                request.Headers.Add("X-Device-Id", deviceId);
+            }
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
 
@@ -116,7 +134,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.AzureDocumentIntelligence,
+                ApiName.ReceiptScanProxy,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 cancellationToken: cancellationToken);
@@ -226,17 +244,8 @@ public class AzureReceiptScannerService : IReceiptScannerService
         return result;
     }
 
-    private static string? GetContentType(string fileName)
+    public void Dispose()
     {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        return extension switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".pdf" => "application/pdf",
-            ".bmp" => "image/bmp",
-            ".tiff" or ".tif" => "image/tiff",
-            _ => null
-        };
+        _httpClient.Dispose();
     }
 }

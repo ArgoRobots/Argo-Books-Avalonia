@@ -11,8 +11,9 @@
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
@@ -43,8 +44,9 @@
         <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
@@ -61,8 +63,9 @@
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Cursor" Value="Hand" />
@@ -93,8 +96,9 @@
         <Setter Property="Background" Value="{DynamicResource SecondaryButtonBgBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
@@ -113,8 +117,9 @@
         <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Cursor" Value="Hand" />
@@ -142,8 +147,9 @@
         <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Cursor" Value="Hand" />
@@ -171,8 +177,9 @@
         <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
         <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Cursor" Value="Hand" />

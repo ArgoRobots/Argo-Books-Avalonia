@@ -55,19 +55,9 @@ public partial class AppShellViewModel : ViewModelBase
     public NotificationPanelViewModel NotificationPanelViewModel { get; }
 
     /// <summary>
-    /// Gets the user panel view model.
-    /// </summary>
-    public UserPanelViewModel UserPanelViewModel { get; }
-
-    /// <summary>
     /// Gets the file menu panel view model.
     /// </summary>
     public FileMenuPanelViewModel FileMenuPanelViewModel { get; }
-
-    /// <summary>
-    /// Gets the profile modal view model.
-    /// </summary>
-    public ProfileModalViewModel ProfileModalViewModel { get; }
 
     /// <summary>
     /// Gets the help panel view model.
@@ -353,15 +343,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create notification panel with header view model (shares notifications)
         NotificationPanelViewModel = new NotificationPanelViewModel(HeaderViewModel);
 
-        // Create user panel with navigation service and header view model
-        UserPanelViewModel = new UserPanelViewModel(HeaderViewModel);
-
         // Create file menu panel with navigation service and link to sidebar for dynamic positioning
         FileMenuPanelViewModel = new FileMenuPanelViewModel();
         FileMenuPanelViewModel.SetSidebarViewModel(SidebarViewModel);
-
-        // Create profile modal with navigation service and header view model
-        ProfileModalViewModel = new ProfileModalViewModel(HeaderViewModel);
 
         // Create help panel with navigation service
         HelpPanelViewModel = new HelpPanelViewModel();
@@ -507,32 +491,14 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up header's notification button to toggle the notification panel
         HeaderViewModel.OpenNotificationsRequested += (_, _) => NotificationPanelViewModel.ToggleCommand.Execute(null);
 
-        // Wire up header's user menu button to toggle the user panel
-        HeaderViewModel.OpenUserMenuRequested += (_, _) => UserPanelViewModel.ToggleCommand.Execute(null);
-
         // Wire up header's file menu button to toggle the file menu panel
         HeaderViewModel.OpenFileMenuRequested += (_, _) => FileMenuPanelViewModel.ToggleCommand.Execute(null);
-
-        // Wire up user panel's open profile to open profile modal
-        UserPanelViewModel.OpenProfileRequested += (_, _) => ProfileModalViewModel.OpenCommand.Execute(null);
-
-        // Wire up user panel's open help to open help panel
-        UserPanelViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
-
-        // Wire up user panel's open settings to open settings modal
-        UserPanelViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
-
-        // Wire up user panel's my plan to open upgrade modal
-        UserPanelViewModel.OpenMyPlanRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
         // Wire up notification panel's settings to open settings modal at notifications tab
         NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(1);
 
         // Wire up settings modal's upgrade request to open upgrade modal
         SettingsModalViewModel.UpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
-
-        // Wire up user panel's switch account to open switch account modal
-        UserPanelViewModel.SwitchAccountRequested += (_, _) => SwitchAccountModalViewModel.OpenCommand.Execute(null);
 
         // Wire up header's help button to toggle help panel
         HeaderViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
@@ -809,9 +775,12 @@ public partial class AppShellViewModel : ViewModelBase
         SettingsModalViewModel.HasPremium = hasPremium;
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
-        UserPanelViewModel.HasPremium = hasPremium;
+
         if (App.InvoiceModalsViewModel != null)
             App.InvoiceModalsViewModel.HasPremium = hasPremium;
+
+        // Invalidate cached receipt scan services so upgraded license takes effect immediately
+        ReceiptsModalsViewModel.InvalidateScanServices();
 
         // Notify lazily-created page ViewModels (e.g., InsightsPageViewModel)
         App.RaisePlanStatusChanged(hasPremium);
@@ -835,7 +804,7 @@ public partial class AppShellViewModel : ViewModelBase
         SettingsModalViewModel.HasPremium = hasPremium;
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
-        UserPanelViewModel.HasPremium = hasPremium;
+
 
         // Notify any subscribers (e.g., ProductsPageViewModel) of plan status change
         App.RaisePlanStatusChanged(hasPremium);
@@ -895,7 +864,6 @@ public partial class AppShellViewModel : ViewModelBase
     private void CloseAllPanels()
     {
         NotificationPanelViewModel.CloseCommand.Execute(null);
-        UserPanelViewModel.CloseCommand.Execute(null);
         FileMenuPanelViewModel.CloseCommand.Execute(null);
         HelpPanelViewModel.CloseCommand.Execute(null);
         QuickActionsViewModel.CloseCommand.Execute(null);

@@ -191,11 +191,4 @@ public interface IMessageBoxService
     /// <returns>True if confirm was clicked, false otherwise.</returns>
     Task<bool> ConfirmAsync(string title, string message, string confirmText, string cancelText);
 
-    /// <summary>
-    /// Shows a Yes/No/Cancel dialog.
-    /// </summary>
-    /// <param name="title">Dialog title.</param>
-    /// <param name="message">Message content.</param>
-    /// <returns>The result indicating which button was clicked.</returns>
-    Task<MessageBoxResult> ShowYesNoCancelAsync(string title, string message);
 }

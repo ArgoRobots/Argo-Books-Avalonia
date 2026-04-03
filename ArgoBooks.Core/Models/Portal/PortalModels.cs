@@ -103,10 +103,16 @@ public class PortalPaymentRecord
     public string CustomerName { get; set; } = string.Empty;
 
     /// <summary>
-    /// The payment amount.
+    /// The payment amount (total charged including any processing fee).
     /// </summary>
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }
+
+    /// <summary>
+    /// The processing fee portion of the payment (0 if fees not passed to customer).
+    /// </summary>
+    [JsonPropertyName("processingFee")]
+    public decimal ProcessingFee { get; set; }
 
     /// <summary>
     /// The currency code (e.g., "USD", "CAD").
@@ -283,6 +289,13 @@ public class PortalPublishRequest
     /// </summary>
     [JsonPropertyName("customInvoiceHtml")]
     public string? CustomInvoiceHtml { get; set; }
+
+    /// <summary>
+    /// Whether to pass payment processing fees to customers.
+    /// When true, the portal adds a card processing fee to online payments.
+    /// </summary>
+    [JsonPropertyName("passProcessingFee")]
+    public bool PassProcessingFee { get; set; } = true;
 }
 
 /// <summary>
@@ -373,4 +386,19 @@ public class PortalLogoResponse
 
     [JsonPropertyName("timestamp")]
     public string? Timestamp { get; set; }
+}
+
+/// <summary>
+/// Response from updating the company name on the portal.
+/// </summary>
+public class PortalCompanyNameResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("companyName")]
+    public string? CompanyName { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
 }

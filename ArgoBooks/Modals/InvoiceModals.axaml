@@ -187,6 +187,7 @@
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="2*,80,90,100,40">
                                                     <controls:SearchableDropdown Grid.Column="0"
+                                                                 Classes="compact"
                                                                  Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
                                                                  SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
@@ -209,7 +210,7 @@
                                                                    VerticalAlignment="Stretch"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
-                                                                   Value="{Binding UnitPrice, Mode=TwoWay}"
+                                                                   Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
                                                                    Minimum="0"
                                                                    Maximum="999999999"
                                                                    FormatString="N2"
@@ -672,7 +673,8 @@
         </controls:ModalOverlay>
 
         <!-- ======================= HISTORY MODAL ======================= -->
-        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsHistoryModalOpen}"
+                               ClosingCommand="{Binding CloseHistoryModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"

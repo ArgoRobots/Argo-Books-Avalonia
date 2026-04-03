@@ -197,7 +197,7 @@ public class Invoice
     /// Whether this invoice's original currency is USD (including legacy data which defaults to USD).
     /// </summary>
     [JsonIgnore]
-    private bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
+    public bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Whether this invoice was saved offline and is awaiting USD conversion.

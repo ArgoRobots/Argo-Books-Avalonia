@@ -140,18 +140,6 @@ public class MessageBoxService : IMessageBoxService
         return result == MessageBoxResult.Ok;
     }
 
-    /// <inheritdoc />
-    public Task<MessageBoxResult> ShowYesNoCancelAsync(string title, string message)
-    {
-        return ShowAsync(new MessageBoxOptions
-        {
-            Title = title,
-            Message = message,
-            Type = MessageBoxType.Question,
-            Buttons = MessageBoxButtons.YesNoCancel
-        });
-    }
-
     private void OnResultSelected(object? sender, MessageBoxResultEventArgs e)
     {
         Dispatcher.UIThread.Post(() =>

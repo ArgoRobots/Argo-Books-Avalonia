@@ -285,6 +285,7 @@
                                                             Spacing="4">
                                                     <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'View Invoice'}"
+                                                            AutomationProperties.Name="View Invoice"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ViewInvoiceCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.Eye}"
@@ -292,6 +293,7 @@
                                                     </Button>
                                                     <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc Continue}"
+                                                            AutomationProperties.Name="Continue"
                                                             IsVisible="{Binding IsDraft}"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
                                                             CommandParameter="{Binding}">
@@ -300,6 +302,7 @@
                                                     </Button>
                                                     <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'View History'}"
+                                                            AutomationProperties.Name="View History"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.History}"

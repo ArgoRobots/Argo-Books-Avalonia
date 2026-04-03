@@ -39,7 +39,7 @@ public class IdGenerator(CompanyData companyData)
     /// </summary>
     public string NextInvoiceNumber()
     {
-        return $"#INV-{DateTime.UtcNow.Year}-{companyData.IdCounters.Invoice:D3}";
+        return $"#INV-{DateTime.UtcNow.Year}-{companyData.IdCounters.Invoice:D5}";
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public class IdGenerator(CompanyData companyData)
         var next = companyData.IdCounters.Invoice + 1;
         return (
             $"INV-{DateTime.UtcNow.Year}-{next:D5}",
-            $"#INV-{DateTime.UtcNow.Year}-{next:D3}"
+            $"#INV-{DateTime.UtcNow.Year}-{next:D5}"
         );
     }
 

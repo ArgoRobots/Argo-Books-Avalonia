@@ -9,8 +9,8 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ReceiptUsageService : IReceiptUsageService
 {
-    private const string UsageApiUrl = "https://argorobots.com/api/receipt/usage.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/receipt/usage.php";
+    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
     private readonly LicenseService? _licenseService;
@@ -44,13 +44,14 @@ public class ReceiptUsageService : IReceiptUsageService
     /// <inheritdoc />
     public async Task<UsageCheckResult> CheckUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new UsageCheckResult
             {
                 CanScan = false,
-                ErrorMessage = "No license key found. Please activate your license.",
+                ErrorMessage = "No license key or device ID found.",
                 ScanCount = 0,
                 MonthlyLimit = 0,
                 Remaining = 0
@@ -164,13 +165,14 @@ public class ReceiptUsageService : IReceiptUsageService
     /// <inheritdoc />
     public async Task<UsageIncrementResult> IncrementUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new UsageIncrementResult
             {
                 Success = false,
-                ErrorMessage = "No license key found"
+                ErrorMessage = "No license key or device ID found"
             };
         }
 
@@ -273,9 +275,11 @@ public class ReceiptUsageService : IReceiptUsageService
 
     private async Task<UsageApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)
     {
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
         var requestBody = new
         {
             license_key = licenseKey,
+            device_id = deviceId,
             action
         };
 

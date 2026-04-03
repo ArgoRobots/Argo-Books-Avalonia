@@ -12,7 +12,7 @@ namespace ArgoBooks.Core.Services;
 /// column mappings and entity type detection for import.
 /// </summary>
 public class SpreadsheetAnalysisService(
-    IOpenAiService openAiService,
+    IGeminiService geminiService,
     IErrorLogger? errorLogger = null,
     string? country = null)
 {
@@ -158,7 +158,7 @@ public class SpreadsheetAnalysisService(
         string? response;
         try
         {
-            response = await openAiService.SendChatAsync(
+            response = await geminiService.SendChatAsync(
                 systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
         }
         finally
@@ -209,7 +209,7 @@ public class SpreadsheetAnalysisService(
         var userPrompt = BuildTier2UserPrompt(headers, rows);
 
 
-        var response = await openAiService.SendChatAsync(
+        var response = await geminiService.SendChatAsync(
             systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
@@ -652,18 +652,8 @@ IMPORTANT:
         }
     }
 
-    private static string CleanJsonResponse(string response)
-    {
-        var cleaned = response.Trim();
-        if (cleaned.StartsWith("```"))
-        {
-            var startIndex = cleaned.IndexOf('\n') + 1;
-            var endIndex = cleaned.LastIndexOf("```", StringComparison.Ordinal);
-            if (endIndex > startIndex)
-                cleaned = cleaned[startIndex..endIndex].Trim();
-        }
-        return cleaned;
-    }
+    private static string CleanJsonResponse(string response) =>
+        JsonResponseHelper.StripMarkdownCodeBlock(response);
 
     private static string GetString(JsonElement el, string prop)
     {

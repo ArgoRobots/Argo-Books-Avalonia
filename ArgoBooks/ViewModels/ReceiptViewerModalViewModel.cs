@@ -203,11 +203,23 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
             {
                 var destinationPath = result.Path.LocalPath;
 
-                // Copy the file
                 if (File.Exists(ReceiptPath))
                 {
+                    // Copy the file directly if it exists on disk
                     File.Copy(ReceiptPath, destinationPath, overwrite: true);
                     App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
+                }
+                else
+                {
+                    // Fall back to in-memory FileData (base64) when temp file no longer exists
+                    var receipt = App.CompanyManager?.CompanyData?.Receipts
+                        .FirstOrDefault(r => r.Id == ReceiptId);
+                    if (receipt?.FileData != null)
+                    {
+                        var bytes = Convert.FromBase64String(receipt.FileData);
+                        await File.WriteAllBytesAsync(destinationPath, bytes);
+                        App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
+                    }
                 }
             }
         }

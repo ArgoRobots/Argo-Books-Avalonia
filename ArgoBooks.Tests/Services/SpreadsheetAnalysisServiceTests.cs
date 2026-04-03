@@ -9,9 +9,9 @@ namespace ArgoBooks.Tests.Services;
 public class SpreadsheetAnalysisServiceTests
 {
     /// <summary>
-    /// Mock OpenAI service for testing analysis without real API calls.
+    /// Mock Gemini service for testing analysis without real API calls.
     /// </summary>
-    private class MockOpenAiService : IOpenAiService
+    private class MockGeminiService : IGeminiService
     {
         public bool IsConfigured => true;
         public string? LastSystemPrompt { get; private set; }
@@ -31,12 +31,20 @@ public class SpreadsheetAnalysisServiceTests
             LastUserPrompt = userPrompt;
             return Task.FromResult(ResponseToReturn);
         }
+
+        public Task<string?> SendVisionChatAsync(
+            string systemPrompt, string userPrompt,
+            string base64Image, string mimeType,
+            int maxTokens = 4000, double temperature = 0.1,
+            string? model = null,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<string?>(null);
     }
 
     [Fact]
     public async Task AnalyzeAsync_WithNullResponse_ReturnsNull()
     {
-        var mock = new MockOpenAiService { ResponseToReturn = null };
+        var mock = new MockGeminiService { ResponseToReturn = null };
         var service = new SpreadsheetAnalysisService(mock);
 
         // This will return null since there's no real file, but tests the null response path
@@ -69,13 +77,12 @@ public class SpreadsheetAnalysisServiceTests
             warnings = new[] { "Some columns could not be mapped" }
         });
 
-        // Use reflection to access ParseAnalysisResponse since it's private
-        var service = new SpreadsheetAnalysisService(new MockOpenAiService());
+        // ParseAnalysisResponse is internal static
         var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         Assert.NotNull(method);
-        var result = method!.Invoke(service, [json, "test.xlsx"]) as SpreadsheetAnalysisResult;
+        var result = method!.Invoke(null, [json]) as SpreadsheetAnalysisResult;
 
         Assert.NotNull(result);
         Assert.Single(result!.Sheets);
@@ -111,11 +118,10 @@ public class SpreadsheetAnalysisServiceTests
 
         var wrappedJson = $"```json\n{innerJson}\n```";
 
-        var service = new SpreadsheetAnalysisService(new MockOpenAiService());
         var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-        var result = method!.Invoke(service, [wrappedJson, "test.xlsx"]) as SpreadsheetAnalysisResult;
+        var result = method!.Invoke(null, [wrappedJson]) as SpreadsheetAnalysisResult;
 
         Assert.NotNull(result);
         Assert.Single(result!.Sheets);
@@ -125,11 +131,10 @@ public class SpreadsheetAnalysisServiceTests
     [Fact]
     public void ParseAnalysisResponse_MalformedJson_ReturnsNull()
     {
-        var service = new SpreadsheetAnalysisService(new MockOpenAiService());
         var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-        var result = method!.Invoke(service, ["not valid json at all", "test.xlsx"]) as SpreadsheetAnalysisResult;
+        var result = method!.Invoke(null, ["not valid json at all"]) as SpreadsheetAnalysisResult;
 
         Assert.Null(result);
     }

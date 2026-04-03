@@ -183,7 +183,6 @@ public class ExchangeRateCache
                 return;
 
             snapshot = new Dictionary<string, decimal>(_memoryCache);
-            _isDirty = false;
         }
 
         try
@@ -198,10 +197,16 @@ public class ExchangeRateCache
             var options = new JsonSerializerOptions { WriteIndented = true };
             var json = JsonSerializer.Serialize(snapshot, options);
             await File.WriteAllTextAsync(cachePath, json);
+
+            // Only clear dirty flag after successful write
+            lock (_lock)
+            {
+                _isDirty = false;
+            }
         }
         catch (Exception ex)
         {
-            // Failed to save cache - not critical
+            // Failed to save cache - not critical, dirty flag remains set so we retry next time
             _errorLogger?.LogWarning($"Failed to save exchange rate cache: {ex.Message}", "ExchangeRateCache");
         }
     }

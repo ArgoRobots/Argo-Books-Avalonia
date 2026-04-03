@@ -125,6 +125,7 @@
                                                 <StackPanel Spacing="4">
                                                     <Grid ColumnDefinitions="*,60,90,40">
                                                         <controls:SearchableDropdown Grid.Column="0"
+                                                                 Classes="compact"
                                                                  Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
                                                                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
@@ -340,6 +341,7 @@
                                                 <StackPanel Spacing="4">
                                                     <Grid ColumnDefinitions="*,60,90,40">
                                                         <controls:SearchableDropdown Grid.Column="0"
+                                                                 Classes="compact"
                                                                  Margin="0,0,8,0"
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).AvailableItems}"
                                                                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"

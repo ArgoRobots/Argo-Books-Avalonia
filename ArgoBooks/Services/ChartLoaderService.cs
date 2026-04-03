@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core;
@@ -43,7 +44,7 @@ public class ChartLoaderService
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
-        return new SolidColorPaint(textColor) { FontFamily = "Segoe UI" };
+        return new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") };
     }
 
     // Maximum length for legend labels to prevent overflow
@@ -82,7 +83,7 @@ public class ChartLoaderService
             Text = translatedText,
             TextSize = 16,
             Padding = new Padding(15, 12),
-            Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
+            Paint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
         };
     }
 
@@ -170,6 +171,23 @@ public class ChartLoaderService
     };
 
     /// <summary>
+    /// Reverse mapping from ISO 3166-1 alpha-3 codes to display names for Excel export.
+    /// </summary>
+    private static readonly Dictionary<string, string> IsoCodeToDisplayName = BuildIsoCodeToDisplayName();
+
+    private static Dictionary<string, string> BuildIsoCodeToDisplayName()
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, code) in CountryNameToIsoCode)
+        {
+            // Prefer the longest name (most descriptive) for each code
+            if (!result.TryGetValue(code, out var existing) || name.Length > existing.Length)
+                result[code] = name;
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
     /// </summary>
     private static string GetCountryIsoCode(string? countryName)
@@ -178,6 +196,18 @@ public class ChartLoaderService
             return string.Empty;
 
         return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Converts geomap data (ISO codes to values) into display names for Excel export.
+    /// </summary>
+    public static Dictionary<string, double> ConvertGeoMapDataForExport(Dictionary<string, double> isoCodeData)
+    {
+        return isoCodeData
+            .Where(kvp => kvp.Value > 0)
+            .ToDictionary(
+                kvp => IsoCodeToDisplayName.TryGetValue(kvp.Key, out var name) ? name : kvp.Key.ToUpperInvariant(),
+                kvp => kvp.Value);
     }
 
     /// <summary>

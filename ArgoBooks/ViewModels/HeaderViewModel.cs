@@ -106,6 +106,7 @@ public partial class HeaderViewModel : ViewModelBase
     private NotificationItem? _toastNotification;
 
     private CancellationTokenSource? _toastCancellationTokenSource;
+    private CancellationTokenSource? _savedFeedbackCts;
 
     private bool _toastsEnabled;
 
@@ -151,6 +152,9 @@ public partial class HeaderViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasUnsavedChanges;
+
+    [ObservableProperty]
+    private bool _showSavingIndicator;
 
     [ObservableProperty]
     private bool _showSavedIndicator;
@@ -378,15 +382,6 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the user menu.
-    /// </summary>
-    [RelayCommand]
-    private void OpenUserMenu()
-    {
-        OpenUserMenuRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
     /// Toggles the sidebar collapsed state.
     /// </summary>
     [RelayCommand]
@@ -402,6 +397,8 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
+        if (HasUnsavedChanges)
+            ShowSavingIndicator = true;
         SaveRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -437,11 +434,6 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when notifications panel should be opened.
     /// </summary>
     public event EventHandler? OpenNotificationsRequested;
-
-    /// <summary>
-    /// Event raised when user menu panel should be opened.
-    /// </summary>
-    public event EventHandler? OpenUserMenuRequested;
 
     /// <summary>
     /// Event raised when file menu should be opened.
@@ -648,45 +640,43 @@ public partial class HeaderViewModel : ViewModelBase
     {
         try
         {
-            // If already showing feedback, ignore this request
-            if (ShowSavedIndicator || ShowNoChangesIndicator)
-                return;
+            ShowSavingIndicator = false;
+
+            // Cancel any previous feedback animation
+            _savedFeedbackCts?.Cancel();
+            _savedFeedbackCts?.Dispose();
+            var cts = new CancellationTokenSource();
+            _savedFeedbackCts = cts;
 
             if (HasUnsavedChanges)
             {
                 // There were changes - show "Saved"
+                ShowNoChangesIndicator = false;
                 HasUnsavedChanges = false;
                 ShowSavedIndicator = true;
                 SavedIndicatorOpacity = 1.0;
 
-                // Wait 3 seconds then fade out
-                await Task.Delay(3000);
-
-                // Fade out by setting opacity to 0 (animation handled in XAML)
+                await Task.Delay(3000, cts.Token);
                 SavedIndicatorOpacity = 0;
-
-                // Wait for fade animation
-                await Task.Delay(300);
-
+                await Task.Delay(300, cts.Token);
                 ShowSavedIndicator = false;
             }
             else
             {
                 // No changes - show "No changes found"
+                ShowSavedIndicator = false;
                 ShowNoChangesIndicator = true;
                 NoChangesIndicatorOpacity = 1.0;
 
-                // Wait 3 seconds then fade out
-                await Task.Delay(3000);
-
-                // Fade out
+                await Task.Delay(3000, cts.Token);
                 NoChangesIndicatorOpacity = 0;
-
-                // Wait for fade animation
-                await Task.Delay(300);
-
+                await Task.Delay(300, cts.Token);
                 ShowNoChangesIndicator = false;
             }
+        }
+        catch (TaskCanceledException)
+        {
+            // Superseded by a newer call — do nothing
         }
         catch (Exception ex)
         {

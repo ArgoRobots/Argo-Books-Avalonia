@@ -1,5 +1,5 @@
+#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
-using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -28,17 +28,10 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ChartExpandOverlay : UserControl
 {
-    // LiveChartsCore's GeoMap stores its core chart engine in a private readonly
-    // field named "_core". Its DetachedFromVisualTree handler calls _core.Unload(),
-    // which throws NullReferenceException after the first unload because there is no
-    // AttachedToVisualTree handler to reinitialize state. We temporarily null this
-    // field during reparenting so the handler short-circuits (it checks for null).
-    private static readonly FieldInfo? s_geoMapCoreField =
-        typeof(GeoMap).GetField("_core", BindingFlags.NonPublic | BindingFlags.Instance);
-
     private Panel? _sourcePanel;
     private Button? _expandButton;
     private readonly List<Control> _movedChildren = new();
+    private readonly List<(GeoMap original, GeoMap copy)> _geoMapCopies = new();
     private ContentControl? _pageContentControl;
     private readonly List<(object element, double originalSize)> _originalTitleSizes = new();
     private readonly List<(PieChartLegend legend, double origFontSize, double origIndicatorSize, CornerRadius origCornerRadius, double origMaxHeight, double origWidth, Thickness origMargin)> _originalLegendSizes = new();
@@ -53,6 +46,9 @@ public partial class ChartExpandOverlay : UserControl
     private Axis[]? _expandedXAxes;
     private bool _expandedIsMultiSeries;
     private ReportChartDataService.TimeBucket? _preFullscreenBucket;
+
+    // GeoMap fullscreen state
+    private bool _isGeoMapFullscreen;
 
     public ChartExpandOverlay()
     {
@@ -322,21 +318,43 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea != null)
             chartArea.DataContext = sourcePanel.DataContext;
 
-        // Move all children except the expand button to the overlay
+        // Move all children except the expand button to the overlay.
+        // GeoMaps cannot be reparented because LiveCharts' DetachedFromVisualTree
+        // handler calls CoreChart.Unload() which permanently breaks the control.
+        // Instead, we hide original GeoMaps and create fresh copies in the overlay.
+        _geoMapCopies.Clear();
+        _isGeoMapFullscreen = sourcePanel.Children.OfType<GeoMap>().Any();
+
         foreach (var child in sourcePanel.Children.ToList())
         {
-            if (child != expandButton)
-                _movedChildren.Add(child);
-        }
+            if (child == expandButton) continue;
 
-        foreach (var child in _movedChildren)
-        {
-            SuppressGeoMapCoreDuringReparent(child, () =>
+            if (child is GeoMap originalGeo)
             {
+                // Copy ALL GeoMaps (both origin and destination) so the toggle works
+                originalGeo.IsVisible = false;
+                var copy = new GeoMap
+                {
+                    Series = originalGeo.Series,
+                    MapProjection = originalGeo.MapProjection,
+                    Tag = originalGeo.Tag,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                };
+                _geoMapCopies.Add((originalGeo, copy));
+                contentPanel.Children.Add(copy);
+            }
+            else
+            {
+                _movedChildren.Add(child);
                 sourcePanel.Children.Remove(child);
                 contentPanel.Children.Add(child);
-            });
+            }
         }
+
+        // Set up GeoMap header with title and origin/destination toggle
+        if (_isGeoMapFullscreen)
+            SetupGeoMapHeader(sourcePanel);
 
         // Hide the expand button while overlay is open
         expandButton.IsVisible = false;
@@ -372,14 +390,24 @@ public partial class ChartExpandOverlay : UserControl
         // Restore original sizes before reparenting back
         RestoreChartElements();
 
+        // Hide GeoMap header
+        if (_isGeoMapFullscreen)
+            TeardownGeoMapHeader();
+
+        // Remove GeoMap copies from overlay and restore originals
+        foreach (var (original, copy) in _geoMapCopies)
+        {
+            contentPanel.Children.Remove(copy);
+            original.ClearValue(IsVisibleProperty);
+        }
+        _geoMapCopies.Clear();
+
+        // Return non-GeoMap children to the source panel
         var insertIndex = 0;
         foreach (var child in _movedChildren)
         {
-            SuppressGeoMapCoreDuringReparent(child, () =>
-            {
-                contentPanel.Children.Remove(child);
-                _sourcePanel!.Children.Insert(insertIndex, child);
-            });
+            contentPanel.Children.Remove(child);
+            _sourcePanel!.Children.Insert(insertIndex, child);
             insertIndex++;
         }
 
@@ -634,6 +662,90 @@ public partial class ChartExpandOverlay : UserControl
 
     #endregion
 
+    #region GeoMap Fullscreen Header
+
+    /// <summary>
+    /// Sets up the GeoMap header panel with the title and origin/destination toggle.
+    /// Reads the title and radio button labels from the source page's parent elements.
+    /// </summary>
+    private void SetupGeoMapHeader(Panel sourcePanel)
+    {
+        // Find the title from the source panel's parent structure:
+        // Panel (sourcePanel) > Border > Grid (row grid) > Border (header) > Grid > TextBlock
+        var titleText = "World Map Overview";
+        string? originLabel = null;
+        string? destinationLabel = null;
+
+        if (sourcePanel.Parent is Border border && border.Parent is Grid rowGrid)
+        {
+            foreach (var child in rowGrid.Children)
+            {
+                if (child is not Border headerBorder || Grid.GetRow(child) != 0) continue;
+                if (headerBorder.Child is not Grid headerGrid) continue;
+
+                foreach (var headerChild in headerGrid.Children)
+                {
+                    if (headerChild is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text))
+                        titleText = tb.Text;
+
+                    // Find the segmented button labels from the source toggle
+                    if (headerChild is Border toggleBorder &&
+                        toggleBorder.Child is StackPanel togglePanel)
+                    {
+                        var radioButtons = togglePanel.Children.OfType<RadioButton>().ToList();
+                        if (radioButtons.Count >= 2)
+                        {
+                            originLabel = radioButtons[0].Content?.ToString();
+                            destinationLabel = radioButtons[1].Content?.ToString();
+                        }
+                    }
+                }
+            }
+        }
+
+        GeoMapTitle.Text = titleText;
+        GeoMapOriginButton.Content = originLabel ?? "Origin";
+        GeoMapDestinationButton.Content = destinationLabel ?? "Destination";
+
+        // Set checked state based on the ViewModel's IsMapModeOrigin (the first GeoMap
+        // in the source panel is the origin map; if it was the one being shown, select origin)
+        bool isOriginMode = true;
+        if (sourcePanel.DataContext is AnalyticsPageViewModel analyticsVm)
+            isOriginMode = analyticsVm.IsMapModeOrigin;
+        GeoMapOriginButton.IsChecked = isOriginMode;
+        GeoMapDestinationButton.IsChecked = !isOriginMode;
+
+        // Set initial visibility: show only the copy that corresponds to the checked button
+        UpdateGeoMapCopyVisibility();
+
+        GeoMapHeaderPanel.IsVisible = true;
+    }
+
+    private void TeardownGeoMapHeader()
+    {
+        GeoMapHeaderPanel.IsVisible = false;
+        _isGeoMapFullscreen = false;
+    }
+
+    private void OnGeoMapModeChanged(object? sender, RoutedEventArgs e)
+    {
+        UpdateGeoMapCopyVisibility();
+    }
+
+    /// <summary>
+    /// Shows/hides GeoMap copies based on the origin/destination toggle state.
+    /// </summary>
+    private void UpdateGeoMapCopyVisibility()
+    {
+        if (_geoMapCopies.Count < 2) return;
+
+        bool showOrigin = GeoMapOriginButton.IsChecked == true;
+        _geoMapCopies[0].copy.IsVisible = showOrigin;
+        _geoMapCopies[1].copy.IsVisible = !showOrigin;
+    }
+
+    #endregion
+
     #region Right-Click Context Menu
 
     /// <summary>
@@ -750,49 +862,6 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         return "Chart";
-    }
-
-    #endregion
-
-    #region GeoMap Reparenting Workaround
-
-    /// <summary>
-    /// Temporarily nulls the GeoMap's internal <c>_core</c> field so that its
-    /// <c>DetachedFromVisualTree</c> handler skips <c>GeoMapChart.Unload()</c>
-    /// during a reparent operation. The field is restored after the action.
-    /// For non-GeoMap controls the action runs directly.
-    /// </summary>
-    private static void SuppressGeoMapCoreDuringReparent(Control child, Action reparent)
-    {
-        if (child is not GeoMap || s_geoMapCoreField == null)
-        {
-            reparent();
-            return;
-        }
-
-        object? savedCore = null;
-        try
-        {
-            savedCore = s_geoMapCoreField.GetValue(child);
-            s_geoMapCoreField.SetValue(child, null);
-        }
-        catch
-        {
-            // Reflection may fail on some runtimes; fall through to direct call.
-        }
-
-        try
-        {
-            reparent();
-        }
-        finally
-        {
-            if (savedCore != null)
-            {
-                try { s_geoMapCoreField.SetValue(child, savedCore); }
-                catch { /* best effort */ }
-            }
-        }
     }
 
     #endregion

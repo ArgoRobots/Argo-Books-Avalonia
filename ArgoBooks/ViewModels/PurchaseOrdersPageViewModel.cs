@@ -548,7 +548,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         companyData?.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager.RecordAction(new Services.DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Approve order '{item.PoNumber}'",
             () =>
             {

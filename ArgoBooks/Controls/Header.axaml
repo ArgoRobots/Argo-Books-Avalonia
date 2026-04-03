@@ -122,6 +122,13 @@
                                 </TextBlock.Transitions>
                             </TextBlock>
 
+                            <!-- "Saving..." indicator (shown while save is in progress) -->
+                            <TextBlock Text="{loc:Loc 'Saving...'}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding ShowSavingIndicator}" />
+
                             <!-- "Saved" indicator (temporary, shows when save clicked with changes) -->
                             <TextBlock Text="{loc:Loc Saved}"
                                        FontSize="12"
@@ -204,14 +211,6 @@
                               Width="20" Height="20" />
                 </Button>
 
-                <!-- User Menu (temporarily commented out)
-                <Button Classes="header-icon"
-                        Command="{Binding OpenUserMenuCommand}"
-                        ToolTip.Tip="{Binding UserDisplayName}">
-                    <PathIcon Data="{x:Static icons:Icons.Employees}"
-                              Width="22" Height="22" />
-                </Button>
-                -->
             </StackPanel>
         </Panel>
     </Border>

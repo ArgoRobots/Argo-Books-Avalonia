@@ -53,6 +53,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding TypeOptions}"
                                           SelectedItem="{Binding FilterType}"
+                                          Classes="form-combobox"
                                           HorizontalAlignment="Stretch">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
@@ -94,6 +95,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding ReasonOptions}"
                                           SelectedItem="{Binding FilterReason}"
+                                          Classes="form-combobox"
                                           HorizontalAlignment="Stretch">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
@@ -353,6 +355,7 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding UndoItemReason, Mode=TwoWay}"
                                          Watermark="{loc:Loc 'Enter reason for undoing this record...'}"
+                                         Classes="form-input"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"

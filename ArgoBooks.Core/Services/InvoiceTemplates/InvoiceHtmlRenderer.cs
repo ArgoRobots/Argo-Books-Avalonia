@@ -143,7 +143,7 @@ public partial class InvoiceHtmlRenderer
         // Bill to
         sb.AppendLine("BILL TO:");
         sb.AppendLine(customer?.Name ?? "Unknown Customer");
-        var customerAddress = customer?.Address.ToString();
+        var customerAddress = customer?.Address?.ToString();
         if (!string.IsNullOrWhiteSpace(customerAddress))
             sb.AppendLine(customerAddress);
         if (!string.IsNullOrWhiteSpace(customer?.Email))
@@ -221,7 +221,7 @@ public partial class InvoiceHtmlRenderer
         string currencySymbol,
         bool lockAspectRatio)
     {
-        var isOverdue = invoice.DueDate.Date < DateTime.Today &&
+        var isOverdue = invoice.DueDate.Date < DateTime.UtcNow.Date &&
                         invoice.Balance > 0;
 
         var context = new Dictionary<string, object?>
@@ -293,6 +293,16 @@ public partial class InvoiceHtmlRenderer
             ["Total"] = $"{currencySymbol}{invoice.Total:N2}",
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
+
+            // Processing fee (calculated at render time, shown on portal invoices)
+            ["ShowProcessingFee"] = template.PassProcessingFee && invoice.Balance > 0,
+            ["ProcessingFeeLabel"] = BuildProcessingFeeLabel(companySettings),
+            ["ProcessingFeeAmount"] = template.PassProcessingFee && invoice.Balance > 0
+                ? $"{currencySymbol}{CalculateProcessingFee(invoice.Balance):N2}"
+                : "",
+            ["AmountToPay"] = template.PassProcessingFee && invoice.Balance > 0
+                ? $"{currencySymbol}{invoice.Balance + CalculateProcessingFee(invoice.Balance):N2}"
+                : "",
 
             // Notes
             ["Notes"] = invoice.Notes,
@@ -501,6 +511,34 @@ public partial class InvoiceHtmlRenderer
     {
         var label = !string.IsNullOrWhiteSpace(invoice.CustomFeeLabel) ? invoice.CustomFeeLabel : "Fee";
         return invoice.CustomFeeIsPercent ? $"{label} ({invoice.CustomFeeAmount}%)" : label;
+    }
+
+    private static string BuildProcessingFeeLabel(CompanySettings companySettings)
+    {
+        var providers = new List<string>();
+        var accounts = companySettings.PaymentPortal?.ConnectedAccounts;
+        if (accounts != null)
+        {
+            if (accounts.StripeConnected) providers.Add("Stripe");
+            if (accounts.PaypalConnected) providers.Add("PayPal");
+            if (accounts.SquareConnected) providers.Add("Square");
+        }
+
+        var providerName = providers.Count > 0 ? string.Join(" / ", providers) : "Payment";
+        return $"{providerName} processing fee";
+    }
+
+    /// <summary>
+    /// Calculate the payment processing fee (2.90% + $0.30 flat).
+    /// The $0.30 is applied in the invoice's currency here; the server-side
+    /// calculate_invoice_processing_fee() in config/pricing.php converts from CAD.
+    /// </summary>
+    private static decimal CalculateProcessingFee(decimal amount)
+    {
+        if (amount <= 0) return 0m;
+        const decimal percent = 2.90m;
+        const decimal fixedFee = 0.30m;
+        return Math.Round(amount * percent / 100m + fixedFee, 2);
     }
 
     /// <summary>

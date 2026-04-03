@@ -17,7 +17,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     /// <summary>
     /// AppCast URL — separate from the WinForms app since version tracks diverge.
     /// </summary>
-    private const string AppCastUrl = "https://argorobots.com/avalonia-update.xml";
+    private static readonly string AppCastUrl = $"{ApiConfig.BaseUrl}/avalonia-update.xml";
 
     /// <summary>
     /// Download timeout for the update package.
@@ -57,9 +57,8 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     {
         _errorLogger = errorLogger;
 
-        // Use Ed25519 with Strict mode — all updates must have valid signatures.
-        // This prevents man-in-the-middle attacks from installing unsigned/tampered updates.
-        // TODO: For now use Unsafe until we can configure it properly
+        // TODO: Switch to SecurityMode.Strict once Ed25519 signing is configured.
+        // Currently using Unsafe mode — updates are not signature-verified.
         _sparkle = new SparkleUpdater(AppCastUrl, new Ed25519Checker(SecurityMode.Unsafe))
         {
             UIFactory = null, // We use our own UI

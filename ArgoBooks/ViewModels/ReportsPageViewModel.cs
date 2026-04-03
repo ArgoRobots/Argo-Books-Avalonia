@@ -7,6 +7,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
@@ -250,6 +251,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     partial void OnStep1TabIndexChanged(int value)
     {
+        _ = value;
         OnPropertyChanged(nameof(IsTemplatesTabSelected));
         OnPropertyChanged(nameof(IsChartsTabSelected));
 
@@ -336,7 +338,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private TransactionType _selectedTransactionType = TransactionType.Revenue;
 
-    public ObservableCollection<string> TemplateNames { get; } = [];
     public ObservableCollection<CustomTemplateOption> CustomTemplateNames { get; } = [];
     public ObservableCollection<DatePresetOption> DatePresets { get; } = [];
 
@@ -447,8 +448,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             customTemplate.IsSelected = customTemplate.Name == templateName;
         }
 
-        // Wait briefly for template to load asynchronously
-        await Task.Delay(50);
+        // Wait for template to load
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
         // Set the report name to the template name
         ReportName = templateName;
@@ -618,10 +619,10 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ChartReportElement SelectedChartElement => (SelectedElement as ChartReportElement) ?? EmptyChart;
     public LabelReportElement SelectedLabelElement => (SelectedElement as LabelReportElement) ?? EmptyLabel;
     public ImageReportElement SelectedImageElement => (SelectedElement as ImageReportElement) ?? EmptyImage;
-    public string SelectedImageFileName => string.IsNullOrEmpty(SelectedImageElement?.ImagePath)
+    public string SelectedImageFileName => string.IsNullOrEmpty(SelectedImageElement.ImagePath)
         ? string.Empty
         : Path.GetFileName(SelectedImageElement.ImagePath);
-    public bool HasSelectedImage => !string.IsNullOrEmpty(SelectedImageElement?.ImagePath);
+    public bool HasSelectedImage => !string.IsNullOrEmpty(SelectedImageElement.ImagePath);
     public TableReportElement SelectedTableElement => (SelectedElement as TableReportElement) ?? EmptyTable;
 
     public bool IsSelectedTableMaxRowsUnlimited
@@ -682,7 +683,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// <summary>
     /// Whether the selected chart is a distribution/pie chart that benefits from legend display.
     /// </summary>
-    public bool IsDistributionChartSelected => SelectedChartElement?.ChartType is
+    public bool IsDistributionChartSelected => SelectedChartElement.ChartType is
         ChartDataType.WorldMap or
         ChartDataType.RevenueDistribution or
         ChartDataType.ExpensesDistribution or
@@ -744,6 +745,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     partial void OnCurrentDesignerPageChanged(int value)
     {
+        _ = value;
         OnPropertyChanged(nameof(CurrentDesignerPageDisplay));
         OnPropertyChanged(nameof(CanGoToPreviousPage));
         OnPropertyChanged(nameof(CanGoToNextPage));
@@ -910,53 +912,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isRedoDropdownOpen;
 
-    public ObservableCollection<UndoRedoHistoryItem> UndoHistoryItems { get; } = [];
-    public ObservableCollection<UndoRedoHistoryItem> RedoHistoryItems { get; } = [];
-
-    [RelayCommand]
-    private void ToggleUndoDropdown()
-    {
-        if (!UndoRedoManager.CanUndo) return;
-        IsRedoDropdownOpen = false;
-        IsUndoDropdownOpen = !IsUndoDropdownOpen;
-        if (IsUndoDropdownOpen)
-        {
-            RefreshUndoHistory();
-        }
-    }
-
-    [RelayCommand]
-    private void ToggleRedoDropdown()
-    {
-        if (!UndoRedoManager.CanRedo) return;
-        IsUndoDropdownOpen = false;
-        IsRedoDropdownOpen = !IsRedoDropdownOpen;
-        if (IsRedoDropdownOpen)
-        {
-            RefreshRedoHistory();
-        }
-    }
-
-    private void RefreshUndoHistory()
-    {
-        UndoHistoryItems.Clear();
-        int index = 0;
-        foreach (var desc in UndoRedoManager.UndoHistory)
-        {
-            UndoHistoryItems.Add(new UndoRedoHistoryItem { Index = index++, Description = desc });
-        }
-    }
-
-    private void RefreshRedoHistory()
-    {
-        RedoHistoryItems.Clear();
-        int index = 0;
-        foreach (var desc in UndoRedoManager.RedoHistory)
-        {
-            RedoHistoryItems.Add(new UndoRedoHistoryItem { Index = index++, Description = desc });
-        }
-    }
-
     [RelayCommand]
     private void UndoToIndex(int index)
     {
@@ -1031,6 +986,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     partial void OnConfigurationChanged(ReportConfiguration value)
     {
+        _ = value;
         UpdateCanvasDimensions();
     }
 
@@ -1409,7 +1365,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private async Task BrowseImagePathAsync()
     {
-        if (SelectedImageElement == null) return;
+        if (SelectedElement is not ImageReportElement) return;
 
         var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
             ? desktop.MainWindow
@@ -1446,7 +1402,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveImage()
     {
-        if (SelectedImageElement == null) return;
+        if (SelectedElement is not ImageReportElement) return;
         SelectedImageElement.ImagePath = string.Empty;
         OnPropertyChanged(nameof(SelectedImageElement));
         OnPropertyChanged(nameof(SelectedImageFileName));
@@ -1771,7 +1727,7 @@ public partial class ReportsPageViewModel : ViewModelBase
                     try
                     {
                         await Task.Delay(5000);
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        Dispatcher.UIThread.Post(() =>
                         {
                             if (ExportMessage == "Export completed successfully!")
                                 ExportMessage = string.Empty;
@@ -1946,12 +1902,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public ChartDataTypeOption? SelectedChartDataTypeOption
     {
-        get => SelectedChartElement != null
+        get => SelectedElement is ChartReportElement
             ? ChartTypeOptions.FirstOrDefault(o => o.Value == SelectedChartElement.ChartType)
             : null;
         set
         {
-            if (SelectedChartElement != null && value != null)
+            if (SelectedElement is ChartReportElement && value != null)
             {
                 SelectedChartElement.ChartType = value.Value;
                 OnPropertyChanged();
@@ -2464,12 +2420,6 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     private void InitializeCollections()
     {
-        // Load built-in templates
-        foreach (var name in ReportTemplateFactory.GetBuiltInTemplateNames())
-        {
-            TemplateNames.Add(name);
-        }
-
         // Load custom templates
         LoadCustomTemplates();
 
@@ -2633,15 +2583,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         foreach (var chart in lossCharts) AvailableCharts.Add(chart);
 
         // Create category groups for grouped display
-        ChartCategories.Add(new ChartCategoryGroup("Revenue", revenueColor, revenueCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Expenses", expenseColor, expenseCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Financial", financialColor, financialCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Transactions", transactionColor, transactionCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Geographic", geographicColor, geographicCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Personnel", accountantColor, accountantCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Customers", customerColor, customerCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Returns", returnColor, returnCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
-        ChartCategories.Add(new ChartCategoryGroup("Losses", lossColor, lossCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Revenue", revenueCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Expenses", expenseCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Financial", financialCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Transactions", transactionCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Geographic", geographicCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Personnel", accountantCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Customers", customerCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Returns", returnCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Losses", lossCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
     }
 
     private void LoadTemplate(string templateName)
@@ -2660,7 +2610,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 var config = await _templateStorage.LoadTemplateAsync(templateName);
                 // Update configuration and page settings on UI thread
-                Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                await Dispatcher.UIThread.InvokeAsync(async () =>
                 {
                     if (config == null)
                     {
@@ -2970,10 +2920,9 @@ public partial class ChartOption(
 /// </summary>
 public class ChartCategoryGroup : ObservableObject
 {
-    public ChartCategoryGroup(string name, string accentColor, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
+    public ChartCategoryGroup(string name, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
     {
         Name = name;
-        AccentColor = accentColor;
         Charts = charts;
         var onSelectionChanged1 = onSelectionChanged;
 
@@ -2993,7 +2942,6 @@ public class ChartCategoryGroup : ObservableObject
     }
 
     public string Name { get; }
-    public string AccentColor { get; }
     public ObservableCollection<ChartOption> Charts { get; }
 
     /// <summary>

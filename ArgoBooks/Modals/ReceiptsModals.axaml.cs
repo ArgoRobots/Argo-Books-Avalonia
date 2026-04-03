@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -77,19 +78,31 @@ public partial class ReceiptsModals : UserControl
 
     private void OnScanViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ReceiptsModalsViewModel.HasScanResult) &&
-            sender is ReceiptsModalsViewModel { HasScanResult: true })
+        if (sender is not ReceiptsModalsViewModel vm) return;
+
+        if (e.PropertyName == nameof(ReceiptsModalsViewModel.HasScanResult) && vm.HasScanResult)
         {
             // Reset zoom and fit when results first appear
             _scanZoomLevel = 1.0;
+            _ = FitScanPreviewAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptsModalsViewModel.IsScanReviewModalOpen) && vm.IsScanReviewModalOpen && vm.HasScanResult)
+        {
+            // Fit to window when modal re-opens with existing results
+            _scanZoomLevel = 1.0;
+            _ = FitScanPreviewAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptsModalsViewModel.IsFullscreen))
+        {
+            // Re-fit after fullscreen toggle changes viewport size
             _ = FitScanPreviewAfterLayoutAsync();
         }
     }
 
     private async Task FitScanPreviewAfterLayoutAsync()
     {
-        // Wait for layout to settle after results state becomes visible
-        await Task.Delay(150);
+        // Wait for layout and rendering passes to complete
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         ScanPreviewFitToWindow();
     }
 
@@ -176,7 +189,7 @@ public partial class ReceiptsModals : UserControl
         var scaleX = viewportWidth / imageWidth;
         var scaleY = viewportHeight / imageHeight;
 
-        _scanZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
+        _scanZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), 0.01, MaxZoom);
         ApplyScanZoom();
     }
 

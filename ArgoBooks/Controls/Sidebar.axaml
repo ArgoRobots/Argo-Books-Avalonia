@@ -60,7 +60,7 @@
                                     Background="{DynamicResource SurfaceAltBrush}">
                                 <Panel>
                                     <Image Source="{Binding CompanyLogo}"
-                                           Stretch="UniformToFill"
+                                           Stretch="Uniform"
                                            IsVisible="{Binding HasCompanyLogo}" />
                                     <!-- Gradient background for initial only -->
                                     <Border CornerRadius="8"
@@ -128,7 +128,7 @@
                                 Background="{DynamicResource SurfaceAltBrush}">
                             <Panel>
                                 <Image Source="{Binding CompanyLogo}"
-                                       Stretch="UniformToFill"
+                                       Stretch="Uniform"
                                        IsVisible="{Binding HasCompanyLogo}" />
                                 <!-- Gradient background for initial only -->
                                 <Border CornerRadius="8"

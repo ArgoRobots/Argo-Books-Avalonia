@@ -137,6 +137,7 @@
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="*,80,90,100,40">
                                                     <controls:SearchableDropdown Grid.Column="0"
+                                                             Classes="compact"
                                                              Margin="0,0,8,0"
                                                              ItemsSource="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).ProductOptions}"
                                                              SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
@@ -158,15 +159,16 @@
                                                                    HorizontalAlignment="Stretch"
                                                                    VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
-                                                    <TextBox Grid.Column="2"
-                                                             Text="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=''}"
-                                                             Classes="form-input-compact"
-                                                             Watermark="0.00"
-                                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                             HorizontalContentAlignment="Center"
-                                                             VerticalAlignment="Top"
-                                                             Margin="0,0,8,0"
-                                                             MaxLength="13" />
+                                                    <NumericUpDown Grid.Column="2"
+                                                                   Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
+                                                                   Minimum="0"
+                                                                   Maximum="999999999"
+                                                                   FormatString="N2"
+                                                                   Classes="line-item-input"
+                                                                   ShowButtonSpinner="False"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
+                                                                   Margin="0,0,8,0" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding AmountFormatted}"
                                                                FontSize="14"
@@ -324,6 +326,19 @@
                                         <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource ErrorBrush}" />
                                     </Grid>
                                 </StackPanel>
+                            </Border>
+
+                            <!-- Total Mismatch Warning -->
+                            <Border IsVisible="{Binding HasTotalMismatchWarning}"
+                                    Background="#33FFA500"
+                                    BorderBrush="#FFA500"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="12,8">
+                                <TextBlock Text="{Binding TotalMismatchWarningMessage}"
+                                           FontSize="12"
+                                           Foreground="#FFA500"
+                                           TextWrapping="Wrap" />
                             </Border>
 
                             <!-- Saving/Loading State -->

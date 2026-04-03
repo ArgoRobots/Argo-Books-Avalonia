@@ -18,6 +18,7 @@ public class TelemetryManager : ITelemetryManager
     private readonly string _platform;
     private readonly string _userAgent;
 
+    private readonly SemaphoreSlim _initLock = new(1, 1);
     private DateTime _sessionStartTime;
     private GeoLocationData? _cachedGeoLocation;
     private bool _isInitialized;
@@ -72,35 +73,46 @@ public class TelemetryManager : ITelemetryManager
         if (_isInitialized)
             return;
 
-        _sessionStartTime = DateTime.UtcNow;
-        _isInitialized = true;
-
-        if (!IsConsentGranted)
-            return;
-
+        await _initLock.WaitAsync(cancellationToken);
         try
         {
-            // Prefetch geolocation in background
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    _cachedGeoLocation = await _geoLocationService.GetLocationAsync(cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _errorLogger.LogDebug($"Failed to get geolocation: {ex.Message}");
-                }
-            }, cancellationToken);
+            if (_isInitialized)
+                return;
 
-            // Record session start
-            var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
-            sessionEvent.Action = SessionAction.SessionStart;
-            await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
+            _sessionStartTime = DateTime.UtcNow;
+            _isInitialized = true;
+
+            if (!IsConsentGranted)
+                return;
+
+            try
+            {
+                // Prefetch geolocation in background
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        _cachedGeoLocation = await _geoLocationService.GetLocationAsync(cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _errorLogger.LogDebug($"Failed to get geolocation: {ex.Message}");
+                    }
+                }, cancellationToken);
+
+                // Record session start
+                var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
+                sessionEvent.Action = SessionAction.SessionStart;
+                await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _errorLogger.LogError(ex, ErrorCategory.Unknown, "Failed to initialize telemetry");
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            _errorLogger.LogError(ex, ErrorCategory.Unknown, "Failed to initialize telemetry");
+            _initLock.Release();
         }
     }
 

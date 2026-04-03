@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
@@ -91,9 +92,6 @@ public partial class Header : UserControl
 
     public static readonly StyledProperty<ICommand?> OpenSettingsCommandProperty =
         AvaloniaProperty.Register<Header, ICommand?>(nameof(OpenSettingsCommand));
-
-    public static readonly StyledProperty<ICommand?> OpenUserMenuCommandProperty =
-        AvaloniaProperty.Register<Header, ICommand?>(nameof(OpenUserMenuCommand));
 
     #endregion
 
@@ -335,13 +333,6 @@ public partial class Header : UserControl
 
     /// <summary>
     /// Gets or sets the open user menu command.
-    /// </summary>
-    public ICommand? OpenUserMenuCommand
-    {
-        get => GetValue(OpenUserMenuCommandProperty);
-        set => SetValue(OpenUserMenuCommandProperty, value);
-    }
-
     #endregion
 
     private TextBlock? _asterisk;
@@ -360,8 +351,8 @@ public partial class Header : UserControl
     {
         try
         {
-            // Wait a moment for all initialization to complete
-            await Task.Delay(100);
+            // Wait for layout and rendering passes to complete
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
             _isInitialized = true;
 

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services.InvoiceTemplates;
@@ -23,8 +24,13 @@ public static class InvoicePreviewService
             // Ensure the temp directory exists
             Directory.CreateDirectory(TempDirectory);
 
+            // Sanitize the invoiceId to prevent path traversal
+            var safeId = Regex.Replace(invoiceId ?? "", @"[^a-zA-Z0-9\-_]", "");
+            if (string.IsNullOrEmpty(safeId))
+                safeId = Guid.NewGuid().ToString("N");
+
             // Generate a filename
-            var filename = $"invoice-preview-{invoiceId ?? Guid.NewGuid().ToString("N")[..8]}.html";
+            var filename = $"invoice-preview-{safeId}.html";
             var filePath = Path.Combine(TempDirectory, filename);
 
             // Write the HTML to the file
@@ -36,8 +42,9 @@ public static class InvoicePreviewService
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
             return false;
         }
     }
@@ -64,16 +71,16 @@ public static class InvoicePreviewService
                     {
                         File.Delete(file);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Ignore deletion errors
+                        System.Diagnostics.Debug.WriteLine(ex.Message);
                     }
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore cleanup errors
+            System.Diagnostics.Debug.WriteLine(ex.Message);
         }
     }
 

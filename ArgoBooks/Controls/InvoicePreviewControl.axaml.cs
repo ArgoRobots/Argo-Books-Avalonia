@@ -101,7 +101,7 @@ public partial class InvoicePreviewControl : UserControl
             // This handles cases where the control is always visible (no IsVisible binding)
             // like in the template designer modal.
             EnsureWebViewCreatedIfVisible();
-            UpdateWebViewContent();
+            _ = UpdateWebViewContent();
         }
 
         // Handle visibility changes - NativeControlHost doesn't respect IsVisible,
@@ -226,8 +226,9 @@ public partial class InvoicePreviewControl : UserControl
             // Initialize WebView2 asynchronously
             InitializeWebView2Async();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
             ShowFallback();
         }
 #else
@@ -276,11 +277,12 @@ public partial class InvoicePreviewControl : UserControl
                 UpdateZoomDisplay();
 
                 // Set initial content if available
-                UpdateWebViewContent();
+                _ = UpdateWebViewContent();
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
             // Show fallback on UI thread
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(ShowFallback);
         }
@@ -322,9 +324,9 @@ public partial class InvoicePreviewControl : UserControl
                 HandleZoomMessage(root);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Ignore malformed messages
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
         }
     }
 
@@ -385,13 +387,13 @@ public partial class InvoicePreviewControl : UserControl
             var scrollScript = $@"window.scrollTo({_pendingScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {_pendingScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
             await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Ignore scroll restoration errors (including disposed WebView)
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
         }
     }
 
-    private async void ZoomToCenter(double newZoom)
+    private async Task ZoomToCenter(double newZoom)
     {
         if (_webView?.CoreWebView2 == null)
             return;
@@ -449,15 +451,16 @@ public partial class InvoicePreviewControl : UserControl
             var scrollScript = $@"window.scrollTo({newScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {newScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
             await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
             _webView.ZoomFactor = newZoom;
             UpdateZoomDisplay();
         }
     }
 #endif
 
-    private async void UpdateWebViewContent()
+    private async Task UpdateWebViewContent()
     {
 #if WINDOWS
         if (_isWebViewInitialized && _webView?.CoreWebView2 != null && !string.IsNullOrEmpty(Html))
@@ -686,7 +689,7 @@ public partial class InvoicePreviewControl : UserControl
         if (_webView != null)
         {
             var newZoom = Math.Min(_webView.ZoomFactor + ZoomStep, MaxZoom);
-            ZoomToCenter(newZoom);
+            _ = ZoomToCenter(newZoom);
             UpdateZoomDisplay();
         }
 #endif
@@ -698,7 +701,7 @@ public partial class InvoicePreviewControl : UserControl
         if (_webView != null)
         {
             var newZoom = Math.Max(_webView.ZoomFactor - ZoomStep, MinZoom);
-            ZoomToCenter(newZoom);
+            _ = ZoomToCenter(newZoom);
             UpdateZoomDisplay();
         }
 #endif

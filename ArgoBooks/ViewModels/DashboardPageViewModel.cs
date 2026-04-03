@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -482,27 +483,33 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ChartSettings.DateRangeChanged += OnChartSettingsDateRangeChanged;
 
         // Subscribe to theme changes to reload charts with new colors
-        ThemeService.Instance.ThemeChanged += (_, _) =>
-        {
-            LoadDashboardData();
-            // Notify chart titles to recreate LabelVisuals with the new theme's text color.
-            // Without this, titles whose backing string hasn't changed won't re-evaluate
-            // the computed LabelVisual and will keep the previous theme's paint color.
-            OnPropertyChanged(nameof(ProfitsChartTitleVisual));
-            OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
-        };
+        ThemeService.Instance.ThemeChanged += OnThemeChanged;
 
         // Subscribe to date format changes to refresh charts and transaction dates
-        DateFormatService.DateFormatChanged += (_, _) =>
-        {
-            LoadDashboardData();
-        };
+        DateFormatService.DateFormatChanged += OnDateFormatChanged;
 
         // Subscribe to currency changes to refresh all monetary displays
-        CurrencyService.CurrencyChanged += (_, _) =>
-        {
-            LoadDashboardData();
-        };
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
+    }
+
+    private void OnThemeChanged(object? sender, ThemeMode e)
+    {
+        LoadDashboardData();
+        // Notify chart titles to recreate LabelVisuals with the new theme's text color.
+        // Without this, titles whose backing string hasn't changed won't re-evaluate
+        // the computed LabelVisual and will keep the previous theme's paint color.
+        OnPropertyChanged(nameof(ProfitsChartTitleVisual));
+        OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
+    }
+
+    private void OnDateFormatChanged(object? sender, EventArgs e)
+    {
+        LoadDashboardData();
+    }
+
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        LoadDashboardData();
     }
 
     private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
@@ -598,6 +605,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from chart settings events
         ChartSettings.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
         ChartSettings.DateRangeChanged -= OnChartSettingsDateRangeChanged;
+
+        // Unsubscribe from theme, date format, and currency changes
+        ThemeService.Instance.ThemeChanged -= OnThemeChanged;
+        DateFormatService.DateFormatChanged -= OnDateFormatChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
 
         // Unsubscribe from language changes
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
@@ -1267,10 +1279,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     [RelayCommand]
-    private void ScanReceipt()
+    private async Task ScanReceipt()
     {
+        if (App.ReceiptsModalsViewModel == null) return;
+        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
+
         App.NavigationService?.NavigateTo("Receipts");
-        // Note: Scan modal requires a file path, so just navigate to receipts page
     }
 
     [RelayCommand]
@@ -1636,6 +1650,16 @@ public class ExcelExportEventArgs : EventArgs
     /// Returns true if this is a distribution/pie chart.
     /// </summary>
     public bool IsDistribution => ChartType == ChartType.Distribution;
+
+    /// <summary>
+    /// Returns true if this is a region map chart (geographic heat map).
+    /// </summary>
+    public bool IsRegionMap => RegionMapData.Count > 0;
+
+    /// <summary>
+    /// Gets or sets the region map data (country display name to value).
+    /// </summary>
+    public Dictionary<string, double> RegionMapData { get; set; } = [];
 }
 
 /// <summary>

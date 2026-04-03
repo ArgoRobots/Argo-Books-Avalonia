@@ -116,11 +116,16 @@ public static class ChartImageExportService
         {
             var format = GetImageFormat(filePath);
             var (width, height) = GetValidDimensions(chart.Bounds);
-            var skChart = new SKGeoMap(chart)
+
+            // Build SKGeoMap manually instead of using the copy constructor,
+            // which does not reliably copy the series data.
+            var skChart = new SKGeoMap
             {
                 Width = width,
                 Height = height,
-                Background = SKColors.Transparent
+                Background = SKColors.Transparent,
+                Series = chart.Series ?? [],
+                MapProjection = chart.MapProjection
             };
             skChart.SaveImage(filePath, format, 100);
             return true;

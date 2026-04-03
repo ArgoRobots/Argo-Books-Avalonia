@@ -39,6 +39,7 @@
 
                     <!-- Export to Google Sheets -->
                     <Button Classes="context-menu-item"
+                            IsVisible="{Binding ShowGoogleSheetsExport, RelativeSource={RelativeSource AncestorType=controls:ChartContextMenu}}"
                             Command="{Binding ExportToGoogleSheetsCommand, RelativeSource={RelativeSource AncestorType=controls:ChartContextMenu}}">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <PathIcon Data="{x:Static icons:Icons.CloudUpload}"

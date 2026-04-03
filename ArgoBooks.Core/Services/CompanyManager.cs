@@ -17,6 +17,7 @@ public class CompanyManager : IDisposable
     private readonly FooterService _footerService;
     private readonly IErrorLogger? _errorLogger;
 
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
     private string? _currentTempDirectory;
     private string? _currentPassword;
     private FileStream? _fileLock;
@@ -225,6 +226,9 @@ public class CompanyManager : IDisposable
                 CompanyData.Settings.Company = companyInfo;
             }
 
+            if (string.IsNullOrEmpty(CompanyData.Settings.Company.Name))
+                CompanyData.Settings.Company.Name = companyName;
+
             // Save all data to temp directory first (before creating receipts subdirectory,
             // otherwise GetCompanyDirectory will incorrectly find receipts/ as the company dir)
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
@@ -375,63 +379,73 @@ public class CompanyManager : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SaveCompanyAsync(CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null)
+        await _saveLock.WaitAsync(cancellationToken);
+        try
         {
-            throw new InvalidOperationException("No company is currently open.");
-        }
-
-        // Notify listeners to sync in-memory state before saving
-        CompanySaving?.Invoke(this, EventArgs.Empty);
-
-        // Save data to temp directory
-        var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
-
-        // Apply pending rename before saving so the file is saved at the new path
-        if (PendingRenamePath != null && PendingRenamePath != CurrentFilePath)
-        {
-            var oldPath = CurrentFilePath;
-            ReleaseFileLock();
-            try
+            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null)
             {
-                if (!File.Exists(PendingRenamePath))
+                throw new InvalidOperationException("No company is currently open.");
+            }
+
+            // Notify listeners to sync in-memory state before saving
+            CompanySaving?.Invoke(this, EventArgs.Empty);
+
+            // Save data to temp directory
+            var companyDir = GetCompanyDirectory(_currentTempDirectory);
+            await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
+
+            // Apply pending rename before saving so the file is saved at the new path
+            if (PendingRenamePath != null && PendingRenamePath != CurrentFilePath)
+            {
+                var oldPath = CurrentFilePath;
+                ReleaseFileLock();
+                try
                 {
+                    if (File.Exists(PendingRenamePath))
+                    {
+                        throw new IOException($"Cannot rename: a file already exists at '{PendingRenamePath}'.");
+                    }
+
                     File.Move(CurrentFilePath, PendingRenamePath);
                     CurrentFilePath = PendingRenamePath;
                 }
+                finally
+                {
+                    AcquireFileLock(CurrentFilePath);
+                }
+
+                // Update the recent companies list so the old path is replaced with the new one
+                if (CurrentFilePath != oldPath)
+                {
+                    _settingsService.RemoveRecentCompany(oldPath);
+                    _settingsService.AddRecentCompany(CurrentFilePath);
+                    await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
+                }
+
+                PendingRenamePath = null;
+            }
+
+            // Release file lock before saving (save uses exclusive access), then re-acquire
+            ReleaseFileLock();
+            try
+            {
+                await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
             }
             finally
             {
                 AcquireFileLock(CurrentFilePath);
             }
 
-            // Update the recent companies list so the old path is replaced with the new one
-            if (CurrentFilePath != oldPath)
-            {
-                _settingsService.RemoveRecentCompany(oldPath);
-                _settingsService.AddRecentCompany(CurrentFilePath);
-                await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
-            }
+            // Mark as saved
+            CompanyData!.MarkAsSaved();
 
-            PendingRenamePath = null;
-        }
-
-        // Release file lock before saving (save uses exclusive access), then re-acquire
-        ReleaseFileLock();
-        try
-        {
-            await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+            // Raise event
+            CompanySaved?.Invoke(this, EventArgs.Empty);
         }
         finally
         {
-            AcquireFileLock(CurrentFilePath);
+            _saveLock.Release();
         }
-
-        // Mark as saved
-        CompanyData!.MarkAsSaved();
-
-        // Raise event
-        CompanySaved?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -445,58 +459,66 @@ public class CompanyManager : IDisposable
         string? newPassword = null,
         CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || _currentTempDirectory == null)
-        {
-            throw new InvalidOperationException("No company is currently open.");
-        }
-
-        ArgumentException.ThrowIfNullOrEmpty(newFilePath);
-
-        // Notify listeners to sync in-memory state before saving
-        CompanySaving?.Invoke(this, EventArgs.Empty);
-
-        // Determine password to use
-        var passwordToUse = newPassword ?? _currentPassword;
-        if (newPassword == string.Empty)
-        {
-            passwordToUse = null; // Remove encryption
-        }
-
-        // Sync company name with the new file name so they stay consistent
-        var newName = Path.GetFileNameWithoutExtension(newFilePath);
-        if (!string.IsNullOrEmpty(newName) && CompanyData!.Settings.Company.Name != newName)
-        {
-            CompanyData.Settings.Company.Name = newName;
-        }
-
-        // Save data to temp directory
-        var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
-
-        // Release file lock before saving, then re-acquire on new path
-        ReleaseFileLock();
+        await _saveLock.WaitAsync(cancellationToken);
         try
         {
-            await _fileService.SaveCompanyAsync(newFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+            if (!IsCompanyOpen || _currentTempDirectory == null)
+            {
+                throw new InvalidOperationException("No company is currently open.");
+            }
 
-            // Update current file path and password
-            CurrentFilePath = newFilePath;
-            _currentPassword = passwordToUse;
+            ArgumentException.ThrowIfNullOrEmpty(newFilePath);
+
+            // Notify listeners to sync in-memory state before saving
+            CompanySaving?.Invoke(this, EventArgs.Empty);
+
+            // Determine password to use
+            var passwordToUse = newPassword ?? _currentPassword;
+            if (newPassword == string.Empty)
+            {
+                passwordToUse = null; // Remove encryption
+            }
+
+            // Sync company name with the new file name so they stay consistent
+            var newName = Path.GetFileNameWithoutExtension(newFilePath);
+            if (!string.IsNullOrEmpty(newName) && CompanyData!.Settings.Company.Name != newName)
+            {
+                CompanyData.Settings.Company.Name = newName;
+            }
+
+            // Save data to temp directory
+            var companyDir = GetCompanyDirectory(_currentTempDirectory);
+            await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
+
+            // Release file lock before saving, then re-acquire on new path
+            ReleaseFileLock();
+            try
+            {
+                await _fileService.SaveCompanyAsync(newFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+
+                // Update current file path and password
+                CurrentFilePath = newFilePath;
+                _currentPassword = passwordToUse;
+            }
+            finally
+            {
+                AcquireFileLock(newFilePath);
+            }
+
+            // Mark as saved
+            CompanyData!.MarkAsSaved();
+
+            // Add to recent companies
+            _settingsService.AddRecentCompany(newFilePath);
+            await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
+
+            // Raise event
+            CompanySaved?.Invoke(this, EventArgs.Empty);
         }
         finally
         {
-            AcquireFileLock(newFilePath);
+            _saveLock.Release();
         }
-
-        // Mark as saved
-        CompanyData!.MarkAsSaved();
-
-        // Add to recent companies
-        _settingsService.AddRecentCompany(newFilePath);
-        await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
-
-        // Raise event
-        CompanySaved?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -592,7 +614,7 @@ public class CompanyManager : IDisposable
 
     /// <summary>
     /// Extracts the company logo from a .argo file without fully opening it.
-    /// Returns null for encrypted files or files without a logo.
+    /// Returns null for files without a logo.
     /// </summary>
     public Task<byte[]?> ExtractLogoFromFileAsync(string filePath, CancellationToken cancellationToken = default)
     {
@@ -642,34 +664,42 @@ public class CompanyManager : IDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ChangePasswordAsync(string? newPassword, CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null)
-        {
-            throw new InvalidOperationException("No company is currently open.");
-        }
-
-        // Determine password to use
-        var passwordToUse = string.IsNullOrEmpty(newPassword) ? null : newPassword;
-
-        // Re-encrypt the file with the new password WITHOUT saving data changes
-        // This only packages the existing temp directory content with the new encryption
-        // Release file lock before saving (save uses exclusive access), then re-acquire
-        ReleaseFileLock();
+        await _saveLock.WaitAsync(cancellationToken);
         try
         {
-            await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null)
+            {
+                throw new InvalidOperationException("No company is currently open.");
+            }
+
+            // Determine password to use
+            var passwordToUse = string.IsNullOrEmpty(newPassword) ? null : newPassword;
+
+            // Re-encrypt the file with the new password WITHOUT saving data changes
+            // This only packages the existing temp directory content with the new encryption
+            // Release file lock before saving (save uses exclusive access), then re-acquire
+            ReleaseFileLock();
+            try
+            {
+                await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+            }
+            finally
+            {
+                AcquireFileLock(CurrentFilePath);
+            }
+
+            // Update current password
+            _currentPassword = passwordToUse;
+
+            // Note: We intentionally do NOT:
+            // - Call SaveCompanyDataAsync (preserves unsaved changes in memory)
+            // - Call _companyData.MarkAsSaved() (keeps HasUnsavedChanges state)
+            // - Raise CompanySaved event (no data was saved, only password changed)
         }
         finally
         {
-            AcquireFileLock(CurrentFilePath);
+            _saveLock.Release();
         }
-
-        // Update current password
-        _currentPassword = passwordToUse;
-
-        // Note: We intentionally do NOT:
-        // - Call SaveCompanyDataAsync (preserves unsaved changes in memory)
-        // - Call _companyData.MarkAsSaved() (keeps HasUnsavedChanges state)
-        // - Raise CompanySaved event (no data was saved, only password changed)
     }
 
     /// <summary>
@@ -683,28 +713,36 @@ public class CompanyManager : IDisposable
         string backupPath,
         CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || _currentTempDirectory == null || CompanyData == null)
+        await _saveLock.WaitAsync(cancellationToken);
+        try
         {
-            throw new InvalidOperationException("No company is currently open.");
+            if (!IsCompanyOpen || _currentTempDirectory == null || CompanyData == null)
+            {
+                throw new InvalidOperationException("No company is currently open.");
+            }
+
+            ArgumentException.ThrowIfNullOrEmpty(backupPath);
+
+            // Sync in-memory state before exporting (e.g., event log)
+            CompanySaving?.Invoke(this, EventArgs.Empty);
+
+            // Save current data to temp directory
+            var companyDir = GetCompanyDirectory(_currentTempDirectory);
+            await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
+
+            // Export the entire temp directory as-is (includes receipts/)
+            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
+
+            // Note: We intentionally do NOT:
+            // - Change _currentFilePath (backup is a separate file)
+            // - Release/acquire file lock (working file stays locked)
+            // - Mark as saved (unsaved changes state is unchanged)
+            // - Add to recent companies (backups are not working files)
         }
-
-        ArgumentException.ThrowIfNullOrEmpty(backupPath);
-
-        // Sync in-memory state before exporting (e.g., event log)
-        CompanySaving?.Invoke(this, EventArgs.Empty);
-
-        // Save current data to temp directory
-        var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
-
-        // Export the entire temp directory as-is (includes receipts/)
-        await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
-
-        // Note: We intentionally do NOT:
-        // - Change _currentFilePath (backup is a separate file)
-        // - Release/acquire file lock (working file stays locked)
-        // - Mark as saved (unsaved changes state is unchanged)
-        // - Add to recent companies (backups are not working files)
+        finally
+        {
+            _saveLock.Release();
+        }
     }
 
     /// <summary>
@@ -714,25 +752,29 @@ public class CompanyManager : IDisposable
     /// </summary>
     public async Task SavePaymentSyncAsync(CancellationToken cancellationToken = default)
     {
-        if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
-            return;
-
-        var companyDir = GetCompanyDirectory(_currentTempDirectory);
-        await _fileService.WriteJsonAsync(companyDir, "payments.json", CompanyData.Payments, cancellationToken);
-        await _fileService.WriteJsonAsync(companyDir, "invoices.json", CompanyData.Invoices, cancellationToken);
-        await _fileService.WriteJsonAsync(companyDir, "revenues.json", CompanyData.Revenues, cancellationToken);
-        await _fileService.WriteJsonAsync(companyDir, "idCounters.json", CompanyData.IdCounters, cancellationToken);
-        await _fileService.WriteJsonAsync(companyDir, "appSettings.json", CompanyData.Settings, cancellationToken);
-
-        // Repackage the .argo file so changes persist across restarts
-        ReleaseFileLock();
+        await _saveLock.WaitAsync(cancellationToken);
         try
         {
-            await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
+                return;
+
+            var companyDir = GetCompanyDirectory(_currentTempDirectory);
+            await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
+
+            // Repackage the .argo file so changes persist across restarts
+            ReleaseFileLock();
+            try
+            {
+                await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+            }
+            finally
+            {
+                AcquireFileLock(CurrentFilePath);
+            }
         }
         finally
         {
-            AcquireFileLock(CurrentFilePath);
+            _saveLock.Release();
         }
     }
 
@@ -801,7 +843,17 @@ public class CompanyManager : IDisposable
     private static string GetCompanyDirectory(string tempDirectory)
     {
         var subdirs = Directory.GetDirectories(tempDirectory);
-        return subdirs.Length > 0 ? subdirs[0] : tempDirectory;
+        if (subdirs.Length == 0) return tempDirectory;
+        if (subdirs.Length == 1) return subdirs[0];
+
+        // Multiple subdirectories: pick the one that contains company data files
+        // (exclude known non-company directories like "receipts")
+        var companyDir = subdirs.FirstOrDefault(d =>
+            File.Exists(Path.Combine(d, "settings.json")) ||
+            File.Exists(Path.Combine(d, "revenues.json")) ||
+            File.Exists(Path.Combine(d, "expenses.json")));
+
+        return companyDir ?? subdirs[0];
     }
 
     public void Dispose()
@@ -809,6 +861,8 @@ public class CompanyManager : IDisposable
         if (_isDisposed) return;
 
         ReleaseFileLock();
+        _saveLock.Dispose();
+        _currentPassword = null;
 
         // Clean up temp directory
         if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
@@ -834,7 +888,7 @@ public class CompanyManager : IDisposable
         ReleaseFileLock();
         try
         {
-            _fileLock = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            _fileLock = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
         catch (Exception ex)
         {

@@ -3,6 +3,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
@@ -319,7 +320,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     private bool _isDragOver;
 
     [ObservableProperty]
-    private bool _isAzureConfigured;
+    private bool _isScannerConfigured;
 
     /// <summary>
     /// Event raised when a file needs to be scanned via file picker.
@@ -329,13 +330,12 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     partial void OnHasPremiumChanged(bool value)
     {
-        CheckAzureConfiguration();
+        CheckScannerConfiguration();
     }
 
-    private void CheckAzureConfiguration()
+    private void CheckScannerConfiguration()
     {
-        // Check if portal is configured (receipt scanning goes through server proxy)
-        IsAzureConfigured = PortalSettings.IsConfigured;
+        IsScannerConfigured = PortalSettings.IsConfigured;
     }
 
     /// <summary>
@@ -344,16 +344,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     public async Task HandleFileSelectedAsync(string filePath)
     {
         if (string.IsNullOrEmpty(filePath)) return;
+        if (App.ReceiptsModalsViewModel == null) return;
 
-        if (!HasPremium)
-        {
-            await App.ShowWarningMessageBoxAsync(
-                Loc.Tr("Premium Feature"),
-                Loc.Tr("AI Receipt Scanning requires a Premium subscription."));
-            return;
-        }
-
-        await App.ReceiptsModalsViewModel!.OpenScanModalAsync(filePath);
+        await App.ReceiptsModalsViewModel.OpenScanModalAsync(filePath);
     }
 
     /// <summary>
@@ -384,7 +377,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     public ReceiptsPageViewModel()
     {
         LoadReceipts();
-        CheckAzureConfiguration();
+        CheckScannerConfiguration();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -639,7 +632,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             Directory.CreateDirectory(tempDir);
             var tempPath = Path.Combine(tempDir, receipt.FileName);
             var bytes = Convert.FromBase64String(receipt.FileData);
-            File.WriteAllBytes(tempPath, bytes);
+            var isImage = receipt.FileType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+            var output = isImage ? ReceiptImageHelper.FixOrientation(bytes) : bytes;
+            File.WriteAllBytes(tempPath, output);
             return tempPath;
         }
         catch
@@ -663,9 +658,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     #region Action Commands
 
     [RelayCommand]
-    private void AiScanReceipt()
+    private async Task AiScanReceipt()
     {
-        // Trigger file picker in the view
+        if (App.ReceiptsModalsViewModel == null) return;
+
+        // Trigger file picker in the view — usage limit is checked after modal opens
         ScanFileRequested?.Invoke(this, EventArgs.Empty);
     }
 

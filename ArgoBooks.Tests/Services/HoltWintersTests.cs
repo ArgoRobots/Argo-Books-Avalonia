@@ -29,17 +29,17 @@ public class HoltWintersTests
         var data = new List<decimal> { 100, 110, 120, 130 }; // Less than 2 seasons (24 points for seasonLength=12)
         var result = _forecasting.ForecastAdditive(data, seasonLength: 12, periodsToForecast: 1);
 
-        Assert.Equal("Simple Exponential Smoothing", result.Method);
+        Assert.Equal("Weighted Moving Average", result.Method);
         Assert.Single(result.ForecastedValues);
     }
 
     [Fact]
-    public void FallbackForecast_SingleDataPoint_UsesSimpleSmoothing()
+    public void FallbackForecast_SingleDataPoint_UsesWeightedMovingAverage()
     {
         var data = new List<decimal> { 100 };
         var result = _forecasting.ForecastAdditive(data, seasonLength: 12, periodsToForecast: 1);
 
-        Assert.Equal("Simple Exponential Smoothing", result.Method);
+        Assert.Equal("Weighted Moving Average", result.Method);
         Assert.Single(result.ForecastedValues);
         Assert.Equal(100m, result.ForecastedValues[0]);
     }
@@ -125,7 +125,7 @@ public class HoltWintersTests
         var data = new List<decimal> { 100, 110, 120 };
         var result = _forecasting.ForecastMultiplicative(data, seasonLength: 12, periodsToForecast: 1);
 
-        Assert.Equal("Simple Exponential Smoothing", result.Method);
+        Assert.Equal("Weighted Moving Average", result.Method);
     }
 
     #endregion
@@ -138,7 +138,7 @@ public class HoltWintersTests
         var data = new List<decimal> { 100, 110, 120 };
         var result = _forecasting.AutoForecast(data, seasonLength: 12, periodsToForecast: 1);
 
-        Assert.Equal("Simple Exponential Smoothing", result.Method);
+        Assert.Equal("Weighted Moving Average", result.Method);
     }
 
     [Fact]
@@ -243,15 +243,15 @@ public class HoltWintersTests
     }
 
     [Fact]
-    public void DetectSeasonLength_VeryShortData_ReturnsZeroWhenNoCandidateFits()
+    public void DetectSeasonLength_VeryShortData_ReturnsSafeFallbackWhenNoCandidateFits()
     {
         var data = new List<decimal> { 100, 110, 120 };
         var candidates = new[] { 12, 4, 6 };
 
         var detected = _forecasting.DetectSeasonLength(data, candidates);
 
-        // With data.Count / 2 = 1, no candidates fit, returns default (0)
-        Assert.Equal(0, detected);
+        // With data.Count / 2 = 1, no candidates fit, returns last candidate as safe fallback
+        Assert.Equal(6, detected);
     }
 
     [Fact]

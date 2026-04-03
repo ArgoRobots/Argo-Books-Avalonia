@@ -360,28 +360,20 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }
 
         // Subscribe to currency changes to refresh currency display
-        CurrencyService.CurrencyChanged += (_, _) =>
-        {
-            UpdateStatistics();
-            FilterInvoices();
-        };
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
 
         // Subscribe to payment provider changes so invoice display reflects current state
         // and the create button / warning banner update immediately
-        PaymentProviderService.ProvidersChanged += (_, _) =>
-        {
-            CheckPortalConfiguration();
-            FilterInvoices();
-        };
+        PaymentProviderService.ProvidersChanged += OnProvidersChanged;
 
         // Subscribe to company data changes (e.g. payment sync updating invoice status)
         if (App.CompanyManager != null)
         {
-            App.CompanyManager.CompanyDataChanged += (_, _) => LoadInvoices();
+            App.CompanyManager.CompanyDataChanged += OnCompanyDataChanged;
         }
 
         // Subscribe to plan status changes so we update when user upgrades
-        App.PlanStatusChanged += (_, e) => HasPremium = e.HasPremium;
+        App.PlanStatusChanged += OnPlanStatusChanged;
 
         // Auto-sync online payments so invoice statuses reflect portal payments
         _ = App.AutoSyncPortalPaymentsAsync();
@@ -405,6 +397,42 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 InvoiceMonthlyLimit = result.MonthlyLimit;
             SentInvoicesThisMonthCount = result.SendCount;
         }
+    }
+
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        UpdateStatistics();
+        FilterInvoices();
+    }
+
+    private void OnProvidersChanged(object? sender, EventArgs e)
+    {
+        CheckPortalConfiguration();
+        FilterInvoices();
+    }
+
+    private void OnCompanyDataChanged(object? sender, EventArgs e)
+    {
+        LoadInvoices();
+    }
+
+    private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
+    {
+        HasPremium = e.HasPremium;
+    }
+
+    /// <summary>
+    /// Cleans up event subscriptions.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
+        PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
+        if (App.CompanyManager != null)
+            App.CompanyManager.CompanyDataChanged -= OnCompanyDataChanged;
+        App.PlanStatusChanged -= OnPlanStatusChanged;
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -561,9 +589,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            var status = Enum.Parse<InvoiceStatus>(FilterStatus);
-            filtered = filtered.Where(i => i.Status == status ||
-                (FilterStatus == "Overdue" && i.IsOverdue)).ToList();
+            if (Enum.TryParse<InvoiceStatus>(FilterStatus, out var status))
+            {
+                filtered = filtered.Where(i => i.Status == status ||
+                    (FilterStatus == "Overdue" && i.IsOverdue)).ToList();
+            }
         }
 
         // Apply customer filter
@@ -573,11 +603,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }
 
         // Apply amount filter
-        if (decimal.TryParse(FilterAmountMin, out var minAmount))
+        if (decimal.TryParse(FilterAmountMin, System.Globalization.CultureInfo.InvariantCulture, out var minAmount))
         {
             filtered = filtered.Where(i => i.Total >= minAmount).ToList();
         }
-        if (decimal.TryParse(FilterAmountMax, out var maxAmount))
+        if (decimal.TryParse(FilterAmountMax, System.Globalization.CultureInfo.InvariantCulture, out var maxAmount))
         {
             filtered = filtered.Where(i => i.Total <= maxAmount).ToList();
         }
@@ -637,7 +667,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }).ToList();
 
         // Apply sorting (only if not searching, since search has its own relevance sorting)
-        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
+        if (string.IsNullOrWhiteSpace(SearchQuery))
         {
             displayItems = displayItems.ApplySort(
                 SortColumn,

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,12 +17,12 @@ namespace ArgoBooks.ViewModels;
 public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-    private const string LicenseRedeemUrl = "https://argorobots.com/api/license/redeem.php";
-    private const string ApiHostUrl = "https://argorobots.com";
+    private static readonly string LicenseRedeemUrl = $"{ApiConfig.BaseUrl}/api/license/redeem.php";
+    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
-    private const string PricingApiUrl = "https://argorobots.com/api/pricing/plans.php";
-    private const string PremiumUpgradeUrl = "https://argorobots.com/pricing/";
-    private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
+    private static readonly string PricingApiUrl = $"{ApiConfig.BaseUrl}/api/pricing/plans.php";
+    private static readonly string PremiumUpgradeUrl = $"{ApiConfig.BaseUrl}/pricing/";
+    private static readonly string CancelSubscriptionUrl = $"{ApiConfig.BaseUrl}/community/users/subscription.php";
 
     [ObservableProperty]
     private bool _isOpen;
@@ -46,6 +47,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _licenseKey = string.Empty;
+
+    [ObservableProperty]
+    private bool _isOffline;
 
     partial void OnIsVerificationSuccessChanged(bool value)
     {
@@ -83,7 +87,36 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _premiumYearlySavings = "(save $20)";
 
-    private bool _hasFetchedPricing;
+    private bool _hasFetchedPlans;
+
+    public ObservableCollection<string> FreePlanFeatures { get; } = new(TranslateDefaults(DefaultFreeFeatures));
+
+    public ObservableCollection<string> PremiumPlanFeatures { get; } = new(TranslateDefaults(DefaultPremiumFeatures));
+
+    private static readonly string[] DefaultFreeFeatures =
+    [
+        "Up to 10 products",
+        "Unlimited transactions",
+        "Real-time analytics",
+        "Receipt management",
+        "5 invoices / month",
+        "AI spreadsheet import (100/month)",
+        "AI receipt scanning (5/month)"
+    ];
+
+    private static readonly string[] DefaultPremiumFeatures =
+    [
+        "Everything in Free",
+        "Unlimited products",
+        "Biometric login security",
+        "Unlimited invoices & payments",
+        "AI receipt scanning (500/month)",
+        "Predictive analytics",
+        "Priority support"
+    ];
+
+    private static IEnumerable<string> TranslateDefaults(string[] features)
+        => features.Select(f => f.Translate());
 
     #endregion
 
@@ -138,10 +171,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsOpen = true;
 
-        // Fetch pricing in the background when modal opens (once per session)
-        if (!_hasFetchedPricing)
+        // Retry fetching plans if the previous attempt failed (e.g. was offline at startup)
+        if (!_hasFetchedPlans || IsOffline)
         {
-            _ = FetchPricingAsync();
+            _ = FetchPlansAsync();
         }
     }
 
@@ -384,67 +417,131 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     #endregion
 
-    #region Pricing API
+    #region Plans API
 
     /// <summary>
-    /// Fetches plan pricing from the website API.
-    /// Falls back to hardcoded defaults if the request fails.
+    /// Fetches plan details and pricing from the website API.
+    /// Updates features lists and pricing from the server so the app stays in sync.
+    /// Sets IsOffline if the API is unreachable.
+    /// Called once on app startup for free-tier users.
     /// </summary>
-    private async Task FetchPricingAsync()
+    public async Task FetchPlansAsync()
     {
         try
         {
             var response = await HttpClient.GetStringAsync(PricingApiUrl);
-            var pricing = JsonSerializer.Deserialize<PricingApiResponse>(response);
+            var apiResponse = JsonSerializer.Deserialize<PlansApiResponse>(response);
 
-            if (pricing?.Premium != null)
+            IsOffline = false;
+
+            if (apiResponse?.Pricing != null)
             {
-                PremiumMonthlyPrice = pricing.Premium.PriceDisplay;
-                PremiumBillingPeriod = pricing.Premium.BillingPeriod;
-                if (pricing.Premium.YearlyPriceDisplay is not null && pricing.Premium.YearlySavingsDisplay is not null)
+                PremiumMonthlyPrice = apiResponse.Pricing.PremiumPriceDisplay;
+                PremiumBillingPeriod = "/month";
+                if (apiResponse.Pricing.PremiumYearlyPriceDisplay is not null &&
+                    apiResponse.Pricing.PremiumYearlySavingsDisplay is not null)
                 {
-                    PremiumYearlyPrice = $"or {pricing.Premium.YearlyPriceDisplay}/year";
-                    PremiumYearlySavings = $"(save {pricing.Premium.YearlySavingsDisplay})";
+                    PremiumYearlyPrice = $"or {apiResponse.Pricing.PremiumYearlyPriceDisplay}/year";
+                    PremiumYearlySavings = $"(save {apiResponse.Pricing.PremiumYearlySavingsDisplay})";
                 }
             }
 
-            _hasFetchedPricing = true;
+            if (apiResponse?.Plans != null)
+            {
+                if (apiResponse.Plans.Free?.Features is { Count: > 0 })
+                {
+                    FreePlanFeatures.Clear();
+                    foreach (var feature in apiResponse.Plans.Free.Features)
+                        FreePlanFeatures.Add(feature.DisplayText.Translate());
+                }
+
+                if (apiResponse.Plans.Premium?.Features is { Count: > 0 })
+                {
+                    PremiumPlanFeatures.Clear();
+                    foreach (var feature in apiResponse.Plans.Premium.Features)
+                        PremiumPlanFeatures.Add(feature.DisplayText.Translate());
+                }
+            }
+
+            _hasFetchedPlans = true;
         }
         catch (Exception ex)
         {
-            _hasFetchedPricing = true;
-
-            // Only log if it's not a connectivity issue
-            var isConnectivityError = ex is HttpRequestException
+            // HttpRequestException with a status code means the server responded (not a connectivity issue)
+            var isConnectivityError = ex is HttpRequestException { StatusCode: null }
                 || (ex is TaskCanceledException tce && (tce.InnerException is TimeoutException || tce.CancellationToken != default));
 
-            if (!isConnectivityError || await _connectivityService.IsInternetAvailableAsync())
+            if (isConnectivityError)
             {
-                App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch pricing from API");
+                IsOffline = true;
+                // Don't set _hasFetchedPlans so Open() will retry when the modal is opened
+            }
+            else
+            {
+                // Server error or bad JSON — show plans with defaults, don't mark offline
+                IsOffline = false;
+                _hasFetchedPlans = true;
+                App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch plans from API");
             }
         }
     }
 
-    private class PricingApiResponse
+    #region API Response Models
+
+    private class PlansApiResponse
     {
+        [JsonPropertyName("plans")]
+        public PlansData? Plans { get; init; }
+
+        [JsonPropertyName("pricing")]
+        public PricingData? Pricing { get; init; }
+    }
+
+    private class PlansData
+    {
+        [JsonPropertyName("free")]
+        public PlanInfo? Free { get; init; }
+
         [JsonPropertyName("premium")]
-        public PlanPricing? Premium { get; init; }
+        public PlanInfo? Premium { get; init; }
     }
 
-    private class PlanPricing
+    private class PlanInfo
     {
-        [JsonPropertyName("price_display")]
-        public string PriceDisplay { get; init; } = "$10 CAD";
+        [JsonPropertyName("name")]
+        public string? Name { get; init; }
 
-        [JsonPropertyName("billing_period")]
-        public string BillingPeriod { get; init; } = "/month";
-
-        [JsonPropertyName("yearly_price_display")]
-        public string? YearlyPriceDisplay { get; init; }
-
-        [JsonPropertyName("yearly_savings_display")]
-        public string? YearlySavingsDisplay { get; init; }
+        [JsonPropertyName("features")]
+        public List<PlanFeature>? Features { get; init; }
     }
+
+    private class PlanFeature
+    {
+        [JsonPropertyName("label")]
+        public string Label { get; init; } = "";
+
+        [JsonPropertyName("detail")]
+        public string? Detail { get; init; }
+
+        public string DisplayText => Detail != null ? $"{Label} ({Detail})" : Label;
+    }
+
+    private class PricingData
+    {
+        [JsonPropertyName("currency")]
+        public string? Currency { get; init; }
+
+        [JsonPropertyName("premium_price_display")]
+        public string PremiumPriceDisplay { get; init; } = "$10 CAD";
+
+        [JsonPropertyName("premium_yearly_price_display")]
+        public string? PremiumYearlyPriceDisplay { get; init; }
+
+        [JsonPropertyName("premium_yearly_savings_display")]
+        public string? PremiumYearlySavingsDisplay { get; init; }
+    }
+
+    #endregion
 
     #endregion
 

@@ -84,16 +84,16 @@ public class SpreadsheetImportService
 {
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
-    private readonly IOpenAiService? _openAiService;
+    private readonly IGeminiService? _geminiService;
 
     /// <summary>
     /// Creates a new SpreadsheetImportService.
     /// </summary>
-    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IOpenAiService? openAiService = null)
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IGeminiService? geminiService = null)
     {
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
-        _openAiService = openAiService;
+        _geminiService = geminiService;
     }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
@@ -753,7 +753,7 @@ public class SpreadsheetImportService
                     if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
                     {
                         data.IdCounters.Revenue++;
-                        var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
+                        var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
                         var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
 
                         data.Revenues.Add(new Revenue
@@ -773,8 +773,8 @@ public class SpreadsheetImportService
                             Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                             InvoiceId = invoice.Id,
                             ReferenceNumber = invoice.InvoiceNumber,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
                             OriginalCurrency = invoice.OriginalCurrency,
                             TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
                         });
@@ -990,8 +990,8 @@ public class SpreadsheetImportService
                 {
                     if (!string.IsNullOrEmpty(recurring.CustomerId))
                         EnsureCustomerExists(data, recurring.CustomerId);
-                    if (string.IsNullOrEmpty(recurring.Status))
-                        recurring.Status = "Active";
+                    if (recurring.Status == default)
+                        recurring.Status = RecurringInvoiceStatus.Active;
                     var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == recurring.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.RecurringInvoices.Remove(existing);
@@ -2084,12 +2084,12 @@ public class SpreadsheetImportService
     {
         var headers = new List<string>();
         var row = worksheet.Row(headerRow);
+        var lastColumn = worksheet.LastColumnUsed()?.ColumnNumber() ?? 0;
 
-        for (int col = 1; col <= worksheet.ColumnsUsed().Count(); col++)
+        for (int col = 1; col <= lastColumn; col++)
         {
             var cell = row.Cell(col);
-            if (cell.IsEmpty()) break;
-            headers.Add(cell.GetString().Trim());
+            headers.Add(cell.IsEmpty() ? "" : cell.GetString().Trim());
         }
 
         return headers;
@@ -2431,7 +2431,7 @@ public class SpreadsheetImportService
 
 
         // Try AI categorization if the service is available
-        if (_openAiService?.IsConfigured == true)
+        if (_geminiService?.IsConfigured == true)
         {
             try
             {
@@ -2459,7 +2459,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
   {{ ""productName"": ""..."", ""categoryName"": ""..."" }}
 ]";
 
-                var response = await _openAiService.SendChatAsync(
+                var response = await _geminiService.SendChatAsync(
                     "You are a helpful assistant that categorizes business products. Always respond with valid JSON only, no markdown.",
                     prompt,
                     maxTokens: Math.Max(500, uncategorized.Count * 50),
@@ -2612,7 +2612,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
             {
                 data.IdCounters.Revenue++;
-                var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
+                var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
                 var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
 
                 data.Revenues.Add(new Revenue
@@ -2632,8 +2632,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                     InvoiceId = invoice.Id,
                     ReferenceNumber = invoice.InvoiceNumber,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                     OriginalCurrency = invoice.OriginalCurrency,
                     TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
                 });
@@ -3246,10 +3246,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             recurring.Description = GetString(row, headers, "Description");
             recurring.Frequency = ParseEnum(GetString(row, headers, "Frequency"), Frequency.Monthly);
             recurring.NextInvoiceDate = GetDateTime(row, headers, "Next Date");
-            recurring.Status = GetString(row, headers, "Status");
+            recurring.Status = ParseEnum(GetString(row, headers, "Status"), RecurringInvoiceStatus.Active);
 
-            if (string.IsNullOrEmpty(recurring.Status))
-                recurring.Status = "Active";
+            if (recurring.Status == default)
+                recurring.Status = RecurringInvoiceStatus.Active;
 
             if (existing == null)
                 data.RecurringInvoices.Add(recurring);

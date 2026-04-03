@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Insights;
@@ -486,7 +487,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             new Axis
             {
                 TextSize = 12,
-                LabelsPaint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI" },
+                LabelsPaint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") },
                 MinLimit = minDate - padding,
                 MaxLimit = maxDate + padding,
                 Labeler = value =>
@@ -513,7 +514,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             new Axis
             {
                 TextSize = 12,
-                LabelsPaint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI" },
+                LabelsPaint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") },
                 SeparatorsPaint = new SolidColorPaint(gridColor) { StrokeThickness = 1 },
                 MinLimit = 0,
                 MaxLimit = 105, // Slightly above 100 for visual padding

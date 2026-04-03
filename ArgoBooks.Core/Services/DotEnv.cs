@@ -65,7 +65,7 @@ public static class DotEnv
     private const int MaxParentSearchDepth = 1;
 
     /// <summary>
-    /// Finds the .env file by searching the application directory and one level up.
+    /// Finds the .env file by searching the application directory and up to one parent directory.
     /// Limited to prevent an attacker from injecting a .env file in a distant parent directory.
     /// </summary>
     private static string? FindEnvFile()
@@ -136,6 +136,19 @@ public static class DotEnv
         {
             // .env file loading is best-effort; errors are non-critical
         }
+    }
+
+    /// <summary>
+    /// Sets an environment variable in-memory only (no disk write).
+    /// Use for transient/per-session values that should not persist across app restarts.
+    /// </summary>
+    /// <param name="key">The variable name.</param>
+    /// <param name="value">The value to set.</param>
+    public static void SetInMemory(string key, string value)
+    {
+        if (!_isLoaded) Load();
+        EnvVars[key] = value;
+        Environment.SetEnvironmentVariable(key, value);
     }
 
     /// <summary>

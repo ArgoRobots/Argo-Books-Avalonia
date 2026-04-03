@@ -6,18 +6,11 @@ Argo Books integrates with external services to provide AI-powered features and 
 
 ![Integrations Overview](diagrams/integrations/integrations-overview.svg)
 
-## Azure Receipt Scanning
+## Google Gemini Integration
 
-AI-powered optical character recognition (OCR) for receipt processing.
+AI-powered receipt scanning via Gemini 2.5 Flash vision, plus supplier and category matching for receipt processing.
 
-![Integrations Overview](diagrams/integrations/receipts.svg
-)
-
-## OpenAI Integration
-
-AI-powered supplier and category matching for receipt processing.
-
-![Integrations Overview](diagrams/integrations/open-ai.svg
+![Gemini Integration](diagrams/integrations/gemini.svg
 )
 
 ## Google Sheets Integration
