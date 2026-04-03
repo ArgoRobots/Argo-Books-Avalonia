@@ -90,6 +90,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalEmailError;
 
+    [ObservableProperty]
+    private string? _modalPhoneError;
+
     partial void OnModalFirstNameChanged(string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
@@ -104,6 +107,11 @@ public partial class CustomerModalsViewModel : ViewModelBase
         {
             ModalLastNameError = null;
         }
+    }
+
+    partial void OnModalPhoneChanged(string value)
+    {
+        ModalPhoneError = null;
     }
 
     partial void OnModalEmailChanged(string value)
@@ -977,6 +985,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalFirstNameError = null;
         ModalLastNameError = null;
         ModalEmailError = null;
+        ModalPhoneError = null;
         HasValidationMessage = false;
     }
 
@@ -1003,6 +1012,50 @@ public partial class CustomerModalsViewModel : ViewModelBase
             {
                 ModalEmailError = "Please enter a valid email address.".Translate();
                 isValid = false;
+            }
+        }
+
+        // Duplicate detection
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData != null)
+        {
+            var fullName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}";
+            var existingWithSameName = companyData.Customers.Any(c =>
+                c.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase) &&
+                (_editingCustomer == null || c.Id != _editingCustomer.Id));
+
+            if (existingWithSameName)
+            {
+                ModalFirstNameError = "A customer with this name already exists.".Translate();
+                isValid = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(ModalEmail))
+            {
+                var existingWithSameEmail = companyData.Customers.Any(c =>
+                    !string.IsNullOrWhiteSpace(c.Email) &&
+                    c.Email.Equals(ModalEmail.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    (_editingCustomer == null || c.Id != _editingCustomer.Id));
+
+                if (existingWithSameEmail)
+                {
+                    ModalEmailError = "A customer with this email already exists.".Translate();
+                    isValid = false;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(ModalPhone))
+            {
+                var existingWithSamePhone = companyData.Customers.Any(c =>
+                    !string.IsNullOrWhiteSpace(c.Phone) &&
+                    c.Phone.Equals(ModalPhone.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    (_editingCustomer == null || c.Id != _editingCustomer.Id));
+
+                if (existingWithSamePhone)
+                {
+                    ModalPhoneError = "A customer with this phone number already exists.".Translate();
+                    isValid = false;
+                }
             }
         }
 

@@ -100,6 +100,8 @@
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Phone'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
+                                    <TextBlock Text="{Binding ModalPhoneError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
 
@@ -233,6 +235,8 @@
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Phone'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
+                                    <TextBlock Text="{Binding ModalPhoneError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
 
