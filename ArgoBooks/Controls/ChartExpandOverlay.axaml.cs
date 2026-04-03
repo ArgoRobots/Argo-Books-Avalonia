@@ -47,6 +47,9 @@ public partial class ChartExpandOverlay : UserControl
     private bool _expandedIsMultiSeries;
     private ReportChartDataService.TimeBucket? _preFullscreenBucket;
 
+    // GeoMap fullscreen state
+    private bool _isGeoMapFullscreen;
+
     public ChartExpandOverlay()
     {
         InitializeComponent();
@@ -320,15 +323,15 @@ public partial class ChartExpandOverlay : UserControl
         // handler calls CoreChart.Unload() which permanently breaks the control.
         // Instead, we hide original GeoMaps and create fresh copies in the overlay.
         _geoMapCopies.Clear();
+        _isGeoMapFullscreen = sourcePanel.Children.OfType<GeoMap>().Any();
+
         foreach (var child in sourcePanel.Children.ToList())
         {
             if (child == expandButton) continue;
 
             if (child is GeoMap originalGeo)
             {
-                // Only copy the currently visible GeoMap
-                if (!originalGeo.IsVisible) continue;
-
+                // Copy ALL GeoMaps (both origin and destination) so the toggle works
                 originalGeo.IsVisible = false;
                 var copy = new GeoMap
                 {
@@ -348,6 +351,10 @@ public partial class ChartExpandOverlay : UserControl
                 contentPanel.Children.Add(child);
             }
         }
+
+        // Set up GeoMap header with title and origin/destination toggle
+        if (_isGeoMapFullscreen)
+            SetupGeoMapHeader(sourcePanel);
 
         // Hide the expand button while overlay is open
         expandButton.IsVisible = false;
@@ -382,6 +389,10 @@ public partial class ChartExpandOverlay : UserControl
 
         // Restore original sizes before reparenting back
         RestoreChartElements();
+
+        // Hide GeoMap header
+        if (_isGeoMapFullscreen)
+            TeardownGeoMapHeader();
 
         // Remove GeoMap copies from overlay and restore originals
         foreach (var (original, copy) in _geoMapCopies)
@@ -647,6 +658,90 @@ public partial class ChartExpandOverlay : UserControl
         {
             FindDescendantsRecursive(decorator.Child, results);
         }
+    }
+
+    #endregion
+
+    #region GeoMap Fullscreen Header
+
+    /// <summary>
+    /// Sets up the GeoMap header panel with the title and origin/destination toggle.
+    /// Reads the title and radio button labels from the source page's parent elements.
+    /// </summary>
+    private void SetupGeoMapHeader(Panel sourcePanel)
+    {
+        // Find the title from the source panel's parent structure:
+        // Panel (sourcePanel) > Border > Grid (row grid) > Border (header) > Grid > TextBlock
+        var titleText = "World Map Overview";
+        string? originLabel = null;
+        string? destinationLabel = null;
+
+        if (sourcePanel.Parent is Border border && border.Parent is Grid rowGrid)
+        {
+            foreach (var child in rowGrid.Children)
+            {
+                if (child is not Border headerBorder || Grid.GetRow(child) != 0) continue;
+                if (headerBorder.Child is not Grid headerGrid) continue;
+
+                foreach (var headerChild in headerGrid.Children)
+                {
+                    if (headerChild is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text))
+                        titleText = tb.Text;
+
+                    // Find the segmented button labels from the source toggle
+                    if (headerChild is Border toggleBorder &&
+                        toggleBorder.Child is StackPanel togglePanel)
+                    {
+                        var radioButtons = togglePanel.Children.OfType<RadioButton>().ToList();
+                        if (radioButtons.Count >= 2)
+                        {
+                            originLabel = radioButtons[0].Content?.ToString();
+                            destinationLabel = radioButtons[1].Content?.ToString();
+                        }
+                    }
+                }
+            }
+        }
+
+        GeoMapTitle.Text = titleText;
+        GeoMapOriginButton.Content = originLabel ?? "Origin";
+        GeoMapDestinationButton.Content = destinationLabel ?? "Destination";
+
+        // Set checked state based on the ViewModel's IsMapModeOrigin (the first GeoMap
+        // in the source panel is the origin map; if it was the one being shown, select origin)
+        bool isOriginMode = true;
+        if (sourcePanel.DataContext is AnalyticsPageViewModel analyticsVm)
+            isOriginMode = analyticsVm.IsMapModeOrigin;
+        GeoMapOriginButton.IsChecked = isOriginMode;
+        GeoMapDestinationButton.IsChecked = !isOriginMode;
+
+        // Set initial visibility: show only the copy that corresponds to the checked button
+        UpdateGeoMapCopyVisibility();
+
+        GeoMapHeaderPanel.IsVisible = true;
+    }
+
+    private void TeardownGeoMapHeader()
+    {
+        GeoMapHeaderPanel.IsVisible = false;
+        _isGeoMapFullscreen = false;
+    }
+
+    private void OnGeoMapModeChanged(object? sender, RoutedEventArgs e)
+    {
+        UpdateGeoMapCopyVisibility();
+    }
+
+    /// <summary>
+    /// Shows/hides GeoMap copies based on the origin/destination toggle state.
+    /// </summary>
+    private void UpdateGeoMapCopyVisibility()
+    {
+        if (_geoMapCopies.Count < 2) return;
+
+        bool showOrigin = GeoMapOriginButton.IsChecked == true;
+        _geoMapCopies[0].copy.IsVisible = showOrigin;
+        _geoMapCopies[1].copy.IsVisible = !showOrigin;
     }
 
     #endregion
