@@ -684,12 +684,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             // Create temp file from Base64 data stored in company file
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
-            if (File.Exists(tempPath))
-                return tempPath;
+            var tempPath = Path.Combine(tempDir, receipt.FileName);
             var bytes = Convert.FromBase64String(receipt.FileData);
-            var oriented = ReceiptImageHelper.FixOrientation(bytes);
-            File.WriteAllBytes(tempPath, oriented);
+            var isImage = receipt.FileType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+            var output = isImage ? ReceiptImageHelper.FixOrientation(bytes) : bytes;
+            File.WriteAllBytes(tempPath, output);
             return tempPath;
         }
         catch

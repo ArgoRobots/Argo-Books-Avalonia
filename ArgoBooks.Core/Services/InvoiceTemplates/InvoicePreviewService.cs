@@ -25,7 +25,9 @@ public static class InvoicePreviewService
             Directory.CreateDirectory(TempDirectory);
 
             // Sanitize the invoiceId to prevent path traversal
-            var safeId = Regex.Replace(invoiceId ?? Guid.NewGuid().ToString("N"), @"[^a-zA-Z0-9\-_]", "");
+            var safeId = Regex.Replace(invoiceId ?? "", @"[^a-zA-Z0-9\-_]", "");
+            if (string.IsNullOrEmpty(safeId))
+                safeId = Guid.NewGuid().ToString("N");
 
             // Generate a filename
             var filename = $"invoice-preview-{safeId}.html";
