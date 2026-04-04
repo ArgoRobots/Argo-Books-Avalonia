@@ -25,6 +25,7 @@
                 <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="750"
+                    MinHeight="500"
                     MaxHeight="700"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
@@ -52,7 +53,8 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer x:Name="AddEditScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ScrollViewer x:Name="AddEditScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                    IsVisible="{Binding !IsSavingTransaction}">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Date and Payment Method Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -341,29 +343,30 @@
                                            TextWrapping="Wrap" />
                             </Border>
 
-                            <!-- Saving/Loading State -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8"
-                                    Padding="16"
-                                    IsVisible="{Binding IsSavingTransaction}">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
-                                    <PathIcon Data="{x:Static icons:Icons.Spinner}"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Converting currency...'}"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Border>
                         </StackPanel>
                     </ScrollViewer>
+
+                    <!-- Saving Overlay (replaces content + footer while saving) -->
+                    <StackPanel Grid.Row="1" Grid.RowSpan="2"
+                                IsVisible="{Binding IsSavingTransaction}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Spacing="16">
+                        <controls:LoadingSpinner IsSpinning="{Binding IsSavingTransaction}"
+                                                 SizePreset="Large"
+                                                 HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Saving transaction...'}"
+                                   FontSize="16"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
 
                     <!-- Footer -->
                     <Border Grid.Row="2"
                             Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
+                            BorderThickness="0,1,0,0"
+                            IsVisible="{Binding !IsSavingTransaction}">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <TextBlock Grid.Column="0"
                                        Text="{loc:Loc 'Please enter all required fields'}"
@@ -375,13 +378,11 @@
                                     Classes="secondary-button"
                                     Content="{loc:Loc 'Cancel'}"
                                     Command="{Binding CloseAddEditModalCommand}"
-                                    IsEnabled="{Binding !IsSavingTransaction}"
                                     Margin="0,0,12,0" />
                             <Button Grid.Column="3"
                                     Classes="primary-button"
                                     Content="{Binding SaveButtonText}"
-                                    Command="{Binding SaveExpenseCommand}"
-                                    IsEnabled="{Binding !IsSavingTransaction}" />
+                                    Command="{Binding SaveExpenseCommand}" />
                         </Grid>
                     </Border>
                 </Grid>

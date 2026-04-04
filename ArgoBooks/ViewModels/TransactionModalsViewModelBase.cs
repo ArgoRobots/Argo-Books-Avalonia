@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -889,6 +890,10 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
+        IsSavingTransaction = true;
+        // Yield to let the UI render the loading indicator
+        await Task.Delay(1);
+
         // Perform USD conversion if currency is not USD
         var currentCurrency = CurrencyService.CurrentCurrencyCode;
         var transactionDate = ModalDate?.DateTime ?? DateTime.Now;
@@ -897,7 +902,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (!string.Equals(currentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
-            IsSavingTransaction = true;
             try
             {
                 var exchangeService = ExchangeRateService.Instance;
@@ -940,10 +944,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 ConvertedDiscount = new MonetaryValue(DiscountAmount, currentCurrency, 0, transactionDate);
                 ConvertedFee = new MonetaryValue(FeeAmount, currentCurrency, 0, transactionDate);
             }
-            finally
-            {
-                IsSavingTransaction = false;
-            }
         }
         else
         {
@@ -967,14 +967,28 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         // Capture pending state before CloseAddEditModal resets it via ResetForm
         var wasPendingConversion = IsPendingConversion;
 
+        IsSavingTransaction = false;
         CloseAddEditModal();
 
         // Show pending conversion warning after modal closes
         if (wasPendingConversion)
         {
+            string message;
+            if (transactionDate.Date > DateTime.Today)
+            {
+                message = "The transaction date is in the future, so the exchange rate is not yet available. Your transaction has been saved and the converted amount will be updated automatically when the rate becomes available.".Translate();
+            }
+            else if (!await new ConnectivityService().IsInternetAvailableAsync())
+            {
+                message = "You are currently offline. Your transaction has been saved and the converted amount will be updated automatically when you reconnect.".Translate();
+            }
+            else
+            {
+                message = "Your transaction has been saved. The converted amount will be updated automatically when the exchange rate becomes available.".Translate();
+            }
             _ = App.ShowWarningMessageBoxAsync(
                 "Pending Conversion".Translate(),
-                "Your transaction has been saved. The converted amount will be updated automatically when the exchange rate becomes available.".Translate());
+                message);
         }
     }
 
@@ -1154,6 +1168,170 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     }
 
     #endregion
+
+    #region Inventory Helpers
+
+    /// <summary>
+    /// Adjusts inventory for each line item whose product has TrackInventory enabled.
+    /// Creates StockAdjustment audit records and auto-creates InventoryItems when missing.
+    /// </summary>
+    protected static List<InventoryAdjustmentResult> AdjustInventoryForLineItems(
+        CompanyData companyData, List<LineItem> lineItems, string transactionId, bool isExpense)
+    {
+        var results = new List<InventoryAdjustmentResult>();
+
+        foreach (var lineItem in lineItems)
+        {
+            if (string.IsNullOrEmpty(lineItem.ProductId)) continue;
+
+            var product = companyData.Products.FirstOrDefault(p => p.Id == lineItem.ProductId);
+            if (product is not { TrackInventory: true }) continue;
+
+            var qty = (int)Math.Round(lineItem.Quantity, MidpointRounding.AwayFromZero);
+            if (qty == 0) continue;
+
+            var inventoryItem = companyData.Inventory.FirstOrDefault(inv => inv.ProductId == lineItem.ProductId);
+            var wasCreated = false;
+
+            if (inventoryItem == null)
+            {
+                companyData.IdCounters.InventoryItem++;
+                inventoryItem = new InventoryItem
+                {
+                    Id = $"INV-ITM-{companyData.IdCounters.InventoryItem:D5}",
+                    ProductId = product.Id,
+                    Sku = product.Sku,
+                    InStock = 0,
+                    Status = InventoryStatus.OutOfStock,
+                    UnitCost = lineItem.UnitPrice,
+                    LastUpdated = DateTime.UtcNow
+                };
+                companyData.Inventory.Add(inventoryItem);
+                wasCreated = true;
+            }
+
+            var oldStock = inventoryItem.InStock;
+            inventoryItem.InStock += isExpense ? qty : -qty;
+            inventoryItem.Status = inventoryItem.CalculateStatus();
+            inventoryItem.LastUpdated = DateTime.UtcNow;
+
+            // Create audit record
+            companyData.IdCounters.StockAdjustment++;
+            var adjustment = new StockAdjustment
+            {
+                Id = $"ADJ-{companyData.IdCounters.StockAdjustment:D5}",
+                InventoryItemId = inventoryItem.Id,
+                AdjustmentType = isExpense ? AdjustmentType.Add : AdjustmentType.Remove,
+                Quantity = qty,
+                PreviousStock = oldStock,
+                NewStock = inventoryItem.InStock,
+                Reason = isExpense ? "Expense transaction" : "Revenue transaction",
+                ReferenceNumber = transactionId,
+                Timestamp = DateTime.UtcNow
+            };
+            companyData.StockAdjustments.Add(adjustment);
+
+            results.Add(new InventoryAdjustmentResult
+            {
+                ProductName = product.Name,
+                InventoryItemId = inventoryItem.Id,
+                AdjustmentId = adjustment.Id,
+                OldStock = oldStock,
+                NewStock = inventoryItem.InStock,
+                WasCreated = wasCreated
+            });
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Reverts inventory adjustments (for undo). Restores stock, removes audit records,
+    /// and removes auto-created InventoryItems.
+    /// </summary>
+    protected static void RevertInventoryAdjustments(CompanyData companyData, List<InventoryAdjustmentResult> adjustments)
+    {
+        foreach (var result in adjustments)
+        {
+            if (result.WasCreated)
+            {
+                companyData.Inventory.RemoveAll(inv => inv.Id == result.InventoryItemId);
+            }
+            else
+            {
+                var inventoryItem = companyData.Inventory.FirstOrDefault(inv => inv.Id == result.InventoryItemId);
+                if (inventoryItem != null)
+                {
+                    inventoryItem.InStock = result.OldStock;
+                    inventoryItem.Status = inventoryItem.CalculateStatus();
+                    inventoryItem.LastUpdated = DateTime.UtcNow;
+                }
+            }
+
+            companyData.StockAdjustments.RemoveAll(a => a.Id == result.AdjustmentId);
+        }
+    }
+
+    /// <summary>
+    /// Shows notifications for inventory adjustments (auto-created items, low stock warnings).
+    /// </summary>
+    protected static void ShowInventoryNotifications(
+        List<InventoryAdjustmentResult> results, bool isExpense)
+    {
+        var created = results.Where(r => r.WasCreated).ToList();
+        if (created.Count > 0)
+        {
+            var names = string.Join(", ", created.Select(r => r.ProductName));
+            App.AddNotification(
+                "Inventory Created".Translate(),
+                string.Format("Inventory item created for {0}.".Translate(), names),
+                NotificationType.Info);
+        }
+
+        if (!isExpense)
+        {
+            var lowStock = results.Where(r => r.NewStock < 0).ToList();
+            if (lowStock.Count > 0)
+            {
+                var warnings = string.Join("; ", lowStock.Select(r =>
+                    $"{r.ProductName} ({r.OldStock} available, sold {r.OldStock - r.NewStock})"));
+                App.AddNotification(
+                    "Insufficient Stock".Translate(),
+                    string.Format("Insufficient stock: {0}".Translate(), warnings),
+                    NotificationType.Warning);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Shows notifications for inventory changes from editing a transaction.
+    /// </summary>
+    protected static void ShowEditInventoryNotifications(List<InventoryAdjustmentResult> results)
+    {
+        if (results.Count == 0) return;
+
+        var changes = string.Join("; ", results.Select(r =>
+            $"{r.ProductName}: {r.OldStock} → {r.NewStock}"));
+        App.AddNotification(
+            "Inventory Updated".Translate(),
+            string.Format("Inventory updated: {0}".Translate(), changes),
+            NotificationType.Info);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Result of a single inventory adjustment for a line item.
+/// </summary>
+public class InventoryAdjustmentResult
+{
+    public string ProductName { get; init; } = string.Empty;
+    public string InventoryItemId { get; init; } = string.Empty;
+    public string AdjustmentId { get; init; } = string.Empty;
+    public int OldStock { get; init; }
+    public int NewStock { get; init; }
+    public bool WasCreated { get; init; }
 }
 
 /// <summary>

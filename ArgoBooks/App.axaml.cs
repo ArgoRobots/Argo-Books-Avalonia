@@ -877,7 +877,9 @@ public class App : Application
                             message,
                             NotificationType.Success);
 
-                        // Refresh the current page to update status badges and amounts
+                        // Refresh ViewModels so converted transactions show updated status and amounts
+                        _expensesPageViewModel?.RefreshExpensesCommand.Execute(null);
+                        _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
                         NavigationService.RefreshCurrentPage();
                     });
                 }
