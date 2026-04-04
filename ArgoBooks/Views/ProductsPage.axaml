@@ -166,6 +166,11 @@
                                                        IsColumnVisible="{Binding ShowOverstockColumn}"
                                                        IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
 
+                            <table:ArgoTableHeader Header="{loc:Loc 'Track Inv.'}" ColumnName="TrackInventory"
+                                                       ColumnWidth="{Binding ColumnWidths.TrackInventoryColumnWidth}"
+                                                       IsColumnVisible="{Binding ShowTrackInventoryColumn}"
+                                                       IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
+
                             <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
                                                        ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
                                                        IsSortable="False" IsResizable="False" ShowSeparator="False" />
@@ -264,6 +269,16 @@
                                             <table:ArgoTableCell Text="{Binding OverstockThreshold}"
                                                                      ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.OverstockColumnWidth}"
                                                                      IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowOverstockColumn}" />
+
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.TrackInventoryColumnWidth}"
+                                                                     IsColumnVisible="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ShowTrackInventoryColumn}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}" Width="14" Height="14"
+                                                              Foreground="{DynamicResource SuccessBrush}"
+                                                              IsVisible="{Binding TrackInventory}"
+                                                              HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" />
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
 
                                             <!-- Actions - Custom content required -->
                                             <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
@@ -380,6 +395,7 @@
                 <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc Supplier}" Classes="column-toggle" IsVisible="{Binding IsExpensesTabSelected}" />
                 <CheckBox IsChecked="{Binding ShowReorderColumn}" Content="{loc:Loc Reorder}" Classes="column-toggle" IsVisible="{Binding IsExpensesTabSelected}" />
                 <CheckBox IsChecked="{Binding ShowOverstockColumn}" Content="{loc:Loc Overstock}" Classes="column-toggle" IsVisible="{Binding IsExpensesTabSelected}" />
+                <CheckBox IsChecked="{Binding ShowTrackInventoryColumn}" Content="{loc:Loc 'Track Inventory'}" Classes="column-toggle" IsVisible="{Binding IsExpensesTabSelected}" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

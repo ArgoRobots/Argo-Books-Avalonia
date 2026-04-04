@@ -701,9 +701,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             }
         }
 
-        // Adjust inventory: revert old line items, apply new ones
-        var revertResults = AdjustInventoryForLineItems(companyData, original.LineItems, revenue.Id, isExpense: true);
-        var applyResults = AdjustInventoryForLineItems(companyData, modelLineItems, revenue.Id, isExpense: false);
+        // Adjust inventory with net diff (single adjustment per product)
+        var editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, revenue.Id, isExpense: false);
 
         var capturedNewReceipt = newReceipt;
         var action = new DelegateAction(
@@ -713,8 +712,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 RestoreTransactionState(revenue, original);
                 if (capturedNewReceipt != null)
                     companyData.Receipts.Remove(capturedNewReceipt);
-                RevertInventoryAdjustments(companyData, applyResults);
-                RevertInventoryAdjustments(companyData, revertResults);
+                RevertInventoryAdjustments(companyData, editResults);
                 RaiseTransactionSaved();
             },
             () =>
@@ -740,8 +738,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                     revenue.ReceiptId = capturedNewReceipt.Id;
                     companyData.Receipts.Add(capturedNewReceipt);
                 }
-                revertResults = AdjustInventoryForLineItems(companyData, original.LineItems, revenue.Id, isExpense: true);
-                applyResults = AdjustInventoryForLineItems(companyData, modelLineItems, revenue.Id, isExpense: false);
+                editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, revenue.Id, isExpense: false);
                 RaiseTransactionSaved();
             });
 
@@ -749,7 +746,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
 
-        ShowEditInventoryNotifications(applyResults);
+        ShowEditInventoryNotifications(editResults);
     }
 
     private Receipt? CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)

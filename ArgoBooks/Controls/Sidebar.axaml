@@ -190,14 +190,6 @@
                                          IsCollapsible="True"
                                          Items="{Binding ManagementItems}" />
 
-                <!-- Rentals Section -->
-                <controls:SidebarSection Title="{loc:Loc Rentals}"
-                                         SectionKey="Rentals"
-                                         IsCollapsed="{Binding IsCollapsed}"
-                                         IsCollapsible="True"
-                                         Items="{Binding RentalItems}"
-                                         IsVisible="{Binding ShowRentals}" />
-
                 <!-- Inventory Section -->
                 <controls:SidebarSection Title="{loc:Loc Inventory}"
                                          SectionKey="Inventory"
@@ -205,6 +197,14 @@
                                          IsCollapsible="True"
                                          Items="{Binding InventoryItems}"
                                          IsVisible="{Binding ShowInventory}" />
+
+                <!-- Rentals Section -->
+                <controls:SidebarSection Title="{loc:Loc Rentals}"
+                                         SectionKey="Rentals"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
+                                         Items="{Binding RentalItems}"
+                                         IsVisible="{Binding ShowRentals}" />
 
                 <!-- Team Section -->
                 <controls:SidebarSection Title="{loc:Loc Team}"

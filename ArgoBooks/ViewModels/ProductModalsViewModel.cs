@@ -49,10 +49,12 @@ public partial class ProductModalsViewModel : ViewModelBase
     /// Gets whether a Product is selected (not Service) - used for showing threshold inputs.
     /// </summary>
     public bool IsProductSelected => ModalItemType == "Product";
+    public string EditModalTitle => IsProductSelected ? "Edit Product".Translate() : "Edit Service".Translate();
 
     partial void OnModalItemTypeChanged(string value)
     {
         OnPropertyChanged(nameof(IsProductSelected));
+        OnPropertyChanged(nameof(EditModalTitle));
     }
 
     [ObservableProperty]
@@ -68,6 +70,9 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private SupplierOption? _modalSupplier;
+
+    [ObservableProperty]
+    private bool _modalTrackInventory;
 
     [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
@@ -127,6 +132,7 @@ public partial class ProductModalsViewModel : ViewModelBase
     private string _originalItemType = "Product";
     private string? _originalCategoryId;
     private string? _originalSupplierId;
+    private bool _originalTrackInventory;
     private string _originalReorderPoint = string.Empty;
     private string _originalOverstockThreshold = string.Empty;
     private string _originalUnitPrice = string.Empty;
@@ -156,6 +162,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         ModalItemType != _originalItemType ||
         ModalCategory?.Id != _originalCategoryId ||
         ModalSupplier?.Id != _originalSupplierId ||
+        ModalTrackInventory != _originalTrackInventory ||
         ModalReorderPoint != _originalReorderPoint ||
         ModalOverstockThreshold != _originalOverstockThreshold ||
         ModalUnitPrice != _originalUnitPrice ||
@@ -312,7 +319,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
             CostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0,
-            TrackInventory = ModalItemType == "Product" && (reorderPoint > 0 || overstockThreshold > 0),
+            TrackInventory = ModalTrackInventory,
             ReorderPoint = reorderPoint,
             OverstockThreshold = overstockThreshold,
             Status = EntityStatus.Active,
@@ -384,6 +391,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             ModalSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == product.SupplierId);
         }
 
+        ModalTrackInventory = product.TrackInventory;
         ModalReorderPoint = product.ReorderPoint > 0 ? product.ReorderPoint.ToString() : string.Empty;
         ModalOverstockThreshold = product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : string.Empty;
 
@@ -393,6 +401,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         _originalItemType = ModalItemType;
         _originalCategoryId = ModalCategory?.Id;
         _originalSupplierId = ModalSupplier?.Id;
+        _originalTrackInventory = ModalTrackInventory;
         _originalReorderPoint = ModalReorderPoint;
         _originalOverstockThreshold = ModalOverstockThreshold;
         _originalUnitPrice = ModalUnitPrice;
@@ -462,7 +471,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
         var newReorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
         var newOverstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
-        var newTrackInventory = ModalItemType == "Product" && (newReorderPoint > 0 || newOverstockThreshold > 0);
+        var newTrackInventory = ModalTrackInventory;
 
         // Check if anything actually changed
         var hasChanges = oldName != newName ||
@@ -719,6 +728,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         ModalCategory = null;
         ModalCategoryId = null;
         ModalSupplier = null;
+        ModalTrackInventory = false;
         ModalReorderPoint = string.Empty;
         ModalOverstockThreshold = string.Empty;
         ModalUnitPrice = string.Empty;

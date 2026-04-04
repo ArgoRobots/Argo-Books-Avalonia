@@ -16,7 +16,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     private readonly Dictionary<string, ColumnDef> _columns = new();
 
     // Column order for Expenses tab
-    private readonly string[] _expensesColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Reorder", "Overstock", "Actions"
+    private readonly string[] _expensesColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Reorder", "Overstock", "TrackInventory", "Actions"
     ];
 
     // Column order for Revenue tab
@@ -61,6 +61,9 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
 
     [ObservableProperty]
     private double _overstockColumnWidth = 80;
+
+    [ObservableProperty]
+    private double _trackInventoryColumnWidth = 80;
 
     [ObservableProperty]
     private double _actionsColumnWidth = 84;
@@ -162,6 +165,18 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
         _columns["Overstock"] = new ColumnDef
         {
             Name = "Overstock",
+            ExpensesStarValue = 0.6,
+            RevenueStarValue = 0,
+            MinWidth = 60,
+            PreferredWidth = 80,
+            IsVisibleInExpenses = true,
+            IsVisibleInRevenue = false
+        };
+
+        // Track Inventory column (Expenses only)
+        _columns["TrackInventory"] = new ColumnDef
+        {
+            Name = "TrackInventory",
             ExpensesStarValue = 0.6,
             RevenueStarValue = 0,
             MinWidth = 60,
@@ -389,6 +404,7 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
             case "Supplier": SupplierColumnWidth = width; break;
             case "Reorder": ReorderColumnWidth = width; break;
             case "Overstock": OverstockColumnWidth = width; break;
+            case "TrackInventory": TrackInventoryColumnWidth = width; break;
             case "Actions": ActionsColumnWidth = width; break;
         }
     }

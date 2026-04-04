@@ -1,5 +1,9 @@
 # Argo Books — Claude Code Guide
 
+## Workflow Rules
+
+- **Do NOT build or run tests after every change.** Only build/test when explicitly asked.
+
 ## Project Overview
 
 Argo Books is a cross-platform desktop accounting application built with C# .NET 10 and Avalonia UI. It provides AI receipt scanning, expense/revenue tracking, predictive analytics, inventory management, rental management, customer management, and invoicing. Data is stored locally in encrypted `.argo` files — no cloud or database required. Available for Windows, macOS, and Linux.

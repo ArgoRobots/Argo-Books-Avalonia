@@ -30,7 +30,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Add Product'}"
+                                       Text="{loc:Loc 'Add Product/Service'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -91,29 +91,35 @@
                                 </StackPanel>
                             </Grid>
 
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
-                                                            SelectedItem="{Binding ModalSupplier}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Search suppliers...'}"
-                                                            ShowAddNew="False"
-                                                            EmptyMessage="{loc:Loc 'No suppliers available.'}"
-                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
-                            </StackPanel>
+                            <!-- Supplier and Price Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                                SelectedItem="{Binding ModalSupplier}"
+                                                                DisplayMemberPath="Name"
+                                                                Placeholder="{loc:Loc 'Search suppliers...'}"
+                                                                ShowAddNew="False"
+                                                                EmptyMessage="{loc:Loc 'No suppliers available.'}"
+                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsExpensesTab}">
+                                    <TextBlock Text="{loc:Loc 'Default Unit Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding IsExpensesTab}">
+                                    <TextBlock Text="{loc:Loc 'Default Cost Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
+                                </StackPanel>
+                            </Grid>
 
-                            <StackPanel Spacing="6" IsVisible="{Binding !IsExpensesTab}">
-                                <TextBlock Text="{loc:Loc 'Default Unit Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
-                            </StackPanel>
+                            <CheckBox IsChecked="{Binding ModalTrackInventory, Mode=TwoWay}"
+                                     Content="{loc:Loc 'Track Inventory'}"
+                                     IsVisible="{Binding IsProductSelected}"
+                                     FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                            <StackPanel Spacing="6" IsVisible="{Binding IsExpensesTab}">
-                                <TextBlock Text="{loc:Loc 'Default Cost Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
-                            </StackPanel>
-
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding ModalTrackInventory}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
@@ -135,7 +141,7 @@
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
                             <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="{loc:Loc 'Add Product'}" Command="{Binding SaveNewProductCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Product/Service'}" Command="{Binding SaveNewProductCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -158,7 +164,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Edit Product'}"
+                                       Text="{Binding EditModalTitle}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -219,29 +225,35 @@
                                 </StackPanel>
                             </Grid>
 
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
-                                                            SelectedItem="{Binding ModalSupplier}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Search suppliers...'}"
-                                                            ShowAddNew="False"
-                                                            EmptyMessage="{loc:Loc 'No suppliers available.'}"
-                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
-                            </StackPanel>
+                            <!-- Supplier and Price Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                                SelectedItem="{Binding ModalSupplier}"
+                                                                DisplayMemberPath="Name"
+                                                                Placeholder="{loc:Loc 'Search suppliers...'}"
+                                                                ShowAddNew="False"
+                                                                EmptyMessage="{loc:Loc 'No suppliers available.'}"
+                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsExpensesTab}">
+                                    <TextBlock Text="{loc:Loc 'Default Unit Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding IsExpensesTab}">
+                                    <TextBlock Text="{loc:Loc 'Default Cost Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
+                                </StackPanel>
+                            </Grid>
 
-                            <StackPanel Spacing="6" IsVisible="{Binding !IsExpensesTab}">
-                                <TextBlock Text="{loc:Loc 'Default Unit Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalUnitPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
-                            </StackPanel>
+                            <CheckBox IsChecked="{Binding ModalTrackInventory, Mode=TwoWay}"
+                                     Content="{loc:Loc 'Track Inventory'}"
+                                     IsVisible="{Binding IsProductSelected}"
+                                     FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                            <StackPanel Spacing="6" IsVisible="{Binding IsExpensesTab}">
-                                <TextBlock Text="{loc:Loc 'Default Cost Price'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCostPrice, Mode=TwoWay}" Classes="form-input" Watermark="0.00" MaxLength="13" />
-                            </StackPanel>
-
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding ModalTrackInventory}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">

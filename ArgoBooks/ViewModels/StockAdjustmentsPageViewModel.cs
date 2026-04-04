@@ -466,7 +466,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
                 ProductName = product?.Name ?? "Unknown Product",
                 ProductSku = invItem?.Sku ?? product?.Sku ?? "",
                 LocationId = invItem?.LocationId ?? "",
-                LocationName = location?.Name ?? "Unknown Location",
+                LocationName = location?.Name ?? "Default",
                 AdjustmentType = adjustment.AdjustmentType,
                 TypeDisplay = adjustment.AdjustmentType.ToString(),
                 Quantity = adjustment.Quantity,
@@ -661,6 +661,12 @@ public partial class StockAdjustmentDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _userDisplay = string.Empty;
+
+    /// <summary>
+    /// Whether this adjustment was auto-created from a transaction (not manually deletable).
+    /// </summary>
+    public bool IsFromTransaction => Reason is "Expense transaction" or "Revenue transaction"
+                                              or "Expense edited" or "Revenue edited";
 
     /// <summary>
     /// Gets the type badge color based on adjustment type.

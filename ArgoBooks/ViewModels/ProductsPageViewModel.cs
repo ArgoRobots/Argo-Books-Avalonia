@@ -61,10 +61,13 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private bool _showSupplierColumn = ColumnVisibilityHelper.Load("Products", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showReorderColumn = ColumnVisibilityHelper.Load("Products", "Reorder", true);
+    private bool _showReorderColumn = ColumnVisibilityHelper.Load("Products", "Reorder", false);
 
     [ObservableProperty]
-    private bool _showOverstockColumn = ColumnVisibilityHelper.Load("Products", "Overstock", true);
+    private bool _showOverstockColumn = ColumnVisibilityHelper.Load("Products", "Overstock", false);
+
+    [ObservableProperty]
+    private bool _showTrackInventoryColumn = ColumnVisibilityHelper.Load("Products", "TrackInventory", false);
 
     partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Products", "Name", value); }
     partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Products", "Type", value); }
@@ -73,6 +76,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("Products", "Supplier", value); }
     partial void OnShowReorderColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reorder", value); ColumnVisibilityHelper.Save("Products", "Reorder", value); }
     partial void OnShowOverstockColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Overstock", value); ColumnVisibilityHelper.Save("Products", "Overstock", value); }
+    partial void OnShowTrackInventoryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("TrackInventory", value); ColumnVisibilityHelper.Save("Products", "TrackInventory", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -96,8 +100,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         ShowDescriptionColumn = true;
         ShowCategoryColumn = true;
         ShowSupplierColumn = true;
-        ShowReorderColumn = true;
-        ShowOverstockColumn = true;
+        ShowReorderColumn = false;
+        ShowOverstockColumn = false;
+        ShowTrackInventoryColumn = false;
     }
 
     #endregion
@@ -313,6 +318,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private SupplierOption? _modalSupplier;
+
+    [ObservableProperty]
+    private bool _modalTrackInventory;
 
     [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
@@ -752,7 +760,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
             CostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0,
-            TrackInventory = ModalItemType == "Product" && (reorderPoint > 0 || overstockThreshold > 0),
+            TrackInventory = ModalTrackInventory,
             ReorderPoint = reorderPoint,
             OverstockThreshold = overstockThreshold,
             Status = EntityStatus.Active,
@@ -844,7 +852,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
         var newReorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
         var newOverstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
-        var newTrackInventory = ModalItemType == "Product" && (newReorderPoint > 0 || newOverstockThreshold > 0);
+        var newTrackInventory = ModalTrackInventory;
 
         // Update the product
         var productToEdit = _editingProduct;

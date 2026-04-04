@@ -246,10 +246,17 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         var newStock = adjustmentTypeEnum switch
         {
             Core.Enums.AdjustmentType.Add => inventoryItem.InStock + quantity,
-            Core.Enums.AdjustmentType.Remove => Math.Max(0, inventoryItem.InStock - quantity),
+            Core.Enums.AdjustmentType.Remove => inventoryItem.InStock - quantity,
             Core.Enums.AdjustmentType.Set => quantity,
             _ => inventoryItem.InStock
         };
+
+        if (newStock < 0)
+        {
+            AddModalError = $"Cannot remove {quantity} items. Only {inventoryItem.InStock} in stock.";
+            HasQuantityError = true;
+            return;
+        }
 
         // Apply the change
         inventoryItem.InStock = newStock;
@@ -327,9 +334,9 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
             AvailableInventoryItems.Add(new InventoryItemDisplayOption
             {
                 InventoryItem = item,
-                DisplayText = $"{product?.Name ?? "Unknown"} @ {location?.Name ?? "Unknown"}",
+                DisplayText = $"{product?.Name ?? "Unknown"} @ {location?.Name ?? "Default"}",
                 ProductName = product?.Name ?? "Unknown",
-                LocationName = location?.Name ?? "Unknown",
+                LocationName = location?.Name ?? "Default",
                 CurrentStock = item.InStock
             });
         }

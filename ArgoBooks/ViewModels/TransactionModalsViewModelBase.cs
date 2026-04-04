@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -1172,6 +1173,31 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     #region Inventory Helpers
 
     /// <summary>
+    /// Finds or auto-creates an InventoryItem for a product.
+    /// </summary>
+    private static (InventoryItem item, bool wasCreated) FindOrCreateInventoryItem(
+        CompanyData companyData, Product product, decimal unitPrice)
+    {
+        var inventoryItem = companyData.Inventory.FirstOrDefault(inv => inv.ProductId == product.Id);
+        if (inventoryItem != null) return (inventoryItem, false);
+
+        companyData.IdCounters.InventoryItem++;
+        inventoryItem = new InventoryItem
+        {
+            Id = $"INV-ITM-{companyData.IdCounters.InventoryItem:D5}",
+            ProductId = product.Id,
+            Sku = product.Sku,
+            LocationId = "default",
+            InStock = 0,
+            Status = InventoryStatus.OutOfStock,
+            UnitCost = unitPrice,
+            LastUpdated = DateTime.UtcNow
+        };
+        companyData.Inventory.Add(inventoryItem);
+        return (inventoryItem, true);
+    }
+
+    /// <summary>
     /// Adjusts inventory for each line item whose product has TrackInventory enabled.
     /// Creates StockAdjustment audit records and auto-creates InventoryItems when missing.
     /// </summary>
@@ -1190,25 +1216,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var qty = (int)Math.Round(lineItem.Quantity, MidpointRounding.AwayFromZero);
             if (qty == 0) continue;
 
-            var inventoryItem = companyData.Inventory.FirstOrDefault(inv => inv.ProductId == lineItem.ProductId);
-            var wasCreated = false;
-
-            if (inventoryItem == null)
-            {
-                companyData.IdCounters.InventoryItem++;
-                inventoryItem = new InventoryItem
-                {
-                    Id = $"INV-ITM-{companyData.IdCounters.InventoryItem:D5}",
-                    ProductId = product.Id,
-                    Sku = product.Sku,
-                    InStock = 0,
-                    Status = InventoryStatus.OutOfStock,
-                    UnitCost = lineItem.UnitPrice,
-                    LastUpdated = DateTime.UtcNow
-                };
-                companyData.Inventory.Add(inventoryItem);
-                wasCreated = true;
-            }
+            var (inventoryItem, wasCreated) = FindOrCreateInventoryItem(companyData, product, lineItem.UnitPrice);
 
             var oldStock = inventoryItem.InStock;
             inventoryItem.InStock += isExpense ? qty : -qty;
@@ -1226,6 +1234,89 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 PreviousStock = oldStock,
                 NewStock = inventoryItem.InStock,
                 Reason = isExpense ? "Expense transaction" : "Revenue transaction",
+                ReferenceNumber = transactionId,
+                Timestamp = DateTime.UtcNow
+            };
+            companyData.StockAdjustments.Add(adjustment);
+
+            results.Add(new InventoryAdjustmentResult
+            {
+                ProductName = product.Name,
+                InventoryItemId = inventoryItem.Id,
+                AdjustmentId = adjustment.Id,
+                OldStock = oldStock,
+                NewStock = inventoryItem.InStock,
+                WasCreated = wasCreated
+            });
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Adjusts inventory for an edited transaction by computing the net quantity diff per product.
+    /// Creates a single StockAdjustment per product instead of revert+reapply.
+    /// </summary>
+    protected static List<InventoryAdjustmentResult> AdjustInventoryForEdit(
+        CompanyData companyData, List<LineItem> oldLineItems, List<LineItem> newLineItems,
+        string transactionId, bool isExpense)
+    {
+        // Build per-product quantity maps
+        var oldQtyByProduct = new Dictionary<string, int>();
+        var newQtyByProduct = new Dictionary<string, int>();
+
+        foreach (var li in oldLineItems)
+        {
+            if (string.IsNullOrEmpty(li.ProductId)) continue;
+            var qty = (int)Math.Round(li.Quantity, MidpointRounding.AwayFromZero);
+            oldQtyByProduct[li.ProductId] = oldQtyByProduct.GetValueOrDefault(li.ProductId) + qty;
+        }
+
+        foreach (var li in newLineItems)
+        {
+            if (string.IsNullOrEmpty(li.ProductId)) continue;
+            var qty = (int)Math.Round(li.Quantity, MidpointRounding.AwayFromZero);
+            newQtyByProduct[li.ProductId] = newQtyByProduct.GetValueOrDefault(li.ProductId) + qty;
+        }
+
+        // Union of all product IDs
+        var allProductIds = oldQtyByProduct.Keys.Union(newQtyByProduct.Keys).Distinct().ToList();
+
+        var results = new List<InventoryAdjustmentResult>();
+
+        foreach (var productId in allProductIds)
+        {
+            var product = companyData.Products.FirstOrDefault(p => p.Id == productId);
+            if (product is not { TrackInventory: true }) continue;
+
+            var oldQty = oldQtyByProduct.GetValueOrDefault(productId);
+            var newQty = newQtyByProduct.GetValueOrDefault(productId);
+            var diff = newQty - oldQty; // positive = more items, negative = fewer items
+            if (diff == 0) continue;
+
+            // For expenses: +diff means more purchased (add stock), -diff means less (remove stock)
+            // For revenue: +diff means more sold (remove stock), -diff means less (add stock)
+            var stockChange = isExpense ? diff : -diff;
+
+            var unitPrice = newLineItems.FirstOrDefault(li => li.ProductId == productId)?.UnitPrice
+                         ?? oldLineItems.FirstOrDefault(li => li.ProductId == productId)?.UnitPrice ?? 0;
+            var (inventoryItem, wasCreated) = FindOrCreateInventoryItem(companyData, product, unitPrice);
+
+            var oldStock = inventoryItem.InStock;
+            inventoryItem.InStock += stockChange;
+            inventoryItem.Status = inventoryItem.CalculateStatus();
+            inventoryItem.LastUpdated = DateTime.UtcNow;
+
+            companyData.IdCounters.StockAdjustment++;
+            var adjustment = new StockAdjustment
+            {
+                Id = $"ADJ-{companyData.IdCounters.StockAdjustment:D5}",
+                InventoryItemId = inventoryItem.Id,
+                AdjustmentType = stockChange > 0 ? AdjustmentType.Add : AdjustmentType.Remove,
+                Quantity = Math.Abs(stockChange),
+                PreviousStock = oldStock,
+                NewStock = inventoryItem.InStock,
+                Reason = isExpense ? "Expense edited" : "Revenue edited",
                 ReferenceNumber = transactionId,
                 Timestamp = DateTime.UtcNow
             };
