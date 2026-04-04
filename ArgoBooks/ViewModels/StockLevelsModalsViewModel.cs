@@ -361,7 +361,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         AvailableProducts.Clear();
-        foreach (var product in companyData.Products)
+        foreach (var product in companyData.Products.Where(p => p.TrackInventory))
         {
             AvailableProducts.Add(product);
         }
@@ -402,7 +402,6 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// </summary>
     private bool HasAddItemEnteredData =>
         SelectedProduct != null ||
-        SelectedLocation != null ||
         !string.IsNullOrWhiteSpace(AddItemQuantity);
 
     /// <summary>

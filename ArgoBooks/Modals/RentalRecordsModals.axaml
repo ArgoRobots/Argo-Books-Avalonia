@@ -611,7 +611,8 @@
                         </Border>
 
                         <!-- Security Deposit -->
-                        <Border Background="{DynamicResource WarningLightBrush}" CornerRadius="8" Padding="16">
+                        <Border Background="{DynamicResource WarningLightBrush}" CornerRadius="8" Padding="16"
+                                IsVisible="{Binding HasDeposit}">
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontWeight="Medium" Foreground="{DynamicResource WarningTextBrush}" />
