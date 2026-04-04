@@ -803,12 +803,14 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var rentals = companyData.Rentals.Where(r => r.CustomerId == customerId);
         foreach (var rental in rentals)
         {
-            var item = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
+            var rentalItem = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
+            var invItem = rentalItem != null ? companyData.Inventory.FirstOrDefault(i => i.Id == rentalItem.InventoryItemId) : null;
+            var rentalProductName = invItem != null ? companyData.GetProduct(invItem.ProductId)?.Name : null;
             historyItems.Add(new CustomerHistoryItem
             {
                 Date = rental.StartDate,
                 Type = "Rental",
-                Description = $"Rental - {item?.Name ?? "Unknown Item"}",
+                Description = $"Rental - {rentalProductName ?? "Unknown Item"}",
                 Amount = rental.TotalCost ?? 0,
                 Status = rental.Status.ToString()
             });

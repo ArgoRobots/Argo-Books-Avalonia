@@ -343,13 +343,13 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             filtered = filtered
                 .Select(r =>
                 {
-                    var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == r.RentalItemId);
+                    var itemName = RentalRecordsModalsViewModel.GetItemDisplayName(r, companyData);
                     var customer = companyData?.Customers.FirstOrDefault(c => c.Id == r.CustomerId);
                     return new
                     {
                         Record = r,
                         IdScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, r.Id),
-                        ItemScore = item != null ? LevenshteinDistance.ComputeSearchScore(SearchQuery, item.Name) : -1,
+                        ItemScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, itemName),
                         CustomerScore = customer != null ? LevenshteinDistance.ComputeSearchScore(SearchQuery, customer.Name) : -1
                     };
                 })
@@ -389,11 +389,17 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         // Apply item filter
         if (!string.IsNullOrWhiteSpace(FilterItem) && FilterItem != "All Items")
         {
-            var item = companyData?.RentalInventory.FirstOrDefault(i => i.Name == FilterItem);
-            if (item != null)
-            {
-                filtered = filtered.Where(r => r.RentalItemId == item.Id).ToList();
-            }
+            // Resolve filter item name through chain: find all RentalItems whose resolved name matches
+            var matchingRentalItemIds = companyData?.RentalInventory
+                .Where(ri =>
+                {
+                    var invItem = companyData.Inventory.FirstOrDefault(inv => inv.Id == ri.InventoryItemId);
+                    var product = invItem != null ? companyData.Products.FirstOrDefault(p => p.Id == invItem.ProductId) : null;
+                    return product?.Name == FilterItem;
+                })
+                .Select(ri => ri.Id)
+                .ToHashSet() ?? [];
+            filtered = filtered.Where(r => matchingRentalItemIds.Contains(r.RentalItemId)).ToList();
         }
 
         // Apply date filters

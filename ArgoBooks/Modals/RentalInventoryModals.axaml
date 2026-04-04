@@ -42,30 +42,19 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- Product -->
+                            <!-- Inventory Item -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Product'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    <Run Text="{loc:Loc 'Inventory Item'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
-                                <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
-                                                            SelectedItem="{Binding ModalProduct}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Search products...'}"
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableInventoryItems}"
+                                                            SelectedItem="{Binding ModalInventoryItem}"
+                                                            DisplayMemberPath="DisplayText"
+                                                            Placeholder="{loc:Loc 'Search inventory items...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="{loc:Loc 'No products available.'}" />
-                                <TextBlock Text="{Binding ModalProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                           IsVisible="{Binding ModalProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-
-                            <!-- Quantity -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Total Quantity'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
-                                <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter quantity'}"
-                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="7" />
-                                <TextBlock Text="{Binding ModalQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                           IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                            EmptyMessage="{loc:Loc 'No inventory items available.'}" />
+                                <TextBlock Text="{Binding ModalInventoryItemError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding ModalInventoryItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Rates Section -->
@@ -150,33 +139,23 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- Product -->
+                            <!-- Inventory Item -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Product'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    <Run Text="{loc:Loc 'Inventory Item'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
-                                <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
-                                                            SelectedItem="{Binding ModalProduct}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="{loc:Loc 'Search products...'}"
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableInventoryItems}"
+                                                            SelectedItem="{Binding ModalInventoryItem}"
+                                                            DisplayMemberPath="DisplayText"
+                                                            Placeholder="{loc:Loc 'Search inventory items...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="{loc:Loc 'No products available.'}" />
-                                <TextBlock Text="{Binding ModalProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                           IsVisible="{Binding ModalProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                            EmptyMessage="{loc:Loc 'No inventory items available.'}" />
+                                <TextBlock Text="{Binding ModalInventoryItemError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding ModalInventoryItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
-                            <!-- Quantity and Status Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Total Quantity'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter quantity'}"
-                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="7" />
-                                    <TextBlock Text="{Binding ModalQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                               IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
+                            <!-- Status -->
+                            <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding ModalStatus}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
@@ -185,8 +164,7 @@
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
-                                </StackPanel>
-                            </Grid>
+                            </StackPanel>
 
                             <!-- Rates Section -->
                             <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0">

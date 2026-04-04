@@ -3,7 +3,8 @@ using ArgoBooks.Core.Enums;
 namespace ArgoBooks.Core.Models.Rentals;
 
 /// <summary>
-/// Represents an item available for rental.
+/// Represents an item available for rental, linked to an inventory item.
+/// Stock is tracked via the linked InventoryItem.InStock — no local quantity fields.
 /// </summary>
 public class RentalItem
 {
@@ -14,40 +15,10 @@ public class RentalItem
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Product ID (linked to a revenue product).
+    /// Inventory item ID (linked to an InventoryItem for stock tracking).
     /// </summary>
-    [JsonPropertyName("productId")]
-    public string? ProductId { get; set; }
-
-    /// <summary>
-    /// Item name (derived from product name).
-    /// </summary>
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Supplier ID (derived from product supplier).
-    /// </summary>
-    [JsonPropertyName("supplierId")]
-    public string? SupplierId { get; set; }
-
-    /// <summary>
-    /// Total quantity owned.
-    /// </summary>
-    [JsonPropertyName("totalQuantity")]
-    public int TotalQuantity { get; set; }
-
-    /// <summary>
-    /// Quantity currently available.
-    /// </summary>
-    [JsonPropertyName("availableQuantity")]
-    public int AvailableQuantity { get; set; }
-
-    /// <summary>
-    /// Quantity currently rented out.
-    /// </summary>
-    [JsonPropertyName("rentedQuantity")]
-    public int RentedQuantity { get; set; }
+    [JsonPropertyName("inventoryItemId")]
+    public string InventoryItemId { get; set; } = string.Empty;
 
     /// <summary>
     /// Daily rental rate.
@@ -96,10 +67,4 @@ public class RentalItem
     /// </summary>
     [JsonPropertyName("updatedAt")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Whether any quantity is available for rental.
-    /// </summary>
-    [JsonIgnore]
-    public bool IsAvailable => AvailableQuantity > 0 && Status == EntityStatus.Active;
 }

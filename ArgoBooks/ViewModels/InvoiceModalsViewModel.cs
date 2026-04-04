@@ -628,7 +628,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (rental == null) return;
 
         var rentalItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == rental.RentalItemId);
-        var itemName = rentalItem?.Name ?? "Unknown Item";
+        var inventoryItem = rentalItem != null ? companyData.Inventory.FirstOrDefault(i => i.Id == rentalItem.InventoryItemId) : null;
+        var rentalProduct = inventoryItem != null ? companyData.GetProduct(inventoryItem.ProductId) : null;
+        var itemName = rentalProduct?.Name ?? "Unknown Item";
 
         // Open the standard create modal (loads options, resets form)
         OpenCreateModal();

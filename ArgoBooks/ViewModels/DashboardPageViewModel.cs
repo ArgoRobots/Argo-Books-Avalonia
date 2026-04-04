@@ -1493,7 +1493,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private static string GetRentalItemName(CompanyData data, string rentalItemId)
     {
         var item = data.RentalInventory.FirstOrDefault(r => r.Id == rentalItemId);
-        return item?.Name ?? "Unknown Item";
+        if (item == null) return "Unknown Item";
+        var invItem = data.Inventory.FirstOrDefault(i => i.Id == item.InventoryItemId);
+        if (invItem == null) return "Unknown Item";
+        var product = data.GetProduct(invItem.ProductId);
+        return product?.Name ?? "Unknown Item";
     }
 
     private static int CalculateDaysRemaining(DateTime dueDate)

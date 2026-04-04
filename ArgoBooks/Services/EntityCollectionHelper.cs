@@ -96,7 +96,7 @@ internal static class EntityCollectionHelper
             "stockadjustment" => data.StockAdjustments.FirstOrDefault(e => e.Id == entityName)?.Id,
             "stocktransfer" => data.StockTransfers.FirstOrDefault(e => e.Id == entityName)?.Id,
             "purchaseorder" => data.PurchaseOrders.FirstOrDefault(e => e.Id == entityName || e.PoNumber == entityName)?.Id,
-            "rentalitem" => data.RentalInventory.FirstOrDefault(e => e.Name == entityName)?.Id,
+            "rentalitem" => data.RentalInventory.FirstOrDefault(e => e.Id == entityName)?.Id,
             "rental" or "rentalrecord" => data.Rentals.FirstOrDefault(e => e.Id == entityName)?.Id,
             "return" => data.Returns.FirstOrDefault(e => e.Id == entityName)?.Id,
             "lostdamaged" => data.LostDamaged.FirstOrDefault(e => e.Id == entityName)?.Id,
