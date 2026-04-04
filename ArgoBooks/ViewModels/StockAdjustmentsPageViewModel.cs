@@ -666,7 +666,9 @@ public partial class StockAdjustmentDisplayItem : ObservableObject
     /// Whether this adjustment was auto-created from a transaction (not manually deletable).
     /// </summary>
     public bool IsFromTransaction => Reason is "Expense transaction" or "Revenue transaction"
-                                              or "Expense edited" or "Revenue edited";
+                                              or "Expense edited" or "Revenue edited"
+                                              or "Rental" or "Rental return"
+                                              or "Rental edited" or "Rental deleted";
 
     /// <summary>
     /// Gets the type badge color based on adjustment type.
