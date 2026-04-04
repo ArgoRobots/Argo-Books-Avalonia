@@ -457,14 +457,11 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetRentalInventoryData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Total Qty", "Available", "Rented", "Daily Rate", "Weekly Rate", "Monthly Rate", "Deposit", "Status" };
+        var headers = new[] { "ID", "Inventory Item ID", "Daily Rate", "Weekly Rate", "Monthly Rate", "Deposit", "Status" };
         var rows = data.RentalInventory.Select(r => new object[]
         {
             r.Id,
-            r.Name,
-            r.TotalQuantity,
-            r.AvailableQuantity,
-            r.RentedQuantity,
+            r.InventoryItemId,
             r.DailyRate,
             r.WeeklyRate,
             r.MonthlyRate,

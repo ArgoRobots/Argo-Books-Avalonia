@@ -2871,9 +2871,7 @@ public class ReportRenderer : IDisposable
                     result.Add(columns.Select(col => col switch
                     {
                         "Name" => r.Name,
-                        "Total Qty" => r.TotalQuantity.ToString("N0"),
-                        "Available" => r.AvailableQuantity.ToString("N0"),
-                        "Rented" => r.RentedQuantity.ToString("N0"),
+                        "Inventory Item" => r.InventoryItemId,
                         "Daily Rate" => FormatCurrency(r.DailyRate),
                         "Weekly Rate" => FormatCurrency(r.WeeklyRate),
                         "Monthly Rate" => FormatCurrency(r.MonthlyRate),
@@ -4093,7 +4091,7 @@ public class ReportRenderer : IDisposable
             TransactionType.Invoices => ["Date", "ID", "Company", "Due Date", "Total", "Paid", "Balance", "Status"],
             TransactionType.Payments => ["Date", "Company", "Total", "Method", "ID"],
             TransactionType.RentalRecords => ["Item", "Company", "Date", "Due Date", "Rate", "Total", "Status"],
-            TransactionType.RentalItems => ["Name", "Total Qty", "Available", "Rented", "Daily Rate", "Status"],
+            TransactionType.RentalItems => ["Name", "Inventory Item", "Daily Rate", "Status"],
             TransactionType.Inventory => ["Product", "SKU", "Location", "In Stock", "Available", "Unit Cost", "Total", "Status"],
             TransactionType.PurchaseOrders => ["ID", "Company", "Date", "Due Date", "Total", "Status"],
             TransactionType.StockAdjustments => ["Date", "Product", "Type", "Qty", "Previous", "New", "Reason"],

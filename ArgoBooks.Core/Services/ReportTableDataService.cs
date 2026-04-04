@@ -313,10 +313,12 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         {
             var customer = companyData?.GetCustomer(r.CustomerId);
             var rentalItem = companyData?.RentalInventory.FirstOrDefault(ri => ri.Id == r.RentalItemId);
+            var inventoryItem = rentalItem != null ? companyData?.Inventory.FirstOrDefault(i => i.Id == rentalItem.InventoryItemId) : null;
+            var product = inventoryItem != null ? companyData?.GetProduct(inventoryItem.ProductId) : null;
             return new RentalRecordTableRow
             {
                 Id = r.Id,
-                ItemName = rentalItem?.Name ?? "Unknown",
+                ItemName = product?.Name ?? "Unknown",
                 CustomerName = customer?.Name ?? "Unknown",
                 StartDate = r.StartDate,
                 DueDate = r.DueDate,
@@ -343,23 +345,26 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         {
             TableSortOrder.AmountAscending => query.OrderBy(r => r.DailyRate),
             TableSortOrder.AmountDescending => query.OrderByDescending(r => r.DailyRate),
-            _ => query.OrderBy(r => r.Name)
+            _ => query.OrderBy(r => r.Id)
         };
 
         if (tableConfig.MaxRows > 0)
             query = query.Take(tableConfig.MaxRows);
 
-        return query.Select(r => new RentalItemTableRow
+        return query.Select(r =>
         {
-            Id = r.Id,
-            Name = r.Name,
-            TotalQuantity = r.TotalQuantity,
-            AvailableQuantity = r.AvailableQuantity,
-            RentedQuantity = r.RentedQuantity,
-            DailyRate = r.DailyRate,
-            WeeklyRate = r.WeeklyRate,
-            MonthlyRate = r.MonthlyRate,
-            Status = r.Status.ToString()
+            var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == r.InventoryItemId);
+            var product = inventoryItem != null ? companyData?.GetProduct(inventoryItem.ProductId) : null;
+            return new RentalItemTableRow
+            {
+                Id = r.Id,
+                Name = product?.Name ?? "Unknown",
+                InventoryItemId = r.InventoryItemId,
+                DailyRate = r.DailyRate,
+                WeeklyRate = r.WeeklyRate,
+                MonthlyRate = r.MonthlyRate,
+                Status = r.Status.ToString()
+            };
         }).ToList();
     }
 
@@ -1284,9 +1289,7 @@ public class RentalItemTableRow
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public int TotalQuantity { get; set; }
-    public int AvailableQuantity { get; set; }
-    public int RentedQuantity { get; set; }
+    public string InventoryItemId { get; set; } = string.Empty;
     public decimal DailyRate { get; set; }
     public decimal WeeklyRate { get; set; }
     public decimal MonthlyRate { get; set; }

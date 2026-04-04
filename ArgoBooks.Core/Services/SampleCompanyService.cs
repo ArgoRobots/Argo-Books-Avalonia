@@ -446,16 +446,7 @@ public class SampleCompanyService
         {
             data.Rentals.Add(rental);
 
-            // Update inventory counts for all line items
-            foreach (var li in rental.LineItems)
-            {
-                var rentalItem = data.RentalInventory.FirstOrDefault(i => i.Id == li.RentalItemId);
-                if (rentalItem != null && rentalItem.AvailableQuantity >= li.Quantity)
-                {
-                    rentalItem.AvailableQuantity -= li.Quantity;
-                    rentalItem.RentedQuantity += li.Quantity;
-                }
-            }
+            // Stock is now tracked via the linked InventoryItem — no local quantity fields on RentalItem
         }
 
         // Update the ID counter
