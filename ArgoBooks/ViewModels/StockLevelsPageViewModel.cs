@@ -487,7 +487,8 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 StatusText = GetStatusText(status),
                 StatusColor = GetStatusColor(status),
                 StatusBackground = GetStatusBackground(status),
-                LastUpdated = item.LastUpdated
+                LastUpdated = item.LastUpdated,
+                IsHighlighted = item.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -511,6 +512,9 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 },
                 i => i.ProductName);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -690,4 +694,7 @@ public partial class StockLevelDisplayItem : ObservableObject
 
     [ObservableProperty]
     private DateTime _lastUpdated;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

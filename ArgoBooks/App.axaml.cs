@@ -4302,6 +4302,7 @@ public class App : Application
                 _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             _invoicesPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            _invoicesPageViewModel.HighlightTransactionId = null;
             if (param is RentalInvoiceNavigationParameter rentalParam)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -4309,11 +4310,22 @@ public class App : Application
                     InvoiceModalsViewModel?.OpenCreateFromRental(rentalParam.RentalRecordId);
                 });
             }
+            else if (param is TransactionNavigationParameter navParam)
+            {
+                _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _invoicesPageViewModel.ApplyHighlight();
+            }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
         navigationService.RegisterPage("Payments", param =>
         {
             _paymentsPageViewModel ??= new PaymentsPageViewModel();
+            _paymentsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _paymentsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _paymentsPageViewModel.ApplyHighlight();
+            }
             _ = AutoSyncPortalPaymentsAsync();
             return new PaymentsPage { DataContext = _paymentsPageViewModel };
         });
@@ -4331,7 +4343,13 @@ public class App : Application
             _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
             // Reset modal state
             _productsPageViewModel.IsAddModalOpen = false;
-            if (param is Dictionary<string, object?> dict)
+            _productsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _productsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _productsPageViewModel.ApplyHighlight();
+            }
+            else if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
                 if (dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
@@ -4346,7 +4364,17 @@ public class App : Application
             }
             return new ProductsPage { DataContext = _productsPageViewModel };
         });
-        navigationService.RegisterPage("StockLevels", _ => new StockLevelsPage { DataContext = _stockLevelsPageViewModel ??= new StockLevelsPageViewModel() });
+        navigationService.RegisterPage("StockLevels", param =>
+        {
+            _stockLevelsPageViewModel ??= new StockLevelsPageViewModel();
+            _stockLevelsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _stockLevelsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _stockLevelsPageViewModel.ApplyHighlight();
+            }
+            return new StockLevelsPage { DataContext = _stockLevelsPageViewModel };
+        });
         navigationService.RegisterPage("Locations", param =>
         {
             _locationsPageViewModel ??= new LocationsPageViewModel();
@@ -4358,7 +4386,17 @@ public class App : Application
             return new LocationsPage { DataContext = _locationsPageViewModel };
         });
         navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = _stockAdjustmentsPageViewModel ??= new StockAdjustmentsPageViewModel() });
-        navigationService.RegisterPage("PurchaseOrders", _ => new PurchaseOrdersPage { DataContext = _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel() });
+        navigationService.RegisterPage("PurchaseOrders", param =>
+        {
+            _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel();
+            _purchaseOrdersPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _purchaseOrdersPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _purchaseOrdersPageViewModel.ApplyHighlight();
+            }
+            return new PurchaseOrdersPage { DataContext = _purchaseOrdersPageViewModel };
+        });
         navigationService.RegisterPage("Categories", param =>
         {
             _categoriesPageViewModel ??= new CategoriesPageViewModel();
@@ -4381,8 +4419,28 @@ public class App : Application
         });
 
         // Contacts Section
-        navigationService.RegisterPage("Customers", _ => new CustomersPage { DataContext = _customersPageViewModel ??= new CustomersPageViewModel() });
-        navigationService.RegisterPage("Suppliers", _ => new SuppliersPage { DataContext = _suppliersPageViewModel ??= new SuppliersPageViewModel() });
+        navigationService.RegisterPage("Customers", param =>
+        {
+            _customersPageViewModel ??= new CustomersPageViewModel();
+            _customersPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _customersPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _customersPageViewModel.ApplyHighlight();
+            }
+            return new CustomersPage { DataContext = _customersPageViewModel };
+        });
+        navigationService.RegisterPage("Suppliers", param =>
+        {
+            _suppliersPageViewModel ??= new SuppliersPageViewModel();
+            _suppliersPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _suppliersPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _suppliersPageViewModel.ApplyHighlight();
+            }
+            return new SuppliersPage { DataContext = _suppliersPageViewModel };
+        });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
         navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
         navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));

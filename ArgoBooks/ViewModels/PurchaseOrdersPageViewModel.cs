@@ -411,7 +411,8 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 ExpectedDisplay = order.ExpectedDeliveryDate.ToString("MMM dd, yyyy"),
                 Notes = order.Notes,
                 CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt
+                UpdatedAt = order.UpdatedAt,
+                IsHighlighted = order.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -433,6 +434,9 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 },
                 o => o.OrderDate);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -715,4 +719,7 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// Whether the order can be edited.
     /// </summary>
     public bool CanEdit => Status == PurchaseOrderStatus.Draft || Status == PurchaseOrderStatus.Pending;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

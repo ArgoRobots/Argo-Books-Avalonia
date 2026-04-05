@@ -662,7 +662,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 StatusDisplay = statusDisplay,
                 Notes = invoice.Notes,
                 OriginalCurrency = invoice.OriginalCurrency,
-                IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId)
+                IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId),
+                IsHighlighted = invoice.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -683,6 +684,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 },
                 i => i.IssueDate);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -907,6 +911,9 @@ public partial class InvoiceDisplayItem : ObservableObject
     /// Whether this invoice can be sent via email (not drafts or cancelled).
     /// </summary>
     public bool CanSend => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

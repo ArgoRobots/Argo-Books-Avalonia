@@ -435,7 +435,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 Address = addressString,
                 Country = string.IsNullOrWhiteSpace(customer.Address.Country) ? "-" : customer.Address.Country,
                 LastRental = customer.LastTransactionDate,
-                Status = customer.Status
+                Status = customer.Status,
+                IsHighlighted = customer.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -455,6 +456,9 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 },
                 c => c.Name);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -937,6 +941,9 @@ public partial class CustomerDisplayItem : ObservableObject
     /// Gets the formatted last rental date.
     /// </summary>
     public string LastRentalFormatted => LastRental?.ToString("MMM d, yyyy") ?? "-";
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

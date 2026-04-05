@@ -12,7 +12,8 @@ public enum QuickActionName
     OpenImport,
     OpenScanModal,
     OpenEditCompany,
-    OpenCheckForUpdates
+    OpenCheckForUpdates,
+    ViewSearchResult
 }
 
 /// <summary>
@@ -25,6 +26,9 @@ public static class QuickActionNameExtensions
     /// </summary>
     public static QuickActionName? ParseQuickActionName(string? name)
     {
+        if (name != null && name.StartsWith("ViewSearchResult:"))
+            return QuickActionName.ViewSearchResult;
+
         return name switch
         {
             "OpenAddModal" => QuickActionName.OpenAddModal,
@@ -37,6 +41,16 @@ public static class QuickActionNameExtensions
             "OpenCheckForUpdates" => QuickActionName.OpenCheckForUpdates,
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Extracts the entity ID from a ViewSearchResult action name (e.g., "ViewSearchResult:CUST-001" -> "CUST-001").
+    /// </summary>
+    public static string? ParseSearchResultEntityId(string? actionName)
+    {
+        if (actionName == null || !actionName.StartsWith("ViewSearchResult:"))
+            return null;
+        return actionName["ViewSearchResult:".Length..];
     }
 }
 
@@ -54,7 +68,9 @@ public enum NavigationTarget
     Expenses,
     Revenue,
     Payments,
-    Categories
+    Categories,
+    StockLevels,
+    PurchaseOrders
 }
 
 /// <summary>
@@ -79,6 +95,8 @@ public static class NavigationTargetExtensions
             "Revenue" => NavigationTarget.Revenue,
             "Payments" => NavigationTarget.Payments,
             "Categories" => NavigationTarget.Categories,
+            "StockLevels" => NavigationTarget.StockLevels,
+            "PurchaseOrders" => NavigationTarget.PurchaseOrders,
             _ => null
         };
     }

@@ -629,6 +629,16 @@ public partial class AppShellViewModel : ViewModelBase
                 case QuickActionName.OpenCheckForUpdates:
                     CheckForUpdateModalViewModel.OpenCommand.Execute(null);
                     break;
+                case QuickActionName.ViewSearchResult:
+                    var entityId = QuickActionNameExtensions.ParseSearchResultEntityId(e.ActionName);
+                    if (entityId != null)
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            DispatchSearchResultView(e.NavigationTarget, entityId);
+                        });
+                    }
+                    break;
             }
         };
 
@@ -670,6 +680,56 @@ public partial class AppShellViewModel : ViewModelBase
         {
             _reportsPageViewModel = null;
             ReportModalsViewModel.ReportsPageViewModel = null;
+        }
+    }
+
+    /// <summary>
+    /// Dispatches a search result view action: opens the view/edit modal for the given entity.
+    /// </summary>
+    private void DispatchSearchResultView(string? navigationTarget, string entityId)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        switch (NavigationTargetExtensions.ParseNavigationTarget(navigationTarget))
+        {
+            case NavigationTarget.Customers:
+                CustomerModalsViewModel.OpenEditModal(new CustomerDisplayItem { Id = entityId });
+                break;
+            case NavigationTarget.Products:
+                ProductModalsViewModel.OpenEditModal(new ProductDisplayItem { Id = entityId });
+                break;
+            case NavigationTarget.Invoices:
+                InvoiceModalsViewModel.OpenViewInvoice(entityId);
+                break;
+            case NavigationTarget.Expenses:
+                ExpenseModalsViewModel.OpenEditModal(new ExpenseDisplayItem { Id = entityId });
+                break;
+            case NavigationTarget.Revenue:
+                RevenueModalsViewModel.OpenEditModal(new RevenueDisplayItem { Id = entityId });
+                break;
+            case NavigationTarget.Suppliers:
+                SupplierModalsViewModel.OpenEditModal(new SupplierDisplayItem { Id = entityId });
+                break;
+            case NavigationTarget.Payments:
+                PaymentModalsViewModel.OpenEditModal(new PaymentDisplayItem { Id = entityId });
+                break;
+            case NavigationTarget.RentalRecords:
+                var rental = companyData.Rentals.FirstOrDefault(r => r.Id == entityId);
+                if (rental != null)
+                {
+                    var customerName = companyData.Customers.FirstOrDefault(c => c.Id == rental.CustomerId)?.Name ?? "";
+                    RentalRecordsModalsViewModel.OpenViewModal(new RentalRecordDisplayItem { Id = rental.Id, CustomerName = customerName, IsActive = rental.Status == Core.Enums.RentalStatus.Active || rental.Status == Core.Enums.RentalStatus.Overdue });
+                }
+                break;
+            case NavigationTarget.PurchaseOrders:
+                var po = companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entityId);
+                if (po != null)
+                {
+                    var poSupplier = companyData.Suppliers.FirstOrDefault(s => s.Id == po.SupplierId)?.Name ?? "";
+                    App.PurchaseOrdersModalsViewModel?.OpenViewModal(new PurchaseOrderDisplayItem { Id = po.Id, PoNumber = po.PoNumber, SupplierName = poSupplier });
+                }
+                break;
         }
     }
 

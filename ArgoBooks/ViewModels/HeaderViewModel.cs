@@ -316,27 +316,6 @@ public partial class HeaderViewModel : ViewModelBase
     #region Commands
 
     /// <summary>
-    /// Performs a global search.
-    /// </summary>
-    [RelayCommand]
-    private void Search()
-    {
-        if (string.IsNullOrWhiteSpace(SearchQuery))
-            return;
-
-        _navigationService?.NavigateTo("Search", new Dictionary<string, object?> { { "query", SearchQuery } });
-    }
-
-    /// <summary>
-    /// Clears the search query.
-    /// </summary>
-    [RelayCommand]
-    private void ClearSearch()
-    {
-        SearchQuery = null;
-    }
-
-    /// <summary>
     /// Opens the quick actions panel.
     /// </summary>
     [RelayCommand]
