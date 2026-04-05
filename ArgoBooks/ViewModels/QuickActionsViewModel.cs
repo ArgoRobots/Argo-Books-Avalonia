@@ -398,13 +398,9 @@ public partial class QuickActionsViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(action.NavigationTarget))
         {
             // For search results, navigate with highlight parameter
-            if (action.Type == QuickActionType.SearchResult && action.ActionName != null)
+            if (action.Type == QuickActionType.SearchResult && action.EntityId != null)
             {
-                var entityId = Core.Enums.QuickActionNameExtensions.ParseSearchResultEntityId(action.ActionName);
-                if (entityId != null)
-                {
-                    _navigationService?.NavigateTo(action.NavigationTarget, new TransactionNavigationParameter(entityId));
-                }
+                _navigationService?.NavigateTo(action.NavigationTarget, new TransactionNavigationParameter(action.EntityId));
             }
             else
             {
@@ -412,8 +408,8 @@ public partial class QuickActionsViewModel : ViewModelBase
             }
         }
 
-        // Execute action after navigation if specified
-        if (!string.IsNullOrEmpty(action.ActionName))
+        // Execute action after navigation if specified (not for search results)
+        if (action.Type != QuickActionType.SearchResult && !string.IsNullOrEmpty(action.ActionName))
         {
             ActionRequested?.Invoke(this, new QuickActionEventArgs(action.NavigationTarget, action.ActionName));
         }
@@ -481,7 +477,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             var score = BestScore(query, c.Name, c.CompanyName ?? "", c.Email, c.Phone);
             if (score > 0)
-                results.Add((new QuickActionItem(c.Name, string.IsNullOrWhiteSpace(c.CompanyName) ? c.Email : c.CompanyName, Icons.Customers, QuickActionType.SearchResult, "Customers", $"ViewSearchResult:{c.Id}"), score));
+                results.Add((new QuickActionItem(c.Name, string.IsNullOrWhiteSpace(c.CompanyName) ? c.Email : c.CompanyName, Icons.Customers, QuickActionType.SearchResult, "Customers", entityId: c.Id), score));
         }
 
         // Products
@@ -489,7 +485,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             var score = BestScore(query, p.Name, p.Sku, p.Description);
             if (score > 0)
-                results.Add((new QuickActionItem(p.Name, string.IsNullOrWhiteSpace(p.Sku) ? p.Description : $"SKU: {p.Sku}", Icons.Products, QuickActionType.SearchResult, "Products", $"ViewSearchResult:{p.Id}"), score));
+                results.Add((new QuickActionItem(p.Name, string.IsNullOrWhiteSpace(p.Sku) ? p.Description : $"SKU: {p.Sku}", Icons.Products, QuickActionType.SearchResult, "Products", entityId: p.Id), score));
         }
 
         // Invoices
@@ -498,7 +494,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             var customerName = companyData.Customers.FirstOrDefault(c => c.Id == inv.CustomerId)?.Name ?? "";
             var score = BestScore(query, inv.InvoiceNumber, customerName, inv.Status.ToString());
             if (score > 0)
-                results.Add((new QuickActionItem(inv.InvoiceNumber, $"{customerName} · {inv.Status}", Icons.Invoices, QuickActionType.SearchResult, "Invoices", $"ViewSearchResult:{inv.Id}"), score));
+                results.Add((new QuickActionItem(inv.InvoiceNumber, $"{customerName} · {inv.Status}", Icons.Invoices, QuickActionType.SearchResult, "Invoices", entityId: inv.Id), score));
         }
 
         // Expenses
@@ -506,7 +502,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             var score = BestScore(query, e.Description, e.ReferenceNumber, e.Id);
             if (score > 0)
-                results.Add((new QuickActionItem(e.Description, $"{CurrencyService.Format(e.Amount)} · {e.Date:MMM dd, yyyy}", Icons.Expenses, QuickActionType.SearchResult, "Expenses", $"ViewSearchResult:{e.Id}"), score));
+                results.Add((new QuickActionItem(e.Description, $"{CurrencyService.Format(e.Amount)} · {e.Date:MMM dd, yyyy}", Icons.Expenses, QuickActionType.SearchResult, "Expenses", entityId: e.Id), score));
         }
 
         // Revenues
@@ -514,7 +510,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             var score = BestScore(query, r.Description, r.ReferenceNumber, r.Id);
             if (score > 0)
-                results.Add((new QuickActionItem(r.Description, $"{CurrencyService.Format(r.Amount)} · {r.Date:MMM dd, yyyy}", Icons.Revenue, QuickActionType.SearchResult, "Revenue", $"ViewSearchResult:{r.Id}"), score));
+                results.Add((new QuickActionItem(r.Description, $"{CurrencyService.Format(r.Amount)} · {r.Date:MMM dd, yyyy}", Icons.Revenue, QuickActionType.SearchResult, "Revenue", entityId: r.Id), score));
         }
 
         // Suppliers
@@ -522,7 +518,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             var score = BestScore(query, s.Name, s.ContactPerson, s.Email);
             if (score > 0)
-                results.Add((new QuickActionItem(s.Name, string.IsNullOrWhiteSpace(s.ContactPerson) ? s.Email : s.ContactPerson, Icons.Suppliers, QuickActionType.SearchResult, "Suppliers", $"ViewSearchResult:{s.Id}"), score));
+                results.Add((new QuickActionItem(s.Name, string.IsNullOrWhiteSpace(s.ContactPerson) ? s.Email : s.ContactPerson, Icons.Suppliers, QuickActionType.SearchResult, "Suppliers", entityId: s.Id), score));
         }
 
         // Payments
@@ -530,7 +526,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             var score = BestScore(query, p.Id, p.ReferenceNumber ?? "", p.InvoiceId);
             if (score > 0)
-                results.Add((new QuickActionItem(p.Id, $"{CurrencyService.Format(p.Amount)} · {p.PaymentMethod}", Icons.Payments, QuickActionType.SearchResult, "Payments", $"ViewSearchResult:{p.Id}"), score));
+                results.Add((new QuickActionItem(p.Id, $"{CurrencyService.Format(p.Amount)} · {p.PaymentMethod}", Icons.Payments, QuickActionType.SearchResult, "Payments", entityId: p.Id), score));
         }
 
         // Rental Records
@@ -539,7 +535,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             var customerName = companyData.Customers.FirstOrDefault(c => c.Id == r.CustomerId)?.Name ?? "";
             var score = BestScore(query, r.Id, customerName, r.Status.ToString());
             if (score > 0)
-                results.Add((new QuickActionItem(r.Id, $"{customerName} · {r.Status}", Icons.RentalRecords, QuickActionType.SearchResult, "RentalRecords", $"ViewSearchResult:{r.Id}"), score));
+                results.Add((new QuickActionItem(r.Id, $"{customerName} · {r.Status}", Icons.RentalRecords, QuickActionType.SearchResult, "RentalRecords", entityId: r.Id), score));
         }
 
         // Inventory Items
@@ -550,7 +546,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             var productName = product?.Name ?? "";
             var score = BestScore(query, productName, i.Sku, product?.Sku ?? "", location?.Name ?? "");
             if (score > 0)
-                results.Add((new QuickActionItem($"{productName} @ {location?.Name ?? "Default"}", $"SKU: {i.Sku} · In Stock: {i.InStock}", Icons.StockLevels, QuickActionType.SearchResult, "StockLevels", $"ViewSearchResult:{i.Id}"), score));
+                results.Add((new QuickActionItem($"{productName} @ {location?.Name ?? "Default"}", $"SKU: {i.Sku} · In Stock: {i.InStock}", Icons.StockLevels, QuickActionType.SearchResult, "StockLevels", entityId: i.Id), score));
         }
 
         // Purchase Orders
@@ -559,7 +555,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             var supplierName = companyData.Suppliers.FirstOrDefault(s => s.Id == po.SupplierId)?.Name ?? "";
             var score = BestScore(query, po.PoNumber, supplierName, po.Status.ToString());
             if (score > 0)
-                results.Add((new QuickActionItem(po.PoNumber, $"{supplierName} · {po.Status}", Icons.PurchaseOrders, QuickActionType.SearchResult, "PurchaseOrders", $"ViewSearchResult:{po.Id}"), score));
+                results.Add((new QuickActionItem(po.PoNumber, $"{supplierName} · {po.Status}", Icons.PurchaseOrders, QuickActionType.SearchResult, "PurchaseOrders", entityId: po.Id), score));
         }
 
         // Sort by score and take top results, max 3 per type
@@ -631,9 +627,14 @@ public class QuickActionItem
     public string? ActionName { get; }
 
     /// <summary>
+    /// Entity ID for search results (used for row highlighting on navigation).
+    /// </summary>
+    public string? EntityId { get; }
+
+    /// <summary>
     /// Creates a new QuickActionItem.
     /// </summary>
-    public QuickActionItem(string title, string description, string iconData, QuickActionType type, string? navigationTarget = null, string? actionName = null)
+    public QuickActionItem(string title, string description, string iconData, QuickActionType type, string? navigationTarget = null, string? actionName = null, string? entityId = null)
     {
         Title = title;
         Description = description;
@@ -641,6 +642,7 @@ public class QuickActionItem
         Type = type;
         NavigationTarget = navigationTarget;
         ActionName = actionName;
+        EntityId = entityId;
     }
 }
 
