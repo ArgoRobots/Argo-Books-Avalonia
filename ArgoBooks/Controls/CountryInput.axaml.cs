@@ -111,6 +111,12 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
                     SelectedIndex = 0;
                     UpdateFilteredCountries();
                 }
+                else
+                {
+                    // Clear items on close so visual containers are fully detached
+                    // before the next open cycle (prevents "Visual already has a parent")
+                    FilteredCountries.Clear();
+                }
             }
         }
     }

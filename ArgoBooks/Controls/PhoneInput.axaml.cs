@@ -170,11 +170,17 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
                 field = value;
                 RaisePropertyChanged();
 
-                // Refresh the list when opening
                 if (value)
                 {
+                    // Refresh the list when opening
                     SelectedIndex = 0;
                     UpdateFilteredCountries();
+                }
+                else
+                {
+                    // Clear items on close so visual containers are fully detached
+                    // before the next open cycle (prevents "Visual already has a parent")
+                    FilteredDialCodes.Clear();
                 }
             }
         }
