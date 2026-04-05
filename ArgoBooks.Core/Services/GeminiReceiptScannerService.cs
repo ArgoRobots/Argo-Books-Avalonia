@@ -102,7 +102,7 @@ Rules:
                 "Extract all data from this receipt. Respond with JSON only.",
                 base64Image,
                 mimeType,
-                maxTokens: 8000,
+                maxTokens: 16000,
                 temperature: 0.0,
                 model: "gemini-2.5-flash",
                 cancellationToken: cancellationToken);
