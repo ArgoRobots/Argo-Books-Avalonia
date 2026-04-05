@@ -627,13 +627,25 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         try
         {
-            // Create temp file from Base64 data stored in company file
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, receipt.FileName);
             var bytes = Convert.FromBase64String(receipt.FileData);
-            var isImage = receipt.FileType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
-            var output = isImage ? ReceiptImageHelper.FixOrientation(bytes) : bytes;
+
+            var isPdf = receipt.FileType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) == true
+                        || receipt.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+            if (isPdf)
+            {
+                // Render first page of the PDF as a JPEG for preview
+                var rendered = ReceiptImageHelper.RenderPdfFirstPage(bytes);
+                if (rendered == null) return string.Empty;
+                var pdfPreviewPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
+                File.WriteAllBytes(pdfPreviewPath, rendered);
+                return pdfPreviewPath;
+            }
+
+            var tempPath = Path.Combine(tempDir, receipt.FileName);
+            var output = ReceiptImageHelper.FixOrientation(bytes);
             File.WriteAllBytes(tempPath, output);
             return tempPath;
         }

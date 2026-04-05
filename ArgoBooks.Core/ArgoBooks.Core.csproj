@@ -29,6 +29,8 @@
 
         <!-- PDF -->
         <PackageReference Include="QuestPDF" />
+        <!-- PDF rendering (page-to-image). TODO: Replace with Avalonia WebView when free tier ships -->
+        <PackageReference Include="PDFtoImage" />
 
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />

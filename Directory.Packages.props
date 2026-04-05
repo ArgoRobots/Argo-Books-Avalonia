@@ -28,6 +28,8 @@
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
     <!-- PDF -->
     <PackageVersion Include="QuestPDF" Version="2026.2.4" />
+    <!-- PDF rendering (page-to-image). TODO: Replace with Avalonia WebView when it ships in the free tier to save exe size -->
+    <PackageVersion Include="PDFtoImage" Version="5.2.0" />
     <!-- Excel -->
     <PackageVersion Include="ClosedXML" Version="0.105.0" />
     <PackageVersion Include="EPPlus" Version="8.5.1" />

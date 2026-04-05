@@ -575,11 +575,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Preprocess the image once on a background thread (EXIF fix + contrast + sharpen).
         // The result is used for both the preview image and the API call, avoiding
-        // a redundant FixOrientation decode/encode cycle.
+        // a redundant FixOrientation decode/encode cycle. PDFs are returned unchanged.
+        var isPdf = Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
         var preprocessedData = await Task.Run(() =>
             ReceiptImageHelper.PreprocessForOcr(imageData, fileName));
         _currentImageData = preprocessedData;
-        _currentFileName = Path.ChangeExtension(fileName, ".jpg");
+        _currentFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
 
         // Write preview image to disk off the UI thread
         _ = Task.Run(async () =>
@@ -587,8 +588,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "ScanPreview");
             Directory.CreateDirectory(tempDir);
             var previewPath = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
-            await File.WriteAllBytesAsync(previewPath, preprocessedData);
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
+
+            // For PDFs, render the first page as JPEG for preview
+            var previewBytes = isPdf
+                ? ReceiptImageHelper.RenderPdfFirstPage(preprocessedData)
+                : preprocessedData;
+
+            if (previewBytes != null)
+            {
+                await File.WriteAllBytesAsync(previewPath, previewBytes);
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
+            }
         });
 
         // Start scanning (image is already preprocessed)
