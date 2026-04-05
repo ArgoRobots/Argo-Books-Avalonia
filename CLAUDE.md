@@ -3,6 +3,7 @@
 ## Workflow Rules
 
 - **Do NOT build or run tests after every change.** Only build/test when explicitly asked.
+- **Do NOT amend commits or force push** unless explicitly told to. Always create new commits.
 
 ## Project Overview
 
