@@ -13,6 +13,9 @@ public static class ReceiptImageHelper
     /// TODO: Replace with Avalonia WebView when it ships in the free tier to save exe size.
     /// Returns null if the PDF cannot be rendered.
     /// </summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    [System.Runtime.Versioning.SupportedOSPlatform("linux")]
+    [System.Runtime.Versioning.SupportedOSPlatform("macos")]
     public static byte[]? RenderPdfFirstPage(byte[] pdfData, int dpi = 150)
     {
         try
