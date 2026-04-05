@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -20,7 +22,7 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _isCollapsed;
 
     [ObservableProperty]
-    private string _collapseTooltip = "Collapse sidebar";
+    private string _collapseTooltip = Loc.Tr("Collapse sidebar");
 
     [ObservableProperty]
     private double _width = 250;
@@ -134,6 +136,13 @@ public partial class SidebarViewModel : ViewModelBase
         _navigationService = navigationService;
 
         InitializeNavigationItems();
+
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        CollapseTooltip = IsCollapsed ? Loc.Tr("Expand sidebar") : Loc.Tr("Collapse sidebar");
     }
 
     /// <summary>
@@ -213,7 +222,7 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnIsCollapsedChanged(bool value)
     {
         Width = value ? CollapsedWidth : ExpandedWidth;
-        CollapseTooltip = value ? "Expand sidebar" : "Collapse sidebar";
+        CollapseTooltip = value ? Loc.Tr("Expand sidebar") : Loc.Tr("Collapse sidebar");
 
         // Update all items with collapsed state
         UpdateItemsCollapsedState(value);
