@@ -325,36 +325,64 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     #region Add Item Commands
 
     /// <summary>
-    /// Navigates to Locations page and opens the create location modal.
+    /// Opens the create location modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateLocation()
+    private void OpenCreateLocation()
     {
-        // Close this modal
-        IsAddItemModalOpen = false;
+        var locationModals = App.LocationsModalsViewModel;
+        if (locationModals == null) return;
 
-        // Navigate to Locations page with openAddModal parameter
-        App.NavigationService?.NavigateTo("Locations", new Dictionary<string, object?> { { "openAddModal", true } });
+        void OnSaved(object? s, EventArgs e)
+        {
+            locationModals.LocationSaved -= OnSaved;
+            ReloadAvailableLocations();
+        }
+        locationModals.LocationSaved += OnSaved;
+        locationModals.OpenAddModal();
     }
 
     /// <summary>
-    /// Navigates to Products page and opens the create product modal.
+    /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateProduct()
+    private void OpenCreateProduct()
     {
-        // Close this modal
-        IsAddItemModalOpen = false;
+        var productModals = App.ProductModalsViewModel;
+        if (productModals == null) return;
 
-        // Navigate to Products page with openAddModal parameter
-        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true } });
+        void OnSaved(object? s, EventArgs e)
+        {
+            productModals.ProductSaved -= OnSaved;
+            ReloadAvailableProducts();
+        }
+        productModals.ProductSaved += OnSaved;
+        productModals.OpenAddModal();
+    }
+
+    private void ReloadAvailableProducts()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+        AvailableProducts.Clear();
+        foreach (var product in companyData.Products.Where(p => p.TrackInventory))
+            AvailableProducts.Add(product);
+    }
+
+    private void ReloadAvailableLocations()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+        AvailableLocations.Clear();
+        foreach (var location in companyData.Locations)
+            AvailableLocations.Add(location);
     }
 
     /// <summary>
     /// Opens the add item modal.
     /// </summary>
     [RelayCommand]
-    private void OpenAddItemModal()
+    public void OpenAddItemModal()
     {
         // Load available products and locations
         var companyData = App.CompanyManager?.CompanyData;

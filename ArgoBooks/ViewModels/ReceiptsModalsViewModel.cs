@@ -1131,21 +1131,33 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void NavigateToCreateSupplier()
+    private void OpenCreateSupplier()
     {
-        // Close modal and navigate to suppliers page with add modal open
-        CloseScanReviewModal();
-        App.NavigationService?.NavigateTo("Suppliers");
-        App.SupplierModalsViewModel?.OpenAddModal();
+        var supplierModals = App.SupplierModalsViewModel;
+        if (supplierModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            supplierModals.SupplierSaved -= OnSaved;
+            LoadSupplierOptions();
+        }
+        supplierModals.SupplierSaved += OnSaved;
+        supplierModals.OpenAddModal();
     }
 
     [RelayCommand]
-    private void NavigateToCreateProduct()
+    private void OpenCreateProduct()
     {
-        // Close modal and navigate to products page with add modal open
-        CloseScanReviewModal();
-        App.NavigationService?.NavigateTo("Products");
-        App.ProductModalsViewModel?.OpenAddModal();
+        var productModals = App.ProductModalsViewModel;
+        if (productModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            productModals.ProductSaved -= OnSaved;
+            LoadProductOptions();
+        }
+        productModals.ProductSaved += OnSaved;
+        productModals.OpenAddModal();
     }
 
     /// <summary>

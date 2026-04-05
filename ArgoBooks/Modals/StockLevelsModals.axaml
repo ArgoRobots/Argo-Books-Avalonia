@@ -172,7 +172,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No products available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateProductCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateProductCommand}" />
                                 <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding AddItemProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -200,7 +200,7 @@
                                         ShowAddNew="False"
                                         EmptyMessage="{loc:Loc 'No locations found.'}"
                                         EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                        EmptyCreateCommand="{Binding NavigateToCreateLocationCommand}" />
+                                        EmptyCreateCommand="{Binding OpenCreateLocationCommand}" />
                                 </StackPanel>
                             </Grid>
 

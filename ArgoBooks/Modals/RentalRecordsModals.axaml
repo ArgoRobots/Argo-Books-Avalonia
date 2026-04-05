@@ -52,7 +52,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
                                 <TextBlock Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -134,7 +134,7 @@
                                                                  ShowAddNew="False"
                                                                  EmptyMessage="{loc:Loc 'No items available.'}"
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).NavigateToCreateRentalItemCommand}"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).OpenCreateRentalItemCommand}"
                                                                  HasError="{Binding HasItemError}"
                                                                  ErrorMessage="{loc:Loc 'Select an item'}" />
                                                         <TextBox Grid.Column="1"
@@ -268,7 +268,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
                                 <TextBlock Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -350,7 +350,7 @@
                                                                  ShowAddNew="False"
                                                                  EmptyMessage="{loc:Loc 'No items available.'}"
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).NavigateToCreateRentalItemCommand}"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).OpenCreateRentalItemCommand}"
                                                                  HasError="{Binding HasItemError}"
                                                                  ErrorMessage="{loc:Loc 'Select an item'}" />
                                                         <TextBox Grid.Column="1"

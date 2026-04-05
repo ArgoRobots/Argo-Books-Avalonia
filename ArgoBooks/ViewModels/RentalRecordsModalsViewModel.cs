@@ -368,25 +368,39 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to Rental Inventory page and opens the create item modal.
+    /// Opens the create rental item modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateRentalItem()
+    private void OpenCreateRentalItem()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        App.NavigationService?.NavigateTo("RentalInventory", new Dictionary<string, object?> { { "openAddModal", true } });
+        var rentalInventoryModals = App.RentalInventoryModalsViewModel;
+        if (rentalInventoryModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            rentalInventoryModals.ItemSaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        rentalInventoryModals.ItemSaved += OnSaved;
+        rentalInventoryModals.OpenAddModal();
     }
 
     /// <summary>
-    /// Navigates to Customers page and opens the create customer modal.
+    /// Opens the create customer modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateCustomer()
+    private void OpenCreateCustomer()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
+        var customerModals = App.CustomerModalsViewModel;
+        if (customerModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            customerModals.CustomerSaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        customerModals.CustomerSaved += OnSaved;
+        customerModals.OpenAddModal();
     }
 
     [RelayCommand]

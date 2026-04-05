@@ -1075,27 +1075,66 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     #region Navigation Commands
 
     [RelayCommand]
-    protected void NavigateToCreateCounterparty()
+    protected void OpenCreateCounterparty()
     {
-        IsAddEditModalOpen = false;
-        var pageName = CounterpartyName == "Supplier" ? "Suppliers" : "Customers";
-        App.NavigationService?.NavigateTo(pageName, new Dictionary<string, object?> { { "openAddModal", true } });
+        if (CounterpartyName == "Supplier")
+        {
+            var supplierModals = App.SupplierModalsViewModel;
+            if (supplierModals == null) return;
+
+            void OnSaved(object? s, EventArgs e)
+            {
+                supplierModals.SupplierSaved -= OnSaved;
+                LoadCounterpartyOptions();
+            }
+            supplierModals.SupplierSaved += OnSaved;
+            supplierModals.OpenAddModal();
+        }
+        else
+        {
+            var customerModals = App.CustomerModalsViewModel;
+            if (customerModals == null) return;
+
+            void OnSaved(object? s, EventArgs e)
+            {
+                customerModals.CustomerSaved -= OnSaved;
+                LoadCounterpartyOptions();
+            }
+            customerModals.CustomerSaved += OnSaved;
+            customerModals.OpenAddModal();
+        }
     }
 
     [RelayCommand]
-    protected void NavigateToCreateCategory()
+    protected void OpenCreateCategory()
     {
-        IsAddEditModalOpen = false;
-        var tabIndex = CategoryTypeFilter == CategoryType.Expense ? 0 : 1;
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", tabIndex } });
+        var categoryModals = App.CategoryModalsViewModel;
+        if (categoryModals == null) return;
+
+        var isExpense = CategoryTypeFilter == CategoryType.Expense;
+        void OnSaved(object? s, EventArgs e)
+        {
+            categoryModals.CategorySaved -= OnSaved;
+            LoadCategoryOptions();
+        }
+        categoryModals.CategorySaved += OnSaved;
+        categoryModals.OpenAddModal(isExpense);
     }
 
     [RelayCommand]
-    protected void NavigateToCreateProduct()
+    protected void OpenCreateProduct()
     {
-        IsAddEditModalOpen = false;
-        var tabIndex = CategoryTypeFilter == CategoryType.Expense ? 0 : 1;
-        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", tabIndex } });
+        var productModals = App.ProductModalsViewModel;
+        if (productModals == null) return;
+
+        var isExpense = CategoryTypeFilter == CategoryType.Expense;
+        void OnSaved(object? s, EventArgs e)
+        {
+            productModals.ProductSaved -= OnSaved;
+            LoadProductOptions();
+        }
+        productModals.ProductSaved += OnSaved;
+        productModals.OpenAddModal(isExpense);
     }
 
     #endregion

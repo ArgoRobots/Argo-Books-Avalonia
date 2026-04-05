@@ -397,29 +397,39 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to Customers page and opens the create customer modal.
+    /// Opens the create customer modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateCustomer()
+    private void OpenCreateCustomer()
     {
-        // Close the current modal
-        IsCreateEditModalOpen = false;
+        var customerModals = App.CustomerModalsViewModel;
+        if (customerModals == null) return;
 
-        // Navigate to Customers page with openAddModal parameter
-        App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
+        void OnCustomerSaved(object? s, EventArgs e)
+        {
+            customerModals.CustomerSaved -= OnCustomerSaved;
+            LoadCustomerOptions(includeAllOption: false);
+        }
+        customerModals.CustomerSaved += OnCustomerSaved;
+        customerModals.OpenAddModal();
     }
 
     /// <summary>
-    /// Navigates to Products page and opens the create product modal.
+    /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateProduct()
+    private void OpenCreateProduct()
     {
-        // Close the current modal
-        IsCreateEditModalOpen = false;
+        var productModals = App.ProductModalsViewModel;
+        if (productModals == null) return;
 
-        // Navigate to Products page with openAddModal parameter (Sales tab)
-        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 1 } });
+        void OnProductSaved(object? s, EventArgs e)
+        {
+            productModals.ProductSaved -= OnProductSaved;
+            LoadProductOptions();
+        }
+        productModals.ProductSaved += OnProductSaved;
+        productModals.OpenAddModal();
     }
 
     #endregion

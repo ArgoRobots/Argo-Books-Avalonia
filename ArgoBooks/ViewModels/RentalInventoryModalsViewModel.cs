@@ -331,20 +331,33 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void NavigateToCreateSupplier()
+    private void OpenCreateSupplier()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Suppliers", new Dictionary<string, object?> { { "openAddModal", true } });
+        var supplierModals = App.SupplierModalsViewModel;
+        if (supplierModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            supplierModals.SupplierSaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        supplierModals.SupplierSaved += OnSaved;
+        supplierModals.OpenAddModal();
     }
 
     [RelayCommand]
-    private void NavigateToCreateCustomer()
+    private void OpenCreateCustomer()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        IsRentOutModalOpen = false;
-        App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
+        var customerModals = App.CustomerModalsViewModel;
+        if (customerModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            customerModals.CustomerSaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        customerModals.CustomerSaved += OnSaved;
+        customerModals.OpenAddModal();
     }
 
     [RelayCommand]

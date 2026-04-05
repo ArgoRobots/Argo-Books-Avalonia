@@ -297,17 +297,21 @@ public partial class PaymentModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to Invoices page and opens the create invoice modal.
+    /// Opens the create invoice modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateInvoice()
+    private void OpenCreateInvoice()
     {
-        // Close the current modal
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
+        var invoiceModals = App.InvoiceModalsViewModel;
+        if (invoiceModals == null) return;
 
-        // Navigate to Invoices page with openAddModal parameter
-        App.NavigationService?.NavigateTo("Invoices", new Dictionary<string, object?> { { "openAddModal", true } });
+        void OnSaved(object? s, EventArgs e)
+        {
+            invoiceModals.InvoiceSaved -= OnSaved;
+            LoadInvoiceOptions();
+        }
+        invoiceModals.InvoiceSaved += OnSaved;
+        invoiceModals.OpenCreateModal();
     }
 
     [RelayCommand]

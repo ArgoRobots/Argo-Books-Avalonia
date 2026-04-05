@@ -225,8 +225,7 @@ public partial class ProductModalsViewModel : ViewModelBase
     public event EventHandler? ProductDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
-    public event EventHandler? OpenCategoriesRequested;
-    public event EventHandler? OpenSuppliersRequested;
+
 
     #endregion
 
@@ -272,17 +271,32 @@ public partial class ProductModalsViewModel : ViewModelBase
     [RelayCommand]
     public void OpenCategoriesWithAddModal()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        OpenCategoriesRequested?.Invoke(this, EventArgs.Empty);
+        var categoryModals = App.CategoryModalsViewModel;
+        if (categoryModals == null) return;
+
+        var isExpense = IsExpensesTab;
+        void OnSaved(object? s, EventArgs e)
+        {
+            categoryModals.CategorySaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        categoryModals.CategorySaved += OnSaved;
+        categoryModals.OpenAddModal(isExpense);
     }
 
     [RelayCommand]
     public void OpenSuppliersWithAddModal()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        OpenSuppliersRequested?.Invoke(this, EventArgs.Empty);
+        var supplierModals = App.SupplierModalsViewModel;
+        if (supplierModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            supplierModals.SupplierSaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        supplierModals.SupplierSaved += OnSaved;
+        supplierModals.OpenAddModal();
     }
 
     [RelayCommand]

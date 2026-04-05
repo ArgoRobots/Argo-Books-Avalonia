@@ -148,7 +148,7 @@
                                                              ShowAddNew="False"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              HasError="{Binding HasProductError}"
                                                              ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <NumericUpDown Grid.Column="1"

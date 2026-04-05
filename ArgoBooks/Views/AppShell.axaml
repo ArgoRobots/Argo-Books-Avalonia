@@ -226,65 +226,31 @@
         <!-- Edit Company Modal -->
         <modals:EditCompanyModal DataContext="{Binding EditCompanyModalViewModel}" />
 
-        <!-- Customer Modals -->
-        <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
+        <!-- Consumer modals (may open mid-level or entity modals on top) -->
+        <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
+        <modals:StockAdjustmentsModals DataContext="{Binding StockAdjustmentsModalsViewModel}" />
+        <modals:ReceiptsModals DataContext="{Binding ReceiptsModalsViewModel}" />
+        <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
+        <modals:LostDamagedModals DataContext="{Binding LostDamagedModalsViewModel}" />
+        <modals:ReturnsModals DataContext="{Binding ReturnsModalsViewModel}" />
+        <modals:ReportModals DataContext="{Binding ReportModalsViewModel}" />
 
-        <!-- Product Modals -->
-        <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
-
-        <!-- Category Modals -->
-        <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
-
-        <!-- Department Modals -->
-        <modals:DepartmentModals DataContext="{Binding DepartmentModalsViewModel}" />
-
-        <!-- Supplier Modals -->
-        <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
-
-        <!-- Rental Inventory Modals -->
+        <!-- Mid-level modals (may open entity creation modals on top) -->
+        <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
+        <modals:InvoiceTemplateDesignerModal DataContext="{Binding InvoiceTemplateDesignerViewModel}" />
+        <modals:ExpenseModals DataContext="{Binding ExpenseModalsViewModel}" />
+        <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />
+        <modals:PurchaseOrdersModals DataContext="{Binding PurchaseOrdersModalsViewModel}" />
+        <modals:StockLevelsModals DataContext="{Binding StockLevelsModalsViewModel}" />
         <modals:RentalInventoryModals DataContext="{Binding RentalInventoryModalsViewModel}" />
 
-        <!-- Rental Records Modals -->
-        <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
-
-        <!-- Payment Modals -->
-        <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
-
-        <!-- Invoice Modals -->
-        <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
-
-        <!-- Invoice Template Designer Modal -->
-        <modals:InvoiceTemplateDesignerModal DataContext="{Binding InvoiceTemplateDesignerViewModel}" />
-
-        <!-- Expense Modals -->
-        <modals:ExpenseModals DataContext="{Binding ExpenseModalsViewModel}" />
-
-        <!-- Revenue Modals -->
-        <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />
-
-        <!-- Stock Levels Modals -->
-        <modals:StockLevelsModals DataContext="{Binding StockLevelsModalsViewModel}" />
-
-        <!-- Locations Modals -->
+        <!-- Entity creation modals (top layer, opened from other modals) -->
+        <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
+        <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
+        <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
+        <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
+        <modals:DepartmentModals DataContext="{Binding DepartmentModalsViewModel}" />
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
-
-        <!-- Stock Adjustments Modals -->
-        <modals:StockAdjustmentsModals DataContext="{Binding StockAdjustmentsModalsViewModel}" />
-
-        <!-- Purchase Orders Modals -->
-        <modals:PurchaseOrdersModals DataContext="{Binding PurchaseOrdersModalsViewModel}" />
-
-        <!-- Receipts Modals -->
-        <modals:ReceiptsModals DataContext="{Binding ReceiptsModalsViewModel}" />
-
-        <!-- Lost/Damaged Modals -->
-        <modals:LostDamagedModals DataContext="{Binding LostDamagedModalsViewModel}" />
-
-        <!-- Returns Modals -->
-        <modals:ReturnsModals DataContext="{Binding ReturnsModalsViewModel}" />
-
-        <!-- Report Modals -->
-        <modals:ReportModals DataContext="{Binding ReportModalsViewModel}" />
 
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />

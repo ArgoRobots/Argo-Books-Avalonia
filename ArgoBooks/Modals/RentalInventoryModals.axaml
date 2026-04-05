@@ -343,7 +343,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
                                 <TextBlock Text="{Binding RentOutCustomerError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding RentOutCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>

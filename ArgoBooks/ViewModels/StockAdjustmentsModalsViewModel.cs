@@ -189,13 +189,21 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to Stock Levels page and opens the create inventory item modal.
+    /// Opens the create inventory item modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateInventoryItem()
+    private void OpenCreateInventoryItem()
     {
-        IsAddModalOpen = false;
-        App.NavigationService?.NavigateTo("StockLevels", new Dictionary<string, object?> { { "openAddModal", true } });
+        var stockLevelsModals = App.StockLevelsModalsViewModel;
+        if (stockLevelsModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            stockLevelsModals.ItemSaved -= OnSaved;
+            LoadInventoryItems();
+        }
+        stockLevelsModals.ItemSaved += OnSaved;
+        stockLevelsModals.OpenAddItemModal();
     }
 
     /// <summary>

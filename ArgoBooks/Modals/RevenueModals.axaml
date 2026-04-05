@@ -98,7 +98,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No customers found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
                             </StackPanel>
 
                             <!-- Line Items Section -->
@@ -164,7 +164,7 @@
                                                              ShowAddNew="False"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              HasError="{Binding HasProductError}"
                                                              ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <NumericUpDown Grid.Column="1"

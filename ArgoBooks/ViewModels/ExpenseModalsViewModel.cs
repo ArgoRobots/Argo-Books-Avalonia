@@ -821,7 +821,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     #region Navigation Aliases
 
     [RelayCommand]
-    private void NavigateToCreateSupplier() => NavigateToCreateCounterparty();
+    private void OpenCreateSupplier() => OpenCreateCounterparty();
 
     #endregion
 }

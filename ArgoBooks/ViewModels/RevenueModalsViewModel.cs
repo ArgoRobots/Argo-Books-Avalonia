@@ -845,7 +845,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     #region Navigation Aliases
 
     [RelayCommand]
-    private void NavigateToCreateCustomer() => NavigateToCreateCounterparty();
+    private void OpenCreateCustomer() => OpenCreateCounterparty();
 
     #endregion
 }

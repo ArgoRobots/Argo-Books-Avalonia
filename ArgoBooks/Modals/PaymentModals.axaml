@@ -64,7 +64,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No invoices found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateInvoiceCommand}" />
                                 <TextBlock Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
@@ -194,7 +194,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No invoices found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateInvoiceCommand}" />
                             </StackPanel>
 
                             <!-- Amount — hidden for portal payments -->
