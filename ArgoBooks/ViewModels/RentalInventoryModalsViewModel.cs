@@ -563,6 +563,22 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
             if (item == null)
                 return;
 
+            // Check if rental item is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Rentals.Any(r => r.RentalItemId == item.Id || r.LineItems.Any(li => li.RentalItemId == item.Id)))
+                    usages.Add("Rental Record".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This rental item cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var dialog = App.ConfirmationDialog;
             if (dialog == null)
                 return;

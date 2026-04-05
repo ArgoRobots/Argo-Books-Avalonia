@@ -358,6 +358,21 @@ public partial class CategoryModalsViewModel : ViewModelBase
 
             var companyData = App.CompanyManager?.CompanyData;
 
+            // Check if category is in use by products
+            if (companyData != null)
+            {
+                var usages = new List<string>();
+                if (companyData.Products.Any(p => p.CategoryId == item.Id))
+                    usages.Add("Product".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This category cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
             if (category == null) return;
 

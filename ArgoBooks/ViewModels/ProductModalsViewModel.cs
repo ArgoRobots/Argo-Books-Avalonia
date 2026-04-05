@@ -566,6 +566,34 @@ public partial class ProductModalsViewModel : ViewModelBase
             if (item == null)
                 return;
 
+            // Check if product is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Revenues.Any(r => r.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Revenue".Translate());
+                if (cd.Expenses.Any(e => e.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Expense".Translate());
+                if (cd.Invoices.Any(i => i.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Invoice".Translate());
+                if (cd.Inventory.Any(i => i.ProductId == item.Id))
+                    usages.Add("Inventory".Translate());
+                if (cd.PurchaseOrders.Any(po => po.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Purchase Order".Translate());
+                if (cd.Returns.Any(r => r.Items.Any(ri => ri.ProductId == item.Id)))
+                    usages.Add("Return".Translate());
+                if (cd.LostDamaged.Any(ld => ld.ProductId == item.Id))
+                    usages.Add("Lost/Damaged".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This product cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var dialog = App.ConfirmationDialog;
             if (dialog == null)
                 return;

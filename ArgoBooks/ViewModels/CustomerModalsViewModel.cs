@@ -580,6 +580,32 @@ public partial class CustomerModalsViewModel : ViewModelBase
             if (item == null)
                 return;
 
+            // Check if customer is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Invoices.Any(i => i.CustomerId == item.Id))
+                    usages.Add("Invoice".Translate());
+                if (cd.Revenues.Any(r => r.CustomerId == item.Id))
+                    usages.Add("Revenue".Translate());
+                if (cd.Rentals.Any(r => r.CustomerId == item.Id))
+                    usages.Add("Rental".Translate());
+                if (cd.RecurringInvoices.Any(ri => ri.CustomerId == item.Id))
+                    usages.Add("Recurring Invoice".Translate());
+                if (cd.Payments.Any(p => p.CustomerId == item.Id))
+                    usages.Add("Payment".Translate());
+                if (cd.Returns.Any(r => r.CustomerId == item.Id))
+                    usages.Add("Return".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This customer cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var dialog = App.ConfirmationDialog;
             if (dialog == null)
                 return;
