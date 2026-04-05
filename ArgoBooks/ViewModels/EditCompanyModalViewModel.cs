@@ -39,6 +39,9 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string _phoneNumber = "";
 
     [ObservableProperty]
+    private string? _phoneNumberError;
+
+    [ObservableProperty]
     private CountryDialCode? _selectedPhoneCountry;
 
     [ObservableProperty]
@@ -202,6 +205,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         _originalPhoneNumber = "";
         _originalSelectedPhoneCountry = null;
         PhoneNumber = "";
+        PhoneNumberError = null;
         SelectedPhoneCountry = null;
 
         if (!string.IsNullOrWhiteSpace(phone))
@@ -469,6 +473,19 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 return;
             }
             _pendingCurrencyCode = null;
+        }
+
+        // Validate phone number completeness
+        PhoneNumberError = null;
+        if (!string.IsNullOrWhiteSpace(PhoneNumber) && SelectedPhoneCountry != null)
+        {
+            var digits = new string(PhoneNumber.Where(char.IsDigit).ToArray());
+            var expectedDigits = SelectedPhoneCountry.PhoneFormat.Count(c => c == 'X');
+            if (digits.Length > 0 && digits.Length < expectedDigits)
+            {
+                PhoneNumberError = "Please enter a complete phone number.".Translate();
+                return;
+            }
         }
 
         // Build the full phone number with country code

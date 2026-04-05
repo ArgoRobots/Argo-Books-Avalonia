@@ -169,6 +169,8 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:PhoneInput SelectedCountry="{Binding SelectedPhoneCountry, Mode=TwoWay}"
                                                          PhoneNumber="{Binding PhoneNumber, Mode=TwoWay}" />
+                                    <TextBlock Text="{Binding PhoneNumberError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding PhoneNumberError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
 
                                 <!-- Email -->

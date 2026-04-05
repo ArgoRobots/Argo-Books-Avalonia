@@ -88,6 +88,9 @@ public partial class CreateCompanyViewModel : ViewModelBase
     private string _phoneNumber = "";
 
     [ObservableProperty]
+    private string? _phoneNumberError;
+
+    [ObservableProperty]
     private CountryDialCode? _selectedPhoneCountry;
 
     [ObservableProperty]
@@ -279,6 +282,20 @@ public partial class CreateCompanyViewModel : ViewModelBase
     {
         if (!CanCreate) return;
 
+        PhoneNumberError = null;
+
+        // Validate phone number completeness
+        if (!string.IsNullOrWhiteSpace(PhoneNumber) && SelectedPhoneCountry != null)
+        {
+            var digits = new string(PhoneNumber.Where(char.IsDigit).ToArray());
+            var expectedDigits = SelectedPhoneCountry.PhoneFormat.Count(c => c == 'X');
+            if (digits.Length > 0 && digits.Length < expectedDigits)
+            {
+                PhoneNumberError = "Please enter a complete phone number.".Translate();
+                return;
+            }
+        }
+
         // Build the full phone number with country code
         string? fullPhone = null;
         if (!string.IsNullOrWhiteSpace(PhoneNumber))
@@ -333,6 +350,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         Industry = null;
         SelectedCurrency = "USD - US Dollar ($)";
         PhoneNumber = "";
+        PhoneNumberError = null;
         SelectedPhoneCountry = null;
         Country = null;
         City = null;
