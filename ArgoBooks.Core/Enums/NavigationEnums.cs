@@ -54,7 +54,9 @@ public enum NavigationTarget
     Expenses,
     Revenue,
     Payments,
-    Categories
+    Categories,
+    StockLevels,
+    PurchaseOrders
 }
 
 /// <summary>
@@ -79,6 +81,8 @@ public static class NavigationTargetExtensions
             "Revenue" => NavigationTarget.Revenue,
             "Payments" => NavigationTarget.Payments,
             "Categories" => NavigationTarget.Categories,
+            "StockLevels" => NavigationTarget.StockLevels,
+            "PurchaseOrders" => NavigationTarget.PurchaseOrders,
             _ => null
         };
     }

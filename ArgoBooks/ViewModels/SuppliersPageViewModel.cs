@@ -499,7 +499,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 Country = string.IsNullOrWhiteSpace(supplier.Address.Country) ? "-" : supplier.Address.Country,
                 ProductCount = productCount,
                 IsActive = isActive,
-                Initials = GetInitials(supplier.Name)
+                Initials = GetInitials(supplier.Name),
+                IsHighlighted = supplier.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -521,6 +522,9 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 },
                 s => s.Name);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalItems = displayItems.Count;
@@ -1030,4 +1034,7 @@ public partial class SupplierDisplayItem : ObservableObject
     /// Status text for display.
     /// </summary>
     public string StatusText => IsActive ? "Active" : "Inactive";
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

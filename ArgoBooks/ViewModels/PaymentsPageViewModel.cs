@@ -684,6 +684,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
                 IsFromPortal = payment.Source == "Online",
+                IsHighlighted = payment.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -705,6 +706,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 },
                 p => p.Date);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -851,6 +855,9 @@ public partial class PaymentDisplayItem : ObservableObject
     /// Gets whether the amount is negative (refund).
     /// </summary>
     public bool IsRefund => Amount < 0;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

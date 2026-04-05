@@ -648,7 +648,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 OverstockThreshold = product.TrackInventory && product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : "-",
                 UnitPrice = product.UnitPrice,
                 CostPrice = product.CostPrice,
-                TrackInventory = product.TrackInventory
+                TrackInventory = product.TrackInventory,
+                IsHighlighted = product.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -668,6 +669,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 },
                 p => p.Name);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -1143,6 +1147,9 @@ public partial class ProductDisplayItem : ObservableObject
     /// CSS-like badge class for item type.
     /// </summary>
     public string TypeBadgeClass => ItemType == "Product" ? "info" : "secondary";
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

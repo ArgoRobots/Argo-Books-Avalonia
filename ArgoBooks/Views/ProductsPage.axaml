@@ -220,6 +220,7 @@
                                     <Border Padding="24,0"
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="0,0,0,1"
+                                            Classes.highlighted-row="{Binding IsHighlighted}"
                                             MinHeight="52">
                                         <StackPanel Orientation="Horizontal">
                                             <!-- Product Name with ID - Custom content required -->
@@ -312,6 +313,7 @@
                                     <Border Padding="24,0"
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="0,0,0,1"
+                                            Classes.highlighted-row="{Binding IsHighlighted}"
                                             MinHeight="52">
                                         <StackPanel Orientation="Horizontal">
                                             <!-- Product Name with ID - Custom content required -->
