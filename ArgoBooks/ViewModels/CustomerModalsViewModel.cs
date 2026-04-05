@@ -1073,7 +1073,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 }
             }
 
-            if (!IsPhoneComplete(ModalPhone))
+            if (!PhoneInput.IsFullPhoneComplete(ModalPhone))
             {
                 ModalPhoneError = "Please enter a complete phone number.".Translate();
                 isValid = false;
@@ -1096,37 +1096,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
         HasValidationMessage = !isValid;
         return isValid;
-    }
-
-    /// <summary>
-    /// Checks if a phone number is complete based on its country's expected format.
-    /// Returns true if empty (optional field) or has the correct number of digits.
-    /// </summary>
-    private static bool IsPhoneComplete(string fullPhone)
-    {
-        if (string.IsNullOrWhiteSpace(fullPhone))
-            return true; // Phone is optional
-
-        var parts = fullPhone.Split(' ', 2);
-        if (parts.Length < 2)
-            return true; // No number entered yet
-
-        var dialCode = parts[0];
-        var numberPart = parts[1];
-        var digits = new string(numberPart.Where(char.IsDigit).ToArray());
-
-        if (string.IsNullOrEmpty(digits))
-            return true; // No digits entered
-
-        var country = PhoneInput.AllDialCodes
-            .OrderByDescending(c => c.DialCode.Length)
-            .FirstOrDefault(c => dialCode.Equals(c.DialCode, StringComparison.OrdinalIgnoreCase));
-
-        if (country == null)
-            return true; // Unknown country, allow it
-
-        var expectedDigits = country.PhoneFormat.Count(c => c == 'X');
-        return digits.Length == expectedDigits;
     }
 
     #endregion

@@ -430,7 +430,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// </summary>
     private bool HasAddItemEnteredData =>
         SelectedProduct != null ||
-        !string.IsNullOrWhiteSpace(AddItemQuantity);
+        (!string.IsNullOrWhiteSpace(AddItemQuantity) && AddItemQuantity != "0");
 
     /// <summary>
     /// Requests to close the Add Item modal, showing confirmation if data was entered.
