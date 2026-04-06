@@ -95,6 +95,21 @@ public partial class BulkScanItem : ObservableObject
     private bool _isSkipped;
 
     /// <summary>
+    /// Per-item notes entered by the user during review.
+    /// </summary>
+    public string Notes { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Per-item transaction type override (user may change from the AI-detected value).
+    /// </summary>
+    public bool? IsRevenueOverride { get; set; }
+
+    /// <summary>
+    /// Per-item selected supplier ID (persisted across navigation).
+    /// </summary>
+    public string? SelectedSupplierId { get; set; }
+
+    /// <summary>
     /// Quick summary text shown on progress screen and carousel thumbnail.
     /// e.g., "Costco · $142.57"
     /// </summary>

@@ -243,6 +243,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
     private byte[]? _currentImageData;
     private string? _currentFileName;
+    private bool _suppressAiSuggestions;
 
     // Track entities created during receipt flow for undo
     private Supplier? _createdSupplierForUndo;
@@ -529,7 +530,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public bool BulkAllReviewed =>
         BulkApprovedCount > 0 &&
-        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsReviewed || i.IsApproved);
+        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsApproved || i.IsSkipped);
 
     private List<BulkScanItem>? _bulkSucceededItemsCache;
 
@@ -846,9 +847,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CancelBulkScan()
     {
+        // Signal cancellation — Task.WhenAll in StartBulkScan will set IsBulkScanComplete
+        // when all tasks finish. Don't set it here to avoid counter corruption from
+        // tasks that complete after this point.
         _bulkCancellationSource?.Cancel();
-        IsBulkScanning = false;
-        IsBulkScanComplete = true;
     }
 
     /// <summary>
@@ -917,7 +919,23 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         ReceiptImagePath = item.PreviewImagePath;
 
+        // Skip AI suggestions when re-populating for bulk review (they already ran during scan)
+        _suppressAiSuggestions = true;
         PopulateScanResults(item.ScanResult);
+        _suppressAiSuggestions = false;
+
+        // Restore per-item state that isn't on ScanResult
+        Notes = item.Notes;
+
+        if (item.IsRevenueOverride.HasValue)
+            IsRevenue = item.IsRevenueOverride.Value;
+
+        if (item.SelectedSupplierId != null)
+        {
+            var supplier = SupplierOptions.FirstOrDefault(s => s.Id == item.SelectedSupplierId);
+            if (supplier != null)
+                SelectedSupplier = supplier;
+        }
     }
 
     [RelayCommand]
@@ -998,6 +1016,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (decimal.TryParse(ExtractedDiscount, out var disc)) item.ScanResult.Discount = disc;
 
         item.ScanResult.PaymentMethod = SelectedPaymentMethod;
+
+        // Persist per-item state that isn't on ScanResult
+        item.Notes = Notes;
+        item.IsRevenueOverride = IsRevenue;
+        item.SelectedSupplierId = SelectedSupplier?.Id;
 
         item.ScanResult.LineItems = LineItems.Select(li =>
         {
@@ -1506,7 +1529,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ValidateTotals();
 
             // Fire AI suggestions in the background — don't block showing scan results
-            _ = GetAiSuggestionsAsync(result);
+            // Suppressed during bulk review carousel navigation to prevent cross-item suggestion corruption
+            if (!_suppressAiSuggestions)
+                _ = GetAiSuggestionsAsync(result);
         }
         catch (Exception ex)
         {
