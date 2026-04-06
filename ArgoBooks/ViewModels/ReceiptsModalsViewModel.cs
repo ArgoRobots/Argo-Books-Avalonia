@@ -806,7 +806,16 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 });
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                item.Status = BulkScanStatus.Failed;
+                item.ErrorMessage = "Cancelled";
+                BulkScansCompleted++;
+                BulkScansFailed++;
+            });
+        }
         catch (Exception ex)
         {
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
@@ -1293,21 +1302,16 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
         }
 
-        // Show modal immediately in loading state before reading the file
-        ResetScanModal();
-        IsScanReviewModalOpen = true;
-        IsScanning = true;
-        HasScanError = false;
-        HasScanResult = false;
-
         try
         {
-            _currentImageData = await File.ReadAllBytesAsync(filePath);
-            _currentFileName = Path.GetFileName(filePath);
-            await OpenScanModalWithDataAsync(_currentImageData, _currentFileName, filePath);
+            var imageData = await File.ReadAllBytesAsync(filePath);
+            var fileName = Path.GetFileName(filePath);
+            await OpenScanModalWithDataAsync(imageData, fileName, filePath);
         }
         catch (Exception ex)
         {
+            // If file read fails before OpenScanModalWithDataAsync, show error in modal
+            IsScanReviewModalOpen = true;
             IsScanning = false;
             HasScanError = true;
             ScanErrorMessage = "Failed to read file: {0}".TranslateFormat(ex.Message);
@@ -1466,7 +1470,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsNearLimit = usageCheck.MonthlyLimit > 0 && usageCheck.Remaining > 0 && usageCheck.Remaining <= usageCheck.MonthlyLimit / 10;
     }
 
-    private async void PopulateScanResults(ReceiptScanResult result)
+    private void PopulateScanResults(ReceiptScanResult result)
     {
         try
         {
