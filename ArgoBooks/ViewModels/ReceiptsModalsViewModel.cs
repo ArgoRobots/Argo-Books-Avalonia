@@ -815,7 +815,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (item == null) return;
         var succeeded = BulkSucceededItems;
-        var index = succeeded.IndexOf(item);
+        var index = ((IList<BulkScanItem>)succeeded).IndexOf(item);
         if (index >= 0)
             NavigateToBulkItem(index);
     }
