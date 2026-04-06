@@ -531,8 +531,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         BulkApprovedCount > 0 &&
         BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsReviewed || i.IsApproved);
 
-    public IReadOnlyList<BulkScanItem> BulkSucceededItems =>
-        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).ToList();
+    private List<BulkScanItem>? _bulkSucceededItemsCache;
+
+    public IReadOnlyList<BulkScanItem> BulkSucceededItems
+    {
+        get
+        {
+            _bulkSucceededItemsCache ??= BulkItems
+                .Where(i => i.Status == BulkScanStatus.Succeeded).ToList();
+            return _bulkSucceededItemsCache;
+        }
+    }
 
     public int BulkProgressPercent => BulkItems.Count > 0
         ? (int)(BulkScansCompleted / (double)BulkItems.Count * 100)
@@ -559,6 +568,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     partial void OnBulkScansCompletedChanged(int value)
     {
+        _bulkSucceededItemsCache = null;
         OnPropertyChanged(nameof(BulkProgressPercent));
         OnPropertyChanged(nameof(BulkSucceededItems));
     }
@@ -741,6 +751,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                         item.PreviewImagePath = previewPath);
                 }
             }, token);
+
+            // Free original file bytes — local `fileData` var keeps the reference for the preview task
+            item.FileData = null;
 
             // 4. Check usage
             if (_usageService != null)
@@ -1026,6 +1039,23 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var createdCategories = new List<Category>();
         var createdProducts = new List<Product>();
 
+        // Pre-encode all receipt images in parallel (CPU-bound FixOrientation + Base64)
+        var encodedImages = await Task.Run(() =>
+        {
+            var results = new Dictionary<BulkScanItem, string?>();
+            Parallel.ForEach(approvedItems, item =>
+            {
+                string? encoded = null;
+                if (item.PreprocessedData != null)
+                {
+                    var orientedData = ReceiptImageHelper.FixOrientation(item.PreprocessedData);
+                    encoded = Convert.ToBase64String(orientedData);
+                }
+                lock (results) results[item] = encoded;
+            });
+            return results;
+        });
+
         foreach (var item in approvedItems)
         {
             PopulateScanResultsForBulkItem(item);
@@ -1057,16 +1087,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             companyData.IdCounters.Receipt++;
             var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
 
-            string? fileData = null;
-            if (item.PreprocessedData != null)
-            {
-                var imageBytes = item.PreprocessedData;
-                fileData = await Task.Run(() =>
-                {
-                    var orientedData = ReceiptImageHelper.FixOrientation(imageBytes);
-                    return Convert.ToBase64String(orientedData);
-                });
-            }
+            var fileData = encodedImages.GetValueOrDefault(item);
 
             var receipt = new Receipt
             {
@@ -1192,6 +1213,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsBulkReviewOpen = false;
         IsBulkScanComplete = false;
         IsBulkScanning = false;
+        _bulkSucceededItemsCache = null;
         BulkItems.Clear();
         CurrentBulkItem = null;
         ResetScanModal();
