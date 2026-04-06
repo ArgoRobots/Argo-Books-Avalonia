@@ -1181,8 +1181,7 @@
 
         <!-- ======================= BULK SCANNING PROGRESS MODAL ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsBulkScanning}"
-                               CloseOnBackdropClick="False"
-                               CloseOnEscape="False">
+                               ClosingCommand="{Binding RequestCancelBulkScanCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"

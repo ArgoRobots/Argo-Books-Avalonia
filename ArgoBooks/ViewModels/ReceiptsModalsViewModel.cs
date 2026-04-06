@@ -843,6 +843,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsBulkScanComplete = true;
     }
 
+    /// <summary>
+    /// Requests to cancel bulk scan with discard confirmation.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCancelBulkScan()
+    {
+        if (!await ConfirmDiscardNewAsync()) return;
+        CancelBulkScan();
+        CloseBulkReview();
+    }
+
     [RelayCommand]
     private void OpenBulkReview()
     {
