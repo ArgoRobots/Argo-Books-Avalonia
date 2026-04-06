@@ -534,6 +534,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnBulkScansCompletedChanged(int value)
     {
         OnPropertyChanged(nameof(BulkProgressPercent));
+        OnPropertyChanged(nameof(BulkSucceededItems));
     }
 
     private CancellationTokenSource? _bulkCancellationSource;
@@ -758,6 +759,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private async Task RetryBulkItem(BulkScanItem? item)
     {
         if (item == null || item.PreprocessedData == null) return;
+
+        // Don't allow retry while scanning is still in progress (would cause duplicate concurrent scan)
+        if (IsBulkScanning) return;
+
+        // Reset cancelled token if user cancelled a previous batch
+        if (_bulkCancellationSource?.IsCancellationRequested == true)
+            _bulkCancellationSource = new CancellationTokenSource();
 
         item.Status = BulkScanStatus.Queued;
         item.ErrorMessage = string.Empty;
