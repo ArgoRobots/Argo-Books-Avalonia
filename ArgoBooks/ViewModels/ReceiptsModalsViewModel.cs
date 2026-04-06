@@ -524,6 +524,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public int BulkApprovedCount => BulkItems.Count(i => i.IsApproved);
 
+    /// <summary>
+    /// True when every succeeded item has been either approved or skipped (reviewed).
+    /// </summary>
+    public bool BulkAllReviewed =>
+        BulkApprovedCount > 0 &&
+        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsReviewed || i.IsApproved);
+
     public IReadOnlyList<BulkScanItem> BulkSucceededItems =>
         BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).ToList();
 
@@ -618,6 +625,20 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         IsBulkDropZoneOpen = false;
         BulkItems.Clear();
+    }
+
+    /// <summary>
+    /// Requests to close the drop zone, showing a discard confirmation if files are queued.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseBulkDropZone()
+    {
+        if (BulkItems.Count > 0)
+        {
+            if (!await ConfirmDiscardNewAsync()) return;
+        }
+
+        CloseBulkDropZone();
     }
 
     [RelayCommand]
@@ -836,11 +857,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var succeeded = BulkSucceededItems;
         if (index < 0 || index >= succeeded.Count) return;
 
-        // Save current form state before navigating away
+        // Save current form state before navigating away and mark as reviewed
         if (CurrentBulkItem != null)
         {
             SaveCurrentFormToItem(CurrentBulkItem);
+            CurrentBulkItem.IsReviewed = true;
             CurrentBulkItem.IsActive = false;
+            OnPropertyChanged(nameof(BulkAllReviewed));
         }
 
         CurrentBulkIndex = index;
@@ -879,7 +902,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         SaveCurrentFormToItem(CurrentBulkItem);
         CurrentBulkItem.IsApproved = true;
+        CurrentBulkItem.IsReviewed = true;
         OnPropertyChanged(nameof(BulkApprovedCount));
+        OnPropertyChanged(nameof(BulkAllReviewed));
 
         var succeeded = BulkSucceededItems;
         var nextIndex = -1;
@@ -915,6 +940,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (CurrentBulkItem == null) return;
         CurrentBulkItem.IsApproved = false;
         OnPropertyChanged(nameof(BulkApprovedCount));
+        OnPropertyChanged(nameof(BulkAllReviewed));
     }
 
     [RelayCommand]

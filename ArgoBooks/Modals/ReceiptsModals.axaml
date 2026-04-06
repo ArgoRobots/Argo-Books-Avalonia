@@ -992,8 +992,7 @@
         </controls:ModalOverlay>
         <!-- ======================= BULK DROP ZONE MODAL ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsBulkDropZoneOpen}"
-                               ClosingCommand="{Binding CloseBulkDropZoneCommand}"
-                               CloseOnBackdropClick="False">
+                               ClosingCommand="{Binding RequestCloseBulkDropZoneCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -1160,7 +1159,7 @@
                                         Content="Cancel"
                                         Classes="secondary-button"
                                         Margin="0,0,12,0"
-                                        Command="{Binding CloseBulkDropZoneCommand}" />
+                                        Command="{Binding RequestCloseBulkDropZoneCommand}" />
                                 <Button Grid.Column="2"
                                         Classes="primary-button"
                                         Command="{Binding StartBulkScanCommand}"
@@ -1554,34 +1553,74 @@
                         <Grid Grid.Row="1"
                               ColumnDefinitions="2*,3*"
                               Margin="24">
-                            <!-- Left: Receipt Image Preview -->
+                            <!-- Left: Receipt Image Preview (zoomable/pannable) -->
                             <Border Grid.Column="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
                                     Margin="0,0,24,0"
                                     ClipToBounds="True">
-                                <Grid RowDefinitions="Auto,*">
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="16,12">
-                                        <TextBlock Text="Receipt Preview"
-                                                   FontSize="13"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <Button Grid.Column="1"
-                                                Classes="icon-button"
-                                                ToolTip.Tip="Toggle Fullscreen"
-                                                Command="{Binding ToggleFullscreenCommand}">
-                                            <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
-                                                      Width="14" Height="14" />
-                                        </Button>
-                                    </Grid>
+                                <Grid RowDefinitions="Auto,*,Auto">
+                                    <TextBlock Grid.Row="0"
+                                               Text="{loc:Loc 'Receipt Preview'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="16,12" />
                                     <Border Grid.Row="1"
                                             Background="#1A000000"
-                                            Margin="8,0,8,8"
+                                            Margin="8,0,8,4"
                                             CornerRadius="4"
                                             ClipToBounds="True">
-                                        <Image Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                               Stretch="Uniform" />
+                                        <ScrollViewer x:Name="BulkPreviewScrollViewer"
+                                                      HorizontalScrollBarVisibility="Auto"
+                                                      VerticalScrollBarVisibility="Auto">
+                                            <LayoutTransformControl x:Name="BulkPreviewZoomTransform"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center">
+                                                <Image x:Name="BulkPreviewImage"
+                                                       Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                       Stretch="None" />
+                                            </LayoutTransformControl>
+                                        </ScrollViewer>
                                     </Border>
+                                    <!-- Zoom Controls -->
+                                    <StackPanel Grid.Row="2"
+                                                Orientation="Horizontal"
+                                                Spacing="2"
+                                                HorizontalAlignment="Center"
+                                                Margin="4,0,4,8">
+                                        <Button Classes="icon-button"
+                                                Click="BulkPreviewZoomOut_Click"
+                                                ToolTip.Tip="{loc:Loc 'Zoom Out'}">
+                                            <PathIcon Data="{x:Static icons:Icons.ZoomOut}"
+                                                      Width="14" Height="14" />
+                                        </Button>
+                                        <Slider x:Name="BulkPreviewZoomSlider"
+                                                Minimum="0.01"
+                                                Maximum="4.0"
+                                                Width="80"
+                                                VerticalAlignment="Center"
+                                                ValueChanged="BulkPreviewZoomSlider_ValueChanged" />
+                                        <Button Classes="icon-button"
+                                                Click="BulkPreviewZoomIn_Click"
+                                                ToolTip.Tip="{loc:Loc 'Zoom In'}">
+                                            <PathIcon Data="{x:Static icons:Icons.ZoomIn}"
+                                                      Width="14" Height="14" />
+                                        </Button>
+                                        <TextBlock x:Name="BulkPreviewZoomText"
+                                                   Text="100%"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="11"
+                                                   Width="38"
+                                                   TextAlignment="Center"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <Button Classes="icon-button"
+                                                Click="BulkPreviewFitToWindow_Click"
+                                                ToolTip.Tip="{loc:Loc 'Fit to Window'}">
+                                            <PathIcon Data="{x:Static icons:Icons.ScanFocus}"
+                                                      Width="14" Height="14" />
+                                        </Button>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
 
@@ -2024,7 +2063,7 @@
                                 <Button Grid.Column="2"
                                         Classes="primary-button"
                                         Command="{Binding CreateAllApprovedTransactionsCommand}"
-                                        IsEnabled="{Binding BulkApprovedCount}">
+                                        IsEnabled="{Binding BulkAllReviewed}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="{x:Static icons:Icons.Check}"
                                                   Width="16" Height="16" />

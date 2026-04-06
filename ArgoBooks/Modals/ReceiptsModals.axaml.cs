@@ -21,10 +21,12 @@ public partial class ReceiptsModals : UserControl
 {
     // Zoom settings for scan preview
     private double _scanZoomLevel = 1.0;
+    private double _bulkZoomLevel = 1.0;
     private const double MinZoom = 0.25;
     private const double MaxZoom = 4.0;
     private const double ZoomStep = 0.25;
     private bool _updatingSlider;
+    private bool _updatingBulkSlider;
     private ReceiptsModalsViewModel? _subscribedVm;
 
     // Panning (right-click or middle-click drag)
@@ -57,6 +59,19 @@ public partial class ReceiptsModals : UserControl
             _updatingSlider = true;
             ScanPreviewZoomSlider.Value = _scanZoomLevel;
             _updatingSlider = false;
+        }
+
+        // Bulk preview zoom setup
+        if (BulkPreviewScrollViewer != null)
+        {
+            BulkPreviewScrollViewer.AddHandler(PointerWheelChangedEvent, OnBulkPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
+        }
+
+        if (BulkPreviewZoomSlider != null)
+        {
+            _updatingBulkSlider = true;
+            BulkPreviewZoomSlider.Value = _bulkZoomLevel;
+            _updatingBulkSlider = false;
         }
 
         // Wire up drag-drop on the bulk scan drop zone
@@ -107,6 +122,12 @@ public partial class ReceiptsModals : UserControl
         {
             // Re-fit after fullscreen toggle changes viewport size
             _ = FitScanPreviewAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptsModalsViewModel.CurrentBulkItem))
+        {
+            // Reset zoom and fit when navigating to a new receipt in carousel review
+            _bulkZoomLevel = 1.0;
+            _ = FitBulkPreviewAfterLayoutAsync();
         }
     }
 
@@ -332,6 +353,115 @@ public partial class ReceiptsModals : UserControl
 
             e.Handled = true;
         }
+    }
+
+    #endregion
+
+    #region Bulk Preview Zoom
+
+    private void BulkPreviewZoomIn_Click(object? sender, RoutedEventArgs e) => BulkPreviewZoomTowardsCenter(true);
+    private void BulkPreviewZoomOut_Click(object? sender, RoutedEventArgs e) => BulkPreviewZoomTowardsCenter(false);
+
+    private void BulkPreviewZoomSlider_ValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingBulkSlider) return;
+        BulkPreviewZoomToLevel(e.NewValue);
+    }
+
+    private void BulkPreviewZoomToLevel(double newZoom)
+    {
+        if (BulkPreviewScrollViewer == null || BulkPreviewZoomTransform == null) return;
+
+        var oldZoom = _bulkZoomLevel;
+        newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        var viewportCenterX = BulkPreviewScrollViewer.Viewport.Width / 2;
+        var viewportCenterY = BulkPreviewScrollViewer.Viewport.Height / 2;
+        var contentCenterX = (BulkPreviewScrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (BulkPreviewScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        _bulkZoomLevel = newZoom;
+        ApplyBulkZoom();
+        BulkPreviewZoomTransform.UpdateLayout();
+
+        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+        var maxX = Math.Max(0, BulkPreviewScrollViewer.Extent.Width - BulkPreviewScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, BulkPreviewScrollViewer.Extent.Height - BulkPreviewScrollViewer.Viewport.Height);
+
+        BulkPreviewScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
+    }
+
+    private void BulkPreviewFitToWindow_Click(object? sender, RoutedEventArgs e) => BulkPreviewFitToWindow();
+
+    private void BulkPreviewFitToWindow()
+    {
+        if (BulkPreviewScrollViewer == null || BulkPreviewImage?.Source == null) return;
+
+        double imageWidth = 0, imageHeight = 0;
+        if (BulkPreviewImage.Source is Bitmap bitmap)
+        {
+            imageWidth = bitmap.PixelSize.Width;
+            imageHeight = bitmap.PixelSize.Height;
+        }
+
+        if (imageWidth <= 0 || imageHeight <= 0) return;
+
+        var viewportWidth = BulkPreviewScrollViewer.Bounds.Width;
+        var viewportHeight = BulkPreviewScrollViewer.Bounds.Height;
+        if (viewportWidth <= 0 || viewportHeight <= 0) return;
+
+        var scaleX = viewportWidth / imageWidth;
+        var scaleY = viewportHeight / imageHeight;
+
+        _bulkZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), 0.01, MaxZoom);
+        ApplyBulkZoom();
+    }
+
+    private void BulkPreviewZoomTowardsCenter(bool zoomIn)
+    {
+        var newZoom = zoomIn
+            ? Math.Min(_bulkZoomLevel + ZoomStep, MaxZoom)
+            : Math.Max(_bulkZoomLevel - ZoomStep, MinZoom);
+        BulkPreviewZoomToLevel(newZoom);
+    }
+
+    private void OnBulkPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        var delta = e.Delta.Y;
+        if (delta != 0 && BulkPreviewZoomTransform != null)
+        {
+            BulkPreviewZoomTowardsCenter(delta > 0);
+        }
+        e.Handled = true;
+    }
+
+    private void ApplyBulkZoom()
+    {
+        if (BulkPreviewZoomTransform == null) return;
+        BulkPreviewZoomTransform.LayoutTransform = new ScaleTransform(_bulkZoomLevel, _bulkZoomLevel);
+
+        if (BulkPreviewZoomSlider != null && !_updatingBulkSlider)
+        {
+            _updatingBulkSlider = true;
+            BulkPreviewZoomSlider.Value = _bulkZoomLevel;
+            _updatingBulkSlider = false;
+        }
+
+        if (BulkPreviewZoomText != null)
+        {
+            BulkPreviewZoomText.Text = $"{_bulkZoomLevel:P0}";
+        }
+    }
+
+    private async Task FitBulkPreviewAfterLayoutAsync()
+    {
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+        BulkPreviewFitToWindow();
     }
 
     #endregion
