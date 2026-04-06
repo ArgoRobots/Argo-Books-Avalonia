@@ -648,7 +648,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             if (isPdf)
             {
                 // Render first page of the PDF as a JPEG for preview
+                #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
                 var rendered = ReceiptImageHelper.RenderPdfFirstPage(bytes);
+                #pragma warning restore CA1416
                 if (rendered == null) return string.Empty;
                 var pdfPreviewPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
                 File.WriteAllBytes(pdfPreviewPath, rendered);

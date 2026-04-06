@@ -647,9 +647,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     Directory.CreateDirectory(tempDir);
                     var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
 
+                    #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
                     var previewBytes = isPdf
                         ? ReceiptImageHelper.RenderPdfFirstPage(fileData)
                         : item.PreprocessedData;
+                    #pragma warning restore CA1416
 
                     if (previewBytes != null)
                     {
@@ -1221,9 +1223,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var previewPath = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
 
             // For PDFs, render the first page as JPEG for preview
+            #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
             var previewBytes = isPdf
                 ? ReceiptImageHelper.RenderPdfFirstPage(preprocessedData)
                 : preprocessedData;
+            #pragma warning restore CA1416
 
             if (previewBytes != null)
             {
