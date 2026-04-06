@@ -40,25 +40,8 @@ public partial class ReceiptsPage : UserControl
             var viewModel = DataContext as ReceiptsPageViewModel;
             if (viewModel == null) return;
 
-            var topLevel = TopLevel.GetTopLevel(this);
-            if (topLevel == null) return;
-
-            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Select Receipt to Scan",
-                AllowMultiple = false,
-                FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
-            });
-
-            if (files.Count > 0)
-            {
-                var file = files[0];
-                var path = file.TryGetLocalPath();
-                if (!string.IsNullOrEmpty(path))
-                {
-                    await viewModel.HandleFileSelectedAsync(path);
-                }
-            }
+            // Open the bulk drop zone modal instead of going straight to file picker
+            App.ReceiptsModalsViewModel?.OpenBulkDropZone();
         }
         catch (Exception ex)
         {

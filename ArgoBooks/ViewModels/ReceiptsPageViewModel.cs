@@ -350,24 +350,35 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called by the view when files are dropped.
+    /// Called by the view when files are dropped on the receipts page.
     /// </summary>
     public async Task HandleFilesDroppedAsync(IEnumerable<string> filePaths)
     {
-        var filePath = filePaths.FirstOrDefault();
-        if (string.IsNullOrEmpty(filePath)) return;
+        var validPaths = filePaths
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Where(p =>
+            {
+                var ext = Path.GetExtension(p).ToLowerInvariant();
+                return ext is ".jpg" or ".jpeg" or ".png" or ".pdf";
+            })
+            .ToList();
 
-        // Validate file type
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
-        if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".pdf")
+        if (validPaths.Count == 0)
         {
             await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop a JPEG, PNG, or PDF file."));
+                Loc.Tr("Please drop JPEG, PNG, or PDF files."));
             return;
         }
 
-        await HandleFileSelectedAsync(filePath);
+        // Open bulk drop zone and add the files
+        var modalsVm = App.ReceiptsModalsViewModel;
+        if (modalsVm == null) return;
+
+        if (!modalsVm.IsBulkDropZoneOpen)
+            modalsVm.OpenBulkDropZone();
+
+        modalsVm.AddFilesToQueue(validPaths);
     }
 
     #endregion
