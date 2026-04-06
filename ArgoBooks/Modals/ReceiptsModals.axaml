@@ -1744,6 +1744,30 @@
                                                    TextWrapping="Wrap" />
                                     </Border>
 
+                                    <!-- Create All Suggested Products banner -->
+                                    <Border IsVisible="{Binding HasUnmatchedProducts}"
+                                            Background="{DynamicResource WarningLightBrush}"
+                                            CornerRadius="6"
+                                            Padding="10,8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{loc:Loc 'Some items don\'t match existing products.'}"
+                                                       FontSize="12"
+                                                       Foreground="#5C4813"
+                                                       VerticalAlignment="Center" />
+                                            <Button Grid.Column="1"
+                                                    Command="{Binding CreateAllSuggestedProductsCommand}"
+                                                    Classes="primary-button"
+                                                    Padding="12,4"
+                                                    FontSize="12"
+                                                    MinHeight="0"
+                                                    Height="28"
+                                                    VerticalContentAlignment="Center">
+                                                <TextBlock Text="{loc:Loc 'Create All Suggested Products'}" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+
                                     <!-- Line Items Section -->
                                     <StackPanel Spacing="12">
                                         <Grid ColumnDefinitions="*,Auto">
