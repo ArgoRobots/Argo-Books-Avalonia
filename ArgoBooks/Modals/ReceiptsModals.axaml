@@ -1189,5 +1189,322 @@
                 </Border>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
+
+        <!-- ======================= BULK SCANNING PROGRESS MODAL ======================= -->
+        <controls:ModalOverlay IsOpen="{Binding IsBulkScanning}"
+                               CloseOnBackdropClick="False"
+                               CloseOnEscape="False">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="550"
+                        MaxHeight="600"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Scanning Receipts"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Grid.Column="1"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center">
+                                        <Run Text="{Binding BulkScansCompleted}" />
+                                        <Run Text=" of " />
+                                        <Run Text="{Binding BulkItems.Count}" />
+                                        <Run Text=" complete" />
+                                    </TextBlock>
+                                </Grid>
+                                <ProgressBar Value="{Binding BulkProgressPercent}"
+                                             Maximum="100"
+                                             Height="6"
+                                             CornerRadius="3" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Items List -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding BulkItems}" Margin="24,12">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:BulkScanItem">
+                                        <Border Padding="8"
+                                                CornerRadius="6"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                Margin="0,2">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <!-- Thumbnail -->
+                                                <Border Grid.Column="0"
+                                                        Width="44" Height="44"
+                                                        CornerRadius="4"
+                                                        ClipToBounds="True"
+                                                        Background="#1A000000"
+                                                        Margin="0,0,12,0">
+                                                    <Panel>
+                                                        <PathIcon Data="{x:Static icons:Icons.Receipts}"
+                                                                  Width="20" Height="20"
+                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                  IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                        <Image Source="{Binding PreviewImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                               IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                               Stretch="UniformToFill"
+                                                               Width="44" Height="44" />
+                                                    </Panel>
+                                                </Border>
+
+                                                <!-- Filename + Status -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding FileName}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+
+                                                    <!-- Queued status -->
+                                                    <TextBlock Text="Waiting..."
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               IsVisible="{Binding IsQueued}" />
+
+                                                    <!-- Scanning status -->
+                                                    <TextBlock Text="Scanning..."
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               FontWeight="Medium"
+                                                               IsVisible="{Binding IsScanning}" />
+
+                                                    <!-- Succeeded status -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                IsVisible="{Binding IsSucceeded}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                                  Width="12" Height="12"
+                                                                  Foreground="#16A34A" />
+                                                        <TextBlock Text="{Binding SummaryText}"
+                                                                   FontSize="12"
+                                                                   Foreground="#16A34A" />
+                                                        <TextBlock Text="{Binding ConfidenceText}"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
+
+                                                    <!-- Failed status -->
+                                                    <TextBlock Text="{Binding ErrorMessage}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding IsFailed}" />
+                                                </StackPanel>
+
+                                                <!-- Retry button for failed items -->
+                                                <Button Grid.Column="2"
+                                                        Classes="secondary-button"
+                                                        Padding="8,4"
+                                                        FontSize="12"
+                                                        MinHeight="0"
+                                                        Height="28"
+                                                        VerticalAlignment="Center"
+                                                        IsVisible="{Binding IsFailed}"
+                                                        Command="{Binding DataContext.RetryBulkItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
+                                                                  Width="12" Height="12" />
+                                                        <TextBlock Text="Retry" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Button Grid.Column="1"
+                                        Content="Cancel"
+                                        Classes="secondary-button"
+                                        Command="{Binding CancelBulkScanCommand}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- ======================= BULK SCAN COMPLETE MODAL ======================= -->
+        <controls:ModalOverlay IsOpen="{Binding IsBulkScanComplete}"
+                               ClosingCommand="{Binding CloseBulkReviewCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="550"
+                        MaxHeight="600"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Scan Complete"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Grid.Column="1"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center">
+                                    <Run Text="{Binding BulkScansSucceeded}" />
+                                    <Run Text=" succeeded, " />
+                                    <Run Text="{Binding BulkScansFailed}" />
+                                    <Run Text=" failed" />
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <!-- Items List (same as scanning but all done) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding BulkItems}" Margin="24,12">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:BulkScanItem">
+                                        <Border Padding="8"
+                                                CornerRadius="6"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                Margin="0,2">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <!-- Thumbnail -->
+                                                <Border Grid.Column="0"
+                                                        Width="44" Height="44"
+                                                        CornerRadius="4"
+                                                        ClipToBounds="True"
+                                                        Background="#1A000000"
+                                                        Margin="0,0,12,0">
+                                                    <Panel>
+                                                        <PathIcon Data="{x:Static icons:Icons.Receipts}"
+                                                                  Width="20" Height="20"
+                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                  IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                        <Image Source="{Binding PreviewImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                               IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                               Stretch="UniformToFill"
+                                                               Width="44" Height="44" />
+                                                    </Panel>
+                                                </Border>
+
+                                                <!-- Filename + Status -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding FileName}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+
+                                                    <!-- Succeeded status -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                IsVisible="{Binding IsSucceeded}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                                  Width="12" Height="12"
+                                                                  Foreground="#16A34A" />
+                                                        <TextBlock Text="{Binding SummaryText}"
+                                                                   FontSize="12"
+                                                                   Foreground="#16A34A" />
+                                                        <TextBlock Text="{Binding ConfidenceText}"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
+
+                                                    <!-- Failed status -->
+                                                    <TextBlock Text="{Binding ErrorMessage}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding IsFailed}" />
+                                                </StackPanel>
+
+                                                <!-- Retry button for failed items -->
+                                                <Button Grid.Column="2"
+                                                        Classes="secondary-button"
+                                                        Padding="8,4"
+                                                        FontSize="12"
+                                                        MinHeight="0"
+                                                        Height="28"
+                                                        VerticalAlignment="Center"
+                                                        IsVisible="{Binding IsFailed}"
+                                                        Command="{Binding DataContext.RetryBulkItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
+                                                                  Width="12" Height="12" />
+                                                        <TextBlock Text="Retry" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <!-- Close when no succeeded items -->
+                                <Button Grid.Column="1"
+                                        Content="Close"
+                                        Classes="secondary-button"
+                                        Margin="0,0,12,0"
+                                        Command="{Binding CloseBulkReviewCommand}" />
+                                <!-- Review Results when succeeded items exist -->
+                                <Button Grid.Column="2"
+                                        Classes="primary-button"
+                                        IsVisible="{Binding BulkScansSucceeded}"
+                                        Command="{Binding OpenBulkReviewCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                  Width="16" Height="16" />
+                                        <TextBlock>
+                                            <Run Text="Review Results (" /><Run Text="{Binding BulkScansSucceeded}" /><Run Text=")" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>
