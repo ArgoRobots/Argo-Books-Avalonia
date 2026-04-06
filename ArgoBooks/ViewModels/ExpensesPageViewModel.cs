@@ -222,6 +222,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to expense modal events to refresh data
         if (App.ExpenseModalsViewModel != null)
@@ -276,9 +278,25 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         ColumnWidths.RecalculateWidths();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Expenses")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadExpenses();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Expenses" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadExpenses();
+        }
     }
 
     private void OnExpenseSaved(object? sender, EventArgs e)

@@ -385,6 +385,8 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to payment modal events to refresh data
         if (App.PaymentModalsViewModel != null)
@@ -427,9 +429,25 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the payments.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Payments")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadPayments();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Payments" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadPayments();
+        }
     }
 
     /// <summary>

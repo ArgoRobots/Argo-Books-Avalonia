@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Helpers;
@@ -311,6 +312,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to shared modal events to refresh data
         if (App.CategoryModalsViewModel != null)
@@ -331,9 +334,25 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the categories.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Categories")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadCategories();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Categories" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadCategories();
+        }
     }
 
     #endregion

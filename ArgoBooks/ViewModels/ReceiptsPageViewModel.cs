@@ -382,6 +382,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to filter modal events
         if (App.ReceiptsModalsViewModel != null)
@@ -404,9 +406,25 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         FilterReceipts();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Receipts")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadReceipts();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Receipts" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadReceipts();
+        }
     }
 
     #endregion

@@ -5,6 +5,7 @@ using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -234,6 +235,8 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to shared modal events to refresh data
         if (App.DepartmentModalsViewModel != null)
@@ -254,9 +257,25 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the departments.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Departments")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadDepartments();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Departments" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadDepartments();
+        }
     }
 
     #endregion

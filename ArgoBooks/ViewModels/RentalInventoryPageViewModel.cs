@@ -6,6 +6,7 @@ using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -165,6 +166,8 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         if (App.RentalInventoryModalsViewModel != null)
         {
@@ -175,9 +178,25 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
         }
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "RentalInventory")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadItems();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "RentalInventory" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadItems();
+        }
     }
 
     private void OnItemSaved(object? sender, EventArgs e)

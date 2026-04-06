@@ -6,6 +6,7 @@ using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -202,6 +203,8 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events to refresh when orders are saved
         if (App.PurchaseOrdersModalsViewModel != null)
@@ -235,9 +238,25 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the orders.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "PurchaseOrders")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadOrders();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "PurchaseOrders" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadOrders();
+        }
     }
 
     /// <summary>

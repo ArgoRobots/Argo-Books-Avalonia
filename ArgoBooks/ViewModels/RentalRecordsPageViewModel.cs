@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -199,6 +200,8 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         if (App.RentalRecordsModalsViewModel != null)
         {
@@ -220,9 +223,25 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         }
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "RentalRecords")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadRecords();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "RentalRecords" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadRecords();
+        }
     }
 
     private void OnRecordSaved(object? sender, EventArgs e)

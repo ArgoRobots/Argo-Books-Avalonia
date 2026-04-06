@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -349,6 +350,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to invoice modal events to refresh data
         if (App.InvoiceModalsViewModel != null)
@@ -435,9 +438,25 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.PlanStatusChanged -= OnPlanStatusChanged;
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Invoices")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadInvoices();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Invoices" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadInvoices();
+        }
     }
 
     private void OnInvoiceSaved(object? sender, EventArgs e)

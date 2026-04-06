@@ -210,6 +210,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to revenue modal events to refresh data
         if (App.RevenueModalsViewModel != null)
@@ -269,9 +271,25 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         ColumnWidths.RecalculateWidths();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Revenue")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadRevenue();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Revenue" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadRevenue();
+        }
     }
 
     private void OnRevenueSaved(object? sender, EventArgs e)

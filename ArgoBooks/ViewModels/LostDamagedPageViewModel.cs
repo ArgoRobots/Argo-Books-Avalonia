@@ -4,6 +4,7 @@ using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -194,6 +195,8 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events
         if (App.LostDamagedModalsViewModel != null)
@@ -230,9 +233,25 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         LoadItems();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "LostDamaged")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadItems();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "LostDamaged" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadItems();
+        }
     }
 
     #endregion

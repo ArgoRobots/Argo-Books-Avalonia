@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -202,6 +203,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events
         if (App.ReturnsModalsViewModel != null)
@@ -240,9 +243,25 @@ public partial class ReturnsPageViewModel : ViewModelBase
         LoadReturns();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != "Returns")
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadReturns();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == "Returns" && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadReturns();
+        }
     }
 
     #endregion
