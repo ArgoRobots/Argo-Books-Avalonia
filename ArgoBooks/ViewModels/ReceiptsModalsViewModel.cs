@@ -531,6 +531,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ? (int)(BulkScansCompleted / (double)BulkItems.Count * 100)
         : 0;
 
+    /// <summary>
+    /// Usage summary text for the drop zone, e.g., "This will use 3 scans. 12/50 used this month."
+    /// </summary>
+    public string BulkUsageSummary
+    {
+        get
+        {
+            var count = BulkItems.Count;
+            var scanWord = count == 1 ? "scan" : "scans";
+            return $"This will use {count} {scanWord}. {ScansUsed}/{ScansLimit} used this month.";
+        }
+    }
+
     partial void OnBulkScansCompletedChanged(int value)
     {
         OnPropertyChanged(nameof(BulkProgressPercent));
@@ -543,7 +556,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     #region Bulk Scan Commands
 
-    public void OpenBulkDropZone()
+    public async void OpenBulkDropZone()
     {
         BulkItems.Clear();
         BulkScansCompleted = 0;
@@ -553,6 +566,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsBulkScanning = false;
         IsBulkScanComplete = false;
         IsBulkReviewOpen = false;
+
+        // Fetch current usage so the summary text is accurate
+        _usageService ??= CreateUsageService();
+        if (_usageService != null)
+        {
+            try
+            {
+                var usageCheck = await _usageService.CheckUsageAsync();
+                UpdateUsageDisplay(usageCheck);
+                OnPropertyChanged(nameof(BulkUsageSummary));
+            }
+            catch { /* Non-critical — summary will show 0/0 until scan starts */ }
+        }
     }
 
     public void AddFilesToQueue(IEnumerable<string> filePaths)
@@ -574,13 +600,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(BulkApprovedCount));
+        OnPropertyChanged(nameof(BulkUsageSummary));
     }
 
     [RelayCommand]
     private void RemoveFromQueue(BulkScanItem? item)
     {
         if (item != null)
+        {
             BulkItems.Remove(item);
+            OnPropertyChanged(nameof(BulkUsageSummary));
+        }
     }
 
     [RelayCommand]

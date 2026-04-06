@@ -992,7 +992,8 @@
         </controls:ModalOverlay>
         <!-- ======================= BULK DROP ZONE MODAL ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsBulkDropZoneOpen}"
-                               ClosingCommand="{Binding CloseBulkDropZoneCommand}">
+                               ClosingCommand="{Binding CloseBulkDropZoneCommand}"
+                               CloseOnBackdropClick="False">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -1142,15 +1143,8 @@
                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBlock FontSize="12"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center">
-                                            <Run Text="This will use " />
-                                            <Run Text="{Binding BulkItems.Count}" FontWeight="SemiBold" />
-                                            <Run Text=" scan(s). " />
-                                            <Run Text="{Binding ScansUsed}" />
-                                            <Run Text="/" />
-                                            <Run Text="{Binding ScansLimit}" />
-                                            <Run Text=" used this month." />
-                                        </TextBlock>
+                                                   VerticalAlignment="Center"
+                                                   Text="{Binding BulkUsageSummary}" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -1349,7 +1343,8 @@
 
         <!-- ======================= BULK SCAN COMPLETE MODAL ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsBulkScanComplete}"
-                               ClosingCommand="{Binding CloseBulkReviewCommand}">
+                               ClosingCommand="{Binding CloseBulkReviewCommand}"
+                               CloseOnBackdropClick="False">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -1507,11 +1502,10 @@
                                ClosingCommand="{Binding CloseBulkReviewCommand}"
                                CloseOnBackdropClick="False">
             <controls:ModalOverlay.ModalContent>
-                <Border Width="{Binding ModalWidth}"
-                        Height="{Binding ModalHeight}"
-                        Margin="{Binding ModalMargin}"
-                        HorizontalAlignment="{Binding ModalHorizontalAlignment}"
-                        VerticalAlignment="{Binding ModalVerticalAlignment}"
+                <Border Width="1100"
+                        Height="850"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BoxShadow="0 8 32 0 #40000000">
