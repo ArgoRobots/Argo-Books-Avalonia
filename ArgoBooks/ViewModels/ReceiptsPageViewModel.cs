@@ -339,17 +339,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called by the view after a file is selected or dropped.
-    /// </summary>
-    public async Task HandleFileSelectedAsync(string filePath)
-    {
-        if (string.IsNullOrEmpty(filePath)) return;
-        if (App.ReceiptsModalsViewModel == null) return;
-
-        await App.ReceiptsModalsViewModel.OpenScanModalAsync(filePath);
-    }
-
-    /// <summary>
     /// Called by the view when files are dropped on the receipts page.
     /// </summary>
     public async Task HandleFilesDroppedAsync(IEnumerable<string> filePaths)
