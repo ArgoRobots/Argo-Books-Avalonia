@@ -110,6 +110,34 @@ public partial class BulkScanItem : ObservableObject
     public string? SelectedSupplierId { get; set; }
 
     /// <summary>
+    /// Whether the supplier suggestion UI state has been saved for this item.
+    /// </summary>
+    public bool ShowCreateSupplierSuggestion { get; set; }
+
+    /// <summary>
+    /// The suggested supplier name saved for this item.
+    /// </summary>
+    public string? SuggestedSupplierName { get; set; }
+
+    /// <summary>
+    /// Whether AI suggestions have already been processed for this item.
+    /// </summary>
+    public bool HasAiSuggestionsRun { get; set; }
+
+    /// <summary>
+    /// Saved product IDs for each line item (parallel to ScanResult.LineItems).
+    /// Null entries mean no product was selected for that line item.
+    /// </summary>
+    public List<string?> LineItemProductIds { get; set; } = [];
+
+    /// <summary>
+    /// Whether this approved item has validation errors that prevent creation.
+    /// True when required fields are missing (total, supplier for expenses, products on line items).
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasValidationErrors;
+
+    /// <summary>
     /// Quick summary text shown on progress screen and carousel thumbnail.
     /// e.g., "Costco · $142.57"
     /// </summary>
@@ -132,6 +160,64 @@ public partial class BulkScanItem : ObservableObject
     public bool IsScanning => Status == BulkScanStatus.Scanning;
     public bool IsSucceeded => Status == BulkScanStatus.Succeeded;
     public bool IsFailed => Status == BulkScanStatus.Failed;
+
+    /// <summary>
+    /// Whether this item is approved but has incomplete required fields.
+    /// Used to show the orange warning state on carousel thumbnails.
+    /// </summary>
+    public bool IsApprovedWithErrors => IsApproved && HasValidationErrors;
+
+    /// <summary>
+    /// Whether this item is approved and all required fields are complete.
+    /// Used to show the green approved state on carousel thumbnails.
+    /// </summary>
+    public bool IsApprovedWithoutErrors => IsApproved && !HasValidationErrors;
+
+    /// <summary>
+    /// Recomputes HasValidationErrors based on the saved item state.
+    /// Call after saving form data or changing approval.
+    /// </summary>
+    public void UpdateValidation()
+    {
+        var hasErrors = false;
+
+        if (ScanResult != null)
+        {
+            // Total must be > 0
+            if ((ScanResult.TotalAmount ?? 0) <= 0)
+                hasErrors = true;
+
+            // Supplier required for expenses (not revenue)
+            var isRevenue = IsRevenueOverride == true;
+            if (!isRevenue && string.IsNullOrEmpty(SelectedSupplierId))
+                hasErrors = true;
+
+            // At least one line item required
+            if (ScanResult.LineItems.Count == 0)
+                hasErrors = true;
+
+            // Every line item must have a product selected
+            if (LineItemProductIds.Count > 0 &&
+                LineItemProductIds.Any(id => string.IsNullOrEmpty(id)))
+                hasErrors = true;
+            else if (LineItemProductIds.Count == 0 && ScanResult.LineItems.Count > 0)
+                hasErrors = true;
+        }
+
+        HasValidationErrors = hasErrors;
+    }
+
+    partial void OnIsApprovedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsApprovedWithErrors));
+        OnPropertyChanged(nameof(IsApprovedWithoutErrors));
+    }
+
+    partial void OnHasValidationErrorsChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsApprovedWithErrors));
+        OnPropertyChanged(nameof(IsApprovedWithoutErrors));
+    }
 
     partial void OnStatusChanged(BulkScanStatus value)
     {

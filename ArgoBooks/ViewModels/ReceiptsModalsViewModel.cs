@@ -377,6 +377,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnIsRevenueChanged(bool value)
     {
         OnPropertyChanged(nameof(TransactionTypeLabel));
+        ValidateCurrentBulkItem();
     }
 
     /// <summary>
@@ -422,6 +423,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasValidationMessage;
 
+    [ObservableProperty]
+    private bool _hasBulkIncompleteWarning;
+
+    [ObservableProperty]
+    private string _bulkIncompleteWarningMessage = string.Empty;
+
     partial void OnSelectedSupplierChanged(SupplierOption? value)
     {
         if (value != null)
@@ -430,9 +437,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             SupplierErrorMessage = string.Empty;
             ClearValidationMessageIfNoErrors();
         }
+        ValidateCurrentBulkItem();
     }
 
-    partial void OnExtractedTotalChanged(string value) => ValidateTotals();
+    partial void OnExtractedTotalChanged(string value) { ValidateTotals(); ValidateCurrentBulkItem(); }
     partial void OnExtractedSubtotalChanged(string value) => ValidateTotals();
     partial void OnExtractedTaxChanged(string value) => ValidateTotals();
     partial void OnExtractedDiscountChanged(string value) => ValidateTotals();
@@ -526,11 +534,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     public int BulkApprovedCount => BulkItems.Count(i => i.IsApproved);
 
     /// <summary>
-    /// True when every succeeded item has been either approved or skipped (reviewed).
+    /// True when every succeeded item has been either approved or skipped (reviewed),
+    /// and no approved items have validation errors.
     /// </summary>
     public bool BulkAllReviewed =>
         BulkApprovedCount > 0 &&
-        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsApproved || i.IsSkipped);
+        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsApproved || i.IsSkipped) &&
+        !BulkItems.Any(i => i.IsApproved && i.HasValidationErrors);
+
+    public int BulkIncompleteCount => BulkItems.Count(i => i.IsApproved && i.HasValidationErrors);
+
+    public bool HasBulkIncompleteItems => BulkIncompleteCount > 0;
 
     private List<BulkScanItem>? _bulkSucceededItemsCache;
 
@@ -907,6 +921,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         CurrentBulkItem.IsActive = true;
 
         PopulateScanResultsForBulkItem(CurrentBulkItem);
+        ValidateCurrentBulkItem();
     }
 
     [RelayCommand]
@@ -928,8 +943,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         ReceiptImagePath = item.PreviewImagePath;
 
-        // Skip AI suggestions when re-populating for bulk review (they already ran during scan)
-        _suppressAiSuggestions = true;
+        // Only suppress AI suggestions if they've already run for this item.
+        // On first visit, let them run so supplier matching/suggestion works.
+        _suppressAiSuggestions = item.HasAiSuggestionsRun;
         PopulateScanResults(item.ScanResult);
         _suppressAiSuggestions = false;
 
@@ -944,6 +960,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var supplier = SupplierOptions.FirstOrDefault(s => s.Id == item.SelectedSupplierId);
             if (supplier != null)
                 SelectedSupplier = supplier;
+        }
+
+        // Restore supplier suggestion state from previous visit
+        if (item.HasAiSuggestionsRun && item.SelectedSupplierId == null)
+        {
+            ShowCreateSupplierSuggestion = item.ShowCreateSupplierSuggestion;
+            SuggestedSupplierName = item.SuggestedSupplierName ?? string.Empty;
         }
     }
 
@@ -994,6 +1017,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         CurrentBulkItem.IsApproved = false;
         OnPropertyChanged(nameof(BulkApprovedCount));
         OnPropertyChanged(nameof(BulkAllReviewed));
+        OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
     }
 
     [RelayCommand]
@@ -1001,9 +1026,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (CurrentBulkItem != null)
         {
+            CurrentBulkItem.IsApproved = false;
             CurrentBulkItem.IsSkipped = true;
             CurrentBulkItem.IsReviewed = true;
+            OnPropertyChanged(nameof(BulkApprovedCount));
             OnPropertyChanged(nameof(BulkAllReviewed));
+            OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
         }
 
         var succeeded = BulkSucceededItems;
@@ -1030,6 +1059,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         item.Notes = Notes;
         item.IsRevenueOverride = IsRevenue;
         item.SelectedSupplierId = SelectedSupplier?.Id;
+        item.ShowCreateSupplierSuggestion = ShowCreateSupplierSuggestion;
+        item.SuggestedSupplierName = SuggestedSupplierName;
+        item.HasAiSuggestionsRun = true;
 
         item.ScanResult.LineItems = LineItems.Select(li =>
         {
@@ -1046,10 +1078,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             };
         }).ToList();
 
+        item.LineItemProductIds = LineItems.Select(li => li.SelectedProduct?.Id).ToList();
+
         var supplier = ExtractedSupplier;
         if (string.IsNullOrEmpty(supplier) && SelectedSupplier != null)
             supplier = SelectedSupplier.Name;
         item.SummaryText = $"{supplier} · ${ExtractedTotal}";
+
+        item.UpdateValidation();
+        OnPropertyChanged(nameof(BulkAllReviewed));
+        OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
     }
 
     [RelayCommand]
@@ -1603,6 +1642,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             OnProductErrorCleared = ClearValidationMessageIfNoErrors,
             OnTotalPriceEdited = ValidateTotals
         });
+        ValidateCurrentBulkItem();
     }
 
     [RelayCommand]
@@ -1612,6 +1652,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             LineItems.Remove(item);
             ValidateTotals();
+            ValidateCurrentBulkItem();
         }
     }
 
@@ -2047,6 +2088,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void UpdateHasUnmatchedProducts()
     {
         HasUnmatchedProducts = LineItems.Any(li => li.ShowCreateProductSuggestion);
+        ValidateCurrentBulkItem();
     }
 
     [RelayCommand]
@@ -2062,6 +2104,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private async Task GetAiSuggestionsAsync(ReceiptScanResult result)
     {
+        // Capture the bulk item (if any) so we can discard results if the user navigated away
+        var bulkItemAtStart = CurrentBulkItem;
+
         var geminiService = new GeminiService(App.ErrorLogger, App.TelemetryManager);
 
         if (!geminiService.IsConfigured)
@@ -2105,6 +2150,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             };
 
             var suggestion = await geminiService.GetSupplierCategorySuggestionAsync(request);
+
+            // If in bulk review and user navigated to a different item, discard stale results
+            if (IsBulkReviewOpen && CurrentBulkItem != bulkItemAtStart)
+                return;
 
             if (suggestion != null)
             {
@@ -2175,6 +2224,63 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TotalMismatchWarningMessage = string.Format(
                 "Line items ({0:C}) + tax ({1:C}) - discount ({2:C}) = {3:C}, but total is {4:C}. Some items may be incorrect.".Translate(),
                 lineItemSum, tax, discount, expectedTotal, total);
+        }
+    }
+
+    /// <summary>
+    /// Validates the current bulk item's required fields from live form state and updates
+    /// the item's validation errors, carousel badge, and warning message in real time.
+    /// </summary>
+    private void ValidateCurrentBulkItem()
+    {
+        if (!IsBulkReviewOpen || CurrentBulkItem == null || !CurrentBulkItem.IsApproved)
+        {
+            HasBulkIncompleteWarning = false;
+            BulkIncompleteWarningMessage = string.Empty;
+            return;
+        }
+
+        var missing = new List<string>();
+
+        if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
+            missing.Add("total amount".Translate());
+
+        if (!IsRevenue && SelectedSupplier == null)
+            missing.Add("supplier".Translate());
+
+        if (LineItems.Count == 0)
+            missing.Add("at least one line item".Translate());
+        else if (LineItems.Any(li => li.SelectedProduct == null))
+            missing.Add("product selection for all line items".Translate());
+
+        var hasErrors = missing.Count > 0;
+
+        // Update the BulkScanItem directly from live form state
+        CurrentBulkItem.LineItemProductIds = LineItems.Select(li => li.SelectedProduct?.Id).ToList();
+        CurrentBulkItem.IsRevenueOverride = IsRevenue;
+        CurrentBulkItem.SelectedSupplierId = SelectedSupplier?.Id;
+        if (CurrentBulkItem.ScanResult != null && decimal.TryParse(ExtractedTotal, out var t))
+            CurrentBulkItem.ScanResult.TotalAmount = t;
+
+        // Setting HasValidationErrors triggers OnHasValidationErrorsChanged which notifies
+        // IsApprovedWithErrors/IsApprovedWithoutErrors for carousel badge updates
+        CurrentBulkItem.HasValidationErrors = hasErrors;
+
+        OnPropertyChanged(nameof(BulkAllReviewed));
+        OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
+
+        if (hasErrors)
+        {
+            HasBulkIncompleteWarning = true;
+            BulkIncompleteWarningMessage = string.Format(
+                "This receipt is missing required fields: {0}. Fill these in to enable bulk creation.".Translate(),
+                string.Join(", ", missing));
+        }
+        else
+        {
+            HasBulkIncompleteWarning = false;
+            BulkIncompleteWarningMessage = string.Empty;
         }
     }
 

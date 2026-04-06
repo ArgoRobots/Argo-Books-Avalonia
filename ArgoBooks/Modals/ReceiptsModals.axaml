@@ -1769,6 +1769,19 @@
                                                    TextWrapping="Wrap" />
                                     </Border>
 
+                                    <!-- Incomplete Fields Warning -->
+                                    <Border IsVisible="{Binding HasBulkIncompleteWarning}"
+                                            Background="#33FFA500"
+                                            BorderBrush="#FFA500"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12,8">
+                                        <TextBlock Text="{Binding BulkIncompleteWarningMessage}"
+                                                   FontSize="12"
+                                                   Foreground="#FFA500"
+                                                   TextWrapping="Wrap" />
+                                    </Border>
+
                                     <!-- Create All Suggested Products banner -->
                                     <Border IsVisible="{Binding HasUnmatchedProducts}"
                                             Background="{DynamicResource WarningLightBrush}"
@@ -2231,19 +2244,19 @@
                                                                        MaxWidth="56" />
                                                         </StackPanel>
                                                     </Border>
-                                                    <!-- Active indicator (blue border overlay) -->
-                                                    <Border Width="64" Height="64"
-                                                            CornerRadius="6"
-                                                            BorderThickness="2"
-                                                            BorderBrush="{DynamicResource PrimaryBrush}"
-                                                            IsVisible="{Binding IsActive}"
-                                                            IsHitTestVisible="False" />
-                                                    <!-- Approved indicator (green border overlay) -->
+                                                    <!-- Approved indicator (green border overlay) — only when no validation errors -->
                                                     <Border Width="64" Height="64"
                                                             CornerRadius="6"
                                                             BorderThickness="2"
                                                             BorderBrush="#16A34A"
-                                                            IsVisible="{Binding IsApproved}"
+                                                            IsVisible="{Binding IsApprovedWithoutErrors}"
+                                                            IsHitTestVisible="False" />
+                                                    <!-- Warning indicator (orange border overlay) — approved but incomplete -->
+                                                    <Border Width="64" Height="64"
+                                                            CornerRadius="6"
+                                                            BorderThickness="2"
+                                                            BorderBrush="#F59E0B"
+                                                            IsVisible="{Binding IsApprovedWithErrors}"
                                                             IsHitTestVisible="False" />
                                                     <!-- Skipped indicator (red border overlay) -->
                                                     <Border Width="64" Height="64"
@@ -2252,8 +2265,8 @@
                                                             BorderBrush="#DC2626"
                                                             IsVisible="{Binding IsSkipped}"
                                                             IsHitTestVisible="False" />
-                                                    <!-- Green checkmark overlay -->
-                                                    <Border IsVisible="{Binding IsApproved}"
+                                                    <!-- Green checkmark overlay — only when no validation errors -->
+                                                    <Border IsVisible="{Binding IsApprovedWithoutErrors}"
                                                             Width="18" Height="18"
                                                             CornerRadius="9"
                                                             Background="#16A34A"
@@ -2262,6 +2275,21 @@
                                                             Margin="0,-2,-2,0"
                                                             IsHitTestVisible="False">
                                                         <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                                  Width="10" Height="10"
+                                                                  Foreground="White"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <!-- Orange warning overlay — approved but incomplete -->
+                                                    <Border IsVisible="{Binding IsApprovedWithErrors}"
+                                                            Width="18" Height="18"
+                                                            CornerRadius="9"
+                                                            Background="#F59E0B"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Top"
+                                                            Margin="0,-2,-2,0"
+                                                            IsHitTestVisible="False">
+                                                        <PathIcon Data="{x:Static icons:Icons.Warning}"
                                                                   Width="10" Height="10"
                                                                   Foreground="White"
                                                                   HorizontalAlignment="Center"
@@ -2282,6 +2310,13 @@
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
                                                     </Border>
+                                                    <!-- Active indicator (blue border) — painted last so it's always visible on top of status borders -->
+                                                    <Border Width="64" Height="64"
+                                                            CornerRadius="6"
+                                                            BorderThickness="2"
+                                                            BorderBrush="{DynamicResource PrimaryBrush}"
+                                                            IsVisible="{Binding IsActive}"
+                                                            IsHitTestVisible="False" />
                                                 </Panel>
                                             </Button>
                                         </DataTemplate>
@@ -2313,6 +2348,23 @@
                                     <Run Text="{Binding BulkSucceededItems.Count}" />
                                     <Run Text=" approved" />
                                 </TextBlock>
+                                <StackPanel Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Spacing="4"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,12,0"
+                                            IsVisible="{Binding HasBulkIncompleteItems}">
+                                    <PathIcon Data="{x:Static icons:Icons.Warning}"
+                                              Width="12" Height="12"
+                                              Foreground="#F59E0B" />
+                                    <TextBlock FontSize="12"
+                                               Foreground="#F59E0B"
+                                               VerticalAlignment="Center">
+                                        <Run Text="{Binding BulkIncompleteCount}" />
+                                        <Run Text=" item(s) need attention" />
+                                    </TextBlock>
+                                </StackPanel>
                                 <Button Grid.Column="3"
                                         Classes="primary-button"
                                         Command="{Binding CreateAllApprovedTransactionsCommand}"
