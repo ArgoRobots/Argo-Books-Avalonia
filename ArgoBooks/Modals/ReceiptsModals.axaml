@@ -1039,11 +1039,7 @@
                                         CornerRadius="12"
                                         Padding="32,40"
                                         HorizontalAlignment="Stretch">
-                                    <Border.Styles>
-                                        <Style Selector="Border#DropZoneBorder">
-                                            <Setter Property="BorderDashArray" Value="6,4" />
-                                        </Style>
-                                    </Border.Styles>
+                                    <!-- Avalonia Border does not support BorderDashArray; using solid border -->
                                     <StackPanel HorizontalAlignment="Center" Spacing="12">
                                         <PathIcon Data="{x:Static icons:Icons.CloudUpload}"
                                                   Width="48" Height="48"
@@ -1114,7 +1110,7 @@
                                                                     Margin="0,-4,-4,0"
                                                                     Width="22" Height="22"
                                                                     Padding="2"
-                                                                    Command="{Binding DataContext.RemoveFromQueueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RemoveFromQueueCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <PathIcon Data="{x:Static icons:Icons.Close}"
                                                                           Width="12" Height="12" />
@@ -1319,7 +1315,7 @@
                                                         Height="28"
                                                         VerticalAlignment="Center"
                                                         IsVisible="{Binding IsFailed}"
-                                                        Command="{Binding DataContext.RetryBulkItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RetryBulkItemCommand}"
                                                         CommandParameter="{Binding}">
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
@@ -1460,7 +1456,7 @@
                                                         Height="28"
                                                         VerticalAlignment="Center"
                                                         IsVisible="{Binding IsFailed}"
-                                                        Command="{Binding DataContext.RetryBulkItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RetryBulkItemCommand}"
                                                         CommandParameter="{Binding}">
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
@@ -1958,7 +1954,7 @@
                                                     BorderThickness="0"
                                                     Padding="0"
                                                     Cursor="Hand"
-                                                    Command="{Binding DataContext.NavigateToBulkItemByRefCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).NavigateToBulkItemByRefCommand}"
                                                     CommandParameter="{Binding}">
                                                 <Panel>
                                                     <Border Width="64" Height="64"
