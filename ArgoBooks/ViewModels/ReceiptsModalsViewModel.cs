@@ -630,15 +630,55 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             if (BulkItems.Any(i => i.FilePath.Equals(path, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
-            BulkItems.Add(new BulkScanItem
+            var item = new BulkScanItem
             {
                 FilePath = path,
                 FileName = Path.GetFileName(path)
-            });
+            };
+            BulkItems.Add(item);
+
+            // Generate preview thumbnail in background for the drop zone cards
+            _ = GenerateQueuePreviewAsync(item);
         }
 
         OnPropertyChanged(nameof(BulkApprovedCount));
         OnPropertyChanged(nameof(BulkUsageSummary));
+    }
+
+    private static async Task GenerateQueuePreviewAsync(BulkScanItem item)
+    {
+        try
+        {
+            var fileData = await File.ReadAllBytesAsync(item.FilePath);
+            var isPdf = item.IsPdf;
+
+            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
+            Directory.CreateDirectory(tempDir);
+            var previewPath = Path.Combine(tempDir,
+                $"{Path.GetFileNameWithoutExtension(item.FileName)}_{Guid.NewGuid():N}.jpg");
+
+            await Task.Run(() =>
+            {
+                #pragma warning disable CA1416
+                var previewBytes = isPdf
+                    ? ReceiptImageHelper.RenderPdfFirstPage(fileData)
+                    : ReceiptImageHelper.PreprocessForOcr(fileData, item.FileName);
+                #pragma warning restore CA1416
+
+                if (previewBytes != null)
+                    File.WriteAllBytes(previewPath, previewBytes);
+                else
+                    previewPath = null;
+            });
+
+            if (previewPath != null)
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    item.PreviewImagePath = previewPath);
+        }
+        catch
+        {
+            // Non-critical — card will show placeholder icon
+        }
     }
 
     [RelayCommand]
@@ -746,26 +786,29 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
             item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
 
-            // 3. Generate preview (fire-and-forget, non-blocking)
-            _ = Task.Run(async () =>
+            // 3. Generate preview (fire-and-forget, non-blocking) — skip if already generated in queue
+            if (string.IsNullOrEmpty(item.PreviewImagePath))
             {
-                var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
-                Directory.CreateDirectory(tempDir);
-                var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
-
-                #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
-                var previewBytes = isPdf
-                    ? ReceiptImageHelper.RenderPdfFirstPage(fileData)
-                    : item.PreprocessedData;
-                #pragma warning restore CA1416
-
-                if (previewBytes != null)
+                _ = Task.Run(async () =>
                 {
-                    await File.WriteAllBytesAsync(previewPath, previewBytes);
-                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                        item.PreviewImagePath = previewPath);
-                }
-            }, token);
+                    var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
+                    Directory.CreateDirectory(tempDir);
+                    var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
+
+                    #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
+                    var previewBytes = isPdf
+                        ? ReceiptImageHelper.RenderPdfFirstPage(fileData)
+                        : item.PreprocessedData;
+                    #pragma warning restore CA1416
+
+                    if (previewBytes != null)
+                    {
+                        await File.WriteAllBytesAsync(previewPath, previewBytes);
+                        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            item.PreviewImagePath = previewPath);
+                    }
+                }, token);
+            }
 
             // Free original file bytes — local `fileData` var keeps the reference for the preview task
             item.FileData = null;
