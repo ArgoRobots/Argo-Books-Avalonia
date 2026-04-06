@@ -990,5 +990,204 @@
             </Border>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
+        <!-- ======================= BULK DROP ZONE MODAL ======================= -->
+        <controls:ModalOverlay IsOpen="{Binding IsBulkDropZoneOpen}"
+                               ClosingCommand="{Binding CloseBulkDropZoneCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="550"
+                        MaxHeight="700"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
+                                              Width="24" Height="24"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Bulk Receipt Scanning"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Classes="icon-button"
+                                        Command="{Binding CloseBulkDropZoneCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}"
+                                              Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="16">
+                                <!-- Drop Zone Area -->
+                                <Border Name="DropZoneBorder"
+                                        DragDrop.AllowDrop="True"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="2"
+                                        CornerRadius="12"
+                                        Padding="32,40"
+                                        HorizontalAlignment="Stretch">
+                                    <Border.Styles>
+                                        <Style Selector="Border#DropZoneBorder">
+                                            <Setter Property="BorderDashArray" Value="6,4" />
+                                        </Style>
+                                    </Border.Styles>
+                                    <StackPanel HorizontalAlignment="Center" Spacing="12">
+                                        <PathIcon Data="{x:Static icons:Icons.CloudUpload}"
+                                                  Width="48" Height="48"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  HorizontalAlignment="Center" />
+                                        <TextBlock Text="Drag &amp; drop receipts here"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="JPEG, PNG, or PDF"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <Button Classes="secondary-button"
+                                                Content="Browse Files"
+                                                HorizontalAlignment="Center"
+                                                Margin="0,8,0,0"
+                                                Click="OnBrowseFilesClick" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- File Queue -->
+                                <StackPanel IsVisible="{Binding BulkItems.Count}"
+                                            Spacing="12">
+                                    <TextBlock FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}">
+                                        <Run Text="Queued Files (" /><Run Text="{Binding BulkItems.Count}" /><Run Text=")" />
+                                    </TextBlock>
+                                    <ItemsControl ItemsSource="{Binding BulkItems}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:BulkScanItem">
+                                                <Border Margin="4"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="8"
+                                                        Padding="8"
+                                                        Width="100">
+                                                    <Grid RowDefinitions="Auto,Auto">
+                                                        <!-- Thumbnail area with remove button -->
+                                                        <Panel Grid.Row="0" Height="64">
+                                                            <!-- Placeholder when no preview -->
+                                                            <Border Background="#1A000000"
+                                                                    CornerRadius="4"
+                                                                    IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    VerticalAlignment="Stretch">
+                                                                <PathIcon Data="{x:Static icons:Icons.Receipts}"
+                                                                          Width="24" Height="24"
+                                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                          HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <!-- Preview image when available -->
+                                                            <Image Source="{Binding PreviewImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                   IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Height="64" />
+                                                            <!-- Remove button -->
+                                                            <Button Classes="icon-button danger"
+                                                                    HorizontalAlignment="Right"
+                                                                    VerticalAlignment="Top"
+                                                                    Margin="0,-4,-4,0"
+                                                                    Width="22" Height="22"
+                                                                    Padding="2"
+                                                                    Command="{Binding DataContext.RemoveFromQueueCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <PathIcon Data="{x:Static icons:Icons.Close}"
+                                                                          Width="12" Height="12" />
+                                                            </Button>
+                                                        </Panel>
+                                                        <!-- Filename -->
+                                                        <TextBlock Grid.Row="1"
+                                                                   Text="{Binding FileName}"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   HorizontalAlignment="Center"
+                                                                   Margin="0,4,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <!-- Usage Info -->
+                                <Border IsVisible="{Binding BulkItems.Count}"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="{x:Static icons:Icons.Info}"
+                                                  Width="14" Height="14"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center">
+                                            <Run Text="This will use " />
+                                            <Run Text="{Binding BulkItems.Count}" FontWeight="SemiBold" />
+                                            <Run Text=" scan(s). " />
+                                            <Run Text="{Binding ScansUsed}" />
+                                            <Run Text="/" />
+                                            <Run Text="{Binding ScansLimit}" />
+                                            <Run Text=" used this month." />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <Button Grid.Column="1"
+                                        Content="Cancel"
+                                        Classes="secondary-button"
+                                        Margin="0,0,12,0"
+                                        Command="{Binding CloseBulkDropZoneCommand}" />
+                                <Button Grid.Column="2"
+                                        Classes="primary-button"
+                                        Command="{Binding StartBulkScanCommand}"
+                                        IsEnabled="{Binding BulkItems.Count}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
+                                                  Width="16" Height="16" />
+                                        <TextBlock>
+                                            <Run Text="Scan All (" /><Run Text="{Binding BulkItems.Count}" /><Run Text=")" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 </UserControl>

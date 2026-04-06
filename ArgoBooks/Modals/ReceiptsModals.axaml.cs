@@ -6,8 +6,10 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using ArgoBooks.Helpers;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -55,6 +57,15 @@ public partial class ReceiptsModals : UserControl
             _updatingSlider = true;
             ScanPreviewZoomSlider.Value = _scanZoomLevel;
             _updatingSlider = false;
+        }
+
+        // Wire up drag-drop on the bulk scan drop zone
+        var dropZone = this.FindControl<Border>("DropZoneBorder");
+        if (dropZone != null)
+        {
+            DragDrop.SetAllowDrop(dropZone, true);
+            dropZone.AddHandler(DragDrop.DragOverEvent, OnDropZoneDragOver);
+            dropZone.AddHandler(DragDrop.DropEvent, OnDropZoneDrop);
         }
 
         // Subscribe to ViewModel to fit image when scan results arrive
@@ -320,6 +331,70 @@ public partial class ReceiptsModals : UserControl
             }
 
             e.Handled = true;
+        }
+    }
+
+    #endregion
+
+    #region Bulk Scan Drop Zone
+
+    private void OnDropZoneDragOver(object? sender, DragEventArgs e)
+    {
+#pragma warning disable CS0618
+        var files = e.Data.GetFiles();
+#pragma warning restore CS0618
+        if (files != null && files.Any())
+        {
+            e.DragEffects = DragDropEffects.Copy;
+            return;
+        }
+        e.DragEffects = DragDropEffects.None;
+    }
+
+    private void OnDropZoneDrop(object? sender, DragEventArgs e)
+    {
+#pragma warning disable CS0618
+        var files = e.Data.GetFiles();
+#pragma warning restore CS0618
+        if (files == null) return;
+
+        var paths = files
+            .Select(f => f.TryGetLocalPath())
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+
+        if (DataContext is ReceiptsModalsViewModel vm)
+        {
+            vm.AddFilesToQueue(paths!);
+        }
+    }
+
+    private async void OnBrowseFilesClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Receipts to Scan",
+                AllowMultiple = true,
+                FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
+            });
+
+            if (files.Count > 0 && DataContext is ReceiptsModalsViewModel vm)
+            {
+                var paths = files
+                    .Select(f => f.TryGetLocalPath())
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .ToList();
+                vm.AddFilesToQueue(paths!);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnBrowseFilesClick");
         }
     }
 

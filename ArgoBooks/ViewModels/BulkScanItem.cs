@@ -99,4 +99,18 @@ public partial class BulkScanItem : ObservableObject
     /// Whether this is a PDF file.
     /// </summary>
     public bool IsPdf => Path.GetExtension(FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+
+    // Computed status booleans for UI visibility bindings
+    public bool IsQueued => Status == BulkScanStatus.Queued;
+    public bool IsScanning => Status == BulkScanStatus.Scanning;
+    public bool IsSucceeded => Status == BulkScanStatus.Succeeded;
+    public bool IsFailed => Status == BulkScanStatus.Failed;
+
+    partial void OnStatusChanged(BulkScanStatus value)
+    {
+        OnPropertyChanged(nameof(IsQueued));
+        OnPropertyChanged(nameof(IsScanning));
+        OnPropertyChanged(nameof(IsSucceeded));
+        OnPropertyChanged(nameof(IsFailed));
+    }
 }
