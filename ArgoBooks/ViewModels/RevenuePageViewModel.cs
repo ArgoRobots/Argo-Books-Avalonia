@@ -361,8 +361,15 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         // Returns count
         var companyData = App.CompanyManager?.CompanyData;
-        ReturnsCount = companyData?.Returns.Count(r =>
-            _allRevenue.Any(s => s.Id == r.OriginalTransactionId)) ?? 0;
+        if (companyData?.Returns.Count > 0)
+        {
+            var revenueIds = new HashSet<string>(_allRevenue.Select(s => s.Id));
+            ReturnsCount = companyData.Returns.Count(r => revenueIds.Contains(r.OriginalTransactionId));
+        }
+        else
+        {
+            ReturnsCount = 0;
+        }
     }
 
     [RelayCommand]
