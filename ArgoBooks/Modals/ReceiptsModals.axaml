@@ -1342,8 +1342,7 @@
 
         <!-- ======================= BULK SCAN COMPLETE MODAL ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsBulkScanComplete}"
-                               ClosingCommand="{Binding CloseBulkReviewCommand}"
-                               CloseOnBackdropClick="False">
+                               ClosingCommand="{Binding RequestCloseBulkReviewCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -1498,13 +1497,13 @@
         </controls:ModalOverlay>
         <!-- ======================= BULK CAROUSEL REVIEW MODAL ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsBulkReviewOpen}"
-                               ClosingCommand="{Binding CloseBulkReviewCommand}"
-                               CloseOnBackdropClick="False">
+                               ClosingCommand="{Binding RequestCloseBulkReviewCommand}">
             <controls:ModalOverlay.ModalContent>
-                <Border Width="1100"
-                        Height="850"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
+                <Border Width="{Binding ModalWidth}"
+                        Height="{Binding ModalHeight}"
+                        Margin="{Binding ModalMargin}"
+                        HorizontalAlignment="{Binding ModalHorizontalAlignment}"
+                        VerticalAlignment="{Binding ModalVerticalAlignment}"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BoxShadow="0 8 32 0 #40000000">
@@ -2022,6 +2021,13 @@
                                                             BorderBrush="#16A34A"
                                                             IsVisible="{Binding IsApproved}"
                                                             IsHitTestVisible="False" />
+                                                    <!-- Skipped indicator (red border overlay) -->
+                                                    <Border Width="64" Height="64"
+                                                            CornerRadius="6"
+                                                            BorderThickness="2"
+                                                            BorderBrush="#DC2626"
+                                                            IsVisible="{Binding IsSkipped}"
+                                                            IsHitTestVisible="False" />
                                                     <!-- Green checkmark overlay -->
                                                     <Border IsVisible="{Binding IsApproved}"
                                                             Width="18" Height="18"
@@ -2032,6 +2038,21 @@
                                                             Margin="0,-2,-2,0"
                                                             IsHitTestVisible="False">
                                                         <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                                  Width="10" Height="10"
+                                                                  Foreground="White"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <!-- Red skip overlay -->
+                                                    <Border IsVisible="{Binding IsSkipped}"
+                                                            Width="18" Height="18"
+                                                            CornerRadius="9"
+                                                            Background="#DC2626"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Top"
+                                                            Margin="0,-2,-2,0"
+                                                            IsHitTestVisible="False">
+                                                        <PathIcon Data="{x:Static icons:Icons.ArrowForward}"
                                                                   Width="10" Height="10"
                                                                   Foreground="White"
                                                                   HorizontalAlignment="Center"
@@ -2050,8 +2071,16 @@
                                 Padding="24,12"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,1,0,0">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <TextBlock Grid.Column="0"
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                <Button Grid.Column="0"
+                                        Classes="icon-button"
+                                        ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
+                                        Command="{Binding ToggleFullscreenCommand}"
+                                        Margin="0,0,12,0">
+                                    <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <TextBlock Grid.Column="1"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center">
@@ -2060,7 +2089,7 @@
                                     <Run Text="{Binding BulkSucceededItems.Count}" />
                                     <Run Text=" approved" />
                                 </TextBlock>
-                                <Button Grid.Column="2"
+                                <Button Grid.Column="3"
                                         Classes="primary-button"
                                         Command="{Binding CreateAllApprovedTransactionsCommand}"
                                         IsEnabled="{Binding BulkAllReviewed}">

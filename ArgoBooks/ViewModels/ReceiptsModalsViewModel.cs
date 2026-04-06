@@ -275,12 +275,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// Narrower for loading/error states, wider for results.
     /// NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult ? 1100 : 520);
+    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult || IsBulkReviewOpen ? 1100 : 520);
 
     /// <summary>
     /// Gets the modal height. NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalHeight => IsFullscreen ? double.NaN : (HasScanResult ? 850 : 400);
+    public double ModalHeight => IsFullscreen ? double.NaN : (HasScanResult || IsBulkReviewOpen ? 850 : 400);
 
     /// <summary>
     /// Gets the modal margin. Zero when fullscreen, auto-centered otherwise.
@@ -549,6 +549,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var scanWord = count == 1 ? "scan" : "scans";
             return $"This will use {count} {scanWord}. {ScansUsed}/{ScansLimit} used this month.";
         }
+    }
+
+    partial void OnIsBulkReviewOpenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
     }
 
     partial void OnBulkScansCompletedChanged(int value)
@@ -902,6 +908,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         SaveCurrentFormToItem(CurrentBulkItem);
         CurrentBulkItem.IsApproved = true;
+        CurrentBulkItem.IsSkipped = false;
         CurrentBulkItem.IsReviewed = true;
         OnPropertyChanged(nameof(BulkApprovedCount));
         OnPropertyChanged(nameof(BulkAllReviewed));
@@ -946,6 +953,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void SkipBulkItem()
     {
+        if (CurrentBulkItem != null)
+        {
+            CurrentBulkItem.IsSkipped = true;
+            CurrentBulkItem.IsReviewed = true;
+            OnPropertyChanged(nameof(BulkAllReviewed));
+        }
+
         var succeeded = BulkSucceededItems;
         var nextIndex = CurrentBulkIndex + 1;
         if (nextIndex < succeeded.Count)
@@ -1175,6 +1189,16 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         BulkItems.Clear();
         CurrentBulkItem = null;
         ResetScanModal();
+    }
+
+    /// <summary>
+    /// Requests to close bulk review/complete modals, showing discard confirmation.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseBulkReview()
+    {
+        if (!await ConfirmDiscardNewAsync()) return;
+        CloseBulkReview();
     }
 
     #endregion

@@ -89,6 +89,12 @@ public partial class BulkScanItem : ObservableObject
     private bool _isReviewed;
 
     /// <summary>
+    /// Whether the user explicitly skipped this item.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSkipped;
+
+    /// <summary>
     /// Quick summary text shown on progress screen and carousel thumbnail.
     /// e.g., "Costco · $142.57"
     /// </summary>
