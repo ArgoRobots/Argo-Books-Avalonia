@@ -683,63 +683,24 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             }
         }
 
-        // Read and preprocess all files first
-        foreach (var item in BulkItems)
-        {
-            if (token.IsCancellationRequested) break;
-            try
-            {
-                item.FileData = await File.ReadAllBytesAsync(item.FilePath, token);
-                var isPdf = item.IsPdf;
-                var fileData = item.FileData;
-                var fileName = item.FileName;
-
-                item.PreprocessedData = await Task.Run(() =>
-                    ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
-                item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
-
-                _ = Task.Run(async () =>
-                {
-                    var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
-                    Directory.CreateDirectory(tempDir);
-                    var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
-
-                    #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
-                    var previewBytes = isPdf
-                        ? ReceiptImageHelper.RenderPdfFirstPage(fileData)
-                        : item.PreprocessedData;
-                    #pragma warning restore CA1416
-
-                    if (previewBytes != null)
-                    {
-                        await File.WriteAllBytesAsync(previewPath, previewBytes);
-                        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                            item.PreviewImagePath = previewPath);
-                    }
-                }, token);
-            }
-            catch (Exception ex)
-            {
-                item.Status = BulkScanStatus.Failed;
-                item.ErrorMessage = ex.Message;
-                BulkScansCompleted++;
-                BulkScansFailed++;
-            }
-        }
-
+        // Pipeline: each item reads, preprocesses, generates preview, and scans
+        // in a single task. SemaphoreSlim(3) gates concurrency across all stages.
         var semaphore = new SemaphoreSlim(3);
-        var scanTasks = BulkItems
-            .Where(i => i.Status == BulkScanStatus.Queued && i.PreprocessedData != null)
-            .Select(item => ScanSingleItemAsync(item, semaphore, token))
+        var tasks = BulkItems
+            .Select(item => ProcessAndScanItemAsync(item, semaphore, token))
             .ToList();
 
-        await Task.WhenAll(scanTasks);
+        await Task.WhenAll(tasks);
 
         IsBulkScanning = false;
         IsBulkScanComplete = true;
     }
 
-    private async Task ScanSingleItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
+    /// <summary>
+    /// Pipelines a single item through: read file → preprocess → generate preview → scan API.
+    /// All stages run within the semaphore so up to 3 items process simultaneously.
+    /// </summary>
+    private async Task ProcessAndScanItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
     {
         await semaphore.WaitAsync(token);
         try
@@ -749,6 +710,39 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                 item.Status = BulkScanStatus.Scanning);
 
+            // 1. Read file
+            item.FileData = await File.ReadAllBytesAsync(item.FilePath, token);
+            var isPdf = item.IsPdf;
+            var fileData = item.FileData;
+            var fileName = item.FileName;
+
+            // 2. Preprocess (CPU-bound: EXIF fix, contrast, sharpen)
+            item.PreprocessedData = await Task.Run(() =>
+                ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
+            item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
+
+            // 3. Generate preview (fire-and-forget, non-blocking)
+            _ = Task.Run(async () =>
+            {
+                var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
+                Directory.CreateDirectory(tempDir);
+                var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
+
+                #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
+                var previewBytes = isPdf
+                    ? ReceiptImageHelper.RenderPdfFirstPage(fileData)
+                    : item.PreprocessedData;
+                #pragma warning restore CA1416
+
+                if (previewBytes != null)
+                {
+                    await File.WriteAllBytesAsync(previewPath, previewBytes);
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                        item.PreviewImagePath = previewPath);
+                }
+            }, token);
+
+            // 4. Check usage
             if (_usageService != null)
             {
                 var usageCheck = await _usageService.CheckUsageAsync();
@@ -765,6 +759,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }
             }
 
+            // 5. Scan via API
             var result = await Task.Run(() =>
                 _scannerService!.ScanReceiptAsync(item.PreprocessedData!, item.ScanFileName, skipPreprocessing: true, token), token);
 
@@ -832,7 +827,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         BulkScansCompleted--;
 
         var semaphore = new SemaphoreSlim(1);
-        await ScanSingleItemAsync(item, semaphore, _bulkCancellationSource?.Token ?? CancellationToken.None);
+        await ProcessAndScanItemAsync(item, semaphore, _bulkCancellationSource?.Token ?? CancellationToken.None);
     }
 
     [RelayCommand]
