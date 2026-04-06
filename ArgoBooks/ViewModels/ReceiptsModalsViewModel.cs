@@ -1149,9 +1149,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var createdExpenses = new List<Expense>();
         var createdRevenues = new List<Revenue>();
         var createdReceipts = new List<Receipt>();
-        var createdSuppliers = new List<Supplier>();
-        var createdCategories = new List<Category>();
-        var createdProducts = new List<Product>();
 
         // Pre-encode all receipt images in parallel (CPU-bound FixOrientation + Base64)
         var encodedImages = await Task.Run(() =>
@@ -1172,29 +1169,33 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         foreach (var item in approvedItems)
         {
-            PopulateScanResultsForBulkItem(item);
-
-            _createdSupplierForUndo = null;
-            _createdCategoryForUndo = null;
-            _createdProductsForUndo.Clear();
-
-            decimal.TryParse(ExtractedTotal, out var total);
-            decimal.TryParse(ExtractedSubtotal, out var subtotal);
-            decimal.TryParse(ExtractedTax, out var taxAmount);
-            decimal.TryParse(ExtractedDiscount, out var discount);
+            var scanResult = item.ScanResult!;
+            var total = scanResult.TotalAmount ?? 0;
+            var subtotal = scanResult.Subtotal ?? 0;
+            var taxAmount = scanResult.TaxAmount ?? 0;
+            var discount = scanResult.Discount ?? 0;
+            var supplierName = scanResult.SupplierName ?? string.Empty;
+            var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
+            var isRevenue = item.IsRevenueOverride ?? false;
+            var notes = item.Notes ?? string.Empty;
+            var paymentMethod = scanResult.PaymentMethod ?? "Cash";
 
             if (total <= 0) continue;
 
-            var lineItems = LineItems.Select(li =>
+            // Build line items directly from saved scan result + product IDs
+            var productIds = item.LineItemProductIds;
+            var lineItems = scanResult.LineItems.Select((li, idx) =>
             {
-                decimal.TryParse(li.Quantity, out var qty);
-                decimal.TryParse(li.UnitPrice, out var unitPrice);
+                var productId = productIds != null && idx < productIds.Count ? productIds[idx] : null;
+                Product? product = null;
+                if (productId != null)
+                    product = companyData.Products?.FirstOrDefault(p => p.Id == productId);
                 return new LineItem
                 {
-                    ProductId = li.SelectedProduct?.Id,
-                    Description = li.SelectedProduct?.Name ?? li.Description,
-                    Quantity = qty > 0 ? qty : 1,
-                    UnitPrice = unitPrice
+                    ProductId = productId,
+                    Description = product?.Name ?? li.Description,
+                    Quantity = li.Quantity > 0 ? li.Quantity : 1,
+                    UnitPrice = li.UnitPrice
                 };
             }).Where(li => !string.IsNullOrWhiteSpace(li.Description) || li.ProductId != null).ToList();
 
@@ -1206,20 +1207,20 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var receipt = new Receipt
             {
                 Id = receiptId,
-                TransactionType = IsRevenue ? "Revenue" : "Expense",
+                TransactionType = isRevenue ? "Revenue" : "Expense",
                 FileName = item.ScanFileName,
                 FileType = GetMimeType(item.ScanFileName),
                 FileSize = item.PreprocessedData?.Length ?? 0,
                 FileData = fileData,
                 Amount = total,
-                Date = ExtractedDate?.DateTime ?? DateTime.Now,
-                Supplier = ExtractedSupplier,
+                Date = transactionDate,
+                Supplier = supplierName,
                 Source = "AI Scanned",
-                OcrData = CreateOcrData(),
+                OcrData = CreateOcrDataFromScanResult(scanResult),
                 CreatedAt = DateTime.Now
             };
 
-            if (IsRevenue)
+            if (isRevenue)
             {
                 companyData.IdCounters.Revenue++;
                 var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
@@ -1227,9 +1228,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 var revenue = new Revenue
                 {
                     Id = revenueId,
-                    Date = ExtractedDate?.DateTime ?? DateTime.Now,
+                    Date = transactionDate,
                     CustomerId = null,
-                    Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedSupplier,
+                    Description = lineItems.Count > 0 ? lineItems[0].Description : supplierName,
                     LineItems = lineItems,
                     Quantity = lineItems.Sum(li => li.Quantity),
                     UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
@@ -1239,9 +1240,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     TaxAmount = taxAmount,
                     Discount = discount,
                     Total = total,
-                    PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var rpm) ? rpm : PaymentMethod.Cash,
+                    PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var rpm) ? rpm : PaymentMethod.Cash,
                     PaymentStatus = "Paid",
-                    Notes = Notes,
+                    Notes = notes,
                     ReceiptId = receiptId,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
@@ -1259,9 +1260,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 var expense = new Expense
                 {
                     Id = expenseId,
-                    Date = ExtractedDate?.DateTime ?? DateTime.Now,
-                    SupplierId = SelectedSupplier?.Id,
-                    Description = lineItems.Count > 0 ? lineItems[0].Description : ExtractedSupplier,
+                    Date = transactionDate,
+                    SupplierId = item.SelectedSupplierId,
+                    Description = lineItems.Count > 0 ? lineItems[0].Description : supplierName,
                     LineItems = lineItems,
                     Quantity = lineItems.Sum(li => li.Quantity),
                     UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
@@ -1270,8 +1271,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     TaxAmount = taxAmount,
                     Discount = discount,
                     Total = total,
-                    PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var epm) ? epm : PaymentMethod.Cash,
-                    Notes = Notes,
+                    PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var epm) ? epm : PaymentMethod.Cash,
+                    Notes = notes,
                     ReceiptId = receiptId,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
@@ -1284,12 +1285,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             companyData.Receipts.Add(receipt);
             createdReceipts.Add(receipt);
-
-            if (_createdSupplierForUndo != null)
-                createdSuppliers.Add(_createdSupplierForUndo);
-            if (_createdCategoryForUndo != null)
-                createdCategories.Add(_createdCategoryForUndo);
-            createdProducts.AddRange(_createdProductsForUndo);
         }
 
         var action = new DelegateAction(
@@ -1299,20 +1294,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 foreach (var e in createdExpenses) companyData.Expenses.Remove(e);
                 foreach (var r in createdRevenues) companyData.Revenues.Remove(r);
                 foreach (var r in createdReceipts) companyData.Receipts.Remove(r);
-                foreach (var p in createdProducts) companyData.Products?.Remove(p);
-                foreach (var c in createdCategories) companyData.Categories.Remove(c);
-                foreach (var s in createdSuppliers) companyData.Suppliers.Remove(s);
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                foreach (var s in createdSuppliers) companyData.Suppliers.Add(s);
-                foreach (var c in createdCategories) companyData.Categories.Add(c);
-                foreach (var p in createdProducts) companyData.Products?.Add(p);
                 foreach (var e in createdExpenses) companyData.Expenses.Add(e);
                 foreach (var r in createdRevenues) companyData.Revenues.Add(r);
                 foreach (var r in createdReceipts) companyData.Receipts.Add(r);
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
         App.UndoRedoManager.RecordAction(action);
@@ -1883,8 +1870,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     companyData.Categories.Remove(capturedCategory);
                 if (capturedSupplier != null)
                     companyData.Suppliers.Remove(capturedSupplier);
-
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
@@ -1898,7 +1883,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
                 companyData.Expenses.Add(capturedExpense);
                 companyData.Receipts.Add(capturedReceipt);
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
         companyData.Expenses.Add(expense);
@@ -1973,8 +1957,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     companyData.Categories.Remove(capturedCategory);
                 if (capturedSupplier != null)
                     companyData.Suppliers.Remove(capturedSupplier);
-
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
@@ -1988,7 +1970,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
                 companyData.Revenues.Add(capturedRevenue);
                 companyData.Receipts.Add(capturedReceipt);
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
         companyData.Revenues.Add(revenue);
@@ -2713,6 +2694,28 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 };
             }).ToList(),
             ExtractedItems = LineItems.Select(li => li.Description).ToList()
+        };
+    }
+
+    private static OcrData CreateOcrDataFromScanResult(ReceiptScanResult result)
+    {
+        return new OcrData
+        {
+            ExtractedSupplier = result.SupplierName ?? string.Empty,
+            ExtractedDate = result.TransactionDate,
+            ExtractedAmount = result.TotalAmount ?? 0,
+            ExtractedSubtotal = result.Subtotal ?? 0,
+            ExtractedTaxAmount = result.TaxAmount ?? 0,
+            Confidence = result.Confidence,
+            LineItems = result.LineItems.Select(li => new OcrLineItem
+            {
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitPrice = li.UnitPrice,
+                TotalPrice = li.TotalPrice,
+                Confidence = li.Confidence
+            }).ToList(),
+            ExtractedItems = result.LineItems.Select(li => li.Description).ToList()
         };
     }
 

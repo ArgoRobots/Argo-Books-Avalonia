@@ -154,6 +154,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     #region Receipts Collection
 
     private readonly List<Receipt> _allReceipts = [];
+    private CancellationTokenSource? _imageLoadCts;
 
     public BatchObservableCollection<ReceiptDisplayItem> Receipts { get; } = [];
 
@@ -387,14 +388,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             App.ReceiptsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReceiptsModalsViewModel.FiltersCleared += OnFiltersCleared;
-            App.ReceiptsModalsViewModel.ReceiptScanned += OnReceiptScanned;
         }
-    }
-
-    private void OnReceiptScanned(object? sender, EventArgs e)
-    {
-        // Refresh the receipts list after a new scan
-        LoadReceipts();
     }
 
     private void OnFiltersApplied(object? sender, EventArgs e)
@@ -524,8 +518,23 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         // Sort by date descending (newest first)
         filtered = filtered.OrderByDescending(r => r.Date).ToList();
 
-        // Create display items
-        var displayItems = filtered.Select(receipt => new ReceiptDisplayItem
+        // Calculate pagination on raw receipts (before creating display items)
+        var totalCount = filtered.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalCount);
+
+        // Paginate BEFORE creating display items — only process the visible page
+        var pagedReceipts = filtered
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        // Create display items with cached image paths (no file I/O for cache hits)
+        var displayItems = pagedReceipts.Select(receipt => new ReceiptDisplayItem
         {
             Id = receipt.Id,
             TransactionId = receipt.TransactionId,
@@ -539,23 +548,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             Source = receipt.Source,
             IsAiScanned = receipt.IsAiScanned,
             CreatedAt = receipt.CreatedAt,
-            ImagePath = GetReceiptImagePath(receipt)
+            ImagePath = GetCachedReceiptImagePath(receipt)
         }).ToList();
-
-        // Calculate pagination
-        var totalCount = displayItems.Count;
-        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
-        if (CurrentPage > TotalPages)
-            CurrentPage = TotalPages;
-
-        UpdatePageNumbers();
-        UpdatePaginationText(totalCount);
-
-        // Apply pagination and add to collection
-        var pagedReceipts = displayItems
-            .Skip((CurrentPage - 1) * PageSize)
-            .Take(PageSize)
-            .ToList();
 
         // Unsubscribe from previous receipt items before replacing
         foreach (var oldItem in Receipts)
@@ -563,12 +557,15 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             oldItem.PropertyChanged -= OnReceiptItemPropertyChanged;
         }
 
-        foreach (var item in pagedReceipts)
+        foreach (var item in displayItems)
         {
             item.PropertyChanged += OnReceiptItemPropertyChanged;
         }
 
-        Receipts.ReplaceAll(pagedReceipts);
+        Receipts.ReplaceAll(displayItems);
+
+        // Generate images async for cache misses (off the UI thread)
+        _ = LoadMissingImagesAsync(displayItems, pagedReceipts);
     }
 
     private void OnReceiptItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -620,7 +617,31 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
     }
 
-    private static string GetReceiptImagePath(Receipt receipt)
+    private static string GetCachedReceiptImagePath(Receipt receipt)
+    {
+        if (string.IsNullOrEmpty(receipt.FileData))
+            return string.Empty;
+
+        try
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
+
+            var isPdf = receipt.FileType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) == true
+                        || receipt.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+            var path = isPdf
+                ? Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"))
+                : Path.Combine(tempDir, receipt.FileName);
+
+            return File.Exists(path) ? path : string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string GenerateReceiptImagePath(Receipt receipt)
     {
         if (string.IsNullOrEmpty(receipt.FileData))
             return string.Empty;
@@ -636,7 +657,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (isPdf)
             {
-                // Render first page of the PDF as a JPEG for preview
                 #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
                 var rendered = ReceiptImageHelper.RenderPdfFirstPage(bytes);
                 #pragma warning restore CA1416
@@ -655,6 +675,46 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             return string.Empty;
         }
+    }
+
+    private async Task LoadMissingImagesAsync(List<ReceiptDisplayItem> displayItems, List<Receipt> receipts)
+    {
+        _imageLoadCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _imageLoadCts = cts;
+
+        try
+        {
+            var toLoad = new List<(ReceiptDisplayItem Display, Receipt Receipt)>();
+            for (var i = 0; i < displayItems.Count; i++)
+            {
+                if (string.IsNullOrEmpty(displayItems[i].ImagePath) && !string.IsNullOrEmpty(receipts[i].FileData))
+                    toLoad.Add((displayItems[i], receipts[i]));
+            }
+
+            if (toLoad.Count == 0) return;
+
+            var results = await Task.Run(() =>
+            {
+                var paths = new List<(ReceiptDisplayItem Display, string Path)>();
+                foreach (var (display, receipt) in toLoad)
+                {
+                    cts.Token.ThrowIfCancellationRequested();
+                    var path = GenerateReceiptImagePath(receipt);
+                    if (!string.IsNullOrEmpty(path))
+                        paths.Add((display, path));
+                }
+                return paths;
+            }, cts.Token);
+
+            cts.Token.ThrowIfCancellationRequested();
+
+            foreach (var (display, path) in results)
+            {
+                display.ImagePath = path;
+            }
+        }
+        catch (OperationCanceledException) { }
     }
 
     #endregion
