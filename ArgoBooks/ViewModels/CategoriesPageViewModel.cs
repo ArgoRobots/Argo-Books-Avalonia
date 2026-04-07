@@ -338,7 +338,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Categories")
+        if (App.NavigationService?.CurrentPageName != PageNames.Categories)
         {
             _needsRefresh = true;
             return;
@@ -348,7 +348,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Categories" && _needsRefresh)
+        if (e.PageName == PageNames.Categories && _needsRefresh)
         {
             _needsRefresh = false;
             LoadCategories();

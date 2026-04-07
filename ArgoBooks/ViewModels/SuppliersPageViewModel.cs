@@ -343,7 +343,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Suppliers")
+        if (App.NavigationService?.CurrentPageName != PageNames.Suppliers)
         {
             _needsRefresh = true;
             return;
@@ -353,7 +353,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Suppliers" && _needsRefresh)
+        if (e.PageName == PageNames.Suppliers && _needsRefresh)
         {
             _needsRefresh = false;
             LoadSuppliers();

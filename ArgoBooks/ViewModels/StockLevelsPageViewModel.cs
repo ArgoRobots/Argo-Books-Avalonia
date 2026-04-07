@@ -286,7 +286,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "StockLevels")
+        if (App.NavigationService?.CurrentPageName != PageNames.StockLevels)
         {
             _needsRefresh = true;
             return;
@@ -296,7 +296,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "StockLevels" && _needsRefresh)
+        if (e.PageName == PageNames.StockLevels && _needsRefresh)
         {
             _needsRefresh = false;
             LoadItems();

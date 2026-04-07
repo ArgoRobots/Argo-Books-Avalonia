@@ -237,7 +237,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "LostDamaged")
+        if (App.NavigationService?.CurrentPageName != PageNames.LostDamaged)
         {
             _needsRefresh = true;
             return;
@@ -247,7 +247,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "LostDamaged" && _needsRefresh)
+        if (e.PageName == PageNames.LostDamaged && _needsRefresh)
         {
             _needsRefresh = false;
             LoadItems();

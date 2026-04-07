@@ -275,7 +275,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "StockAdjustments")
+        if (App.NavigationService?.CurrentPageName != PageNames.StockAdjustments)
         {
             _needsRefresh = true;
             return;
@@ -285,7 +285,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "StockAdjustments" && _needsRefresh)
+        if (e.PageName == PageNames.StockAdjustments && _needsRefresh)
         {
             _needsRefresh = false;
             LoadAdjustments();

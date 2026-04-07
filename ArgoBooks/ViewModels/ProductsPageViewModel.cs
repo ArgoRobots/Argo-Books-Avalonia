@@ -410,7 +410,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Products")
+        if (App.NavigationService?.CurrentPageName != PageNames.Products)
         {
             _needsRefresh = true;
             return;
@@ -420,7 +420,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Products" && _needsRefresh)
+        if (e.PageName == PageNames.Products && _needsRefresh)
         {
             _needsRefresh = false;
             LoadProducts();

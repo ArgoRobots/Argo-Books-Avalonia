@@ -275,7 +275,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Revenue")
+        if (App.NavigationService?.CurrentPageName != PageNames.Revenue)
         {
             _needsRefresh = true;
             return;
@@ -285,7 +285,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Revenue" && _needsRefresh)
+        if (e.PageName == PageNames.Revenue && _needsRefresh)
         {
             _needsRefresh = false;
             LoadRevenue();

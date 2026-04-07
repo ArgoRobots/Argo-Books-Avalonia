@@ -195,7 +195,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Locations")
+        if (App.NavigationService?.CurrentPageName != PageNames.Locations)
         {
             _needsRefresh = true;
             return;
@@ -205,7 +205,7 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Locations" && _needsRefresh)
+        if (e.PageName == PageNames.Locations && _needsRefresh)
         {
             _needsRefresh = false;
             LoadLocations();

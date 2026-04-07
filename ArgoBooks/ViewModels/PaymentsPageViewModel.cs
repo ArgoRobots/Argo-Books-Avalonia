@@ -433,7 +433,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Payments")
+        if (App.NavigationService?.CurrentPageName != PageNames.Payments)
         {
             _needsRefresh = true;
             return;
@@ -443,7 +443,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Payments" && _needsRefresh)
+        if (e.PageName == PageNames.Payments && _needsRefresh)
         {
             _needsRefresh = false;
             LoadPayments();

@@ -279,7 +279,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Customers")
+        if (App.NavigationService?.CurrentPageName != PageNames.Customers)
         {
             _needsRefresh = true;
             return;
@@ -289,7 +289,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Customers" && _needsRefresh)
+        if (e.PageName == PageNames.Customers && _needsRefresh)
         {
             _needsRefresh = false;
             LoadCustomers();

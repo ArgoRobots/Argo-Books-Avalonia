@@ -227,7 +227,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "RentalRecords")
+        if (App.NavigationService?.CurrentPageName != PageNames.RentalRecords)
         {
             _needsRefresh = true;
             return;
@@ -237,7 +237,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "RentalRecords" && _needsRefresh)
+        if (e.PageName == PageNames.RentalRecords && _needsRefresh)
         {
             _needsRefresh = false;
             LoadRecords();

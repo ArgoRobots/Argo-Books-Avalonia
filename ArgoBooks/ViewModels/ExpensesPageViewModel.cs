@@ -282,7 +282,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Expenses")
+        if (App.NavigationService?.CurrentPageName != PageNames.Expenses)
         {
             _needsRefresh = true;
             return;
@@ -292,7 +292,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Expenses" && _needsRefresh)
+        if (e.PageName == PageNames.Expenses && _needsRefresh)
         {
             _needsRefresh = false;
             LoadExpenses();

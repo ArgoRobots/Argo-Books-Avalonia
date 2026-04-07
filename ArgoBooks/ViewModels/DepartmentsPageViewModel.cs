@@ -261,7 +261,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != "Departments")
+        if (App.NavigationService?.CurrentPageName != PageNames.Departments)
         {
             _needsRefresh = true;
             return;
@@ -271,7 +271,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == "Departments" && _needsRefresh)
+        if (e.PageName == PageNames.Departments && _needsRefresh)
         {
             _needsRefresh = false;
             LoadDepartments();
