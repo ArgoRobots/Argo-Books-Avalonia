@@ -251,18 +251,20 @@ public partial class EmojiPickerViewModel : ObservableObject
         }
         else if (SelectedTab.Name == "Recent")
         {
-            // Get recent emojis with their names
+            // Get recent emojis with their names (O(1) lookup via dictionary)
+            var emojiLookup = EmojiData.AllEmojis.ToDictionary(e => e.Emoji);
             var recentEmojis = _settings.RecentEmojis
-                .Select(emoji => EmojiData.AllEmojis.FirstOrDefault(e => e.Emoji == emoji) ??
+                .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
                                  new EmojiData.EmojiItem(emoji, ""))
                 .ToList();
             emojis = recentEmojis;
         }
         else if (SelectedTab.Name == "Favorites")
         {
-            // Get favorite emojis with their names
+            // Get favorite emojis with their names (O(1) lookup via dictionary)
+            var emojiLookup = EmojiData.AllEmojis.ToDictionary(e => e.Emoji);
             var favoriteEmojis = _settings.FavoriteEmojis
-                .Select(emoji => EmojiData.AllEmojis.FirstOrDefault(e => e.Emoji == emoji) ??
+                .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
                                  new EmojiData.EmojiItem(emoji, ""))
                 .ToList();
             emojis = favoriteEmojis;

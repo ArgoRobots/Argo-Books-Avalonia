@@ -250,7 +250,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
         _isExpensesTab = isExpensesTab;
 
         var companyData = App.CompanyManager?.CompanyData;
-        var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
+        var category = companyData?.GetCategory(item.Id);
         if (category == null) return;
 
         _editingCategory = category;
@@ -373,7 +373,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
                 }
             }
 
-            var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
+            var category = companyData?.GetCategory(item.Id);
             if (category == null) return;
 
             var children = companyData?.Categories.Where(c => c.ParentId == category.Id).ToList();
@@ -441,7 +441,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
                 {
                     companyData?.Categories.Add(deletedCategory);
                     if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Add(child); }
-                    else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                    else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.GetCategory(kvp.Key);
                         child?.ParentId = kvp.Value;
                     } }
                     companyData?.MarkAsModified();
@@ -450,7 +450,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
                 () =>
                 {
                     if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Remove(child); }
-                    else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                    else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.GetCategory(kvp.Key);
                         child?.ParentId = null;
                     } }
                     companyData?.Categories.Remove(deletedCategory);
@@ -501,7 +501,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var category = companyData?.Categories.FirstOrDefault(c => c.Id == _movingCategory.Id);
+        var category = companyData?.GetCategory(_movingCategory.Id);
         if (category == null) return;
 
         var oldParentId = category.ParentId;
