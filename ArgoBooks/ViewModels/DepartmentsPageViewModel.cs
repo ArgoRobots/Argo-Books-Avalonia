@@ -354,8 +354,14 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
                 .Select(x => x.Department);
         }
 
+        // Pre-build employee count lookup for O(1) access per department
+        var employeeCountByDept = companyData?.Employees
+            .Where(e => !string.IsNullOrEmpty(e.DepartmentId))
+            .GroupBy(e => e.DepartmentId!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         // Create display items with employee counts
-        var displayItems = departments.Select(dept => CreateDisplayItem(dept, companyData)).ToList();
+        var displayItems = departments.Select(dept => CreateDisplayItem(dept, employeeCountByDept)).ToList();
 
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
@@ -399,10 +405,10 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Creates a display item for a department.
     /// </summary>
-    private DepartmentDisplayItem CreateDisplayItem(Department department, CompanyData? companyData)
+    private DepartmentDisplayItem CreateDisplayItem(Department department, Dictionary<string, int>? employeeCountByDept)
     {
-        // Count employees in this department
-        var employeeCount = companyData?.Employees.Count(e => e.DepartmentId == department.Id) ?? 0;
+        // Look up employee count from pre-built dictionary
+        var employeeCount = employeeCountByDept?.GetValueOrDefault(department.Id) ?? 0;
 
         return new DepartmentDisplayItem
         {

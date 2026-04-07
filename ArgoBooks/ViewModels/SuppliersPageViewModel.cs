@@ -491,10 +491,16 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 : filtered.Where(s => !suppliersWithProducts.Contains(s.Id));
         }
 
+        // Pre-build product count lookup for O(1) access per supplier
+        var productCountBySupplier = companyData.Products
+            .Where(p => !string.IsNullOrEmpty(p.SupplierId))
+            .GroupBy(p => p.SupplierId!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         // Convert to a list and create display items with additional computed properties
         var displayItems = filtered.Select(supplier =>
         {
-            var productCount = companyData.Products.Count(p => p.SupplierId == supplier.Id);
+            var productCount = productCountBySupplier.GetValueOrDefault(supplier.Id);
             var isActive = productCount > 0;
 
             // Format address as comma-separated parts

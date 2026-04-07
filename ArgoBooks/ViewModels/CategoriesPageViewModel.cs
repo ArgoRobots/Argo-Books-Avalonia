@@ -414,6 +414,12 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
+        // Pre-build product count lookup for O(1) access per category
+        var productCountByCategory = App.CompanyManager?.CompanyData?.Products
+            .Where(p => !string.IsNullOrEmpty(p.CategoryId))
+            .GroupBy(p => p.CategoryId!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         // Build display items list (flat, with parent-child info)
         var displayItems = new List<CategoryDisplayItem>();
 
@@ -423,14 +429,14 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         foreach (var parent in parentCategories)
         {
             var childCount = CountChildren(parent.Id);
-            displayItems.Add(CreateDisplayItem(parent, null, childCount));
+            displayItems.Add(CreateDisplayItem(parent, null, childCount, productCountByCategory));
 
             // Add children
             var children = categories.Where(c => c.ParentId == parent.Id);
             foreach (var child in children)
             {
                 var grandchildCount = CountChildren(child.Id);
-                displayItems.Add(CreateDisplayItem(child, parent.Name, grandchildCount, isChild: true));
+                displayItems.Add(CreateDisplayItem(child, parent.Name, grandchildCount, productCountByCategory, isChild: true));
             }
         }
 
@@ -442,7 +448,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         foreach (var orphan in orphans)
         {
             var childCount = CountChildren(orphan.Id);
-            displayItems.Add(CreateDisplayItem(orphan, "Unknown", childCount));
+            displayItems.Add(CreateDisplayItem(orphan, "Unknown", childCount, productCountByCategory));
         }
 
         // Apply sorting
@@ -480,11 +486,10 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         OnPropertyChanged(nameof(CurrentCategories));
     }
 
-    private CategoryDisplayItem CreateDisplayItem(Category category, string? parentName, int childCount, bool isChild = false)
+    private CategoryDisplayItem CreateDisplayItem(Category category, string? parentName, int childCount, Dictionary<string, int>? productCountByCategory, bool isChild = false)
     {
-        // Count products using this category
-        var productCount = App.CompanyManager?.CompanyData?.Products
-            .Count(p => p.CategoryId == category.Id) ?? 0;
+        // Look up product count from pre-built dictionary
+        var productCount = productCountByCategory?.GetValueOrDefault(category.Id) ?? 0;
 
         return new CategoryDisplayItem
         {
