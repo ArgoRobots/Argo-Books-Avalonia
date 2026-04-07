@@ -582,9 +582,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             .ToHashSet();
 
         // Filter products by category type
-        var filtered = _allProducts
-            .Where(p => string.IsNullOrEmpty(p.CategoryId) || categoryIds.Contains(p.CategoryId))
-            .ToList();
+        IEnumerable<Product> filtered = _allProducts
+            .Where(p => string.IsNullOrEmpty(p.CategoryId) || categoryIds.Contains(p.CategoryId));
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -612,8 +611,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 .ToHashSet();
 
             filtered = filtered
-                .Where(p => !string.IsNullOrEmpty(p.CategoryId) && itemTypeCategories.Contains(p.CategoryId))
-                .ToList();
+                .Where(p => !string.IsNullOrEmpty(p.CategoryId) && itemTypeCategories.Contains(p.CategoryId));
         }
 
         // Apply category filter
@@ -622,7 +620,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             var categoryOption = AvailableCategories.FirstOrDefault(c => c.Name == FilterCategory);
             if (categoryOption?.Id != null)
             {
-                filtered = filtered.Where(p => p.CategoryId == categoryOption.Id).ToList();
+                filtered = filtered.Where(p => p.CategoryId == categoryOption.Id);
             }
         }
 
@@ -632,7 +630,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             var supplierOption = AvailableSuppliers.FirstOrDefault(s => s.Name == FilterSupplier);
             if (supplierOption?.Id != null)
             {
-                filtered = filtered.Where(p => p.SupplierId == supplierOption.Id).ToList();
+                filtered = filtered.Where(p => p.SupplierId == supplierOption.Id);
             }
         }
 

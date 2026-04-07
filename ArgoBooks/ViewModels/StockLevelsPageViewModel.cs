@@ -400,14 +400,14 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         if (companyData == null)
             return;
 
-        var filtered = _allItems.ToList();
+        IEnumerable<InventoryItem> filtered = _allItems;
 
         // Apply tab filter
         filtered = SelectedTabIndex switch
         {
-            1 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.LowStock).ToList(),
-            2 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.OutOfStock).ToList(),
-            3 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.Overstock).ToList(),
+            1 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.LowStock),
+            2 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.OutOfStock),
+            3 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.Overstock),
             _ => filtered
         };
 
@@ -445,7 +445,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 .Select(p => p.Id)
                 .ToHashSet();
 
-            filtered = filtered.Where(i => categoryProducts.Contains(i.ProductId)).ToList();
+            filtered = filtered.Where(i => categoryProducts.Contains(i.ProductId));
         }
 
         // Apply location filter
@@ -456,7 +456,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
             if (locationId != null)
             {
-                filtered = filtered.Where(i => i.LocationId == locationId).ToList();
+                filtered = filtered.Where(i => i.LocationId == locationId);
             }
         }
 
@@ -474,7 +474,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
             if (targetStatus.HasValue)
             {
-                filtered = filtered.Where(i => i.CalculateStatus() == targetStatus.Value).ToList();
+                filtered = filtered.Where(i => i.CalculateStatus() == targetStatus.Value);
             }
         }
 

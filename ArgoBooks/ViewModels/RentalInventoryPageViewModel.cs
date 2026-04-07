@@ -312,7 +312,7 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             return product.SupplierId;
         }
 
-        var filtered = _allItems.ToList();
+        IEnumerable<RentalItem> filtered = _allItems;
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -335,9 +335,9 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
         {
             filtered = FilterStatus switch
             {
-                "Available" => filtered.Where(i => ResolveInStock(i) > 0 && i.Status == EntityStatus.Active).ToList(),
-                "In Maintenance" => filtered.Where(i => i.Status == EntityStatus.Inactive).ToList(),
-                "All Rented" => filtered.Where(i => ResolveInStock(i) == 0 && i.Status == EntityStatus.Active).ToList(),
+                "Available" => filtered.Where(i => ResolveInStock(i) > 0 && i.Status == EntityStatus.Active),
+                "In Maintenance" => filtered.Where(i => i.Status == EntityStatus.Inactive),
+                "All Rented" => filtered.Where(i => ResolveInStock(i) == 0 && i.Status == EntityStatus.Active),
                 _ => filtered
             };
         }
@@ -347,8 +347,8 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
         {
             filtered = FilterAvailability switch
             {
-                "Available Only" => filtered.Where(i => ResolveInStock(i) > 0 && i.Status == EntityStatus.Active).ToList(),
-                "Unavailable Only" => filtered.Where(i => ResolveInStock(i) == 0 || i.Status != EntityStatus.Active).ToList(),
+                "Available Only" => filtered.Where(i => ResolveInStock(i) > 0 && i.Status == EntityStatus.Active),
+                "Unavailable Only" => filtered.Where(i => ResolveInStock(i) == 0 || i.Status != EntityStatus.Active),
                 _ => filtered
             };
         }
@@ -359,18 +359,18 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             var supplier = companyData?.Suppliers.FirstOrDefault(s => s.Name == FilterSupplier);
             if (supplier != null)
             {
-                filtered = filtered.Where(i => ResolveSupplierId(i) == supplier.Id).ToList();
+                filtered = filtered.Where(i => ResolveSupplierId(i) == supplier.Id);
             }
         }
 
         // Apply daily rate filter
         if (decimal.TryParse(FilterDailyRateMin, out var minRate))
         {
-            filtered = filtered.Where(i => i.DailyRate >= minRate).ToList();
+            filtered = filtered.Where(i => i.DailyRate >= minRate);
         }
         if (decimal.TryParse(FilterDailyRateMax, out var maxRate))
         {
-            filtered = filtered.Where(i => i.DailyRate <= maxRate).ToList();
+            filtered = filtered.Where(i => i.DailyRate <= maxRate);
         }
 
         // Create display items
