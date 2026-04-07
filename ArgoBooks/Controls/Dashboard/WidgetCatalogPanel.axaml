@@ -1,0 +1,153 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             x:Class="ArgoBooks.Controls.Dashboard.WidgetCatalogPanel"
+             x:DataType="vm:WidgetCatalogViewModel"
+             IsVisible="{Binding IsOpen}"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+
+    <UserControl.Styles>
+        <Style Selector="Button.catalog-item-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.catalog-item-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.catalog-item-btn.already-added">
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+        <Style Selector="Button.catalog-close-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="MinWidth" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.catalog-close-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <!-- Semi-transparent backdrop -->
+        <Border Background="{DynamicResource OverlayBrush}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                PointerPressed="OnBackdropPointerPressed" />
+
+        <!-- Right-aligned slide-in panel -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1,0,0,0"
+                Width="340"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
+                BoxShadow="-4 0 16 0 #30000000">
+
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="20,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Add Widget"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Button Grid.Column="1"
+                                Classes="catalog-close-btn"
+                                Command="{Binding CloseCommand}"
+                                ToolTip.Tip="Close"
+                                Width="28" Height="28">
+                            <TextBlock Text="&#x2715;"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Scrollable category list -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Categories}"
+                                  Margin="16,8,16,16">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:CatalogCategory">
+                                <StackPanel Margin="0,8,0,0">
+                                    <!-- Category heading -->
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="4,0,0,8" />
+
+                                    <!-- Widget items -->
+                                    <ItemsControl ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:CatalogItem">
+                                                <Button Classes="catalog-item-btn"
+                                                        Classes.already-added="{Binding IsAlreadyAdded}"
+                                                        Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Margin="0,0,0,6">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                                        <!-- Icon -->
+                                                        <TextBlock Grid.Column="0"
+                                                                   Text="{Binding Definition.Icon}"
+                                                                   FontSize="20"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="0,0,12,0" />
+                                                        <!-- Name and description -->
+                                                        <StackPanel Grid.Column="1"
+                                                                    VerticalAlignment="Center"
+                                                                    Spacing="2">
+                                                            <TextBlock Text="{Binding Definition.Name}"
+                                                                       FontSize="13"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                            <TextBlock Text="{Binding Definition.Description}"
+                                                                       FontSize="11"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                        </StackPanel>
+                                                        <!-- "Added" indicator -->
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="Added"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="8,0,0,0"
+                                                                   IsVisible="{Binding IsAlreadyAdded}" />
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Panel>
+</UserControl>

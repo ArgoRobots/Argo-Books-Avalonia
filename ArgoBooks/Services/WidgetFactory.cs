@@ -1,5 +1,7 @@
+using ArgoBooks.Controls.Dashboard.Widgets;
 using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.ViewModels.Dashboard;
+using Avalonia.Controls;
 
 namespace ArgoBooks.Services;
 
@@ -47,10 +49,45 @@ public static class WidgetFactory
         return new WidgetHostViewModel(entry, viewModel, definition.AvailableSizes);
     }
 
-    // NOTE: Will be filled in as widget ViewModels are implemented in Tasks 4-10.
-    public static WidgetViewModelBase CreateViewModel(WidgetType type)
+    public static WidgetViewModelBase CreateViewModel(WidgetType type) => type switch
     {
-        // TODO: Will be filled as Tasks 4-10 are completed
-        throw new NotImplementedException($"Widget ViewModel for {type} not yet implemented");
-    }
+        WidgetType.StatCardRevenue => new StatCardWidgetViewModel(StatCardKind.Revenue),
+        WidgetType.StatCardExpenses => new StatCardWidgetViewModel(StatCardKind.Expenses),
+        WidgetType.StatCardOutstandingInvoices => new StatCardWidgetViewModel(StatCardKind.OutstandingInvoices),
+        WidgetType.StatCardActiveRentals => new StatCardWidgetViewModel(StatCardKind.ActiveRentals),
+        WidgetType.QuickActions => new QuickActionsWidgetViewModel(),
+        WidgetType.ProfitsChart => new ChartWidgetViewModel(ChartWidgetKind.Profits),
+        WidgetType.RevenueVsExpensesChart => new ChartWidgetViewModel(ChartWidgetKind.RevenueVsExpenses),
+        WidgetType.RecentTransactions => new RecentTransactionsWidgetViewModel(),
+        WidgetType.ActiveRentalsTable => new ActiveRentalsWidgetViewModel(),
+        WidgetType.SetupChecklist => new SetupChecklistWidgetViewModel(),
+        WidgetType.TopCustomers => new TopCustomersWidgetViewModel(),
+        WidgetType.LowStockAlerts => new LowStockAlertsWidgetViewModel(),
+        WidgetType.UpcomingInvoiceDueDates => new UpcomingInvoicesWidgetViewModel(),
+        WidgetType.ExpenseByCategory => new ExpenseByCategoryWidgetViewModel(),
+        WidgetType.CashFlowSummary => new CashFlowWidgetViewModel(),
+        WidgetType.OverdueRentals => new OverdueRentalsWidgetViewModel(),
+        _ => throw new ArgumentOutOfRangeException(nameof(type))
+    };
+
+    public static Control CreateView(WidgetType type) => type switch
+    {
+        WidgetType.StatCardRevenue or
+        WidgetType.StatCardExpenses or
+        WidgetType.StatCardOutstandingInvoices or
+        WidgetType.StatCardActiveRentals => new StatCardWidget(),
+        WidgetType.QuickActions => new QuickActionsWidget(),
+        WidgetType.ProfitsChart or
+        WidgetType.RevenueVsExpensesChart => new ChartWidget(),
+        WidgetType.RecentTransactions => new RecentTransactionsWidget(),
+        WidgetType.ActiveRentalsTable => new ActiveRentalsWidget(),
+        WidgetType.SetupChecklist => new SetupChecklistWidget(),
+        WidgetType.TopCustomers => new TopCustomersWidget(),
+        WidgetType.LowStockAlerts => new LowStockAlertsWidget(),
+        WidgetType.UpcomingInvoiceDueDates => new UpcomingInvoicesWidget(),
+        WidgetType.ExpenseByCategory => new ExpenseByCategoryWidget(),
+        WidgetType.CashFlowSummary => new CashFlowWidget(),
+        WidgetType.OverdueRentals => new OverdueRentalsWidget(),
+        _ => throw new ArgumentOutOfRangeException(nameof(type))
+    };
 }
