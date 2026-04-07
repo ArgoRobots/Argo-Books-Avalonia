@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             x:Class="ArgoBooks.Controls.Dashboard.WidgetHost"
+             x:DataType="vm:WidgetHostViewModel">
+
+    <UserControl.Styles>
+        <!-- Widget card base -->
+        <Style Selector="Border.widget-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <!-- Edit mode uses a thicker accent-colored border -->
+        <Style Selector="Border.widget-card.editing">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="Opacity" Value="0.95" />
+        </Style>
+        <!-- Overlay buttons -->
+        <Style Selector="Button.widget-overlay-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="MinWidth" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.widget-overlay-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.drag-handle">
+            <Setter Property="Cursor" Value="SizeAll" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <Border Classes="widget-card"
+                Classes.editing="{Binding IsEditMode}">
+            <ContentPresenter x:Name="WidgetContent"
+                              Content="{Binding WidgetViewModel}" />
+        </Border>
+
+        <!-- Edit mode overlay controls -->
+        <StackPanel x:Name="EditOverlay"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,8,8,0"
+                    Spacing="4"
+                    IsVisible="{Binding IsEditMode}">
+            <Button Classes="widget-overlay-btn drag-handle"
+                    x:Name="DragHandle"
+                    ToolTip.Tip="Drag to reorder">
+                <TextBlock Text="⠿" FontSize="14" />
+            </Button>
+            <Button Classes="widget-overlay-btn"
+                    Command="{Binding ToggleConfigCommand}"
+                    ToolTip.Tip="Configure widget">
+                <TextBlock Text="⚙" FontSize="12" />
+            </Button>
+            <Button Classes="widget-overlay-btn"
+                    Command="{Binding CycleSizeCommand}"
+                    ToolTip.Tip="Resize widget">
+                <TextBlock Text="↔" FontSize="12" />
+            </Button>
+            <Button Classes="widget-overlay-btn remove-btn"
+                    x:Name="RemoveButton"
+                    ToolTip.Tip="Remove widget">
+                <TextBlock Text="✕" FontSize="12" />
+            </Button>
+        </StackPanel>
+    </Panel>
+</UserControl>
