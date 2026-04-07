@@ -1443,7 +1443,9 @@ public class App : Application
 
         CompanyManager.CompanyOpened += async (_, args) =>
         {
-            _mainWindowViewModel.OpenCompany(args.CompanyName);
+            // Don't hide the welcome screen yet — keep it visible behind the loading
+            // overlay so the user doesn't see the half-initialized dashboard.
+            _mainWindowViewModel.CurrentCompanyName = args.CompanyName;
             var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
             _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath, logo);
@@ -1548,8 +1550,9 @@ public class App : Application
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
 
-            // Hide loading overlay only after the dashboard is in place,
-            // so the user never sees the welcome screen flash during initialization.
+            // Now that the dashboard is ready, hide the welcome screen and loading
+            // overlay together so the user never sees a half-initialized dashboard.
+            _mainWindowViewModel.OpenCompany(args.CompanyName);
             _mainWindowViewModel.HideLoading();
         };
 
