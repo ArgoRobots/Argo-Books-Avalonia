@@ -1713,48 +1713,11 @@ public class App : Application
             appShellVm.HeaderViewModel.HasUnsavedChanges = true;
         }
 
-        // Customer modals
-        _appShellViewModel.CustomerModalsViewModel.CustomerSaved += MarkUnsavedChanges;
-        _appShellViewModel.CustomerModalsViewModel.CustomerDeleted += MarkUnsavedChanges;
+        // Central handler for all modal save/delete events (wired lazily in each getter)
+        _appShellViewModel.UnsavedChangesMade += MarkUnsavedChanges;
 
-        // Product modals
-        _appShellViewModel.ProductModalsViewModel.ProductSaved += MarkUnsavedChanges;
-        _appShellViewModel.ProductModalsViewModel.ProductDeleted += MarkUnsavedChanges;
-
-        // Category modals
-        _appShellViewModel.CategoryModalsViewModel.CategorySaved += MarkUnsavedChanges;
-        _appShellViewModel.CategoryModalsViewModel.CategoryDeleted += MarkUnsavedChanges;
-
-        // Department modals
-        _appShellViewModel.DepartmentModalsViewModel.DepartmentSaved += MarkUnsavedChanges;
-        _appShellViewModel.DepartmentModalsViewModel.DepartmentDeleted += MarkUnsavedChanges;
-
-        // Supplier modals
-        _appShellViewModel.SupplierModalsViewModel.SupplierSaved += MarkUnsavedChanges;
-        _appShellViewModel.SupplierModalsViewModel.SupplierDeleted += MarkUnsavedChanges;
-
-        // Rental inventory modals
-        _appShellViewModel.RentalInventoryModalsViewModel.ItemSaved += MarkUnsavedChanges;
-        _appShellViewModel.RentalInventoryModalsViewModel.ItemDeleted += MarkUnsavedChanges;
-        _appShellViewModel.RentalInventoryModalsViewModel.RentalCreated += MarkUnsavedChanges;
-
-        // Rental records modals
-        _appShellViewModel.RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
-        _appShellViewModel.RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
-        _appShellViewModel.RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
-
-        // Payment modals
-        _appShellViewModel.PaymentModalsViewModel.PaymentSaved += MarkUnsavedChanges;
-        _appShellViewModel.PaymentModalsViewModel.PaymentDeleted += MarkUnsavedChanges;
-
-        // Invoice modals
-        // Note: InvoiceSaved is not wired to MarkUnsavedChanges because both call sites
-        // (CreateAndSendInvoice, SaveInvoice) auto-save immediately, which avoids a
-        // brief asterisk flash in the window title.
-        _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
-
-        // Invoice template designer
-        _appShellViewModel.InvoiceTemplateDesignerViewModel.TemplateSaved += MarkUnsavedChanges;
+        // Invoice template designer — BrowseLogoRequested needs desktop file picker access
+        // Note: TemplateSaved is already wired to RaiseUnsavedChanges in the lazy getter
         _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
         {
             if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
@@ -1778,14 +1741,6 @@ public class App : Application
                 _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
             }
         };
-
-        // Expense modals
-        _appShellViewModel.ExpenseModalsViewModel.ExpenseSaved += MarkUnsavedChanges;
-        _appShellViewModel.ExpenseModalsViewModel.ExpenseDeleted += MarkUnsavedChanges;
-
-        // Revenue modals
-        _appShellViewModel.RevenueModalsViewModel.RevenueSaved += MarkUnsavedChanges;
-        _appShellViewModel.RevenueModalsViewModel.RevenueDeleted += MarkUnsavedChanges;
     }
 
     /// <summary>
