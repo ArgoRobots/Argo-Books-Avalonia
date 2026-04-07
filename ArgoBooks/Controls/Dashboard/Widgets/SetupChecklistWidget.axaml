@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.SetupChecklistWidget"
+             x:DataType="vm:SetupChecklistWidgetViewModel">
+    <controls:SetupChecklist DataContext="{Binding Checklist}" />
+</UserControl>

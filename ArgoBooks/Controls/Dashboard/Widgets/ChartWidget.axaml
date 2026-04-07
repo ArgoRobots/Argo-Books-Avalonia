@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.ChartWidget"
+             x:DataType="vm:ChartWidgetViewModel">
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Padding="8"
+            ClipToBounds="True">
+        <Grid>
+            <!-- Chart with data -->
+            <lvc:CartesianChart
+                Title="{Binding ChartTitleVisual}"
+                Series="{Binding Series}"
+                XAxes="{Binding XAxes}"
+                YAxes="{Binding YAxes}"
+                TooltipPosition="Top"
+                ZoomMode="Both"
+                IsVisible="{Binding HasData}" />
+
+            <!-- Empty state placeholder -->
+            <controls:ChartEmptyState
+                IsVisible="{Binding !HasData}"
+                DefaultMessage="{Binding EmptyStateMessage}" />
+        </Grid>
+    </Border>
+</UserControl>
