@@ -727,10 +727,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             cts.Token.ThrowIfCancellationRequested();
 
-            foreach (var (display, path) in results)
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                display.ImagePath = path;
-            }
+                foreach (var (display, path) in results)
+                {
+                    display.ImagePath = path;
+                }
+            });
         }
         catch (OperationCanceledException) { }
     }

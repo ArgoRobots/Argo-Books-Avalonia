@@ -33,7 +33,7 @@ public partial class ReceiptsPage : UserControl
         }
     }
 
-    private async void OnScanFileRequested(object? sender, EventArgs e)
+    private void OnScanFileRequested(object? sender, EventArgs e)
     {
         try
         {
