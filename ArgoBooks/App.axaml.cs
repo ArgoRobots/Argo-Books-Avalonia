@@ -976,20 +976,19 @@ public class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
-            // Load settings and recent companies BEFORE showing window to prevent flicker
-            // Use Task.Run to avoid deadlock with synchronization context
+            // Load settings synchronously — sidebar state, theme, and language depend on them.
+            // Recent companies are loaded asynchronously in InitializeAsync after the window is shown.
             try
             {
                 Task.Run(async () =>
                 {
                     if (SettingsService != null)
                         await SettingsService.LoadGlobalSettingsAsync();
-                    await LoadRecentCompaniesAsync();
                 }).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                ErrorLogger.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
+                ErrorLogger.LogWarning($"Failed to load settings during startup: {ex.Message}", "Startup");
             }
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
@@ -1036,14 +1035,16 @@ public class App : Application
     {
         try
         {
+            // Load recent companies asynchronously (footer reads from .argo files)
+            await LoadRecentCompaniesAsync();
+
             // Register file type associations on Windows
             RegisterFileTypeAssociationsAsync();
 
             // Post-update recovery: auto-reopen the last company after an update restart
             await TryAutoOpenRecentCompanyAfterUpdateAsync();
 
-            // Settings and recent companies are loaded synchronously before window is shown
-            // to prevent flicker. Just initialize services that depend on settings here.
+            // Initialize services that depend on settings.
             if (SettingsService != null)
             {
                 // Initialize theme service with settings
