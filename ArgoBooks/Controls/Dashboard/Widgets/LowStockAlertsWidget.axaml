@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.LowStockAlertsWidget"
+             x:DataType="vm:LowStockAlertsWidgetViewModel">
+
+    <UserControl.Styles>
+        <!-- Table Row Style -->
+        <Style Selector="Border.table-row">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <!-- Remove bottom border from last row -->
+        <Style Selector="ItemsControl > ContentPresenter:nth-last-child(1) Border.table-row">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            ClipToBounds="True">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TextBlock Text="{loc:Loc 'Low Stock Alerts'}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+
+            <!-- Table Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="400"
+                          IsVisible="{Binding HasAlerts}">
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LowStockItem">
+                            <Border Classes="table-row">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Warning Icon -->
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            CornerRadius="8"
+                                            Margin="0,0,12,0"
+                                            Background="{DynamicResource WarningIconBgBrush}">
+                                        <PathIcon Data="{x:Static icons:Icons.Warning}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+
+                                    <!-- Product Name -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Name}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+
+                                    <!-- Stock Count -->
+                                    <StackPanel Grid.Column="2"
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                VerticalAlignment="Center"
+                                                Margin="12,0,0,0">
+                                        <TextBlock Text="{Binding CurrentStock}"
+                                                   FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource DangerBrush}" />
+                                        <TextBlock Text="{loc:Loc 'in stock'}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextMutedBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Empty State -->
+            <Border Grid.Row="1"
+                    Padding="40"
+                    IsVisible="{Binding HasNoAlerts}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
+                              Width="48" Height="48"
+                              Foreground="{DynamicResource SuccessBrush}" />
+                    <TextBlock Text="{loc:Loc 'All stock levels healthy'}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

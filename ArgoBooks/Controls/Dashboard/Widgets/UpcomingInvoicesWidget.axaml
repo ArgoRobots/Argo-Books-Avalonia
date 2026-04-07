@@ -1,0 +1,154 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.UpcomingInvoicesWidget"
+             x:DataType="vm:UpcomingInvoicesWidgetViewModel">
+
+    <UserControl.Styles>
+        <!-- Table Row Style -->
+        <Style Selector="Border.table-row">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <!-- Remove bottom border from last row -->
+        <Style Selector="ItemsControl > ContentPresenter:nth-last-child(1) Border.table-row">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <!-- Status styling -->
+        <Style Selector="TextBlock.overdue">
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+        </Style>
+        <Style Selector="TextBlock.urgent">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.normal">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="Border.overdue-indicator">
+            <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+        </Style>
+        <Style Selector="Border.urgent-indicator">
+            <Setter Property="Background" Value="{DynamicResource WarningIconBgBrush}" />
+        </Style>
+        <Style Selector="Border.normal-indicator">
+            <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            ClipToBounds="True">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TextBlock Text="{loc:Loc 'Upcoming Invoices'}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+
+            <!-- Table Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="400"
+                          IsVisible="{Binding HasInvoices}">
+                <ItemsControl ItemsSource="{Binding Invoices}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:UpcomingInvoiceItem">
+                            <Border Classes="table-row">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                    <!-- Status Indicator -->
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            CornerRadius="8"
+                                            Margin="0,0,12,0"
+                                            Classes.overdue-indicator="{Binding IsOverdue}"
+                                            Classes.urgent-indicator="{Binding IsUrgent}"
+                                            Classes.normal-indicator="{Binding !IsOverdue}">
+                                        <PathIcon Data="{x:Static icons:Icons.Invoices}"
+                                                  Width="18" Height="18"
+                                                  Classes.overdue="{Binding IsOverdue}"
+                                                  Classes.urgent="{Binding IsUrgent}"
+                                                  Classes.normal="{Binding !IsOverdue}">
+                                            <PathIcon.Styles>
+                                                <Style Selector="PathIcon.overdue">
+                                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                </Style>
+                                                <Style Selector="PathIcon.urgent">
+                                                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                                </Style>
+                                                <Style Selector="PathIcon.normal">
+                                                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                                                </Style>
+                                            </PathIcon.Styles>
+                                        </PathIcon>
+                                    </Border>
+
+                                    <!-- Invoice # & Customer -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="{Binding InvoiceNumber}"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding CustomerName}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+
+                                    <!-- Amount -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Amount}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="12,0" />
+
+                                    <!-- Due Date -->
+                                    <StackPanel Grid.Column="3" VerticalAlignment="Center" MinWidth="80" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding DueDate}"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Right"
+                                                   Classes.overdue="{Binding IsOverdue}"
+                                                   Classes.urgent="{Binding IsUrgent}"
+                                                   Classes.normal="{Binding !IsOverdue}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Empty State -->
+            <Border Grid.Row="1"
+                    Padding="40"
+                    IsVisible="{Binding HasNoInvoices}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
+                              Width="48" Height="48"
+                              Foreground="{DynamicResource SuccessBrush}" />
+                    <TextBlock Text="{loc:Loc 'No invoices due soon'}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

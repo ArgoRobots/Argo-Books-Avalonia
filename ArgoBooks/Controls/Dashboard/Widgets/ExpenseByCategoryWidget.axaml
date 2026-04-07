@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.ExpenseByCategoryWidget"
+             x:DataType="vm:ExpenseByCategoryWidgetViewModel">
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            ClipToBounds="True">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TextBlock Text="{loc:Loc 'Expenses by Category'}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+
+            <!-- Pie Chart -->
+            <lvc:PieChart Grid.Row="1"
+                          Series="{Binding Series}"
+                          LegendPosition="Right"
+                          TooltipPosition="Top"
+                          IsVisible="{Binding HasData}"
+                          MinHeight="250" />
+
+            <!-- Empty State -->
+            <Border Grid.Row="1"
+                    Padding="40"
+                    IsVisible="{Binding HasNoData}">
+                <TextBlock Text="{loc:Loc 'No expense data available'}"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

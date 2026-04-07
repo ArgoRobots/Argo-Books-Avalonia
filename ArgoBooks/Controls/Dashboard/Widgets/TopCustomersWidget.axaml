@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.TopCustomersWidget"
+             x:DataType="vm:TopCustomersWidgetViewModel">
+
+    <UserControl.Styles>
+        <!-- Table Row Style -->
+        <Style Selector="Border.table-row">
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+
+        <!-- Remove bottom border from last row -->
+        <Style Selector="ItemsControl > ContentPresenter:nth-last-child(1) Border.table-row">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            ClipToBounds="True">
+        <Grid RowDefinitions="Auto,Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TextBlock Text="{loc:Loc 'Top Customers'}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+
+            <!-- Column Headers -->
+            <Border Grid.Row="1"
+                    Padding="16,10"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    IsVisible="{Binding HasCustomers}">
+                <Grid ColumnDefinitions="30,*,Auto,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="#"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMutedBrush}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{loc:Loc 'Customer'}"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMutedBrush}" />
+                    <TextBlock Grid.Column="2"
+                               Text="{loc:Loc 'Revenue'}"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               Margin="12,0"
+                               HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="3"
+                               Text="{loc:Loc 'Count'}"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               MinWidth="40"
+                               HorizontalAlignment="Right" />
+                </Grid>
+            </Border>
+
+            <!-- Table Content -->
+            <ScrollViewer Grid.Row="2"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="400"
+                          IsVisible="{Binding HasCustomers}">
+                <ItemsControl ItemsSource="{Binding Customers}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TopCustomerItem">
+                            <Border Classes="table-row">
+                                <Grid ColumnDefinitions="30,*,Auto,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Rank}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Name}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding TotalRevenue}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource SuccessBrush}"
+                                               Margin="12,0"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="3"
+                                               Text="{Binding TransactionCount}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               MinWidth="40"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Empty State -->
+            <Border Grid.Row="2"
+                    Padding="40"
+                    IsVisible="{Binding HasNoCustomers}">
+                <TextBlock Text="{loc:Loc 'No customer data yet'}"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
