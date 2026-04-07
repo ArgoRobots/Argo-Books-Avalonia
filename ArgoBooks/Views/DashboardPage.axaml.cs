@@ -1,4 +1,6 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+using System.Collections.Specialized;
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -6,11 +8,14 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using ArgoBooks.Controls;
+using ArgoBooks.Controls.Dashboard;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
+using ArgoBooks.ViewModels.Dashboard;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using OfficeOpenXml.Drawing.Chart;
 using LiveChartsCore.SkiaSharpView.VisualElements;
@@ -18,15 +23,13 @@ using LiveChartsCore.SkiaSharpView.VisualElements;
 namespace ArgoBooks.Views;
 
 /// <summary>
-/// Dashboard page providing an overview of key business metrics,
-/// recent transactions, and quick actions.
+/// Dashboard page providing an overview of key business metrics via customizable widgets.
 /// </summary>
 public partial class DashboardPage : UserControl
 {
     private Control? _clickedChart;
     private string _clickedChartName = "Chart";
-
-    private const double CompactQuickActionsThreshold = 1050;
+    private DashboardDragDropManager? _dragDropManager;
 
     /// <summary>
     /// Sets the clicked chart reference from an external source (e.g., ChartExpandOverlay).
@@ -47,38 +50,8 @@ public partial class DashboardPage : UserControl
         // Subscribe to ViewModel events when DataContext changes
         DataContextChanged += OnDataContextChanged;
 
-        // Responsive quick actions padding
-        QuickActionsCard.SizeChanged += OnQuickActionsSizeChanged;
-
         // Wire up chart scroll handler after control is loaded
         Loaded += OnLoaded;
-    }
-
-    private void OnQuickActionsSizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        var width = e.NewSize.Width;
-        if (width < CompactQuickActionsThreshold)
-        {
-            foreach (var child in QuickActionsWrapPanel.Children)
-            {
-                if (child is Button btn)
-                {
-                    btn.Padding = new Thickness(8, 6);
-                    btn.Margin = new Thickness(3);
-                }
-            }
-        }
-        else
-        {
-            foreach (var child in QuickActionsWrapPanel.Children)
-            {
-                if (child is Button btn)
-                {
-                    btn.Padding = new Thickness(12, 10);
-                    btn.Margin = new Thickness(6);
-                }
-            }
-        }
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -97,6 +70,109 @@ public partial class DashboardPage : UserControl
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
     }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is DashboardPageViewModel viewModel)
+        {
+            viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
+            viewModel.ExcelExportRequested += OnExcelExportRequested;
+
+            // Observe the Widgets collection for changes
+            viewModel.LayoutViewModel.Widgets.CollectionChanged += OnWidgetsCollectionChanged;
+
+            // Build initial widgets
+            RebuildWidgetPanel(viewModel.LayoutViewModel);
+        }
+    }
+
+    #region Widget Panel Management
+
+    private void OnWidgetsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (DataContext is DashboardPageViewModel viewModel)
+        {
+            RebuildWidgetPanel(viewModel.LayoutViewModel);
+        }
+    }
+
+    private void RebuildWidgetPanel(DashboardLayoutViewModel layoutVm)
+    {
+        var panel = WidgetPanel;
+        panel.Children.Clear();
+
+        for (int i = 0; i < layoutVm.Widgets.Count; i++)
+        {
+            var hostVm = layoutVm.Widgets[i];
+
+            // Create the WidgetHost control
+            var widgetHost = new WidgetHost
+            {
+                DataContext = hostVm
+            };
+
+            // Set the widget fraction based on current size
+            DashboardFlowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
+
+            // Subscribe to size changes to update the fraction
+            hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
+
+            // Wire up the remove button
+            var removeButton = widgetHost.FindControl<Button>("RemoveButton");
+            if (removeButton != null)
+            {
+                removeButton.Command = layoutVm.RemoveWidgetCommand;
+                removeButton.CommandParameter = hostVm;
+            }
+
+            panel.Children.Add(widgetHost);
+        }
+
+        // Set up drag-and-drop
+        SetupDragDrop(layoutVm);
+    }
+
+    private void OnWidgetHostPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(WidgetHostViewModel.Size) && sender is WidgetHostViewModel hostVm)
+        {
+            // Find the corresponding WidgetHost control and update its fraction
+            foreach (var child in WidgetPanel.Children)
+            {
+                if (child is WidgetHost widgetHost && widgetHost.DataContext == hostVm)
+                {
+                    DashboardFlowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
+                    WidgetPanel.InvalidateMeasure();
+                    WidgetPanel.InvalidateArrange();
+                    break;
+                }
+            }
+        }
+    }
+
+    private void SetupDragDrop(DashboardLayoutViewModel layoutVm)
+    {
+        _dragDropManager = new DashboardDragDropManager(
+            WidgetPanel,
+            MainScrollViewer,
+            (from, to) => layoutVm.MoveWidget(from, to));
+
+        for (int i = 0; i < WidgetPanel.Children.Count; i++)
+        {
+            if (WidgetPanel.Children[i] is WidgetHost widgetHost)
+            {
+                var dragHandle = widgetHost.FindControl<Button>("DragHandle");
+                if (dragHandle != null)
+                {
+                    _dragDropManager.AttachDragHandle(dragHandle, i);
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Chart Context Menu & Export
 
     /// <summary>
     /// Intercepts right-click in tunneling phase to prevent LiveCharts from starting selection box.
@@ -124,15 +200,6 @@ public partial class DashboardPage : UserControl
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
             }
             e.Handled = true;
-        }
-    }
-
-    private void OnDataContextChanged(object? sender, EventArgs e)
-    {
-        if (DataContext is DashboardPageViewModel viewModel)
-        {
-            viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
-            viewModel.ExcelExportRequested += OnExcelExportRequested;
         }
     }
 
@@ -191,166 +258,89 @@ public partial class DashboardPage : UserControl
 
             try
             {
-            var filePath = file.Path.LocalPath;
+                var filePath = file.Path.LocalPath;
 
-            // Map chart style to Excel chart type
-            var excelChartType = e.ChartStyle switch
-            {
-                ChartStyle.Column => eChartType.ColumnClustered,
-                ChartStyle.Area => eChartType.Area,
-                ChartStyle.Scatter => eChartType.XYScatter,
-                _ => eChartType.Line
-            };
-
-            // Export based on chart type
-            if (e.IsMultiSeries)
-            {
-                // Multi-series chart (e.g., Revenue vs Expenses)
-                var seriesData = new Dictionary<string, double[]>
+                // Map chart style to Excel chart type
+                var excelChartType = e.ChartStyle switch
                 {
-                    { e.SeriesName, e.Values }
+                    ChartStyle.Column => eChartType.ColumnClustered,
+                    ChartStyle.Area => eChartType.Area,
+                    ChartStyle.Scatter => eChartType.XYScatter,
+                    _ => eChartType.Line
                 };
-                foreach (var (name, values) in e.AdditionalSeries)
+
+                // Export based on chart type
+                if (e.IsMultiSeries)
                 {
-                    seriesData[name] = values;
+                    // Multi-series chart (e.g., Revenue vs Expenses)
+                    var seriesData = new Dictionary<string, double[]>
+                    {
+                        { e.SeriesName, e.Values }
+                    };
+                    foreach (var (name, values) in e.AdditionalSeries)
+                    {
+                        seriesData[name] = values;
+                    }
+
+                    await ChartExcelExportService.ExportMultiSeriesChartAsync(
+                        filePath,
+                        e.ChartTitle,
+                        e.Labels,
+                        seriesData,
+                        labelHeader: "Date",
+                        isCurrency: true,
+                        excelChartType: excelChartType);
                 }
-
-                await ChartExcelExportService.ExportMultiSeriesChartAsync(
-                    filePath,
-                    e.ChartTitle,
-                    e.Labels,
-                    seriesData,
-                    labelHeader: "Date",
-                    isCurrency: true,
-                    excelChartType: excelChartType);
-            }
-            else if (e.IsDistribution)
-            {
-                // Distribution/Pie chart
-                await ChartExcelExportService.ExportDistributionChartAsync(
-                    filePath,
-                    e.ChartTitle,
-                    e.Labels,
-                    e.Values,
-                    categoryHeader: "Category",
-                    valueHeader: e.SeriesName,
-                    isCurrency: true);
-            }
-            else
-            {
-                // Single-series time chart
-                var isCurrency = e.ChartType != ChartType.Comparison ||
-                                 !e.SeriesName.Contains("Count", StringComparison.OrdinalIgnoreCase);
-
-                await ChartExcelExportService.ExportChartAsync(
-                    filePath,
-                    e.ChartTitle,
-                    e.Labels,
-                    e.Values,
-                    column1Header: "Date",
-                    column2Header: e.SeriesName,
-                    isCurrency: isCurrency,
-                    excelChartType: excelChartType);
-            }
-
-        }
-        catch (Exception ex)
-        {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "Failed to export chart to Excel");
-            var dialog = App.ConfirmationDialog;
-            if (dialog != null)
-            {
-                await dialog.ShowAsync(new ConfirmationDialogOptions
+                else if (e.IsDistribution)
                 {
-                    Title = "Export Failed".Translate(),
-                    Message = "Failed to export the chart to Excel: {0}".TranslateFormat(ex.Message),
-                    PrimaryButtonText = "OK".Translate(),
-                    SecondaryButtonText = null,
-                    CancelButtonText = null
-                });
+                    // Distribution/Pie chart
+                    await ChartExcelExportService.ExportDistributionChartAsync(
+                        filePath,
+                        e.ChartTitle,
+                        e.Labels,
+                        e.Values,
+                        categoryHeader: "Category",
+                        valueHeader: e.SeriesName,
+                        isCurrency: true);
+                }
+                else
+                {
+                    // Single-series time chart
+                    var isCurrency = e.ChartType != ChartType.Comparison ||
+                                     !e.SeriesName.Contains("Count", StringComparison.OrdinalIgnoreCase);
+
+                    await ChartExcelExportService.ExportChartAsync(
+                        filePath,
+                        e.ChartTitle,
+                        e.Labels,
+                        e.Values,
+                        column1Header: "Date",
+                        column2Header: e.SeriesName,
+                        isCurrency: isCurrency,
+                        excelChartType: excelChartType);
+                }
             }
-        }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "Failed to export chart to Excel");
+                var dialog = App.ConfirmationDialog;
+                if (dialog != null)
+                {
+                    await dialog.ShowAsync(new ConfirmationDialogOptions
+                    {
+                        Title = "Export Failed".Translate(),
+                        Message = "Failed to export the chart to Excel: {0}".TranslateFormat(ex.Message),
+                        PrimaryButtonText = "OK".Translate(),
+                        SecondaryButtonText = null,
+                        CancelButtonText = null
+                    });
+                }
+            }
         }
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "OnExcelExportRequested");
         }
-    }
-
-    /// <summary>
-    /// Handles right-click on the chart to show the context menu.
-    /// </summary>
-    private void OnChartPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        var properties = e.GetCurrentPoint(sender as Control).Properties;
-
-        if (properties.IsRightButtonPressed)
-        {
-            if (DataContext is DashboardPageViewModel viewModel)
-            {
-                // Get position relative to this page (the Panel container) for proper menu placement
-                var position = e.GetPosition(this);
-                var isPieChart = sender is PieChart;
-
-                _clickedChart = sender as Control;
-                _clickedChartName = GetChartTitle(_clickedChart) ?? "Chart";
-                var chartDataType = _clickedChart?.Tag as ChartDataType?;
-
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartDataType: chartDataType, isPieChart: isPieChart,
-                    parentWidth: Bounds.Width, parentHeight: Bounds.Height);
-                e.Handled = true;
-            }
-        }
-        else if (properties.IsLeftButtonPressed)
-        {
-            // Close context menu on left click
-            if (DataContext is DashboardPageViewModel viewModel)
-            {
-                viewModel.HideChartContextMenuCommand.Execute(null);
-            }
-
-            // Set hand cursor when panning
-            if (sender is CartesianChart chart)
-            {
-                chart.Cursor = new Cursor(StandardCursorType.Hand);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Restores the default cursor when pointer is released after panning.
-    /// </summary>
-    private void OnChartPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (sender is CartesianChart chart)
-        {
-            chart.Cursor = Cursor.Default;
-        }
-    }
-
-    /// <summary>
-    /// Attempts to find the chart title from the chart's Title property.
-    /// </summary>
-    private static string? GetChartTitle(Control? chart)
-    {
-        if (chart == null) return null;
-
-        // Get the title directly from LiveCharts chart controls
-        if (chart is CartesianChart cartesianChart &&
-            cartesianChart.Title is LabelVisual cartesianLabel &&
-            !string.IsNullOrWhiteSpace(cartesianLabel.Text))
-        {
-            return cartesianLabel.Text;
-        }
-
-        if (chart is PieChart pieChart &&
-            pieChart.Title is LabelVisual pieLabel &&
-            !string.IsNullOrWhiteSpace(pieLabel.Text))
-        {
-            return pieLabel.Text;
-        }
-
-        return null;
     }
 
     /// <summary>
@@ -416,4 +406,31 @@ public partial class DashboardPage : UserControl
             }
         }
     }
+
+    /// <summary>
+    /// Attempts to find the chart title from the chart's Title property.
+    /// </summary>
+    private static string? GetChartTitle(Control? chart)
+    {
+        if (chart == null) return null;
+
+        // Get the title directly from LiveCharts chart controls
+        if (chart is CartesianChart cartesianChart &&
+            cartesianChart.Title is LabelVisual cartesianLabel &&
+            !string.IsNullOrWhiteSpace(cartesianLabel.Text))
+        {
+            return cartesianLabel.Text;
+        }
+
+        if (chart is PieChart pieChart &&
+            pieChart.Title is LabelVisual pieLabel &&
+            !string.IsNullOrWhiteSpace(pieLabel.Text))
+        {
+            return pieLabel.Text;
+        }
+
+        return null;
+    }
+
+    #endregion
 }
