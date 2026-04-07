@@ -1506,8 +1506,11 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Restart the timer with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
 
-            // Mark company data as modified so settings are persisted on save
-            App.CompanyManager?.CompanyData?.MarkAsModified();
+            // Persist company settings to the .argo file immediately
+            if (App.CompanyManager?.IsCompanyOpen == true && !App.CompanyManager.IsSampleCompany)
+            {
+                await App.CompanyManager.SaveCompanyAsync();
+            }
         }
 
         // Save max pie slices, language, timezone and time format to global settings
