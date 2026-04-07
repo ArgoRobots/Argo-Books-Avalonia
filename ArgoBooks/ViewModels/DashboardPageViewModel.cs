@@ -2,6 +2,8 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
@@ -844,6 +846,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadActiveRentals(CompanyData data)
     {
+        var rentalItemLookup = data.RentalInventory.ToDictionary(r => r.Id);
+        var inventoryLookup = data.Inventory.ToDictionary(i => i.Id);
+
         var activeRentals = data.Rentals
             .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue)
             .OrderBy(r => r.DueDate)
@@ -851,7 +856,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             .Select(r => new ActiveRentalItem
             {
                 Id = r.Id,
-                ItemName = GetRentalItemName(data, r.RentalItemId),
+                ItemName = GetRentalItemName(rentalItemLookup, inventoryLookup, data, r.RentalItemId),
                 CustomerName = GetCustomerName(data, r.CustomerId),
                 StartDate = r.StartDate,
                 StartDateFormatted = FormatDate(r.StartDate),
@@ -1479,23 +1484,25 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private static string GetCustomerName(CompanyData data, string? customerId)
     {
         if (string.IsNullOrEmpty(customerId)) return "Unknown";
-        var customer = data.Customers.FirstOrDefault(c => c.Id == customerId);
+        var customer = data.GetCustomer(customerId);
         return customer?.Name ?? "Unknown";
     }
 
     private static string GetSupplierName(CompanyData data, string? supplierId)
     {
         if (string.IsNullOrEmpty(supplierId)) return "Unknown";
-        var supplier = data.Suppliers.FirstOrDefault(s => s.Id == supplierId);
+        var supplier = data.GetSupplier(supplierId);
         return supplier?.Name ?? "Unknown";
     }
 
-    private static string GetRentalItemName(CompanyData data, string rentalItemId)
+    private static string GetRentalItemName(
+        Dictionary<string, RentalItem> rentalItemLookup,
+        Dictionary<string, InventoryItem> inventoryLookup,
+        CompanyData data,
+        string rentalItemId)
     {
-        var item = data.RentalInventory.FirstOrDefault(r => r.Id == rentalItemId);
-        if (item == null) return "Unknown Item";
-        var invItem = data.Inventory.FirstOrDefault(i => i.Id == item.InventoryItemId);
-        if (invItem == null) return "Unknown Item";
+        if (!rentalItemLookup.TryGetValue(rentalItemId, out var item)) return "Unknown Item";
+        if (!inventoryLookup.TryGetValue(item.InventoryItemId, out var invItem)) return "Unknown Item";
         var product = data.GetProduct(invItem.ProductId);
         return product?.Name ?? "Unknown Item";
     }
