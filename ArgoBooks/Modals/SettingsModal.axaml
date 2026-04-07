@@ -61,8 +61,18 @@
                     <TabItem Header="{loc:Loc General}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Some settings are not available for the sample company.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
                                 <!-- Language -->
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc Language}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -74,7 +84,7 @@
                                 </StackPanel>
 
                                 <!-- Date Format -->
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Date Format'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -197,6 +207,17 @@
                     <TabItem Header="{loc:Loc Notifications}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Margin="0,0,0,12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
                                 <TextBlock Text="{loc:Loc 'Configure notification preferences'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
@@ -205,7 +226,8 @@
                                 <!-- Low Stock Alert -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Low Stock Alert'}"
@@ -225,7 +247,8 @@
                                 <!-- Out of Stock Alert -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Out of Stock Alert'}"
@@ -245,7 +268,8 @@
                                 <!-- Invoice Overdue -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Invoice Overdue'}"
@@ -265,7 +289,8 @@
                                 <!-- Rental Overdue -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Rental Overdue'}"
@@ -285,7 +310,8 @@
                                 <!-- Payment Notifications -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Payment Received'}"
@@ -305,7 +331,8 @@
                                 <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <StackPanel Spacing="12">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
@@ -601,7 +628,7 @@
                                         CornerRadius="8"
                                         Padding="12"
                                         IsVisible="{Binding IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Security settings are not available for the sample company. Save as a new company to enable password protection.'}"
+                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource WarningTextBrush}"
                                                TextWrapping="Wrap" />
@@ -739,8 +766,18 @@
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
                                 <!-- Portal Company Name -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Company Name'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -755,7 +792,7 @@
                                 </StackPanel>
 
                                 <!-- Portal Logo -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Portal Logo'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -805,7 +842,7 @@
                                 </StackPanel>
 
                                 <!-- Connected Payment Providers -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Connected Payment Providers'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -930,7 +967,7 @@
                                 </StackPanel>
 
                                 <!-- Sync Interval -->
-                                <StackPanel Spacing="6" Margin="0,8,0,0">
+                                <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
                                                FontSize="13"
                                                FontWeight="Medium"
