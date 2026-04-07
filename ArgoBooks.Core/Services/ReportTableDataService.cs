@@ -309,11 +309,14 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         if (tableConfig.MaxRows > 0)
             query = query.Take(tableConfig.MaxRows);
 
+        var rentalItemLookup = companyData?.RentalInventory.ToDictionary(ri => ri.Id) ?? [];
+        var inventoryItemLookup = companyData?.Inventory.ToDictionary(i => i.Id) ?? [];
+
         return query.Select(r =>
         {
             var customer = companyData?.GetCustomer(r.CustomerId);
-            var rentalItem = companyData?.RentalInventory.FirstOrDefault(ri => ri.Id == r.RentalItemId);
-            var inventoryItem = rentalItem != null ? companyData?.Inventory.FirstOrDefault(i => i.Id == rentalItem.InventoryItemId) : null;
+            var rentalItem = rentalItemLookup.GetValueOrDefault(r.RentalItemId);
+            var inventoryItem = rentalItem != null ? inventoryItemLookup.GetValueOrDefault(rentalItem.InventoryItemId) : null;
             var product = inventoryItem != null ? companyData?.GetProduct(inventoryItem.ProductId) : null;
             return new RentalRecordTableRow
             {
@@ -351,9 +354,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         if (tableConfig.MaxRows > 0)
             query = query.Take(tableConfig.MaxRows);
 
+        var inventoryItemLookup = companyData?.Inventory.ToDictionary(i => i.Id) ?? [];
+
         return query.Select(r =>
         {
-            var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == r.InventoryItemId);
+            var inventoryItem = inventoryItemLookup.GetValueOrDefault(r.InventoryItemId);
             var product = inventoryItem != null ? companyData?.GetProduct(inventoryItem.ProductId) : null;
             return new RentalItemTableRow
             {
@@ -392,7 +397,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return query.Select(i =>
         {
             var product = companyData?.GetProduct(i.ProductId);
-            var location = companyData?.Locations.FirstOrDefault(l => l.Id == i.LocationId);
+            var location = companyData?.GetLocation(i.LocationId);
             return new InventoryTableRow
             {
                 Id = i.Id,
@@ -475,9 +480,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         if (tableConfig.MaxRows > 0)
             query = query.Take(tableConfig.MaxRows);
 
+        var inventoryItemLookup = companyData?.Inventory.ToDictionary(i => i.Id) ?? [];
+
         return query.Select(sa =>
         {
-            var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == sa.InventoryItemId);
+            var inventoryItem = inventoryItemLookup.GetValueOrDefault(sa.InventoryItemId);
             var product = inventoryItem != null ? companyData?.GetProduct(inventoryItem.ProductId) : null;
             return new StockAdjustmentTableRow
             {
@@ -517,12 +524,14 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         if (tableConfig.MaxRows > 0)
             query = query.Take(tableConfig.MaxRows);
 
+        var inventoryItemLookup = companyData?.Inventory.ToDictionary(i => i.Id) ?? [];
+
         return query.Select(st =>
         {
-            var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == st.InventoryItemId);
+            var inventoryItem = inventoryItemLookup.GetValueOrDefault(st.InventoryItemId);
             var product = inventoryItem != null ? companyData?.GetProduct(inventoryItem.ProductId) : null;
-            var sourceLoc = companyData?.Locations.FirstOrDefault(l => l.Id == st.SourceLocationId);
-            var destLoc = companyData?.Locations.FirstOrDefault(l => l.Id == st.DestinationLocationId);
+            var sourceLoc = companyData?.GetLocation(st.SourceLocationId);
+            var destLoc = companyData?.GetLocation(st.DestinationLocationId);
             return new StockTransferTableRow
             {
                 Id = st.Id,
@@ -679,7 +688,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         return query.Select(e =>
         {
-            var dept = companyData?.Departments.FirstOrDefault(d => d.Id == e.DepartmentId);
+            var dept = companyData?.GetDepartment(e.DepartmentId ?? "");
             return new EmployeeTableRow
             {
                 Id = e.Id,
@@ -707,7 +716,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return query.Select(d =>
         {
             var headEmployee = !string.IsNullOrEmpty(d.HeadEmployeeId)
-                ? companyData?.Employees.FirstOrDefault(e => e.Id == d.HeadEmployeeId)
+                ? companyData?.GetEmployee(d.HeadEmployeeId)
                 : null;
             var employeeCount = companyData?.Employees.Count(e => e.DepartmentId == d.Id) ?? 0;
             return new DepartmentTableRow
