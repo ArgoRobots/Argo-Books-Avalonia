@@ -289,7 +289,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     private void FilterItems()
     {
-        var filtered = _allItems.ToList();
+        IEnumerable<LostDamaged> filtered = _allItems;
 
         // Get filter values from modals view model
         var modals = App.LostDamagedModalsViewModel;
@@ -306,7 +306,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
                 item.Id.ToLowerInvariant().Contains(query) ||
                 GetProductName(item.ProductId).ToLowerInvariant().Contains(query) ||
                 item.Notes.ToLowerInvariant().Contains(query)
-            ).ToList();
+            );
         }
 
         // Apply type filter
@@ -316,11 +316,11 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             {
                 "Lost" => filtered.Where(item =>
                     item.Reason == LostDamagedReason.Lost ||
-                    item.Reason == LostDamagedReason.Stolen).ToList(),
+                    item.Reason == LostDamagedReason.Stolen),
                 "Damaged" => filtered.Where(item =>
                     item.Reason == LostDamagedReason.Damaged ||
                     item.Reason == LostDamagedReason.Expired ||
-                    item.Reason == LostDamagedReason.Other).ToList(),
+                    item.Reason == LostDamagedReason.Other),
                 _ => filtered
             };
         }
@@ -329,21 +329,21 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         if (filterReason != "All")
         {
             var reason = Enum.TryParse<LostDamagedReason>(filterReason, out var r) ? r : LostDamagedReason.Other;
-            filtered = filtered.Where(item => item.Reason == reason).ToList();
+            filtered = filtered.Where(item => item.Reason == reason);
         }
 
         // Apply date filter
         if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(item => item.DateDiscovered >= filterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(item => item.DateDiscovered >= filterDateFrom.Value.DateTime);
         }
         if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(item => item.DateDiscovered <= filterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(item => item.DateDiscovered <= filterDateTo.Value.DateTime);
         }
 
         // Sort by date descending (newest first)
-        filtered = filtered.OrderByDescending(item => item.DateDiscovered).ToList();
+        filtered = filtered.OrderByDescending(item => item.DateDiscovered);
 
         // Create display items
         var displayItems = filtered.Select(CreateDisplayItem).ToList();

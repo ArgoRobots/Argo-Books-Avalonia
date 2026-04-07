@@ -385,7 +385,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         var products = companyData?.Products ?? [];
         var locations = companyData?.Locations ?? [];
 
-        var filtered = _allAdjustments.ToList();
+        IEnumerable<StockAdjustment> filtered = _allAdjustments;
 
         // Apply tab filter
         if (ActiveTab != "All")
@@ -400,18 +400,18 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
             if (tabType.HasValue)
             {
-                filtered = filtered.Where(a => a.AdjustmentType == tabType.Value).ToList();
+                filtered = filtered.Where(a => a.AdjustmentType == tabType.Value);
             }
         }
 
         // Apply date range filter
         if (StartDate.HasValue)
         {
-            filtered = filtered.Where(a => a.Timestamp.Date >= StartDate.Value.Date).ToList();
+            filtered = filtered.Where(a => a.Timestamp.Date >= StartDate.Value.Date);
         }
         if (EndDate.HasValue)
         {
-            filtered = filtered.Where(a => a.Timestamp.Date <= EndDate.Value.Date).ToList();
+            filtered = filtered.Where(a => a.Timestamp.Date <= EndDate.Value.Date);
         }
 
         // Apply location filter
@@ -423,7 +423,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
                 if (invItem == null) return false;
                 var location = locations.FirstOrDefault(l => l.Id == invItem.LocationId);
                 return location?.Name == FilterLocation;
-            }).ToList();
+            });
         }
 
         // Apply product filter
@@ -435,7 +435,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
                 if (invItem == null) return false;
                 var product = products.FirstOrDefault(p => p.Id == invItem.ProductId);
                 return product?.Name == FilterProduct;
-            }).ToList();
+            });
         }
 
         // Apply search filter

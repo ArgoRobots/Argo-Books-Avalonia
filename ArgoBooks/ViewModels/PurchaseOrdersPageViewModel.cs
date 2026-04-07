@@ -325,7 +325,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         var suppliers = companyData?.Suppliers ?? [];
 
-        var filtered = _allOrders.ToList();
+        IEnumerable<PurchaseOrder> filtered = _allOrders;
 
         // Apply tab filter
         if (ActiveTab != "All")
@@ -341,7 +341,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
             if (tabStatus.Length > 0)
             {
-                filtered = filtered.Where(o => tabStatus.Contains(o.Status)).ToList();
+                filtered = filtered.Where(o => tabStatus.Contains(o.Status));
             }
         }
 
@@ -355,11 +355,11 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // Apply date range filter
         if (startDate.HasValue)
         {
-            filtered = filtered.Where(o => o.OrderDate.Date >= startDate.Value.Date).ToList();
+            filtered = filtered.Where(o => o.OrderDate.Date >= startDate.Value.Date);
         }
         if (endDate.HasValue)
         {
-            filtered = filtered.Where(o => o.OrderDate.Date <= endDate.Value.Date).ToList();
+            filtered = filtered.Where(o => o.OrderDate.Date <= endDate.Value.Date);
         }
 
         // Apply supplier filter
@@ -369,7 +369,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
             {
                 var supplier = suppliers.FirstOrDefault(s => s.Id == o.SupplierId);
                 return supplier?.Name == filterSupplier;
-            }).ToList();
+            });
         }
 
         // Apply status filter
@@ -379,7 +379,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
             if (statusEnum.HasValue)
             {
-                filtered = filtered.Where(o => o.Status == statusEnum.Value).ToList();
+                filtered = filtered.Where(o => o.Status == statusEnum.Value);
             }
         }
 

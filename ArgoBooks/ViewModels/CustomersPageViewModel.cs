@@ -389,7 +389,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterCustomers()
     {
-        var filtered = _allCustomers.ToList();
+        IEnumerable<Customer> filtered = _allCustomers;
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -419,17 +419,17 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 "Banned" => EntityStatus.Archived,
                 _ => EntityStatus.Active
             };
-            filtered = filtered.Where(c => c.Status == status).ToList();
+            filtered = filtered.Where(c => c.Status == status);
         }
 
         // Apply last rental date filter
         if (FilterLastRentalFrom.HasValue)
         {
-            filtered = filtered.Where(c => c.LastTransactionDate >= FilterLastRentalFrom.Value).ToList();
+            filtered = filtered.Where(c => c.LastTransactionDate >= FilterLastRentalFrom.Value);
         }
         if (FilterLastRentalTo.HasValue)
         {
-            filtered = filtered.Where(c => c.LastTransactionDate <= FilterLastRentalTo.Value).ToList();
+            filtered = filtered.Where(c => c.LastTransactionDate <= FilterLastRentalTo.Value);
         }
 
         // Create display items
