@@ -252,7 +252,7 @@ public partial class EmojiPickerViewModel : ObservableObject
         else if (SelectedTab.Name == "Recent")
         {
             // Get recent emojis with their names (O(1) lookup via dictionary)
-            var emojiLookup = EmojiData.AllEmojis.ToDictionary(e => e.Emoji);
+            var emojiLookup = EmojiData.AllEmojis.GroupBy(e => e.Emoji).ToDictionary(g => g.Key, g => g.First());
             var recentEmojis = _settings.RecentEmojis
                 .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
                                  new EmojiData.EmojiItem(emoji, ""))
@@ -262,7 +262,7 @@ public partial class EmojiPickerViewModel : ObservableObject
         else if (SelectedTab.Name == "Favorites")
         {
             // Get favorite emojis with their names (O(1) lookup via dictionary)
-            var emojiLookup = EmojiData.AllEmojis.ToDictionary(e => e.Emoji);
+            var emojiLookup = EmojiData.AllEmojis.GroupBy(e => e.Emoji).ToDictionary(g => g.Key, g => g.First());
             var favoriteEmojis = _settings.FavoriteEmojis
                 .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
                                  new EmojiData.EmojiItem(emoji, ""))
