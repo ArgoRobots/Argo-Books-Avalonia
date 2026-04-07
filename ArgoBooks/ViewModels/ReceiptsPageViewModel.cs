@@ -461,7 +461,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private void FilterReceipts()
     {
-        var filtered = _allReceipts.ToList();
+        IEnumerable<Receipt> filtered = _allReceipts;
 
         // Get filter values from modals view model
         var modals = App.ReceiptsModalsViewModel;
@@ -482,13 +482,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                 r.Supplier.ToLowerInvariant().Contains(query) ||
                 r.FileName.ToLowerInvariant().Contains(query) ||
                 r.TransactionId.ToLowerInvariant().Contains(query)
-            ).ToList();
+            );
         }
 
         // Apply type filter
         if (filterType != "All")
         {
-            filtered = filtered.Where(r => r.TransactionType == filterType).ToList();
+            filtered = filtered.Where(r => r.TransactionType == filterType);
         }
 
         // Apply source filter
@@ -496,8 +496,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             filtered = filterSource switch
             {
-                "AI Scanned" => filtered.Where(r => r.IsAiScanned).ToList(),
-                "Manual" => filtered.Where(r => !r.IsAiScanned).ToList(),
+                "AI Scanned" => filtered.Where(r => r.IsAiScanned),
+                "Manual" => filtered.Where(r => !r.IsAiScanned),
                 _ => filtered
             };
         }
@@ -507,8 +507,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             filtered = filterFileType switch
             {
-                "Image" => filtered.Where(r => IsImageFile(r.FileType)).ToList(),
-                "PDF" => filtered.Where(r => r.FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase)).ToList(),
+                "Image" => filtered.Where(r => IsImageFile(r.FileType)),
+                "PDF" => filtered.Where(r => r.FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase)),
                 _ => filtered
             };
         }
@@ -516,28 +516,28 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         // Apply amount filter
         if (decimal.TryParse(filterAmountMin, out var minAmount))
         {
-            filtered = filtered.Where(r => r.Amount >= minAmount).ToList();
+            filtered = filtered.Where(r => r.Amount >= minAmount);
         }
         if (decimal.TryParse(filterAmountMax, out var maxAmount))
         {
-            filtered = filtered.Where(r => r.Amount <= maxAmount).ToList();
+            filtered = filtered.Where(r => r.Amount <= maxAmount);
         }
 
         // Apply date filter
         if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime);
         }
         if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.Date <= filterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.Date <= filterDateTo.Value.DateTime);
         }
 
-        // Sort by date descending (newest first)
-        filtered = filtered.OrderByDescending(r => r.Date).ToList();
+        // Sort by date descending (newest first) — materialize for .Count and pagination
+        var sortedFiltered = filtered.OrderByDescending(r => r.Date).ToList();
 
         // Calculate pagination on raw receipts (before creating display items)
-        var totalCount = filtered.Count;
+        var totalCount = sortedFiltered.Count;
         TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
         if (CurrentPage > TotalPages)
             CurrentPage = TotalPages;
@@ -546,7 +546,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         UpdatePaginationText(totalCount);
 
         // Paginate BEFORE creating display items — only process the visible page
-        var pagedReceipts = filtered
+        var pagedReceipts = sortedFiltered
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize)
             .ToList();

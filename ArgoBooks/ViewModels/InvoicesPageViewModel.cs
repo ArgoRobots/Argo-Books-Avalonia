@@ -577,13 +577,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void FilterInvoices()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        var filtered = _allInvoices.ToList();
+        IEnumerable<Invoice> filtered = _allInvoices;
 
         // Apply tab filter
         filtered = SelectedTab switch
         {
-            "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft).ToList(),
-            "Recurring" => filtered.Where(i => !string.IsNullOrEmpty(i.RecurringInvoiceId)).ToList(),
+            "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft),
+            "Recurring" => filtered.Where(i => !string.IsNullOrEmpty(i.RecurringInvoiceId)),
             _ => filtered
         };
 
@@ -611,44 +611,44 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             if (Enum.TryParse<InvoiceStatus>(FilterStatus, out var status))
             {
                 filtered = filtered.Where(i => i.Status == status ||
-                    (FilterStatus == "Overdue" && i.IsOverdue)).ToList();
+                    (FilterStatus == "Overdue" && i.IsOverdue));
             }
         }
 
         // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
-            filtered = filtered.Where(i => i.CustomerId == FilterCustomerId).ToList();
+            filtered = filtered.Where(i => i.CustomerId == FilterCustomerId);
         }
 
         // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, System.Globalization.CultureInfo.InvariantCulture, out var minAmount))
         {
-            filtered = filtered.Where(i => i.Total >= minAmount).ToList();
+            filtered = filtered.Where(i => i.Total >= minAmount);
         }
         if (decimal.TryParse(FilterAmountMax, System.Globalization.CultureInfo.InvariantCulture, out var maxAmount))
         {
-            filtered = filtered.Where(i => i.Total <= maxAmount).ToList();
+            filtered = filtered.Where(i => i.Total <= maxAmount);
         }
 
         // Apply issue date filter
         if (FilterIssueDateFrom.HasValue)
         {
-            filtered = filtered.Where(i => i.IssueDate >= FilterIssueDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.IssueDate >= FilterIssueDateFrom.Value.DateTime);
         }
         if (FilterIssueDateTo.HasValue)
         {
-            filtered = filtered.Where(i => i.IssueDate <= FilterIssueDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.IssueDate <= FilterIssueDateTo.Value.DateTime);
         }
 
         // Apply due date filter
         if (FilterDueDateFrom.HasValue)
         {
-            filtered = filtered.Where(i => i.DueDate >= FilterDueDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.DueDate >= FilterDueDateFrom.Value.DateTime);
         }
         if (FilterDueDateTo.HasValue)
         {
-            filtered = filtered.Where(i => i.DueDate <= FilterDueDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.DueDate <= FilterDueDateTo.Value.DateTime);
         }
 
         // Create display items

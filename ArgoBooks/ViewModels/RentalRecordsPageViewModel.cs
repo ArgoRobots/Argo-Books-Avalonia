@@ -353,7 +353,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private void FilterRecords()
     {
-        var filtered = _allRecords.ToList();
+        IEnumerable<RentalRecord> filtered = _allRecords;
         var companyData = App.CompanyManager?.CompanyData;
 
         // Apply search filter
@@ -391,7 +391,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             };
             if (statusEnum.HasValue)
             {
-                filtered = filtered.Where(r => r.Status == statusEnum.Value).ToList();
+                filtered = filtered.Where(r => r.Status == statusEnum.Value);
             }
         }
 
@@ -401,7 +401,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             var customer = companyData?.Customers.FirstOrDefault(c => c.Name == FilterCustomer);
             if (customer != null)
             {
-                filtered = filtered.Where(r => r.CustomerId == customer.Id).ToList();
+                filtered = filtered.Where(r => r.CustomerId == customer.Id);
             }
         }
 
@@ -418,25 +418,25 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 })
                 .Select(ri => ri.Id)
                 .ToHashSet() ?? [];
-            filtered = filtered.Where(r => matchingRentalItemIds.Contains(r.RentalItemId)).ToList();
+            filtered = filtered.Where(r => matchingRentalItemIds.Contains(r.RentalItemId));
         }
 
         // Apply date filters
         if (FilterStartDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.StartDate >= FilterStartDateFrom.Value).ToList();
+            filtered = filtered.Where(r => r.StartDate >= FilterStartDateFrom.Value);
         }
         if (FilterStartDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.StartDate <= FilterStartDateTo.Value).ToList();
+            filtered = filtered.Where(r => r.StartDate <= FilterStartDateTo.Value);
         }
         if (FilterDueDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.DueDate >= FilterDueDateFrom.Value).ToList();
+            filtered = filtered.Where(r => r.DueDate >= FilterDueDateFrom.Value);
         }
         if (FilterDueDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.DueDate <= FilterDueDateTo.Value).ToList();
+            filtered = filtered.Where(r => r.DueDate <= FilterDueDateTo.Value);
         }
 
         // Create display items

@@ -609,7 +609,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private void FilterPayments()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        var filtered = _allPayments.ToList();
+        IEnumerable<Payment> filtered = _allPayments;
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -642,39 +642,39 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 "Square" => PaymentMethod.Square,
                 _ => PaymentMethod.Cash
             };
-            filtered = filtered.Where(p => p.PaymentMethod == method).ToList();
+            filtered = filtered.Where(p => p.PaymentMethod == method);
         }
 
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(p => GetPaymentStatus(p) == FilterStatus).ToList();
+            filtered = filtered.Where(p => GetPaymentStatus(p) == FilterStatus);
         }
 
         // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
-            filtered = filtered.Where(p => p.CustomerId == FilterCustomerId).ToList();
+            filtered = filtered.Where(p => p.CustomerId == FilterCustomerId);
         }
 
         // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
-            filtered = filtered.Where(p => Math.Abs(p.Amount) >= minAmount).ToList();
+            filtered = filtered.Where(p => Math.Abs(p.Amount) >= minAmount);
         }
         if (decimal.TryParse(FilterAmountMax, out var maxAmount))
         {
-            filtered = filtered.Where(p => Math.Abs(p.Amount) <= maxAmount).ToList();
+            filtered = filtered.Where(p => Math.Abs(p.Amount) <= maxAmount);
         }
 
         // Apply date filter
         if (FilterDateFrom.HasValue)
         {
-            filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime);
         }
         if (FilterDateTo.HasValue)
         {
-            filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime);
         }
 
         // Create display items
