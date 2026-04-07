@@ -15,6 +15,37 @@ namespace ArgoBooks.ViewModels;
 public partial class AppShellViewModel : ViewModelBase
 {
     private readonly INavigationService? _navigationService;
+    private bool _hasPremium;
+
+    // Lazy modal VM backing fields
+    private CustomerModalsViewModel? _customerModalsViewModel;
+    private ProductModalsViewModel? _productModalsViewModel;
+    private CategoryModalsViewModel? _categoryModalsViewModel;
+    private DepartmentModalsViewModel? _departmentModalsViewModel;
+    private SupplierModalsViewModel? _supplierModalsViewModel;
+    private RentalInventoryModalsViewModel? _rentalInventoryModalsViewModel;
+    private RentalRecordsModalsViewModel? _rentalRecordsModalsViewModel;
+    private PaymentModalsViewModel? _paymentModalsViewModel;
+    private InvoiceModalsViewModel? _invoiceModalsViewModel;
+    private InvoiceTemplateDesignerViewModel? _invoiceTemplateDesignerViewModel;
+    private ExpenseModalsViewModel? _expenseModalsViewModel;
+    private RevenueModalsViewModel? _revenueModalsViewModel;
+    private StockLevelsModalsViewModel? _stockLevelsModalsViewModel;
+    private LocationsModalsViewModel? _locationsModalsViewModel;
+    private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
+    private PurchaseOrdersModalsViewModel? _purchaseOrdersModalsViewModel;
+    private ReceiptsModalsViewModel? _receiptsModalsViewModel;
+    private LostDamagedModalsViewModel? _lostDamagedModalsViewModel;
+    private ReturnsModalsViewModel? _returnsModalsViewModel;
+    private ReportModalsViewModel? _reportModalsViewModel;
+
+    /// <summary>
+    /// Raised when any modal ViewModel saves or deletes data (for unsaved-changes tracking).
+    /// </summary>
+    internal event EventHandler? UnsavedChangesMade;
+
+    private void RaiseUnsavedChanges(object? sender, EventArgs e) =>
+        UnsavedChangesMade?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
     /// Raised when the user requests to open a file for scanning via quick action.
@@ -142,102 +173,349 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Gets the customer modals view model.
     /// </summary>
-    public CustomerModalsViewModel CustomerModalsViewModel { get; }
+    public CustomerModalsViewModel CustomerModalsViewModel
+    {
+        get
+        {
+            if (_customerModalsViewModel == null)
+            {
+                _customerModalsViewModel = new CustomerModalsViewModel();
+                _customerModalsViewModel.CustomerSaved += RaiseUnsavedChanges;
+                _customerModalsViewModel.CustomerDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _customerModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the product modals view model.
     /// </summary>
-    public ProductModalsViewModel ProductModalsViewModel { get; }
+    public ProductModalsViewModel ProductModalsViewModel
+    {
+        get
+        {
+            if (_productModalsViewModel == null)
+            {
+                _productModalsViewModel = new ProductModalsViewModel();
+                _productModalsViewModel.ProductSaved += RaiseUnsavedChanges;
+                _productModalsViewModel.ProductDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _productModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the category modals view model.
     /// </summary>
-    public CategoryModalsViewModel CategoryModalsViewModel { get; }
+    public CategoryModalsViewModel CategoryModalsViewModel
+    {
+        get
+        {
+            if (_categoryModalsViewModel == null)
+            {
+                _categoryModalsViewModel = new CategoryModalsViewModel();
+                _categoryModalsViewModel.CategorySaved += RaiseUnsavedChanges;
+                _categoryModalsViewModel.CategoryDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _categoryModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the department modals view model.
     /// </summary>
-    public DepartmentModalsViewModel DepartmentModalsViewModel { get; }
+    public DepartmentModalsViewModel DepartmentModalsViewModel
+    {
+        get
+        {
+            if (_departmentModalsViewModel == null)
+            {
+                _departmentModalsViewModel = new DepartmentModalsViewModel();
+                _departmentModalsViewModel.DepartmentSaved += RaiseUnsavedChanges;
+                _departmentModalsViewModel.DepartmentDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _departmentModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the supplier modals view model.
     /// </summary>
-    public SupplierModalsViewModel SupplierModalsViewModel { get; }
+    public SupplierModalsViewModel SupplierModalsViewModel
+    {
+        get
+        {
+            if (_supplierModalsViewModel == null)
+            {
+                _supplierModalsViewModel = new SupplierModalsViewModel();
+                _supplierModalsViewModel.SupplierSaved += RaiseUnsavedChanges;
+                _supplierModalsViewModel.SupplierDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _supplierModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the rental inventory modals view model.
     /// </summary>
-    public RentalInventoryModalsViewModel RentalInventoryModalsViewModel { get; }
+    public RentalInventoryModalsViewModel RentalInventoryModalsViewModel
+    {
+        get
+        {
+            if (_rentalInventoryModalsViewModel == null)
+            {
+                _rentalInventoryModalsViewModel = new RentalInventoryModalsViewModel();
+                _rentalInventoryModalsViewModel.ItemSaved += RaiseUnsavedChanges;
+                _rentalInventoryModalsViewModel.ItemDeleted += RaiseUnsavedChanges;
+                _rentalInventoryModalsViewModel.RentalCreated += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _rentalInventoryModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the rental records modals view model.
     /// </summary>
-    public RentalRecordsModalsViewModel RentalRecordsModalsViewModel { get; }
+    public RentalRecordsModalsViewModel RentalRecordsModalsViewModel
+    {
+        get
+        {
+            if (_rentalRecordsModalsViewModel == null)
+            {
+                _rentalRecordsModalsViewModel = new RentalRecordsModalsViewModel();
+                _rentalRecordsModalsViewModel.RecordSaved += RaiseUnsavedChanges;
+                _rentalRecordsModalsViewModel.RecordDeleted += RaiseUnsavedChanges;
+                _rentalRecordsModalsViewModel.RecordReturned += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _rentalRecordsModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the payment modals view model.
     /// </summary>
-    public PaymentModalsViewModel PaymentModalsViewModel { get; }
+    public PaymentModalsViewModel PaymentModalsViewModel
+    {
+        get
+        {
+            if (_paymentModalsViewModel == null)
+            {
+                _paymentModalsViewModel = new PaymentModalsViewModel();
+                _paymentModalsViewModel.PaymentSaved += RaiseUnsavedChanges;
+                _paymentModalsViewModel.PaymentDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _paymentModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the invoice modals view model.
     /// </summary>
-    public InvoiceModalsViewModel InvoiceModalsViewModel { get; }
+    public InvoiceModalsViewModel InvoiceModalsViewModel
+    {
+        get
+        {
+            if (_invoiceModalsViewModel == null)
+            {
+                _invoiceModalsViewModel = new InvoiceModalsViewModel();
+                _invoiceModalsViewModel.InvoiceDeleted += RaiseUnsavedChanges;
+                _invoiceModalsViewModel.HasPremium = _hasPremium;
+                OnPropertyChanged();
+            }
+            return _invoiceModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the invoice template designer modal view model.
     /// </summary>
-    public InvoiceTemplateDesignerViewModel InvoiceTemplateDesignerViewModel { get; }
+    public InvoiceTemplateDesignerViewModel InvoiceTemplateDesignerViewModel
+    {
+        get
+        {
+            if (_invoiceTemplateDesignerViewModel == null)
+            {
+                _invoiceTemplateDesignerViewModel = new InvoiceTemplateDesignerViewModel();
+                _invoiceTemplateDesignerViewModel.TemplateSaved += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _invoiceTemplateDesignerViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the expense modals view model.
     /// </summary>
-    public ExpenseModalsViewModel ExpenseModalsViewModel { get; }
+    public ExpenseModalsViewModel ExpenseModalsViewModel
+    {
+        get
+        {
+            if (_expenseModalsViewModel == null)
+            {
+                _expenseModalsViewModel = new ExpenseModalsViewModel();
+                _expenseModalsViewModel.ExpenseSaved += RaiseUnsavedChanges;
+                _expenseModalsViewModel.ExpenseDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _expenseModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the revenue modals view model.
     /// </summary>
-    public RevenueModalsViewModel RevenueModalsViewModel { get; }
+    public RevenueModalsViewModel RevenueModalsViewModel
+    {
+        get
+        {
+            if (_revenueModalsViewModel == null)
+            {
+                _revenueModalsViewModel = new RevenueModalsViewModel();
+                _revenueModalsViewModel.RevenueSaved += RaiseUnsavedChanges;
+                _revenueModalsViewModel.RevenueDeleted += RaiseUnsavedChanges;
+                OnPropertyChanged();
+            }
+            return _revenueModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the stock levels modals view model.
     /// </summary>
-    public StockLevelsModalsViewModel StockLevelsModalsViewModel { get; }
+    public StockLevelsModalsViewModel StockLevelsModalsViewModel
+    {
+        get
+        {
+            if (_stockLevelsModalsViewModel == null)
+            {
+                _stockLevelsModalsViewModel = new StockLevelsModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _stockLevelsModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the locations modals view model.
     /// </summary>
-    public LocationsModalsViewModel LocationsModalsViewModel { get; }
+    public LocationsModalsViewModel LocationsModalsViewModel
+    {
+        get
+        {
+            if (_locationsModalsViewModel == null)
+            {
+                _locationsModalsViewModel = new LocationsModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _locationsModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the stock adjustments modals view model.
     /// </summary>
-    public StockAdjustmentsModalsViewModel StockAdjustmentsModalsViewModel { get; }
+    public StockAdjustmentsModalsViewModel StockAdjustmentsModalsViewModel
+    {
+        get
+        {
+            if (_stockAdjustmentsModalsViewModel == null)
+            {
+                _stockAdjustmentsModalsViewModel = new StockAdjustmentsModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _stockAdjustmentsModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the purchase orders modals view model.
     /// </summary>
-    public PurchaseOrdersModalsViewModel PurchaseOrdersModalsViewModel { get; }
+    public PurchaseOrdersModalsViewModel PurchaseOrdersModalsViewModel
+    {
+        get
+        {
+            if (_purchaseOrdersModalsViewModel == null)
+            {
+                _purchaseOrdersModalsViewModel = new PurchaseOrdersModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _purchaseOrdersModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the receipts modals view model.
     /// </summary>
-    public ReceiptsModalsViewModel ReceiptsModalsViewModel { get; }
+    public ReceiptsModalsViewModel ReceiptsModalsViewModel
+    {
+        get
+        {
+            if (_receiptsModalsViewModel == null)
+            {
+                _receiptsModalsViewModel = new ReceiptsModalsViewModel();
+                if (_hasPremium)
+                    _receiptsModalsViewModel.InvalidateScanServices();
+                OnPropertyChanged();
+            }
+            return _receiptsModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the lost/damaged modals view model.
     /// </summary>
-    public LostDamagedModalsViewModel LostDamagedModalsViewModel { get; }
+    public LostDamagedModalsViewModel LostDamagedModalsViewModel
+    {
+        get
+        {
+            if (_lostDamagedModalsViewModel == null)
+            {
+                _lostDamagedModalsViewModel = new LostDamagedModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _lostDamagedModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the returns modals view model.
     /// </summary>
-    public ReturnsModalsViewModel ReturnsModalsViewModel { get; }
+    public ReturnsModalsViewModel ReturnsModalsViewModel
+    {
+        get
+        {
+            if (_returnsModalsViewModel == null)
+            {
+                _returnsModalsViewModel = new ReturnsModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _returnsModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the report modals view model.
     /// </summary>
-    public ReportModalsViewModel ReportModalsViewModel { get; }
+    public ReportModalsViewModel ReportModalsViewModel
+    {
+        get
+        {
+            if (_reportModalsViewModel == null)
+            {
+                _reportModalsViewModel = new ReportModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _reportModalsViewModel;
+        }
+    }
 
     /// <summary>
     /// Gets the version history modal view model.
@@ -400,66 +678,6 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create edit company modal
         EditCompanyModalViewModel = new EditCompanyModalViewModel();
-
-        // Create customer modals
-        CustomerModalsViewModel = new CustomerModalsViewModel();
-
-        // Create product modals
-        ProductModalsViewModel = new ProductModalsViewModel();
-
-        // Create category modals
-        CategoryModalsViewModel = new CategoryModalsViewModel();
-
-        // Create department modals
-        DepartmentModalsViewModel = new DepartmentModalsViewModel();
-
-        // Create supplier modals
-        SupplierModalsViewModel = new SupplierModalsViewModel();
-
-        // Create rental inventory modals
-        RentalInventoryModalsViewModel = new RentalInventoryModalsViewModel();
-
-        // Create rental records modals
-        RentalRecordsModalsViewModel = new RentalRecordsModalsViewModel();
-
-        // Create payment modals
-        PaymentModalsViewModel = new PaymentModalsViewModel();
-
-        // Create invoice modals
-        InvoiceModalsViewModel = new InvoiceModalsViewModel();
-
-        // Create invoice template designer modal
-        InvoiceTemplateDesignerViewModel = new InvoiceTemplateDesignerViewModel();
-
-        // Create expense modals
-        ExpenseModalsViewModel = new ExpenseModalsViewModel();
-
-        // Create revenue modals
-        RevenueModalsViewModel = new RevenueModalsViewModel();
-
-        // Create stock levels modals
-        StockLevelsModalsViewModel = new StockLevelsModalsViewModel();
-
-        // Create locations modals
-        LocationsModalsViewModel = new LocationsModalsViewModel();
-
-        // Create stock adjustments modals
-        StockAdjustmentsModalsViewModel = new StockAdjustmentsModalsViewModel();
-
-        // Create purchase orders modals
-        PurchaseOrdersModalsViewModel = new PurchaseOrdersModalsViewModel();
-
-        // Create receipts modals
-        ReceiptsModalsViewModel = new ReceiptsModalsViewModel();
-
-        // Create lost/damaged modals
-        LostDamagedModalsViewModel = new LostDamagedModalsViewModel();
-
-        // Create returns modals
-        ReturnsModalsViewModel = new ReturnsModalsViewModel();
-
-        // Create report modals
-        ReportModalsViewModel = new ReportModalsViewModel();
 
         // Create version history modal
         VersionHistoryModalViewModel = new VersionHistoryModalViewModel();
@@ -771,16 +989,18 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public void SetPremiumStatus(bool hasPremium)
     {
+        _hasPremium = hasPremium;
+
         SidebarViewModel.HasPremium = hasPremium;
         SettingsModalViewModel.HasPremium = hasPremium;
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
 
-        if (App.InvoiceModalsViewModel != null)
-            App.InvoiceModalsViewModel.HasPremium = hasPremium;
+        if (_invoiceModalsViewModel != null)
+            _invoiceModalsViewModel.HasPremium = hasPremium;
 
-        // Invalidate cached receipt scan services so upgraded license takes effect immediately
-        ReceiptsModalsViewModel.InvalidateScanServices();
+        // Only invalidate if already created
+        _receiptsModalsViewModel?.InvalidateScanServices();
 
         // Notify lazily-created page ViewModels (e.g., InsightsPageViewModel)
         App.RaisePlanStatusChanged(hasPremium);
