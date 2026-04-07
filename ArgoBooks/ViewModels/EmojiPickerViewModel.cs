@@ -138,8 +138,9 @@ public partial class EmojiPickerViewModel : ObservableObject
         }
         else
         {
-            // Select first category tab (skip Recent and Favorites)
-            SelectTab(Tabs.FirstOrDefault(t => !t.IsSpecial) ?? Tabs.First());
+            // Default to Office tab (most relevant for a business app)
+            SelectTab(Tabs.FirstOrDefault(t => t.Name == "Office") ??
+                      Tabs.FirstOrDefault(t => !t.IsSpecial) ?? Tabs.First());
         }
 
         IsOpen = true;
