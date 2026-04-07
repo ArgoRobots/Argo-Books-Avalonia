@@ -1448,7 +1448,6 @@ public class App : Application
             _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath, logo);
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(args.FilePath);
-            _mainWindowViewModel.HideLoading();
 
             // Clear undo/redo history for fresh start with new company
             UndoRedoManager.Clear();
@@ -1548,6 +1547,10 @@ public class App : Application
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
+
+            // Hide loading overlay only after the dashboard is in place,
+            // so the user never sees the welcome screen flash during initialization.
+            _mainWindowViewModel.HideLoading();
         };
 
         CompanyManager.CompanyClosed += async (_, _) =>
