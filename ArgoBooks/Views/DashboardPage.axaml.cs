@@ -169,7 +169,7 @@ public partial class DashboardPage : UserControl
         {
             if (WidgetPanel.Children[i] is WidgetHost widgetHost)
             {
-                var dragHandle = widgetHost.FindControl<Button>("DragHandle");
+                var dragHandle = widgetHost.FindControl<Border>("DragHandle");
                 if (dragHandle != null)
                 {
                     _dragDropManager.AttachDragHandle(dragHandle, i);

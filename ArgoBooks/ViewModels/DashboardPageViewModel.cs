@@ -432,7 +432,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Initialize the widget layout system
         LayoutViewModel.Initialize(companyManager);
-        LayoutViewModel.LoadAllWidgetData();
+
+        // Load data through the full flow (includes CorrectRentalStatuses)
+        LoadDashboardData();
 
         // Mark dashboard as explored when initialized
         TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ExploreDashboard);

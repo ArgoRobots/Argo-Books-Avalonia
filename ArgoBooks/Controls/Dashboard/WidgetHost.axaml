@@ -36,8 +36,8 @@
         <Style Selector="Button.widget-overlay-btn:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
-        <Style Selector="Button.drag-handle">
-            <Setter Property="Cursor" Value="SizeAll" />
+        <Style Selector="Border.drag-handle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <!-- Config popover styles -->
         <Style Selector="TextBlock.config-label">
@@ -55,7 +55,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Panel>
+    <Panel IsVisible="{Binding WidgetViewModel.IsWidgetVisible}">
         <Border Classes="widget-card"
                 Classes.editing="{Binding IsEditMode}">
             <ContentPresenter x:Name="WidgetContent"
@@ -70,11 +70,19 @@
                     Margin="0,8,8,0"
                     Spacing="4"
                     IsVisible="{Binding IsEditMode}">
-            <Button Classes="widget-overlay-btn drag-handle"
-                    x:Name="DragHandle"
-                    ToolTip.Tip="Drag to reorder">
-                <TextBlock Text="&#x2817;" FontSize="14" />
-            </Button>
+            <Border x:Name="DragHandle"
+                    Classes="widget-overlay-btn drag-handle"
+                    ToolTip.Tip="Drag to reorder"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    CornerRadius="6"
+                    Padding="4"
+                    MinWidth="28" MinHeight="28"
+                    Cursor="SizeAll">
+                <TextBlock Text="&#x2817;" FontSize="14"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
             <Button Classes="widget-overlay-btn"
                     Command="{Binding ToggleConfigCommand}"
                     IsVisible="{Binding WidgetViewModel.HasConfig}"
@@ -84,7 +92,12 @@
             <Button Classes="widget-overlay-btn"
                     Command="{Binding CycleSizeCommand}"
                     ToolTip.Tip="Resize widget">
-                <TextBlock Text="&#x2194;" FontSize="12" />
+                <Panel>
+                    <!-- Outward arrows (expand) when next cycle grows -->
+                    <TextBlock Text="⇔" FontSize="13" IsVisible="{Binding WillGrow}" />
+                    <!-- Inward arrows (shrink) when next cycle wraps to smallest -->
+                    <TextBlock Text="⇐" FontSize="13" IsVisible="{Binding !WillGrow}" />
+                </Panel>
             </Button>
             <Button Classes="widget-overlay-btn remove-btn"
                     x:Name="RemoveButton"

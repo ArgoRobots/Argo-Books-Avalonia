@@ -30,18 +30,18 @@ public class DashboardDragDropManager
 
     public void AttachDragHandle(Control dragHandle, int widgetIndex)
     {
-        dragHandle.PointerPressed += (s, e) => OnPointerPressed(e, widgetIndex);
+        dragHandle.PointerPressed += (s, e) => OnPointerPressed(e, widgetIndex, dragHandle);
         dragHandle.PointerMoved += (s, e) => OnPointerMoved(e);
         dragHandle.PointerReleased += (s, e) => OnPointerReleased(e);
         dragHandle.PointerCaptureLost += (s, e) => CancelDrag();
     }
 
-    private void OnPointerPressed(PointerPressedEventArgs e, int widgetIndex)
+    private void OnPointerPressed(PointerPressedEventArgs e, int widgetIndex, Control dragHandle)
     {
         if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
         _dragStartPoint = e.GetPosition(_panel);
         _dragSourceIndex = widgetIndex;
-        e.Pointer.Capture((Control)e.Source!);
+        e.Pointer.Capture(dragHandle);
         e.Handled = true;
     }
 

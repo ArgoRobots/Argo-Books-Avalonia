@@ -16,16 +16,25 @@ public partial class SetupChecklistWidgetViewModel : WidgetViewModelBase
     public override void Initialize(Dictionary<string, string> config)
     {
         Checklist.NavigationRequested += OnChecklistNavigationRequested;
+        Checklist.PropertyChanged += OnChecklistPropertyChanged;
     }
 
     public override void LoadData()
     {
         Checklist.Refresh();
+        IsWidgetVisible = Checklist.IsVisible;
     }
 
     public override void Cleanup()
     {
         Checklist.NavigationRequested -= OnChecklistNavigationRequested;
+        Checklist.PropertyChanged -= OnChecklistPropertyChanged;
+    }
+
+    private void OnChecklistPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SetupChecklistViewModel.IsVisible))
+            IsWidgetVisible = Checklist.IsVisible;
     }
 
     private void OnChecklistNavigationRequested(object? sender, string target)

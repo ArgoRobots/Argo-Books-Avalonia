@@ -13,6 +13,12 @@ public abstract partial class WidgetViewModelBase : ObservableObject
     /// </summary>
     public virtual bool HasConfig => false;
 
+    /// <summary>
+    /// Whether the widget host card wrapper should be visible.
+    /// Widgets can set this to false to hide themselves (e.g., setup checklist when dismissed).
+    /// </summary>
+    [ObservableProperty] private bool _isWidgetVisible = true;
+
     protected CompanyManager? CompanyManager => App.CompanyManager;
 
     public virtual void Initialize(Dictionary<string, string> config) { }

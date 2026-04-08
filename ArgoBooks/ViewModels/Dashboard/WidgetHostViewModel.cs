@@ -29,12 +29,26 @@ public partial class WidgetHostViewModel : ObservableObject
         widgetVm.Initialize(entry.Config);
     }
 
+    /// <summary>
+    /// Whether the next size cycle will make the widget larger (true) or wrap back to smallest (false).
+    /// </summary>
+    public bool WillGrow
+    {
+        get
+        {
+            var currentIndex = Array.IndexOf(AvailableSizes, Size);
+            var nextIndex = (currentIndex + 1) % AvailableSizes.Length;
+            return AvailableSizes[nextIndex] > Size;
+        }
+    }
+
     [RelayCommand]
     private void CycleSize()
     {
         var currentIndex = Array.IndexOf(AvailableSizes, Size);
         var nextIndex = (currentIndex + 1) % AvailableSizes.Length;
         Size = AvailableSizes[nextIndex];
+        OnPropertyChanged(nameof(WillGrow));
     }
 
     [RelayCommand]
