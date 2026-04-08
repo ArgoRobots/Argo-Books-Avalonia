@@ -85,6 +85,10 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 
     public override void Initialize(Dictionary<string, string> config)
     {
+        System.Diagnostics.Debug.WriteLine($"[QuickActions] Initialize: config.Count={config.Count}");
+        foreach (var kvp in config)
+            System.Diagnostics.Debug.WriteLine($"[QuickActions]   {kvp.Key}={kvp.Value}");
+
         if (config.Count > 0)
         {
             // Apply saved widget config
@@ -95,6 +99,8 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             // No widget config saved yet — load from legacy GlobalSettings
             LoadQuickActionsSettings();
         }
+
+        System.Diagnostics.Debug.WriteLine($"[QuickActions] After init: ShowNewInvoice={ShowNewInvoice}, ShowNewExpense={ShowNewExpense}, ShowNewCustomer={ShowNewCustomer}, ShowNewProduct={ShowNewProduct}");
     }
 
     public override void LoadData()

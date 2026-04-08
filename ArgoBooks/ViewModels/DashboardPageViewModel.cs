@@ -429,6 +429,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     public void Initialize(CompanyManager companyManager)
     {
         _companyManager = companyManager;
+        System.Diagnostics.Debug.WriteLine($"[DashboardVM] Initialize: companyManager={companyManager != null}, CompanyData={companyManager?.CompanyData != null}, Revenues={companyManager?.CompanyData?.Revenues?.Count}");
 
         // Initialize the widget layout system
         LayoutViewModel.Initialize(companyManager);

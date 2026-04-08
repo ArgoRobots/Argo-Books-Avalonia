@@ -89,6 +89,7 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
     public override void LoadData()
     {
         var data = CompanyManager?.CompanyData;
+        System.Diagnostics.Debug.WriteLine($"[StatCard:{Kind}] LoadData: CompanyManager={CompanyManager != null}, CompanyData={data != null}, Revenues={data?.Revenues?.Count}, Expenses={data?.Expenses?.Count}");
         if (data == null) return;
 
         var chartSettings = ChartSettingsService.Instance;

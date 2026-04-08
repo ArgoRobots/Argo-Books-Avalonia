@@ -87,7 +87,12 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
     public void LoadAllWidgetData()
     {
-        foreach (var w in Widgets) w.LoadData();
+        System.Diagnostics.Debug.WriteLine($"[Dashboard] LoadAllWidgetData: {Widgets.Count} widgets, _companyManager={_companyManager != null}, CompanyData={_companyManager?.CompanyData != null}");
+        foreach (var w in Widgets)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Dashboard]   Widget {w.WidgetType}");
+            w.LoadData();
+        }
     }
 
     [RelayCommand]
