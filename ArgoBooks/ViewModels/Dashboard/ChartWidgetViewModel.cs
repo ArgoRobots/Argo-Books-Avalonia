@@ -94,6 +94,7 @@ public partial class ChartWidgetViewModel : WidgetViewModelBase
     private void LoadProfitsChart(Core.Data.CompanyData data, DateTime startDate, DateTime endDate)
     {
         var (series, labels, dates, totalProfit) = ChartLoaderService.LoadProfitsOverviewChart(data, startDate, endDate);
+        System.Diagnostics.Debug.WriteLine($"[Chart:Profits] series={series.Count}, labels={labels.Length}, dates={dates.Length}, totalProfit={totalProfit}, startDate={startDate}, endDate={endDate}");
 
         Series = series;
         XAxes = ChartLoaderService.CreateDateXAxes(dates);

@@ -314,9 +314,28 @@ public partial class ChartExpandOverlay : UserControl
         // Preserve the page's DataContext so chart bindings (Series, Axes, etc.) keep working
         // after reparenting from the page into the AppShell-level overlay.
         // Set on ChartArea so the ChartContextMenu also inherits it.
+        // When charts are inside dashboard widgets, the sourcePanel's DataContext is a
+        // ChartWidgetViewModel — walk up the tree to find the page-level ViewModel instead.
         var chartArea = this.FindControl<Panel>("ChartArea");
         if (chartArea != null)
-            chartArea.DataContext = sourcePanel.DataContext;
+        {
+            var dc = sourcePanel.DataContext;
+            if (dc is not ViewModels.ChartContextMenuViewModelBase)
+            {
+                // Walk up to find the page ViewModel
+                var parent = sourcePanel.Parent;
+                while (parent != null)
+                {
+                    if (parent.DataContext is ViewModels.ChartContextMenuViewModelBase pageVm)
+                    {
+                        dc = pageVm;
+                        break;
+                    }
+                    parent = parent.Parent;
+                }
+            }
+            chartArea.DataContext = dc;
+        }
 
         // Move all children except the expand button to the overlay.
         // GeoMaps cannot be reparented because LiveCharts' DetachedFromVisualTree
