@@ -99,6 +99,14 @@ public partial class DashboardPage : UserControl
     private void RebuildWidgetPanel(DashboardLayoutViewModel layoutVm)
     {
         var panel = WidgetPanel;
+
+        // Unsubscribe from old widget VMs to prevent event handler leaks
+        foreach (var child in panel.Children)
+        {
+            if (child is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
+                oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
+        }
+
         panel.Children.Clear();
 
         for (int i = 0; i < layoutVm.Widgets.Count; i++)

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -66,8 +67,21 @@ public partial class DashboardLayoutViewModel : ObservableObject
         foreach (var entry in layout.Widgets)
         {
             var host = WidgetFactory.CreateWidgetHost(entry);
+            WireUpWidgetEvents(host);
             Widgets.Add(host);
         }
+    }
+
+    private void WireUpWidgetEvents(WidgetHostViewModel host)
+    {
+        // Wire setup checklist navigation
+        if (host.WidgetViewModel is SetupChecklistWidgetViewModel checklistVm)
+            checklistVm.NavigationRequested += OnChecklistNavigationRequested;
+    }
+
+    private void OnChecklistNavigationRequested(object? sender, string pageName)
+    {
+        _ = App.NavigationService?.NavigateToAsync(pageName);
     }
 
     public void LoadAllWidgetData()

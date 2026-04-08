@@ -90,7 +90,8 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 
     public override void LoadData()
     {
-        LoadQuickActionsSettings();
+        // Quick actions is a pure UI configuration widget — no data to load.
+        // Config is applied via Initialize/ApplyConfig only.
     }
 
     public void LoadQuickActionsSettings()

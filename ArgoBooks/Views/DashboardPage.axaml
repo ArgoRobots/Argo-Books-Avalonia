@@ -178,10 +178,12 @@
                         ShowDateRangeMessage="True" />
                 </Border>
 
-                <!-- Widget Panel (populated from code-behind) -->
-                <dashboard:DashboardFlowPanel x:Name="WidgetPanel"
-                                               Spacing="12"
-                                               RowSpacing="12" />
+                <!-- Widget Panel (wrapped in Panel for drag-drop indicator positioning) -->
+                <Panel x:Name="WidgetPanelContainer">
+                    <dashboard:DashboardFlowPanel x:Name="WidgetPanel"
+                                                   Spacing="12"
+                                                   RowSpacing="12" />
+                </Panel>
 
                 <!-- Bottom Spacing -->
                 <Border Height="24" />
