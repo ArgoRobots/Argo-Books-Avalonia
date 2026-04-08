@@ -39,6 +39,20 @@
         <Style Selector="Button.drag-handle">
             <Setter Property="Cursor" Value="SizeAll" />
         </Style>
+        <!-- Config popover styles -->
+        <Style Selector="TextBlock.config-label">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style Selector="Border.config-toggle-row">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Border.config-toggle-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
     </UserControl.Styles>
 
     <Panel>
@@ -59,23 +73,240 @@
             <Button Classes="widget-overlay-btn drag-handle"
                     x:Name="DragHandle"
                     ToolTip.Tip="Drag to reorder">
-                <TextBlock Text="⠿" FontSize="14" />
+                <TextBlock Text="&#x2817;" FontSize="14" />
             </Button>
             <Button Classes="widget-overlay-btn"
                     Command="{Binding ToggleConfigCommand}"
+                    IsVisible="{Binding WidgetViewModel.HasConfig}"
                     ToolTip.Tip="Configure widget">
-                <TextBlock Text="⚙" FontSize="12" />
+                <TextBlock Text="&#x2699;" FontSize="12" />
             </Button>
             <Button Classes="widget-overlay-btn"
                     Command="{Binding CycleSizeCommand}"
                     ToolTip.Tip="Resize widget">
-                <TextBlock Text="↔" FontSize="12" />
+                <TextBlock Text="&#x2194;" FontSize="12" />
             </Button>
             <Button Classes="widget-overlay-btn remove-btn"
                     x:Name="RemoveButton"
                     ToolTip.Tip="Remove widget">
-                <TextBlock Text="✕" FontSize="12" />
+                <TextBlock Text="&#x2715;" FontSize="12" />
             </Button>
         </StackPanel>
+
+        <!-- Config popover (visible when editing and config is open) -->
+        <Border x:Name="ConfigPopover"
+                IsVisible="{Binding IsConfigOpen}"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12"
+                Margin="8,40,8,0"
+                VerticalAlignment="Top"
+                HorizontalAlignment="Right"
+                MaxWidth="320"
+                MaxHeight="400"
+                ZIndex="100"
+                BoxShadow="0 4 16 0 #30000000">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Configure" FontWeight="SemiBold" FontSize="13"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <Separator Background="{DynamicResource BorderBrush}" Height="1" Margin="0,0,0,4" />
+
+                <!-- Config content resolved per widget type -->
+                <ContentPresenter Content="{Binding WidgetViewModel}" x:Name="ConfigContent">
+                    <ContentPresenter.DataTemplates>
+
+                        <!-- QuickActionsWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:QuickActionsWidgetViewModel">
+                            <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Classes="config-label" Text="Visible Actions" />
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Invoice" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewInvoice}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Expense" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewExpense}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Revenue" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewRevenue}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="Scan Receipt" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowScanReceipt}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Customer" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewCustomer}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Supplier" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewSupplier}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Product" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewProduct}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="Record Payment" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowRecordPayment}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Rental Item" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewRentalItem}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Rental Record" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewRentalRecord}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Category" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewCategory}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Department" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewDepartment}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Location" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewLocation}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Purchase Order" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewPurchaseOrder}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="config-toggle-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="New Stock Adjustment" VerticalAlignment="Center" FontSize="12" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding ShowNewStockAdjustment}" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DataTemplate>
+
+                        <!-- RecentTransactionsWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:RecentTransactionsWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Rows to display" />
+                                <ComboBox ItemsSource="{Binding RowCountOptions}"
+                                          SelectedItem="{Binding RowCount}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- ActiveRentalsWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:ActiveRentalsWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Rows to display" />
+                                <ComboBox ItemsSource="{Binding RowCountOptions}"
+                                          SelectedItem="{Binding RowCount}"
+                                          HorizontalAlignment="Stretch" />
+                                <Border Classes="config-toggle-row">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Overdue only" VerticalAlignment="Center" FontSize="12" />
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding OverdueOnly}" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- TopCustomersWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:TopCustomersWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Number of customers" />
+                                <ComboBox ItemsSource="{Binding CountOptions}"
+                                          SelectedItem="{Binding Count}"
+                                          HorizontalAlignment="Stretch" />
+                                <TextBlock Classes="config-label" Text="Sort by" Margin="0,4,0,4" />
+                                <ComboBox ItemsSource="{Binding SortByOptions}"
+                                          SelectedItem="{Binding SortBy}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- LowStockAlertsWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:LowStockAlertsWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Stock threshold" />
+                                <ComboBox ItemsSource="{Binding ThresholdOptions}"
+                                          SelectedItem="{Binding Threshold}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- UpcomingInvoicesWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:UpcomingInvoicesWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Days ahead" />
+                                <ComboBox ItemsSource="{Binding DaysAheadOptions}"
+                                          SelectedItem="{Binding DaysAhead}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- ExpenseByCategoryWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:ExpenseByCategoryWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Chart style" />
+                                <ComboBox ItemsSource="{Binding ChartStyleOptions}"
+                                          SelectedItem="{Binding ChartStyle}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                        <!-- CashFlowWidgetViewModel Config -->
+                        <DataTemplate DataType="vm:CashFlowWidgetViewModel">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="config-label" Text="Period" />
+                                <ComboBox ItemsSource="{Binding PeriodOptions}"
+                                          SelectedItem="{Binding Period}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </DataTemplate>
+
+                    </ContentPresenter.DataTemplates>
+                </ContentPresenter>
+
+                <!-- Done button -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" Margin="0,4,0,0">
+                    <Button Content="Done"
+                            Classes="widget-overlay-btn"
+                            Padding="12,6"
+                            Command="{Binding ToggleConfigCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
     </Panel>
 </UserControl>

@@ -47,21 +47,10 @@
             Padding="20"
             IsVisible="{Binding HasVisibleQuickActions}">
         <StackPanel>
-            <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           Text="{loc:Loc 'Quick Actions'}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                <Button Grid.Column="1"
-                        Classes="icon-button"
-                        ToolTip.Tip="{loc:Loc 'Configure Quick Actions'}"
-                        Command="{Binding OpenQuickActionsSettingsCommand}">
-                    <PathIcon Data="{x:Static local:Icons.Settings}"
-                              Width="16" Height="16"
-                              Foreground="{DynamicResource TextSecondaryBrush}" />
-                </Button>
-            </Grid>
+            <TextBlock Text="{loc:Loc 'Quick Actions'}"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
 
             <controls:CenteringWrapPanel x:Name="QuickActionsWrapPanel" Margin="0,8,0,0">
                 <!-- New Invoice -->

@@ -19,7 +19,12 @@ public partial class LowStockAlertsWidgetViewModel : WidgetViewModelBase
     public bool HasAlerts => Items.Count > 0;
     public bool HasNoAlerts => Items.Count == 0;
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private int _threshold = 10;
+
+    public int[] ThresholdOptions { get; } = [5, 10, 15, 20, 25, 50, 100];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -29,14 +34,14 @@ public partial class LowStockAlertsWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("Threshold", out var thresholdStr) && int.TryParse(thresholdStr, out var threshold))
-            _threshold = threshold;
+            Threshold = threshold;
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["Threshold"] = _threshold.ToString()
+            ["Threshold"] = Threshold.ToString()
         };
     }
 
@@ -51,13 +56,13 @@ public partial class LowStockAlertsWidgetViewModel : WidgetViewModelBase
     private void LoadLowStockItems(CompanyData data)
     {
         var lowStockItems = data.Inventory
-            .Where(inv => inv.InStock <= _threshold)
+            .Where(inv => inv.InStock <= Threshold)
             .OrderBy(inv => inv.InStock)
             .Select(inv =>
             {
                 var product = data.GetProduct(inv.ProductId);
                 var name = product?.Name ?? "Unknown Item";
-                return new LowStockItem(name, inv.InStock, _threshold);
+                return new LowStockItem(name, inv.InStock, Threshold);
             })
             .ToList();
 

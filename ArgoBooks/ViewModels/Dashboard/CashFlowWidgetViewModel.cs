@@ -38,7 +38,12 @@ public partial class CashFlowWidgetViewModel : WidgetViewModelBase
     [ObservableProperty]
     private string _netCashFlow = "";
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private string _period = "monthly";
+
+    public string[] PeriodOptions { get; } = ["weekly", "monthly"];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -48,14 +53,14 @@ public partial class CashFlowWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("Period", out var period))
-            _period = period;
+            Period = period;
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["Period"] = _period
+            ["Period"] = Period
         };
     }
 
@@ -153,7 +158,7 @@ public partial class CashFlowWidgetViewModel : WidgetViewModelBase
     {
         var periods = new List<(DateTime Start, DateTime End, string Label)>();
 
-        if (_period == "weekly")
+        if (Period == "weekly")
         {
             // Align to start of week (Monday)
             var current = startDate.Date;

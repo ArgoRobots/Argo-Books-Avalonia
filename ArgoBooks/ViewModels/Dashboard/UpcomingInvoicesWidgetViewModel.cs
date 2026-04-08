@@ -28,7 +28,12 @@ public partial class UpcomingInvoicesWidgetViewModel : WidgetViewModelBase
     public bool HasInvoices => Invoices.Count > 0;
     public bool HasNoInvoices => Invoices.Count == 0;
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private int _daysAhead = 14;
+
+    public int[] DaysAheadOptions { get; } = [7, 14, 30];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -38,14 +43,14 @@ public partial class UpcomingInvoicesWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("DaysAhead", out var daysStr) && int.TryParse(daysStr, out var days))
-            _daysAhead = days;
+            DaysAhead = days;
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["DaysAhead"] = _daysAhead.ToString()
+            ["DaysAhead"] = DaysAhead.ToString()
         };
     }
 
@@ -60,7 +65,7 @@ public partial class UpcomingInvoicesWidgetViewModel : WidgetViewModelBase
     private void LoadUpcomingInvoices(CompanyData data)
     {
         var today = DateTime.Now.Date;
-        var cutoff = today.AddDays(_daysAhead);
+        var cutoff = today.AddDays(DaysAhead);
 
         var unpaidStatuses = new[]
         {

@@ -20,8 +20,17 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
     public bool HasCustomers => Customers.Count > 0;
     public bool HasNoCustomers => Customers.Count == 0;
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private int _count = 5;
+
+    [ObservableProperty]
     private string _sortBy = "revenue";
+
+    public int[] CountOptions { get; } = [5, 10];
+
+    public string[] SortByOptions { get; } = ["revenue", "count"];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -31,17 +40,17 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("Count", out var countStr) && int.TryParse(countStr, out var count))
-            _count = count;
+            Count = count;
         if (config.TryGetValue("SortBy", out var sortBy))
-            _sortBy = sortBy;
+            SortBy = sortBy;
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["Count"] = _count.ToString(),
-            ["SortBy"] = _sortBy
+            ["Count"] = Count.ToString(),
+            ["SortBy"] = SortBy
         };
     }
 
@@ -65,12 +74,12 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
                 Count = g.Count()
             });
 
-        var sorted = _sortBy == "count"
+        var sorted = SortBy == "count"
             ? grouped.OrderByDescending(g => g.Count)
             : grouped.OrderByDescending(g => g.TotalRevenue);
 
         var items = sorted
-            .Take(_count)
+            .Take(Count)
             .Select((g, i) =>
             {
                 var customer = data.GetCustomer(g.CustomerId);

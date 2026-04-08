@@ -8,6 +8,7 @@ namespace ArgoBooks.ViewModels.Dashboard;
 public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 {
     public override WidgetType WidgetType => WidgetType.QuickActions;
+    public override bool HasConfig => true;
 
     #region Quick Actions Visibility
 
@@ -161,12 +162,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     #endregion
 
     #region Quick Action Commands
-
-    [RelayCommand]
-    private void OpenQuickActionsSettings()
-    {
-        App.QuickActionsSettingsModalViewModel?.OpenCommand.Execute(null);
-    }
 
     [RelayCommand]
     private void NewInvoice()

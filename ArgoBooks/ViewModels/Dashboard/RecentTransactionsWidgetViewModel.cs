@@ -19,7 +19,12 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
     public bool HasRecentTransactions => RecentTransactions.Count > 0;
     public bool HasNoRecentTransactions => RecentTransactions.Count == 0;
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private int _rowCount = 10;
+
+    public int[] RowCountOptions { get; } = [5, 10, 20];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -29,14 +34,14 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("RowCount", out var rowCountStr) && int.TryParse(rowCountStr, out var rowCount))
-            _rowCount = rowCount;
+            RowCount = rowCount;
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["RowCount"] = _rowCount.ToString()
+            ["RowCount"] = RowCount.ToString()
         };
     }
 
@@ -54,7 +59,7 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
 
         var recentSales = data.Revenues
             .OrderByDescending(s => s.Date)
-            .Take(_rowCount)
+            .Take(RowCount)
             .Select(s => new RecentTransactionItem
             {
                 Id = s.Id,
@@ -74,7 +79,7 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
 
         var recentPurchases = data.Expenses
             .OrderByDescending(p => p.Date)
-            .Take(_rowCount)
+            .Take(RowCount)
             .Select(p => new RecentTransactionItem
             {
                 Id = p.Id,
@@ -94,7 +99,7 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
 
         var sortedItems = recentItems
             .OrderByDescending(t => t.Date)
-            .Take(_rowCount)
+            .Take(RowCount)
             .ToList();
 
         RecentTransactions = new ObservableCollection<RecentTransactionItem>(sortedItems);

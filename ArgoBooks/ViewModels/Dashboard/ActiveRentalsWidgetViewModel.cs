@@ -22,8 +22,15 @@ public partial class ActiveRentalsWidgetViewModel : WidgetViewModelBase
     public bool HasActiveRentals => ActiveRentalsList.Count > 0;
     public bool HasNoActiveRentals => ActiveRentalsList.Count == 0;
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private int _rowCount = 10;
+
+    [ObservableProperty]
     private bool _overdueOnly;
+
+    public int[] RowCountOptions { get; } = [5, 10, 20];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -33,17 +40,17 @@ public partial class ActiveRentalsWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("RowCount", out var rowCountStr) && int.TryParse(rowCountStr, out var rowCount))
-            _rowCount = rowCount;
+            RowCount = rowCount;
         if (config.TryGetValue("OverdueOnly", out var overdueStr))
-            _overdueOnly = overdueStr == "True";
+            OverdueOnly = overdueStr == "True";
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["RowCount"] = _rowCount.ToString(),
-            ["OverdueOnly"] = _overdueOnly.ToString()
+            ["RowCount"] = RowCount.ToString(),
+            ["OverdueOnly"] = OverdueOnly.ToString()
         };
     }
 
@@ -63,12 +70,12 @@ public partial class ActiveRentalsWidgetViewModel : WidgetViewModelBase
         var query = data.Rentals
             .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue);
 
-        if (_overdueOnly)
+        if (OverdueOnly)
             query = query.Where(r => r.Status == RentalStatus.Overdue);
 
         var activeRentals = query
             .OrderBy(r => r.DueDate)
-            .Take(_rowCount)
+            .Take(RowCount)
             .Select(r => new ActiveRentalItem
             {
                 Id = r.Id,

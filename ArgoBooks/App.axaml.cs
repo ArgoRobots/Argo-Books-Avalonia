@@ -192,11 +192,6 @@ public class App : Application
     public static PastPredictionsModalViewModel? PastPredictionsModalViewModel => _appShellViewModel?.PastPredictionsModalViewModel;
 
     /// <summary>
-    /// Gets the quick actions settings modal view model for shared access.
-    /// </summary>
-    public static QuickActionsSettingsModalViewModel? QuickActionsSettingsModalViewModel => _appShellViewModel?.QuickActionsSettingsModalViewModel;
-
-    /// <summary>
     /// Gets the settings modal view model for shared access.
     /// </summary>
     public static SettingsModalViewModel? SettingsModalViewModel => _appShellViewModel?.SettingsModalViewModel;

@@ -25,7 +25,12 @@ public partial class ExpenseByCategoryWidgetViewModel : WidgetViewModelBase
 
     public bool HasNoData => !HasData;
 
+    public override bool HasConfig => true;
+
+    [ObservableProperty]
     private string _chartStyle = "donut";
+
+    public string[] ChartStyleOptions { get; } = ["pie", "donut"];
 
     public override void Initialize(Dictionary<string, string> config)
     {
@@ -35,14 +40,14 @@ public partial class ExpenseByCategoryWidgetViewModel : WidgetViewModelBase
     public override void ApplyConfig(Dictionary<string, string> config)
     {
         if (config.TryGetValue("ChartStyle", out var style))
-            _chartStyle = style;
+            ChartStyle = style;
     }
 
     public override Dictionary<string, string> GetConfig()
     {
         return new Dictionary<string, string>
         {
-            ["ChartStyle"] = _chartStyle
+            ["ChartStyle"] = ChartStyle
         };
     }
 
@@ -106,7 +111,7 @@ public partial class ExpenseByCategoryWidgetViewModel : WidgetViewModelBase
             .Take(8)
             .ToList();
 
-        var isDonut = _chartStyle == "donut";
+        var isDonut = ChartStyle == "donut";
         var series = new ObservableCollection<ISeries>();
 
         for (int i = 0; i < sorted.Count; i++)

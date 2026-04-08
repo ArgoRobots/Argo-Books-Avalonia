@@ -528,11 +528,6 @@ public partial class AppShellViewModel : ViewModelBase
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
 
     /// <summary>
-    /// Gets the quick actions settings modal view model.
-    /// </summary>
-    public QuickActionsSettingsModalViewModel QuickActionsSettingsModalViewModel { get; }
-
-    /// <summary>
     /// Gets the custom date range modal view model.
     /// </summary>
     public CustomDateRangeModalViewModel CustomDateRangeModalViewModel { get; }
@@ -684,9 +679,6 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
-
-        // Create quick actions settings modal
-        QuickActionsSettingsModalViewModel = new QuickActionsSettingsModalViewModel();
 
         // Create custom date range modal
         CustomDateRangeModalViewModel = new CustomDateRangeModalViewModel();
