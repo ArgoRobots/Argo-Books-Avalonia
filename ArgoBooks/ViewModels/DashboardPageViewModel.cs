@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Dashboard;
+using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -541,20 +542,20 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private static void CorrectRentalStatuses(CompanyData data)
     {
         // Mark active rentals as overdue if past due
-        foreach (var rental in data.Rentals.Where(r => r.Status == Core.Models.Rentals.RentalStatus.Active))
+        foreach (var rental in data.Rentals.Where(r => r.Status == RentalStatus.Active))
         {
             if (rental.IsOverdue)
             {
-                rental.Status = Core.Models.Rentals.RentalStatus.Overdue;
+                rental.Status = RentalStatus.Overdue;
             }
         }
 
         // Reset incorrectly marked overdue rentals back to active if due date is in the future
-        foreach (var rental in data.Rentals.Where(r => r.Status == Core.Models.Rentals.RentalStatus.Overdue))
+        foreach (var rental in data.Rentals.Where(r => r.Status == RentalStatus.Overdue))
         {
             if (DateTime.Today <= rental.DueDate.Date)
             {
-                rental.Status = Core.Models.Rentals.RentalStatus.Active;
+                rental.Status = RentalStatus.Active;
             }
         }
     }
