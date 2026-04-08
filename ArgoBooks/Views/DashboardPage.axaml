@@ -6,7 +6,6 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:dashboard="using:ArgoBooks.Controls.Dashboard"
              xmlns:dashboardVm="using:ArgoBooks.ViewModels.Dashboard"
-             xmlns:dashboardWidgets="using:ArgoBooks.Controls.Dashboard.Widgets"
              xmlns:local="using:ArgoBooks"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
@@ -20,45 +19,7 @@
         <vm:DashboardPageViewModel />
     </Design.DataContext>
 
-    <!-- DataTemplates for widget ViewModel -> View resolution -->
-    <UserControl.DataTemplates>
-        <DataTemplate DataType="dashboardVm:StatCardWidgetViewModel">
-            <dashboardWidgets:StatCardWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:QuickActionsWidgetViewModel">
-            <dashboardWidgets:QuickActionsWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:ChartWidgetViewModel">
-            <dashboardWidgets:ChartWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:RecentTransactionsWidgetViewModel">
-            <dashboardWidgets:RecentTransactionsWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:ActiveRentalsWidgetViewModel">
-            <dashboardWidgets:ActiveRentalsWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:SetupChecklistWidgetViewModel">
-            <dashboardWidgets:SetupChecklistWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:TopCustomersWidgetViewModel">
-            <dashboardWidgets:TopCustomersWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:LowStockAlertsWidgetViewModel">
-            <dashboardWidgets:LowStockAlertsWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:UpcomingInvoicesWidgetViewModel">
-            <dashboardWidgets:UpcomingInvoicesWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:OverdueRentalsWidgetViewModel">
-            <dashboardWidgets:OverdueRentalsWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:ExpenseByCategoryWidgetViewModel">
-            <dashboardWidgets:ExpenseByCategoryWidget />
-        </DataTemplate>
-        <DataTemplate DataType="dashboardVm:CashFlowWidgetViewModel">
-            <dashboardWidgets:CashFlowWidget />
-        </DataTemplate>
-    </UserControl.DataTemplates>
+    <!-- Widget views are created in code-behind via WidgetFactory.CreateView() -->
 
     <UserControl.Styles>
         <!-- Card Style -->

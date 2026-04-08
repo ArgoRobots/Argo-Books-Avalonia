@@ -121,6 +121,9 @@ public partial class DashboardPage : UserControl
                 DataContext = hostVm
             };
 
+            // Set widget content directly (bypasses DataTemplate resolution)
+            widgetHost.SetWidgetContent(hostVm);
+
             // Set the widget fraction based on current size
             DashboardFlowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
 

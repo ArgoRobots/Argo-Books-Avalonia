@@ -58,8 +58,8 @@
     <Panel IsVisible="{Binding WidgetViewModel.IsWidgetVisible}">
         <Border Classes="widget-card"
                 Classes.editing="{Binding IsEditMode}">
-            <ContentPresenter x:Name="WidgetContent"
-                              Content="{Binding WidgetViewModel}" />
+            <!-- Widget content set from code-behind to avoid DataTemplate/DataContext conflicts -->
+            <Border x:Name="WidgetContent" />
         </Border>
 
         <!-- Edit mode overlay controls -->
@@ -126,8 +126,8 @@
                            Foreground="{DynamicResource TextPrimaryBrush}" />
                 <Separator Background="{DynamicResource BorderBrush}" Height="1" Margin="0,0,0,4" />
 
-                <!-- Config content resolved per widget type -->
-                <ContentPresenter Content="{Binding WidgetViewModel}" x:Name="ConfigContent">
+                <!-- Config content set from code-behind -->
+                <ContentPresenter x:Name="ConfigContent">
                     <ContentPresenter.DataTemplates>
 
                         <!-- QuickActionsWidgetViewModel Config -->
