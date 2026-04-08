@@ -16,7 +16,6 @@ public class DashboardDragDropManager
     private Point _dragOffset;
     private int _dragSourceIndex = -1;
     private int _currentDropIndex = -1;
-    private DragDropIndicator? _dropIndicator;
     private Border? _dragGhost;
     private Control? _dragSourceControl;
 
@@ -78,8 +77,7 @@ public class DashboardDragDropManager
 
     private void OnPointerReleased(PointerReleasedEventArgs e)
     {
-        if (_isDragging && _currentDropIndex >= 0 && _currentDropIndex != _dragSourceIndex)
-            _onMoveWidget(_dragSourceIndex, _currentDropIndex);
+        // Final position is already set via live rearrangement — just clean up
         CancelDrag();
         e.Pointer.Capture(null);
     }
@@ -87,10 +85,11 @@ public class DashboardDragDropManager
     private void StartDrag()
     {
         _isDragging = true;
+        _currentDropIndex = _dragSourceIndex;
 
         // Make the source widget semi-transparent
         if (_dragSourceControl != null)
-            _dragSourceControl.Opacity = 0.3;
+            _dragSourceControl.Opacity = 0.4;
 
         // Create a ghost outline that follows the cursor
         var sourceWidth = _dragSourceControl?.Bounds.Width ?? 200;
@@ -100,36 +99,23 @@ public class DashboardDragDropManager
         {
             Width = sourceWidth,
             Height = sourceHeight,
-            Background = new SolidColorBrush(Color.FromArgb(40, 59, 130, 246)),
+            Background = new SolidColorBrush(Color.FromArgb(30, 59, 130, 246)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
             BorderThickness = new Thickness(2),
             CornerRadius = new CornerRadius(12),
             IsHitTestVisible = false,
             IsVisible = true,
-            Opacity = 0.8
-        };
-
-        _dropIndicator = new DragDropIndicator
-        {
-            IsVisible = false,
-            IndicatorBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
-            IsHitTestVisible = false
+            Opacity = 0.7
         };
 
         if (_panel.Parent is Panel parent)
-        {
             parent.Children.Add(_dragGhost);
-            parent.Children.Add(_dropIndicator);
-        }
     }
 
     private void UpdateDrag(Point position)
     {
-        var bounds = _panel.GetChildBounds();
-        _currentDropIndex = CalculateDropIndex(position, bounds);
-
-        // Move the ghost to follow the cursor
-        if (_dragGhost != null && _panel.Parent is Panel)
+        // Move ghost to follow cursor
+        if (_dragGhost != null)
         {
             var ghostX = position.X - _dragOffset.X;
             var ghostY = position.Y - _dragOffset.Y;
@@ -138,10 +124,27 @@ public class DashboardDragDropManager
             _dragGhost.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
         }
 
-        if (_dropIndicator != null && _currentDropIndex >= 0 && bounds.Count > 0)
+        // Calculate where the widget would drop
+        var bounds = _panel.GetChildBounds();
+        var newDropIndex = CalculateDropIndex(position, bounds);
+
+        // Live rearrange: move the widget in the collection so the layout updates in real time
+        if (newDropIndex >= 0 && newDropIndex != _currentDropIndex && newDropIndex != _dragSourceIndex)
         {
-            _dropIndicator.IsVisible = true;
-            PositionIndicator(_currentDropIndex, bounds);
+            _onMoveWidget(_dragSourceIndex, newDropIndex);
+
+            // After move, the source index changes to the new position
+            _dragSourceIndex = newDropIndex > _dragSourceIndex
+                ? newDropIndex - 1
+                : newDropIndex;
+            _currentDropIndex = _dragSourceIndex;
+
+            // Re-find the source control after rearrangement
+            if (_dragSourceIndex >= 0 && _dragSourceIndex < _panel.Children.Count)
+            {
+                _dragSourceControl = _panel.Children[_dragSourceIndex];
+                _dragSourceControl.Opacity = 0.4;
+            }
         }
     }
 
@@ -191,21 +194,6 @@ public class DashboardDragDropManager
         return bestIndex;
     }
 
-    private void PositionIndicator(int index, IReadOnlyList<Rect> bounds)
-    {
-        if (_dropIndicator == null || bounds.Count == 0) return;
-
-        double y;
-        if (index == 0) y = bounds[0].Top - 6;
-        else if (index >= bounds.Count) y = bounds[^1].Bottom + 2;
-        else y = (bounds[index - 1].Bottom + bounds[index].Top) / 2 - 6;
-
-        _dropIndicator.Margin = new Thickness(0, y, 0, 0);
-        _dropIndicator.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-        _dropIndicator.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
-        _dropIndicator.Width = _panel.Bounds.Width;
-    }
-
     private void HandleAutoScroll(Point posInScrollViewer)
     {
         if (posInScrollViewer.Y < AutoScrollMargin)
@@ -229,12 +217,9 @@ public class DashboardDragDropManager
 
         if (_panel.Parent is Panel parent)
         {
-            if (_dropIndicator != null)
-                parent.Children.Remove(_dropIndicator);
             if (_dragGhost != null)
                 parent.Children.Remove(_dragGhost);
         }
-        _dropIndicator = null;
         _dragGhost = null;
     }
 }

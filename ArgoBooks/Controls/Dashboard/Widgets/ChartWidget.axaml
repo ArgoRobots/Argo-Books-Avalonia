@@ -12,7 +12,8 @@
             BorderThickness="1"
             CornerRadius="12"
             Padding="8"
-            ClipToBounds="True">
+            ClipToBounds="True"
+            MinHeight="320">
         <Grid>
             <!-- Chart with data -->
             <lvc:CartesianChart

@@ -26,6 +26,8 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
 
     public int[] RowCountOptions { get; } = [5, 10, 20];
 
+    partial void OnRowCountChanged(int value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);

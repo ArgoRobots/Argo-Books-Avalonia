@@ -2,6 +2,7 @@ using ArgoBooks.Services;
 using ArgoBooks.ViewModels.Dashboard;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Input;
 
 namespace ArgoBooks.Controls.Dashboard;
 
@@ -10,6 +11,18 @@ public partial class WidgetHost : UserControl
     public WidgetHost()
     {
         InitializeComponent();
+
+        // Click-outside-to-close for config popover
+        ConfigBackdrop.PointerPressed += OnConfigBackdropPressed;
+    }
+
+    private void OnConfigBackdropPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is WidgetHostViewModel hostVm && hostVm.IsConfigOpen)
+        {
+            hostVm.IsConfigOpen = false;
+            e.Handled = true;
+        }
     }
 
     /// <summary>

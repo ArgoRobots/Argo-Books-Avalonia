@@ -32,6 +32,9 @@ public partial class ActiveRentalsWidgetViewModel : WidgetViewModelBase
 
     public int[] RowCountOptions { get; } = [5, 10, 20];
 
+    partial void OnRowCountChanged(int value) => LoadData();
+    partial void OnOverdueOnlyChanged(bool value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);

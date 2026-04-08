@@ -32,6 +32,8 @@ public partial class ExpenseByCategoryWidgetViewModel : WidgetViewModelBase
 
     public string[] ChartStyleOptions { get; } = ["pie", "donut"];
 
+    partial void OnChartStyleChanged(string value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);

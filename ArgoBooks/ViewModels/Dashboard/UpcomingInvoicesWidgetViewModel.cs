@@ -35,6 +35,8 @@ public partial class UpcomingInvoicesWidgetViewModel : WidgetViewModelBase
 
     public int[] DaysAheadOptions { get; } = [7, 14, 30];
 
+    partial void OnDaysAheadChanged(int value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);

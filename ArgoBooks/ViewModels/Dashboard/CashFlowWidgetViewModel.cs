@@ -45,6 +45,8 @@ public partial class CashFlowWidgetViewModel : WidgetViewModelBase
 
     public string[] PeriodOptions { get; } = ["weekly", "monthly"];
 
+    partial void OnPeriodChanged(string value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);

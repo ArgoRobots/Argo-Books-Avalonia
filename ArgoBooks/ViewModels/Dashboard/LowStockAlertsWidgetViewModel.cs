@@ -26,6 +26,8 @@ public partial class LowStockAlertsWidgetViewModel : WidgetViewModelBase
 
     public int[] ThresholdOptions { get; } = [5, 10, 15, 20, 25, 50, 100];
 
+    partial void OnThresholdChanged(int value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);

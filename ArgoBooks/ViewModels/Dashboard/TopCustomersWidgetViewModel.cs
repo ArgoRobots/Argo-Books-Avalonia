@@ -32,6 +32,9 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
 
     public string[] SortByOptions { get; } = ["revenue", "count"];
 
+    partial void OnCountChanged(int value) => LoadData();
+    partial void OnSortByChanged(string value) => LoadData();
+
     public override void Initialize(Dictionary<string, string> config)
     {
         ApplyConfig(config);
