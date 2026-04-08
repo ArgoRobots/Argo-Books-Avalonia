@@ -67,6 +67,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         foreach (var entry in layout.Widgets)
         {
             var host = WidgetFactory.CreateWidgetHost(entry);
+            host.SetCompanyManager(_companyManager);
             WireUpWidgetEvents(host);
             Widgets.Add(host);
         }
@@ -154,6 +155,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         var def = WidgetFactory.GetDefinition(type);
         var entry = new DashboardWidgetEntry(type, def.DefaultSize);
         var host = WidgetFactory.CreateWidgetHost(entry);
+        host.SetCompanyManager(_companyManager);
         host.IsEditMode = true;
         host.LoadData();
         Widgets.Add(host);

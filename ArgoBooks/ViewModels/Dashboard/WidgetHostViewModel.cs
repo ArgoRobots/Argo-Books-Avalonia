@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models.Dashboard;
+using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -56,6 +57,9 @@ public partial class WidgetHostViewModel : ObservableObject
     {
         IsConfigOpen = !IsConfigOpen;
     }
+
+    public void SetCompanyManager(CompanyManager? companyManager) =>
+        WidgetViewModel.SetCompanyManager(companyManager);
 
     public void LoadData() => WidgetViewModel.LoadData();
     public void Cleanup() => WidgetViewModel.Cleanup();

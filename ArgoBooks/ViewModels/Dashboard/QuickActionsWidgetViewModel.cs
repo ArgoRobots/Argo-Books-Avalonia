@@ -85,7 +85,16 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 
     public override void Initialize(Dictionary<string, string> config)
     {
-        ApplyConfig(config);
+        if (config.Count > 0)
+        {
+            // Apply saved widget config
+            ApplyConfig(config);
+        }
+        else
+        {
+            // No widget config saved yet — load from legacy GlobalSettings
+            LoadQuickActionsSettings();
+        }
     }
 
     public override void LoadData()

@@ -19,7 +19,9 @@ public abstract partial class WidgetViewModelBase : ObservableObject
     /// </summary>
     [ObservableProperty] private bool _isWidgetVisible = true;
 
-    protected CompanyManager? CompanyManager => App.CompanyManager;
+    protected CompanyManager? CompanyManager { get; private set; }
+
+    public void SetCompanyManager(CompanyManager? companyManager) => CompanyManager = companyManager;
 
     public virtual void Initialize(Dictionary<string, string> config) { }
     public virtual void LoadData() { }

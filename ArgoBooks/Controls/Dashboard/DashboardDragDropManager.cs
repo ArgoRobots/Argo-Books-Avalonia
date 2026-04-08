@@ -13,9 +13,12 @@ public class DashboardDragDropManager
 
     private bool _isDragging;
     private Point _dragStartPoint;
+    private Point _dragOffset;
     private int _dragSourceIndex = -1;
     private int _currentDropIndex = -1;
     private DragDropIndicator? _dropIndicator;
+    private Border? _dragGhost;
+    private Control? _dragSourceControl;
 
     private const double DragDeadZone = 5;
     private const double AutoScrollMargin = 50;
@@ -41,6 +44,18 @@ public class DashboardDragDropManager
         if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
         _dragStartPoint = e.GetPosition(_panel);
         _dragSourceIndex = widgetIndex;
+
+        // Find the WidgetHost control for this drag handle
+        if (widgetIndex >= 0 && widgetIndex < _panel.Children.Count)
+            _dragSourceControl = _panel.Children[widgetIndex];
+
+        // Calculate offset from pointer to widget top-left for ghost positioning
+        if (_dragSourceControl != null)
+        {
+            var widgetPos = _dragSourceControl.Bounds.Position;
+            _dragOffset = _dragStartPoint - widgetPos;
+        }
+
         e.Pointer.Capture(dragHandle);
         e.Handled = true;
     }
@@ -72,20 +87,56 @@ public class DashboardDragDropManager
     private void StartDrag()
     {
         _isDragging = true;
+
+        // Make the source widget semi-transparent
+        if (_dragSourceControl != null)
+            _dragSourceControl.Opacity = 0.3;
+
+        // Create a ghost outline that follows the cursor
+        var sourceWidth = _dragSourceControl?.Bounds.Width ?? 200;
+        var sourceHeight = _dragSourceControl?.Bounds.Height ?? 80;
+
+        _dragGhost = new Border
+        {
+            Width = sourceWidth,
+            Height = sourceHeight,
+            Background = new SolidColorBrush(Color.FromArgb(40, 59, 130, 246)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
+            BorderThickness = new Thickness(2),
+            CornerRadius = new CornerRadius(12),
+            IsHitTestVisible = false,
+            IsVisible = true,
+            Opacity = 0.8
+        };
+
         _dropIndicator = new DragDropIndicator
         {
             IsVisible = false,
             IndicatorBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
             IsHitTestVisible = false
         };
+
         if (_panel.Parent is Panel parent)
+        {
+            parent.Children.Add(_dragGhost);
             parent.Children.Add(_dropIndicator);
+        }
     }
 
     private void UpdateDrag(Point position)
     {
         var bounds = _panel.GetChildBounds();
         _currentDropIndex = CalculateDropIndex(position, bounds);
+
+        // Move the ghost to follow the cursor
+        if (_dragGhost != null && _panel.Parent is Panel)
+        {
+            var ghostX = position.X - _dragOffset.X;
+            var ghostY = position.Y - _dragOffset.Y;
+            _dragGhost.Margin = new Thickness(ghostX, ghostY, 0, 0);
+            _dragGhost.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+            _dragGhost.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+        }
 
         if (_dropIndicator != null && _currentDropIndex >= 0 && bounds.Count > 0)
         {
@@ -149,11 +200,10 @@ public class DashboardDragDropManager
         else if (index >= bounds.Count) y = bounds[^1].Bottom + 2;
         else y = (bounds[index - 1].Bottom + bounds[index].Top) / 2 - 6;
 
-        // Position relative to panel within the parent
-        var panelBounds = _panel.Bounds;
-        Canvas.SetLeft(_dropIndicator, panelBounds.Left);
-        Canvas.SetTop(_dropIndicator, panelBounds.Top + y);
-        _dropIndicator.Width = panelBounds.Width;
+        _dropIndicator.Margin = new Thickness(0, y, 0, 0);
+        _dropIndicator.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        _dropIndicator.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+        _dropIndicator.Width = _panel.Bounds.Width;
     }
 
     private void HandleAutoScroll(Point posInScrollViewer)
@@ -166,14 +216,25 @@ public class DashboardDragDropManager
 
     private void CancelDrag()
     {
+        // Restore source widget opacity
+        if (_dragSourceControl != null)
+        {
+            _dragSourceControl.Opacity = 1.0;
+            _dragSourceControl = null;
+        }
+
         _isDragging = false;
         _dragSourceIndex = -1;
         _currentDropIndex = -1;
-        if (_dropIndicator != null)
+
+        if (_panel.Parent is Panel parent)
         {
-            if (_panel.Parent is Panel parent)
+            if (_dropIndicator != null)
                 parent.Children.Remove(_dropIndicator);
-            _dropIndicator = null;
+            if (_dragGhost != null)
+                parent.Children.Remove(_dragGhost);
         }
+        _dropIndicator = null;
+        _dragGhost = null;
     }
 }
