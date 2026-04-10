@@ -29,6 +29,7 @@ public partial class DashboardPage : UserControl
     private Control? _clickedChart;
     private string _clickedChartName = "Chart";
     private DashboardDragDropManager? _dragDropManager;
+    private DashboardPageViewModel? _previousViewModel;
 
     /// <summary>
     /// Sets the clicked chart reference from an external source (e.g., ChartExpandOverlay).
@@ -72,8 +73,18 @@ public partial class DashboardPage : UserControl
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        // Unsubscribe from previous ViewModel to prevent event handler leaks
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
+            _previousViewModel.ExcelExportRequested -= OnExcelExportRequested;
+            _previousViewModel.LayoutViewModel.Widgets.CollectionChanged -= OnWidgetsCollectionChanged;
+            _previousViewModel = null;
+        }
+
         if (DataContext is DashboardPageViewModel viewModel)
         {
+            _previousViewModel = viewModel;
             viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
             viewModel.ExcelExportRequested += OnExcelExportRequested;
 

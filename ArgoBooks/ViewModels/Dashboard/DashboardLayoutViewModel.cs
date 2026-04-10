@@ -62,6 +62,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
     private void LoadWidgetsFromLayout(DashboardLayout layout)
     {
+        UnwireWidgetEvents();
         foreach (var w in Widgets) w.Cleanup();
         Widgets.Clear();
         foreach (var entry in layout.Widgets)
@@ -78,6 +79,15 @@ public partial class DashboardLayoutViewModel : ObservableObject
         // Wire setup checklist navigation
         if (host.WidgetViewModel is SetupChecklistWidgetViewModel checklistVm)
             checklistVm.NavigationRequested += OnChecklistNavigationRequested;
+    }
+
+    private void UnwireWidgetEvents()
+    {
+        foreach (var w in Widgets)
+        {
+            if (w.WidgetViewModel is SetupChecklistWidgetViewModel checklistVm)
+                checklistVm.NavigationRequested -= OnChecklistNavigationRequested;
+        }
     }
 
     private void OnChecklistNavigationRequested(object? sender, string pageName)
@@ -244,6 +254,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
     public void Cleanup()
     {
         Catalog.WidgetAddRequested -= OnWidgetAddRequested;
+        UnwireWidgetEvents();
         foreach (var w in Widgets) w.Cleanup();
     }
 }

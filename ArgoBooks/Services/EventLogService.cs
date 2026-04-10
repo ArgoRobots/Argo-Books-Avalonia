@@ -161,6 +161,14 @@ public class EventLogService
             ReconstructActions(companyData);
         }
 
+        // Free EntitySnapshot strings from memory — they've been consumed for action
+        // reconstruction and are no longer needed. They remain on disk in the .argo file
+        // and will be re-read on the next load.
+        foreach (var evt in _events)
+        {
+            evt.EntitySnapshot = null;
+        }
+
         EventsChanged?.Invoke(this, EventArgs.Empty);
     }
 
