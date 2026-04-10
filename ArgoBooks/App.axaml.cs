@@ -498,26 +498,6 @@ public class App : Application
     }
 
     /// <summary>
-    /// Checks if an invoice is overdue and sends a notification if enabled.
-    /// Call this after saving an invoice.
-    /// </summary>
-    /// <param name="invoice">The invoice to check.</param>
-    public static void CheckAndNotifyInvoiceOverdue(Invoice invoice)
-    {
-        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
-        if (settings == null || !settings.InvoiceOverdueAlert)
-            return;
-
-        if (invoice.IsOverdue)
-        {
-            AddNotification(
-                "Invoice Overdue".Translate(),
-                "Invoice {0} is overdue.".TranslateFormat(invoice.InvoiceNumber),
-                NotificationType.Warning);
-        }
-    }
-
-    /// <summary>
     /// Checks if a rental is overdue and sends a notification if enabled.
     /// Call this after saving a rental record.
     /// </summary>

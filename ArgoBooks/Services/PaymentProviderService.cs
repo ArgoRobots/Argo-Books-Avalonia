@@ -22,25 +22,6 @@ public static class PaymentProviderService
     }
 
     /// <summary>
-    /// Updates the local PortalSettings.ConnectedAccounts from a ConnectedPaymentAccounts
-    /// object (e.g. from a server response) and fires the ProvidersChanged event.
-    /// </summary>
-    public static void UpdateConnectedAccounts(ConnectedPaymentAccounts accounts)
-    {
-        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
-        if (settings == null) return;
-
-        settings.ConnectedAccounts.StripeConnected = accounts.StripeConnected;
-        settings.ConnectedAccounts.StripeEmail = accounts.StripeEmail;
-        settings.ConnectedAccounts.PaypalConnected = accounts.PaypalConnected;
-        settings.ConnectedAccounts.PaypalEmail = accounts.PaypalEmail;
-        settings.ConnectedAccounts.SquareConnected = accounts.SquareConnected;
-        settings.ConnectedAccounts.SquareEmail = accounts.SquareEmail;
-
-        NotifyProvidersChanged();
-    }
-
-    /// <summary>
     /// Updates the local PortalSettings.ConnectedAccounts from a payment_methods list
     /// (e.g. ["stripe", "square"]) and fires the ProvidersChanged event.
     /// Providers not in the list are marked as disconnected.

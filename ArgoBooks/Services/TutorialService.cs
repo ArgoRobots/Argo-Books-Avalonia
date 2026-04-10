@@ -474,21 +474,6 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Enables first-visit hints.
-    /// </summary>
-    public void EnableFirstVisitHints()
-    {
-        _hintsDisabledThisSession = false;
-        var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null)
-        {
-            settings.Tutorial.ShowFirstVisitHints = true;
-            SaveSettings();
-        }
-        TutorialStateChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
     /// Resets all tutorial progress (for restart functionality).
     /// Clears the tutorial company so it will show on the next company opened.
     /// </summary>
@@ -511,21 +496,6 @@ public class TutorialService
         }
     }
 
-    /// <summary>
-    /// Resets only the app tour (allows re-watching).
-    /// Clears the tutorial company so it will show on the next company opened.
-    /// </summary>
-    public void ResetAppTour()
-    {
-        var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null)
-        {
-            settings.Tutorial.HasCompletedAppTour = false;
-            settings.Tutorial.TutorialStartedOnCompanyPath = null;
-            SaveSettings();
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
 
     /// <summary>
     /// Resets the setup checklist progress.
