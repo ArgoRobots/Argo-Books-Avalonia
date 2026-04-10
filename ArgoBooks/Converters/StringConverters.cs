@@ -18,16 +18,6 @@ public static class StringConverters
     public static readonly IValueConverter ToItemTypeBadgeForeground = StatusConverters.ItemTypeBadgeForeground;
 
     /// <summary>
-    /// Converts payment status to badge background color.
-    /// </summary>
-    public static readonly IValueConverter ToPaymentStatusBackground = StatusConverters.PaymentStatusBackground;
-
-    /// <summary>
-    /// Converts payment status to badge foreground color.
-    /// </summary>
-    public static readonly IValueConverter ToPaymentStatusForeground = StatusConverters.PaymentStatusForeground;
-
-    /// <summary>
     /// Converts history transaction type to badge background color.
     /// </summary>
     public static readonly IValueConverter ToHistoryTypeBadgeBackground = StatusConverters.HistoryTypeBadgeBackground;
@@ -86,13 +76,6 @@ public static class StringConverters
     /// Converts invoice status to badge foreground color.
     /// </summary>
     public static readonly IValueConverter ToInvoiceStatusForeground = StatusConverters.InvoiceStatusForeground;
-
-    /// <summary>
-    /// Returns true if the value equals the parameter.
-    /// </summary>
-    public new static readonly IValueConverter Equals =
-        new FuncValueConverter<string, string, bool>((value, parameter) =>
-            string.Equals(value, parameter, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Converts expense status to badge background color.

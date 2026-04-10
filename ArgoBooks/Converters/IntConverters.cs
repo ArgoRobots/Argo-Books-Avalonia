@@ -26,9 +26,4 @@ public static class IntConverters
     public static readonly IValueConverter IsGreaterThanOne =
         new FuncValueConverter<int, bool>(value => value > 1);
 
-    /// <summary>
-    /// Returns true if the integer is not zero.
-    /// </summary>
-    public static readonly IValueConverter IsNotZero =
-        new FuncValueConverter<int, bool>(value => value != 0);
 }
