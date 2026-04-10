@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
              x:Class="ArgoBooks.Controls.Dashboard.WidgetCatalogPanel"
              x:DataType="vm:WidgetCatalogViewModel"
              IsVisible="{Binding IsOpen}"
@@ -25,20 +27,46 @@
             <Setter Property="Opacity" Value="0.5" />
             <Setter Property="Cursor" Value="Arrow" />
         </Style>
-        <Style Selector="Button.catalog-close-btn">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="4" />
-            <Setter Property="MinWidth" Value="28" />
-            <Setter Property="MinHeight" Value="28" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+
+        <!-- TabControl styling (matches SettingsModal) -->
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabControl /template/ ItemsPresenter#PART_ItemsPresenter">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TabControl /template/ Border#PART_InnerBorder">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Padding" Value="4,12,4,10" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style Selector="Button.catalog-close-btn:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="IsVisible" Value="True" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Height" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="CornerRadius" Value="1" />
         </Style>
     </UserControl.Styles>
 
@@ -49,105 +77,163 @@
                 VerticalAlignment="Stretch"
                 PointerPressed="OnBackdropPointerPressed" />
 
-        <!-- Right-aligned slide-in panel -->
+        <!-- Centered modal panel -->
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1,0,0,0"
-                Width="340"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Stretch"
-                BoxShadow="-4 0 16 0 #30000000">
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusLg}"
+                Width="640"
+                MaxHeight="560"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 24 0 #40000000">
 
-            <Grid RowDefinitions="Auto,*">
+            <DockPanel>
                 <!-- Header -->
-                <Border Grid.Row="0"
-                        Padding="20,16"
-                        BorderBrush="{DynamicResource BorderBrush}"
+                <Border DockPanel.Dock="Top"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderLightBrush}"
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                    Text="Add Widget"
-                                   FontSize="18"
+                                   FontSize="{StaticResource FontSizeXl}"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                         <Button Grid.Column="1"
-                                Classes="catalog-close-btn"
+                                Classes="icon"
+                                Width="32" Height="32"
+                                VerticalAlignment="Top"
                                 Command="{Binding CloseCommand}"
-                                ToolTip.Tip="Close"
-                                Width="28" Height="28">
-                            <TextBlock Text="&#x2715;"
-                                       FontSize="12"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" />
+                                ToolTip.Tip="{loc:Loc Close}">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="18" Height="18"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
                         </Button>
                     </Grid>
                 </Border>
 
-                <!-- Scrollable category list -->
-                <ScrollViewer Grid.Row="1"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Categories}"
-                                  Margin="16,8,16,16">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:CatalogCategory">
-                                <StackPanel Margin="0,8,0,0">
-                                    <!-- Category heading -->
-                                    <TextBlock Text="{Binding Name}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Margin="4,0,0,8" />
+                <!-- Tabbed content -->
+                <TabControl Margin="0,0,0,8">
+                    <TabItem Header="Stat Cards">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      MaxHeight="400">
+                            <ItemsControl ItemsSource="{Binding StatCards}" Margin="20,8,20,12">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CatalogItem">
+                                        <Button Classes="catalog-item-btn"
+                                                Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,0,6">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Definition.Icon}"
+                                                           FontSize="20"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,12,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Definition.Name}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Definition.Description}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="Added" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding IsAlreadyAdded}" />
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </TabItem>
 
-                                    <!-- Widget items -->
-                                    <ItemsControl ItemsSource="{Binding Items}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:CatalogItem">
-                                                <Button Classes="catalog-item-btn"
-                                                        Classes.already-added="{Binding IsAlreadyAdded}"
-                                                        Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Margin="0,0,0,6">
-                                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                                        <!-- Icon -->
-                                                        <TextBlock Grid.Column="0"
-                                                                   Text="{Binding Definition.Icon}"
-                                                                   FontSize="20"
-                                                                   VerticalAlignment="Center"
-                                                                   Margin="0,0,12,0" />
-                                                        <!-- Name and description -->
-                                                        <StackPanel Grid.Column="1"
-                                                                    VerticalAlignment="Center"
-                                                                    Spacing="2">
-                                                            <TextBlock Text="{Binding Definition.Name}"
-                                                                       FontSize="13"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                            <TextBlock Text="{Binding Definition.Description}"
-                                                                       FontSize="11"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                       TextWrapping="Wrap" />
-                                                        </StackPanel>
-                                                        <!-- "Added" indicator -->
-                                                        <TextBlock Grid.Column="2"
-                                                                   Text="Added"
-                                                                   FontSize="11"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   Margin="8,0,0,0"
-                                                                   IsVisible="{Binding IsAlreadyAdded}" />
-                                                    </Grid>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Grid>
+                    <TabItem Header="Charts">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      MaxHeight="400">
+                            <ItemsControl ItemsSource="{Binding Charts}" Margin="20,8,20,12">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CatalogItem">
+                                        <Button Classes="catalog-item-btn"
+                                                Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,0,6">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Definition.Icon}"
+                                                           FontSize="20"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,12,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Definition.Name}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Definition.Description}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="Added" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding IsAlreadyAdded}" />
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Tables">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      MaxHeight="400">
+                            <ItemsControl ItemsSource="{Binding Tables}" Margin="20,8,20,12">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CatalogItem">
+                                        <Button Classes="catalog-item-btn"
+                                                Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,0,6">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Definition.Icon}"
+                                                           FontSize="20"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,12,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Definition.Name}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Definition.Description}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="Added" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding IsAlreadyAdded}" />
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
         </Border>
     </Panel>
 </UserControl>

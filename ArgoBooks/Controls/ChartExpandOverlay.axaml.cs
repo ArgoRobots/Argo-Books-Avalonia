@@ -119,7 +119,7 @@ public partial class ChartExpandOverlay : UserControl
         {
             if (child is T match && predicate(match))
                 return match;
-            if (child is Visual visual)
+            if (child is Visual visual and not T)
             {
                 var result = FindVisualDescendant(visual, predicate);
                 if (result != null) return result;
@@ -202,10 +202,10 @@ public partial class ChartExpandOverlay : UserControl
         foreach (var child in panel.Children)
         {
             if (child is CartesianChart or PieChart or GeoMap)
-                return child as Control;
+                return child;
             if (child is Grid innerGrid)
             {
-                var nested = innerGrid.Children.OfType<Control>()
+                var nested = innerGrid.Children
                     .FirstOrDefault(c => c is CartesianChart or PieChart or GeoMap);
                 if (nested != null)
                     return nested;
@@ -320,13 +320,13 @@ public partial class ChartExpandOverlay : UserControl
         if (chartArea != null)
         {
             var dc = sourcePanel.DataContext;
-            if (dc is not ViewModels.ChartContextMenuViewModelBase)
+            if (dc is not ChartContextMenuViewModelBase)
             {
                 // Walk up to find the page ViewModel
                 var parent = sourcePanel.Parent;
                 while (parent != null)
                 {
-                    if (parent.DataContext is ViewModels.ChartContextMenuViewModelBase pageVm)
+                    if (parent.DataContext is ChartContextMenuViewModelBase pageVm)
                     {
                         dc = pageVm;
                         break;
@@ -864,7 +864,7 @@ public partial class ChartExpandOverlay : UserControl
         // find the TextBlock title: Grid(Row) > Grid(Column) > PieChart/GeoMap
         if (control is PieChart or PieChartLegend or GeoMap)
         {
-            var columnGrid = control?.Parent as Grid;
+            var columnGrid = control.Parent as Grid;
             var rowGrid = columnGrid?.Parent as Grid;
             if (rowGrid != null)
             {

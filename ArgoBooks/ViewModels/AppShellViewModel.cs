@@ -2,6 +2,7 @@ using System.Reflection;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
+using ArgoBooks.ViewModels.Dashboard;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -541,6 +542,12 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     private ReportsPageViewModel? _reportsPageViewModel;
 
+    /// <summary>
+    /// Widget catalog VM exposed so AppShell can show the catalog modal above the entire window.
+    /// </summary>
+    [ObservableProperty]
+    private WidgetCatalogViewModel? _widgetCatalog;
+
     [ObservableProperty]
     private object? _currentPage;
 
@@ -866,6 +873,12 @@ public partial class AppShellViewModel : ViewModelBase
         CurrentPageName = e.PageName;
         SidebarViewModel.SetActivePage(e.PageName);
         HeaderViewModel.SetPageTitle(e.PageName);
+
+        // Track DashboardPageViewModel when on Dashboard page
+        if (e.PageName == "Dashboard" && CurrentPage is Control { DataContext: DashboardPageViewModel dashVm })
+            WidgetCatalog = dashVm.LayoutViewModel.Catalog;
+        else
+            WidgetCatalog = null;
 
         // Track ReportsPageViewModel when on Reports page
         if (e.PageName == "Reports" && CurrentPage is Control { DataContext: ReportsPageViewModel reportsVm })

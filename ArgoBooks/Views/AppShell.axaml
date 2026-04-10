@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:dashboard="using:ArgoBooks.Controls.Dashboard"
              xmlns:panels="using:ArgoBooks.Panels"
              xmlns:modals="using:ArgoBooks.Modals"
              xmlns:loc="using:ArgoBooks.Localization"
@@ -260,5 +261,8 @@
 
         <!-- Custom Date Range Modal -->
         <modals:CustomDateRangeModal DataContext="{Binding CustomDateRangeModalViewModel}" />
+
+        <!-- Widget Catalog Modal (above entire window including sidebar) -->
+        <dashboard:WidgetCatalogPanel DataContext="{Binding WidgetCatalog}" />
     </Panel>
 </UserControl>

@@ -50,6 +50,8 @@
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="12,8" />
         </Style>
         <Style Selector="Button.edit-toolbar-btn.primary:pointerover">
             <Setter Property="Opacity" Value="0.9" />
@@ -107,7 +109,7 @@
                             <Button Classes="edit-toolbar-btn"
                                     Command="{Binding LayoutViewModel.OpenCatalogCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="+" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
+                                    <TextBlock Text="+" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
                                     <TextBlock Text="{loc:Loc 'Add Widget'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
@@ -118,7 +120,8 @@
                         </StackPanel>
 
                         <!-- Right: Cancel and Save -->
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                    VerticalAlignment="Center">
                             <Button Classes="edit-toolbar-btn"
                                     Command="{Binding LayoutViewModel.CancelEditCommand}">
                                 <TextBlock Text="{loc:Loc Cancel}" />
@@ -182,9 +185,6 @@
                 <Border Height="24" />
             </StackPanel>
         </ScrollViewer>
-
-        <!-- Widget Catalog Overlay -->
-        <dashboard:WidgetCatalogPanel DataContext="{Binding LayoutViewModel.Catalog}" />
 
         <!-- Global Chart Context Menu (rendered on top of everything) -->
         <controls:ChartContextMenu x:Name="ChartContextMenu"

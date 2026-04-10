@@ -13,7 +13,11 @@ public enum StatCardKind
     Revenue,
     Expenses,
     OutstandingInvoices,
-    ActiveRentals
+    ActiveRentals,
+    NetProfit,
+    TotalCustomers,
+    InventoryValue,
+    OverdueInvoices
 }
 
 public partial class StatCardWidgetViewModel : WidgetViewModelBase
@@ -26,6 +30,10 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         StatCardKind.Expenses => WidgetType.StatCardExpenses,
         StatCardKind.OutstandingInvoices => WidgetType.StatCardOutstandingInvoices,
         StatCardKind.ActiveRentals => WidgetType.StatCardActiveRentals,
+        StatCardKind.NetProfit => WidgetType.StatCardNetProfit,
+        StatCardKind.TotalCustomers => WidgetType.StatCardTotalCustomers,
+        StatCardKind.InventoryValue => WidgetType.StatCardInventoryValue,
+        StatCardKind.OverdueInvoices => WidgetType.StatCardOverdueInvoices,
         _ => WidgetType.StatCardRevenue
     };
 
@@ -83,6 +91,26 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
                 IconGeometry = Geometry.Parse("M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z");
                 IconColor = StatCardColor.Info;
                 break;
+            case StatCardKind.NetProfit:
+                Label = "Net Profit";
+                IconGeometry = Geometry.Parse("M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z");
+                IconColor = StatCardColor.Success;
+                break;
+            case StatCardKind.TotalCustomers:
+                Label = "Total Customers";
+                IconGeometry = Geometry.Parse("M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z");
+                IconColor = StatCardColor.Info;
+                break;
+            case StatCardKind.InventoryValue:
+                Label = "Inventory Value";
+                IconGeometry = Geometry.Parse("M20 2H4c-1 0-2 1-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V5c0-1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V5h16v2z");
+                IconColor = StatCardColor.Warning;
+                break;
+            case StatCardKind.OverdueInvoices:
+                Label = "Overdue Invoices";
+                IconGeometry = Geometry.Parse("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z");
+                IconColor = StatCardColor.Danger;
+                break;
         }
     }
 
@@ -110,6 +138,18 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
                 break;
             case StatCardKind.ActiveRentals:
                 LoadActiveRentals(data);
+                break;
+            case StatCardKind.NetProfit:
+                LoadNetProfit(data, startDate, endDate);
+                break;
+            case StatCardKind.TotalCustomers:
+                LoadTotalCustomers(data);
+                break;
+            case StatCardKind.InventoryValue:
+                LoadInventoryValue(data);
+                break;
+            case StatCardKind.OverdueInvoices:
+                LoadOverdueInvoices(data);
                 break;
         }
     }
@@ -179,6 +219,59 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         Value = active.Count.ToString();
         var overdue = active.Count(r => r.Status == RentalStatus.Overdue);
         SecondaryText = overdue > 0 ? $"{overdue} overdue" : null;
+    }
+
+    private void LoadNetProfit(CompanyData data, DateTime startDate, DateTime endDate)
+    {
+        var revenueUSD = data.Revenues
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .Sum(s => s.EffectiveSubtotalUSD);
+        var expenseUSD = data.Expenses
+            .Where(p => p.Date >= startDate && p.Date <= endDate)
+            .Sum(p => p.EffectiveSubtotalUSD);
+        var profitUSD = revenueUSD - expenseUSD;
+        Value = CurrencyService.FormatFromUSD(profitUSD, DateTime.Now);
+
+        var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
+        if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
+        {
+            var prevRevenue = data.Revenues
+                .Where(s => s.Date >= prevStart && s.Date <= prevEnd)
+                .Sum(s => s.EffectiveSubtotalUSD);
+            var prevExpense = data.Expenses
+                .Where(p => p.Date >= prevStart && p.Date <= prevEnd)
+                .Sum(p => p.EffectiveSubtotalUSD);
+            var prevProfit = prevRevenue - prevExpense;
+            ChangeValue = DashboardCalculations.CalculatePercentageChange(prevProfit, profitUSD);
+            ChangeText = DashboardCalculations.FormatPercentageChange(ChangeValue);
+        }
+        else
+        {
+            ChangeValue = null;
+            ChangeText = null;
+        }
+    }
+
+    private void LoadTotalCustomers(CompanyData data)
+    {
+        Value = data.Customers.Count.ToString();
+    }
+
+    private void LoadInventoryValue(CompanyData data)
+    {
+        var totalValue = data.Inventory.Sum(i => i.TotalValue);
+        Value = CurrencyService.Format(totalValue);
+        var lowStock = data.Inventory.Count(i => i.InStock <= i.ReorderPoint && i.InStock > 0);
+        SecondaryText = lowStock > 0 ? $"{lowStock} low stock" : $"{data.Inventory.Count} items";
+    }
+
+    private void LoadOverdueInvoices(CompanyData data)
+    {
+        var overdue = data.Invoices
+            .Where(i => i.Status == InvoiceStatus.Overdue)
+            .ToList();
+        Value = CurrencyService.FormatFromUSD(overdue.Sum(i => i.EffectiveBalanceUSD), DateTime.Now);
+        SecondaryText = $"{overdue.Count} overdue";
     }
 
 }

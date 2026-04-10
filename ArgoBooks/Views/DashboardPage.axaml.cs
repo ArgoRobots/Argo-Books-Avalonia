@@ -1,7 +1,6 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.Specialized;
 using System.ComponentModel;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -90,10 +89,20 @@ public partial class DashboardPage : UserControl
 
     private void OnWidgetsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (DataContext is DashboardPageViewModel viewModel)
+        if (DataContext is not DashboardPageViewModel viewModel) return;
+
+        // During drag, Move actions should just reorder panel children in-place
+        // to preserve the drag handle's pointer capture and keep the ghost visible.
+        if (e.Action == NotifyCollectionChangedAction.Move
+            && e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0
+            && e.OldStartingIndex < WidgetPanel.Children.Count)
         {
-            RebuildWidgetPanel(viewModel.LayoutViewModel);
+            WidgetPanel.Children.MoveRange(e.OldStartingIndex, 1, e.NewStartingIndex);
+            SyncRowBreakFlags();
+            return;
         }
+
+        RebuildWidgetPanel(viewModel.LayoutViewModel);
     }
 
     private void RebuildWidgetPanel(DashboardLayoutViewModel layoutVm)
@@ -124,8 +133,10 @@ public partial class DashboardPage : UserControl
             // Set widget content directly (bypasses DataTemplate resolution)
             widgetHost.SetWidgetContent(hostVm);
 
-            // Set the widget fraction based on current size
+            // Set the widget fraction, row break flag, and horizontal offset
             DashboardFlowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
+            DashboardFlowPanel.SetStartsNewRow(widgetHost, hostVm.StartsNewRow);
+            DashboardFlowPanel.SetRowStartOffset(widgetHost, hostVm.RowStartOffset);
 
             // Subscribe to size changes to update the fraction
             hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
@@ -143,6 +154,18 @@ public partial class DashboardPage : UserControl
 
         // Set up drag-and-drop
         SetupDragDrop(layoutVm);
+    }
+
+    private void SyncRowBreakFlags()
+    {
+        foreach (var child in WidgetPanel.Children)
+        {
+            if (child is WidgetHost widgetHost && widgetHost.DataContext is WidgetHostViewModel hostVm)
+            {
+                DashboardFlowPanel.SetStartsNewRow(widgetHost, hostVm.StartsNewRow);
+                DashboardFlowPanel.SetRowStartOffset(widgetHost, hostVm.RowStartOffset);
+            }
+        }
     }
 
     private void OnWidgetHostPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -165,7 +188,9 @@ public partial class DashboardPage : UserControl
 
     private void SetupDragDrop(DashboardLayoutViewModel layoutVm)
     {
-        _dragDropManager = new DashboardDragDropManager(
+        // Only create the manager once — it determines widget indices dynamically
+        // so it never goes stale after moves or rebuilds.
+        _dragDropManager ??= new DashboardDragDropManager(
             WidgetPanel,
             MainScrollViewer,
             (from, to) => layoutVm.MoveWidget(from, to));
@@ -177,7 +202,7 @@ public partial class DashboardPage : UserControl
                 var dragHandle = widgetHost.FindControl<Border>("DragHandle");
                 if (dragHandle != null)
                 {
-                    _dragDropManager.AttachDragHandle(dragHandle, i);
+                    _dragDropManager.AttachDragHandle(dragHandle);
                 }
             }
         }

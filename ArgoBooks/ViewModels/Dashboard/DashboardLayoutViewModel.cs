@@ -172,13 +172,74 @@ public partial class DashboardLayoutViewModel : ObservableObject
         if (fromIndex < 0 || fromIndex >= Widgets.Count) return;
         if (toIndex < 0 || toIndex > Widgets.Count) return;
         if (fromIndex == toIndex) return;
+
+        // Clear the moved widget's row break flag — it will be recomputed.
+        // This prevents stale flags from splitting rows after same-row swaps.
+        Widgets[fromIndex].StartsNewRow = false;
+
         Widgets.Move(fromIndex, toIndex > fromIndex ? toIndex - 1 : toIndex);
+        RecalculateRowBreaks();
     }
 
-    private DashboardLayout GetCurrentLayout() => new()
+    /// <summary>
+    /// Recalculates StartsNewRow flags after a move. Preserves existing explicit row breaks
+    /// (so partial rows stay separate) while adding new breaks for overflow.
+    /// The moved widget's flag was cleared before the move, so it flows naturally into
+    /// whichever row it fits in.
+    /// </summary>
+    private void RecalculateRowBreaks()
     {
-        Widgets = Widgets.Select(w => w.ToEntry()).ToList()
-    };
+        if (Widgets.Count == 0) return;
+
+        Widgets[0].StartsNewRow = true;
+        double rowSum = Widgets[0].Size.ToFraction();
+
+        for (int i = 1; i < Widgets.Count; i++)
+        {
+            var fraction = Widgets[i].Size.ToFraction();
+            bool overflows = rowSum + fraction > 1.001;
+
+            if (overflows)
+            {
+                Widgets[i].StartsNewRow = true;
+                rowSum = fraction;
+            }
+            else if (Widgets[i].StartsNewRow)
+            {
+                // Existing explicit break — preserve it (keeps partial rows separate)
+                rowSum = fraction;
+            }
+            else
+            {
+                rowSum += fraction;
+            }
+        }
+    }
+
+    private DashboardLayout GetCurrentLayout()
+    {
+        // Compute StartsNewRow flags based on current row structure before saving.
+        // This preserves row boundaries so loading the layout reproduces the same rows.
+        double rowSum = 0;
+        for (int i = 0; i < Widgets.Count; i++)
+        {
+            var fraction = Widgets[i].Size.ToFraction();
+            bool isFirst = i == 0;
+            bool overflows = rowSum > 0 && rowSum + fraction > 1.001;
+            if (isFirst || overflows || Widgets[i].StartsNewRow)
+            {
+                Widgets[i].StartsNewRow = true;
+                rowSum = fraction;
+            }
+            else
+            {
+                Widgets[i].StartsNewRow = false;
+                rowSum += fraction;
+            }
+        }
+
+        return new() { Widgets = Widgets.Select(w => w.ToEntry()).ToList() };
+    }
 
     public void Cleanup()
     {

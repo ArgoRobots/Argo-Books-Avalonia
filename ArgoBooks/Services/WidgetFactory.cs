@@ -12,30 +12,33 @@ public record WidgetDefinition(
     string Category,
     string Icon,
     WidgetSize DefaultSize,
-    WidgetSize[] AvailableSizes,
-    bool AllowDuplicates
+    WidgetSize[] AvailableSizes
 );
 
 public static class WidgetFactory
 {
     private static readonly Dictionary<WidgetType, WidgetDefinition> Definitions = new()
     {
-        [WidgetType.StatCardRevenue] = new(WidgetType.StatCardRevenue, "Revenue", "Total revenue for the period", "Statistics", "💰", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small], false),
-        [WidgetType.StatCardExpenses] = new(WidgetType.StatCardExpenses, "Expenses", "Total expenses for the period", "Statistics", "📉", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small], false),
-        [WidgetType.StatCardOutstandingInvoices] = new(WidgetType.StatCardOutstandingInvoices, "Outstanding Invoices", "Unpaid invoice total", "Statistics", "📋", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small], false),
-        [WidgetType.StatCardActiveRentals] = new(WidgetType.StatCardActiveRentals, "Active Rentals", "Currently active rental count", "Statistics", "🔑", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small], false),
-        [WidgetType.QuickActions] = new(WidgetType.QuickActions, "Quick Actions", "Shortcut buttons for common tasks", "Actions", "⚡", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large], false),
-        [WidgetType.ProfitsChart] = new(WidgetType.ProfitsChart, "Profits Chart", "Profit trends over time", "Charts", "📈", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large], true),
-        [WidgetType.RevenueVsExpensesChart] = new(WidgetType.RevenueVsExpensesChart, "Revenue vs Expenses", "Compare revenue and expenses", "Charts", "📊", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large], true),
-        [WidgetType.RecentTransactions] = new(WidgetType.RecentTransactions, "Recent Transactions", "Latest revenue and expense entries", "Tables", "📝", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large], false),
-        [WidgetType.ActiveRentalsTable] = new(WidgetType.ActiveRentalsTable, "Active Rentals Table", "Currently active and overdue rentals", "Tables", "📅", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large], false),
-        [WidgetType.SetupChecklist] = new(WidgetType.SetupChecklist, "Setup Checklist", "Getting started guide for new users", "Onboarding", "✅", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large], false),
-        [WidgetType.TopCustomers] = new(WidgetType.TopCustomers, "Top Customers", "Highest revenue customers", "Insights", "👥", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium], false),
-        [WidgetType.LowStockAlerts] = new(WidgetType.LowStockAlerts, "Low Stock Alerts", "Inventory items below threshold", "Inventory", "⚠️", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium], false),
-        [WidgetType.UpcomingInvoiceDueDates] = new(WidgetType.UpcomingInvoiceDueDates, "Upcoming Due Dates", "Invoices due soon", "Invoices", "📆", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium], false),
-        [WidgetType.ExpenseByCategory] = new(WidgetType.ExpenseByCategory, "Expense by Category", "Expense breakdown by category", "Charts", "🍩", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large], true),
-        [WidgetType.CashFlowSummary] = new(WidgetType.CashFlowSummary, "Cash Flow", "Income vs outflow summary", "Insights", "💵", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large], true),
-        [WidgetType.OverdueRentals] = new(WidgetType.OverdueRentals, "Overdue Rentals", "Rentals past their due date", "Rentals", "🚨", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium], false),
+        [WidgetType.StatCardRevenue] = new(WidgetType.StatCardRevenue, "Revenue", "Total revenue for the period", "Statistics", "💰", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardExpenses] = new(WidgetType.StatCardExpenses, "Expenses", "Total expenses for the period", "Statistics", "📉", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardOutstandingInvoices] = new(WidgetType.StatCardOutstandingInvoices, "Outstanding Invoices", "Unpaid invoice total", "Statistics", "📋", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardActiveRentals] = new(WidgetType.StatCardActiveRentals, "Active Rentals", "Currently active rental count", "Statistics", "🔑", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardNetProfit] = new(WidgetType.StatCardNetProfit, "Net Profit", "Revenue minus expenses for the period", "Statistics", "📈", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardTotalCustomers] = new(WidgetType.StatCardTotalCustomers, "Total Customers", "Number of customers", "Statistics", "👥", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardInventoryValue] = new(WidgetType.StatCardInventoryValue, "Inventory Value", "Total value of inventory on hand", "Statistics", "📦", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.StatCardOverdueInvoices] = new(WidgetType.StatCardOverdueInvoices, "Overdue Invoices", "Invoices past their due date", "Statistics", "🚨", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
+        [WidgetType.QuickActions] = new(WidgetType.QuickActions, "Quick Actions", "Shortcut buttons for common tasks", "Actions", "⚡", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.ProfitsChart] = new(WidgetType.ProfitsChart, "Profits Chart", "Profit trends over time", "Charts", "📈", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.RevenueVsExpensesChart] = new(WidgetType.RevenueVsExpensesChart, "Revenue vs Expenses", "Compare revenue and expenses", "Charts", "📊", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.RecentTransactions] = new(WidgetType.RecentTransactions, "Recent Transactions", "Latest revenue and expense entries", "Tables", "📝", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.ActiveRentalsTable] = new(WidgetType.ActiveRentalsTable, "Active Rentals Table", "Currently active and overdue rentals", "Tables", "📅", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.SetupChecklist] = new(WidgetType.SetupChecklist, "Setup Checklist", "Getting started guide for new users", "Onboarding", "✅", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.TopCustomers] = new(WidgetType.TopCustomers, "Top Customers", "Highest revenue customers", "Insights", "👥", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.LowStockAlerts] = new(WidgetType.LowStockAlerts, "Low Stock Alerts", "Inventory items below threshold", "Inventory", "⚠️", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.UpcomingInvoiceDueDates] = new(WidgetType.UpcomingInvoiceDueDates, "Upcoming Due Dates", "Invoices due soon", "Invoices", "📆", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.ExpenseByCategory] = new(WidgetType.ExpenseByCategory, "Expense by Category", "Expense breakdown by category", "Charts", "🍩", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.CashFlowSummary] = new(WidgetType.CashFlowSummary, "Cash Flow", "Income vs outflow summary", "Insights", "💵", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
+        [WidgetType.OverdueRentals] = new(WidgetType.OverdueRentals, "Overdue Rentals", "Rentals past their due date", "Rentals", "🚨", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
     };
 
     public static WidgetDefinition GetDefinition(WidgetType type) => Definitions[type];
@@ -55,6 +58,10 @@ public static class WidgetFactory
         WidgetType.StatCardExpenses => new StatCardWidgetViewModel(StatCardKind.Expenses),
         WidgetType.StatCardOutstandingInvoices => new StatCardWidgetViewModel(StatCardKind.OutstandingInvoices),
         WidgetType.StatCardActiveRentals => new StatCardWidgetViewModel(StatCardKind.ActiveRentals),
+        WidgetType.StatCardNetProfit => new StatCardWidgetViewModel(StatCardKind.NetProfit),
+        WidgetType.StatCardTotalCustomers => new StatCardWidgetViewModel(StatCardKind.TotalCustomers),
+        WidgetType.StatCardInventoryValue => new StatCardWidgetViewModel(StatCardKind.InventoryValue),
+        WidgetType.StatCardOverdueInvoices => new StatCardWidgetViewModel(StatCardKind.OverdueInvoices),
         WidgetType.QuickActions => new QuickActionsWidgetViewModel(),
         WidgetType.ProfitsChart => new ChartWidgetViewModel(ChartWidgetKind.Profits),
         WidgetType.RevenueVsExpensesChart => new ChartWidgetViewModel(ChartWidgetKind.RevenueVsExpenses),
@@ -75,7 +82,11 @@ public static class WidgetFactory
         WidgetType.StatCardRevenue or
         WidgetType.StatCardExpenses or
         WidgetType.StatCardOutstandingInvoices or
-        WidgetType.StatCardActiveRentals => new StatCardWidget(),
+        WidgetType.StatCardActiveRentals or
+        WidgetType.StatCardNetProfit or
+        WidgetType.StatCardTotalCustomers or
+        WidgetType.StatCardInventoryValue or
+        WidgetType.StatCardOverdueInvoices => new StatCardWidget(),
         WidgetType.QuickActions => new QuickActionsWidget(),
         WidgetType.ProfitsChart or
         WidgetType.RevenueVsExpensesChart => new ChartWidget(),

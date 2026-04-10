@@ -11,6 +11,22 @@ public class DashboardFlowPanel : Panel
     public static double GetWidgetFraction(Control element) => element.GetValue(WidgetFractionProperty);
     public static void SetWidgetFraction(Control element, double value) => element.SetValue(WidgetFractionProperty, value);
 
+    public static readonly AttachedProperty<bool> StartsNewRowProperty =
+        AvaloniaProperty.RegisterAttached<DashboardFlowPanel, Control, bool>("StartsNewRow", false);
+
+    public static bool GetStartsNewRow(Control element) => element.GetValue(StartsNewRowProperty);
+    public static void SetStartsNewRow(Control element, bool value) => element.SetValue(StartsNewRowProperty, value);
+
+    /// <summary>
+    /// Fraction of the row width to skip before this widget (0.0 = left-aligned, 0.25 = skip 25%, etc.).
+    /// Only applies to the first widget in a row.
+    /// </summary>
+    public static readonly AttachedProperty<double> RowStartOffsetProperty =
+        AvaloniaProperty.RegisterAttached<DashboardFlowPanel, Control, double>("RowStartOffset", 0.0);
+
+    public static double GetRowStartOffset(Control element) => element.GetValue(RowStartOffsetProperty);
+    public static void SetRowStartOffset(Control element, double value) => element.SetValue(RowStartOffsetProperty, value);
+
     public static readonly StyledProperty<double> SpacingProperty =
         AvaloniaProperty.Register<DashboardFlowPanel, double>(nameof(Spacing), 12.0);
 
@@ -64,8 +80,9 @@ public class DashboardFlowPanel : Panel
             var fraction = GetWidgetFraction(child);
             if (fraction <= 0) fraction = 0.5;
 
-            // Check if adding this widget would exceed the row
-            if (rowFractionSum > 0 && rowFractionSum + fraction > 1.001)
+            // Check if this widget forces a new row or would exceed the current row
+            var startsNewRow = GetStartsNewRow(child);
+            if (rowFractionSum > 0 && (startsNewRow || rowFractionSum + fraction > 1.001))
             {
                 // Close current row
                 _rows.Add((rowStart, i - 1, rowHeight));
@@ -128,12 +145,26 @@ public class DashboardFlowPanel : Panel
 
             if (visibleCount == 0) continue;
 
-            // Scale factor to stretch partial rows to fill width
-            var scaleFactor = totalFraction > 0 ? 1.0 / totalFraction : 1.0;
+            // Only stretch rows that are full (fraction sum ≈ 1.0). Partial rows keep their natural widths.
+            var scaleFactor = totalFraction >= 0.999 ? 1.0 / totalFraction : 1.0;
             var totalSpacing = Math.Max(0, visibleCount - 1) * Spacing;
             var availableForWidgets = panelWidth - totalSpacing;
 
+            // Apply RowStartOffset on the first visible widget of partial rows
             double x = 0;
+            if (totalFraction < 0.999)
+            {
+                // Find the first visible child and check its offset
+                for (int i = start; i <= end; i++)
+                {
+                    if (!Children[i].IsVisible) continue;
+                    var offset = GetRowStartOffset(Children[i]);
+                    if (offset > 0)
+                        x = availableForWidgets * offset + (offset > 0 ? Spacing : 0);
+                    break;
+                }
+            }
+
             for (int i = start; i <= end; i++)
             {
                 if (!Children[i].IsVisible) continue;

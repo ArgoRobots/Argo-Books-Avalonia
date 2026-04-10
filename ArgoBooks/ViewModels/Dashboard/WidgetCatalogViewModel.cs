@@ -13,36 +13,36 @@ public partial class CatalogItem : ObservableObject
     public CatalogItem(WidgetDefinition definition) { Definition = definition; }
 }
 
-public partial class CatalogCategory : ObservableObject
-{
-    public string Name { get; }
-    public ObservableCollection<CatalogItem> Items { get; }
-    public CatalogCategory(string name, IEnumerable<CatalogItem> items)
-    {
-        Name = name;
-        Items = new ObservableCollection<CatalogItem>(items);
-    }
-}
-
 public partial class WidgetCatalogViewModel : ObservableObject
 {
     [ObservableProperty] private bool _isOpen;
-    public ObservableCollection<CatalogCategory> Categories { get; } = [];
+    public ObservableCollection<CatalogItem> StatCards { get; } = [];
+    public ObservableCollection<CatalogItem> Charts { get; } = [];
+    public ObservableCollection<CatalogItem> Tables { get; } = [];
 
     public event EventHandler<WidgetType>? WidgetAddRequested;
 
+    private static readonly HashSet<string> StatCardCategories = ["Statistics"];
+    private static readonly HashSet<string> ChartCategories = ["Charts", "Insights"];
+
     public void Refresh(IReadOnlyList<WidgetHostViewModel> currentWidgets)
     {
-        Categories.Clear();
+        StatCards.Clear();
+        Charts.Clear();
+        Tables.Clear();
+
         var placedTypes = currentWidgets.Select(w => w.WidgetType).ToHashSet();
 
-        foreach (var categoryName in WidgetFactory.GetCategories())
+        foreach (var d in WidgetFactory.GetAllDefinitions())
         {
-            var items = WidgetFactory.GetAllDefinitions()
-                .Where(d => d.Category == categoryName)
-                .Select(d => new CatalogItem(d) { IsAlreadyAdded = !d.AllowDuplicates && placedTypes.Contains(d.Type) })
-                .ToList();
-            Categories.Add(new CatalogCategory(categoryName, items));
+            var item = new CatalogItem(d) { IsAlreadyAdded = placedTypes.Contains(d.Type) };
+
+            if (StatCardCategories.Contains(d.Category))
+                StatCards.Add(item);
+            else if (ChartCategories.Contains(d.Category))
+                Charts.Add(item);
+            else
+                Tables.Add(item);
         }
     }
 
