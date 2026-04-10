@@ -97,12 +97,8 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
     public void LoadAllWidgetData()
     {
-        System.Diagnostics.Debug.WriteLine($"[Dashboard] LoadAllWidgetData: {Widgets.Count} widgets, _companyManager={_companyManager != null}, CompanyData={_companyManager?.CompanyData != null}");
         foreach (var w in Widgets)
-        {
-            System.Diagnostics.Debug.WriteLine($"[Dashboard]   Widget {w.WidgetType}");
             w.LoadData();
-        }
     }
 
     [RelayCommand]
@@ -171,6 +167,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         var entry = new DashboardWidgetEntry(type, def.DefaultSize);
         var host = WidgetFactory.CreateWidgetHost(entry);
         host.SetCompanyManager(_companyManager);
+        WireUpWidgetEvents(host);
         host.IsEditMode = true;
         host.LoadData();
         Widgets.Add(host);

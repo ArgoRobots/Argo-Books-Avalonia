@@ -75,12 +75,12 @@
                                             Margin="0,0,12,0"
                                             Classes.overdue-indicator="{Binding IsOverdue}"
                                             Classes.urgent-indicator="{Binding IsUrgent}"
-                                            Classes.normal-indicator="{Binding !IsOverdue}">
+                                            Classes.normal-indicator="{Binding IsNormal}">
                                         <PathIcon Data="{x:Static icons:Icons.Invoices}"
                                                   Width="18" Height="18"
                                                   Classes.overdue="{Binding IsOverdue}"
                                                   Classes.urgent="{Binding IsUrgent}"
-                                                  Classes.normal="{Binding !IsOverdue}">
+                                                  Classes.normal="{Binding IsNormal}">
                                             <PathIcon.Styles>
                                                 <Style Selector="PathIcon.overdue">
                                                     <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />

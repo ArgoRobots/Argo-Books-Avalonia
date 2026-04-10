@@ -58,7 +58,7 @@ public partial class LowStockAlertsWidgetViewModel : WidgetViewModelBase
     private void LoadLowStockItems(CompanyData data)
     {
         var lowStockItems = data.Inventory
-            .Where(inv => inv.InStock <= Threshold)
+            .Where(inv => inv.InStock > 0 && inv.InStock <= Threshold)
             .OrderBy(inv => inv.InStock)
             .Select(inv =>
             {

@@ -43,7 +43,6 @@ public static class WidgetFactory
 
     public static WidgetDefinition GetDefinition(WidgetType type) => Definitions[type];
     public static IReadOnlyList<WidgetDefinition> GetAllDefinitions() => Definitions.Values.ToList();
-    public static IReadOnlyList<string> GetCategories() => Definitions.Values.Select(d => d.Category).Distinct().ToList();
 
     public static WidgetHostViewModel CreateWidgetHost(DashboardWidgetEntry entry)
     {

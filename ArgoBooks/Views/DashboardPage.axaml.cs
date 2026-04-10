@@ -129,11 +129,9 @@ public partial class DashboardPage : UserControl
 
         panel.Children.Clear();
 
-        System.Diagnostics.Debug.WriteLine($"[DashboardPage] RebuildWidgetPanel: {layoutVm.Widgets.Count} widgets");
         for (int i = 0; i < layoutVm.Widgets.Count; i++)
         {
             var hostVm = layoutVm.Widgets[i];
-            System.Diagnostics.Debug.WriteLine($"[DashboardPage]   Widget[{i}]: {hostVm.WidgetType}, VM type={hostVm.WidgetViewModel.GetType().Name}");
 
             // Create the WidgetHost control
             var widgetHost = new WidgetHost

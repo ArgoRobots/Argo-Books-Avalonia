@@ -57,49 +57,37 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
 
     private void LoadRecentTransactions(CompanyData data)
     {
-        var recentItems = new List<RecentTransactionItem>();
+        var revenues = data.Revenues.Select(s => new RecentTransactionItem
+        {
+            Id = s.Id,
+            Type = "Revenue",
+            Description = string.IsNullOrEmpty(s.Description) ? "Revenue Transaction" : s.Description,
+            Amount = CurrencyService.FormatFromUSD(s.EffectiveSubtotalUSD, s.Date),
+            AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveSubtotalUSD, s.Date),
+            Date = s.Date,
+            DateFormatted = FormatDate(s.Date),
+            Status = string.Empty,
+            StatusVariant = string.Empty,
+            IsIncome = true,
+            CustomerName = GetCustomerName(data, s.CustomerId)
+        });
 
-        var recentSales = data.Revenues
-            .OrderByDescending(s => s.Date)
-            .Take(RowCount)
-            .Select(s => new RecentTransactionItem
-            {
-                Id = s.Id,
-                Type = "Revenue",
-                Description = string.IsNullOrEmpty(s.Description) ? "Revenue Transaction" : s.Description,
-                Amount = CurrencyService.FormatFromUSD(s.EffectiveSubtotalUSD, s.Date),
-                AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveSubtotalUSD, s.Date),
-                Date = s.Date,
-                DateFormatted = FormatDate(s.Date),
-                Status = string.Empty,
-                StatusVariant = string.Empty,
-                IsIncome = true,
-                CustomerName = GetCustomerName(data, s.CustomerId)
-            });
+        var expenses = data.Expenses.Select(p => new RecentTransactionItem
+        {
+            Id = p.Id,
+            Type = "Expense",
+            Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
+            Amount = CurrencyService.FormatFromUSD(p.EffectiveSubtotalUSD, p.Date),
+            AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveSubtotalUSD, p.Date),
+            Date = p.Date,
+            DateFormatted = FormatDate(p.Date),
+            Status = string.Empty,
+            StatusVariant = string.Empty,
+            IsIncome = false,
+            CustomerName = GetSupplierName(data, p.SupplierId)
+        });
 
-        recentItems.AddRange(recentSales);
-
-        var recentPurchases = data.Expenses
-            .OrderByDescending(p => p.Date)
-            .Take(RowCount)
-            .Select(p => new RecentTransactionItem
-            {
-                Id = p.Id,
-                Type = "Expense",
-                Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
-                Amount = CurrencyService.FormatFromUSD(p.EffectiveSubtotalUSD, p.Date),
-                AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveSubtotalUSD, p.Date),
-                Date = p.Date,
-                DateFormatted = FormatDate(p.Date),
-                Status = string.Empty,
-                StatusVariant = string.Empty,
-                IsIncome = false,
-                CustomerName = GetSupplierName(data, p.SupplierId)
-            });
-
-        recentItems.AddRange(recentPurchases);
-
-        var sortedItems = recentItems
+        var sortedItems = revenues.Concat(expenses)
             .OrderByDescending(t => t.Date)
             .Take(RowCount)
             .ToList();

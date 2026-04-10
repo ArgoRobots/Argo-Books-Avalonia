@@ -14,7 +14,10 @@ public record UpcomingInvoiceItem(
     string DueDate,
     int DaysUntilDue,
     bool IsOverdue,
-    bool IsUrgent);
+    bool IsUrgent)
+{
+    public bool IsNormal => !IsOverdue && !IsUrgent;
+}
 
 public partial class UpcomingInvoicesWidgetViewModel : WidgetViewModelBase
 {
@@ -71,7 +74,6 @@ public partial class UpcomingInvoicesWidgetViewModel : WidgetViewModelBase
 
         var unpaidStatuses = new[]
         {
-            InvoiceStatus.Draft,
             InvoiceStatus.Pending,
             InvoiceStatus.Sent,
             InvoiceStatus.Viewed,

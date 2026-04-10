@@ -1,4 +1,3 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -11,8 +10,6 @@ using ArgoBooks.Services;
 using ArgoBooks.ViewModels.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LiveChartsCore.SkiaSharpView.Painting;
-using LiveChartsCore.SkiaSharpView.VisualElements;
 
 namespace ArgoBooks.ViewModels;
 
@@ -223,58 +220,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             });
     }
 
-    /// <summary>
-    /// Gets the comparison period dates based on the selected date range.
-    /// </summary>
-    private (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriod()
-    {
-        var now = DateTime.Now;
-        var preset = DateRangePresetExtensions.ParseDateRange(SelectedDateRange);
-
-        return preset switch
-        {
-            DateRangePreset.ThisMonth => (
-                new DateTime(now.Year, now.Month, 1).AddMonths(-1),
-                new DateTime(now.Year, now.Month, 1).AddDays(-1)
-            ),
-            DateRangePreset.LastMonth => (
-                new DateTime(now.Year, now.Month, 1).AddMonths(-2),
-                new DateTime(now.Year, now.Month, 1).AddMonths(-1).AddDays(-1)
-            ),
-            DateRangePreset.Last30Days => (
-                StartDate.AddDays(-30), StartDate.AddDays(-1)
-            ),
-            DateRangePreset.Last100Days => (
-                StartDate.AddDays(-100), StartDate.AddDays(-1)
-            ),
-            DateRangePreset.Last365Days => (
-                StartDate.AddDays(-365), StartDate.AddDays(-1)
-            ),
-            DateRangePreset.ThisQuarter => (
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3),
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1)
-            ),
-            DateRangePreset.LastQuarter => (
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-6),
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3).AddDays(-1)
-            ),
-            DateRangePreset.ThisYear => (
-                new DateTime(now.Year - 1, 1, 1),
-                new DateTime(now.Year - 1, 12, 31)
-            ),
-            DateRangePreset.LastYear => (
-                new DateTime(now.Year - 2, 1, 1),
-                new DateTime(now.Year - 2, 12, 31)
-            ),
-            DateRangePreset.AllTime => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
-            DateRangePreset.CustomRange => (
-                StartDate.AddDays(-(EndDate - StartDate).TotalDays - 1),
-                StartDate.AddDays(-1)
-            ),
-            _ => (StartDate.AddDays(-30), StartDate.AddDays(-1))
-        };
-    }
-
     #endregion
 
     #region Chart Type
@@ -414,11 +359,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the legend text paint based on the current theme.
-    /// </summary>
-    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
-
     #endregion
 
     #region Data Loading
@@ -429,7 +369,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     public void Initialize(CompanyManager companyManager)
     {
         _companyManager = companyManager;
-        System.Diagnostics.Debug.WriteLine($"[DashboardVM] Initialize: companyManager={companyManager != null}, CompanyData={companyManager?.CompanyData != null}, Revenues={companyManager?.CompanyData?.Revenues?.Count}");
 
         // Initialize the widget layout system
         LayoutViewModel.Initialize(companyManager!);
@@ -773,11 +712,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     #endregion
 
     #region Helper Methods
-
-    /// <summary>
-    /// Gets the comparison period dates based on the selected date range.
-    /// </summary>
-    internal (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriodDates() => GetComparisonPeriod();
 
     /// <summary>
     /// Checks if there is sufficient data coverage for the prior comparison period.

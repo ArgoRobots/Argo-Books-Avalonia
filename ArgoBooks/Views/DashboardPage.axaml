@@ -5,12 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:dashboard="using:ArgoBooks.Controls.Dashboard"
-             xmlns:dashboardVm="using:ArgoBooks.ViewModels.Dashboard"
-             xmlns:local="using:ArgoBooks"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:enums="using:ArgoBooks.Core.Enums"
-             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
              x:DataType="vm:DashboardPageViewModel">
