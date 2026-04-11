@@ -9,8 +9,13 @@ namespace ArgoBooks.ViewModels.Dashboard;
 public partial class CatalogItem : ObservableObject
 {
     public WidgetDefinition Definition { get; }
-    [ObservableProperty] private bool _isAlreadyAdded;
-    [ObservableProperty] private bool _cannotFitInRow;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowWontFit))]
+    private bool _isAlreadyAdded;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowWontFit))]
+    private bool _cannotFitInRow;
+    public bool ShowWontFit => CannotFitInRow && !IsAlreadyAdded;
     public CatalogItem(WidgetDefinition definition) { Definition = definition; }
 }
 
@@ -37,7 +42,6 @@ public partial class WidgetCatalogViewModel : ObservableObject
         var placedTypes = currentWidgets.Select(w => w.WidgetType).ToHashSet();
 
         RemainingFraction = remainingFraction;
-        IsRowFull = remainingFraction < 0.25 - 0.001; // smallest widget is Tiny at 0.25
 
         foreach (var d in WidgetFactory.GetAllDefinitions())
         {
@@ -54,6 +58,10 @@ public partial class WidgetCatalogViewModel : ObservableObject
             else
                 Tables.Add(item);
         }
+
+        // Show banner when every available (not-already-added) widget is too large
+        var allItems = StatCards.Concat(Charts).Concat(Tables);
+        IsRowFull = allItems.Where(i => !i.IsAlreadyAdded).All(i => i.CannotFitInRow);
     }
 
     [RelayCommand]
