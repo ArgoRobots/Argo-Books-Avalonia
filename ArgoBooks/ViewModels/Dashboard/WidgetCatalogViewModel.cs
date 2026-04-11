@@ -10,12 +10,15 @@ public partial class CatalogItem : ObservableObject
 {
     public WidgetDefinition Definition { get; }
     [ObservableProperty] private bool _isAlreadyAdded;
+    [ObservableProperty] private bool _cannotFitInRow;
     public CatalogItem(WidgetDefinition definition) { Definition = definition; }
 }
 
 public partial class WidgetCatalogViewModel : ObservableObject
 {
     [ObservableProperty] private bool _isOpen;
+    [ObservableProperty] private double _remainingFraction = 1.0;
+    [ObservableProperty] private bool _isRowFull;
     public ObservableCollection<CatalogItem> StatCards { get; } = [];
     public ObservableCollection<CatalogItem> Charts { get; } = [];
     public ObservableCollection<CatalogItem> Tables { get; } = [];
@@ -25,7 +28,7 @@ public partial class WidgetCatalogViewModel : ObservableObject
     private static readonly HashSet<string> StatCardCategories = ["Statistics"];
     private static readonly HashSet<string> ChartCategories = ["Charts", "Insights"];
 
-    public void Refresh(IEnumerable<WidgetHostViewModel> currentWidgets)
+    public void Refresh(IEnumerable<WidgetHostViewModel> currentWidgets, double remainingFraction = 1.0)
     {
         StatCards.Clear();
         Charts.Clear();
@@ -33,9 +36,16 @@ public partial class WidgetCatalogViewModel : ObservableObject
 
         var placedTypes = currentWidgets.Select(w => w.WidgetType).ToHashSet();
 
+        RemainingFraction = remainingFraction;
+        IsRowFull = remainingFraction < 0.25 - 0.001; // smallest widget is Tiny at 0.25
+
         foreach (var d in WidgetFactory.GetAllDefinitions())
         {
-            var item = new CatalogItem(d) { IsAlreadyAdded = placedTypes.Contains(d.Type) };
+            var item = new CatalogItem(d)
+            {
+                IsAlreadyAdded = placedTypes.Contains(d.Type),
+                CannotFitInRow = d.DefaultSize.ToFraction() > remainingFraction + 0.001
+            };
 
             if (StatCardCategories.Contains(d.Category))
                 StatCards.Add(item);
@@ -49,7 +59,7 @@ public partial class WidgetCatalogViewModel : ObservableObject
     [RelayCommand]
     private void AddWidget(CatalogItem item)
     {
-        if (item.IsAlreadyAdded) return;
+        if (item.IsAlreadyAdded || item.CannotFitInRow) return;
         WidgetAddRequested?.Invoke(this, item.Definition.Type);
         IsOpen = false;
     }
