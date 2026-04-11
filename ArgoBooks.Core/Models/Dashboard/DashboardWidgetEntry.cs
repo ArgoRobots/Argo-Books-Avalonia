@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ArgoBooks.Core.Models.Dashboard;
 
 public class DashboardWidgetEntry
@@ -5,8 +7,10 @@ public class DashboardWidgetEntry
     public string Id { get; set; } = Guid.NewGuid().ToString("N")[..8];
     public WidgetType WidgetType { get; set; }
     public WidgetSize Size { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool StartsNewRow { get; set; }
-    public double RowStartOffset { get; set; }
+
     public Dictionary<string, string> Config { get; set; } = new();
 
     public DashboardWidgetEntry() { }
@@ -23,7 +27,6 @@ public class DashboardWidgetEntry
         WidgetType = WidgetType,
         Size = Size,
         StartsNewRow = StartsNewRow,
-        RowStartOffset = RowStartOffset,
         Config = new Dictionary<string, string>(Config)
     };
 }
