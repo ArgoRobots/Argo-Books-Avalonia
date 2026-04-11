@@ -3,32 +3,62 @@
              xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:loc="using:ArgoBooks.Localization"
              x:Class="ArgoBooks.Controls.Dashboard.Widgets.ChartWidget"
-             x:DataType="vm:ChartWidgetViewModel">
+             x:DataType="vm:UnifiedChartWidgetViewModel">
 
     <Border Background="{DynamicResource SurfaceBrush}"
             BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
             CornerRadius="12"
-            Padding="8"
             ClipToBounds="True"
             MinHeight="320">
         <Grid>
-            <!-- Chart with data -->
-            <lvc:CartesianChart
-                Title="{Binding ChartTitleVisual}"
-                Series="{Binding Series}"
-                XAxes="{Binding XAxes}"
-                YAxes="{Binding YAxes}"
-                TooltipPosition="Top"
-                ZoomMode="Both"
-                IsVisible="{Binding HasData}" />
+            <!-- Cartesian chart (time-series) -->
+            <Panel IsVisible="{Binding !IsDistribution}">
+                <lvc:CartesianChart
+                    Title="{Binding ChartTitleVisual}"
+                    Series="{Binding Series}"
+                    XAxes="{Binding XAxes}"
+                    YAxes="{Binding YAxes}"
+                    TooltipPosition="Top"
+                    ZoomMode="Both"
+                    IsVisible="{Binding HasData}" />
 
-            <!-- Empty state placeholder -->
-            <controls:ChartEmptyState
-                IsVisible="{Binding !HasData}"
-                DefaultMessage="{Binding EmptyStateMessage}" />
+                <controls:ChartEmptyState
+                    IsVisible="{Binding HasNoData}"
+                    DefaultMessage="{Binding EmptyStateMessage}" />
+            </Panel>
+
+            <!-- Pie/donut chart (distribution) -->
+            <Grid RowDefinitions="Auto,*"
+                  IsVisible="{Binding IsDistribution}">
+                <Border Grid.Row="0"
+                        Padding="20,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="{Binding ChartTitle}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+
+                <lvc:PieChart Grid.Row="1"
+                              Series="{Binding Series}"
+                              LegendPosition="Right"
+                              TooltipPosition="Top"
+                              IsVisible="{Binding HasData}"
+                              MinHeight="250" />
+
+                <Border Grid.Row="1"
+                        Padding="40"
+                        IsVisible="{Binding HasNoData}">
+                    <TextBlock Text="{Binding EmptyStateMessage}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>
