@@ -31,7 +31,7 @@
     </UserControl.Styles>
 
     <Grid ClipToBounds="False">
-        <dashboard:DashboardRowPanel x:Name="RowPanel" Spacing="12" />
+        <dashboard:DashboardRowPanel x:Name="RowPanel" Spacing="0" />
 
         <Border Classes.row-container-editing="{Binding IsEditMode}"
                 IsHitTestVisible="False"

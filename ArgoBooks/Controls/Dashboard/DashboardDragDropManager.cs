@@ -20,12 +20,19 @@ public class DashboardDragDropManager
     private DashboardRowPanel? _sourceRowPanel;
     private int _dragSourceIndex = -1;
     private Border? _dragGhost;
+    private DragGridOverlay? _dragGrid;
     private Control? _dragSourceControl;
-    private bool _swapSettling;
+
+    // Preview state: no collection changes until mouse release
+    private int _previewTargetIndex = -1;
+    private DashboardRowPanel? _crossRowTargetPanel;
 
     private const double DragDeadZone = 5;
     private const double AutoScrollMargin = 50;
     private const double AutoScrollSpeed = 8;
+
+    private static readonly SolidColorBrush BlueBrush = new(Color.FromRgb(59, 130, 246));
+    private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(239, 68, 68));
 
     public DashboardDragDropManager(
         List<DashboardRowPanel> rowPanels,
@@ -91,13 +98,14 @@ public class DashboardDragDropManager
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (_dragSourceIndex < 0) return;
-        CancelDrag();
+        FinalizeDrag();
     }
 
     private void StartDrag()
     {
         _isDragging = true;
-        _swapSettling = false;
+        _previewTargetIndex = _dragSourceIndex;
+        _crossRowTargetPanel = null;
 
         if (_dragSourceControl != null)
             _dragSourceControl.Opacity = 0;
@@ -110,7 +118,7 @@ public class DashboardDragDropManager
             Width = sourceWidth,
             Height = sourceHeight,
             Background = new SolidColorBrush(Color.FromArgb(30, 59, 130, 246)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
+            BorderBrush = BlueBrush,
             BorderThickness = new Thickness(2),
             CornerRadius = new CornerRadius(12),
             IsHitTestVisible = false,
@@ -120,7 +128,11 @@ public class DashboardDragDropManager
         };
 
         if (_rowsContainer.Parent is Panel parent)
+        {
+            _dragGrid = new DragGridOverlay(_rowsContainer);
+            parent.Children.Add(_dragGrid);
             parent.Children.Add(_dragGhost);
+        }
     }
 
     private void UpdateDrag(Point position)
@@ -133,116 +145,165 @@ public class DashboardDragDropManager
         var ghostY = position.Y - _dragOffset.Y;
 
         _dragGhost.Margin = new Thickness(ghostX, ghostY, 0, 0);
+        _dragGrid?.InvalidateVisual();
 
         var ghostRect = new Rect(ghostX, ghostY, ghostWidth, ghostHeight);
-
-        if (_swapSettling)
-        {
-            if (_dragSourceIndex >= 0 && _dragSourceIndex < _sourceRowPanel.Children.Count)
-            {
-                var srcControl = _sourceRowPanel.Children[_dragSourceIndex];
-                var srcPos = srcControl.TranslatePoint(new Point(0, 0), _rowsContainer) ?? new Point();
-                var srcRect = new Rect(srcPos, srcControl.Bounds.Size);
-                var ghostCenter = ghostRect.Center;
-                if (ghostCenter.X >= srcRect.Left && ghostCenter.X <= srcRect.Right
-                    && ghostCenter.Y >= srcRect.Top && ghostCenter.Y <= srcRect.Bottom)
-                    _swapSettling = false;
-            }
-            else
-            {
-                _swapSettling = false;
-            }
-
-            if (_swapSettling) return;
-        }
-
         var targetRowPanel = FindRowPanelAtPosition(ghostRect.Center);
 
         if (targetRowPanel == _sourceRowPanel)
         {
-            // Reset ghost color for same-row
-            _dragGhost.BorderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));
-            TrySameRowSwap(ghostRect);
+            _dragGhost.BorderBrush = BlueBrush;
+            _crossRowTargetPanel = null;
+            UpdateSameRowPreview(ghostRect);
         }
         else if (targetRowPanel != null)
         {
-            TryCrossRowMove(targetRowPanel);
+            ResetPreviewTransforms();
+            _previewTargetIndex = _dragSourceIndex;
+            UpdateCrossRowPreview(targetRowPanel);
         }
         else
         {
-            // Not over any row — reset ghost color
-            _dragGhost.BorderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));
+            _dragGhost.BorderBrush = BlueBrush;
+            _crossRowTargetPanel = null;
+            ResetPreviewTransforms();
+            _previewTargetIndex = _dragSourceIndex;
         }
     }
 
-    private void TrySameRowSwap(Rect ghostRect)
+    private void UpdateSameRowPreview(Rect ghostRect)
     {
         if (_sourceRowPanel == null || _dragSourceIndex < 0) return;
 
-        int bestTarget = -1;
-        double bestOverlap = 0;
-        double sourceOverlap = 0;
+        var children = _sourceRowPanel.Children;
+        int count = children.Count;
+        if (count <= 1) return;
 
-        for (int i = 0; i < _sourceRowPanel.Children.Count; i++)
+        int sourceIdx = _dragSourceIndex;
+        var sourceMargin = children[sourceIdx].Margin;
+        double sourceWidth = children[sourceIdx].Bounds.Width + sourceMargin.Left + sourceMargin.Right;
+
+        // Ghost center X in row-panel-local coordinates
+        var panelPos = _sourceRowPanel.TranslatePoint(new Point(0, 0), _rowsContainer) ?? new Point();
+        double localGhostCenterX = ghostRect.Center.X - panelPos.X;
+
+        // Determine target: compare ghost center against midpoints of non-source widgets
+        int targetIdx = sourceIdx;
+
+        for (int i = sourceIdx + 1; i < count; i++)
         {
-            var child = _sourceRowPanel.Children[i];
-            var childPos = child.TranslatePoint(new Point(0, 0), _rowsContainer) ?? new Point();
-            var childRect = new Rect(childPos, child.Bounds.Size);
-            var overlap = RectOverlapArea(ghostRect, childRect);
-
-            if (i == _dragSourceIndex)
-            {
-                sourceOverlap = overlap;
-                continue;
-            }
-
-            if (overlap > bestOverlap)
-            {
-                bestOverlap = overlap;
-                bestTarget = i;
-            }
+            var midX = children[i].Bounds.Left + children[i].Bounds.Width / 2;
+            if (localGhostCenterX > midX)
+                targetIdx = i;
         }
 
-        if (bestTarget < 0 || bestOverlap <= sourceOverlap) return;
-
-        var rowVm = FindRowVm(_sourceRowPanel);
-        if (rowVm == null) return;
-
-        _layoutVm.SwapWidgetsInRow(rowVm, _dragSourceIndex, bestTarget);
-        _swapSettling = true;
-        _dragSourceIndex = bestTarget;
-
-        if (_dragSourceIndex >= 0 && _dragSourceIndex < _sourceRowPanel.Children.Count)
+        for (int i = sourceIdx - 1; i >= 0; i--)
         {
-            _dragSourceControl = _sourceRowPanel.Children[_dragSourceIndex];
-            _dragSourceControl.Opacity = 0;
+            var midX = children[i].Bounds.Left + children[i].Bounds.Width / 2;
+            if (localGhostCenterX < midX)
+                targetIdx = i;
+        }
+
+        _previewTargetIndex = targetIdx;
+
+        // Apply transforms: shift widgets between source and target by source's width
+        for (int i = 0; i < count; i++)
+        {
+            if (i == sourceIdx) continue;
+
+            double dx = 0;
+            if (targetIdx > sourceIdx && i > sourceIdx && i <= targetIdx)
+                dx = -sourceWidth;
+            else if (targetIdx < sourceIdx && i >= targetIdx && i < sourceIdx)
+                dx = sourceWidth;
+
+            children[i].RenderTransform = Math.Abs(dx) > 0.5
+                ? new TranslateTransform(dx, 0)
+                : null;
         }
     }
 
-    private void TryCrossRowMove(DashboardRowPanel targetRowPanel)
+    private void UpdateCrossRowPreview(DashboardRowPanel targetRowPanel)
     {
-        if (_sourceRowPanel == null || _dragSourceIndex < 0) return;
+        if (_sourceRowPanel == null || _dragSourceIndex < 0 || _dragGhost == null) return;
 
         var sourceRowVm = FindRowVm(_sourceRowPanel);
         var targetRowVm = FindRowVm(targetRowPanel);
         if (sourceRowVm == null || targetRowVm == null) return;
-
         if (_dragSourceIndex >= sourceRowVm.Widgets.Count) return;
 
         if (!targetRowVm.CanFit(sourceRowVm.Widgets[_dragSourceIndex].Size))
         {
-            if (_dragGhost != null)
-                _dragGhost.BorderBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+            _dragGhost.BorderBrush = RedBrush;
+            _crossRowTargetPanel = null;
             return;
         }
 
-        if (_dragGhost != null)
-            _dragGhost.BorderBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));
+        _dragGhost.BorderBrush = BlueBrush;
+        _crossRowTargetPanel = targetRowPanel;
+    }
 
-        if (_layoutVm.MoveWidgetToRow(sourceRowVm, _dragSourceIndex, targetRowVm))
+    private void FinalizeDrag()
+    {
+        // Capture move info before resetting state
+        var sourceRowPanel = _sourceRowPanel;
+        int sourceIndex = _dragSourceIndex;
+        int targetIndex = _previewTargetIndex;
+        var crossRowTarget = _crossRowTargetPanel;
+
+        // Reset all visual state first (before any collection changes trigger rebuilds)
+        ResetPreviewTransforms();
+
+        if (_dragSourceControl != null)
         {
-            CancelDrag();
+            _dragSourceControl.Opacity = 1.0;
+            _dragSourceControl = null;
         }
+
+        if (_rowsContainer.Parent is Panel parent)
+        {
+            if (_dragGrid != null)
+                parent.Children.Remove(_dragGrid);
+            if (_dragGhost != null)
+                parent.Children.Remove(_dragGhost);
+        }
+        _dragGrid = null;
+        _dragGhost = null;
+
+        _isDragging = false;
+        _dragSourceIndex = -1;
+        _previewTargetIndex = -1;
+        _crossRowTargetPanel = null;
+        _sourceRowPanel = null;
+
+        // Now perform the actual move (may trigger RebuildRows — that's fine, state is clean)
+        if (crossRowTarget != null && sourceRowPanel != null)
+        {
+            var sourceRowVm = FindRowVm(sourceRowPanel);
+            var targetRowVm = FindRowVm(crossRowTarget);
+            if (sourceRowVm != null && targetRowVm != null
+                && sourceIndex >= 0 && sourceIndex < sourceRowVm.Widgets.Count
+                && targetRowVm.CanFit(sourceRowVm.Widgets[sourceIndex].Size))
+            {
+                _layoutVm.MoveWidgetToRow(sourceRowVm, sourceIndex, targetRowVm);
+            }
+        }
+        else if (sourceRowPanel != null && targetIndex >= 0 && targetIndex != sourceIndex)
+        {
+            var rowVm = FindRowVm(sourceRowPanel);
+            if (rowVm != null && sourceIndex >= 0 && sourceIndex < rowVm.Widgets.Count
+                && targetIndex < rowVm.Widgets.Count)
+            {
+                rowVm.Widgets.Move(sourceIndex, targetIndex);
+            }
+        }
+    }
+
+    private void ResetPreviewTransforms()
+    {
+        if (_sourceRowPanel == null) return;
+        foreach (var child in _sourceRowPanel.Children)
+            child.RenderTransform = null;
     }
 
     private DashboardRowPanel? FindRowPanelAtPosition(Point position)
@@ -266,13 +327,6 @@ public class DashboardDragDropManager
         return rowHost?.DataContext as DashboardRowViewModel;
     }
 
-    private static double RectOverlapArea(Rect a, Rect b)
-    {
-        double x = Math.Max(0, Math.Min(a.Right, b.Right) - Math.Max(a.Left, b.Left));
-        double y = Math.Max(0, Math.Min(a.Bottom, b.Bottom) - Math.Max(a.Top, b.Top));
-        return x * y;
-    }
-
     private void HandleAutoScroll(Point posInScrollViewer)
     {
         if (posInScrollViewer.Y < AutoScrollMargin)
@@ -281,23 +335,5 @@ public class DashboardDragDropManager
         else if (posInScrollViewer.Y > _scrollViewer.Bounds.Height - AutoScrollMargin)
             _scrollViewer.Offset = new Vector(_scrollViewer.Offset.X,
                 _scrollViewer.Offset.Y + AutoScrollSpeed);
-    }
-
-    private void CancelDrag()
-    {
-        if (_dragSourceControl != null)
-        {
-            _dragSourceControl.Opacity = 1.0;
-            _dragSourceControl = null;
-        }
-
-        _isDragging = false;
-        _dragSourceIndex = -1;
-        _sourceRowPanel = null;
-
-        if (_rowsContainer.Parent is Panel parent && _dragGhost != null)
-            parent.Children.Remove(_dragGhost);
-
-        _dragGhost = null;
     }
 }

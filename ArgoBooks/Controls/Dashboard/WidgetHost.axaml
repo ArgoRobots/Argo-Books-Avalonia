@@ -286,16 +286,6 @@
                             </StackPanel>
                         </DataTemplate>
 
-                        <!-- ExpenseByCategoryWidgetViewModel Config -->
-                        <DataTemplate DataType="vm:ExpenseByCategoryWidgetViewModel">
-                            <StackPanel Spacing="8">
-                                <TextBlock Classes="config-label" Text="Chart style" />
-                                <ComboBox ItemsSource="{Binding ChartStyleOptions}"
-                                          SelectedItem="{Binding ChartStyle}"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-                        </DataTemplate>
-
                     </ContentPresenter.DataTemplates>
                 </ContentPresenter>
                 </ScrollViewer>

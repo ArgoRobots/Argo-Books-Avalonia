@@ -135,12 +135,45 @@ public partial class DashboardPage : UserControl
             }
 
             // Hide the row if all its widgets are invisible (e.g., completed setup checklist)
-            bool anyVisible = rowVm.Widgets.Count == 0
-                || rowVm.Widgets.Any(w => w.WidgetViewModel.IsWidgetVisible);
-            rowHost.IsVisible = anyVisible;
+            UpdateRowVisibility(rowHost, rowVm);
+            var capturedHost = rowHost;
+            var capturedVm = rowVm;
+            foreach (var hostVm in rowVm.Widgets)
+            {
+                hostVm.WidgetViewModel.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName == nameof(WidgetViewModelBase.IsWidgetVisible))
+                        UpdateRowVisibility(capturedHost, capturedVm);
+                };
+            }
 
             // Listen for widget collection changes in this row
-            rowVm.Widgets.CollectionChanged += (_, _) => RebuildRows(layoutVm);
+            var capturedRowHost = rowHost;
+            rowVm.Widgets.CollectionChanged += (_, args) =>
+            {
+                if (args.Action == NotifyCollectionChangedAction.Move
+                    && args.OldStartingIndex >= 0 && args.NewStartingIndex >= 0)
+                {
+                    // Reorder visual children without rebuilding — avoids chart reload
+                    var moveChild = capturedRowHost.Panel.Children[args.OldStartingIndex];
+                    capturedRowHost.Panel.Children.RemoveAt(args.OldStartingIndex);
+                    capturedRowHost.Panel.Children.Insert(args.NewStartingIndex, moveChild);
+                }
+                else if (args.Action == NotifyCollectionChangedAction.Remove
+                    && args.OldStartingIndex >= 0
+                    && args.OldStartingIndex < capturedRowHost.Panel.Children.Count)
+                {
+                    // Remove the visual child without rebuilding — avoids chart reload
+                    var removeChild = capturedRowHost.Panel.Children[args.OldStartingIndex];
+                    if (removeChild is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
+                        oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
+                    capturedRowHost.Panel.Children.RemoveAt(args.OldStartingIndex);
+                }
+                else
+                {
+                    RebuildRows(layoutVm);
+                }
+            };
 
             RowsContainer.Children.Add(rowHost);
         }
@@ -150,7 +183,7 @@ public partial class DashboardPage : UserControl
 
     private WidgetHost CreateWidgetHost(WidgetHostViewModel hostVm, DashboardLayoutViewModel layoutVm)
     {
-        var widgetHost = new WidgetHost { DataContext = hostVm };
+        var widgetHost = new WidgetHost { DataContext = hostVm, Margin = new Avalonia.Thickness(6, 0) };
         widgetHost.SetWidgetContent(hostVm);
         DashboardRowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
         hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
@@ -216,6 +249,12 @@ public partial class DashboardPage : UserControl
                 }
             }
         }
+    }
+
+    private static void UpdateRowVisibility(DashboardRowHost rowHost, DashboardRowViewModel rowVm)
+    {
+        rowHost.IsVisible = rowVm.Widgets.Count == 0
+            || rowVm.Widgets.Any(w => w.WidgetViewModel.IsWidgetVisible);
     }
 
     #endregion

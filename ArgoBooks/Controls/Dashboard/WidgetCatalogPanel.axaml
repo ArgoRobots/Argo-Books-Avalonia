@@ -120,13 +120,15 @@
 
                 <!-- Row is full banner -->
                 <Border DockPanel.Dock="Top"
-                        Background="{DynamicResource SurfaceHoverBrush}"
+                        Background="{DynamicResource WarningLightBrush}"
                         Padding="24,10"
                         IsVisible="{Binding IsRowFull}">
                     <TextBlock Text="This row is full. Remove a widget or add a new row."
                                FontSize="12"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               TextWrapping="Wrap" />
+                               Foreground="{DynamicResource WarningTextBrush}"
+                               TextWrapping="Wrap"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" />
                 </Border>
 
                 <!-- Tabbed content -->

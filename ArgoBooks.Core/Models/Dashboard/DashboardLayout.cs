@@ -63,8 +63,10 @@ public class DashboardLayout
                 new DashboardRow(
                     new DashboardWidgetEntry(WidgetType.QuickActions, WidgetSize.Large)),
                 new DashboardRow(
-                    new DashboardWidgetEntry(WidgetType.ProfitsChart, WidgetSize.Medium),
-                    new DashboardWidgetEntry(WidgetType.RevenueVsExpensesChart, WidgetSize.Medium)),
+                    new DashboardWidgetEntry(WidgetType.Chart, WidgetSize.Medium)
+                        { Config = new() { ["ChartDataType"] = "TotalProfits" } },
+                    new DashboardWidgetEntry(WidgetType.Chart, WidgetSize.Medium)
+                        { Config = new() { ["ChartDataType"] = "RevenueVsExpenses" } }),
                 new DashboardRow(
                     new DashboardWidgetEntry(WidgetType.RecentTransactions, WidgetSize.Medium),
                     new DashboardWidgetEntry(WidgetType.ActiveRentalsTable, WidgetSize.Medium)),

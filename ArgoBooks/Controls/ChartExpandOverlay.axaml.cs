@@ -315,7 +315,7 @@ public partial class ChartExpandOverlay : UserControl
         // after reparenting from the page into the AppShell-level overlay.
         // Set on ChartArea so the ChartContextMenu also inherits it.
         // When charts are inside dashboard widgets, the sourcePanel's DataContext is a
-        // ChartWidgetViewModel — walk up the tree to find the page-level ViewModel instead.
+        // UnifiedChartWidgetViewModel — walk up the tree to find the page-level ViewModel instead.
         var chartArea = this.FindControl<Panel>("ChartArea");
         if (chartArea != null)
         {
