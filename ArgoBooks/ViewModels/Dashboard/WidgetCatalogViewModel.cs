@@ -25,7 +25,7 @@ public partial class WidgetCatalogViewModel : ObservableObject
     private static readonly HashSet<string> StatCardCategories = ["Statistics"];
     private static readonly HashSet<string> ChartCategories = ["Charts", "Insights"];
 
-    public void Refresh(IReadOnlyList<WidgetHostViewModel> currentWidgets)
+    public void Refresh(IEnumerable<WidgetHostViewModel> currentWidgets)
     {
         StatCards.Clear();
         Charts.Clear();
