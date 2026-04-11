@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -16,10 +15,12 @@ public partial class DashboardLayoutViewModel : ObservableObject
     [ObservableProperty] private bool _isEditMode;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasWidgets))]
-    private ObservableCollection<WidgetHostViewModel> _widgets = [];
+    private ObservableCollection<DashboardRowViewModel> _rows = [];
 
-    public bool HasWidgets => Widgets.Count > 0;
+    public bool HasWidgets => Rows.Any(r => r.Widgets.Count > 0);
     public WidgetCatalogViewModel Catalog { get; } = new();
+
+    private DashboardRowViewModel? _targetRowForAdd;
 
     public void Initialize(CompanyManager companyManager)
     {
@@ -28,66 +29,53 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
         var settings = App.SettingsService?.GlobalSettings;
         var layout = settings?.Ui.DashboardLayout ?? DashboardLayout.CreateDefault();
-
-        // Migrate quick actions settings on first load
-        if (settings?.Ui.DashboardLayout == null)
-            MigrateQuickActionsSettings(layout, settings?.Ui.QuickActions);
+        layout.MigrateIfNeeded();
 
         _savedLayout = layout.Clone();
-        LoadWidgetsFromLayout(layout);
+        LoadFromLayout(layout);
     }
 
-    private void MigrateQuickActionsSettings(DashboardLayout layout, QuickActionsSettings? qa)
-    {
-        if (qa == null) return;
-        var widget = layout.Widgets.FirstOrDefault(w => w.WidgetType == WidgetType.QuickActions);
-        if (widget == null) return;
-
-        widget.Config["ShowNewInvoice"] = qa.ShowNewInvoice.ToString();
-        widget.Config["ShowNewExpense"] = qa.ShowNewExpense.ToString();
-        widget.Config["ShowNewRevenue"] = qa.ShowNewRevenue.ToString();
-        widget.Config["ShowScanReceipt"] = qa.ShowScanReceipt.ToString();
-        widget.Config["ShowNewCustomer"] = qa.ShowNewCustomer.ToString();
-        widget.Config["ShowNewSupplier"] = qa.ShowNewSupplier.ToString();
-        widget.Config["ShowNewProduct"] = qa.ShowNewProduct.ToString();
-        widget.Config["ShowRecordPayment"] = qa.ShowRecordPayment.ToString();
-        widget.Config["ShowNewRentalItem"] = qa.ShowNewRentalItem.ToString();
-        widget.Config["ShowNewRentalRecord"] = qa.ShowNewRentalRecord.ToString();
-        widget.Config["ShowNewCategory"] = qa.ShowNewCategory.ToString();
-        widget.Config["ShowNewDepartment"] = qa.ShowNewDepartment.ToString();
-        widget.Config["ShowNewLocation"] = qa.ShowNewLocation.ToString();
-        widget.Config["ShowNewPurchaseOrder"] = qa.ShowNewPurchaseOrder.ToString();
-        widget.Config["ShowNewStockAdjustment"] = qa.ShowNewStockAdjustment.ToString();
-    }
-
-    private void LoadWidgetsFromLayout(DashboardLayout layout)
+    private void LoadFromLayout(DashboardLayout layout)
     {
         UnwireWidgetEvents();
-        foreach (var w in Widgets) w.Cleanup();
-        Widgets.Clear();
-        foreach (var entry in layout.Widgets)
+        foreach (var row in Rows)
+            foreach (var w in row.Widgets)
+                w.Cleanup();
+        Rows.Clear();
+
+        foreach (var row in layout.Rows)
         {
-            var host = WidgetFactory.CreateWidgetHost(entry);
-            host.SetCompanyManager(_companyManager);
-            WireUpWidgetEvents(host);
-            Widgets.Add(host);
+            var rowVm = new DashboardRowViewModel();
+            foreach (var entry in row.Widgets)
+            {
+                if (!WidgetFactory.IsKnownType(entry.WidgetType))
+                    continue;
+                var host = WidgetFactory.CreateWidgetHost(entry);
+                host.SetCompanyManager(_companyManager);
+                WireUpWidgetEvents(host);
+                rowVm.Widgets.Add(host);
+            }
+            Rows.Add(rowVm);
         }
     }
 
     private void WireUpWidgetEvents(WidgetHostViewModel host)
     {
-        // Wire setup checklist navigation
         if (host.WidgetViewModel is SetupChecklistWidgetViewModel checklistVm)
             checklistVm.NavigationRequested += OnChecklistNavigationRequested;
     }
 
     private void UnwireWidgetEvents()
     {
-        foreach (var w in Widgets)
-        {
-            if (w.WidgetViewModel is SetupChecklistWidgetViewModel checklistVm)
-                checklistVm.NavigationRequested -= OnChecklistNavigationRequested;
-        }
+        foreach (var row in Rows)
+            foreach (var w in row.Widgets)
+                UnwireWidgetEvent(w);
+    }
+
+    private void UnwireWidgetEvent(WidgetHostViewModel w)
+    {
+        if (w.WidgetViewModel is SetupChecklistWidgetViewModel checklistVm)
+            checklistVm.NavigationRequested -= OnChecklistNavigationRequested;
     }
 
     private void OnChecklistNavigationRequested(object? sender, string pageName)
@@ -97,8 +85,9 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
     public void LoadAllWidgetData()
     {
-        foreach (var w in Widgets)
-            w.LoadData();
+        foreach (var row in Rows)
+            foreach (var w in row.Widgets)
+                w.LoadData();
     }
 
     [RelayCommand]
@@ -106,16 +95,26 @@ public partial class DashboardLayoutViewModel : ObservableObject
     {
         _savedLayout = GetCurrentLayout();
         IsEditMode = true;
-        foreach (var w in Widgets) w.IsEditMode = true;
-        Catalog.Refresh(Widgets);
+        foreach (var row in Rows)
+        {
+            row.IsEditMode = true;
+            foreach (var w in row.Widgets)
+                w.IsEditMode = true;
+        }
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
     }
 
     [RelayCommand]
     private void CancelEdit()
     {
         IsEditMode = false;
-        foreach (var w in Widgets) w.IsEditMode = false;
-        if (_savedLayout != null) LoadWidgetsFromLayout(_savedLayout);
+        foreach (var row in Rows)
+        {
+            row.IsEditMode = false;
+            foreach (var w in row.Widgets)
+                w.IsEditMode = false;
+        }
+        if (_savedLayout != null) LoadFromLayout(_savedLayout);
         LoadAllWidgetData();
     }
 
@@ -123,7 +122,19 @@ public partial class DashboardLayoutViewModel : ObservableObject
     private async Task SaveEdit()
     {
         IsEditMode = false;
-        foreach (var w in Widgets) w.IsEditMode = false;
+
+        for (int i = Rows.Count - 1; i >= 0; i--)
+        {
+            if (Rows[i].Widgets.Count == 0)
+                Rows.RemoveAt(i);
+        }
+
+        foreach (var row in Rows)
+        {
+            row.IsEditMode = false;
+            foreach (var w in row.Widgets)
+                w.IsEditMode = false;
+        }
 
         var layout = GetCurrentLayout();
         _savedLayout = layout.Clone();
@@ -140,118 +151,148 @@ public partial class DashboardLayoutViewModel : ObservableObject
     private void ResetToDefault()
     {
         var layout = DashboardLayout.CreateDefault();
-        LoadWidgetsFromLayout(layout);
+        LoadFromLayout(layout);
         LoadAllWidgetData();
-        foreach (var w in Widgets) w.IsEditMode = true;
-        Catalog.Refresh(Widgets);
+        foreach (var row in Rows)
+        {
+            row.IsEditMode = true;
+            foreach (var w in row.Widgets)
+                w.IsEditMode = true;
+        }
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+    }
+
+    [RelayCommand]
+    private void AddRow()
+    {
+        var row = new DashboardRowViewModel { IsEditMode = true };
+        Rows.Add(row);
+        OnPropertyChanged(nameof(HasWidgets));
+    }
+
+    public void RemoveRow(DashboardRowViewModel row)
+    {
+        foreach (var w in row.Widgets)
+        {
+            UnwireWidgetEvent(w);
+            w.Cleanup();
+        }
+        Rows.Remove(row);
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+        OnPropertyChanged(nameof(HasWidgets));
+    }
+
+    public void OpenCatalogForRow(DashboardRowViewModel row)
+    {
+        _targetRowForAdd = row;
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+        Catalog.IsOpen = true;
     }
 
     [RelayCommand]
     private void OpenCatalog()
     {
-        Catalog.Refresh(Widgets);
+        var row = new DashboardRowViewModel { IsEditMode = true };
+        Rows.Add(row);
+        _targetRowForAdd = row;
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
         Catalog.IsOpen = true;
-    }
-
-    [RelayCommand]
-    private void RemoveWidget(WidgetHostViewModel widget)
-    {
-        widget.Cleanup();
-        Widgets.Remove(widget);
-        Catalog.Refresh(Widgets);
     }
 
     private void OnWidgetAddRequested(object? sender, WidgetType type)
     {
+        var targetRow = _targetRowForAdd ?? Rows.LastOrDefault();
+        if (targetRow == null)
+        {
+            targetRow = new DashboardRowViewModel { IsEditMode = true };
+            Rows.Add(targetRow);
+        }
+
         var def = WidgetFactory.GetDefinition(type);
         var entry = new DashboardWidgetEntry(type, def.DefaultSize);
+
+        if (!targetRow.CanFit(entry.Size))
+        {
+            _targetRowForAdd = null;
+            return;
+        }
+
         var host = WidgetFactory.CreateWidgetHost(entry);
         host.SetCompanyManager(_companyManager);
         WireUpWidgetEvents(host);
         host.IsEditMode = true;
         host.LoadData();
-        Widgets.Add(host);
-        Catalog.Refresh(Widgets);
+        targetRow.Widgets.Add(host);
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+        _targetRowForAdd = null;
+        OnPropertyChanged(nameof(HasWidgets));
     }
 
-    public void MoveWidget(int fromIndex, int toIndex)
+    [RelayCommand]
+    private void RemoveWidget(WidgetHostViewModel widget)
     {
-        if (fromIndex < 0 || fromIndex >= Widgets.Count) return;
-        if (toIndex < 0 || toIndex > Widgets.Count) return;
-        if (fromIndex == toIndex) return;
-
-        // Clear the moved widget's row break flag — it will be recomputed.
-        // This prevents stale flags from splitting rows after same-row swaps.
-        Widgets[fromIndex].StartsNewRow = false;
-
-        Widgets.Move(fromIndex, toIndex > fromIndex ? toIndex - 1 : toIndex);
-        RecalculateRowBreaks();
-    }
-
-    /// <summary>
-    /// Recalculates StartsNewRow flags after a move. Preserves existing explicit row breaks
-    /// (so partial rows stay separate) while adding new breaks for overflow.
-    /// The moved widget's flag was cleared before the move, so it flows naturally into
-    /// whichever row it fits in.
-    /// </summary>
-    private void RecalculateRowBreaks()
-    {
-        if (Widgets.Count == 0) return;
-
-        Widgets[0].StartsNewRow = true;
-        double rowSum = Widgets[0].Size.ToFraction();
-
-        for (int i = 1; i < Widgets.Count; i++)
+        foreach (var row in Rows)
         {
-            var fraction = Widgets[i].Size.ToFraction();
-            bool overflows = rowSum + fraction > 1.001;
+            if (row.Widgets.Remove(widget))
+            {
+                UnwireWidgetEvent(widget);
+                widget.Cleanup();
 
-            if (overflows)
-            {
-                Widgets[i].StartsNewRow = true;
-                rowSum = fraction;
-            }
-            else if (Widgets[i].StartsNewRow)
-            {
-                // Existing explicit break — preserve it (keeps partial rows separate)
-                rowSum = fraction;
-            }
-            else
-            {
-                rowSum += fraction;
+                if (row.Widgets.Count == 0)
+                    Rows.Remove(row);
+
+                break;
             }
         }
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+        OnPropertyChanged(nameof(HasWidgets));
+    }
+
+    public void SwapWidgetsInRow(DashboardRowViewModel row, int indexA, int indexB)
+    {
+        if (indexA < 0 || indexA >= row.Widgets.Count) return;
+        if (indexB < 0 || indexB >= row.Widgets.Count) return;
+        if (indexA == indexB) return;
+
+        int a = Math.Min(indexA, indexB);
+        int b = Math.Max(indexA, indexB);
+        row.Widgets.Move(b, a);
+        row.Widgets.Move(a + 1, b);
+    }
+
+    public bool MoveWidgetToRow(DashboardRowViewModel sourceRow, int widgetIndex,
+        DashboardRowViewModel targetRow)
+    {
+        if (widgetIndex < 0 || widgetIndex >= sourceRow.Widgets.Count) return false;
+        if (sourceRow == targetRow) return false;
+
+        var widget = sourceRow.Widgets[widgetIndex];
+        if (!targetRow.CanFit(widget.Size)) return false;
+
+        sourceRow.Widgets.RemoveAt(widgetIndex);
+        targetRow.Widgets.Add(widget);
+
+        if (sourceRow.Widgets.Count == 0)
+            Rows.Remove(sourceRow);
+
+        OnPropertyChanged(nameof(HasWidgets));
+        return true;
     }
 
     private DashboardLayout GetCurrentLayout()
     {
-        // Compute StartsNewRow flags based on current row structure before saving.
-        // This preserves row boundaries so loading the layout reproduces the same rows.
-        double rowSum = 0;
-        for (int i = 0; i < Widgets.Count; i++)
+        return new DashboardLayout
         {
-            var fraction = Widgets[i].Size.ToFraction();
-            bool isFirst = i == 0;
-            bool overflows = rowSum > 0 && rowSum + fraction > 1.001;
-            if (isFirst || overflows || Widgets[i].StartsNewRow)
-            {
-                Widgets[i].StartsNewRow = true;
-                rowSum = fraction;
-            }
-            else
-            {
-                Widgets[i].StartsNewRow = false;
-                rowSum += fraction;
-            }
-        }
-
-        return new() { Widgets = Widgets.Select(w => w.ToEntry()).ToList() };
+            Rows = Rows.Select(r => r.ToRow()).ToList()
+        };
     }
 
     public void Cleanup()
     {
         Catalog.WidgetAddRequested -= OnWidgetAddRequested;
         UnwireWidgetEvents();
-        foreach (var w in Widgets) w.Cleanup();
+        foreach (var row in Rows)
+            foreach (var w in row.Widgets)
+                w.Cleanup();
     }
 }
