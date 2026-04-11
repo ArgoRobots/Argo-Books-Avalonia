@@ -185,7 +185,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
     public void OpenCatalogForRow(DashboardRowViewModel row)
     {
         _targetRowForAdd = row;
-        Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+        Catalog.Refresh(Rows.SelectMany(r => r.Widgets), 1.0 - row.TotalFraction);
         Catalog.IsOpen = true;
     }
 
