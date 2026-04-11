@@ -27,6 +27,10 @@
             <Setter Property="Opacity" Value="0.5" />
             <Setter Property="Cursor" Value="Arrow" />
         </Style>
+        <Style Selector="Button.catalog-item-btn.cannot-fit">
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
 
         <!-- TabControl styling (matches SettingsModal) -->
         <Style Selector="TabControl">
@@ -114,6 +118,17 @@
                     </Grid>
                 </Border>
 
+                <!-- Row is full banner -->
+                <Border DockPanel.Dock="Top"
+                        Background="{DynamicResource SurfaceHoverBrush}"
+                        Padding="24,10"
+                        IsVisible="{Binding IsRowFull}">
+                    <TextBlock Text="This row is full. Remove a widget or add a new row."
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextWrapping="Wrap" />
+                </Border>
+
                 <!-- Tabbed content -->
                 <TabControl Margin="0,0,0,8">
                     <TabItem Header="Stat Cards">
@@ -125,6 +140,7 @@
                                     <DataTemplate x:DataType="vm:CatalogItem">
                                         <Button Classes="catalog-item-btn"
                                                 Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Classes.cannot-fit="{Binding CannotFitInRow}"
                                                 Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,0,6">
@@ -147,6 +163,10 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            VerticalAlignment="Center" Margin="8,0,0,0"
                                                            IsVisible="{Binding IsAlreadyAdded}" />
+                                                <TextBlock Grid.Column="2" Text="Won't fit" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding CannotFitInRow}" />
                                             </Grid>
                                         </Button>
                                     </DataTemplate>
@@ -164,6 +184,7 @@
                                     <DataTemplate x:DataType="vm:CatalogItem">
                                         <Button Classes="catalog-item-btn"
                                                 Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Classes.cannot-fit="{Binding CannotFitInRow}"
                                                 Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,0,6">
@@ -186,6 +207,10 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            VerticalAlignment="Center" Margin="8,0,0,0"
                                                            IsVisible="{Binding IsAlreadyAdded}" />
+                                                <TextBlock Grid.Column="2" Text="Won't fit" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding CannotFitInRow}" />
                                             </Grid>
                                         </Button>
                                     </DataTemplate>
@@ -203,6 +228,7 @@
                                     <DataTemplate x:DataType="vm:CatalogItem">
                                         <Button Classes="catalog-item-btn"
                                                 Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Classes.cannot-fit="{Binding CannotFitInRow}"
                                                 Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
                                                 CommandParameter="{Binding}"
                                                 Margin="0,0,0,6">
@@ -225,6 +251,10 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            VerticalAlignment="Center" Margin="8,0,0,0"
                                                            IsVisible="{Binding IsAlreadyAdded}" />
+                                                <TextBlock Grid.Column="2" Text="Won't fit" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding CannotFitInRow}" />
                                             </Grid>
                                         </Button>
                                     </DataTemplate>
