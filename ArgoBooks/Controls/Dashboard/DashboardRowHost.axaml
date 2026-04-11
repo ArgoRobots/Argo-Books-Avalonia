@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:dashboard="using:ArgoBooks.Controls.Dashboard"
+             x:Class="ArgoBooks.Controls.Dashboard.DashboardRowHost"
+             x:DataType="vm:DashboardRowViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.row-container-editing">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        <Style Selector="Button.row-action-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="MinWidth" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.row-action-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <dashboard:DashboardRowPanel x:Name="RowPanel" Spacing="12" />
+
+        <Border Classes.row-container-editing="{Binding IsEditMode}"
+                IsHitTestVisible="False"
+                IsVisible="{Binding IsEditMode}" />
+
+        <Border IsVisible="{Binding IsEmpty}"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="24,16"
+                HorizontalAlignment="Stretch"
+                Opacity="0.7">
+            <TextBlock Text="Empty row — add a widget or this row will be removed on save"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       HorizontalAlignment="Center" />
+        </Border>
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,-14,8,0"
+                    Spacing="4"
+                    IsVisible="{Binding IsEditMode}">
+            <Button x:Name="AddWidgetToRowButton"
+                    Classes="row-action-btn"
+                    ToolTip.Tip="Add widget to this row">
+                <TextBlock Text="+" FontSize="14" FontWeight="Bold" />
+            </Button>
+            <Button x:Name="DeleteRowButton"
+                    Classes="row-action-btn"
+                    ToolTip.Tip="Delete this row">
+                <TextBlock Text="&#x2715;" FontSize="11" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>
