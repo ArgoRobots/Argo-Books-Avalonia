@@ -30,27 +30,77 @@ public static class WidgetFactory
         [WidgetType.StatCardInventoryValue] = new(WidgetType.StatCardInventoryValue, "Inventory Value", "Total value of inventory on hand", "Statistics", "📦", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
         [WidgetType.StatCardOverdueInvoices] = new(WidgetType.StatCardOverdueInvoices, "Overdue Invoices", "Invoices past their due date", "Statistics", "🚨", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
         [WidgetType.QuickActions] = new(WidgetType.QuickActions, "Quick Actions", "Shortcut buttons for common tasks", "Actions", "⚡", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.ProfitsChart] = new(WidgetType.ProfitsChart, "Profits Chart", "Profit trends over time", "Charts", "📈", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.RevenueVsExpensesChart] = new(WidgetType.RevenueVsExpensesChart, "Revenue vs Expenses", "Compare revenue and expenses", "Charts", "📊", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
         [WidgetType.RecentTransactions] = new(WidgetType.RecentTransactions, "Recent Transactions", "Latest revenue and expense entries", "Tables", "📝", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large]),
         [WidgetType.ActiveRentalsTable] = new(WidgetType.ActiveRentalsTable, "Active Rentals Table", "Currently active and overdue rentals", "Tables", "📅", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large]),
         [WidgetType.SetupChecklist] = new(WidgetType.SetupChecklist, "Setup Checklist", "Getting started guide for new users", "Onboarding", "✅", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large]),
         [WidgetType.TopCustomers] = new(WidgetType.TopCustomers, "Top Customers", "Highest revenue customers", "Insights", "👥", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.LowStockAlerts] = new(WidgetType.LowStockAlerts, "Low Stock Alerts", "Inventory items below threshold", "Inventory", "⚠️", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.UpcomingInvoiceDueDates] = new(WidgetType.UpcomingInvoiceDueDates, "Upcoming Due Dates", "Invoices due soon", "Invoices", "📆", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
-        [WidgetType.ExpenseByCategory] = new(WidgetType.ExpenseByCategory, "Expense by Category", "Expense breakdown by category", "Charts", "🍩", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
         [WidgetType.OverdueRentals] = new(WidgetType.OverdueRentals, "Overdue Rentals", "Rentals past their due date", "Rentals", "🚨", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
     };
 
-    public static WidgetDefinition GetDefinition(WidgetType type) => Definitions[type];
-    public static bool IsKnownType(WidgetType type) => Definitions.ContainsKey(type);
-    public static IReadOnlyList<WidgetDefinition> GetAllDefinitions() => Definitions.Values.ToList();
+    private static readonly Dictionary<ChartDataType, WidgetDefinition> ChartDefinitions = BuildChartDefinitions();
+
+    private static Dictionary<ChartDataType, WidgetDefinition> BuildChartDefinitions()
+    {
+        var defs = new Dictionary<ChartDataType, WidgetDefinition>();
+        foreach (var type in Enum.GetValues<ChartDataType>())
+        {
+            if (type == ChartDataType.WorldMap) continue;
+            defs[type] = new WidgetDefinition(
+                WidgetType.Chart,
+                type.GetDisplayName(),
+                $"{type.GetChartCategory()} chart",
+                "Charts",
+                type.GetChartIcon(),
+                WidgetSize.Medium,
+                [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large],
+                type);
+        }
+        return defs;
+    }
+
+    private static ChartDataType? MapLegacyChartType(WidgetType type) => type switch
+    {
+        WidgetType.ProfitsChart => ChartDataType.TotalProfits,
+        WidgetType.RevenueVsExpensesChart => ChartDataType.RevenueVsExpenses,
+        WidgetType.ExpenseByCategory => ChartDataType.ExpensesDistribution,
+        _ => null
+    };
+
+    public static WidgetDefinition GetDefinition(WidgetType type)
+        => Definitions.TryGetValue(type, out var def) ? def : ChartDefinitions.Values.First();
+
+    public static bool IsKnownType(WidgetType type)
+        => Definitions.ContainsKey(type) || type == WidgetType.Chart || MapLegacyChartType(type).HasValue;
+
+    public static IReadOnlyList<WidgetDefinition> GetAllDefinitions()
+        => Definitions.Values.Concat(ChartDefinitions.Values).ToList();
 
     public static WidgetHostViewModel CreateWidgetHost(DashboardWidgetEntry entry)
     {
+        var legacyChart = MapLegacyChartType(entry.WidgetType);
+        if (legacyChart.HasValue)
+            entry.Config.TryAdd("ChartDataType", legacyChart.Value.ToString());
+
+        if (entry.WidgetType == WidgetType.Chart || legacyChart.HasValue)
+        {
+            var chartDataType = ChartDataType.TotalProfits;
+            if (entry.Config.TryGetValue("ChartDataType", out var typeStr)
+                && Enum.TryParse<ChartDataType>(typeStr, out var parsed))
+                chartDataType = parsed;
+
+            var def = ChartDefinitions.TryGetValue(chartDataType, out var chartDef)
+                ? chartDef
+                : ChartDefinitions.Values.First();
+
+            var viewModel = new UnifiedChartWidgetViewModel(chartDataType);
+            return new WidgetHostViewModel(entry, viewModel, def.AvailableSizes);
+        }
+
         var definition = GetDefinition(entry.WidgetType);
-        var viewModel = CreateViewModel(entry.WidgetType);
-        return new WidgetHostViewModel(entry, viewModel, definition.AvailableSizes);
+        var vm = CreateViewModel(entry.WidgetType);
+        return new WidgetHostViewModel(entry, vm, definition.AvailableSizes);
     }
 
     public static WidgetViewModelBase CreateViewModel(WidgetType type) => type switch
@@ -64,15 +114,16 @@ public static class WidgetFactory
         WidgetType.StatCardInventoryValue => new StatCardWidgetViewModel(StatCardKind.InventoryValue),
         WidgetType.StatCardOverdueInvoices => new StatCardWidgetViewModel(StatCardKind.OverdueInvoices),
         WidgetType.QuickActions => new QuickActionsWidgetViewModel(),
-        WidgetType.ProfitsChart => new ChartWidgetViewModel(ChartWidgetKind.Profits),
-        WidgetType.RevenueVsExpensesChart => new ChartWidgetViewModel(ChartWidgetKind.RevenueVsExpenses),
+        WidgetType.Chart => new UnifiedChartWidgetViewModel(ChartDataType.TotalProfits),
+        WidgetType.ProfitsChart => new UnifiedChartWidgetViewModel(ChartDataType.TotalProfits),
+        WidgetType.RevenueVsExpensesChart => new UnifiedChartWidgetViewModel(ChartDataType.RevenueVsExpenses),
         WidgetType.RecentTransactions => new RecentTransactionsWidgetViewModel(),
         WidgetType.ActiveRentalsTable => new ActiveRentalsWidgetViewModel(),
         WidgetType.SetupChecklist => new SetupChecklistWidgetViewModel(),
         WidgetType.TopCustomers => new TopCustomersWidgetViewModel(),
         WidgetType.LowStockAlerts => new LowStockAlertsWidgetViewModel(),
         WidgetType.UpcomingInvoiceDueDates => new UpcomingInvoicesWidgetViewModel(),
-        WidgetType.ExpenseByCategory => new ExpenseByCategoryWidgetViewModel(),
+        WidgetType.ExpenseByCategory => new UnifiedChartWidgetViewModel(ChartDataType.ExpensesDistribution),
         WidgetType.OverdueRentals => new OverdueRentalsWidgetViewModel(),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
@@ -89,14 +140,15 @@ public static class WidgetFactory
         WidgetType.StatCardOverdueInvoices => new StatCardWidget(),
         WidgetType.QuickActions => new QuickActionsWidget(),
         WidgetType.ProfitsChart or
-        WidgetType.RevenueVsExpensesChart => new ChartWidget(),
+        WidgetType.RevenueVsExpensesChart or
+        WidgetType.ExpenseByCategory or
+        WidgetType.Chart => new ChartWidget(),
         WidgetType.RecentTransactions => new RecentTransactionsWidget(),
         WidgetType.ActiveRentalsTable => new ActiveRentalsWidget(),
         WidgetType.SetupChecklist => new SetupChecklistWidget(),
         WidgetType.TopCustomers => new TopCustomersWidget(),
         WidgetType.LowStockAlerts => new LowStockAlertsWidget(),
         WidgetType.UpcomingInvoiceDueDates => new UpcomingInvoicesWidget(),
-        WidgetType.ExpenseByCategory => new ExpenseByCategoryWidget(),
         WidgetType.OverdueRentals => new OverdueRentalsWidget(),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
