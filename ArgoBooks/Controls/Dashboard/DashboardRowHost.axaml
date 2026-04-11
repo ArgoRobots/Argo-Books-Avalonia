@@ -3,7 +3,8 @@
              xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
              xmlns:dashboard="using:ArgoBooks.Controls.Dashboard"
              x:Class="ArgoBooks.Controls.Dashboard.DashboardRowHost"
-             x:DataType="vm:DashboardRowViewModel">
+             x:DataType="vm:DashboardRowViewModel"
+             ClipToBounds="False">
 
     <UserControl.Styles>
         <Style Selector="Border.row-container-editing">
@@ -11,8 +12,6 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="8" />
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Opacity" Value="0.6" />
         </Style>
         <Style Selector="Button.row-action-btn">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -31,7 +30,7 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid>
+    <Grid ClipToBounds="False">
         <dashboard:DashboardRowPanel x:Name="RowPanel" Spacing="12" />
 
         <Border Classes.row-container-editing="{Binding IsEditMode}"

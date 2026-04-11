@@ -134,8 +134,12 @@ public partial class DashboardPage : UserControl
                 rowHost.Panel.Children.Add(widgetHost);
             }
 
+            // Hide the row if all its widgets are invisible (e.g., completed setup checklist)
+            bool anyVisible = rowVm.Widgets.Count == 0
+                || rowVm.Widgets.Any(w => w.WidgetViewModel.IsWidgetVisible);
+            rowHost.IsVisible = anyVisible;
+
             // Listen for widget collection changes in this row
-            var capturedRow = rowVm;
             rowVm.Widgets.CollectionChanged += (_, _) => RebuildRows(layoutVm);
 
             RowsContainer.Children.Add(rowHost);

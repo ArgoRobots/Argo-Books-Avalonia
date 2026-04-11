@@ -5,7 +5,7 @@
              xmlns:loc="using:ArgoBooks.Localization"
              x:Class="ArgoBooks.Controls.Dashboard.WidgetCatalogPanel"
              x:DataType="vm:WidgetCatalogViewModel"
-             IsVisible="{Binding IsOpen}"
+             IsVisible="{Binding IsOpen, FallbackValue=False}"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
 

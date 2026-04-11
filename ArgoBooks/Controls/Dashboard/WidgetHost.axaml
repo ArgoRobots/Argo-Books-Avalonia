@@ -296,16 +296,6 @@
                             </StackPanel>
                         </DataTemplate>
 
-                        <!-- CashFlowWidgetViewModel Config -->
-                        <DataTemplate DataType="vm:CashFlowWidgetViewModel">
-                            <StackPanel Spacing="8">
-                                <TextBlock Classes="config-label" Text="Period" />
-                                <ComboBox ItemsSource="{Binding PeriodOptions}"
-                                          SelectedItem="{Binding Period}"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-                        </DataTemplate>
-
                     </ContentPresenter.DataTemplates>
                 </ContentPresenter>
                 </ScrollViewer>

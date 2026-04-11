@@ -30,6 +30,9 @@
 
         <!-- Auto-Update -->
         <PackageReference Include="NetSparkleUpdater.UI.Avalonia" />
+
+        <!-- Pin transitive dep to patched version (GHSA-xrw6-gwf8-vvr9) -->
+        <PackageReference Include="Tmds.DBus.Protocol" />
     </ItemGroup>
 
     <ItemGroup>

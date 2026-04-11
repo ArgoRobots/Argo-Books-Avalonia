@@ -37,11 +37,11 @@ public static class WidgetFactory
         [WidgetType.LowStockAlerts] = new(WidgetType.LowStockAlerts, "Low Stock Alerts", "Inventory items below threshold", "Inventory", "⚠️", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.UpcomingInvoiceDueDates] = new(WidgetType.UpcomingInvoiceDueDates, "Upcoming Due Dates", "Invoices due soon", "Invoices", "📆", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.ExpenseByCategory] = new(WidgetType.ExpenseByCategory, "Expense by Category", "Expense breakdown by category", "Charts", "🍩", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.CashFlowSummary] = new(WidgetType.CashFlowSummary, "Cash Flow", "Income vs outflow summary", "Insights", "💵", WidgetSize.Medium, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large]),
         [WidgetType.OverdueRentals] = new(WidgetType.OverdueRentals, "Overdue Rentals", "Rentals past their due date", "Rentals", "🚨", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
     };
 
     public static WidgetDefinition GetDefinition(WidgetType type) => Definitions[type];
+    public static bool IsKnownType(WidgetType type) => Definitions.ContainsKey(type);
     public static IReadOnlyList<WidgetDefinition> GetAllDefinitions() => Definitions.Values.ToList();
 
     public static WidgetHostViewModel CreateWidgetHost(DashboardWidgetEntry entry)
@@ -71,7 +71,6 @@ public static class WidgetFactory
         WidgetType.LowStockAlerts => new LowStockAlertsWidgetViewModel(),
         WidgetType.UpcomingInvoiceDueDates => new UpcomingInvoicesWidgetViewModel(),
         WidgetType.ExpenseByCategory => new ExpenseByCategoryWidgetViewModel(),
-        WidgetType.CashFlowSummary => new CashFlowWidgetViewModel(),
         WidgetType.OverdueRentals => new OverdueRentalsWidgetViewModel(),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
@@ -96,7 +95,6 @@ public static class WidgetFactory
         WidgetType.LowStockAlerts => new LowStockAlertsWidget(),
         WidgetType.UpcomingInvoiceDueDates => new UpcomingInvoicesWidget(),
         WidgetType.ExpenseByCategory => new ExpenseByCategoryWidget(),
-        WidgetType.CashFlowSummary => new CashFlowWidget(),
         WidgetType.OverdueRentals => new OverdueRentalsWidget(),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };

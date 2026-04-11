@@ -20,6 +20,6 @@ public enum WidgetType
     LowStockAlerts,
     UpcomingInvoiceDueDates,
     ExpenseByCategory,
-    CashFlowSummary,
-    OverdueRentals
+    // 18 was CashFlowSummary — removed, keep gap to avoid shifting values
+    OverdueRentals = 19
 }

@@ -876,9 +876,17 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Track DashboardPageViewModel when on Dashboard page
         if (e.PageName == "Dashboard" && CurrentPage is Control { DataContext: DashboardPageViewModel dashVm })
+        {
             WidgetCatalog = dashVm.LayoutViewModel.Catalog;
+        }
         else
+        {
+            // Close the catalog before clearing the reference, otherwise the
+            // panel's IsVisible binding breaks (null DataContext → default true)
+            if (WidgetCatalog != null)
+                WidgetCatalog.IsOpen = false;
             WidgetCatalog = null;
+        }
 
         // Track ReportsPageViewModel when on Reports page
         if (e.PageName == "Reports" && CurrentPage is Control { DataContext: ReportsPageViewModel reportsVm })

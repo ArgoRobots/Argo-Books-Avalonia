@@ -168,10 +168,11 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Widget Rows -->
-                <StackPanel x:Name="RowsContainer"
-                            Spacing="12"
-                            IsVisible="{Binding LayoutViewModel.HasWidgets}" />
+                <!-- Widget Rows (wrapped in Panel so the drag ghost can overlay) -->
+                <Panel IsVisible="{Binding LayoutViewModel.HasWidgets}">
+                    <StackPanel x:Name="RowsContainer"
+                                Spacing="12" />
+                </Panel>
 
                 <!-- Add Row button (edit mode only) -->
                 <Button Classes="edit-toolbar-btn"
