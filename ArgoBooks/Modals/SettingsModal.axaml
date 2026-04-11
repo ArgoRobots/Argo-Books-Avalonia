@@ -1011,7 +1011,7 @@
         </controls:ModalOverlay>
 
         <!-- Add Password Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddPasswordModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddPasswordModalOpen}" ClosingCommand="{Binding ClosePasswordModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -1039,7 +1039,7 @@
                                              Text="{Binding NewPassword}"
                                              RevealPassword="{Binding IsNewPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleNewPasswordVisibilityCommand}">
@@ -1047,6 +1047,45 @@
                                     </Button>
                                 </Grid>
                             </Border>
+                            <!-- Password Strength Indicator -->
+                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding ShowPasswordStrength}">
+                                <Border Grid.Column="0" Height="4" CornerRadius="2" Background="{DynamicResource BorderBrush}">
+                                    <Border CornerRadius="2" HorizontalAlignment="Left"
+                                            Width="{Binding PasswordStrengthBarWidth}"
+                                            Classes.strength-weak="{Binding IsStrengthWeak}"
+                                            Classes.strength-fair="{Binding IsStrengthFair}"
+                                            Classes.strength-strong="{Binding IsStrengthStrong}">
+                                        <Border.Styles>
+                                            <Style Selector="Border.strength-weak">
+                                                <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-fair">
+                                                <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-strong">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+                                            </Style>
+                                        </Border.Styles>
+                                    </Border>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="{Binding PasswordStrengthText}" FontSize="11"
+                                           Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Classes.strength-weak="{Binding IsStrengthWeak}"
+                                           Classes.strength-fair="{Binding IsStrengthFair}"
+                                           Classes.strength-strong="{Binding IsStrengthStrong}">
+                                    <TextBlock.Styles>
+                                        <Style Selector="TextBlock.strength-weak">
+                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-fair">
+                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-strong">
+                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                        </Style>
+                                    </TextBlock.Styles>
+                                </TextBlock>
+                            </Grid>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Confirm Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1059,7 +1098,7 @@
                                              Text="{Binding ConfirmPassword}"
                                              RevealPassword="{Binding IsConfirmPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
@@ -1083,7 +1122,7 @@
         </controls:ModalOverlay>
 
         <!-- Change Password Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsChangePasswordModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsChangePasswordModalOpen}" ClosingCommand="{Binding ClosePasswordModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -1110,7 +1149,7 @@
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleCurrentPasswordVisibilityCommand}">
@@ -1130,7 +1169,7 @@
                                              Text="{Binding NewPassword}"
                                              RevealPassword="{Binding IsNewPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleNewPasswordVisibilityCommand}">
@@ -1138,6 +1177,45 @@
                                     </Button>
                                 </Grid>
                             </Border>
+                            <!-- Password Strength Indicator -->
+                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding ShowPasswordStrength}">
+                                <Border Grid.Column="0" Height="4" CornerRadius="2" Background="{DynamicResource BorderBrush}">
+                                    <Border CornerRadius="2" HorizontalAlignment="Left"
+                                            Width="{Binding PasswordStrengthBarWidth}"
+                                            Classes.strength-weak="{Binding IsStrengthWeak}"
+                                            Classes.strength-fair="{Binding IsStrengthFair}"
+                                            Classes.strength-strong="{Binding IsStrengthStrong}">
+                                        <Border.Styles>
+                                            <Style Selector="Border.strength-weak">
+                                                <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-fair">
+                                                <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-strong">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+                                            </Style>
+                                        </Border.Styles>
+                                    </Border>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="{Binding PasswordStrengthText}" FontSize="11"
+                                           Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Classes.strength-weak="{Binding IsStrengthWeak}"
+                                           Classes.strength-fair="{Binding IsStrengthFair}"
+                                           Classes.strength-strong="{Binding IsStrengthStrong}">
+                                    <TextBlock.Styles>
+                                        <Style Selector="TextBlock.strength-weak">
+                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-fair">
+                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-strong">
+                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                        </Style>
+                                    </TextBlock.Styles>
+                                </TextBlock>
+                            </Grid>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Confirm New Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1150,7 +1228,7 @@
                                              Text="{Binding ConfirmPassword}"
                                              RevealPassword="{Binding IsConfirmPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
@@ -1174,7 +1252,7 @@
         </controls:ModalOverlay>
 
         <!-- Remove Password Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsRemovePasswordModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsRemovePasswordModalOpen}" ClosingCommand="{Binding ClosePasswordModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -1203,7 +1281,7 @@
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleCurrentPasswordVisibilityCommand}">
