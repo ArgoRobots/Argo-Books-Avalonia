@@ -15,8 +15,6 @@ public partial class WidgetHostViewModel : ObservableObject
 
     public string Id { get; }
     public WidgetType WidgetType { get; }
-    public bool StartsNewRow { get; set; }
-    public double RowStartOffset { get; set; }
     public Dictionary<string, string> Config { get; private set; }
     public WidgetSize[] AvailableSizes { get; }
 
@@ -25,8 +23,6 @@ public partial class WidgetHostViewModel : ObservableObject
         Id = entry.Id;
         WidgetType = entry.WidgetType;
         Size = entry.Size;
-        StartsNewRow = entry.StartsNewRow;
-        RowStartOffset = entry.RowStartOffset;
         Config = new Dictionary<string, string>(entry.Config);
         AvailableSizes = availableSizes;
         _widgetViewModel = widgetVm;
@@ -73,8 +69,6 @@ public partial class WidgetHostViewModel : ObservableObject
         Id = Id,
         WidgetType = WidgetType,
         Size = Size,
-        StartsNewRow = StartsNewRow,
-        RowStartOffset = RowStartOffset,
         Config = WidgetViewModel.GetConfig()
     };
 }
