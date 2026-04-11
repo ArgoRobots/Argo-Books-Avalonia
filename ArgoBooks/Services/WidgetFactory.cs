@@ -1,4 +1,5 @@
 using ArgoBooks.Controls.Dashboard.Widgets;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.ViewModels.Dashboard;
 using Avalonia.Controls;
@@ -12,7 +13,8 @@ public record WidgetDefinition(
     string Category,
     string Icon,
     WidgetSize DefaultSize,
-    WidgetSize[] AvailableSizes
+    WidgetSize[] AvailableSizes,
+    ChartDataType? ChartDataType = null
 );
 
 public static class WidgetFactory
