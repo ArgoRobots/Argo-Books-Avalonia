@@ -199,7 +199,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         Catalog.IsOpen = true;
     }
 
-    private void OnWidgetAddRequested(object? sender, WidgetType type)
+    private void OnWidgetAddRequested(object? sender, WidgetDefinition def)
     {
         var targetRow = _targetRowForAdd ?? Rows.LastOrDefault();
         if (targetRow == null)
@@ -208,8 +208,9 @@ public partial class DashboardLayoutViewModel : ObservableObject
             Rows.Add(targetRow);
         }
 
-        var def = WidgetFactory.GetDefinition(type);
-        var entry = new DashboardWidgetEntry(type, def.DefaultSize);
+        var entry = new DashboardWidgetEntry(def.Type, def.DefaultSize);
+        if (def.ChartDataType.HasValue)
+            entry.Config["ChartDataType"] = def.ChartDataType.Value.ToString();
 
         if (!targetRow.CanFit(entry.Size))
         {

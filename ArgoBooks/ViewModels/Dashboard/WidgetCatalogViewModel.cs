@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -28,7 +29,7 @@ public partial class WidgetCatalogViewModel : ObservableObject
     public ObservableCollection<CatalogItem> Charts { get; } = [];
     public ObservableCollection<CatalogItem> Tables { get; } = [];
 
-    public event EventHandler<WidgetType>? WidgetAddRequested;
+    public event EventHandler<WidgetDefinition>? WidgetAddRequested;
 
     private static readonly HashSet<string> StatCardCategories = ["Statistics"];
     private static readonly HashSet<string> ChartCategories = ["Charts", "Insights"];
@@ -40,6 +41,10 @@ public partial class WidgetCatalogViewModel : ObservableObject
         Tables.Clear();
 
         var placedTypes = currentWidgets.Select(w => w.WidgetType).ToHashSet();
+        var placedChartTypes = currentWidgets
+            .Where(w => w.WidgetViewModel is UnifiedChartWidgetViewModel)
+            .Select(w => ((UnifiedChartWidgetViewModel)w.WidgetViewModel).ChartDataType)
+            .ToHashSet();
 
         RemainingFraction = remainingFraction;
 
@@ -47,7 +52,9 @@ public partial class WidgetCatalogViewModel : ObservableObject
         {
             var item = new CatalogItem(d)
             {
-                IsAlreadyAdded = placedTypes.Contains(d.Type),
+                IsAlreadyAdded = d.ChartDataType.HasValue
+                    ? placedChartTypes.Contains(d.ChartDataType.Value)
+                    : placedTypes.Contains(d.Type),
                 CannotFitInRow = d.DefaultSize.ToFraction() > remainingFraction + 0.001
             };
 
@@ -68,7 +75,7 @@ public partial class WidgetCatalogViewModel : ObservableObject
     private void AddWidget(CatalogItem item)
     {
         if (item.IsAlreadyAdded || item.CannotFitInRow) return;
-        WidgetAddRequested?.Invoke(this, item.Definition.Type);
+        WidgetAddRequested?.Invoke(this, item.Definition);
         IsOpen = false;
     }
 
