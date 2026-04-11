@@ -410,4 +410,97 @@ public static class ReportEnumExtensions
             _ => reportType.ToString()
         };
     }
+
+    /// <summary>
+    /// Returns true if the chart type produces a distribution (pie/donut) style dataset.
+    /// </summary>
+    public static bool IsDistribution(this ChartDataType chartType) => chartType switch
+    {
+        ChartDataType.RevenueDistribution => true,
+        ChartDataType.ExpensesDistribution => true,
+        ChartDataType.CountriesOfOrigin => true,
+        ChartDataType.CountriesOfDestination => true,
+        ChartDataType.CompaniesOfOrigin => true,
+        ChartDataType.CompaniesOfDestination => true,
+        ChartDataType.AccountantsTransactions => true,
+        ChartDataType.TopCustomersByRevenue => true,
+        ChartDataType.CustomerPaymentStatus => true,
+        ChartDataType.ActiveVsInactiveCustomers => true,
+        ChartDataType.RentalsPerCustomer => true,
+        ChartDataType.ReturnReasons => true,
+        ChartDataType.ReturnsByCategory => true,
+        ChartDataType.ReturnsByProduct => true,
+        ChartDataType.LossReasons => true,
+        ChartDataType.LossesByCategory => true,
+        ChartDataType.LossesByProduct => true,
+        ChartDataType.TaxByCategory => true,
+        ChartDataType.TaxRateDistribution => true,
+        ChartDataType.TaxByProduct => true,
+        _ => false
+    };
+
+    /// <summary>
+    /// Returns true if the chart type produces multiple series (e.g. grouped bar or multi-line).
+    /// </summary>
+    public static bool IsMultiSeries(this ChartDataType chartType) => chartType switch
+    {
+        ChartDataType.RevenueVsExpenses => true,
+        ChartDataType.AverageTransactionValue => true,
+        ChartDataType.TotalTransactions => true,
+        ChartDataType.ExpenseVsRevenueReturns => true,
+        ChartDataType.ExpenseVsRevenueLosses => true,
+        ChartDataType.TaxCollectedVsPaid => true,
+        ChartDataType.ExpenseVsRevenueTax => true,
+        _ => false
+    };
+
+    /// <summary>
+    /// Returns the high-level category name for a chart data type.
+    /// </summary>
+    public static string GetChartCategory(this ChartDataType chartType) => chartType switch
+    {
+        ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution => "Revenue",
+        ChartDataType.TotalExpenses or ChartDataType.ExpensesDistribution => "Expenses",
+        ChartDataType.TotalProfits or ChartDataType.RevenueVsExpenses => "Financial",
+        ChartDataType.AverageTransactionValue or ChartDataType.TotalTransactions
+            or ChartDataType.AverageShippingCosts => "Transactions",
+        ChartDataType.CountriesOfOrigin or ChartDataType.CountriesOfDestination
+            or ChartDataType.CompaniesOfOrigin or ChartDataType.CompaniesOfDestination => "Geographic",
+        ChartDataType.AccountantsTransactions => "Accountant",
+        ChartDataType.TopCustomersByRevenue or ChartDataType.CustomerPaymentStatus
+            or ChartDataType.CustomerGrowth or ChartDataType.CustomerLifetimeValue
+            or ChartDataType.ActiveVsInactiveCustomers or ChartDataType.RentalsPerCustomer => "Customer",
+        ChartDataType.ReturnsOverTime or ChartDataType.ReturnReasons
+            or ChartDataType.ReturnFinancialImpact or ChartDataType.ReturnsByCategory
+            or ChartDataType.ReturnsByProduct or ChartDataType.ExpenseVsRevenueReturns => "Returns",
+        ChartDataType.LossesOverTime or ChartDataType.LossReasons
+            or ChartDataType.LossFinancialImpact or ChartDataType.LossesByCategory
+            or ChartDataType.LossesByProduct or ChartDataType.ExpenseVsRevenueLosses => "Losses",
+        ChartDataType.TaxCollectedVsPaid or ChartDataType.TaxLiabilityTrend
+            or ChartDataType.TaxByCategory or ChartDataType.TaxRateDistribution
+            or ChartDataType.TaxByProduct or ChartDataType.ExpenseVsRevenueTax => "Taxes",
+        _ => "Charts"
+    };
+
+    /// <summary>
+    /// Returns an emoji icon representing the category of the chart data type.
+    /// </summary>
+    public static string GetChartIcon(this ChartDataType chartType)
+    {
+        var category = chartType.GetChartCategory();
+        return category switch
+        {
+            "Revenue" => "💰",
+            "Expenses" => "📉",
+            "Financial" => "📊",
+            "Transactions" => "📝",
+            "Geographic" => "🌍",
+            "Accountant" => "🧾",
+            "Customer" => "👥",
+            "Returns" => "↩️",
+            "Losses" => "⚠️",
+            "Taxes" => "🏛️",
+            _ => "📈"
+        };
+    }
 }
