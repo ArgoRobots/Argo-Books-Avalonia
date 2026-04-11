@@ -73,12 +73,11 @@ public partial class DashboardPage : UserControl
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        // Unsubscribe from previous ViewModel to prevent event handler leaks
         if (_previousViewModel != null)
         {
             _previousViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
             _previousViewModel.ExcelExportRequested -= OnExcelExportRequested;
-            _previousViewModel.LayoutViewModel.Widgets.CollectionChanged -= OnWidgetsCollectionChanged;
+            _previousViewModel.LayoutViewModel.Rows.CollectionChanged -= OnRowsCollectionChanged;
             _previousViewModel = null;
         }
 
@@ -87,109 +86,97 @@ public partial class DashboardPage : UserControl
             _previousViewModel = viewModel;
             viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
             viewModel.ExcelExportRequested += OnExcelExportRequested;
-
-            // Observe the Widgets collection for changes
-            viewModel.LayoutViewModel.Widgets.CollectionChanged += OnWidgetsCollectionChanged;
-
-            // Build initial widgets
-            RebuildWidgetPanel(viewModel.LayoutViewModel);
+            viewModel.LayoutViewModel.Rows.CollectionChanged += OnRowsCollectionChanged;
+            RebuildRows(viewModel.LayoutViewModel);
         }
     }
 
-    #region Widget Panel Management
+    #region Row Panel Management
 
-    private void OnWidgetsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnRowsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         if (DataContext is not DashboardPageViewModel viewModel) return;
-
-        // During drag, Move actions should just reorder panel children in-place
-        // to preserve the drag handle's pointer capture and keep the ghost visible.
-        if (e.Action == NotifyCollectionChangedAction.Move
-            && e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0
-            && e.OldStartingIndex < WidgetPanel.Children.Count)
-        {
-            WidgetPanel.Children.MoveRange(e.OldStartingIndex, 1, e.NewStartingIndex);
-            SyncRowBreakFlags();
-            return;
-        }
-
-        RebuildWidgetPanel(viewModel.LayoutViewModel);
+        RebuildRows(viewModel.LayoutViewModel);
     }
 
-    private void RebuildWidgetPanel(DashboardLayoutViewModel layoutVm)
+    private void RebuildRows(DashboardLayoutViewModel layoutVm)
     {
-        var panel = WidgetPanel;
-
-        // Unsubscribe from old widget VMs to prevent event handler leaks
-        foreach (var child in panel.Children)
+        // Unsubscribe from old widget VMs
+        foreach (var child in RowsContainer.Children)
         {
-            if (child is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
-                oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
+            if (child is DashboardRowHost rowHost)
+            {
+                foreach (var widgetChild in rowHost.Panel.Children)
+                {
+                    if (widgetChild is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
+                        oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
+                }
+            }
         }
 
-        panel.Children.Clear();
+        RowsContainer.Children.Clear();
+        _dragDropManager = null;
 
-        for (int i = 0; i < layoutVm.Widgets.Count; i++)
+        for (int rowIdx = 0; rowIdx < layoutVm.Rows.Count; rowIdx++)
         {
-            var hostVm = layoutVm.Widgets[i];
+            var rowVm = layoutVm.Rows[rowIdx];
+            var rowHost = new DashboardRowHost { DataContext = rowVm };
 
-            // Create the WidgetHost control
-            var widgetHost = new WidgetHost
+            // Wire row-level buttons
+            var capturedRowVm = rowVm; // capture for lambda
+            rowHost.AddButton.Click += (_, _) => layoutVm.OpenCatalogForRow(capturedRowVm);
+            rowHost.DeleteButton.Click += (_, _) => layoutVm.RemoveRow(capturedRowVm);
+
+            // Populate widget panel
+            foreach (var hostVm in rowVm.Widgets)
             {
-                DataContext = hostVm
-            };
-
-            // Set widget content directly (bypasses DataTemplate resolution)
-            widgetHost.SetWidgetContent(hostVm);
-
-            // Set the widget fraction, row break flag, and horizontal offset
-            DashboardFlowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
-            DashboardFlowPanel.SetStartsNewRow(widgetHost, hostVm.StartsNewRow);
-            DashboardFlowPanel.SetRowStartOffset(widgetHost, hostVm.RowStartOffset);
-
-            // Subscribe to size changes to update the fraction
-            hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
-
-            // Wire up the remove button
-            var removeButton = widgetHost.FindControl<Button>("RemoveButton");
-            if (removeButton != null)
-            {
-                removeButton.Command = layoutVm.RemoveWidgetCommand;
-                removeButton.CommandParameter = hostVm;
+                var widgetHost = CreateWidgetHost(hostVm, layoutVm);
+                rowHost.Panel.Children.Add(widgetHost);
             }
 
-            panel.Children.Add(widgetHost);
+            // Listen for widget collection changes in this row
+            var capturedRow = rowVm;
+            rowVm.Widgets.CollectionChanged += (_, _) => RebuildRows(layoutVm);
+
+            RowsContainer.Children.Add(rowHost);
         }
 
-        // Set up drag-and-drop
         SetupDragDrop(layoutVm);
     }
 
-    private void SyncRowBreakFlags()
+    private WidgetHost CreateWidgetHost(WidgetHostViewModel hostVm, DashboardLayoutViewModel layoutVm)
     {
-        foreach (var child in WidgetPanel.Children)
+        var widgetHost = new WidgetHost { DataContext = hostVm };
+        widgetHost.SetWidgetContent(hostVm);
+        DashboardRowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
+        hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
+
+        var removeButton = widgetHost.FindControl<Button>("RemoveButton");
+        if (removeButton != null)
         {
-            if (child is WidgetHost widgetHost && widgetHost.DataContext is WidgetHostViewModel hostVm)
-            {
-                DashboardFlowPanel.SetStartsNewRow(widgetHost, hostVm.StartsNewRow);
-                DashboardFlowPanel.SetRowStartOffset(widgetHost, hostVm.RowStartOffset);
-            }
+            removeButton.Command = layoutVm.RemoveWidgetCommand;
+            removeButton.CommandParameter = hostVm;
         }
+
+        return widgetHost;
     }
 
     private void OnWidgetHostPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(WidgetHostViewModel.Size) && sender is WidgetHostViewModel hostVm)
         {
-            // Find the corresponding WidgetHost control and update its fraction
-            foreach (var child in WidgetPanel.Children)
+            foreach (var child in RowsContainer.Children)
             {
-                if (child is WidgetHost widgetHost && widgetHost.DataContext == hostVm)
+                if (child is not DashboardRowHost rowHost) continue;
+                foreach (var widgetChild in rowHost.Panel.Children)
                 {
-                    DashboardFlowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
-                    WidgetPanel.InvalidateMeasure();
-                    WidgetPanel.InvalidateArrange();
-                    break;
+                    if (widgetChild is WidgetHost wh && wh.DataContext == hostVm)
+                    {
+                        DashboardRowPanel.SetWidgetFraction(wh, hostVm.Size.ToFraction());
+                        rowHost.Panel.InvalidateMeasure();
+                        rowHost.Panel.InvalidateArrange();
+                        return;
+                    }
                 }
             }
         }
@@ -197,21 +184,31 @@ public partial class DashboardPage : UserControl
 
     private void SetupDragDrop(DashboardLayoutViewModel layoutVm)
     {
-        // Only create the manager once — it determines widget indices dynamically
-        // so it never goes stale after moves or rebuilds.
-        _dragDropManager ??= new DashboardDragDropManager(
-            WidgetPanel,
-            MainScrollViewer,
-            (from, to) => layoutVm.MoveWidget(from, to));
-
-        for (int i = 0; i < WidgetPanel.Children.Count; i++)
+        var rowPanels = new List<DashboardRowPanel>();
+        foreach (var child in RowsContainer.Children)
         {
-            if (WidgetPanel.Children[i] is WidgetHost widgetHost)
+            if (child is DashboardRowHost rowHost)
+                rowPanels.Add(rowHost.Panel);
+        }
+
+        if (rowPanels.Count == 0) return;
+
+        _dragDropManager = new DashboardDragDropManager(
+            rowPanels,
+            RowsContainer,
+            MainScrollViewer,
+            layoutVm);
+
+        foreach (var child in RowsContainer.Children)
+        {
+            if (child is not DashboardRowHost rowHost) continue;
+            for (int i = 0; i < rowHost.Panel.Children.Count; i++)
             {
-                var dragHandle = widgetHost.FindControl<Border>("DragHandle");
-                if (dragHandle != null)
+                if (rowHost.Panel.Children[i] is WidgetHost widgetHost)
                 {
-                    _dragDropManager.AttachDragHandle(dragHandle);
+                    var dragHandle = widgetHost.FindControl<Border>("DragHandle");
+                    if (dragHandle != null)
+                        _dragDropManager.AttachDragHandle(dragHandle);
                 }
             }
         }

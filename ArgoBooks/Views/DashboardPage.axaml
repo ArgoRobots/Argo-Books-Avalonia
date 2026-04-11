@@ -168,13 +168,22 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Widget Panel (wrapped in Panel for drag-drop indicator positioning) -->
-                <Panel x:Name="WidgetPanelContainer"
-                       IsVisible="{Binding LayoutViewModel.HasWidgets}">
-                    <dashboard:DashboardFlowPanel x:Name="WidgetPanel"
-                                                   Spacing="12"
-                                                   RowSpacing="12" />
-                </Panel>
+                <!-- Widget Rows -->
+                <StackPanel x:Name="RowsContainer"
+                            Spacing="12"
+                            IsVisible="{Binding LayoutViewModel.HasWidgets}" />
+
+                <!-- Add Row button (edit mode only) -->
+                <Button Classes="edit-toolbar-btn"
+                        Command="{Binding LayoutViewModel.AddRowCommand}"
+                        IsVisible="{Binding LayoutViewModel.IsEditMode}"
+                        HorizontalAlignment="Left"
+                        Margin="0,4,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="+" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBlock Text="Add Row" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
                 <!-- Bottom Spacing -->
                 <Border Height="24" />
