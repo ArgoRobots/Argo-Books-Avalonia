@@ -20,6 +20,7 @@
                     Series="{Binding CartesianSeries}"
                     XAxes="{Binding XAxes}"
                     YAxes="{Binding YAxes}"
+                    Tag="{Binding ChartDataType}"
                     TooltipPosition="Top"
                     ZoomMode="Both"
                     IsVisible="{Binding HasData}" />
@@ -44,6 +45,7 @@
 
                 <lvc:PieChart Grid.Row="1"
                               Series="{Binding PieSeries}"
+                              Tag="{Binding ChartDataType}"
                               LegendPosition="Right"
                               TooltipPosition="Top"
                               IsVisible="{Binding HasData}"

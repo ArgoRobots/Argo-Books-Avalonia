@@ -700,8 +700,20 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        // In widget mode, chart zoom reset is handled by individual chart widgets
-        // This is kept as a no-op fallback for the context menu base class
+        if (SelectedChartDataType is not { } chartType) return;
+
+        foreach (var row in LayoutViewModel.Rows)
+        {
+            foreach (var widget in row.Widgets)
+            {
+                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                    && chartVm.ChartDataType == chartType)
+                {
+                    ChartLoaderService.ResetZoom(chartVm.XAxes, chartVm.YAxes);
+                    return;
+                }
+            }
+        }
     }
 
     /// <summary>
