@@ -2759,7 +2759,7 @@ public class ChartLoaderService
     /// <summary>
     /// Stores export data for a chart, making it available for later retrieval by ChartDataType.
     /// </summary>
-    private void StoreExportData(ChartDataType chartDataType, ChartExportData data)
+    internal void StoreExportData(ChartDataType chartDataType, ChartExportData data)
     {
         CurrentExportData = data;
         _chartExportDataByType[chartDataType] = data;

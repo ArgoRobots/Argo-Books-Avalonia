@@ -171,6 +171,15 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         Series = series;
         HasData = true;
+
+        ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
+        {
+            ChartTitle = ChartTitle,
+            ChartType = ChartType.Distribution,
+            Labels = top.Select(p => p.Label).ToArray(),
+            Values = top.Select(p => Math.Round(p.Value, 2)).ToArray(),
+            SeriesName = ChartDataType.GetDisplayName()
+        });
     }
 
     private void LoadMultiSeriesChart(object result)
@@ -202,6 +211,29 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = allDates.Length > 0;
+
+        if (seriesData.Count > 0)
+        {
+            var primary = seriesData[0];
+            var primaryValues = allDates.Select(date =>
+                primary.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
+            var additional = seriesData.Skip(1).Select(sd =>
+            {
+                var vals = allDates.Select(date =>
+                    sd.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
+                return (sd.Name, vals);
+            }).ToList();
+
+            ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
+            {
+                ChartTitle = ChartTitle,
+                ChartType = ChartDataType.GetChartExportType(),
+                Labels = allDates.Select(d => d.ToString("yyyy-MM-dd")).ToArray(),
+                Values = primaryValues,
+                SeriesName = primary.Name,
+                AdditionalSeries = additional
+            });
+        }
     }
 
     private void LoadSingleSeriesChart(object result)
@@ -236,6 +268,15 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = dates.Length > 0;
+
+        ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
+        {
+            ChartTitle = ChartTitle,
+            ChartType = ChartDataType.GetChartExportType(),
+            Labels = dated.Select(p => p.Label).ToArray(),
+            Values = values,
+            SeriesName = ChartDataType.GetDisplayName()
+        });
     }
 
     private static string TruncateLabel(string? label)
@@ -243,4 +284,17 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         if (string.IsNullOrEmpty(label)) return "Unknown";
         return label.Length > 18 ? label[..17] + "\u2026" : label;
     }
+}
+
+internal static class ChartDataTypeExportExtensions
+{
+    internal static Services.ChartType GetChartExportType(this ChartDataType type) => type switch
+    {
+        ChartDataType.TotalExpenses => Services.ChartType.Expense,
+        ChartDataType.TotalRevenue => Services.ChartType.Revenue,
+        ChartDataType.TotalProfits => Services.ChartType.Profit,
+        _ when type.IsDistribution() => Services.ChartType.Distribution,
+        _ when type.IsMultiSeries() => Services.ChartType.Comparison,
+        _ => Services.ChartType.Revenue
+    };
 }

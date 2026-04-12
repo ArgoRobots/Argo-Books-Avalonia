@@ -535,7 +535,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var exportData = ChartLoaderService.GetGoogleSheetsExportData(SelectedChartDataType);
+        var loader = GetChartLoaderForType(SelectedChartDataType);
+        var exportData = loader.GetGoogleSheetsExportData(SelectedChartDataType);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -569,7 +570,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
 
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartExportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
+            var chartExportData = loader.GetExportDataForChart(SelectedChartDataType);
             var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";
 
             // Use Pie chart type for distribution charts, match chart style for time-based charts
@@ -580,7 +581,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = ChartLoaderService.SelectedChartStyle switch
+                chartType = loader.SelectedChartStyle switch
                 {
                     ChartStyle.Line => GoogleSheetsService.ChartType.Line,
                     ChartStyle.Area => GoogleSheetsService.ChartType.Area,
@@ -675,7 +676,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var exportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
+        var loader = GetChartLoaderForType(SelectedChartDataType);
+        var exportData = loader.GetExportDataForChart(SelectedChartDataType);
         if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
@@ -692,7 +694,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
             ChartType = exportData.ChartType,
-            ChartStyle = ChartLoaderService.SelectedChartStyle,
+            ChartStyle = loader.SelectedChartStyle,
             AdditionalSeries = exportData.AdditionalSeries
         });
     }
@@ -717,9 +719,32 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     /// <summary>
-    /// Gets the chart loader service for external use (e.g., report generation).
+    /// Gets the chart loader service. Falls back to a shared instance for non-widget operations.
     /// </summary>
     public ChartLoaderService ChartLoaderService { get; } = new();
+
+    /// <summary>
+    /// Finds the ChartLoaderService for the widget matching the given chart type,
+    /// falling back to the dashboard-level instance.
+    /// </summary>
+    private ChartLoaderService GetChartLoaderForType(ChartDataType? chartDataType)
+    {
+        if (chartDataType is not { } type) return ChartLoaderService;
+
+        foreach (var row in LayoutViewModel.Rows)
+        {
+            foreach (var widget in row.Widgets)
+            {
+                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                    && chartVm.ChartDataType == type)
+                {
+                    return chartVm.ChartLoaderService;
+                }
+            }
+        }
+
+        return ChartLoaderService;
+    }
 
     #endregion
 
