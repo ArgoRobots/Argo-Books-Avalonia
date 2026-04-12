@@ -11,6 +11,12 @@ public class DashboardRowPanel : Panel
     public static double GetWidgetFraction(Control element) => element.GetValue(WidgetFractionProperty);
     public static void SetWidgetFraction(Control element, double value) => element.SetValue(WidgetFractionProperty, value);
 
+    public static readonly AttachedProperty<double> StartOffsetProperty =
+        AvaloniaProperty.RegisterAttached<DashboardRowPanel, Control, double>("StartOffset", 0.0);
+
+    public static double GetStartOffset(Control element) => element.GetValue(StartOffsetProperty);
+    public static void SetStartOffset(Control element, double value) => element.SetValue(StartOffsetProperty, value);
+
     public static readonly StyledProperty<double> SpacingProperty =
         AvaloniaProperty.Register<DashboardRowPanel, double>(nameof(Spacing), 12.0);
 
@@ -72,7 +78,8 @@ public class DashboardRowPanel : Panel
         }
         if (visibleCount == 0) return finalSize;
 
-        var scaleFactor = totalFraction >= 0.999 ? 1.0 / totalFraction : 1.0;
+        var isFull = totalFraction >= 0.999;
+        var scaleFactor = isFull ? 1.0 / totalFraction : 1.0;
         var totalSpacing = Math.Max(0, visibleCount - 1) * Spacing;
         var availableForWidgets = panelWidth - totalSpacing;
 
@@ -83,15 +90,33 @@ public class DashboardRowPanel : Panel
             rowHeight = Math.Max(rowHeight, child.DesiredSize.Height);
         }
 
-        double x = 0;
-        foreach (var child in Children)
+        if (isFull)
         {
-            if (!child.IsVisible) continue;
-            var fraction = GetWidgetFraction(child);
-            if (fraction <= 0) fraction = 0.5;
-            var childWidth = availableForWidgets * fraction * scaleFactor;
-            child.Arrange(new Rect(x, 0, childWidth, rowHeight));
-            x += childWidth + Spacing;
+            // Full row: pack left-to-right (offsets ignored)
+            double x = 0;
+            foreach (var child in Children)
+            {
+                if (!child.IsVisible) continue;
+                var fraction = GetWidgetFraction(child);
+                if (fraction <= 0) fraction = 0.5;
+                var childWidth = availableForWidgets * fraction * scaleFactor;
+                child.Arrange(new Rect(x, 0, childWidth, rowHeight));
+                x += childWidth + Spacing;
+            }
+        }
+        else
+        {
+            // Partial row: respect StartOffset for positioning
+            foreach (var child in Children)
+            {
+                if (!child.IsVisible) continue;
+                var fraction = GetWidgetFraction(child);
+                if (fraction <= 0) fraction = 0.5;
+                var offset = GetStartOffset(child);
+                var childWidth = panelWidth * fraction;
+                var x = panelWidth * offset;
+                child.Arrange(new Rect(x, 0, childWidth, rowHeight));
+            }
         }
 
         return new Size(panelWidth, rowHeight);

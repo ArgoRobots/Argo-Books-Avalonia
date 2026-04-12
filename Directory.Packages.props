@@ -24,7 +24,7 @@
     <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0" />
     <!-- Color Picker -->
     <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.11" />
-    <!-- HTML Rendering (WebView2 for Windows) -->
+    <!-- HTML Rendering (WebView2 for Windows) TODO: Replace with Avalonia WebView when it ships in the free tier -->
     <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3800.47" />
     <!-- Graphics (for report rendering) -->
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />

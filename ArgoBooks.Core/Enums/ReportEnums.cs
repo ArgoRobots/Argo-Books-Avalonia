@@ -340,7 +340,7 @@ public static class ReportEnumExtensions
             ChartDataType.ExpensesDistribution => "Expense Distribution",
 
             // Financial charts
-            ChartDataType.TotalProfits => "Profit Over Time",
+            ChartDataType.TotalProfits => "Total Profits",
             ChartDataType.RevenueVsExpenses => "Expenses vs Revenue",
 
             // Transaction charts

@@ -11,12 +11,12 @@ public partial class WidgetHostViewModel : ObservableObject
     [ObservableProperty] private WidgetSize _size;
     [ObservableProperty] private bool _isEditMode;
     [ObservableProperty] private bool _isConfigOpen;
-    [ObservableProperty] private bool _isDragging;
 
     public string Id { get; }
     public WidgetType WidgetType { get; }
     public Dictionary<string, string> Config { get; private set; }
     public WidgetSize[] AvailableSizes { get; }
+    public double StartOffset { get; set; }
 
     public WidgetHostViewModel(DashboardWidgetEntry entry, WidgetViewModelBase widgetVm, WidgetSize[] availableSizes)
     {
@@ -27,29 +27,11 @@ public partial class WidgetHostViewModel : ObservableObject
         AvailableSizes = availableSizes;
         _widgetViewModel = widgetVm;
 
+        if (entry.Config.TryGetValue("StartOffset", out var offsetStr)
+            && double.TryParse(offsetStr, System.Globalization.CultureInfo.InvariantCulture, out var offset))
+            StartOffset = offset;
+
         widgetVm.Initialize(entry.Config);
-    }
-
-    /// <summary>
-    /// Whether the next size cycle will make the widget larger (true) or wrap back to smallest (false).
-    /// </summary>
-    public bool WillGrow
-    {
-        get
-        {
-            var currentIndex = Array.IndexOf(AvailableSizes, Size);
-            var nextIndex = (currentIndex + 1) % AvailableSizes.Length;
-            return AvailableSizes[nextIndex] > Size;
-        }
-    }
-
-    [RelayCommand]
-    private void CycleSize()
-    {
-        var currentIndex = Array.IndexOf(AvailableSizes, Size);
-        var nextIndex = (currentIndex + 1) % AvailableSizes.Length;
-        Size = AvailableSizes[nextIndex];
-        OnPropertyChanged(nameof(WillGrow));
     }
 
     [RelayCommand]
@@ -64,11 +46,17 @@ public partial class WidgetHostViewModel : ObservableObject
     public void LoadData() => WidgetViewModel.LoadData();
     public void Cleanup() => WidgetViewModel.Cleanup();
 
-    public DashboardWidgetEntry ToEntry() => new()
+    public DashboardWidgetEntry ToEntry()
     {
-        Id = Id,
-        WidgetType = WidgetType,
-        Size = Size,
-        Config = WidgetViewModel.GetConfig()
-    };
+        var config = WidgetViewModel.GetConfig();
+        if (StartOffset > 0.001)
+            config["StartOffset"] = StartOffset.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return new()
+        {
+            Id = Id,
+            WidgetType = WidgetType,
+            Size = Size,
+            Config = config
+        };
+    }
 }

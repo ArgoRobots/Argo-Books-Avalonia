@@ -57,6 +57,18 @@
                     Margin="0,-14,8,0"
                     Spacing="4"
                     IsVisible="{Binding IsEditMode}">
+            <Border x:Name="RowDragHandle"
+                    ToolTip.Tip="Drag to reorder row"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    CornerRadius="6"
+                    Padding="4,2"
+                    MinWidth="28" MinHeight="28"
+                    Cursor="SizeAll">
+                <TextBlock Text="&#x2817;" FontSize="14"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
             <Button x:Name="AddWidgetToRowButton"
                     Classes="row-action-btn"
                     ToolTip.Tip="Add widget to this row">

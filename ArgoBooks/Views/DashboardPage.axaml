@@ -51,6 +51,24 @@
         <Style Selector="Button.edit-toolbar-btn.primary:pointerover">
             <Setter Property="Opacity" Value="0.9" />
         </Style>
+        <!-- Settings popup size buttons -->
+        <Style Selector="Button.size-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.size-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.size-btn:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+        <Style Selector="Button.size-btn-selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
     </UserControl.Styles>
 
     <!-- Main Content -->
@@ -190,6 +208,26 @@
                 <Border Height="24" />
             </StackPanel>
         </ScrollViewer>
+
+        <!-- Global Widget Settings Popup (rendered on top of everything) -->
+        <Border x:Name="SettingsBackdrop"
+                Background="Transparent"
+                IsVisible="False"
+                ZIndex="200" />
+        <Border x:Name="SettingsPopup"
+                IsVisible="False"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12"
+                MaxWidth="320"
+                ZIndex="201"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                BoxShadow="0 4 16 0 #30000000">
+            <StackPanel x:Name="SettingsContent" Spacing="8" MaxHeight="400" />
+        </Border>
 
         <!-- Global Chart Context Menu (rendered on top of everything) -->
         <controls:ChartContextMenu x:Name="ChartContextMenu"

@@ -25,6 +25,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
     public void Initialize(CompanyManager companyManager)
     {
         _companyManager = companyManager;
+        Catalog.WidgetAddRequested -= OnWidgetAddRequested;
         Catalog.WidgetAddRequested += OnWidgetAddRequested;
 
         var settings = App.SettingsService?.GlobalSettings;
@@ -249,17 +250,6 @@ public partial class DashboardLayoutViewModel : ObservableObject
         OnPropertyChanged(nameof(HasWidgets));
     }
 
-    public void SwapWidgetsInRow(DashboardRowViewModel row, int indexA, int indexB)
-    {
-        if (indexA < 0 || indexA >= row.Widgets.Count) return;
-        if (indexB < 0 || indexB >= row.Widgets.Count) return;
-        if (indexA == indexB) return;
-
-        int a = Math.Min(indexA, indexB);
-        int b = Math.Max(indexA, indexB);
-        row.Widgets.Move(b, a);
-        row.Widgets.Move(a + 1, b);
-    }
 
     public bool MoveWidgetToRow(DashboardRowViewModel sourceRow, int widgetIndex,
         DashboardRowViewModel targetRow)
@@ -278,6 +268,14 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasWidgets));
         return true;
+    }
+
+    public void MoveRow(int fromIndex, int toIndex)
+    {
+        if (fromIndex < 0 || fromIndex >= Rows.Count) return;
+        if (toIndex < 0 || toIndex >= Rows.Count) return;
+        if (fromIndex == toIndex) return;
+        Rows.Move(fromIndex, toIndex);
     }
 
     private DashboardLayout GetCurrentLayout()

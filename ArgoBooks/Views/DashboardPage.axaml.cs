@@ -30,6 +30,18 @@ public partial class DashboardPage : UserControl
     private string _clickedChartName = "Chart";
     private DashboardDragDropManager? _dragDropManager;
     private DashboardPageViewModel? _previousViewModel;
+    private readonly List<(DashboardRowViewModel Row, NotifyCollectionChangedEventHandler Handler)> _rowSubscriptions = [];
+    private WidgetHostViewModel? _settingsTarget;
+    private DashboardRowViewModel? _settingsTargetRow;
+
+    // Row drag state
+    private bool _isRowDragging;
+    private int _rowDragSourceIndex = -1;
+    private int _rowDragPreviewIndex = -1;
+    private Avalonia.Point _rowDragStartPoint;
+    private Avalonia.Point _rowDragOffset;
+    private Avalonia.Controls.Border? _rowDragGhost;
+    private DashboardLayoutViewModel? _rowDragLayoutVm;
 
     /// <summary>
     /// Sets the clicked chart reference from an external source (e.g., ChartExpandOverlay).
@@ -93,14 +105,42 @@ public partial class DashboardPage : UserControl
 
     #region Row Panel Management
 
-    private void OnRowsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void OnRowsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (DataContext is not DashboardPageViewModel viewModel) return;
+
+        if (e.Action == NotifyCollectionChangedAction.Move
+            && e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0
+            && e.OldStartingIndex < RowsContainer.Children.Count)
+        {
+            // Reorder visual children without rebuilding — avoids chart reload
+            var child = RowsContainer.Children[e.OldStartingIndex];
+            RowsContainer.Children.RemoveAt(e.OldStartingIndex);
+            RowsContainer.Children.Insert(e.NewStartingIndex, child);
+            SetupDragDrop(viewModel.LayoutViewModel);
+            return;
+        }
+
+        if (e.Action == NotifyCollectionChangedAction.Remove
+            && e.OldStartingIndex >= 0
+            && e.OldStartingIndex < RowsContainer.Children.Count)
+        {
+            // Remove the visual child without rebuilding — avoids chart reload
+            RowsContainer.Children.RemoveAt(e.OldStartingIndex);
+            SetupDragDrop(viewModel.LayoutViewModel);
+            return;
+        }
+
         RebuildRows(viewModel.LayoutViewModel);
     }
 
     private void RebuildRows(DashboardLayoutViewModel layoutVm)
     {
+        // Unsubscribe from old widget collection handlers (prevents subscription leak)
+        foreach (var (row, handler) in _rowSubscriptions)
+            row.Widgets.CollectionChanged -= handler;
+        _rowSubscriptions.Clear();
+
         // Unsubscribe from old widget VMs
         foreach (var child in RowsContainer.Children)
         {
@@ -115,6 +155,7 @@ public partial class DashboardPage : UserControl
         }
 
         RowsContainer.Children.Clear();
+        _dragDropManager?.Detach();
         _dragDropManager = null;
 
         for (int rowIdx = 0; rowIdx < layoutVm.Rows.Count; rowIdx++)
@@ -149,7 +190,7 @@ public partial class DashboardPage : UserControl
 
             // Listen for widget collection changes in this row
             var capturedRowHost = rowHost;
-            rowVm.Widgets.CollectionChanged += (_, args) =>
+            NotifyCollectionChangedEventHandler widgetHandler = (_, args) =>
             {
                 if (args.Action == NotifyCollectionChangedAction.Move
                     && args.OldStartingIndex >= 0 && args.NewStartingIndex >= 0)
@@ -163,17 +204,40 @@ public partial class DashboardPage : UserControl
                     && args.OldStartingIndex >= 0
                     && args.OldStartingIndex < capturedRowHost.Panel.Children.Count)
                 {
+                    // Capture current positions before removing
+                    var panel = capturedRowHost.Panel;
+                    var positions = new List<double>();
+                    double cumOffset = 0;
+                    for (int i = 0; i < panel.Children.Count; i++)
+                    {
+                        if (i == args.OldStartingIndex) { cumOffset += DashboardRowPanel.GetWidgetFraction(panel.Children[i]); continue; }
+                        positions.Add(cumOffset);
+                        cumOffset += DashboardRowPanel.GetWidgetFraction(panel.Children[i]);
+                    }
+
                     // Remove the visual child without rebuilding — avoids chart reload
-                    var removeChild = capturedRowHost.Panel.Children[args.OldStartingIndex];
+                    var removeChild = panel.Children[args.OldStartingIndex];
                     if (removeChild is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
                         oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
-                    capturedRowHost.Panel.Children.RemoveAt(args.OldStartingIndex);
+                    panel.Children.RemoveAt(args.OldStartingIndex);
+
+                    // Assign offsets so remaining widgets stay in their grid positions
+                    for (int i = 0; i < panel.Children.Count && i < positions.Count; i++)
+                    {
+                        var offset = Math.Round(positions[i] * 4) / 4; // snap to grid
+                        DashboardRowPanel.SetStartOffset(panel.Children[i], offset);
+                        if (panel.Children[i].DataContext is WidgetHostViewModel vm)
+                            vm.StartOffset = offset;
+                    }
+                    panel.InvalidateArrange();
                 }
                 else
                 {
                     RebuildRows(layoutVm);
                 }
             };
+            rowVm.Widgets.CollectionChanged += widgetHandler;
+            _rowSubscriptions.Add((rowVm, widgetHandler));
 
             RowsContainer.Children.Add(rowHost);
         }
@@ -186,6 +250,8 @@ public partial class DashboardPage : UserControl
         var widgetHost = new WidgetHost { DataContext = hostVm, Margin = new Avalonia.Thickness(6, 0) };
         widgetHost.SetWidgetContent(hostVm);
         DashboardRowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
+        if (hostVm.StartOffset > 0.001)
+            DashboardRowPanel.SetStartOffset(widgetHost, hostVm.StartOffset);
         hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
 
         var removeButton = widgetHost.FindControl<Button>("RemoveButton");
@@ -194,6 +260,13 @@ public partial class DashboardPage : UserControl
             removeButton.Command = layoutVm.RemoveWidgetCommand;
             removeButton.CommandParameter = hostVm;
         }
+
+        // Wire settings button to page-level popup
+        hostVm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(WidgetHostViewModel.IsConfigOpen) && hostVm.IsConfigOpen)
+                ShowSettingsPopup(hostVm, widgetHost, layoutVm);
+        };
 
         return widgetHost;
     }
@@ -209,6 +282,20 @@ public partial class DashboardPage : UserControl
                 {
                     if (widgetChild is WidgetHost wh && wh.DataContext == hostVm)
                     {
+                        // Preserve position: compute current offset from widget's visual position
+                        var panelWidth = rowHost.Panel.Bounds.Width;
+                        if (panelWidth > 0)
+                        {
+                            var currentLeft = wh.Bounds.Left;
+                            var offset = Math.Round(currentLeft / panelWidth * 4) / 4;
+                            var newFraction = hostVm.Size.ToFraction();
+                            // Clamp so widget doesn't overflow the row
+                            offset = Math.Min(offset, 1.0 - newFraction);
+                            offset = Math.Max(0, offset);
+                            hostVm.StartOffset = offset;
+                            DashboardRowPanel.SetStartOffset(wh, offset);
+                        }
+
                         DashboardRowPanel.SetWidgetFraction(wh, hostVm.Size.ToFraction());
                         rowHost.Panel.InvalidateMeasure();
                         rowHost.Panel.InvalidateArrange();
@@ -236,9 +323,11 @@ public partial class DashboardPage : UserControl
             MainScrollViewer,
             layoutVm);
 
-        foreach (var child in RowsContainer.Children)
+        for (int idx = 0; idx < RowsContainer.Children.Count; idx++)
         {
-            if (child is not DashboardRowHost rowHost) continue;
+            if (RowsContainer.Children[idx] is not DashboardRowHost rowHost) continue;
+
+            // Wire widget drag handles
             for (int i = 0; i < rowHost.Panel.Children.Count; i++)
             {
                 if (rowHost.Panel.Children[i] is WidgetHost widgetHost)
@@ -248,13 +337,309 @@ public partial class DashboardPage : UserControl
                         _dragDropManager.AttachDragHandle(dragHandle);
                 }
             }
+
+            // Wire row drag handle
+            var capturedIndex = idx;
+            rowHost.DragHandle.PointerPressed += (_, e) =>
+            {
+                if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
+                _rowDragSourceIndex = capturedIndex;
+                _rowDragPreviewIndex = capturedIndex;
+                _rowDragStartPoint = e.GetPosition(RowsContainer);
+                _rowDragLayoutVm = layoutVm;
+                e.Handled = true;
+            };
         }
+
+        // Row drag pointer handlers — remove first to prevent stacking
+        MainScrollViewer.RemoveHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnRowPointerMoved);
+        MainScrollViewer.RemoveHandler(Avalonia.Input.InputElement.PointerReleasedEvent, OnRowPointerReleased);
+        MainScrollViewer.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnRowPointerMoved, handledEventsToo: true);
+        MainScrollViewer.AddHandler(Avalonia.Input.InputElement.PointerReleasedEvent, OnRowPointerReleased, handledEventsToo: true);
+    }
+
+    private void OnRowPointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (_rowDragSourceIndex < 0) return;
+        var position = e.GetPosition(RowsContainer);
+
+        if (!_isRowDragging)
+        {
+            var delta = position - _rowDragStartPoint;
+            if (Math.Abs(delta.Y) < 5) return;
+            _isRowDragging = true;
+
+            var sourceRow = RowsContainer.Children[_rowDragSourceIndex];
+            sourceRow.Opacity = 0;
+
+            // Calculate offset from pointer to row top-left
+            _rowDragOffset = new Avalonia.Point(0, _rowDragStartPoint.Y - sourceRow.Bounds.Top);
+
+            // Create ghost
+            _rowDragGhost = new Avalonia.Controls.Border
+            {
+                Width = sourceRow.Bounds.Width,
+                Height = sourceRow.Bounds.Height,
+                Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromArgb(30, 59, 130, 246)),
+                BorderBrush = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromRgb(59, 130, 246)),
+                BorderThickness = new Avalonia.Thickness(2),
+                CornerRadius = new Avalonia.CornerRadius(12),
+                IsHitTestVisible = false,
+                Opacity = 0.7,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top
+            };
+
+            if (RowsContainer.Parent is Avalonia.Controls.Panel parent)
+                parent.Children.Add(_rowDragGhost);
+        }
+
+        // Position ghost
+        if (_rowDragGhost != null)
+        {
+            var ghostY = position.Y - _rowDragOffset.Y;
+            _rowDragGhost.Margin = new Avalonia.Thickness(0, ghostY, 0, 0);
+        }
+
+        // Determine target row from ghost overlap (30% threshold)
+        int targetIndex = _rowDragSourceIndex;
+        if (_rowDragGhost != null)
+        {
+            var ghostTop = position.Y - _rowDragOffset.Y;
+            var ghostBottom = ghostTop + _rowDragGhost.Height;
+
+            for (int i = 0; i < RowsContainer.Children.Count; i++)
+            {
+                if (i == _rowDragSourceIndex) continue;
+                if (RowsContainer.Children[i] is not DashboardRowHost rowHost) continue;
+                var rowTop = rowHost.Bounds.Top;
+                var rowBottom = rowTop + rowHost.Bounds.Height;
+                var rowHeight = rowHost.Bounds.Height;
+                if (rowHeight <= 0) continue;
+
+                var overlapTop = Math.Max(ghostTop, rowTop);
+                var overlapBottom = Math.Min(ghostBottom, rowBottom);
+                var overlapFraction = Math.Max(0, overlapBottom - overlapTop) / rowHeight;
+
+                if (overlapFraction >= 0.3)
+                {
+                    if (i > _rowDragSourceIndex && i > targetIndex) targetIndex = i;
+                    if (i < _rowDragSourceIndex && i < targetIndex) targetIndex = i;
+                }
+            }
+        }
+
+        if (targetIndex != _rowDragPreviewIndex)
+        {
+            _rowDragPreviewIndex = targetIndex;
+
+            // Apply transforms to show preview
+            double sourceHeight = RowsContainer.Children[_rowDragSourceIndex].Bounds.Height
+                + 12; // spacing
+            for (int i = 0; i < RowsContainer.Children.Count; i++)
+            {
+                if (i == _rowDragSourceIndex) continue;
+                double dy = 0;
+                if (targetIndex > _rowDragSourceIndex && i > _rowDragSourceIndex && i <= targetIndex)
+                    dy = -sourceHeight;
+                else if (targetIndex < _rowDragSourceIndex && i >= targetIndex && i < _rowDragSourceIndex)
+                    dy = sourceHeight;
+
+                RowsContainer.Children[i].RenderTransform = Math.Abs(dy) > 0.5
+                    ? new Avalonia.Media.TranslateTransform(0, dy)
+                    : null;
+            }
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnRowPointerReleased(object? sender, Avalonia.Input.PointerReleasedEventArgs e)
+    {
+        if (_rowDragSourceIndex < 0) return;
+
+        int sourceIndex = _rowDragSourceIndex;
+        int targetIndex = _rowDragPreviewIndex;
+        var layoutVm = _rowDragLayoutVm;
+
+        // Reset visual state
+        for (int i = 0; i < RowsContainer.Children.Count; i++)
+            RowsContainer.Children[i].RenderTransform = null;
+        if (sourceIndex < RowsContainer.Children.Count)
+            RowsContainer.Children[sourceIndex].Opacity = 1.0;
+
+        // Remove ghost
+        if (RowsContainer.Parent is Avalonia.Controls.Panel ghostParent && _rowDragGhost != null)
+            ghostParent.Children.Remove(_rowDragGhost);
+        _rowDragGhost = null;
+
+        _isRowDragging = false;
+        _rowDragSourceIndex = -1;
+        _rowDragPreviewIndex = -1;
+        _rowDragLayoutVm = null;
+
+        // Perform the actual move
+        if (layoutVm != null && targetIndex >= 0 && targetIndex != sourceIndex)
+            layoutVm.MoveRow(sourceIndex, targetIndex);
     }
 
     private static void UpdateRowVisibility(DashboardRowHost rowHost, DashboardRowViewModel rowVm)
     {
         rowHost.IsVisible = rowVm.Widgets.Count == 0
             || rowVm.Widgets.Any(w => w.WidgetViewModel.IsWidgetVisible);
+    }
+
+    #endregion
+
+    #region Widget Settings Popup
+
+    private void ShowSettingsPopup(WidgetHostViewModel hostVm, WidgetHost widgetHost, DashboardLayoutViewModel layoutVm)
+    {
+        _settingsTarget = hostVm;
+
+        // Find which row this widget belongs to
+        _settingsTargetRow = null;
+        foreach (var row in layoutVm.Rows)
+        {
+            if (row.Widgets.Contains(hostVm))
+            {
+                _settingsTargetRow = row;
+                break;
+            }
+        }
+
+        // Build popup content
+        SettingsContent.Children.Clear();
+
+        // Header
+        SettingsContent.Children.Add(new TextBlock
+        {
+            Text = "Settings",
+            FontWeight = Avalonia.Media.FontWeight.SemiBold,
+            FontSize = 13,
+            [!TextBlock.ForegroundProperty] = new Avalonia.Data.Binding("") { Source = this, FallbackValue = Avalonia.Media.Brushes.White }
+        });
+        SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Avalonia.Thickness(0, 0, 0, 4) });
+
+        // Widget-specific config content
+        var configView = WidgetSettingsFactory.CreateConfigView(hostVm.WidgetViewModel);
+        if (configView != null)
+        {
+            configView.DataContext = hostVm.WidgetViewModel;
+            SettingsContent.Children.Add(configView);
+            SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Avalonia.Thickness(0, 4, 0, 0) });
+        }
+
+        // Size section
+        var sizeLabel = new TextBlock { Text = "Size", FontSize = 12, FontWeight = Avalonia.Media.FontWeight.Medium, Margin = new Avalonia.Thickness(0, 0, 0, 4) };
+        SettingsContent.Children.Add(sizeLabel);
+
+        var sizePanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 4 };
+        BuildSizeButtons(sizePanel, hostVm, layoutVm);
+        SettingsContent.Children.Add(sizePanel);
+
+        // Position popup near the widget using scroll-aware coordinates
+        var scrollOffset = MainScrollViewer.Offset;
+        var widgetBounds = widgetHost.Bounds;
+        // Walk up to find widget position relative to the scroll content
+        double widgetX = widgetBounds.Left;
+        double widgetY = widgetBounds.Top;
+        Avalonia.Visual? parent = widgetHost.Parent as Avalonia.Visual;
+        while (parent != null && parent != MainScrollViewer)
+        {
+            widgetX += parent.Bounds.Left;
+            widgetY += parent.Bounds.Top;
+            parent = parent.Parent as Avalonia.Visual;
+        }
+        // Convert to viewport coordinates (subtract scroll offset, add scroll viewer position)
+        var x = Math.Max(8, widgetX + widgetBounds.Width - 320 + 24); // 24 = page margin
+        var y = Math.Max(8, widgetY - scrollOffset.Y + 40 + MainScrollViewer.Bounds.Top);
+        SettingsPopup.Margin = new Avalonia.Thickness(x, y, 0, 0);
+
+        SettingsBackdrop.IsVisible = true;
+        SettingsPopup.IsVisible = true;
+
+        // Wire backdrop click
+        SettingsBackdrop.PointerPressed -= OnSettingsBackdropPressed;
+        SettingsBackdrop.PointerPressed += OnSettingsBackdropPressed;
+    }
+
+    private void OnSettingsBackdropPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        CloseSettingsPopup();
+        e.Handled = true;
+    }
+
+    private void CloseSettingsPopup()
+    {
+        SettingsBackdrop.IsVisible = false;
+        SettingsPopup.IsVisible = false;
+        if (_settingsTarget != null)
+        {
+            _settingsTarget.IsConfigOpen = false;
+            _settingsTarget = null;
+        }
+        _settingsTargetRow = null;
+        SettingsContent.Children.Clear();
+    }
+
+    private void BuildSizeButtons(StackPanel panel, WidgetHostViewModel hostVm, DashboardLayoutViewModel layoutVm)
+    {
+        // Calculate how much room other widgets in the row use
+        double otherFraction = 0;
+        if (_settingsTargetRow != null)
+        {
+            foreach (var w in _settingsTargetRow.Widgets)
+            {
+                if (w != hostVm)
+                    otherFraction += w.Size.ToFraction();
+            }
+        }
+
+        foreach (var size in hostVm.AvailableSizes)
+        {
+            var label = size switch
+            {
+                WidgetSize.Tiny => "25%",
+                WidgetSize.Small => "33%",
+                WidgetSize.Medium => "50%",
+                WidgetSize.MedLarge => "75%",
+                WidgetSize.Large => "100%",
+                _ => size.ToString()
+            };
+
+            bool fits = otherFraction + size.ToFraction() <= 1.001;
+            bool isSelected = hostVm.Size == size;
+
+            var btn = new Button
+            {
+                Content = label,
+                MinWidth = 44,
+                MinHeight = 30,
+                Padding = new Avalonia.Thickness(8, 4),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                FontSize = 11,
+                FontWeight = Avalonia.Media.FontWeight.Medium,
+                Tag = size,
+                IsEnabled = fits || isSelected,
+                Classes = { isSelected ? "size-btn-selected" : "size-btn" }
+            };
+
+            var capturedSize = size;
+            btn.Click += (_, _) =>
+            {
+                if (!fits && !isSelected) return;
+                hostVm.Size = capturedSize;
+                // Rebuild size buttons to update selection and fit states
+                panel.Children.Clear();
+                BuildSizeButtons(panel, hostVm, layoutVm);
+            };
+
+            panel.Children.Add(btn);
+        }
     }
 
     #endregion

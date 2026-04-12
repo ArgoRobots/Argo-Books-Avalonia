@@ -25,6 +25,7 @@ public class DashboardDragDropManager
 
     // Preview state: no collection changes until mouse release
     private int _previewTargetIndex = -1;
+    private double _previewStartOffset = -1;
     private DashboardRowPanel? _crossRowTargetPanel;
 
     private const double DragDeadZone = 5;
@@ -47,6 +48,12 @@ public class DashboardDragDropManager
 
         _scrollViewer.AddHandler(InputElement.PointerMovedEvent, OnPointerMoved, handledEventsToo: true);
         _scrollViewer.AddHandler(InputElement.PointerReleasedEvent, OnPointerReleased, handledEventsToo: true);
+    }
+
+    public void Detach()
+    {
+        _scrollViewer.RemoveHandler(InputElement.PointerMovedEvent, OnPointerMoved);
+        _scrollViewer.RemoveHandler(InputElement.PointerReleasedEvent, OnPointerReleased);
     }
 
     public void AttachDragHandle(Control dragHandle)
@@ -177,40 +184,77 @@ public class DashboardDragDropManager
 
         var children = _sourceRowPanel.Children;
         int count = children.Count;
+        int sourceIdx = _dragSourceIndex;
+        var panelPos = _sourceRowPanel.TranslatePoint(new Point(0, 0), _rowsContainer) ?? new Point();
+        double localGhostCenterX = ghostRect.Center.X - panelPos.X;
+        double panelWidth = _sourceRowPanel.Bounds.Width;
+
+        // Check if row is partial (has empty space)
+        double totalFraction = 0;
+        for (int i = 0; i < count; i++)
+            totalFraction += DashboardRowPanel.GetWidgetFraction(children[i]);
+        bool isPartialRow = totalFraction < 0.999;
+
+        if (isPartialRow)
+        {
+            // Partial row: snap widget to nearest 0.25 column based on ghost position
+            var fraction = DashboardRowPanel.GetWidgetFraction(children[sourceIdx]);
+            var ghostLeftFraction = (localGhostCenterX / panelWidth) - fraction / 2;
+            var snapped = Math.Round(ghostLeftFraction * 4) / 4;
+            snapped = Math.Max(0, Math.Min(snapped, 1.0 - fraction));
+            _previewStartOffset = snapped;
+            _previewTargetIndex = sourceIdx; // no reorder, just reposition
+
+            // Move the source widget visually to the snapped position
+            var currentX = children[sourceIdx].Bounds.Left;
+            var targetX = panelWidth * snapped;
+            var margin = children[sourceIdx].Margin;
+            var dx = targetX - currentX + margin.Left;
+            children[sourceIdx].RenderTransform = Math.Abs(dx) > 0.5
+                ? new TranslateTransform(dx, 0)
+                : null;
+            return;
+        }
+
+        // Full row: reorder widgets based on 30% overlap threshold
         if (count <= 1) return;
 
-        int sourceIdx = _dragSourceIndex;
+        _previewStartOffset = -1;
         var sourceMargin = children[sourceIdx].Margin;
         double sourceWidth = children[sourceIdx].Bounds.Width + sourceMargin.Left + sourceMargin.Right;
 
-        // Ghost center X in row-panel-local coordinates
-        var panelPos = _sourceRowPanel.TranslatePoint(new Point(0, 0), _rowsContainer) ?? new Point();
-        double localGhostCenterX = ghostRect.Center.X - panelPos.X;
+        // Ghost rect in panel-local coordinates
+        double ghostLeft = ghostRect.Left - panelPos.X;
+        double ghostRight = ghostLeft + ghostRect.Width;
 
-        // Determine target: compare ghost center against midpoints of non-source widgets
         int targetIdx = sourceIdx;
-
-        for (int i = sourceIdx + 1; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
-            var midX = children[i].Bounds.Left + children[i].Bounds.Width / 2;
-            if (localGhostCenterX > midX)
-                targetIdx = i;
-        }
+            if (i == sourceIdx) continue;
+            var child = children[i];
+            var childLeft = child.Bounds.Left;
+            var childRight = childLeft + child.Bounds.Width;
+            var childWidth = child.Bounds.Width;
+            if (childWidth <= 0) continue;
 
-        for (int i = sourceIdx - 1; i >= 0; i--)
-        {
-            var midX = children[i].Bounds.Left + children[i].Bounds.Width / 2;
-            if (localGhostCenterX < midX)
-                targetIdx = i;
+            // Calculate horizontal overlap fraction of the target widget
+            var overlapLeft = Math.Max(ghostLeft, childLeft);
+            var overlapRight = Math.Min(ghostRight, childRight);
+            var overlapWidth = Math.Max(0, overlapRight - overlapLeft);
+            var overlapFraction = overlapWidth / childWidth;
+
+            if (overlapFraction >= 0.3)
+            {
+                if (i > sourceIdx && i > targetIdx) targetIdx = i;
+                if (i < sourceIdx && i < targetIdx) targetIdx = i;
+            }
         }
 
         _previewTargetIndex = targetIdx;
 
-        // Apply transforms: shift widgets between source and target by source's width
         for (int i = 0; i < count; i++)
         {
             if (i == sourceIdx) continue;
-
             double dx = 0;
             if (targetIdx > sourceIdx && i > sourceIdx && i <= targetIdx)
                 dx = -sourceWidth;
@@ -247,8 +291,10 @@ public class DashboardDragDropManager
     {
         // Capture move info before resetting state
         var sourceRowPanel = _sourceRowPanel;
+        var sourceControl = _dragSourceControl;
         int sourceIndex = _dragSourceIndex;
         int targetIndex = _previewTargetIndex;
+        double startOffset = _previewStartOffset;
         var crossRowTarget = _crossRowTargetPanel;
 
         // Reset all visual state first (before any collection changes trigger rebuilds)
@@ -273,6 +319,7 @@ public class DashboardDragDropManager
         _isDragging = false;
         _dragSourceIndex = -1;
         _previewTargetIndex = -1;
+        _previewStartOffset = -1;
         _crossRowTargetPanel = null;
         _sourceRowPanel = null;
 
@@ -287,6 +334,14 @@ public class DashboardDragDropManager
             {
                 _layoutVm.MoveWidgetToRow(sourceRowVm, sourceIndex, targetRowVm);
             }
+        }
+        else if (startOffset >= 0 && sourceControl != null && sourceRowPanel != null)
+        {
+            // Column repositioning in partial row
+            DashboardRowPanel.SetStartOffset(sourceControl, startOffset);
+            if (sourceControl.DataContext is WidgetHostViewModel hostVm)
+                hostVm.StartOffset = startOffset;
+            sourceRowPanel.InvalidateArrange();
         }
         else if (sourceRowPanel != null && targetIndex >= 0 && targetIndex != sourceIndex)
         {

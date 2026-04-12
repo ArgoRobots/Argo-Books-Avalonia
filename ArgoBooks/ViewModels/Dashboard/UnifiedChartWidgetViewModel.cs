@@ -28,7 +28,13 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
     public ChartLoaderService ChartLoaderService { get; } = new();
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CartesianSeries))]
+    [NotifyPropertyChangedFor(nameof(PieSeries))]
     private ObservableCollection<ISeries> _series = [];
+
+    // Separate bindings so PieChart never sees LineSeries and vice versa
+    public ObservableCollection<ISeries>? CartesianSeries => IsDistribution ? null : Series;
+    public ObservableCollection<ISeries>? PieSeries => IsDistribution ? Series : null;
 
     [ObservableProperty]
     private Axis[] _xAxes = [new Axis()];
@@ -52,7 +58,7 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
     private string _emptyStateMessage = "No data available";
 
     [ObservableProperty]
-    private string _chartStyle = "donut";
+    private string _chartStyle = "pie";
 
     public string[] ChartStyleOptions { get; } = ["pie", "donut"];
 
@@ -105,6 +111,15 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         var chartSettings = ChartSettingsService.Instance;
 
         ChartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+        ChartLoaderService.SelectedChartStyle = chartSettings.SelectedChartType switch
+        {
+            "Line" => Services.ChartStyle.Line,
+            "Column" => Services.ChartStyle.Column,
+            "Step Line" => Services.ChartStyle.StepLine,
+            "Area" => Services.ChartStyle.Area,
+            "Scatter" => Services.ChartStyle.Scatter,
+            _ => Services.ChartStyle.Line
+        };
 
         var filters = new ReportFilters
         {
@@ -179,7 +194,8 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
                 sd.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
 
             var colorHex = sd.Color ?? AppColors.Palette[i % AppColors.Palette.Length];
-            series.Add(CreateLineSeries(values, sd.Name, colorHex));
+            series.Add(ChartLoaderService.CreateDateTimeSeries(
+                allDates, values, sd.Name, SKColor.Parse(colorHex)));
         }
 
         XAxes = ChartLoaderService.CreateDateXAxes(allDates);
@@ -197,30 +213,18 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             return;
         }
 
-        var dates = points.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
-        var values = points.Select(p => p.Value).ToArray();
+        var dated = points.Where(p => p.Date.HasValue).ToList();
+        var dates = dated.Select(p => p.Date!.Value).ToArray();
+        var values = dated.Select(p => p.Value).ToArray();
 
         var series = new ObservableCollection<ISeries>();
-        series.Add(CreateLineSeries(values, ChartDataType.GetDisplayName(), AppColors.Palette[0]));
+        series.Add(ChartLoaderService.CreateDateTimeSeries(
+            dates, values, ChartDataType.GetDisplayName(), SKColor.Parse(AppColors.Palette[0])));
 
         XAxes = ChartLoaderService.CreateDateXAxes(dates);
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = dates.Length > 0;
-    }
-
-    private static LineSeries<double> CreateLineSeries(double[] values, string name, string colorHex)
-    {
-        var color = SKColor.Parse(colorHex);
-        return new LineSeries<double>
-        {
-            Values = values,
-            Name = name,
-            Stroke = new SolidColorPaint(color) { StrokeThickness = 2 },
-            GeometryStroke = new SolidColorPaint(color) { StrokeThickness = 2 },
-            GeometrySize = 0,
-            Fill = null
-        };
     }
 
     private static string TruncateLabel(string? label)

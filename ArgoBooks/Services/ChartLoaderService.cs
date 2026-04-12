@@ -318,7 +318,7 @@ public class ChartLoaderService
     /// Creates a series for date-based data with proportional spacing.
     /// Points are positioned based on actual date values (converted to OADate), not evenly spaced.
     /// </summary>
-    private ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
+    public ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
     {
         // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
         // Use ObservablePoint which directly stores X,Y coordinates

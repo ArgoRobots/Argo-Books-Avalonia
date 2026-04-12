@@ -17,7 +17,7 @@
             <Panel IsVisible="{Binding !IsDistribution}">
                 <lvc:CartesianChart
                     Title="{Binding ChartTitleVisual}"
-                    Series="{Binding Series}"
+                    Series="{Binding CartesianSeries}"
                     XAxes="{Binding XAxes}"
                     YAxes="{Binding YAxes}"
                     TooltipPosition="Top"
@@ -43,7 +43,7 @@
                 </Border>
 
                 <lvc:PieChart Grid.Row="1"
-                              Series="{Binding Series}"
+                              Series="{Binding PieSeries}"
                               LegendPosition="Right"
                               TooltipPosition="Top"
                               IsVisible="{Binding HasData}"

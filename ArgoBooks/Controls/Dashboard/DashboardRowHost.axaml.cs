@@ -7,6 +7,7 @@ public partial class DashboardRowHost : UserControl
     public DashboardRowPanel Panel => RowPanel;
     public Button AddButton => AddWidgetToRowButton;
     public Button DeleteButton => DeleteRowButton;
+    public Border DragHandle => RowDragHandle;
 
     public DashboardRowHost()
     {

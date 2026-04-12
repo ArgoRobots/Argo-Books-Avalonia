@@ -21,22 +21,22 @@ public static class WidgetFactory
 {
     private static readonly Dictionary<WidgetType, WidgetDefinition> Definitions = new()
     {
-        [WidgetType.StatCardRevenue] = new(WidgetType.StatCardRevenue, "Revenue", "Total revenue for the period", "Statistics", "💰", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardExpenses] = new(WidgetType.StatCardExpenses, "Expenses", "Total expenses for the period", "Statistics", "📉", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardOutstandingInvoices] = new(WidgetType.StatCardOutstandingInvoices, "Outstanding Invoices", "Unpaid invoice total", "Statistics", "📋", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardActiveRentals] = new(WidgetType.StatCardActiveRentals, "Active Rentals", "Currently active rental count", "Statistics", "🔑", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardNetProfit] = new(WidgetType.StatCardNetProfit, "Net Profit", "Revenue minus expenses for the period", "Statistics", "📈", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardTotalCustomers] = new(WidgetType.StatCardTotalCustomers, "Total Customers", "Number of customers", "Statistics", "👥", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardInventoryValue] = new(WidgetType.StatCardInventoryValue, "Inventory Value", "Total value of inventory on hand", "Statistics", "📦", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.StatCardOverdueInvoices] = new(WidgetType.StatCardOverdueInvoices, "Overdue Invoices", "Invoices past their due date", "Statistics", "🚨", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small]),
-        [WidgetType.QuickActions] = new(WidgetType.QuickActions, "Quick Actions", "Shortcut buttons for common tasks", "Actions", "⚡", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.RecentTransactions] = new(WidgetType.RecentTransactions, "Recent Transactions", "Latest revenue and expense entries", "Tables", "📝", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.ActiveRentalsTable] = new(WidgetType.ActiveRentalsTable, "Active Rentals Table", "Currently active and overdue rentals", "Tables", "📅", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.SetupChecklist] = new(WidgetType.SetupChecklist, "Setup Checklist", "Getting started guide for new users", "Onboarding", "✅", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.Large]),
-        [WidgetType.TopCustomers] = new(WidgetType.TopCustomers, "Top Customers", "Highest revenue customers", "Insights", "👥", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
-        [WidgetType.LowStockAlerts] = new(WidgetType.LowStockAlerts, "Low Stock Alerts", "Inventory items below threshold", "Inventory", "⚠️", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
-        [WidgetType.UpcomingInvoiceDueDates] = new(WidgetType.UpcomingInvoiceDueDates, "Upcoming Due Dates", "Invoices due soon", "Invoices", "📆", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
-        [WidgetType.OverdueRentals] = new(WidgetType.OverdueRentals, "Overdue Rentals", "Rentals past their due date", "Rentals", "🚨", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardRevenue] = new(WidgetType.StatCardRevenue, "Revenue", "Total revenue for the period", "Statistics", "💰", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardExpenses] = new(WidgetType.StatCardExpenses, "Expenses", "Total expenses for the period", "Statistics", "📉", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardOutstandingInvoices] = new(WidgetType.StatCardOutstandingInvoices, "Outstanding Invoices", "Unpaid invoice total", "Statistics", "📋", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardActiveRentals] = new(WidgetType.StatCardActiveRentals, "Active Rentals", "Currently active rental count", "Statistics", "🔑", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardNetProfit] = new(WidgetType.StatCardNetProfit, "Net Profit", "Revenue minus expenses for the period", "Statistics", "📈", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardTotalCustomers] = new(WidgetType.StatCardTotalCustomers, "Total Customers", "Number of customers", "Statistics", "👥", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardInventoryValue] = new(WidgetType.StatCardInventoryValue, "Inventory Value", "Total value of inventory on hand", "Statistics", "📦", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardOverdueInvoices] = new(WidgetType.StatCardOverdueInvoices, "Overdue Invoices", "Invoices past their due date", "Statistics", "🚨", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.QuickActions] = new(WidgetType.QuickActions, "Quick Actions", "Shortcut buttons for common tasks", "Actions", "⚡", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
+        [WidgetType.RecentTransactions] = new(WidgetType.RecentTransactions, "Recent Transactions", "Latest revenue and expense entries", "Tables", "📝", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
+        [WidgetType.ActiveRentalsTable] = new(WidgetType.ActiveRentalsTable, "Active Rentals Table", "Currently active and overdue rentals", "Tables", "📅", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
+        [WidgetType.SetupChecklist] = new(WidgetType.SetupChecklist, "Setup Checklist", "Getting started guide for new users", "Onboarding", "✅", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
+        [WidgetType.TopCustomers] = new(WidgetType.TopCustomers, "Top Customers", "Highest revenue customers", "Insights", "👥", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.MedLarge]),
+        [WidgetType.LowStockAlerts] = new(WidgetType.LowStockAlerts, "Low Stock Alerts", "Inventory items below threshold", "Inventory", "⚠️", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.MedLarge]),
+        [WidgetType.UpcomingInvoiceDueDates] = new(WidgetType.UpcomingInvoiceDueDates, "Upcoming Due Dates", "Invoices due soon", "Invoices", "📆", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.MedLarge]),
+        [WidgetType.OverdueRentals] = new(WidgetType.OverdueRentals, "Overdue Rentals", "Rentals past their due date", "Rentals", "🚨", WidgetSize.Small, [WidgetSize.Small, WidgetSize.Medium, WidgetSize.MedLarge]),
     };
 
     private static readonly Dictionary<ChartDataType, WidgetDefinition> ChartDefinitions = BuildChartDefinitions();
@@ -54,7 +54,7 @@ public static class WidgetFactory
                 "Charts",
                 type.GetChartIcon(),
                 WidgetSize.Medium,
-                [WidgetSize.Small, WidgetSize.Medium, WidgetSize.Large],
+                [WidgetSize.Small, WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large],
                 type);
         }
         return defs;
