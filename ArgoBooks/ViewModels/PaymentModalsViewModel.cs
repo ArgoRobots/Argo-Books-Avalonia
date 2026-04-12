@@ -327,19 +327,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
         companyData.IdCounters.Payment++;
         var newId = $"PAY-{companyData.IdCounters.Payment:D3}";
 
-        var paymentMethod = ModalPaymentMethod switch
-        {
-            "Cash" => PaymentMethod.Cash,
-            "Credit Card" => PaymentMethod.CreditCard,
-            "Debit Card" => PaymentMethod.DebitCard,
-            "Bank Transfer" => PaymentMethod.BankTransfer,
-            "Check" => PaymentMethod.Check,
-            "PayPal" => PaymentMethod.PayPal,
-            "Stripe" => PaymentMethod.Stripe,
-            "Square" => PaymentMethod.Square,
-            "Other" => PaymentMethod.Other,
-            _ => PaymentMethod.Cash
-        };
+        var paymentMethod = PaymentMethodExtensions.ParseDisplayName(ModalPaymentMethod);
 
         var parsedAmount = decimal.Parse(ModalAmount);
         var currentCurrency = CurrencyService.CurrentCurrencyCode;
@@ -545,19 +533,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
             }
         }
 
-        var newPaymentMethod = ModalPaymentMethod switch
-        {
-            "Cash" => PaymentMethod.Cash,
-            "Credit Card" => PaymentMethod.CreditCard,
-            "Debit Card" => PaymentMethod.DebitCard,
-            "Bank Transfer" => PaymentMethod.BankTransfer,
-            "Check" => PaymentMethod.Check,
-            "PayPal" => PaymentMethod.PayPal,
-            "Stripe" => PaymentMethod.Stripe,
-            "Square" => PaymentMethod.Square,
-            "Other" => PaymentMethod.Other,
-            _ => PaymentMethod.Cash
-        };
+        var newPaymentMethod = PaymentMethodExtensions.ParseDisplayName(ModalPaymentMethod);
         var newReferenceNumber = string.IsNullOrWhiteSpace(ModalReferenceNumber) ? null : ModalReferenceNumber.Trim();
         var newNotesVal = ModalNotes.Trim();
 

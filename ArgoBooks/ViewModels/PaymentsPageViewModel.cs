@@ -635,15 +635,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         // Apply payment method filter
         if (FilterPaymentMethod != "All")
         {
-            var method = FilterPaymentMethod switch
-            {
-                "Cash" => PaymentMethod.Cash,
-                "Check" => PaymentMethod.Check,
-                "Stripe" => PaymentMethod.Stripe,
-                "PayPal" => PaymentMethod.PayPal,
-                "Square" => PaymentMethod.Square,
-                _ => PaymentMethod.Cash
-            };
+            var method = PaymentMethodExtensions.ParseDisplayName(FilterPaymentMethod);
             filtered = filtered.Where(p => p.PaymentMethod == method);
         }
 
