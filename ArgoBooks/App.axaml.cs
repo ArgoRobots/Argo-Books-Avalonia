@@ -703,6 +703,7 @@ public class App : Application
 
     // When true, the CompanySaved event handler skips showing the "Saved" indicator
     private static bool _suppressSavedFeedback;
+    private static bool _isOpeningCompany;
 
     /// <summary>
     /// Suppresses the "Saved" feedback label for the next save operation.
@@ -1543,7 +1544,8 @@ public class App : Application
             _appShellViewModel.SetCompanyInfo(null);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
-            _mainWindowViewModel.HideLoading();
+            if (!_isOpeningCompany)
+                _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
@@ -3728,11 +3730,13 @@ public class App : Application
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
+        _isOpeningCompany = true;
         _mainWindowViewModel.ShowLoading("Opening company...".Translate());
 
         try
         {
             var success = await CompanyManager.OpenCompanyAsync(filePath);
+            _isOpeningCompany = false;
             if (success)
             {
                 // Close the password modal if it was open
@@ -3758,12 +3762,14 @@ public class App : Application
             else
             {
                 // User cancelled password prompt
+                _isOpeningCompany = false;
                 _mainWindowViewModel.HideLoading();
             }
         }
         catch (UnauthorizedAccessException)
         {
             // Wrong password - show error and retry
+            _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
 
             passwordModal.ShowError("Invalid password. Please try again.".Translate());
@@ -3784,6 +3790,7 @@ public class App : Application
         }
         catch (FileNotFoundException)
         {
+            _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
             if (ConfirmationDialog != null)
@@ -3802,6 +3809,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
+            _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
