@@ -68,9 +68,6 @@ public static class WidgetFactory
         _ => null
     };
 
-    public static WidgetDefinition GetDefinition(WidgetType type)
-        => Definitions.TryGetValue(type, out var def) ? def : ChartDefinitions.Values.First();
-
     public static bool IsKnownType(WidgetType type)
         => Definitions.ContainsKey(type) || type == WidgetType.Chart || MapLegacyChartType(type).HasValue;
 
@@ -98,7 +95,7 @@ public static class WidgetFactory
             return new WidgetHostViewModel(entry, viewModel, def.AvailableSizes);
         }
 
-        var definition = GetDefinition(entry.WidgetType);
+        var definition = Definitions.TryGetValue(entry.WidgetType, out var d) ? d : Definitions.Values.First();
         var vm = CreateViewModel(entry.WidgetType);
         return new WidgetHostViewModel(entry, vm, definition.AvailableSizes);
     }

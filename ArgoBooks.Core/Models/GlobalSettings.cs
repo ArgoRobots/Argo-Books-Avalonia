@@ -75,6 +75,11 @@ public class UiSettings
     public bool ReportsShowGrid { get; set; } = true;
 
     public DashboardLayout? DashboardLayout { get; set; }
+
+    /// <summary>
+    /// Per-company dashboard layouts, keyed by company file path.
+    /// </summary>
+    public Dictionary<string, DashboardLayout> CompanyDashboardLayouts { get; set; } = new();
 }
 
 public class EmojiPickerSettings

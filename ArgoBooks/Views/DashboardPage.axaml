@@ -221,7 +221,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="12"
-                MaxWidth="320"
+                Width="280"
                 ZIndex="201"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"

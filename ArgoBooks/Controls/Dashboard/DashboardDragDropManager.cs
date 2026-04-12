@@ -27,6 +27,8 @@ public class DashboardDragDropManager
     private int _previewTargetIndex = -1;
     private double _previewStartOffset = -1;
     private DashboardRowPanel? _crossRowTargetPanel;
+    private Rect _lastGhostRect;
+    private double _originalGhostHeight;
 
     private const double DragDeadZone = 5;
     private const double AutoScrollMargin = 50;
@@ -119,6 +121,7 @@ public class DashboardDragDropManager
 
         var sourceWidth = _dragSourceControl?.Bounds.Width ?? 200;
         var sourceHeight = _dragSourceControl?.Bounds.Height ?? 80;
+        _originalGhostHeight = sourceHeight;
 
         _dragGhost = new Border
         {
@@ -155,11 +158,13 @@ public class DashboardDragDropManager
         _dragGrid?.InvalidateVisual();
 
         var ghostRect = new Rect(ghostX, ghostY, ghostWidth, ghostHeight);
+        _lastGhostRect = ghostRect;
         var targetRowPanel = FindRowPanelAtPosition(ghostRect.Center);
 
         if (targetRowPanel == _sourceRowPanel)
         {
             _dragGhost.BorderBrush = BlueBrush;
+            _dragGhost.Height = _originalGhostHeight;
             _crossRowTargetPanel = null;
             UpdateSameRowPreview(ghostRect);
         }
@@ -167,11 +172,16 @@ public class DashboardDragDropManager
         {
             ResetPreviewTransforms();
             _previewTargetIndex = _dragSourceIndex;
+            // Resize ghost to match target row height
+            var targetRowHost = targetRowPanel.FindAncestorOfType<DashboardRowHost>();
+            if (targetRowHost != null && targetRowHost.Bounds.Height > 0)
+                _dragGhost.Height = targetRowHost.Bounds.Height;
             UpdateCrossRowPreview(targetRowPanel);
         }
         else
         {
             _dragGhost.BorderBrush = BlueBrush;
+            _dragGhost.Height = _originalGhostHeight;
             _crossRowTargetPanel = null;
             ResetPreviewTransforms();
             _previewTargetIndex = _dragSourceIndex;
@@ -332,7 +342,21 @@ public class DashboardDragDropManager
                 && sourceIndex >= 0 && sourceIndex < sourceRowVm.Widgets.Count
                 && targetRowVm.CanFit(sourceRowVm.Widgets[sourceIndex].Size))
             {
-                _layoutVm.MoveWidgetToRow(sourceRowVm, sourceIndex, targetRowVm);
+                // Determine insert position from ghost X relative to target row
+                var targetPanelPos = crossRowTarget.TranslatePoint(new Point(0, 0), _rowsContainer) ?? new Point();
+                double ghostCenterX = _lastGhostRect.Center.X - targetPanelPos.X;
+                int insertIndex = targetRowVm.Widgets.Count; // default: append
+                for (int i = 0; i < crossRowTarget.Children.Count; i++)
+                {
+                    var child = crossRowTarget.Children[i];
+                    var midX = child.Bounds.Left + child.Bounds.Width / 2;
+                    if (ghostCenterX < midX)
+                    {
+                        insertIndex = i;
+                        break;
+                    }
+                }
+                _layoutVm.MoveWidgetToRow(sourceRowVm, sourceIndex, targetRowVm, insertIndex);
             }
         }
         else if (startOffset >= 0 && sourceControl != null && sourceRowPanel != null)

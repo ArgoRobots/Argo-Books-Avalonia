@@ -29,7 +29,13 @@ public partial class DashboardLayoutViewModel : ObservableObject
         Catalog.WidgetAddRequested += OnWidgetAddRequested;
 
         var settings = App.SettingsService?.GlobalSettings;
-        var layout = settings?.Ui.DashboardLayout ?? DashboardLayout.CreateDefault();
+        var companyPath = companyManager.CurrentFilePath;
+
+        // Load per-company layout, fall back to legacy global layout, then default
+        DashboardLayout? layout = null;
+        if (!string.IsNullOrEmpty(companyPath) && settings?.Ui.CompanyDashboardLayouts.TryGetValue(companyPath, out var companyLayout) == true)
+            layout = companyLayout;
+        layout ??= settings?.Ui.DashboardLayout ?? DashboardLayout.CreateDefault();
         layout.MigrateIfNeeded();
 
         _savedLayout = layout.Clone();
@@ -143,7 +149,11 @@ public partial class DashboardLayoutViewModel : ObservableObject
         var settings = App.SettingsService?.GlobalSettings;
         if (settings != null)
         {
-            settings.Ui.DashboardLayout = layout;
+            var companyPath = _companyManager?.CurrentFilePath;
+            if (!string.IsNullOrEmpty(companyPath))
+                settings.Ui.CompanyDashboardLayouts[companyPath] = layout;
+            else
+                settings.Ui.DashboardLayout = layout;
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }
     }
@@ -252,7 +262,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
 
 
     public bool MoveWidgetToRow(DashboardRowViewModel sourceRow, int widgetIndex,
-        DashboardRowViewModel targetRow)
+        DashboardRowViewModel targetRow, int insertIndex = -1)
     {
         if (widgetIndex < 0 || widgetIndex >= sourceRow.Widgets.Count) return false;
         if (sourceRow == targetRow) return false;
@@ -261,7 +271,10 @@ public partial class DashboardLayoutViewModel : ObservableObject
         if (!targetRow.CanFit(widget.Size)) return false;
 
         sourceRow.Widgets.RemoveAt(widgetIndex);
-        targetRow.Widgets.Add(widget);
+        if (insertIndex >= 0 && insertIndex < targetRow.Widgets.Count)
+            targetRow.Widgets.Insert(insertIndex, widget);
+        else
+            targetRow.Widgets.Add(widget);
 
         if (sourceRow.Widgets.Count == 0)
             Rows.Remove(sourceRow);

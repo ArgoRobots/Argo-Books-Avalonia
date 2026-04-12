@@ -939,7 +939,31 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     private async Task<bool> CheckUnsavedChangesBeforeNavigation(string fromPage, string toPage)
     {
-        // Only check when leaving the Reports page
+        // Check when leaving the Dashboard page in edit mode
+        if (fromPage == "Dashboard" && CurrentPage is Control { DataContext: DashboardPageViewModel dashVm }
+            && dashVm.LayoutViewModel.IsEditMode)
+        {
+            var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
+                "Unsaved Dashboard Changes".Translate(),
+                "You have unsaved changes to the dashboard layout. Would you like to save them before leaving?".Translate());
+
+            switch (result)
+            {
+                case UnsavedChangesResult.Save:
+                    await dashVm.LayoutViewModel.SaveEditCommand.ExecuteAsync(null);
+                    return true;
+
+                case UnsavedChangesResult.DontSave:
+                    dashVm.LayoutViewModel.CancelEditCommand.Execute(null);
+                    return true;
+
+                case UnsavedChangesResult.Cancel:
+                default:
+                    return false;
+            }
+        }
+
+        // Check when leaving the Reports page
         if (fromPage != "Reports" || _reportsPageViewModel == null)
         {
             return true; // Allow navigation
@@ -952,11 +976,11 @@ public partial class AppShellViewModel : ViewModelBase
         }
 
         // Show unsaved changes dialog
-        var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
+        var result2 = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
             "Unsaved Report Changes".Translate(),
             "You have unsaved changes in the report designer. Would you like to save them before leaving?".Translate());
 
-        switch (result)
+        switch (result2)
         {
             case UnsavedChangesResult.Save:
                 // Open the save template modal and wait for it to complete

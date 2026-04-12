@@ -60,7 +60,8 @@
                 <TextBlock Text="&#x2817;" FontSize="14"
                            HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
-            <Button Classes="widget-overlay-btn"
+            <Button x:Name="SettingsButton"
+                    Classes="widget-overlay-btn"
                     Command="{Binding ToggleConfigCommand}"
                     ToolTip.Tip="Settings">
                 <TextBlock Text="&#x2699;" FontSize="12" />

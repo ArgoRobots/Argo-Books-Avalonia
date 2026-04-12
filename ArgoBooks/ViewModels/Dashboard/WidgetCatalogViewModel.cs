@@ -23,7 +23,6 @@ public partial class CatalogItem : ObservableObject
 public partial class WidgetCatalogViewModel : ObservableObject
 {
     [ObservableProperty] private bool _isOpen;
-    [ObservableProperty] private double _remainingFraction = 1.0;
     [ObservableProperty] private bool _isRowFull;
     public ObservableCollection<CatalogItem> StatCards { get; } = [];
     public ObservableCollection<CatalogItem> Charts { get; } = [];
@@ -45,8 +44,6 @@ public partial class WidgetCatalogViewModel : ObservableObject
             .Where(w => w.WidgetViewModel is UnifiedChartWidgetViewModel)
             .Select(w => ((UnifiedChartWidgetViewModel)w.WidgetViewModel).ChartDataType)
             .ToHashSet();
-
-        RemainingFraction = remainingFraction;
 
         foreach (var d in WidgetFactory.GetAllDefinitions())
         {

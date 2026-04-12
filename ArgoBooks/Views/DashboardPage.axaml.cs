@@ -1,6 +1,7 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.Specialized;
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -231,6 +232,23 @@ public partial class DashboardPage : UserControl
                     }
                     panel.InvalidateArrange();
                 }
+                else if (args.Action == NotifyCollectionChangedAction.Add
+                    && args.NewStartingIndex >= 0 && args.NewItems?.Count == 1)
+                {
+                    // Add the visual child without rebuilding — avoids chart reload
+                    if (args.NewItems[0] is WidgetHostViewModel newVm)
+                    {
+                        var newHost = CreateWidgetHost(newVm, layoutVm);
+                        capturedRowHost.Panel.Children.Insert(args.NewStartingIndex, newHost);
+                        // Attach drag handle to existing manager
+                        if (_dragDropManager != null)
+                        {
+                            var dragHandle = newHost.FindControl<Avalonia.Controls.Border>("DragHandle");
+                            if (dragHandle != null)
+                                _dragDropManager.AttachDragHandle(dragHandle);
+                        }
+                    }
+                }
                 else
                 {
                     RebuildRows(layoutVm);
@@ -252,7 +270,16 @@ public partial class DashboardPage : UserControl
         DashboardRowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
         if (hostVm.StartOffset > 0.001)
             DashboardRowPanel.SetStartOffset(widgetHost, hostVm.StartOffset);
-        hostVm.PropertyChanged += OnWidgetHostPropertyChanged;
+        hostVm.PropertyChanged += (sender, args) =>
+        {
+            OnWidgetHostPropertyChanged(sender, args);
+            if (args.PropertyName == nameof(WidgetHostViewModel.IsConfigOpen) && hostVm.IsConfigOpen)
+            {
+                // Find the settings button to position the popup relative to it
+                var settingsBtn = widgetHost.FindControl<Button>("SettingsButton");
+                ShowSettingsPopup(hostVm, widgetHost, settingsBtn, layoutVm);
+            }
+        };
 
         var removeButton = widgetHost.FindControl<Button>("RemoveButton");
         if (removeButton != null)
@@ -260,13 +287,6 @@ public partial class DashboardPage : UserControl
             removeButton.Command = layoutVm.RemoveWidgetCommand;
             removeButton.CommandParameter = hostVm;
         }
-
-        // Wire settings button to page-level popup
-        hostVm.PropertyChanged += (_, args) =>
-        {
-            if (args.PropertyName == nameof(WidgetHostViewModel.IsConfigOpen) && hostVm.IsConfigOpen)
-                ShowSettingsPopup(hostVm, widgetHost, layoutVm);
-        };
 
         return widgetHost;
     }
@@ -338,13 +358,15 @@ public partial class DashboardPage : UserControl
                 }
             }
 
-            // Wire row drag handle
-            var capturedIndex = idx;
+            // Wire row drag handle — find index dynamically at press time
+            var capturedRowHost = rowHost;
             rowHost.DragHandle.PointerPressed += (_, e) =>
             {
                 if (!e.GetCurrentPoint(null).Properties.IsLeftButtonPressed) return;
-                _rowDragSourceIndex = capturedIndex;
-                _rowDragPreviewIndex = capturedIndex;
+                var currentIndex = RowsContainer.Children.IndexOf(capturedRowHost);
+                if (currentIndex < 0) return;
+                _rowDragSourceIndex = currentIndex;
+                _rowDragPreviewIndex = currentIndex;
                 _rowDragStartPoint = e.GetPosition(RowsContainer);
                 _rowDragLayoutVm = layoutVm;
                 e.Handled = true;
@@ -361,6 +383,12 @@ public partial class DashboardPage : UserControl
     private void OnRowPointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
     {
         if (_rowDragSourceIndex < 0) return;
+        if (_rowDragSourceIndex >= RowsContainer.Children.Count)
+        {
+            _rowDragSourceIndex = -1;
+            _isRowDragging = false;
+            return;
+        }
         var position = e.GetPosition(RowsContainer);
 
         if (!_isRowDragging)
@@ -401,37 +429,29 @@ public partial class DashboardPage : UserControl
             _rowDragGhost.Margin = new Avalonia.Thickness(0, ghostY, 0, 0);
         }
 
-        // Determine target row from ghost overlap (30% threshold)
+        // Determine target row from ghost center crossing row midpoints
         int targetIndex = _rowDragSourceIndex;
         if (_rowDragGhost != null)
         {
-            var ghostTop = position.Y - _rowDragOffset.Y;
-            var ghostBottom = ghostTop + _rowDragGhost.Height;
+            var ghostCenterY = position.Y - _rowDragOffset.Y + _rowDragGhost.Height / 2;
 
             for (int i = 0; i < RowsContainer.Children.Count; i++)
             {
                 if (i == _rowDragSourceIndex) continue;
                 if (RowsContainer.Children[i] is not DashboardRowHost rowHost) continue;
-                var rowTop = rowHost.Bounds.Top;
-                var rowBottom = rowTop + rowHost.Bounds.Height;
-                var rowHeight = rowHost.Bounds.Height;
-                if (rowHeight <= 0) continue;
+                var midY = rowHost.Bounds.Top + rowHost.Bounds.Height / 2;
 
-                var overlapTop = Math.Max(ghostTop, rowTop);
-                var overlapBottom = Math.Min(ghostBottom, rowBottom);
-                var overlapFraction = Math.Max(0, overlapBottom - overlapTop) / rowHeight;
-
-                if (overlapFraction >= 0.3)
-                {
-                    if (i > _rowDragSourceIndex && i > targetIndex) targetIndex = i;
-                    if (i < _rowDragSourceIndex && i < targetIndex) targetIndex = i;
-                }
+                if (i > _rowDragSourceIndex && ghostCenterY > midY)
+                    targetIndex = Math.Max(targetIndex, i);
+                else if (i < _rowDragSourceIndex && ghostCenterY < midY)
+                    targetIndex = Math.Min(targetIndex, i);
             }
         }
 
         if (targetIndex != _rowDragPreviewIndex)
         {
             _rowDragPreviewIndex = targetIndex;
+            if (_rowDragSourceIndex >= RowsContainer.Children.Count) return;
 
             // Apply transforms to show preview
             double sourceHeight = RowsContainer.Children[_rowDragSourceIndex].Bounds.Height
@@ -493,7 +513,7 @@ public partial class DashboardPage : UserControl
 
     #region Widget Settings Popup
 
-    private void ShowSettingsPopup(WidgetHostViewModel hostVm, WidgetHost widgetHost, DashboardLayoutViewModel layoutVm)
+    private void ShowSettingsPopup(WidgetHostViewModel hostVm, WidgetHost widgetHost, Button? settingsBtn, DashboardLayoutViewModel layoutVm)
     {
         _settingsTarget = hostVm;
 
@@ -512,13 +532,14 @@ public partial class DashboardPage : UserControl
         SettingsContent.Children.Clear();
 
         // Header
-        SettingsContent.Children.Add(new TextBlock
+        var headerText = new TextBlock
         {
             Text = "Settings",
             FontWeight = Avalonia.Media.FontWeight.SemiBold,
-            FontSize = 13,
-            [!TextBlock.ForegroundProperty] = new Avalonia.Data.Binding("") { Source = this, FallbackValue = Avalonia.Media.Brushes.White }
-        });
+            FontSize = 13
+        };
+        headerText.SetValue(TextBlock.ForegroundProperty, Application.Current?.FindResource("TextPrimaryBrush") as Avalonia.Media.IBrush ?? Avalonia.Media.Brushes.White);
+        SettingsContent.Children.Add(headerText);
         SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Avalonia.Thickness(0, 0, 0, 4) });
 
         // Widget-specific config content
@@ -538,23 +559,39 @@ public partial class DashboardPage : UserControl
         BuildSizeButtons(sizePanel, hostVm, layoutVm);
         SettingsContent.Children.Add(sizePanel);
 
-        // Position popup near the widget using scroll-aware coordinates
-        var scrollOffset = MainScrollViewer.Offset;
-        var widgetBounds = widgetHost.Bounds;
-        // Walk up to find widget position relative to the scroll content
-        double widgetX = widgetBounds.Left;
-        double widgetY = widgetBounds.Top;
-        Avalonia.Visual? parent = widgetHost.Parent as Avalonia.Visual;
-        while (parent != null && parent != MainScrollViewer)
+        // Position popup below the settings button, right-aligned with it
+        // Use right-alignment: popup's right edge = button's right edge
+        var anchor = (Visual)(settingsBtn ?? (Control)widgetHost);
+        double x = 8, y = 8;
+
+        // Translate the button's top-left and bottom-right to page coordinates
+        var topLeft = anchor.TranslatePoint(new Point(0, 0), this);
+        var bottomRight = anchor.TranslatePoint(new Point(anchor.Bounds.Width, anchor.Bounds.Height), this);
+
+        System.Diagnostics.Debug.WriteLine($"[SettingsPopup] anchor.Bounds={anchor.Bounds}");
+        System.Diagnostics.Debug.WriteLine($"[SettingsPopup] topLeft={topLeft}, bottomRight={bottomRight}");
+        System.Diagnostics.Debug.WriteLine($"[SettingsPopup] page.Bounds={Bounds}");
+
+        if (bottomRight.HasValue)
         {
-            widgetX += parent.Bounds.Left;
-            widgetY += parent.Bounds.Top;
-            parent = parent.Parent as Avalonia.Visual;
+            var buttonRight = bottomRight.Value.X;
+            y = bottomRight.Value.Y + 4;
+
+            var popupWidth = 280.0;
+            x = buttonRight - popupWidth;
+
+            System.Diagnostics.Debug.WriteLine($"[SettingsPopup] buttonRight={buttonRight}, x={x}, y={y}");
         }
-        // Convert to viewport coordinates (subtract scroll offset, add scroll viewer position)
-        var x = Math.Max(8, widgetX + widgetBounds.Width - 320 + 24); // 24 = page margin
-        var y = Math.Max(8, widgetY - scrollOffset.Y + 40 + MainScrollViewer.Bounds.Top);
-        SettingsPopup.Margin = new Avalonia.Thickness(x, y, 0, 0);
+
+        // Clamp to stay within page bounds
+        x = Math.Max(8, x);
+        y = Math.Max(8, y);
+
+        SettingsPopup.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        SettingsPopup.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
+        SettingsPopup.Margin = new Thickness(x, y, 0, 0);
+
+        System.Diagnostics.Debug.WriteLine($"[SettingsPopup] final margin=({x}, {y})");
 
         SettingsBackdrop.IsVisible = true;
         SettingsPopup.IsVisible = true;
