@@ -214,6 +214,17 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         }
 
         var dated = points.Where(p => p.Date.HasValue).ToList();
+
+        // Bucket daily data into weeks/months when the date range is wide so
+        // column bars are a readable width instead of hairline-thin slivers.
+        if (dated.Count >= 2)
+        {
+            var bucket = ReportChartDataService.GetTimeBucket(
+                dated[0].Date!.Value, dated[^1].Date!.Value);
+            if (bucket != ReportChartDataService.TimeBucket.Day)
+                dated = ReportChartDataService.RebucketSum(dated, bucket);
+        }
+
         var dates = dated.Select(p => p.Date!.Value).ToArray();
         var values = dated.Select(p => p.Value).ToArray();
 

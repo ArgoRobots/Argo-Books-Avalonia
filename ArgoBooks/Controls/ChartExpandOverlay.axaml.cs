@@ -119,7 +119,7 @@ public partial class ChartExpandOverlay : UserControl
         {
             if (child is T match && predicate(match))
                 return match;
-            if (child is Visual visual and not T)
+            if (child is Visual visual)
             {
                 var result = FindVisualDescendant(visual, predicate);
                 if (result != null) return result;
@@ -191,6 +191,18 @@ public partial class ChartExpandOverlay : UserControl
         else if (control is Decorator decorator && decorator.Child != null)
         {
             FindChartPanels(decorator.Child, result);
+        }
+        else
+        {
+            // Fallback: traverse the visual tree for controls that don't expose
+            // children via the logical tree (e.g., ContentPresenter, template hosts).
+            // This ensures dynamically created charts inside dashboard widgets
+            // are always discovered.
+            foreach (var child in control.GetVisualChildren())
+            {
+                if (child is Control childControl)
+                    FindChartPanels(childControl, result);
+            }
         }
     }
 
@@ -311,11 +323,11 @@ public partial class ChartExpandOverlay : UserControl
         var contentPanel = this.FindControl<Panel>("ContentPanel");
         if (contentPanel == null) return;
 
-        // Preserve the page's DataContext so chart bindings (Series, Axes, etc.) keep working
-        // after reparenting from the page into the AppShell-level overlay.
-        // Set on ChartArea so the ChartContextMenu also inherits it.
-        // When charts are inside dashboard widgets, the sourcePanel's DataContext is a
-        // UnifiedChartWidgetViewModel — walk up the tree to find the page-level ViewModel instead.
+        // Set DataContexts so bindings keep working after reparenting.
+        // ChartArea gets the page-level ViewModel (for context menu bindings).
+        // ContentPanel gets the source panel's original DataContext (for chart
+        // bindings like Series, HasData, etc. — critical for dashboard widgets
+        // where the chart is bound to a UnifiedChartWidgetViewModel, not the page VM).
         var chartArea = this.FindControl<Panel>("ChartArea");
         if (chartArea != null)
         {
@@ -335,6 +347,24 @@ public partial class ChartExpandOverlay : UserControl
                 }
             }
             chartArea.DataContext = dc;
+        }
+
+        // Capture the DataContext that chart bindings need (e.g., UnifiedChartWidgetViewModel
+        // for dashboard widgets, or AnalyticsPageViewModel for the analytics page).
+        var sourceDataContext = sourcePanel.DataContext;
+
+        // Suppress LiveCharts entrance animations during reparenting — without this
+        // the chart slides in from the side every time the fullscreen modal opens.
+        var savedAnimSpeeds = new List<(Control chart, TimeSpan speed)>();
+        foreach (var chart in FindAllDescendants<CartesianChart>(sourcePanel))
+        {
+            savedAnimSpeeds.Add((chart, chart.AnimationsSpeed));
+            chart.AnimationsSpeed = TimeSpan.Zero;
+        }
+        foreach (var chart in FindAllDescendants<PieChart>(sourcePanel))
+        {
+            savedAnimSpeeds.Add((chart, chart.AnimationsSpeed));
+            chart.AnimationsSpeed = TimeSpan.Zero;
         }
 
         // Move all children except the expand button to the overlay.
@@ -365,10 +395,22 @@ public partial class ChartExpandOverlay : UserControl
             }
             else
             {
+                // Set an explicit DataContext on each child so it survives reparenting.
+                // Without this, the child loses its inherited DataContext when removed
+                // from the widget and picks up the overlay's DataContext instead,
+                // breaking bindings (e.g., dashboard charts show "no data available").
+                child.DataContext = sourceDataContext;
                 _movedChildren.Add(child);
                 sourcePanel.Children.Remove(child);
                 contentPanel.Children.Add(child);
             }
+        }
+
+        // Restore animation speeds after reparenting is complete
+        foreach (var (chart, speed) in savedAnimSpeeds)
+        {
+            if (chart is CartesianChart cc) cc.AnimationsSpeed = speed;
+            else if (chart is PieChart pc) pc.AnimationsSpeed = speed;
         }
 
         // Set up GeoMap header with title and origin/destination toggle
@@ -421,13 +463,39 @@ public partial class ChartExpandOverlay : UserControl
         }
         _geoMapCopies.Clear();
 
+        // Suppress LiveCharts entrance animations when reparenting back
+        var savedAnimSpeeds = new List<(Control chart, TimeSpan speed)>();
+        foreach (var child in _movedChildren)
+        {
+            foreach (var chart in FindAllDescendants<CartesianChart>(child))
+            {
+                savedAnimSpeeds.Add((chart, chart.AnimationsSpeed));
+                chart.AnimationsSpeed = TimeSpan.Zero;
+            }
+            foreach (var chart in FindAllDescendants<PieChart>(child))
+            {
+                savedAnimSpeeds.Add((chart, chart.AnimationsSpeed));
+                chart.AnimationsSpeed = TimeSpan.Zero;
+            }
+        }
+
         // Return non-GeoMap children to the source panel
         var insertIndex = 0;
         foreach (var child in _movedChildren)
         {
             contentPanel.Children.Remove(child);
+            // Clear the explicit DataContext so the child resumes inheriting
+            // from its original parent (the chart widget).
+            child.ClearValue(DataContextProperty);
             _sourcePanel!.Children.Insert(insertIndex, child);
             insertIndex++;
+        }
+
+        // Restore animation speeds
+        foreach (var (chart, speed) in savedAnimSpeeds)
+        {
+            if (chart is CartesianChart cc) cc.AnimationsSpeed = speed;
+            else if (chart is PieChart pc) pc.AnimationsSpeed = speed;
         }
 
         if (_expandButton != null)
@@ -647,6 +715,23 @@ public partial class ChartExpandOverlay : UserControl
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Finds all descendants of type T using the visual tree.
+    /// Works on any control, including dynamically created widget content.
+    /// </summary>
+    private static List<T> FindAllDescendants<T>(Control root) where T : Control
+    {
+        var results = new List<T>();
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is T match)
+                results.Add(match);
+            if (child is Control childControl)
+                results.AddRange(FindAllDescendants<T>(childControl));
+        }
+        return results;
     }
 
     /// <summary>
