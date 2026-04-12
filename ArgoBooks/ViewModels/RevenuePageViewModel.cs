@@ -91,7 +91,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = ColumnVisibilityHelper.Load("Revenue", "Id", true);
 
     [ObservableProperty]
-    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Revenue", "Accountant", false); // No Accountant column in Revenue UI
+    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Revenue", "Accountant", false);
 
     [ObservableProperty]
     private bool _showCustomerColumn = ColumnVisibilityHelper.Load("Revenue", "Customer", true);

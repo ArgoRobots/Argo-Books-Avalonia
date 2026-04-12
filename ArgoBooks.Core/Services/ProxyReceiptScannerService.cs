@@ -29,7 +29,7 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
     }
 
     /// <inheritdoc />
-    public bool IsConfigured => _licenseService?.GetLicenseKey() != null || _licenseService?.GetDeviceId() != null;
+    public bool IsConfigured => !string.IsNullOrEmpty(_licenseService?.GetLicenseKey());
 
     /// <inheritdoc />
     public Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, bool skipPreprocessing, CancellationToken cancellationToken = default)

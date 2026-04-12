@@ -57,8 +57,9 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     {
         _errorLogger = errorLogger;
 
-        // TODO: Switch to SecurityMode.Strict once Ed25519 signing is configured.
-        // Currently using Unsafe mode — updates are not signature-verified.
+        // TODO: Switch to SecurityMode.Strict once Ed25519 signing is configured in the appcast.
+        // NetSparkle's own verifier is in Unsafe mode, but DownloadUpdateAsync enforces
+        // signature presence manually as a stopgap (see signature check below).
         _sparkle = new SparkleUpdater(AppCastUrl, new Ed25519Checker(SecurityMode.Unsafe))
         {
             UIFactory = null, // We use our own UI

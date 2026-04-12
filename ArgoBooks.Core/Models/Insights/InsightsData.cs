@@ -340,63 +340,6 @@ public class AnalysisDateRange
     public string? PresetName { get; set; }
 
     /// <summary>
-    /// Creates a date range from preset name.
-    /// </summary>
-    /// <param name="presetName">The preset name (e.g., "This Month", "All Time").</param>
-    /// <param name="earliestDate">Optional earliest transaction date for "All Time". Defaults to today if null.</param>
-    public static AnalysisDateRange FromPreset(string presetName, DateTime? earliestDate = null)
-    {
-        var now = DateTime.Now;
-        var range = new AnalysisDateRange { PresetName = presetName };
-        var preset = DateRangePresetExtensions.ParseDateRange(presetName);
-
-        switch (preset)
-        {
-            case DateRangePreset.ThisMonth:
-                range.StartDate = new DateTime(now.Year, now.Month, 1);
-                range.EndDate = now;
-                break;
-
-            case DateRangePreset.LastMonth:
-                var lastMonth = now.AddMonths(-1);
-                range.StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-                range.EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
-                break;
-
-            case DateRangePreset.ThisQuarter:
-                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
-                range.StartDate = quarterStart;
-                range.EndDate = now;
-                break;
-
-            case DateRangePreset.LastQuarter:
-                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
-                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
-                range.StartDate = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
-                range.EndDate = lastQuarterEnd;
-                break;
-
-            case DateRangePreset.ThisYear:
-                range.StartDate = new DateTime(now.Year, 1, 1);
-                range.EndDate = now;
-                break;
-
-            case DateRangePreset.LastYear:
-                range.StartDate = new DateTime(now.Year - 1, 1, 1);
-                range.EndDate = new DateTime(now.Year - 1, 12, 31);
-                break;
-
-            case DateRangePreset.AllTime:
-            default:
-                range.StartDate = earliestDate ?? DateTime.Today;
-                range.EndDate = now;
-                break;
-        }
-
-        return range;
-    }
-
-    /// <summary>
     /// Creates a custom date range.
     /// </summary>
     public static AnalysisDateRange Custom(DateTime start, DateTime end)

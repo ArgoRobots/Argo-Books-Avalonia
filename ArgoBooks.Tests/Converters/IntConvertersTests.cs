@@ -66,7 +66,4 @@ public class IntConvertersTests
 
     #endregion
 
-    #region IsNotZero Tests
-
-    #endregion
 }

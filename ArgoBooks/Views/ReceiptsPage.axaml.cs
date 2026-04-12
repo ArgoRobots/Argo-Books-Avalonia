@@ -25,11 +25,20 @@ public partial class ReceiptsPage : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private ReceiptsPageViewModel? _previousViewModel;
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.ScanFileRequested -= OnScanFileRequested;
+            _previousViewModel = null;
+        }
+
         if (DataContext is ReceiptsPageViewModel viewModel)
         {
             viewModel.ScanFileRequested += OnScanFileRequested;
+            _previousViewModel = viewModel;
         }
     }
 

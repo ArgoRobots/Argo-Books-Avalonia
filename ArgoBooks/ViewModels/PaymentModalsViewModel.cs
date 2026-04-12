@@ -330,7 +330,14 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var paymentMethod = ModalPaymentMethod switch
         {
             "Cash" => PaymentMethod.Cash,
+            "Credit Card" => PaymentMethod.CreditCard,
+            "Debit Card" => PaymentMethod.DebitCard,
+            "Bank Transfer" => PaymentMethod.BankTransfer,
             "Check" => PaymentMethod.Check,
+            "PayPal" => PaymentMethod.PayPal,
+            "Stripe" => PaymentMethod.Stripe,
+            "Square" => PaymentMethod.Square,
+            "Other" => PaymentMethod.Other,
             _ => PaymentMethod.Cash
         };
 
@@ -541,7 +548,14 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var newPaymentMethod = ModalPaymentMethod switch
         {
             "Cash" => PaymentMethod.Cash,
+            "Credit Card" => PaymentMethod.CreditCard,
+            "Debit Card" => PaymentMethod.DebitCard,
+            "Bank Transfer" => PaymentMethod.BankTransfer,
             "Check" => PaymentMethod.Check,
+            "PayPal" => PaymentMethod.PayPal,
+            "Stripe" => PaymentMethod.Stripe,
+            "Square" => PaymentMethod.Square,
+            "Other" => PaymentMethod.Other,
             _ => PaymentMethod.Cash
         };
         var newReferenceNumber = string.IsNullOrWhiteSpace(ModalReferenceNumber) ? null : ModalReferenceNumber.Trim();

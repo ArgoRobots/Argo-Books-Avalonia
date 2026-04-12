@@ -94,7 +94,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
             return AdjustmentType switch
             {
                 "Add" => (SelectedInventoryItem.InStock + qty).ToString(),
-                "Remove" => Math.Max(0, SelectedInventoryItem.InStock - qty).ToString(),
+                "Remove" => (SelectedInventoryItem.InStock - qty).ToString(),
                 "Set" => qty.ToString(),
                 _ => SelectedInventoryItem.InStock.ToString()
             };

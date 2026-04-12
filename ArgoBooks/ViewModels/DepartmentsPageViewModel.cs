@@ -460,7 +460,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Generate new ID
         companyData.IdCounters.Department++;
-        var newId = $"DEP-{companyData.IdCounters.Department:D3}";
+        var newId = $"DEPT-{companyData.IdCounters.Department:D3}";
 
         var newDepartment = new Department
         {

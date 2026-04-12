@@ -110,7 +110,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     #endregion
 
-    #region Step 3: Security & Logo
+    #region Step 2: Security & Logo
 
     [ObservableProperty]
     private bool _enablePassword;

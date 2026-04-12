@@ -840,7 +840,6 @@ internal class TransactionState
 {
     public DateTime Date { get; set; }
     public string? CounterpartyId { get; set; }
-    public string? CategoryId { get; set; }
     public string Description { get; set; } = string.Empty;
     public List<LineItem> LineItems { get; set; } = [];
     public decimal Quantity { get; set; }

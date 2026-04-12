@@ -92,7 +92,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = ColumnVisibilityHelper.Load("Expenses", "Id", true);
 
     [ObservableProperty]
-    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Expenses", "Accountant", false); // No Accountant column in Expenses UI
+    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Expenses", "Accountant", false);
 
     [ObservableProperty]
     private bool _showProductColumn = ColumnVisibilityHelper.Load("Expenses", "Product", true);
@@ -406,9 +406,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             companyData?.Returns
                 .Where(r => r.Status == ReturnStatus.Completed)
                 .Select(r => r.OriginalTransactionId ?? "") ?? []);
-        var returnIds = new HashSet<string>(
-            companyData?.Returns.Select(r => r.OriginalTransactionId ?? "") ?? []);
-
         IEnumerable<Expense> filtered = _allExpenses;
 
         // Apply search filter
@@ -432,7 +429,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(p => GetStatusDisplay(p, lostDamagedIds, returnedIds, returnIds) == FilterStatus);
+            filtered = filtered.Where(p => GetStatusDisplay(p, lostDamagedIds, returnedIds) == FilterStatus);
         }
 
         // Apply supplier filter
@@ -495,7 +492,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
-            var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, lostDamagedIds, returnedIds, returnIds);
+            var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, lostDamagedIds, returnedIds);
             var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
@@ -592,7 +589,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         return (firstName, $" +{remaining} more");
     }
 
-    private static string GetStatusDisplay(Expense purchase, HashSet<string> lostDamagedIds, HashSet<string> returnedIds, HashSet<string> returnIds)
+    private static string GetStatusDisplay(Expense purchase, HashSet<string> lostDamagedIds, HashSet<string> returnedIds)
     {
         if (lostDamagedIds.Contains(purchase.Id)) return "Lost / Damaged";
         if (returnedIds.Contains(purchase.Id)) return "Returned";

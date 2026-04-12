@@ -271,7 +271,7 @@ public class App : Application
         }
     }
 
-    private static bool _isAutoSyncing;
+    private static int _isAutoSyncing;
     private static Timer? _portalSyncTimer;
 
     /// <summary>
@@ -280,8 +280,7 @@ public class App : Application
     /// </summary>
     internal static async Task AutoSyncPortalPaymentsAsync()
     {
-        if (_isAutoSyncing) return;
-        _isAutoSyncing = true;
+        if (Interlocked.CompareExchange(ref _isAutoSyncing, 1, 0) != 0) return;
         try
         {
             var portalService = PaymentPortalService;
@@ -359,7 +358,7 @@ public class App : Application
         }
         finally
         {
-            _isAutoSyncing = false;
+            Interlocked.Exchange(ref _isAutoSyncing, 0);
         }
     }
 

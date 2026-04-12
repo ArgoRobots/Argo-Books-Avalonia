@@ -168,11 +168,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             MaxRows = 0
         };
 
-        var sales = filters.TransactionType is TransactionType.Revenue
+        var sales = filters.TransactionType is not TransactionType.Expenses
             ? GetRevenueTableData(noMaxConfig)
             : [];
 
-        var purchases = filters.TransactionType is TransactionType.Expenses
+        var purchases = filters.TransactionType is not TransactionType.Revenue
             ? GetExpensesTableData(noMaxConfig)
             : [];
 

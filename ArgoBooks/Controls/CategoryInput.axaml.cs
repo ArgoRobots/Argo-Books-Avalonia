@@ -276,6 +276,24 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         UpdateSearchText();
     }
 
+    protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_categorySearchBox != null)
+        {
+            _categorySearchBox.GotFocus -= OnCategorySearchBoxGotFocus;
+            _categorySearchBox.KeyDown -= OnCategorySearchBoxKeyDown;
+        }
+
+        if (_categoryListBox != null)
+        {
+            _categoryListBox.DoubleTapped -= OnCategoryListBoxDoubleTapped;
+            _categoryListBox.PointerWheelChanged -= OnCategoryListBoxPointerWheelChanged;
+            _categoryListBox.PointerReleased -= OnCategoryListBoxPointerReleased;
+        }
+    }
+
     private void OnCategoryListBoxPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         e.Handled = true;

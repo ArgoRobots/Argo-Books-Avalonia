@@ -226,19 +226,6 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Clears the tutorial company association (called when tutorial is completed).
-    /// </summary>
-    private void ClearTutorialCompanyPath()
-    {
-        var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null)
-        {
-            settings.Tutorial.TutorialStartedOnCompanyPath = null;
-            SaveSettings();
-        }
-    }
-
-    /// <summary>
     /// Initializes the tutorial service for a new user if needed.
     /// Also records the current company as the tutorial company.
     /// </summary>

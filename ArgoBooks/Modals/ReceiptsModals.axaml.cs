@@ -208,8 +208,9 @@ public partial class ReceiptsModals : UserControl
         double imageWidth = 0, imageHeight = 0;
         if (ScanPreviewImage.Source is Bitmap bitmap)
         {
-            imageWidth = bitmap.PixelSize.Width;
-            imageHeight = bitmap.PixelSize.Height;
+            // Use DIP bounds when available (correct on HiDPI); fall back to PixelSize
+            imageWidth = ScanPreviewImage.Bounds.Width > 0 ? ScanPreviewImage.Bounds.Width : bitmap.PixelSize.Width;
+            imageHeight = ScanPreviewImage.Bounds.Height > 0 ? ScanPreviewImage.Bounds.Height : bitmap.PixelSize.Height;
         }
 
         if (imageWidth <= 0 || imageHeight <= 0) return;

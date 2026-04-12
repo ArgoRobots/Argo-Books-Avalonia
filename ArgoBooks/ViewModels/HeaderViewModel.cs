@@ -135,9 +135,6 @@ public partial class HeaderViewModel : ViewModelBase
     private string? _userRole;
 
     [ObservableProperty]
-    private bool _showUserName;
-
-    [ObservableProperty]
     private bool _showUserInitials;
 
     [ObservableProperty]
@@ -660,6 +657,10 @@ public partial class HeaderViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "ShowSavedFeedback");
+        }
+        finally
+        {
+            _savedFeedbackCts = null;
         }
     }
 

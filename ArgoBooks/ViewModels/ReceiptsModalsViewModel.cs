@@ -2524,7 +2524,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Generate ID
         companyData.IdCounters.Supplier++;
-        var newId = $"SUP-{companyData.IdCounters.Supplier:D4}";
+        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
 
         // Create supplier
         var newSupplier = new Supplier

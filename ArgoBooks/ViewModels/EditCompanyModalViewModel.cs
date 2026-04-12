@@ -378,7 +378,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             var preloadTask = PreloadExchangeRatesForCurrencyAsync(_pendingCurrencyCode, _currencyLoadingCts.Token);
             var minimumDisplayTask = Task.Delay(1000, _currencyLoadingCts.Token);
             await Task.WhenAll(preloadTask, minimumDisplayTask);
-            success = await preloadTask;
+            success = preloadTask.Result;
         }
         catch (OperationCanceledException)
         {

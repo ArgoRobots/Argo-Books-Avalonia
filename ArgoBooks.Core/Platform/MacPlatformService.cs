@@ -48,7 +48,7 @@ public class MacPlatformService : BasePlatformService
     }
 
     /// <inheritdoc />
-    public override bool SupportsBiometrics => true; // Touch ID
+    public override bool SupportsBiometrics => false; // Touch ID not yet implemented
 
     /// <inheritdoc />
     public override bool SupportsAutoUpdate => true;

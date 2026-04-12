@@ -164,14 +164,12 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     #region Commands
 
     public ICommand ToggleDropdownCommand { get; }
-    public ICommand SelectCountryCommand { get; }
 
     #endregion
 
     public CountryInput()
     {
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
-        SelectCountryCommand = new RelayCommand<CountryDialCode>(SelectCountry);
 
         InitializeComponent();
 
@@ -221,6 +219,24 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             _countryListBox.DoubleTapped += OnCountryListBoxDoubleTapped;
             _countryListBox.PointerWheelChanged += OnCountryListBoxPointerWheelChanged;
             _countryListBox.PointerReleased += OnCountryListBoxPointerReleased;
+        }
+    }
+
+    protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (_countrySearchBox != null)
+        {
+            _countrySearchBox.GotFocus -= OnCountrySearchBoxGotFocus;
+            _countrySearchBox.KeyDown -= OnCountrySearchBoxKeyDown;
+        }
+
+        if (_countryListBox != null)
+        {
+            _countryListBox.DoubleTapped -= OnCountryListBoxDoubleTapped;
+            _countryListBox.PointerWheelChanged -= OnCountryListBoxPointerWheelChanged;
+            _countryListBox.PointerReleased -= OnCountryListBoxPointerReleased;
         }
     }
 

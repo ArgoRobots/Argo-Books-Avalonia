@@ -1145,7 +1145,7 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ExpenseColor));
 
         StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
