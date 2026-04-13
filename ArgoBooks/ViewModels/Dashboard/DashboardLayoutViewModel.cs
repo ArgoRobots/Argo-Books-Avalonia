@@ -249,10 +249,6 @@ public partial class DashboardLayoutViewModel : ObservableObject
             {
                 UnwireWidgetEvent(widget);
                 widget.Cleanup();
-
-                if (row.Widgets.Count == 0)
-                    Rows.Remove(row);
-
                 break;
             }
         }
