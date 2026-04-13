@@ -205,34 +205,12 @@ public partial class DashboardPage : UserControl
                     && args.OldStartingIndex >= 0
                     && args.OldStartingIndex < capturedRowHost.Panel.Children.Count)
                 {
-                    // Snapshot each widget's current visual position before removing,
-                    // so they don't jump when the row switches from full to partial mode
-                    var panel = capturedRowHost.Panel;
-                    var panelWidth = panel.Bounds.Width;
-                    var snapshots = new Dictionary<Control, double>();
-                    if (panelWidth > 0)
-                    {
-                        foreach (var child in panel.Children)
-                        {
-                            if (child != panel.Children[args.OldStartingIndex])
-                                snapshots[child] = child.Bounds.Left / panelWidth;
-                        }
-                    }
-
                     // Remove the visual child without rebuilding — avoids chart reload
+                    var panel = capturedRowHost.Panel;
                     var removeChild = panel.Children[args.OldStartingIndex];
                     if (removeChild is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
                         oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
                     panel.Children.RemoveAt(args.OldStartingIndex);
-
-                    // Apply snapshotted positions so widgets stay where they were
-                    foreach (var (child, offset) in snapshots)
-                    {
-                        var snapped = Math.Round(offset * 4) / 4;
-                        DashboardRowPanel.SetStartOffset(child, snapped);
-                        if (child.DataContext is WidgetHostViewModel vm)
-                            vm.StartOffset = snapped;
-                    }
                     panel.InvalidateArrange();
                 }
                 else if (args.Action == NotifyCollectionChangedAction.Add

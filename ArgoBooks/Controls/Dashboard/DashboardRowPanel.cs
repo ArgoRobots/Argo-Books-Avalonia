@@ -90,44 +90,50 @@ public class DashboardRowPanel : Panel
             rowHeight = Math.Max(rowHeight, child.DesiredSize.Height);
         }
 
+        // Use consistent width calculation for both full and partial modes
+        var childWidthFor = (double fraction) =>
+            availableForWidgets * fraction * (isFull ? scaleFactor : 1.0);
+
         if (isFull)
         {
-            // Full row: pack left-to-right (offsets ignored)
+            // Full row: pack left-to-right and sync StartOffset so partial
+            // mode reads correct positions if a widget is later removed
             double x = 0;
+            double cumFraction = 0;
             foreach (var child in Children)
             {
                 if (!child.IsVisible) continue;
                 var fraction = GetWidgetFraction(child);
                 if (fraction <= 0) fraction = 0.5;
-                var childWidth = availableForWidgets * fraction * scaleFactor;
+                var childWidth = childWidthFor(fraction);
                 child.Arrange(new Rect(x, 0, childWidth, rowHeight));
+                SetStartOffset(child, x / panelWidth);
+                cumFraction += fraction;
                 x += childWidth + Spacing;
             }
         }
         else
         {
-            // Partial row: pack left-to-right with spacing, using StartOffset
-            // to leave gaps where widgets were removed
-            double x = 0;
-            int placed = 0;
-            // Sort by offset to determine visual order
+            // Partial row: use StartOffset for positioning to preserve gaps
             var sorted = Children
                 .Where(c => c.IsVisible)
                 .OrderBy(c => GetStartOffset(c))
                 .ToList();
 
+            double x = 0;
             foreach (var child in sorted)
             {
                 var fraction = GetWidgetFraction(child);
                 if (fraction <= 0) fraction = 0.5;
                 var offset = GetStartOffset(child);
                 var slotX = panelWidth * offset;
-                // Use the greater of packed position or offset position to preserve gaps
                 var actualX = Math.Max(x, slotX);
-                var childWidth = (panelWidth - Math.Max(0, visibleCount - 1) * Spacing) * fraction;
+                var childWidth = childWidthFor(fraction);
+                // Clamp so widget never overflows the row
+                if (actualX + childWidth > panelWidth)
+                    actualX = Math.Max(0, panelWidth - childWidth);
                 child.Arrange(new Rect(actualX, 0, childWidth, rowHeight));
                 x = actualX + childWidth + Spacing;
-                placed++;
             }
         }
 
