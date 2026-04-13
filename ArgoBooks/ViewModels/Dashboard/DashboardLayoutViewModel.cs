@@ -219,15 +219,25 @@ public partial class DashboardLayoutViewModel : ObservableObject
             Rows.Add(targetRow);
         }
 
-        var entry = new DashboardWidgetEntry(def.Type, def.DefaultSize);
+        // Use default size, or shrink to the smallest available size that fits
+        var size = def.DefaultSize;
+        if (!targetRow.CanFit(size))
+        {
+            var fittingSize = def.AvailableSizes
+                .OrderBy(s => s.ToFraction())
+                .Cast<WidgetSize?>()
+                .FirstOrDefault(s => targetRow.CanFit(s!.Value));
+            if (fittingSize == null)
+            {
+                _targetRowForAdd = null;
+                return;
+            }
+            size = fittingSize.Value;
+        }
+
+        var entry = new DashboardWidgetEntry(def.Type, size);
         if (def.ChartDataType.HasValue)
             entry.Config["ChartDataType"] = def.ChartDataType.Value.ToString();
-
-        if (!targetRow.CanFit(entry.Size))
-        {
-            _targetRowForAdd = null;
-            return;
-        }
 
         var host = WidgetFactory.CreateWidgetHost(entry);
         host.SetCompanyManager(_companyManager);

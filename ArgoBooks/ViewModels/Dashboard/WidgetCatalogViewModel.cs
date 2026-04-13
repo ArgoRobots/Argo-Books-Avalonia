@@ -52,7 +52,7 @@ public partial class WidgetCatalogViewModel : ObservableObject
                 IsAlreadyAdded = d.ChartDataType.HasValue
                     ? placedChartTypes.Contains(d.ChartDataType.Value)
                     : placedTypes.Contains(d.Type),
-                CannotFitInRow = d.DefaultSize.ToFraction() > remainingFraction + 0.001
+                CannotFitInRow = d.AvailableSizes.Min(s => s.ToFraction()) > remainingFraction + 0.001
             };
 
             if (StatCardCategories.Contains(d.Category))

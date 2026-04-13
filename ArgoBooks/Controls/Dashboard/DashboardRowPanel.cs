@@ -106,16 +106,28 @@ public class DashboardRowPanel : Panel
         }
         else
         {
-            // Partial row: respect StartOffset for positioning
-            foreach (var child in Children)
+            // Partial row: pack left-to-right with spacing, using StartOffset
+            // to leave gaps where widgets were removed
+            double x = 0;
+            int placed = 0;
+            // Sort by offset to determine visual order
+            var sorted = Children
+                .Where(c => c.IsVisible)
+                .OrderBy(c => GetStartOffset(c))
+                .ToList();
+
+            foreach (var child in sorted)
             {
-                if (!child.IsVisible) continue;
                 var fraction = GetWidgetFraction(child);
                 if (fraction <= 0) fraction = 0.5;
                 var offset = GetStartOffset(child);
-                var childWidth = panelWidth * fraction;
-                var x = panelWidth * offset;
-                child.Arrange(new Rect(x, 0, childWidth, rowHeight));
+                var slotX = panelWidth * offset;
+                // Use the greater of packed position or offset position to preserve gaps
+                var actualX = Math.Max(x, slotX);
+                var childWidth = (panelWidth - Math.Max(0, visibleCount - 1) * Spacing) * fraction;
+                child.Arrange(new Rect(actualX, 0, childWidth, rowHeight));
+                x = actualX + childWidth + Spacing;
+                placed++;
             }
         }
 

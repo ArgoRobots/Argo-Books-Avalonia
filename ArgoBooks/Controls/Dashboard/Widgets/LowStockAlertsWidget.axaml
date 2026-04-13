@@ -79,7 +79,7 @@
                                                    Foreground="{DynamicResource DangerBrush}" />
                                         <TextBlock Text="{loc:Loc 'in stock'}"
                                                    FontSize="12"
-                                                   Foreground="{DynamicResource TextMutedBrush}" />
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
