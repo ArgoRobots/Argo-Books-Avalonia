@@ -91,6 +91,7 @@ public partial class DashboardPage : UserControl
             _previousViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
             _previousViewModel.ExcelExportRequested -= OnExcelExportRequested;
             _previousViewModel.LayoutViewModel.Rows.CollectionChanged -= OnRowsCollectionChanged;
+            _previousViewModel.LayoutViewModel.PropertyChanged -= OnLayoutPropertyChanged;
             _previousViewModel = null;
         }
 
@@ -100,8 +101,28 @@ public partial class DashboardPage : UserControl
             viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
             viewModel.ExcelExportRequested += OnExcelExportRequested;
             viewModel.LayoutViewModel.Rows.CollectionChanged += OnRowsCollectionChanged;
+            viewModel.LayoutViewModel.PropertyChanged += OnLayoutPropertyChanged;
             RebuildRows(viewModel.LayoutViewModel);
+            UpdateEmptyMessageVisibility(viewModel.LayoutViewModel);
         }
+    }
+
+    private void OnLayoutPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DashboardLayoutViewModel.HasWidgets)
+            or nameof(DashboardLayoutViewModel.HasNoWidgets)
+            or nameof(DashboardLayoutViewModel.IsEditMode))
+        {
+            if (sender is DashboardLayoutViewModel layoutVm)
+                UpdateEmptyMessageVisibility(layoutVm);
+        }
+    }
+
+    private void UpdateEmptyMessageVisibility(DashboardLayoutViewModel layoutVm)
+    {
+        var isEmpty = !layoutVm.HasWidgets;
+        EmptyDashboardMessage.IsVisible = isEmpty && !layoutVm.IsEditMode;
+        EmptyDashboardEditMessage.IsVisible = isEmpty && layoutVm.IsEditMode;
     }
 
     #region Row Panel Management
@@ -185,7 +206,10 @@ public partial class DashboardPage : UserControl
                 hostVm.WidgetViewModel.PropertyChanged += (_, args) =>
                 {
                     if (args.PropertyName == nameof(WidgetViewModelBase.IsWidgetVisible))
+                    {
                         UpdateRowVisibility(capturedHost, capturedVm);
+                        UpdateEmptyMessageVisibility(layoutVm);
+                    }
                 };
             }
 

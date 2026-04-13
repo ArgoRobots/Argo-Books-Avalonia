@@ -155,8 +155,9 @@
                         ShowDateRangeMessage="True" />
                 </Border>
 
-                <!-- Empty dashboard message (shown when all widgets are removed) -->
-                <Border IsVisible="{Binding !LayoutViewModel.HasWidgets}"
+                <!-- Empty dashboard message — normal mode -->
+                <Border x:Name="EmptyDashboardMessage"
+                        IsVisible="False"
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
@@ -178,11 +179,45 @@
                                    TextWrapping="Wrap"
                                    TextAlignment="Center"
                                    MaxWidth="400" />
-                        <Button Content="Edit Dashboard"
-                                Classes="edit-toolbar-btn primary"
-                                HorizontalAlignment="Center"
-                                Margin="0,8,0,0"
-                                Command="{Binding LayoutViewModel.EnterEditModeCommand}" />
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Spacing="8"
+                                    Margin="0,8,0,0">
+                            <Button Content="Edit Dashboard"
+                                    Classes="edit-toolbar-btn primary"
+                                    Command="{Binding LayoutViewModel.EnterEditModeCommand}" />
+                            <Button Content="Reset to Default"
+                                    Classes="edit-toolbar-btn"
+                                    Command="{Binding LayoutViewModel.ResetToDefaultCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Empty dashboard message — edit mode -->
+                <Border x:Name="EmptyDashboardEditMessage"
+                        IsVisible="False"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="40"
+                        HorizontalAlignment="Stretch"
+                        Opacity="0.7">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                        <TextBlock Text="No widgets on your dashboard"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Use 'Add Widget' above to get started, or click 'Reset to Default' to restore the default layout."
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   MaxWidth="400" />
                     </StackPanel>
                 </Border>
 

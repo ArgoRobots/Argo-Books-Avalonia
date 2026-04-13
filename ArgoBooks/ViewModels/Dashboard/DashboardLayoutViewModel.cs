@@ -15,9 +15,11 @@ public partial class DashboardLayoutViewModel : ObservableObject
     [ObservableProperty] private bool _isEditMode;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasWidgets))]
+    [NotifyPropertyChangedFor(nameof(HasNoWidgets))]
     private ObservableCollection<DashboardRowViewModel> _rows = [];
 
-    public bool HasWidgets => Rows.Any(r => r.Widgets.Count > 0);
+    public bool HasWidgets => Rows.Any(r => r.Widgets.Any(w => w.WidgetViewModel.IsWidgetVisible));
+    public bool HasNoWidgets => !HasWidgets;
     public WidgetCatalogViewModel Catalog { get; } = new();
 
     private DashboardRowViewModel? _targetRowForAdd;
@@ -64,6 +66,8 @@ public partial class DashboardLayoutViewModel : ObservableObject
             }
             Rows.Add(rowVm);
         }
+        OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
     }
 
     private void WireUpWidgetEvents(WidgetHostViewModel host)
@@ -135,6 +139,8 @@ public partial class DashboardLayoutViewModel : ObservableObject
             if (Rows[i].Widgets.Count == 0)
                 Rows.RemoveAt(i);
         }
+        OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
 
         foreach (var row in Rows)
         {
@@ -179,6 +185,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         var row = new DashboardRowViewModel { IsEditMode = true };
         Rows.Add(row);
         OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
     }
 
     public void RemoveRow(DashboardRowViewModel row)
@@ -191,6 +198,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         Rows.Remove(row);
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
         OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
     }
 
     public void OpenCatalogForRow(DashboardRowViewModel row)
@@ -253,6 +261,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
         _targetRowForAdd = null;
         OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
     }
 
     [RelayCommand]
@@ -269,6 +278,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
         }
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
         OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
     }
 
     private static void RecalculateRowOffsets(DashboardRowViewModel row)
@@ -301,6 +311,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
             Rows.Remove(sourceRow);
 
         OnPropertyChanged(nameof(HasWidgets));
+        OnPropertyChanged(nameof(HasNoWidgets));
         return true;
     }
 
