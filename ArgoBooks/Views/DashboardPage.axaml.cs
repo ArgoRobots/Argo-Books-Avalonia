@@ -205,15 +205,18 @@ public partial class DashboardPage : UserControl
                     && args.OldStartingIndex >= 0
                     && args.OldStartingIndex < capturedRowHost.Panel.Children.Count)
                 {
-                    // Capture current positions before removing
+                    // Snapshot each widget's current visual position before removing,
+                    // so they don't jump when the row switches from full to partial mode
                     var panel = capturedRowHost.Panel;
-                    var positions = new List<double>();
-                    double cumOffset = 0;
-                    for (int i = 0; i < panel.Children.Count; i++)
+                    var panelWidth = panel.Bounds.Width;
+                    var snapshots = new Dictionary<Control, double>();
+                    if (panelWidth > 0)
                     {
-                        if (i == args.OldStartingIndex) { cumOffset += DashboardRowPanel.GetWidgetFraction(panel.Children[i]); continue; }
-                        positions.Add(cumOffset);
-                        cumOffset += DashboardRowPanel.GetWidgetFraction(panel.Children[i]);
+                        foreach (var child in panel.Children)
+                        {
+                            if (child != panel.Children[args.OldStartingIndex])
+                                snapshots[child] = child.Bounds.Left / panelWidth;
+                        }
                     }
 
                     // Remove the visual child without rebuilding — avoids chart reload
@@ -222,13 +225,13 @@ public partial class DashboardPage : UserControl
                         oldVm.PropertyChanged -= OnWidgetHostPropertyChanged;
                     panel.Children.RemoveAt(args.OldStartingIndex);
 
-                    // Assign offsets so remaining widgets stay in their grid positions
-                    for (int i = 0; i < panel.Children.Count && i < positions.Count; i++)
+                    // Apply snapshotted positions so widgets stay where they were
+                    foreach (var (child, offset) in snapshots)
                     {
-                        var offset = Math.Round(positions[i] * 4) / 4; // snap to grid
-                        DashboardRowPanel.SetStartOffset(panel.Children[i], offset);
-                        if (panel.Children[i].DataContext is WidgetHostViewModel vm)
-                            vm.StartOffset = offset;
+                        var snapped = Math.Round(offset * 4) / 4;
+                        DashboardRowPanel.SetStartOffset(child, snapped);
+                        if (child.DataContext is WidgetHostViewModel vm)
+                            vm.StartOffset = snapped;
                     }
                     panel.InvalidateArrange();
                 }

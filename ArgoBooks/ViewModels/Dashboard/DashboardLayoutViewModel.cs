@@ -233,6 +233,11 @@ public partial class DashboardLayoutViewModel : ObservableObject
         host.SetCompanyManager(_companyManager);
         WireUpWidgetEvents(host);
         host.IsEditMode = true;
+
+        // Position after existing widgets so they don't stack at offset 0
+        double usedFraction = targetRow.Widgets.Sum(w => w.Size.ToFraction());
+        host.StartOffset = usedFraction;
+
         host.LoadData();
         targetRow.Widgets.Add(host);
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
@@ -254,6 +259,16 @@ public partial class DashboardLayoutViewModel : ObservableObject
         }
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
         OnPropertyChanged(nameof(HasWidgets));
+    }
+
+    private static void RecalculateRowOffsets(DashboardRowViewModel row)
+    {
+        double offset = 0;
+        foreach (var w in row.Widgets)
+        {
+            w.StartOffset = offset;
+            offset += w.Size.ToFraction();
+        }
     }
 
 
