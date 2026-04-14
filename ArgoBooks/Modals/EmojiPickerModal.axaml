@@ -33,7 +33,7 @@
                     <Border Grid.Row="1" Padding="16,12">
                         <TextBox Text="{Binding SearchText, Mode=TwoWay}"
                                  Classes="form-input"
-                                 Watermark="{loc:Loc 'Search emojis...'}"
+                                 PlaceholderText="{loc:Loc 'Search emojis...'}"
                                  MaxLength="50">
                             <TextBox.InnerRightContent>
                                 <Button Classes="icon-button"

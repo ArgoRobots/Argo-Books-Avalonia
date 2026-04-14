@@ -78,7 +78,7 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="0.00"
+                                         PlaceholderText="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                          MaxLength="13" />
                                 <TextBlock Text="{Binding ModalAmountError}"
@@ -116,7 +116,7 @@
                                 <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'Check number, transaction ID, etc.'}"
+                                         PlaceholderText="{loc:Loc 'Check number, transaction ID, etc.'}"
                                          MaxLength="50" />
                             </StackPanel>
 
@@ -125,7 +125,7 @@
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'Enter notes'}"
+                                         PlaceholderText="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
@@ -204,7 +204,7 @@
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="0.00"
+                                         PlaceholderText="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                          MaxLength="13" />
                                 <TextBlock Text="{Binding ModalAmountError}"
@@ -242,7 +242,7 @@
                                 <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'Check number, transaction ID, etc.'}"
+                                         PlaceholderText="{loc:Loc 'Check number, transaction ID, etc.'}"
                                          MaxLength="50" />
                             </StackPanel>
 
@@ -251,7 +251,7 @@
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'Enter notes'}"
+                                         PlaceholderText="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
@@ -357,11 +357,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
+                                        <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" PlaceholderText="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
+                                        <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" PlaceholderText="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>

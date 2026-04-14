@@ -229,7 +229,7 @@
                                          TextWrapping="Wrap"
                                          MinHeight="60"
                                          MaxHeight="100"
-                                         Watermark="{loc:Loc 'Additional notes for this order...'}"
+                                         PlaceholderText="{loc:Loc 'Additional notes for this order...'}"
                                          MaxLength="500" />
                             </StackPanel>
 

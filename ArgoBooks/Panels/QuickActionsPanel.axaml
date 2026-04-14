@@ -36,7 +36,7 @@
                         <TextBox x:Name="SearchInput"
                                  Grid.Column="1"
                                  Classes="search-input"
-                                 Watermark="{loc:Loc 'Type to search...'}"
+                                 PlaceholderText="{loc:Loc 'Type to search...'}"
                                  Text="{Binding SearchQuery, Mode=TwoWay}"
                                  BorderThickness="0"
                                  Background="Transparent"

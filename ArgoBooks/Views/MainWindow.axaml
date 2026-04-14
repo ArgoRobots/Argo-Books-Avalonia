@@ -21,15 +21,92 @@
         Background="{DynamicResource BackgroundBrush}"
         TransparencyLevelHint="AcrylicBlur"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="PreferSystemChrome"
         ExtendClientAreaTitleBarHeightHint="40"
-        SystemDecorations="Full">
+        WindowDecorations="BorderOnly">
+
+    <Window.Styles>
+        <!-- Caption button hover effects -->
+        <Style Selector="Button.caption-btn:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#20FFFFFF" />
+        </Style>
+        <Style Selector="Button.caption-close:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#E81123" />
+        </Style>
+        <Style Selector="Button.caption-close:pointerover Line">
+            <Setter Property="Stroke" Value="White" />
+        </Style>
+    </Window.Styles>
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
     <Panel>
+        <!-- Window Caption Buttons — high ZIndex so they're always visible above all overlays -->
+        <StackPanel x:Name="WindowControls"
+                    ZIndex="200"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Height="40">
+            <!-- Minimize -->
+            <Button Classes="caption-btn"
+                    Click="MinimizeButton_Click"
+                    Width="46" Height="40"
+                    Background="Transparent"
+                    BorderThickness="0" CornerRadius="0" Padding="0"
+                    VerticalContentAlignment="Center"
+                    HorizontalContentAlignment="Center">
+                <!-- Horizontal line (filled rectangle) -->
+                <Border Width="10" Height="1" Background="{DynamicResource TextPrimaryBrush}" />
+            </Button>
+            <!-- Maximize / Restore -->
+            <Button Classes="caption-btn"
+                    Click="MaximizeButton_Click"
+                    Width="46" Height="40"
+                    Background="Transparent"
+                    BorderThickness="0" CornerRadius="0" Padding="0"
+                    VerticalContentAlignment="Center"
+                    HorizontalContentAlignment="Center">
+                <Panel Width="10" Height="10">
+                    <!-- Maximize icon (single rectangle) -->
+                    <Border x:Name="MaximizeRect"
+                            Width="10" Height="10"
+                            BorderBrush="{DynamicResource TextPrimaryBrush}"
+                            BorderThickness="1" />
+                    <!-- Restore icon (two overlapping rectangles — back one shows only top and right edges) -->
+                    <Canvas x:Name="RestoreIcon" IsVisible="False" Width="10" Height="10">
+                        <!-- Front rectangle (full outline) -->
+                        <Border Width="8" Height="8"
+                                BorderBrush="{DynamicResource TextPrimaryBrush}"
+                                BorderThickness="1"
+                                Canvas.Left="0" Canvas.Top="2" />
+                        <!-- Back rectangle — top edge only -->
+                        <Line StartPoint="2,0" EndPoint="10,0"
+                              Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" />
+                        <!-- Back rectangle — right edge only -->
+                        <Line StartPoint="10,0" EndPoint="10,8"
+                              Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" />
+                    </Canvas>
+                </Panel>
+            </Button>
+            <!-- Close -->
+            <Button Classes="caption-btn caption-close"
+                    Click="CloseButton_Click"
+                    Width="46" Height="40"
+                    Background="Transparent"
+                    BorderThickness="0" CornerRadius="0" Padding="0"
+                    VerticalContentAlignment="Center"
+                    HorizontalContentAlignment="Center">
+                <Canvas Width="10" Height="10">
+                    <Line StartPoint="0,0" EndPoint="10,10"
+                          Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" />
+                    <Line StartPoint="10,0" EndPoint="0,10"
+                          Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" />
+                </Canvas>
+            </Button>
+        </StackPanel>
+
         <!-- Modal Overlay (behind content but available for modals) -->
         <controls:ModalOverlay x:Name="ModalOverlay"
                                ZIndex="100" />
@@ -76,14 +153,8 @@
                             Background="Transparent"
                             x:Name="DragRegion" />
 
-                    <!-- Window Controls placeholder - handled by system on most platforms -->
-                    <StackPanel Grid.Column="2"
-                                Orientation="Horizontal"
-                                Margin="0,0,8,0"
-                                IsVisible="False"
-                                x:Name="WindowControls">
-                        <!-- Custom window controls if needed -->
-                    </StackPanel>
+                    <!-- Spacer for caption buttons (they're in a high-ZIndex layer above) -->
+                    <Border Grid.Column="2" Width="138" />
                 </Grid>
             </Border>
 

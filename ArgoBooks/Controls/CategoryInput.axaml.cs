@@ -315,7 +315,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private void OnCategorySearchBoxGotFocus(object? sender, GotFocusEventArgs e)
+    private void OnCategorySearchBoxGotFocus(object? sender, FocusChangedEventArgs e)
     {
         IsDropdownOpen = true;
         _categorySearchBox?.SelectAll();

@@ -167,14 +167,18 @@ public partial class DashboardLayoutViewModel : ObservableObject
     [RelayCommand]
     private void ResetToDefault()
     {
+        var wasEditMode = IsEditMode;
         var layout = DashboardLayout.CreateDefault();
         LoadFromLayout(layout);
         LoadAllWidgetData();
-        foreach (var row in Rows)
+        if (wasEditMode)
         {
-            row.IsEditMode = true;
-            foreach (var w in row.Widgets)
-                w.IsEditMode = true;
+            foreach (var row in Rows)
+            {
+                row.IsEditMode = true;
+                foreach (var w in row.Widgets)
+                    w.IsEditMode = true;
+            }
         }
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
     }

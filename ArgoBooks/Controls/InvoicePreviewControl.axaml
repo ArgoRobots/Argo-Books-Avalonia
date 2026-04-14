@@ -10,9 +10,11 @@
     <Grid RowDefinitions="*,Auto">
         <!-- Main content panel -->
         <Panel x:Name="RootPanel" Grid.Row="0">
-            <!-- Windows: WebView2 content will be injected here programmatically -->
+            <!-- Cross-platform WebView for HTML/PDF rendering -->
+            <NativeWebView x:Name="WebView"
+                           IsVisible="False" />
 
-            <!-- Non-Windows Fallback (shown when platform is not Windows) -->
+            <!-- Linux Fallback (NativeWebView doesn't embed inline on Linux) -->
             <Border x:Name="FallbackPanel"
                     Background="{DynamicResource SurfaceAltBrush}"
                     CornerRadius="8"
@@ -27,20 +29,12 @@
                             CornerRadius="50"
                             Width="80" Height="80"
                             HorizontalAlignment="Center">
-                        <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                        <PathIcon Data="{x:Static icons:Icons.OpenExternal}"
                                   Width="40" Height="40"
                                   Foreground="{DynamicResource PrimaryBrush}"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />
                     </Border>
-
-                    <!-- Title -->
-                    <TextBlock Text="{loc:Loc 'Preview Not Available'}"
-                               FontSize="20"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}"
-                               TextAlignment="Center"
-                               HorizontalAlignment="Center" />
 
                     <!-- Message -->
                     <TextBlock TextWrapping="Wrap"
@@ -48,10 +42,7 @@
                                FontSize="14"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center">
-                        <Run Text="{loc:Loc 'The in-app invoice preview is currently only available on Windows.'}" />
-                        <LineBreak />
-                        <LineBreak />
-                        <Run Text="{loc:Loc 'macOS and Linux support is in development.'}" />
+                        <Run Text="{loc:Loc 'Click below to preview the invoice in your browser.'}" />
                     </TextBlock>
 
                     <!-- View in Browser Button -->
@@ -65,18 +56,11 @@
                             <TextBlock Text="{loc:Loc 'View in Browser'}" FontSize="14" />
                         </StackPanel>
                     </Button>
-
-                    <!-- Additional note -->
-                    <TextBlock Text="{loc:Loc 'The browser preview shows the exact same invoice.'}"
-                               FontSize="12"
-                               Foreground="{DynamicResource TextTertiaryBrush}"
-                               TextAlignment="Center"
-                               HorizontalAlignment="Center" />
                 </StackPanel>
             </Border>
         </Panel>
 
-        <!-- Zoom Controls Toolbar (Windows only, shown at bottom) -->
+        <!-- Zoom Controls Toolbar (shown at bottom when WebView is active) -->
         <Border x:Name="ZoomToolbar"
                 Grid.Row="1"
                 Background="{DynamicResource SurfaceBrush}"

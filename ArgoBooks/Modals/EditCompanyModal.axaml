@@ -65,7 +65,7 @@
                                 </TextBlock>
                                 <TextBox Classes="form-input"
                                          Text="{Binding CompanyName, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter company name'}"
+                                         PlaceholderText="{loc:Loc 'Enter company name'}"
                                          MaxLength="100" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="6">
@@ -129,7 +129,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Classes="form-input"
                                          Text="{Binding Email, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter email address'}"
+                                         PlaceholderText="{loc:Loc 'Enter email address'}"
                                          MaxLength="200" />
                             </StackPanel>
 
@@ -151,7 +151,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Classes="form-input"
                                          Text="{Binding ProvinceState, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter province or state'}"
+                                         PlaceholderText="{loc:Loc 'Enter province or state'}"
                                          MaxLength="100" />
                             </StackPanel>
 
@@ -163,7 +163,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Classes="form-input"
                                          Text="{Binding City, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter city'}"
+                                         PlaceholderText="{loc:Loc 'Enter city'}"
                                          MaxLength="100" />
                             </StackPanel>
 
@@ -175,7 +175,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Classes="form-input"
                                          Text="{Binding Address, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter address'}"
+                                         PlaceholderText="{loc:Loc 'Enter address'}"
                                          MaxLength="200" />
                             </StackPanel>
 

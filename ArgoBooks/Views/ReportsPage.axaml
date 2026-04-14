@@ -604,7 +604,7 @@
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReportName}"
-                                         Watermark="{loc:Loc 'Enter report name...'}"
+                                         PlaceholderText="{loc:Loc 'Enter report name...'}"
                                          Padding="12,10" />
                             </StackPanel>
 
@@ -1675,7 +1675,7 @@
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{loc:Loc 'Report Name'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding ReportName}"
-                                             Watermark="{loc:Loc 'Enter report name...'}"
+                                             PlaceholderText="{loc:Loc 'Enter report name...'}"
                                              Padding="8,6"
                                              FontSize="12" />
                                 </StackPanel>
@@ -1932,7 +1932,7 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <TextBox Text="{Binding ExportFileName}"
-                                     Watermark="{loc:Loc 'Enter file name...'}"
+                                     PlaceholderText="{loc:Loc 'Enter file name...'}"
                                      Padding="12,10" />
                         </StackPanel>
 
@@ -1945,7 +1945,7 @@
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBox Grid.Column="0"
                                          Text="{Binding ExportFilePath}"
-                                         Watermark="{loc:Loc 'Select file path...'}"
+                                         PlaceholderText="{loc:Loc 'Select file path...'}"
                                          Padding="12,10" />
                                 <Button Grid.Column="1"
                                         Classes="toolbar-button"

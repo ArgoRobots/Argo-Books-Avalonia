@@ -139,7 +139,7 @@
                                                                  ErrorMessage="{loc:Loc 'Select an item'}" />
                                                         <TextBox Grid.Column="1"
                                                                  Text="{Binding Quantity, Mode=TwoWay}"
-                                                                 Watermark="1"
+                                                                 PlaceholderText="1"
                                                                  Classes="form-input-compact"
                                                                  behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                                                  MaxLength="7"
@@ -211,7 +211,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes}" Watermark="{loc:Loc 'Optional notes'}" TextWrapping="Wrap" Classes="form-input"
+                                <TextBox Text="{Binding ModalNotes}" PlaceholderText="{loc:Loc 'Optional notes'}" TextWrapping="Wrap" Classes="form-input"
                                          AcceptsReturn="True" MinHeight="80" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
@@ -355,7 +355,7 @@
                                                                  ErrorMessage="{loc:Loc 'Select an item'}" />
                                                         <TextBox Grid.Column="1"
                                                                  Text="{Binding Quantity, Mode=TwoWay}"
-                                                                 Watermark="1"
+                                                                 PlaceholderText="1"
                                                                  Classes="form-input-compact"
                                                                  behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                                                  MaxLength="7"
@@ -427,7 +427,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes}" Watermark="{loc:Loc 'Optional notes'}" TextWrapping="Wrap" Classes="form-input"
+                                <TextBox Text="{Binding ModalNotes}" PlaceholderText="{loc:Loc 'Optional notes'}" TextWrapping="Wrap" Classes="form-input"
                                          AcceptsReturn="True" MinHeight="80" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
@@ -488,13 +488,13 @@
                             <!-- Customer -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Customer}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding FilterCustomer}" Watermark="{loc:Loc 'Search by customer name'}" Classes="form-input" MaxLength="100" />
+                                <TextBox Text="{Binding FilterCustomer}" PlaceholderText="{loc:Loc 'Search by customer name'}" Classes="form-input" MaxLength="100" />
                             </StackPanel>
 
                             <!-- Item -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Rental Item'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding FilterItem}" Watermark="{loc:Loc 'Search by item name'}" Classes="form-input" MaxLength="100" />
+                                <TextBox Text="{Binding FilterItem}" PlaceholderText="{loc:Loc 'Search by item name'}" Classes="form-input" MaxLength="100" />
                             </StackPanel>
 
                             <!-- Start Date Range -->
@@ -633,7 +633,7 @@
                             <!-- Return Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc 'Return Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ReturnNotes}" Watermark="{loc:Loc 'Optional notes about the return'}" TextWrapping="Wrap" Classes="form-input"
+                                <TextBox Text="{Binding ReturnNotes}" PlaceholderText="{loc:Loc 'Optional notes about the return'}" TextWrapping="Wrap" Classes="form-input"
                                          AcceptsReturn="True" MinHeight="60" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>

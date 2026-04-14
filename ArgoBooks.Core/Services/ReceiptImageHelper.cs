@@ -1,4 +1,3 @@
-using PDFtoImage;
 using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
@@ -8,30 +7,6 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public static class ReceiptImageHelper
 {
-    /// <summary>
-    /// Renders the first page of a PDF as a JPEG image.
-    /// TODO: Replace with Avalonia WebView when it ships in the free tier to save exe size.
-    /// Returns null if the PDF cannot be rendered.
-    /// </summary>
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-    [System.Runtime.Versioning.SupportedOSPlatform("linux")]
-    [System.Runtime.Versioning.SupportedOSPlatform("macos")]
-    public static byte[]? RenderPdfFirstPage(byte[] pdfData, int dpi = 150)
-    {
-        try
-        {
-            using var output = new MemoryStream();
-            using var pdfStream = new MemoryStream(pdfData);
-            Conversion.SaveJpeg(output, pdfStream, page: 0, leaveOpen: false, password: null,
-                options: new RenderOptions(Dpi: dpi));
-            return output.ToArray();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     /// <summary>
     /// Compresses an image to fit within the max file size for scanning.
     /// Strategy: re-encode as JPEG (handles BMP/PNG/TIFF), then progressively

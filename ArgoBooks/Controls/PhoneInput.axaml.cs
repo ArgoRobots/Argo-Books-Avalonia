@@ -439,7 +439,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
                 }
             }
 
-            _phoneNumberBox.Watermark = result.ToString();
+            _phoneNumberBox.PlaceholderText = result.ToString();
         }
     }
 
@@ -494,7 +494,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         _isFormattingPhone = false;
     }
 
-    private void OnCountrySearchBoxGotFocus(object? sender, GotFocusEventArgs e)
+    private void OnCountrySearchBoxGotFocus(object? sender, FocusChangedEventArgs e)
     {
         IsCountryDropdownOpen = true;
         _countrySearchBox?.SelectAll();

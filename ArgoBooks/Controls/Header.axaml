@@ -47,7 +47,7 @@
                     <TextBox x:Name="SearchInput"
                              Grid.Column="1"
                              Text="{Binding SearchQuery, Mode=TwoWay}"
-                             Watermark="{loc:Loc 'Search or jump to...'}"
+                             PlaceholderText="{loc:Loc 'Search or jump to...'}"
                              Classes="header-search"
                              GotFocus="SearchInput_GotFocus"
                              KeyDown="SearchInput_KeyDown"

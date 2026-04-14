@@ -293,7 +293,7 @@
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          Height="80"
-                                         Watermark="{loc:Loc 'Additional notes...'}"
+                                         PlaceholderText="{loc:Loc 'Additional notes...'}"
                                          MaxLength="500" />
                             </StackPanel>
 
@@ -487,7 +487,7 @@
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}"
                                                  Classes="form-input"
-                                                 Watermark="$0.00"
+                                                 PlaceholderText="$0.00"
                                                  HorizontalAlignment="Stretch"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="13" />
@@ -496,7 +496,7 @@
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}"
                                                  Classes="form-input"
-                                                 Watermark="$0.00"
+                                                 PlaceholderText="$0.00"
                                                  HorizontalAlignment="Stretch"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="13" />
@@ -628,7 +628,7 @@
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
                                      Height="80"
-                                     Watermark="{loc:Loc 'Additional notes about this status change...'}"
+                                     PlaceholderText="{loc:Loc 'Additional notes about this status change...'}"
                                      MaxLength="500" />
                         </StackPanel>
                     </StackPanel>

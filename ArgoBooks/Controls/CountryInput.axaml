@@ -42,7 +42,7 @@
                 <TextBox x:Name="CountrySearchBox"
                          Grid.Column="1"
                          Text="{Binding #Root.SearchText, Mode=TwoWay}"
-                         Watermark="{loc:Loc 'Select country'}"
+                         PlaceholderText="{loc:Loc 'Select country'}"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="12,10"

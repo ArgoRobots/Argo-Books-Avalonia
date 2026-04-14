@@ -455,7 +455,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         HandleKeyDown(e);
     }
 
-    private void OnSearchTextBoxGotFocus(object? sender, GotFocusEventArgs e)
+    private void OnSearchTextBoxGotFocus(object? sender, FocusChangedEventArgs e)
     {
         IsDropdownOpen = true;
     }
