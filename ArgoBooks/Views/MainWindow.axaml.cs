@@ -52,6 +52,13 @@ public partial class MainWindow : Window
         Opened += OnWindowOpened;
         Closing += OnWindowClosing;
         PositionChanged += OnPositionChanged;
+
+        // Update maximize/restore icon whenever the window state changes (e.g., drag-to-restore)
+        PropertyChanged += (_, e) =>
+        {
+            if (e.Property == WindowStateProperty)
+                UpdateMaximizeIcon();
+        };
     }
 
     /// <summary>

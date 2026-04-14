@@ -58,7 +58,7 @@
                     VerticalContentAlignment="Center"
                     HorizontalContentAlignment="Center">
                 <!-- Horizontal line (filled rectangle) -->
-                <Border Width="10" Height="1" Background="{DynamicResource TextPrimaryBrush}" />
+                <Border Width="11" Height="1" Background="{DynamicResource TextPrimaryBrush}" />
             </Button>
             <!-- Maximize / Restore -->
             <Button Classes="caption-btn"
@@ -73,20 +73,23 @@
                     <Border x:Name="MaximizeRect"
                             Width="10" Height="10"
                             BorderBrush="{DynamicResource TextPrimaryBrush}"
-                            BorderThickness="1" />
+                            BorderThickness="1"
+                            CornerRadius="1.5" />
                     <!-- Restore icon (two overlapping rectangles — back one shows only top and right edges) -->
-                    <Canvas x:Name="RestoreIcon" IsVisible="False" Width="10" Height="10">
-                        <!-- Front rectangle (full outline) -->
-                        <Border Width="8" Height="8"
+                    <Canvas x:Name="RestoreIcon" IsVisible="False" Width="11" Height="11">
+                        <!-- Back rectangle (rendered first, behind front) -->
+                        <Border Width="9" Height="9"
                                 BorderBrush="{DynamicResource TextPrimaryBrush}"
                                 BorderThickness="1"
+                                CornerRadius="1.5"
+                                Canvas.Left="2" Canvas.Top="0" />
+                        <!-- Front rectangle (occludes back rectangle with solid background) -->
+                        <Border Width="9" Height="9"
+                                BorderBrush="{DynamicResource TextPrimaryBrush}"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderThickness="1"
+                                CornerRadius="1.5"
                                 Canvas.Left="0" Canvas.Top="2" />
-                        <!-- Back rectangle — top edge only -->
-                        <Line StartPoint="2,0" EndPoint="10,0"
-                              Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" />
-                        <!-- Back rectangle — right edge only -->
-                        <Line StartPoint="10,0" EndPoint="10,8"
-                              Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="1" />
                     </Canvas>
                 </Panel>
             </Button>
