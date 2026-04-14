@@ -53,7 +53,7 @@ public sealed class PdfThumbnailService
             if (_webView == null || !_pdfJsReady)
                 return null;
 
-            _renderTcs = new TaskCompletionSource<string>();
+            _renderTcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             var pdfBase64 = Convert.ToBase64String(pdfData);
             System.Diagnostics.Debug.WriteLine($"PdfThumbnail: invoking render for {pdfBase64.Length} chars of base64");
@@ -68,7 +68,7 @@ public sealed class PdfThumbnailService
                 return null;
             }
 
-            var result = _renderTcs.Task.Result;
+            var result = await _renderTcs.Task;
             System.Diagnostics.Debug.WriteLine($"PdfThumbnail: got result, length={result?.Length ?? 0}");
             _renderTcs = null;
 
@@ -96,6 +96,9 @@ public sealed class PdfThumbnailService
     {
         if (_pdfJsReady && _webView != null)
             return;
+
+        // Dispose any previous failed init to avoid leaking windows
+        CleanupWebView();
 
         _offscreenWindow = new Window
         {
@@ -170,7 +173,7 @@ public sealed class PdfThumbnailService
         }
     }
 
-    public void Dispose()
+    private void CleanupWebView()
     {
         if (_webView != null)
             _webView.WebMessageReceived -= OnWebMessageReceived;
@@ -179,6 +182,8 @@ public sealed class PdfThumbnailService
         _webView = null;
         _pdfJsReady = false;
     }
+
+    public void Dispose() => CleanupWebView();
 
     private const string PdfJsRendererHtml = """
 <!DOCTYPE html>
