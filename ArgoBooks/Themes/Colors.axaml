@@ -27,7 +27,7 @@
     <Color x:Key="WarningColor">#F59E0B</Color>
     <Color x:Key="WarningLightColor">#FEF3C7</Color>
     <Color x:Key="WarningDarkColor">#D97706</Color>
-    <Color x:Key="WarningTextColor">#854D0E</Color>
+    <Color x:Key="WarningTextColor">#000000</Color>
     <Color x:Key="WarningTextLightColor">#A16207</Color>
 
     <!-- Semantic Colors - Error/Danger -->

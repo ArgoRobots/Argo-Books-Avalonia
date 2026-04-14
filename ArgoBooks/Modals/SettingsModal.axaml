@@ -67,9 +67,12 @@
                                         Padding="12"
                                         IsVisible="{Binding IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Some settings are not available for the sample company.'}"
-                                               FontSize="12"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
                                                Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
                                 </Border>
                                 <!-- Language -->
                                 <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
@@ -214,9 +217,12 @@
                                         Margin="0,0,0,12"
                                         IsVisible="{Binding IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
-                                               FontSize="12"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
                                                Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
                                 </Border>
                                 <TextBlock Text="{loc:Loc 'Configure notification preferences'}"
                                            FontSize="13"
@@ -629,9 +635,12 @@
                                         Padding="12"
                                         IsVisible="{Binding IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
-                                               FontSize="12"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
                                                Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
                                 </Border>
 
                                 <!-- Password - No password set -->
@@ -772,9 +781,12 @@
                                         Padding="12"
                                         IsVisible="{Binding IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
-                                               FontSize="12"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
                                                Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
                                 </Border>
                                 <!-- Portal Company Name -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">

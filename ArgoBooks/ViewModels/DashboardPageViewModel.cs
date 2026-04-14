@@ -384,8 +384,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Mark dashboard as explored when initialized
         TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ExploreDashboard);
 
-        // Notify welcome subtitle since it depends on company manager
+        // Notify properties that depend on company manager
         OnPropertyChanged(nameof(WelcomeSubtitle));
+        OnPropertyChanged(nameof(IsSampleCompany));
 
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;
