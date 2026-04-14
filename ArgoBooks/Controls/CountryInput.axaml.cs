@@ -19,7 +19,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 {
     public new event PropertyChangedEventHandler? PropertyChanged;
     private TextBox? _countrySearchBox;
-    private ListBox? _countryListBox;
     private bool _isUpdatingText;
 
     protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
@@ -108,17 +107,8 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
                 if (value)
                 {
-                    // Reattach the ItemsSource so the ListBox creates fresh containers
-                    if (_countryListBox != null)
-                        _countryListBox.ItemsSource = FilteredCountries;
                     SelectedIndex = 0;
                     UpdateFilteredCountries();
-                }
-                else
-                {
-                    // Detach items so visual containers are fully released before next open
-                    if (_countryListBox != null)
-                        _countryListBox.ItemsSource = null;
                 }
             }
         }
@@ -152,7 +142,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             {
                 field = value;
                 RaisePropertyChanged();
-                ScrollToSelectedItem();
             }
         }
     } = -1;
@@ -167,16 +156,16 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     #region Commands
 
     public ICommand ToggleDropdownCommand { get; }
+    public ICommand SelectCountryCommand { get; }
 
     #endregion
 
     public CountryInput()
     {
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
+        SelectCountryCommand = new RelayCommand<CountryDialCode>(SelectCountry);
 
         InitializeComponent();
-
-        UpdateFilteredCountries();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -216,13 +205,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             _countrySearchBox.KeyDown += OnCountrySearchBoxKeyDown;
         }
 
-        _countryListBox = this.FindControl<ListBox>("CountryListBox");
-        if (_countryListBox != null)
-        {
-            _countryListBox.DoubleTapped += OnCountryListBoxDoubleTapped;
-            _countryListBox.PointerWheelChanged += OnCountryListBoxPointerWheelChanged;
-            _countryListBox.PointerReleased += OnCountryListBoxPointerReleased;
-        }
     }
 
     protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
@@ -235,33 +217,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             _countrySearchBox.KeyDown -= OnCountrySearchBoxKeyDown;
         }
 
-        if (_countryListBox != null)
-        {
-            _countryListBox.DoubleTapped -= OnCountryListBoxDoubleTapped;
-            _countryListBox.PointerWheelChanged -= OnCountryListBoxPointerWheelChanged;
-            _countryListBox.PointerReleased -= OnCountryListBoxPointerReleased;
-        }
-    }
-
-    private void OnCountryListBoxPointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        e.Handled = true;
-    }
-
-    private void OnCountryListBoxDoubleTapped(object? sender, TappedEventArgs e)
-    {
-        if (_countryListBox?.SelectedItem is CountryDialCode country)
-        {
-            SelectCountry(country);
-        }
-    }
-
-    private void OnCountryListBoxPointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        if (_countryListBox?.SelectedItem is CountryDialCode country)
-        {
-            SelectCountry(country);
-        }
     }
 
     private void OnCountrySearchBoxGotFocus(object? sender, FocusChangedEventArgs e)
@@ -312,14 +267,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
                     e.Handled = true;
                 break;
         }
-    }
-
-    private void ScrollToSelectedItem()
-    {
-        if (_countryListBox == null || SelectedIndex < 0 || SelectedIndex >= FilteredCountries.Count)
-            return;
-
-        _countryListBox.ScrollIntoView(FilteredCountries[SelectedIndex]);
     }
 
     private void ToggleDropdown()

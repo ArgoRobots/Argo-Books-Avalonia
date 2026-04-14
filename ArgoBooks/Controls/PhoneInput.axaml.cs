@@ -172,17 +172,9 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
                 if (value)
                 {
-                    // Reattach the ItemsSource so the ListBox creates fresh containers
-                    if (_countryListBox != null)
-                        _countryListBox.ItemsSource = FilteredDialCodes;
+                    // Refresh the list when opening
                     SelectedIndex = 0;
                     UpdateFilteredCountries();
-                }
-                else
-                {
-                    // Detach items so visual containers are fully released before next open
-                    if (_countryListBox != null)
-                        _countryListBox.ItemsSource = null;
                 }
             }
         }
