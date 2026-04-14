@@ -84,7 +84,8 @@ public static class ReceiptImageHelper
     /// </summary>
     public static byte[] FixOrientation(byte[] imageData)
     {
-        using var codec = SKCodec.Create(new MemoryStream(imageData));
+        using var stream = new MemoryStream(imageData);
+        using var codec = SKCodec.Create(stream);
         if (codec == null)
             return imageData;
 
@@ -123,7 +124,8 @@ public static class ReceiptImageHelper
             return imageData;
 
         // Use SKCodec to read EXIF orientation, then decode with correct rotation applied.
-        using var codec = SKCodec.Create(new MemoryStream(imageData));
+        using var stream = new MemoryStream(imageData);
+        using var codec = SKCodec.Create(stream);
         if (codec == null)
             return imageData;
 
@@ -189,7 +191,8 @@ public static class ReceiptImageHelper
     /// </summary>
     public static byte[]? GenerateThumbnail(byte[] imageData, int maxDimension = 200)
     {
-        using var codec = SKCodec.Create(new MemoryStream(imageData));
+        using var stream = new MemoryStream(imageData);
+        using var codec = SKCodec.Create(stream);
         if (codec == null)
             return null;
 

@@ -32,6 +32,7 @@ public partial class DashboardPage : UserControl
     private DashboardDragDropManager? _dragDropManager;
     private DashboardPageViewModel? _previousViewModel;
     private readonly List<(DashboardRowViewModel Row, NotifyCollectionChangedEventHandler Handler)> _rowSubscriptions = [];
+    private readonly List<(WidgetViewModelBase Vm, PropertyChangedEventHandler Handler)> _widgetVisibilitySubscriptions = [];
     private WidgetHostViewModel? _settingsTarget;
     private DashboardRowViewModel? _settingsTargetRow;
 
@@ -163,6 +164,11 @@ public partial class DashboardPage : UserControl
             row.Widgets.CollectionChanged -= handler;
         _rowSubscriptions.Clear();
 
+        // Unsubscribe from old widget visibility handlers
+        foreach (var (vm, handler) in _widgetVisibilitySubscriptions)
+            vm.PropertyChanged -= handler;
+        _widgetVisibilitySubscriptions.Clear();
+
         // Unsubscribe from old widget VMs
         foreach (var child in RowsContainer.Children)
         {
@@ -203,7 +209,7 @@ public partial class DashboardPage : UserControl
             var capturedVm = rowVm;
             foreach (var hostVm in rowVm.Widgets)
             {
-                hostVm.WidgetViewModel.PropertyChanged += (_, args) =>
+                PropertyChangedEventHandler visibilityHandler = (_, args) =>
                 {
                     if (args.PropertyName == nameof(WidgetViewModelBase.IsWidgetVisible))
                     {
@@ -211,6 +217,8 @@ public partial class DashboardPage : UserControl
                         UpdateEmptyMessageVisibility(layoutVm);
                     }
                 };
+                hostVm.WidgetViewModel.PropertyChanged += visibilityHandler;
+                _widgetVisibilitySubscriptions.Add((hostVm.WidgetViewModel, visibilityHandler));
             }
 
             // Listen for widget collection changes in this row

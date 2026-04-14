@@ -29,11 +29,14 @@ public partial class ReceiptsModals : UserControl
     private bool _updatingBulkSlider;
     private ReceiptsModalsViewModel? _subscribedVm;
 
-    // Panning (right-click or middle-click drag)
+    // Panning (any mouse button drag on preview areas)
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+    private ScrollViewer? _panScrollViewer;
     private OverscrollHelper? _overscrollHelper;
+    private OverscrollHelper? _bulkOverscrollHelper;
+    private OverscrollHelper? _activePanOverscroll;
 
     public ReceiptsModals()
     {
@@ -65,6 +68,11 @@ public partial class ReceiptsModals : UserControl
         if (BulkPreviewScrollViewer != null)
         {
             BulkPreviewScrollViewer.AddHandler(PointerWheelChangedEvent, OnBulkPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
+        }
+
+        if (BulkPreviewZoomTransform != null && _bulkOverscrollHelper == null)
+        {
+            _bulkOverscrollHelper = new OverscrollHelper(BulkPreviewZoomTransform);
         }
 
         if (BulkPreviewZoomSlider != null)
@@ -291,22 +299,57 @@ public partial class ReceiptsModals : UserControl
 
     #endregion
 
-    #region Scan Preview Panning
+    #region Preview Panning (Scan + Bulk)
+
+    /// <summary>
+    /// Determines which preview scroll viewer (if any) the pointer event originated inside.
+    /// </summary>
+    private ScrollViewer? GetPreviewScrollViewerFromPointer(PointerEventArgs e)
+    {
+        if (ScanPreviewScrollViewer != null)
+        {
+            var pos = e.GetPosition(ScanPreviewScrollViewer);
+            if (pos.X >= 0 && pos.Y >= 0
+                && pos.X <= ScanPreviewScrollViewer.Bounds.Width
+                && pos.Y <= ScanPreviewScrollViewer.Bounds.Height)
+                return ScanPreviewScrollViewer;
+        }
+
+        if (BulkPreviewScrollViewer != null)
+        {
+            var pos = e.GetPosition(BulkPreviewScrollViewer);
+            if (pos.X >= 0 && pos.Y >= 0
+                && pos.X <= BulkPreviewScrollViewer.Bounds.Width
+                && pos.Y <= BulkPreviewScrollViewer.Bounds.Height)
+                return BulkPreviewScrollViewer;
+        }
+
+        return null;
+    }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
 
         var point = e.GetCurrentPoint(this);
-        if (point.Properties.IsRightButtonPressed || point.Properties.IsMiddleButtonPressed)
+        var isAnyButton = point.Properties.IsLeftButtonPressed
+                          || point.Properties.IsRightButtonPressed
+                          || point.Properties.IsMiddleButtonPressed;
+
+        if (isAnyButton)
         {
-            if (ScanPreviewScrollViewer != null)
+            var scrollViewer = GetPreviewScrollViewerFromPointer(e);
+            if (scrollViewer != null)
             {
                 _isPanning = true;
+                _panScrollViewer = scrollViewer;
+                _activePanOverscroll = scrollViewer == BulkPreviewScrollViewer
+                    ? _bulkOverscrollHelper
+                    : _overscrollHelper;
                 _panStartPoint = e.GetPosition(this);
-                _panStartOffset = new Vector(ScanPreviewScrollViewer.Offset.X, ScanPreviewScrollViewer.Offset.Y);
+                _panStartOffset = new Vector(scrollViewer.Offset.X, scrollViewer.Offset.Y);
                 e.Pointer.Capture(this);
-                Cursor = new Cursor(StandardCursorType.SizeAll);
+                Cursor = new Cursor(StandardCursorType.Hand);
                 e.Handled = true;
             }
         }
@@ -316,7 +359,7 @@ public partial class ReceiptsModals : UserControl
     {
         base.OnPointerMoved(e);
 
-        if (_isPanning && ScanPreviewScrollViewer != null && _overscrollHelper != null)
+        if (_isPanning && _panScrollViewer != null)
         {
             var currentPoint = e.GetPosition(this);
             var delta = _panStartPoint - currentPoint;
@@ -324,14 +367,23 @@ public partial class ReceiptsModals : UserControl
             var desiredX = _panStartOffset.X + delta.X;
             var desiredY = _panStartOffset.Y + delta.Y;
 
-            var maxX = Math.Max(0, ScanPreviewScrollViewer.Extent.Width - ScanPreviewScrollViewer.Viewport.Width);
-            var maxY = Math.Max(0, ScanPreviewScrollViewer.Extent.Height - ScanPreviewScrollViewer.Viewport.Height);
+            var maxX = Math.Max(0, _panScrollViewer.Extent.Width - _panScrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _panScrollViewer.Extent.Height - _panScrollViewer.Viewport.Height);
 
-            var (clampedX, clampedY, overscrollX, overscrollY) =
-                _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
+            if (_activePanOverscroll != null)
+            {
+                var (clampedX, clampedY, overscrollX, overscrollY) =
+                    _activePanOverscroll.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
-            ScanPreviewScrollViewer.Offset = new Vector(clampedX, clampedY);
-            _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
+                _panScrollViewer.Offset = new Vector(clampedX, clampedY);
+                _activePanOverscroll.ApplyOverscroll(overscrollX, overscrollY);
+            }
+            else
+            {
+                _panScrollViewer.Offset = new Vector(
+                    Math.Clamp(desiredX, 0, maxX),
+                    Math.Clamp(desiredY, 0, maxY));
+            }
 
             e.Handled = true;
         }
@@ -344,13 +396,16 @@ public partial class ReceiptsModals : UserControl
         if (_isPanning)
         {
             _isPanning = false;
+            _panScrollViewer = null;
             e.Pointer.Capture(null);
             Cursor = Cursor.Default;
 
-            if (_overscrollHelper?.HasOverscroll == true)
+            if (_activePanOverscroll?.HasOverscroll == true)
             {
-                _ = _overscrollHelper.AnimateSnapBackAsync();
+                _ = _activePanOverscroll.AnimateSnapBackAsync();
             }
+
+            _activePanOverscroll = null;
 
             e.Handled = true;
         }

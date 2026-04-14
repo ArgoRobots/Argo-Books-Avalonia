@@ -350,7 +350,8 @@
                                                 ClipToBounds="True">
                                             <ScrollViewer x:Name="ScanPreviewScrollViewer"
                                                           HorizontalScrollBarVisibility="Auto"
-                                                          VerticalScrollBarVisibility="Auto">
+                                                          VerticalScrollBarVisibility="Auto"
+                                                          Cursor="Hand">
                                                 <LayoutTransformControl x:Name="ScanPreviewZoomTransform"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center">
@@ -1582,7 +1583,8 @@
                                             ClipToBounds="True">
                                         <ScrollViewer x:Name="BulkPreviewScrollViewer"
                                                       HorizontalScrollBarVisibility="Auto"
-                                                      VerticalScrollBarVisibility="Auto">
+                                                      VerticalScrollBarVisibility="Auto"
+                                                      Cursor="Hand">
                                             <LayoutTransformControl x:Name="BulkPreviewZoomTransform"
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center">

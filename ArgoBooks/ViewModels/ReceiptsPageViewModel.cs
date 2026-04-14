@@ -710,17 +710,28 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (toLoad.Count == 0) return;
 
+            // Process images in parallel (up to 4 at a time) instead of sequentially
+            const int maxParallelism = 4;
+            var semaphore = new SemaphoreSlim(maxParallelism);
             var results = await Task.Run(async () =>
             {
-                var paths = new List<(ReceiptDisplayItem Display, string Path)>();
-                foreach (var (display, receipt) in toLoad)
+                var tasks = toLoad.Select(async item =>
                 {
-                    cts.Token.ThrowIfCancellationRequested();
-                    var path = await GenerateReceiptImagePathAsync(receipt);
-                    if (!string.IsNullOrEmpty(path))
-                        paths.Add((display, path));
-                }
-                return paths;
+                    await semaphore.WaitAsync(cts.Token);
+                    try
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
+                        var path = await GenerateReceiptImagePathAsync(item.Receipt);
+                        return !string.IsNullOrEmpty(path) ? (item.Display, path) : default;
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }).ToList();
+
+                var all = await Task.WhenAll(tasks);
+                return all.Where(r => r.Display != null).ToList();
             }, cts.Token);
 
             cts.Token.ThrowIfCancellationRequested();
