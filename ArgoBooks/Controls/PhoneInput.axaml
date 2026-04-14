@@ -35,7 +35,7 @@
                 <TextBox x:Name="CountrySearchBox"
                          Grid.Column="0"
                          Text="{Binding #Root.CountrySearchText, Mode=TwoWay}"
-                         Watermark="+1"
+                         PlaceholderText="+1"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="8,8"

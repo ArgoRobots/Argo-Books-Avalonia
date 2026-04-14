@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.VisualTree;
 
 namespace ArgoBooks.Controls;
 
@@ -87,7 +86,7 @@ public class ColumnResizeGripper : Border
             _lastClickTime = now;
 
             _isDragging = true;
-            _lastDragPoint = e.GetPosition(this.GetVisualRoot() as Visual);
+            _lastDragPoint = e.GetPosition(TopLevel.GetTopLevel(this));
             Background = new SolidColorBrush(Color.FromArgb(120, 59, 130, 246));
             e.Pointer.Capture(this);
             e.Handled = true;
@@ -100,7 +99,7 @@ public class ColumnResizeGripper : Border
 
         if (_isDragging)
         {
-            var currentPoint = e.GetPosition(this.GetVisualRoot() as Visual);
+            var currentPoint = e.GetPosition(TopLevel.GetTopLevel(this));
             var delta = currentPoint.X - _lastDragPoint.X;
 
             if (Math.Abs(delta) >= 1)

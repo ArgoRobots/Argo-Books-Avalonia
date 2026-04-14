@@ -868,7 +868,7 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Handles navigation events to update UI state.
     /// </summary>
-    private void OnNavigated(object? sender, NavigationEventArgs e)
+    private void OnNavigated(object? sender, Core.Services.NavigationEventArgs e)
     {
         CurrentPageName = e.PageName;
         SidebarViewModel.SetActivePage(e.PageName);

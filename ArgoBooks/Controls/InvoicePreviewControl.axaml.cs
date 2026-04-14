@@ -1,16 +1,14 @@
-using System.Runtime.InteropServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Platform;
 
 namespace ArgoBooks.Controls;
 
 /// <summary>
 /// Cross-platform invoice preview control.
-/// On Windows: Uses WebView2 for high-quality HTML rendering.
-/// On Mac/Linux: Shows a fallback message with option to view in browser.
+/// On Windows/macOS: Uses NativeWebView for high-quality HTML rendering with zoom/pan.
+/// On Linux: Shows a fallback with option to view in browser (NativeWebView doesn't embed inline on Linux).
 /// </summary>
 public partial class InvoicePreviewControl : UserControl
 {
@@ -44,27 +42,25 @@ public partial class InvoicePreviewControl : UserControl
         set => SetValue(OpenInBrowserCommandProperty, value);
     }
 
+    private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
     private Border? _zoomToolbar;
     private TextBlock? _zoomPercentageText;
     private bool _isInitialized;
+    private bool _webViewReady;
+    private double _currentZoom = 1.0;
 
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.25;
     private const double MaxZoom = 5.0;
 
-#if WINDOWS
-    private Microsoft.Web.WebView2.WinForms.WebView2? _webView;
-    private WebView2Host? _webViewHost;
-    private bool _isWebViewInitialized;
-    private bool _isWebViewDisposed;
-    private bool _isHandlingZoom;
-    private double _pendingScrollX;
-    private double _pendingScrollY;
-    private bool _hasPendingScroll;
-
-#endif
+    /// <summary>
+    /// Whether the current platform supports inline WebView embedding.
+    /// NativeWebView works inline on Windows and macOS but not on Linux.
+    /// </summary>
+    private static bool PlatformSupportsInlineWebView =>
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
 
     public InvoicePreviewControl()
     {
@@ -82,13 +78,13 @@ public partial class InvoicePreviewControl : UserControl
         _fallbackPanel = this.FindControl<Border>("FallbackPanel");
         _zoomToolbar = this.FindControl<Border>("ZoomToolbar");
         _zoomPercentageText = this.FindControl<TextBlock>("ZoomPercentageText");
+        _webView = this.FindControl<NativeWebView>("WebView");
 
         _isInitialized = true;
 
-        // IMPORTANT: Do NOT create WebView here!
+        // IMPORTANT: Do NOT create/show WebView here!
         // OnLoaded fires before bindings evaluate, so IsVisible may incorrectly be true.
-        // NativeControlHost windows don't respect Avalonia visibility, so we must only
-        // create the WebView when IsVisible explicitly changes to true.
+        // We must only activate the WebView when IsVisible explicitly changes to true.
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -97,17 +93,10 @@ public partial class InvoicePreviewControl : UserControl
 
         if (change.Property == HtmlProperty && _isInitialized)
         {
-            // If Html is being set and we're visible but WebView doesn't exist, create it.
-            // This handles cases where the control is always visible (no IsVisible binding)
-            // like in the template designer modal.
-            EnsureWebViewCreatedIfVisible();
+            EnsureWebViewActiveIfVisible();
             _ = UpdateWebViewContent();
         }
 
-        // Handle visibility changes - NativeControlHost doesn't respect IsVisible,
-        // so we must manually create/destroy the WebView when visibility changes.
-        // We check for an explicit change from false to true to avoid the initial
-        // binding evaluation race condition.
         if (change.Property == IsVisibleProperty && _isInitialized)
         {
             bool wasVisible = change.OldValue is bool oldVal && oldVal;
@@ -115,22 +104,20 @@ public partial class InvoicePreviewControl : UserControl
 
             if (isNowVisible && !wasVisible)
             {
-                // Visibility changed from false to true - create WebView
                 InitializePlatformPreview();
             }
             else if (!isNowVisible && wasVisible)
             {
-                // Visibility changed from true to false - destroy WebView
-                DestroyWebView();
+                DeactivateWebView();
             }
         }
     }
 
     private void InitializePlatformPreview()
     {
-        if (OperatingSystem.IsWindows())
+        if (PlatformSupportsInlineWebView)
         {
-            InitializeWindowsWebView();
+            ActivateWebView();
         }
         else
         {
@@ -138,178 +125,69 @@ public partial class InvoicePreviewControl : UserControl
         }
     }
 
-    private void EnsureWebViewCreatedIfVisible()
+    private void EnsureWebViewActiveIfVisible()
     {
-#if WINDOWS
-        // Only create if we don't have a WebView yet and the control is effectively visible
-        if (_webView == null && IsEffectivelyVisible && !string.IsNullOrEmpty(Html))
+        if (PlatformSupportsInlineWebView && _webView != null && !_webView.IsVisible
+            && IsEffectivelyVisible && !string.IsNullOrEmpty(Html))
         {
             InitializePlatformPreview();
         }
-#else
-        // On non-Windows, ensure fallback is shown
-        if (IsEffectivelyVisible)
+        else if (!PlatformSupportsInlineWebView && IsEffectivelyVisible)
         {
             ShowFallback();
         }
-#endif
     }
 
-    private void DestroyWebView()
+    private void ActivateWebView()
     {
-#if WINDOWS
-        // Unsubscribe from events
-        if (_webView != null)
-        {
-            _webView.ZoomFactorChanged -= OnZoomFactorChanged;
-            if (_webView.CoreWebView2 != null)
-            {
-                _webView.CoreWebView2.WebMessageReceived -= OnWebMessageReceived;
-                _webView.CoreWebView2.NavigationCompleted -= OnNavigationCompleted;
-            }
-        }
+        if (_webView == null)
+            return;
 
-        if (_webViewHost != null && _rootPanel != null)
-        {
-            _rootPanel.Children.Remove(_webViewHost);
-        }
+        _webView.IsVisible = true;
+        _webView.NavigationCompleted += OnNavigationCompleted;
+        _webView.WebMessageReceived += OnWebMessageReceived;
 
-        _isWebViewDisposed = true;
-
-        if (_webView != null)
-        {
-            _webView.Dispose();
-            _webView = null;
-            _webViewHost = null;
-            _isWebViewInitialized = false;
-        }
-
-        // Hide zoom toolbar
         if (_zoomToolbar != null)
+            _zoomToolbar.IsVisible = true;
+
+        _webViewReady = true;
+        _ = UpdateWebViewContent();
+    }
+
+    private void DeactivateWebView()
+    {
+        if (_webView != null)
         {
-            _zoomToolbar.IsVisible = false;
+            _webView.NavigationCompleted -= OnNavigationCompleted;
+            _webView.WebMessageReceived -= OnWebMessageReceived;
+            _webView.IsVisible = false;
         }
-#endif
+
+        _webViewReady = false;
+
+        if (_zoomToolbar != null)
+            _zoomToolbar.IsVisible = false;
     }
 
     private void ShowFallback()
     {
         if (_fallbackPanel != null)
-        {
             _fallbackPanel.IsVisible = true;
-        }
     }
 
-    private void InitializeWindowsWebView()
+    private void OnNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
     {
-#if WINDOWS
-        // Don't re-initialize if already exists
-        if (_webView != null)
-            return;
-
-        _isWebViewDisposed = false;
-
-        try
-        {
-            _webView = new Microsoft.Web.WebView2.WinForms.WebView2();
-            _webViewHost = new WebView2Host(_webView);
-
-            // Set the host to fill the panel
-            _webViewHost.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-            _webViewHost.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
-
-            if (_rootPanel != null)
-            {
-                _rootPanel.Children.Insert(0, _webViewHost);
-            }
-
-            // Initialize WebView2 asynchronously
-            InitializeWebView2Async();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
-            ShowFallback();
-        }
-#else
-        ShowFallback();
-#endif
+        // Content is loaded and ready
     }
 
-#if WINDOWS
-    private async void InitializeWebView2Async()
+    private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
     {
         try
         {
-            if (_webView == null) return;
+            var message = e.Body;
+            if (string.IsNullOrEmpty(message))
+                return;
 
-            await _webView.EnsureCoreWebView2Async();
-
-            // WebView may have been disposed while awaiting initialization
-            if (_isWebViewDisposed || _webView == null) return;
-
-            // Disable context menu and other browser features for clean preview
-            if (_webView.CoreWebView2 != null)
-            {
-                _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-                _webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-                _webView.CoreWebView2.Settings.IsZoomControlEnabled = false; // We handle zoom ourselves for zoom-to-cursor
-
-                // Subscribe to zoom changes to update the percentage display
-                _webView.ZoomFactorChanged += OnZoomFactorChanged;
-
-                // Subscribe to messages from JavaScript for zoom-to-cursor
-                _webView.CoreWebView2.WebMessageReceived += OnWebMessageReceived;
-
-                // Subscribe to navigation completed to restore scroll position
-                _webView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
-
-                _isWebViewInitialized = true;
-
-                // Show zoom toolbar
-                if (_zoomToolbar != null)
-                {
-                    _zoomToolbar.IsVisible = true;
-                }
-
-                // Set initial zoom to 0.98 to prevent horizontal scrollbar
-                _webView.ZoomFactor = 0.98;
-                UpdateZoomDisplay();
-
-                // Set initial content if available
-                _ = UpdateWebViewContent();
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
-            // Show fallback on UI thread
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(ShowFallback);
-        }
-    }
-
-    private void OnZoomFactorChanged(object? sender, EventArgs e)
-    {
-        // Update zoom display on UI thread
-        Avalonia.Threading.Dispatcher.UIThread.Post(UpdateZoomDisplay);
-    }
-
-    private void UpdateZoomDisplay()
-    {
-        if (_zoomPercentageText != null && _webView != null)
-        {
-            var zoom = _webView.ZoomFactor;
-            // Show 100% when at default zoom (0.98) to hide the slight adjustment
-            var percentage = Math.Abs(zoom - 0.98) < 0.001 ? 100 : (int)Math.Round(zoom * 100);
-            _zoomPercentageText.Text = $"{percentage}%";
-        }
-    }
-
-    private void OnWebMessageReceived(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
-    {
-        try
-        {
-            var message = e.WebMessageAsJson;
             var json = System.Text.Json.JsonDocument.Parse(message);
             var root = json.RootElement;
 
@@ -318,224 +196,127 @@ public partial class InvoicePreviewControl : UserControl
 
             var messageType = typeElement.GetString();
 
-            // Only zoom messages need C# handling - pan is handled entirely in JavaScript
-            if (messageType == "zoom")
+            if (messageType == "zoomUpdate" && root.TryGetProperty("zoom", out var zoomElement))
             {
-                HandleZoomMessage(root);
+                _currentZoom = zoomElement.GetDouble();
+                Avalonia.Threading.Dispatcher.UIThread.Post(UpdateZoomDisplay);
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview message error: {ex.Message}");
         }
     }
 
-    private void HandleZoomMessage(System.Text.Json.JsonElement root)
+    private void UpdateZoomDisplay()
     {
-        if (_webView?.CoreWebView2 == null || _isHandlingZoom)
-            return;
-
-        _isHandlingZoom = true;
-
-        try
+        if (_zoomPercentageText != null)
         {
-            var deltaY = root.GetProperty("deltaY").GetDouble();
-            var clientX = root.GetProperty("clientX").GetInt32();
-            var clientY = root.GetProperty("clientY").GetInt32();
-            var scrollX = root.GetProperty("scrollX").GetDouble();
-            var scrollY = root.GetProperty("scrollY").GetDouble();
-
-            // Calculate zoom direction (negative deltaY = zoom in)
-            double zoomDelta = deltaY < 0 ? ZoomStep : -ZoomStep;
-            double oldZoom = _webView.ZoomFactor;
-            double newZoom = Math.Max(MinZoom, Math.Min(MaxZoom, oldZoom + zoomDelta));
-
-            if (Math.Abs(newZoom - oldZoom) > 0.001)
-            {
-                // Calculate document position under cursor
-                double docX = scrollX + (clientX / oldZoom);
-                double docY = scrollY + (clientY / oldZoom);
-
-                // Apply new zoom
-                _webView.ZoomFactor = newZoom;
-
-                // Calculate new scroll position to keep the point under cursor
-                double newScrollX = docX - (clientX / newZoom);
-                double newScrollY = docY - (clientY / newZoom);
-
-                // Scroll to new position
-                var scrollScript = $@"window.scrollTo({newScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {newScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
-                _ = _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
-            }
-        }
-        finally
-        {
-            _isHandlingZoom = false;
+            var percentage = (int)Math.Round(_currentZoom * 100);
+            _zoomPercentageText.Text = $"{percentage}%";
         }
     }
-
-    private async void OnNavigationCompleted(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
-    {
-        if (!_hasPendingScroll || _isWebViewDisposed || _webView?.CoreWebView2 == null)
-            return;
-
-        _hasPendingScroll = false;
-
-        try
-        {
-            // Restore scroll position after navigation
-            var scrollScript = $@"window.scrollTo({_pendingScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {_pendingScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
-            await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
-        }
-    }
-
-    private async Task ZoomToCenter(double newZoom)
-    {
-        if (_webView?.CoreWebView2 == null)
-            return;
-
-        try
-        {
-            double oldZoom = _webView.ZoomFactor;
-
-            // Get viewport center
-            var viewportWidth = _webView.Width;
-            var viewportHeight = _webView.Height;
-            var centerX = viewportWidth / 2.0;
-            var centerY = viewportHeight / 2.0;
-
-            // JavaScript to get current scroll position
-            var script = @"(function() {
-                var scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
-                var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-                return [scrollX, scrollY];
-            })()";
-
-            var result = await _webView.CoreWebView2.ExecuteScriptAsync(script);
-
-            if (string.IsNullOrEmpty(result) || result == "null")
-            {
-                _webView.ZoomFactor = newZoom;
-                UpdateZoomDisplay();
-                return;
-            }
-
-            var scrollValues = System.Text.Json.JsonSerializer.Deserialize<double[]>(result);
-            if (scrollValues == null || scrollValues.Length < 2)
-            {
-                _webView.ZoomFactor = newZoom;
-                UpdateZoomDisplay();
-                return;
-            }
-
-            double scrollX = scrollValues[0];
-            double scrollY = scrollValues[1];
-
-            // Calculate the document point at viewport center
-            var docCenterX = scrollX + (centerX / oldZoom);
-            var docCenterY = scrollY + (centerY / oldZoom);
-
-            // Apply new zoom
-            _webView.ZoomFactor = newZoom;
-            UpdateZoomDisplay();
-
-            // Calculate new scroll position to keep center in view
-            var newScrollX = docCenterX - (centerX / newZoom);
-            var newScrollY = docCenterY - (centerY / newZoom);
-
-            // Scroll to new position
-            var scrollScript = $@"window.scrollTo({newScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {newScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
-            await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
-            _webView.ZoomFactor = newZoom;
-            UpdateZoomDisplay();
-        }
-    }
-#endif
 
     private async Task UpdateWebViewContent()
     {
-#if WINDOWS
-        if (_isWebViewInitialized && _webView?.CoreWebView2 != null && !string.IsNullOrEmpty(Html))
-        {
-            // Save scroll position before navigating
-            try
-            {
-                var scrollScript = @"(function() {
-                    var scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
-                    var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-                    return JSON.stringify({ x: scrollX, y: scrollY });
-                })()";
-                var result = await _webView.CoreWebView2.ExecuteScriptAsync(scrollScript);
-                if (!string.IsNullOrEmpty(result) && result != "null")
-                {
-                    var json = System.Text.Json.JsonDocument.Parse(result.Trim('"').Replace("\\\"", "\""));
-                    _pendingScrollX = json.RootElement.GetProperty("x").GetDouble();
-                    _pendingScrollY = json.RootElement.GetProperty("y").GetDouble();
-                    _hasPendingScroll = true;
-                }
-            }
-            catch
-            {
-                // If we can't get scroll position, just don't restore it
-                _hasPendingScroll = false;
-            }
+        if (!_webViewReady || _webView == null || string.IsNullOrEmpty(Html))
+            return;
 
-            // WebView may have been disposed while awaiting scroll position
-            if (_isWebViewDisposed || _webView?.CoreWebView2 == null) return;
-
-            // Inject styles and scripts for zoom and pan handling
-            var interactionScript = @"
+        // Inject interaction scripts for zoom and pan handling
+        var interactionScript = @"
 <script>
 (function() {
     if (window.__interactionHandlersInstalled) return;
     window.__interactionHandlersInstalled = true;
 
-    // Zoom handling (Ctrl+Scroll) - needs C# for ZoomFactor
+    // Create zoom wrapper
+    var zoomWrapper = document.getElementById('__zoomWrapper');
+    if (!zoomWrapper) {
+        zoomWrapper = document.createElement('div');
+        zoomWrapper.id = '__zoomWrapper';
+        zoomWrapper.style.cssText = 'transform-origin: 0 0; min-height: 100%; will-change: transform;';
+        zoomWrapper.dataset.scale = '1';
+        while (document.body.firstChild) {
+            zoomWrapper.appendChild(document.body.firstChild);
+        }
+        document.body.appendChild(zoomWrapper);
+        document.body.style.overflow = 'auto';
+    }
+
+    function updateZoom(newScale, originX, originY) {
+        var wrapper = document.getElementById('__zoomWrapper');
+        var oldScale = parseFloat(wrapper.dataset.scale || '1');
+        newScale = Math.max(0.25, Math.min(5.0, newScale));
+        wrapper.dataset.scale = newScale;
+
+        // Calculate scroll adjustment to keep the point under cursor
+        var scrollX = window.scrollX || 0;
+        var scrollY = window.scrollY || 0;
+
+        // Document position under the origin point at old scale
+        var docX = scrollX + (originX / oldScale);
+        var docY = scrollY + (originY / oldScale);
+
+        wrapper.style.transform = 'scale(' + newScale + ')';
+
+        // New scroll position to keep the same document point under cursor
+        var newScrollX = docX - (originX / newScale);
+        var newScrollY = docY - (originY / newScale);
+        window.scrollTo(newScrollX, newScrollY);
+
+        // Notify C# of zoom level
+        try {
+            window.chrome.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: newScale }));
+        } catch(e) {
+            try {
+                window.webkit.messageHandlers.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: newScale }));
+            } catch(e2) {}
+        }
+    }
+
+    // Expose for C# InvokeScript calls
+    window.__setZoom = function(newScale) {
+        var vw = window.innerWidth / 2;
+        var vh = window.innerHeight / 2;
+        updateZoom(newScale, vw, vh);
+    };
+
+    window.__fitToWindow = function() {
+        var wrapper = document.getElementById('__zoomWrapper');
+        // Reset to 1 first to measure natural size
+        wrapper.style.transform = 'scale(1)';
+        wrapper.dataset.scale = '1';
+        var contentWidth = wrapper.scrollWidth;
+        var contentHeight = wrapper.scrollHeight;
+        var viewportWidth = window.innerWidth;
+        var viewportHeight = window.innerHeight;
+        if (contentWidth <= 0 || contentHeight <= 0) return;
+        var fitScale = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight);
+        fitScale = Math.max(0.25, Math.min(5.0, fitScale));
+        updateZoom(fitScale, viewportWidth / 2, viewportHeight / 2);
+    };
+
+    window.__getZoom = function() {
+        var wrapper = document.getElementById('__zoomWrapper');
+        return parseFloat(wrapper.dataset.scale || '1');
+    };
+
+    // Zoom handling (Ctrl+Scroll)
     document.addEventListener('wheel', function(e) {
         if (e.ctrlKey) {
             e.preventDefault();
-            window.chrome.webview.postMessage({
-                type: 'zoom',
-                deltaY: e.deltaY,
-                clientX: e.clientX,
-                clientY: e.clientY,
-                scrollX: window.scrollX || document.documentElement.scrollLeft || 0,
-                scrollY: window.scrollY || document.documentElement.scrollTop || 0
-            });
+            var wrapper = document.getElementById('__zoomWrapper');
+            var currentScale = parseFloat(wrapper.dataset.scale || '1');
+            var delta = e.deltaY < 0 ? 0.1 : -0.1;
+            updateZoom(currentScale + delta, e.clientX, e.clientY);
         }
     }, { passive: false });
 
-    // Pan handling (Right-click drag) - handled entirely in JavaScript
+    // Pan handling (Right-click drag) with rubber band effect
     var isPanning = false;
-    var startX = 0;
-    var startY = 0;
-    var startScrollX = 0;
-    var startScrollY = 0;
-    var overscrollX = 0;
-    var overscrollY = 0;
-    var resistance = 0.3;
-    var maxOverscroll = 80;
-
-    // Create a wrapper for rubber band effect if needed
-    var wrapper = document.getElementById('__panWrapper');
-    if (!wrapper) {
-        wrapper = document.createElement('div');
-        wrapper.id = '__panWrapper';
-        wrapper.style.cssText = 'min-height: 100%; will-change: transform;';
-        while (document.body.firstChild) {
-            wrapper.appendChild(document.body.firstChild);
-        }
-        document.body.appendChild(wrapper);
-        document.body.style.overflow = 'auto';
-    }
+    var startX = 0, startY = 0, startScrollX = 0, startScrollY = 0;
+    var overscrollX = 0, overscrollY = 0;
+    var resistance = 0.3, maxOverscroll = 80;
 
     document.addEventListener('mousedown', function(e) {
         if (e.button === 2) {
@@ -546,7 +327,8 @@ public partial class InvoicePreviewControl : UserControl
             startScrollY = window.scrollY || 0;
             overscrollX = 0;
             overscrollY = 0;
-            wrapper.style.transition = 'none';
+            var zw = document.getElementById('__zoomWrapper');
+            if (zw) zw.style.transition = 'none';
             document.body.style.cursor = 'grabbing';
             document.body.style.userSelect = 'none';
             e.preventDefault();
@@ -555,46 +337,32 @@ public partial class InvoicePreviewControl : UserControl
 
     document.addEventListener('mousemove', function(e) {
         if (!isPanning) return;
-
         var deltaX = e.clientX - startX;
         var deltaY = e.clientY - startY;
-
         var maxScrollX = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);
         var maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-
-        // Calculate target scroll (inverted for pan feel)
         var targetScrollX = startScrollX - deltaX;
         var targetScrollY = startScrollY - deltaY;
-
-        // Clamp scroll to bounds
         var clampedX = Math.max(0, Math.min(maxScrollX, targetScrollX));
         var clampedY = Math.max(0, Math.min(maxScrollY, targetScrollY));
 
-        // Calculate overscroll with resistance
-        if (targetScrollX < 0) {
-            overscrollX = Math.min(maxOverscroll, -targetScrollX * resistance);
-        } else if (targetScrollX > maxScrollX) {
-            overscrollX = Math.max(-maxOverscroll, -(targetScrollX - maxScrollX) * resistance);
-        } else {
-            overscrollX = 0;
-        }
+        if (targetScrollX < 0) overscrollX = Math.min(maxOverscroll, -targetScrollX * resistance);
+        else if (targetScrollX > maxScrollX) overscrollX = Math.max(-maxOverscroll, -(targetScrollX - maxScrollX) * resistance);
+        else overscrollX = 0;
 
-        if (targetScrollY < 0) {
-            overscrollY = Math.min(maxOverscroll, -targetScrollY * resistance);
-        } else if (targetScrollY > maxScrollY) {
-            overscrollY = Math.max(-maxOverscroll, -(targetScrollY - maxScrollY) * resistance);
-        } else {
-            overscrollY = 0;
-        }
+        if (targetScrollY < 0) overscrollY = Math.min(maxOverscroll, -targetScrollY * resistance);
+        else if (targetScrollY > maxScrollY) overscrollY = Math.max(-maxOverscroll, -(targetScrollY - maxScrollY) * resistance);
+        else overscrollY = 0;
 
-        // Apply scroll
         window.scrollTo(clampedX, clampedY);
-
-        // Apply rubber band transform
-        if (overscrollX !== 0 || overscrollY !== 0) {
-            wrapper.style.transform = 'translate(' + overscrollX + 'px, ' + overscrollY + 'px)';
-        } else {
-            wrapper.style.transform = '';
+        var zw = document.getElementById('__zoomWrapper');
+        if (zw) {
+            var scale = parseFloat(zw.dataset.scale || '1');
+            if (overscrollX !== 0 || overscrollY !== 0) {
+                zw.style.transform = 'scale(' + scale + ') translate(' + (overscrollX/scale) + 'px, ' + (overscrollY/scale) + 'px)';
+            } else {
+                zw.style.transform = 'scale(' + scale + ')';
+            }
         }
     });
 
@@ -603,79 +371,121 @@ public partial class InvoicePreviewControl : UserControl
             isPanning = false;
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
-
-            // Animate snap-back
-            if (overscrollX !== 0 || overscrollY !== 0) {
-                wrapper.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                wrapper.style.transform = '';
+            var zw = document.getElementById('__zoomWrapper');
+            if (zw) {
+                var scale = parseFloat(zw.dataset.scale || '1');
+                if (overscrollX !== 0 || overscrollY !== 0) {
+                    zw.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    zw.style.transform = 'scale(' + scale + ')';
+                }
             }
-
             overscrollX = 0;
             overscrollY = 0;
         }
     });
 
-    // Prevent context menu on right-click
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 })();
 </script>";
 
-            // Insert script before closing body tag, or at end if no body tag
-            var html = Html;
-            if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
-            {
-                html = html.Replace("</body>", interactionScript + "</body>", StringComparison.OrdinalIgnoreCase);
-            }
-            else if (html.Contains("</html>", StringComparison.OrdinalIgnoreCase))
-            {
-                html = html.Replace("</html>", interactionScript + "</html>", StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                html = html + interactionScript;
-            }
-
-            if (_isWebViewDisposed || _webView?.CoreWebView2 == null) return;
-
-            try
-            {
-                _webView.CoreWebView2.NavigateToString(html);
-            }
-            catch (InvalidOperationException)
-            {
-                // WebView2 was disposed between the null check and the call
-            }
+        // Insert script before closing body tag, or at end if no body tag
+        var html = Html!;
+        if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
+        {
+            html = html.Replace("</body>", interactionScript + "</body>", StringComparison.OrdinalIgnoreCase);
         }
-#endif
+        else if (html.Contains("</html>", StringComparison.OrdinalIgnoreCase))
+        {
+            html = html.Replace("</html>", interactionScript + "</html>", StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            html += interactionScript;
+        }
+
+        try
+        {
+            _webView!.NavigateToString(html, new Uri("https://localhost/"));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
+        }
     }
 
     /// <summary>
-    /// Captures the current WebView2 content as a PNG screenshot and returns it as base64.
-    /// Returns null on non-Windows platforms or if the WebView is not initialized.
+    /// Captures the current WebView content as a PNG screenshot and returns it as base64.
+    /// Returns null on platforms where the WebView is not active.
     /// </summary>
     public async Task<string?> CaptureScreenshotBase64Async()
     {
-#if WINDOWS
-        if (_isWebViewDisposed || !_isWebViewInitialized || _webView?.CoreWebView2 == null)
+        if (!_webViewReady || _webView == null)
             return null;
 
         try
         {
-            using var stream = new MemoryStream();
-            await _webView.CoreWebView2.CapturePreviewAsync(
-                Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, stream);
-            return Convert.ToBase64String(stream.ToArray());
+            // Use html2canvas via JavaScript to capture the rendered content
+            var captureScript = @"
+(function() {
+    return new Promise(function(resolve) {
+        var wrapper = document.getElementById('__zoomWrapper') || document.body;
+        // Reset transform temporarily for clean capture
+        var origTransform = wrapper.style.transform;
+        var origTransformOrigin = wrapper.style.transformOrigin;
+        wrapper.style.transform = 'none';
+        wrapper.style.transformOrigin = '';
+
+        // Use canvas to capture
+        var canvas = document.createElement('canvas');
+        var rect = wrapper.getBoundingClientRect();
+        canvas.width = Math.min(rect.width, 1200);
+        canvas.height = Math.min(rect.height, 1600);
+
+        // Simple capture: render visible area to canvas via foreignObject
+        var svg = '<svg xmlns=""http://www.w3.org/2000/svg"" width=""' + canvas.width + '"" height=""' + canvas.height + '"">' +
+            '<foreignObject width=""100%"" height=""100%"">' +
+            '<div xmlns=""http://www.w3.org/1999/xhtml"">' + wrapper.innerHTML + '</div>' +
+            '</foreignObject></svg>';
+
+        var img = new Image();
+        img.onload = function() {
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            wrapper.style.transform = origTransform;
+            wrapper.style.transformOrigin = origTransformOrigin;
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = function() {
+            wrapper.style.transform = origTransform;
+            wrapper.style.transformOrigin = origTransformOrigin;
+            resolve('');
+        };
+        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+})()";
+
+            var result = await _webView.InvokeScript(captureScript);
+            if (!string.IsNullOrEmpty(result) && result.StartsWith("data:image/png;base64,"))
+            {
+                return result.Substring("data:image/png;base64,".Length);
+            }
+
+            // Strip surrounding quotes if the result is a JSON string
+            if (result != null && result.StartsWith('"') && result.EndsWith('"'))
+            {
+                result = result[1..^1].Replace("\\\"", "\"");
+                if (result.StartsWith("data:image/png;base64,"))
+                {
+                    return result.Substring("data:image/png;base64,".Length);
+                }
+            }
+
+            return null;
         }
         catch
         {
             return null;
         }
-#else
-        await Task.CompletedTask;
-        return null;
-#endif
     }
 
     private void OpenInBrowserButton_Click(object? sender, RoutedEventArgs e)
@@ -685,149 +495,41 @@ public partial class InvoicePreviewControl : UserControl
 
     private void ZoomIn_Click(object? sender, RoutedEventArgs e)
     {
-#if WINDOWS
-        if (_webView != null)
-        {
-            var newZoom = Math.Min(_webView.ZoomFactor + ZoomStep, MaxZoom);
-            _ = ZoomToCenter(newZoom);
-            UpdateZoomDisplay();
-        }
-#endif
+        if (_webView == null || !_webViewReady)
+            return;
+
+        var newZoom = Math.Min(_currentZoom + ZoomStep, MaxZoom);
+        _ = _webView.InvokeScript($"window.__setZoom({newZoom.ToString(System.Globalization.CultureInfo.InvariantCulture)})");
     }
 
     private void ZoomOut_Click(object? sender, RoutedEventArgs e)
     {
-#if WINDOWS
-        if (_webView != null)
-        {
-            var newZoom = Math.Max(_webView.ZoomFactor - ZoomStep, MinZoom);
-            _ = ZoomToCenter(newZoom);
-            UpdateZoomDisplay();
-        }
-#endif
+        if (_webView == null || !_webViewReady)
+            return;
+
+        var newZoom = Math.Max(_currentZoom - ZoomStep, MinZoom);
+        _ = _webView.InvokeScript($"window.__setZoom({newZoom.ToString(System.Globalization.CultureInfo.InvariantCulture)})");
     }
 
     private void ResetZoom_Click(object? sender, RoutedEventArgs e)
     {
-#if WINDOWS
-        if (_webView != null)
-        {
-            // Use 0.98 to prevent horizontal scrollbar at "100%" zoom
-            _webView.ZoomFactor = 0.98;
-            UpdateZoomDisplay();
-        }
-#endif
-    }
-
-    private async void FitToWindow_Click(object? sender, RoutedEventArgs e)
-    {
-#if WINDOWS
-        if (_webView?.CoreWebView2 == null || _rootPanel == null)
+        if (_webView == null || !_webViewReady)
             return;
 
-        try
-        {
-            // Get the document dimensions via JavaScript
-            var result = await _webView.CoreWebView2.ExecuteScriptAsync(
-                "JSON.stringify({ width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight })");
+        _ = _webView.InvokeScript("window.__setZoom(1)");
+    }
 
-            if (string.IsNullOrEmpty(result) || result == "null")
-                return;
+    private void FitToWindow_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_webView == null || !_webViewReady)
+            return;
 
-            // Parse the JSON result (it comes back as a JSON string)
-            var json = System.Text.Json.JsonDocument.Parse(result.Trim('"').Replace("\\\"", "\""));
-            var docWidth = json.RootElement.GetProperty("width").GetDouble();
-            var docHeight = json.RootElement.GetProperty("height").GetDouble();
-
-            if (docWidth <= 0 || docHeight <= 0)
-                return;
-
-            // Get the available viewport size
-            var viewportWidth = _rootPanel.Bounds.Width;
-            var viewportHeight = _rootPanel.Bounds.Height;
-
-            if (viewportWidth <= 0 || viewportHeight <= 0)
-                return;
-
-            // Calculate the zoom factor to fit the content
-            var zoomX = viewportWidth / docWidth;
-            var zoomY = viewportHeight / docHeight;
-            var fitZoom = Math.Min(zoomX, zoomY);
-
-            // Clamp to valid zoom range
-            fitZoom = Math.Max(MinZoom, Math.Min(MaxZoom, fitZoom));
-
-            _webView.ZoomFactor = fitZoom;
-            UpdateZoomDisplay();
-        }
-        catch (Exception)
-        {
-            // Fallback to reset zoom
-            _webView.ZoomFactor = 1.0;
-            UpdateZoomDisplay();
-        }
-#endif
+        _ = _webView.InvokeScript("window.__fitToWindow()");
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
-        DestroyWebView();
+        DeactivateWebView();
     }
 }
-
-#if WINDOWS
-/// <summary>
-/// NativeControlHost that wraps a WebView2 control for embedding in Avalonia.
-/// This allows the Windows WebView2 control to be rendered within the Avalonia visual tree.
-/// </summary>
-internal class WebView2Host : NativeControlHost
-{
-    private readonly Microsoft.Web.WebView2.WinForms.WebView2 _webView;
-
-    public WebView2Host(Microsoft.Web.WebView2.WinForms.WebView2 webView)
-    {
-        _webView = webView;
-    }
-
-    protected override IPlatformHandle CreateNativeControlCore(IPlatformHandle parent)
-    {
-        // Ensure the WinForms control is created
-        if (!_webView.IsHandleCreated)
-        {
-            _webView.CreateControl();
-        }
-
-        // Set the parent window handle for proper embedding
-        if (parent.Handle != IntPtr.Zero)
-        {
-            SetParent(_webView.Handle, parent.Handle);
-        }
-
-        return new WinPlatformHandle(_webView.Handle, "HWND");
-    }
-
-    protected override void DestroyNativeControlCore(IPlatformHandle control)
-    {
-        // WebView2 disposal is handled by the parent InvoicePreviewControl
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-}
-
-/// <summary>
-/// Simple platform handle implementation for Windows HWND.
-/// </summary>
-internal class WinPlatformHandle : IPlatformHandle
-{
-    public WinPlatformHandle(IntPtr handle, string descriptor)
-    {
-        Handle = handle;
-        HandleDescriptor = descriptor;
-    }
-
-    public IntPtr Handle { get; }
-    public string HandleDescriptor { get; }
-}
-#endif

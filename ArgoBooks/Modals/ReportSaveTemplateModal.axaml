@@ -55,7 +55,7 @@
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox Text="{Binding SaveTemplateName}"
-                             Watermark="{loc:Loc 'Enter template name...'}"
+                             PlaceholderText="{loc:Loc 'Enter template name...'}"
                              Classes="form-input"
                              MaxLength="100" />
                 </StackPanel>

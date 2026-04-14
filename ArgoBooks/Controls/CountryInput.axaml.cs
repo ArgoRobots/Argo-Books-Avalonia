@@ -261,7 +261,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private void OnCountrySearchBoxGotFocus(object? sender, GotFocusEventArgs e)
+    private void OnCountrySearchBoxGotFocus(object? sender, FocusChangedEventArgs e)
     {
         IsDropdownOpen = true;
         _countrySearchBox?.SelectAll();

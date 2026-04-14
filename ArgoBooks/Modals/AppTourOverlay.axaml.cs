@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -96,7 +95,7 @@ public partial class AppTourOverlay : UserControl
         }
 
         // Find the target element
-        var window = this.GetVisualRoot() as Window;
+        var window = TopLevel.GetTopLevel(this) as Window;
         if (window == null)
         {
             _viewModel.HideHighlight();

@@ -798,7 +798,7 @@
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
-                                             Watermark="{loc:Loc 'Enter company name'}"
+                                             PlaceholderText="{loc:Loc 'Enter company name'}"
                                              Classes="form-input"
                                              MaxLength="255" />
                                 </StackPanel>

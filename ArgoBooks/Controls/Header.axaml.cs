@@ -419,7 +419,7 @@ public partial class Header : UserControl
     /// <summary>
     /// Opens the quick actions panel when the search input receives focus.
     /// </summary>
-    private void SearchInput_GotFocus(object? sender, GotFocusEventArgs e)
+    private void SearchInput_GotFocus(object? sender, FocusChangedEventArgs e)
     {
         if (DataContext is HeaderViewModel vm)
         {

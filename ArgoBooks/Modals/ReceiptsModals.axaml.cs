@@ -471,9 +471,7 @@ public partial class ReceiptsModals : UserControl
 
     private void OnDropZoneDragOver(object? sender, DragEventArgs e)
     {
-#pragma warning disable CS0618
-        var files = e.Data.GetFiles();
-#pragma warning restore CS0618
+        var files = e.DataTransfer.TryGetFiles();
         if (files != null && files.Any())
         {
             e.DragEffects = DragDropEffects.Copy;
@@ -484,9 +482,7 @@ public partial class ReceiptsModals : UserControl
 
     private void OnDropZoneDrop(object? sender, DragEventArgs e)
     {
-#pragma warning disable CS0618
-        var files = e.Data.GetFiles();
-#pragma warning restore CS0618
+        var files = e.DataTransfer.TryGetFiles();
         if (files == null) return;
 
         var paths = files

@@ -117,7 +117,7 @@
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMin}"
                                                  Classes="form-input"
-                                                 Watermark="$0.00"
+                                                 PlaceholderText="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="13" />
                                     </StackPanel>
@@ -125,7 +125,7 @@
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMax}"
                                                  Classes="form-input"
-                                                 Watermark="$0.00"
+                                                 PlaceholderText="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="13" />
                                     </StackPanel>
@@ -474,7 +474,7 @@
                                                     <Run Text="{loc:Loc 'Total'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
                                                 <TextBox Text="{Binding ExtractedTotal}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
@@ -494,7 +494,7 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedSubtotal}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
@@ -505,7 +505,7 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedTax}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
@@ -516,7 +516,7 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedDiscount}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
@@ -922,7 +922,7 @@
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding Notes}"
-                                                     Watermark="{loc:Loc 'Add any additional notes...'}"
+                                                     PlaceholderText="{loc:Loc 'Add any additional notes...'}"
                                                      Classes="form-input"
                                                      AcceptsReturn="True"
                                                      TextWrapping="Wrap"
@@ -1706,7 +1706,7 @@
                                                     <Run Text="Total" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                                 </TextBlock>
                                                 <TextBox Text="{Binding ExtractedTotal}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
@@ -1726,7 +1726,7 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedSubtotal}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
@@ -1737,7 +1737,7 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedTax}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
@@ -1748,7 +1748,7 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedDiscount}"
-                                                         Watermark="0.00"
+                                                         PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
@@ -2169,7 +2169,7 @@
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                         <TextBox Text="{Binding Notes}"
-                                                 Watermark="Add any additional notes..."
+                                                 PlaceholderText="Add any additional notes..."
                                                  Classes="form-input"
                                                  AcceptsReturn="True"
                                                  TextWrapping="Wrap"

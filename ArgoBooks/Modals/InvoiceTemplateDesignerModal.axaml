@@ -334,7 +334,7 @@
                                             <TextBox Text="{Binding TemplateName, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      BorderBrush="{Binding HasValidationMessage, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
-                                                     Watermark="{loc:Loc 'Enter template name...'}"
+                                                     PlaceholderText="{loc:Loc 'Enter template name...'}"
                                                      MaxLength="100" />
                                             <TextBlock Text="{Binding ValidationMessage}"
                                                        FontSize="13"
@@ -520,7 +520,7 @@
                                                              AcceptsReturn="True"
                                                              TextWrapping="Wrap"
                                                              MinHeight="60"
-                                                             Watermark="{loc:Loc 'Bank details, payment methods, etc.'}"
+                                                             PlaceholderText="{loc:Loc 'Bank details, payment methods, etc.'}"
                                                              MaxLength="1000" />
                                                 </StackPanel>
 
@@ -531,7 +531,7 @@
                                                              AcceptsReturn="True"
                                                              TextWrapping="Wrap"
                                                              MinHeight="60"
-                                                             Watermark="{loc:Loc 'Default notes for invoices using this template...'}"
+                                                             PlaceholderText="{loc:Loc 'Default notes for invoices using this template...'}"
                                                              MaxLength="500" />
                                                 </StackPanel>
 

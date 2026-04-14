@@ -659,7 +659,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
     }
 
-    private static string GenerateReceiptImagePath(Receipt receipt)
+    private static async Task<string> GenerateReceiptImagePathAsync(Receipt receipt)
     {
         if (string.IsNullOrEmpty(receipt.FileData))
             return string.Empty;
@@ -675,12 +675,10 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (isPdf)
             {
-                #pragma warning disable CA1416 // RenderPdfFirstPage uses PDFium which supports Windows/macOS/Linux (not browser)
-                var rendered = ReceiptImageHelper.RenderPdfFirstPage(bytes);
-                #pragma warning restore CA1416
+                var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
                 if (rendered == null) return string.Empty;
                 var pdfPreviewPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
-                File.WriteAllBytes(pdfPreviewPath, rendered);
+                await File.WriteAllBytesAsync(pdfPreviewPath, rendered);
                 return pdfPreviewPath;
             }
 
@@ -712,13 +710,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (toLoad.Count == 0) return;
 
-            var results = await Task.Run(() =>
+            var results = await Task.Run(async () =>
             {
                 var paths = new List<(ReceiptDisplayItem Display, string Path)>();
                 foreach (var (display, receipt) in toLoad)
                 {
                     cts.Token.ThrowIfCancellationRequested();
-                    var path = GenerateReceiptImagePath(receipt);
+                    var path = await GenerateReceiptImagePathAsync(receipt);
                     if (!string.IsNullOrEmpty(path))
                         paths.Add((display, path));
                 }

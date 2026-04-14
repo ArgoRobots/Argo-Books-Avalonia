@@ -66,14 +66,14 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Daily Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Weekly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
@@ -82,12 +82,12 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Monthly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
@@ -95,7 +95,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
@@ -175,14 +175,14 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Daily Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Weekly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
@@ -191,12 +191,12 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Monthly Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                 </StackPanel>
                             </Grid>
@@ -204,7 +204,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
@@ -277,11 +277,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterDailyRateMin, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
+                                        <TextBox Text="{Binding FilterDailyRateMin, Mode=TwoWay}" Classes="form-input" PlaceholderText="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBox Text="{Binding FilterDailyRateMax, Mode=TwoWay}" Classes="form-input" Watermark="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
+                                        <TextBox Text="{Binding FilterDailyRateMax, Mode=TwoWay}" Classes="form-input" PlaceholderText="$0.00" behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -410,7 +410,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding RentOutNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}"
+                                <TextBox Text="{Binding RentOutNotes, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="100" MaxLength="500" />
                             </StackPanel>
                         </StackPanel>

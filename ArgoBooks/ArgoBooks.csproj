@@ -10,14 +10,7 @@
     <!-- Define WINDOWS constant when targeting Windows -->
     <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
         <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-        <!-- Suppress WebView2/WindowsBase version conflict warning (WebView2 references v5.0, .NET provides v4.0) -->
-        <NoWarn>$(NoWarn);MSB3277</NoWarn>
     </PropertyGroup>
-
-    <!-- Add Windows Forms framework reference for WebView2 (without implicit usings) -->
-    <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0-windows'))">
-        <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
-    </ItemGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
@@ -33,10 +26,13 @@
         <PackageReference Include="Avalonia" />
         <PackageReference Include="Avalonia.Themes.Fluent" />
         <PackageReference Include="Avalonia.Fonts.Inter" />
-        <PackageReference Include="Avalonia.Diagnostics">
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">none</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">all</PrivateAssets>
         </PackageReference>
+
+        <!-- Cross-platform WebView (invoice preview, PDF rendering) -->
+        <PackageReference Include="Avalonia.Controls.WebView" />
 
         <!-- MVVM -->
         <PackageReference Include="CommunityToolkit.Mvvm" />
@@ -52,8 +48,4 @@
         <ProjectReference Include="..\ArgoBooks.Core\ArgoBooks.Core.csproj" />
     </ItemGroup>
 
-    <!-- HTML Rendering (WebView2 for Windows only. Will be replaced with Avalonia Accelerate in the future) -->
-    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
-      <PackageReference Include="Microsoft.Web.WebView2" />
-    </ItemGroup>
 </Project>

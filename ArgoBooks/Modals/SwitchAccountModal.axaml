@@ -71,7 +71,7 @@
                                       VerticalAlignment="Center" />
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchQuery, Mode=TwoWay}"
-                                     Watermark="{loc:Loc 'Search accounts...'}"
+                                     PlaceholderText="{loc:Loc 'Search accounts...'}"
                                      Classes="search-input"
                                      VerticalAlignment="Center"
                                      MaxLength="100" />
