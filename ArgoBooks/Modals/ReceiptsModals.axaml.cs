@@ -50,6 +50,9 @@ public partial class ReceiptsModals : UserControl
         if (ScanPreviewScrollViewer != null)
         {
             ScanPreviewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScanPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
+            ScanPreviewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            ScanPreviewScrollViewer.AddHandler(PointerMovedEvent, OnPreviewPointerMoved, RoutingStrategies.Tunnel);
+            ScanPreviewScrollViewer.AddHandler(PointerReleasedEvent, OnPreviewPointerReleased, RoutingStrategies.Tunnel);
         }
 
         if (ScanPreviewZoomTransform != null && _overscrollHelper == null)
@@ -68,6 +71,9 @@ public partial class ReceiptsModals : UserControl
         if (BulkPreviewScrollViewer != null)
         {
             BulkPreviewScrollViewer.AddHandler(PointerWheelChangedEvent, OnBulkPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
+            BulkPreviewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            BulkPreviewScrollViewer.AddHandler(PointerMovedEvent, OnPreviewPointerMoved, RoutingStrategies.Tunnel);
+            BulkPreviewScrollViewer.AddHandler(PointerReleasedEvent, OnPreviewPointerReleased, RoutingStrategies.Tunnel);
         }
 
         if (BulkPreviewZoomTransform != null && _bulkOverscrollHelper == null)
@@ -301,114 +307,78 @@ public partial class ReceiptsModals : UserControl
 
     #region Preview Panning (Scan + Bulk)
 
-    /// <summary>
-    /// Determines which preview scroll viewer (if any) the pointer event originated inside.
-    /// </summary>
-    private ScrollViewer? GetPreviewScrollViewerFromPointer(PointerEventArgs e)
+    private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (ScanPreviewScrollViewer != null)
+        if (sender is not ScrollViewer scrollViewer) return;
+
+        var point = e.GetCurrentPoint(scrollViewer);
+        if (point.Properties.IsLeftButtonPressed
+            || point.Properties.IsRightButtonPressed
+            || point.Properties.IsMiddleButtonPressed)
         {
-            var pos = e.GetPosition(ScanPreviewScrollViewer);
-            if (pos.X >= 0 && pos.Y >= 0
-                && pos.X <= ScanPreviewScrollViewer.Bounds.Width
-                && pos.Y <= ScanPreviewScrollViewer.Bounds.Height)
-                return ScanPreviewScrollViewer;
-        }
-
-        if (BulkPreviewScrollViewer != null)
-        {
-            var pos = e.GetPosition(BulkPreviewScrollViewer);
-            if (pos.X >= 0 && pos.Y >= 0
-                && pos.X <= BulkPreviewScrollViewer.Bounds.Width
-                && pos.Y <= BulkPreviewScrollViewer.Bounds.Height)
-                return BulkPreviewScrollViewer;
-        }
-
-        return null;
-    }
-
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
-    {
-        base.OnPointerPressed(e);
-
-        var point = e.GetCurrentPoint(this);
-        var isAnyButton = point.Properties.IsLeftButtonPressed
-                          || point.Properties.IsRightButtonPressed
-                          || point.Properties.IsMiddleButtonPressed;
-
-        if (isAnyButton)
-        {
-            var scrollViewer = GetPreviewScrollViewerFromPointer(e);
-            if (scrollViewer != null)
-            {
-                _isPanning = true;
-                _panScrollViewer = scrollViewer;
-                _activePanOverscroll = scrollViewer == BulkPreviewScrollViewer
-                    ? _bulkOverscrollHelper
-                    : _overscrollHelper;
-                _panStartPoint = e.GetPosition(this);
-                _panStartOffset = new Vector(scrollViewer.Offset.X, scrollViewer.Offset.Y);
-                e.Pointer.Capture(this);
-                Cursor = new Cursor(StandardCursorType.Hand);
-                e.Handled = true;
-            }
-        }
-    }
-
-    protected override void OnPointerMoved(PointerEventArgs e)
-    {
-        base.OnPointerMoved(e);
-
-        if (_isPanning && _panScrollViewer != null)
-        {
-            var currentPoint = e.GetPosition(this);
-            var delta = _panStartPoint - currentPoint;
-
-            var desiredX = _panStartOffset.X + delta.X;
-            var desiredY = _panStartOffset.Y + delta.Y;
-
-            var maxX = Math.Max(0, _panScrollViewer.Extent.Width - _panScrollViewer.Viewport.Width);
-            var maxY = Math.Max(0, _panScrollViewer.Extent.Height - _panScrollViewer.Viewport.Height);
-
-            if (_activePanOverscroll != null)
-            {
-                var (clampedX, clampedY, overscrollX, overscrollY) =
-                    _activePanOverscroll.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
-
-                _panScrollViewer.Offset = new Vector(clampedX, clampedY);
-                _activePanOverscroll.ApplyOverscroll(overscrollX, overscrollY);
-            }
-            else
-            {
-                _panScrollViewer.Offset = new Vector(
-                    Math.Clamp(desiredX, 0, maxX),
-                    Math.Clamp(desiredY, 0, maxY));
-            }
-
+            _isPanning = true;
+            _panScrollViewer = scrollViewer;
+            _activePanOverscroll = scrollViewer == BulkPreviewScrollViewer
+                ? _bulkOverscrollHelper
+                : _overscrollHelper;
+            _panStartPoint = e.GetPosition(this);
+            _panStartOffset = new Vector(scrollViewer.Offset.X, scrollViewer.Offset.Y);
+            e.Pointer.Capture(scrollViewer);
+            scrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
             e.Handled = true;
         }
     }
 
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
     {
-        base.OnPointerReleased(e);
+        if (!_isPanning || _panScrollViewer == null) return;
 
-        if (_isPanning)
+        var currentPoint = e.GetPosition(this);
+        var delta = _panStartPoint - currentPoint;
+
+        var desiredX = _panStartOffset.X + delta.X;
+        var desiredY = _panStartOffset.Y + delta.Y;
+
+        var maxX = Math.Max(0, _panScrollViewer.Extent.Width - _panScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _panScrollViewer.Extent.Height - _panScrollViewer.Viewport.Height);
+
+        if (_activePanOverscroll != null)
         {
-            _isPanning = false;
-            _panScrollViewer = null;
-            e.Pointer.Capture(null);
-            Cursor = Cursor.Default;
+            var (clampedX, clampedY, overscrollX, overscrollY) =
+                _activePanOverscroll.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
-            if (_activePanOverscroll?.HasOverscroll == true)
-            {
-                _ = _activePanOverscroll.AnimateSnapBackAsync();
-            }
-
-            _activePanOverscroll = null;
-
-            e.Handled = true;
+            _panScrollViewer.Offset = new Vector(clampedX, clampedY);
+            _activePanOverscroll.ApplyOverscroll(overscrollX, overscrollY);
         }
+        else
+        {
+            _panScrollViewer.Offset = new Vector(
+                Math.Clamp(desiredX, 0, maxX),
+                Math.Clamp(desiredY, 0, maxY));
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_isPanning) return;
+
+        var scrollViewer = _panScrollViewer;
+        _isPanning = false;
+        _panScrollViewer = null;
+        e.Pointer.Capture(null);
+
+        if (scrollViewer != null)
+            scrollViewer.Cursor = new Cursor(StandardCursorType.Hand); // restore hand
+
+        if (_activePanOverscroll?.HasOverscroll == true)
+        {
+            _ = _activePanOverscroll.AnimateSnapBackAsync();
+        }
+
+        _activePanOverscroll = null;
+        e.Handled = true;
     }
 
     #endregion
