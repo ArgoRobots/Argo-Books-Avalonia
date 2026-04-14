@@ -98,7 +98,6 @@
                     <!-- Filtered Items -->
                     <ListBox Grid.Row="1"
                              x:Name="CountryListBox"
-                             ItemsSource="{Binding #Root.FilteredCountries}"
                              SelectedIndex="{Binding #Root.SelectedIndex, Mode=TwoWay}"
                              Background="Transparent"
                              BorderThickness="0"

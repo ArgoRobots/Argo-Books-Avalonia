@@ -108,14 +108,17 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
                 if (value)
                 {
+                    // Reattach the ItemsSource so the ListBox creates fresh containers
+                    if (_countryListBox != null)
+                        _countryListBox.ItemsSource = FilteredCountries;
                     SelectedIndex = 0;
                     UpdateFilteredCountries();
                 }
                 else
                 {
-                    // Clear items on close so visual containers are fully detached
-                    // before the next open cycle (prevents "Visual already has a parent")
-                    FilteredCountries.Clear();
+                    // Detach items so visual containers are fully released before next open
+                    if (_countryListBox != null)
+                        _countryListBox.ItemsSource = null;
                 }
             }
         }
