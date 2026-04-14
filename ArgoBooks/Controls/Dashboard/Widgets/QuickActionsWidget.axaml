@@ -44,15 +44,35 @@
             BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
             CornerRadius="12"
-            Padding="20"
-            IsVisible="{Binding HasVisibleQuickActions}">
+            Padding="20">
         <StackPanel>
             <TextBlock Text="{loc:Loc 'Quick Actions'}"
                        FontSize="16"
                        FontWeight="SemiBold"
                        Foreground="{DynamicResource TextPrimaryBrush}" />
 
-            <controls:CenteringWrapPanel x:Name="QuickActionsWrapPanel" Margin="0,8,0,0">
+            <!-- Empty State -->
+            <Border Padding="40"
+                    IsVisible="{Binding HasNoVisibleQuickActions}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                    <PathIcon Data="{x:Static local:Icons.Adjustments}"
+                              Width="48" Height="48"
+                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                    <TextBlock Text="{loc:Loc 'No quick actions enabled'}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{loc:Loc 'Use the widget settings to enable quick actions'}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <controls:CenteringWrapPanel x:Name="QuickActionsWrapPanel" Margin="0,8,0,0"
+                                         IsVisible="{Binding HasVisibleQuickActions}">
                 <!-- New Invoice -->
                 <Button Classes="quick-action-compact" Margin="6" Width="165"
                         Command="{Binding NewInvoiceCommand}"

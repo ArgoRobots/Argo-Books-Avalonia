@@ -142,6 +142,15 @@ public partial class DashboardLayoutViewModel : ObservableObject
     {
         IsEditMode = false;
 
+        foreach (var row in Rows)
+        {
+            for (int j = row.Widgets.Count - 1; j >= 0; j--)
+            {
+                if (row.Widgets[j].WidgetViewModel is QuickActionsWidgetViewModel qa && qa.HasNoVisibleQuickActions)
+                    row.Widgets.RemoveAt(j);
+            }
+        }
+
         for (int i = Rows.Count - 1; i >= 0; i--)
         {
             if (Rows[i].Widgets.Count == 0)

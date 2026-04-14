@@ -132,7 +132,7 @@
                 </Border>
 
                 <!-- Tabbed content -->
-                <TabControl Margin="0,0,0,8">
+                <TabControl Margin="0,0,0,8" MinHeight="400">
                     <TabItem Header="Stat Cards">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled"
@@ -226,6 +226,50 @@
                                       HorizontalScrollBarVisibility="Disabled"
                                       MaxHeight="400">
                             <ItemsControl ItemsSource="{Binding Tables}" Margin="20,8,20,12">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CatalogItem">
+                                        <Button Classes="catalog-item-btn"
+                                                Classes.already-added="{Binding IsAlreadyAdded}"
+                                                Classes.cannot-fit="{Binding CannotFitInRow}"
+                                                Command="{Binding $parent[UserControl].((vm:WidgetCatalogViewModel)DataContext).AddWidgetCommand}"
+                                                CommandParameter="{Binding}"
+                                                Margin="0,0,0,6">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Definition.Icon}"
+                                                           FontSize="20"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,12,0" />
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Definition.Name}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Definition.Description}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="Added" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding IsAlreadyAdded}" />
+                                                <TextBlock Grid.Column="2" Text="Won't fit" FontSize="11"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                                           IsVisible="{Binding ShowWontFit}" />
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Other">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      MaxHeight="400">
+                            <ItemsControl ItemsSource="{Binding Other}" Margin="20,8,20,12">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:CatalogItem">
                                         <Button Classes="catalog-item-btn"

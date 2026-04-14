@@ -14,62 +14,77 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewInvoice = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewExpense = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewRevenue = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showScanReceipt = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewCustomer;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewSupplier;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewProduct;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showRecordPayment;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewRentalItem;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewRentalRecord = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewCategory;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewDepartment;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewLocation;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewPurchaseOrder;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewStockAdjustment;
 
     public bool HasVisibleQuickActions =>
@@ -78,6 +93,8 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         ShowNewRentalItem || ShowNewRentalRecord ||
         ShowNewCategory || ShowNewDepartment || ShowNewLocation ||
         ShowNewPurchaseOrder || ShowNewStockAdjustment;
+
+    public bool HasNoVisibleQuickActions => !HasVisibleQuickActions;
 
     #endregion
 

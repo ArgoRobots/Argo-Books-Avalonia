@@ -27,17 +27,20 @@ public partial class WidgetCatalogViewModel : ObservableObject
     public ObservableCollection<CatalogItem> StatCards { get; } = [];
     public ObservableCollection<CatalogItem> Charts { get; } = [];
     public ObservableCollection<CatalogItem> Tables { get; } = [];
+    public ObservableCollection<CatalogItem> Other { get; } = [];
 
     public event EventHandler<WidgetDefinition>? WidgetAddRequested;
 
     private static readonly HashSet<string> StatCardCategories = ["Statistics"];
     private static readonly HashSet<string> ChartCategories = ["Charts", "Insights"];
+    private static readonly HashSet<string> OtherCategories = ["Actions"];
 
     public void Refresh(IEnumerable<WidgetHostViewModel> currentWidgets, double remainingFraction = 1.0)
     {
         StatCards.Clear();
         Charts.Clear();
         Tables.Clear();
+        Other.Clear();
 
         var placedTypes = currentWidgets.Select(w => w.WidgetType).ToHashSet();
         var placedChartTypes = currentWidgets
@@ -59,12 +62,14 @@ public partial class WidgetCatalogViewModel : ObservableObject
                 StatCards.Add(item);
             else if (ChartCategories.Contains(d.Category))
                 Charts.Add(item);
+            else if (OtherCategories.Contains(d.Category))
+                Other.Add(item);
             else
                 Tables.Add(item);
         }
 
         // Show banner when every available (not-already-added) widget is too large
-        var allItems = StatCards.Concat(Charts).Concat(Tables);
+        var allItems = StatCards.Concat(Charts).Concat(Tables).Concat(Other);
         IsRowFull = allItems.Where(i => !i.IsAlreadyAdded).All(i => i.CannotFitInRow);
     }
 
