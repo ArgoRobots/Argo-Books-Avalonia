@@ -1086,10 +1086,10 @@
                                                     <Grid RowDefinitions="Auto,Auto">
                                                         <!-- Thumbnail area with remove button -->
                                                         <Panel Grid.Row="0" Height="64">
-                                                            <!-- Placeholder when no preview -->
+                                                            <!-- Placeholder when no thumbnail -->
                                                             <Border Background="#1A000000"
                                                                     CornerRadius="4"
-                                                                    IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                                                    IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
                                                                     HorizontalAlignment="Stretch"
                                                                     VerticalAlignment="Stretch">
                                                                 <PathIcon Data="{x:Static icons:Icons.Receipts}"
@@ -1098,9 +1098,9 @@
                                                                           HorizontalAlignment="Center"
                                                                           VerticalAlignment="Center" />
                                                             </Border>
-                                                            <!-- Preview image when available -->
-                                                            <Image Source="{Binding PreviewImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                                   IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                            <!-- Thumbnail image when available -->
+                                                            <Image Source="{Binding ThumbnailPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                   IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                                                    Stretch="UniformToFill"
                                                                    Height="64" />
                                                             <!-- Remove button -->
@@ -1245,11 +1245,11 @@
                                                         <PathIcon Data="{x:Static icons:Icons.Receipts}"
                                                                   Width="20" Height="20"
                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                  IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                                                  IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
-                                                        <Image Source="{Binding PreviewImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                               IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                        <Image Source="{Binding ThumbnailPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                               IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                                                Stretch="UniformToFill"
                                                                Width="44" Height="44" />
                                                     </Panel>
@@ -1399,11 +1399,11 @@
                                                         <PathIcon Data="{x:Static icons:Icons.Receipts}"
                                                                   Width="20" Height="20"
                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                  IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                                                                  IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNullOrEmpty}}"
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
-                                                        <Image Source="{Binding PreviewImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                               IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                        <Image Source="{Binding ThumbnailPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                               IsVisible="{Binding ThumbnailPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                                                Stretch="UniformToFill"
                                                                Width="44" Height="44" />
                                                     </Panel>

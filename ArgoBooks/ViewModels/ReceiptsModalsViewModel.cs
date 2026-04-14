@@ -654,24 +654,24 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
             Directory.CreateDirectory(tempDir);
-            var previewPath = Path.Combine(tempDir,
-                $"{Path.GetFileNameWithoutExtension(item.FileName)}_{Guid.NewGuid():N}.jpg");
+            var thumbPath = Path.Combine(tempDir,
+                $"{Path.GetFileNameWithoutExtension(item.FileName)}_{Guid.NewGuid():N}_thumb.jpg");
 
             await Task.Run(async () =>
             {
-                var previewBytes = isPdf
+                // Use lightweight thumbnail for queue cards — skip heavy OCR preprocessing
+                var thumbBytes = isPdf
                     ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData)
-                    : ReceiptImageHelper.PreprocessForOcr(fileData, item.FileName);
+                    : ReceiptImageHelper.GenerateThumbnail(fileData);
 
-                if (previewBytes != null)
-                    await File.WriteAllBytesAsync(previewPath, previewBytes);
+                if (thumbBytes != null)
+                    await File.WriteAllBytesAsync(thumbPath, thumbBytes);
                 else
-                    previewPath = null;
+                    return;
             });
 
-            if (previewPath != null)
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                    item.PreviewImagePath = previewPath);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                item.ThumbnailPath = thumbPath);
         }
         catch
         {

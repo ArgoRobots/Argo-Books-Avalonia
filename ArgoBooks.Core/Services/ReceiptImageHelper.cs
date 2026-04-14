@@ -183,6 +183,44 @@ public static class ReceiptImageHelper
         return encoded.ToArray();
     }
 
+    /// <summary>
+    /// Generates a small JPEG thumbnail suitable for preview cards.
+    /// Only applies EXIF rotation and downscale — no contrast/sharpen filters.
+    /// </summary>
+    public static byte[]? GenerateThumbnail(byte[] imageData, int maxDimension = 200)
+    {
+        using var codec = SKCodec.Create(new MemoryStream(imageData));
+        if (codec == null)
+            return null;
+
+        var origin = codec.EncodedOrigin;
+        using var original = SKBitmap.Decode(imageData);
+        if (original == null)
+            return null;
+
+        // Determine EXIF-corrected dimensions
+        var swapDims = origin is SKEncodedOrigin.LeftBottom or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightBottom;
+        var orientedWidth = swapDims ? original.Height : original.Width;
+        var orientedHeight = swapDims ? original.Width : original.Height;
+
+        // Compute thumbnail size preserving aspect ratio
+        var scale = Math.Min((float)maxDimension / orientedWidth, (float)maxDimension / orientedHeight);
+        if (scale > 1f) scale = 1f; // Don't upscale
+        var thumbWidth = Math.Max(1, (int)(orientedWidth * scale));
+        var thumbHeight = Math.Max(1, (int)(orientedHeight * scale));
+
+        using var surface = SKSurface.Create(new SKImageInfo(thumbWidth, thumbHeight));
+        var canvas = surface.Canvas;
+        canvas.Scale(scale, scale);
+        ApplyExifTransform(canvas, origin, original.Width, original.Height, orientedWidth, orientedHeight);
+        canvas.DrawBitmap(original, 0, 0);
+
+        using var snapshot = surface.Snapshot();
+        using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 70);
+        return encoded.ToArray();
+    }
+
     internal static byte[] EncodeAsJpeg(SKBitmap bitmap, int quality)
     {
         using var image = SKImage.FromBitmap(bitmap);

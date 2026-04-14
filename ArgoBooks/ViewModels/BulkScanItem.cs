@@ -71,6 +71,13 @@ public partial class BulkScanItem : ObservableObject
     private string? _previewImagePath;
 
     /// <summary>
+    /// Path to a small thumbnail for queue/carousel cards (fast to generate and display).
+    /// Falls back to <see cref="PreviewImagePath"/> if not set.
+    /// </summary>
+    [ObservableProperty]
+    private string? _thumbnailPath;
+
+    /// <summary>
     /// Whether the user has approved this receipt for transaction creation.
     /// </summary>
     [ObservableProperty]
