@@ -897,7 +897,9 @@ public class App : Application
                     // Sample company cannot be saved directly - redirect to Save As
                     if (CompanyManager.IsSampleCompany)
                     {
-                        await SaveCompanyAsDialogAsync(desktop);
+                        var saved = await SaveCompanyAsDialogAsync(desktop);
+                        if (!saved)
+                            _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                         return;
                     }
 
@@ -3893,17 +3895,22 @@ public class App : Application
 
         try
         {
+            // Suppress the default CompanySaved feedback — we show our own with forceSaved
+            _suppressSavedFeedback = true;
             await CompanyManager!.SaveCompanyAsAsync(filePath);
 
             // Refresh UI with the (possibly updated) company name
             var newName = CompanyManager.CurrentCompanyName ?? "Company";
             RefreshCompanyUi(newName);
 
+            _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
+
             await LoadRecentCompaniesAsync();
             return true;
         }
         catch (Exception ex)
         {
+            _suppressSavedFeedback = false;
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
             await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
             return false;

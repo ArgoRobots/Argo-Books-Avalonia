@@ -612,7 +612,7 @@ public partial class HeaderViewModel : ViewModelBase
     /// Shows the appropriate feedback when save is clicked.
     /// Shows "Saved" if there were changes, or "No changes found" if there were none.
     /// </summary>
-    public async void ShowSavedFeedback()
+    public async void ShowSavedFeedback(bool forceSaved = false)
     {
         try
         {
@@ -624,9 +624,9 @@ public partial class HeaderViewModel : ViewModelBase
             var cts = new CancellationTokenSource();
             _savedFeedbackCts = cts;
 
-            if (HasUnsavedChanges)
+            if (HasUnsavedChanges || forceSaved)
             {
-                // There were changes - show "Saved"
+                // There were changes (or Save As) - show "Saved"
                 ShowNoChangesIndicator = false;
                 HasUnsavedChanges = false;
                 ShowSavedIndicator = true;
