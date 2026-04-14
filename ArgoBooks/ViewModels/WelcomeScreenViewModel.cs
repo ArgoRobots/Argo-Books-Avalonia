@@ -209,6 +209,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     /// </summary>
     public void InitializeTutorialMode()
     {
+        if (IsTutorialMode) return;
         var tutorialService = TutorialService.Instance;
         IsTutorialMode = tutorialService.IsFirstTimeUser && !tutorialService.IsTutorialInProgressOnCompany;
     }

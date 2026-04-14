@@ -2145,6 +2145,9 @@ public class App : Application
         // Restart tutorial from help panel
         _appShellViewModel.RestartTutorialRequested += async (_, _) =>
         {
+            if (_welcomeScreenViewModel != null)
+                _welcomeScreenViewModel.IsTutorialMode = true;
+
             if (CompanyManager?.IsCompanyOpen == true)
             {
                 if (!CompanyManager.IsSampleCompany)
@@ -2154,9 +2157,6 @@ public class App : Application
                 }
                 await CompanyManager.CloseCompanyAsync();
             }
-
-            if (_welcomeScreenViewModel != null)
-                _welcomeScreenViewModel.IsTutorialMode = true;
         };
 
         // Wire up edit company modal events
