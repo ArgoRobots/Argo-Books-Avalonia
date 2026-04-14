@@ -190,6 +190,14 @@
                                     Classes="edit-toolbar-btn"
                                     Command="{Binding LayoutViewModel.ResetToDefaultCommand}" />
                         </StackPanel>
+
+                        <!-- Sample company warning -->
+                        <TextBlock Text="{loc:Loc 'This is a sample company. Dashboard changes will not persist.'}"
+                                   IsVisible="{Binding IsSampleCompany}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
 

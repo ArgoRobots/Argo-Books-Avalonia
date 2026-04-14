@@ -33,11 +33,19 @@ public partial class DashboardLayoutViewModel : ObservableObject
         var settings = App.SettingsService?.GlobalSettings;
         var companyPath = companyManager.CurrentFilePath;
 
-        // Load per-company layout, fall back to legacy global layout, then default
+        // Sample company always gets the default layout
         DashboardLayout? layout = null;
-        if (!string.IsNullOrEmpty(companyPath) && settings?.Ui.CompanyDashboardLayouts.TryGetValue(companyPath, out var companyLayout) == true)
-            layout = companyLayout;
-        layout ??= settings?.Ui.DashboardLayout ?? DashboardLayout.CreateDefault();
+        if (companyManager.IsSampleCompany)
+        {
+            layout = DashboardLayout.CreateDefault();
+        }
+        else
+        {
+            // Load per-company layout, fall back to legacy global layout, then default
+            if (!string.IsNullOrEmpty(companyPath) && settings?.Ui.CompanyDashboardLayouts.TryGetValue(companyPath, out var companyLayout) == true)
+                layout = companyLayout;
+            layout ??= settings?.Ui.DashboardLayout ?? DashboardLayout.CreateDefault();
+        }
         layout.MigrateIfNeeded();
 
         _savedLayout = layout.Clone();
@@ -165,7 +173,7 @@ public partial class DashboardLayoutViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ResetToDefault()
+    private async Task ResetToDefault()
     {
         var layout = DashboardLayout.CreateDefault();
         LoadFromLayout(layout);
@@ -177,6 +185,19 @@ public partial class DashboardLayoutViewModel : ObservableObject
                 w.IsEditMode = true;
         }
         Catalog.Refresh(Rows.SelectMany(r => r.Widgets));
+
+        // Persist the reset so it survives close/reopen
+        _savedLayout = layout.Clone();
+        var settings = App.SettingsService?.GlobalSettings;
+        if (settings != null)
+        {
+            var companyPath = _companyManager?.CurrentFilePath;
+            if (!string.IsNullOrEmpty(companyPath))
+                settings.Ui.CompanyDashboardLayouts[companyPath] = layout;
+            else
+                settings.Ui.DashboardLayout = layout;
+            await App.SettingsService!.SaveGlobalSettingsAsync();
+        }
     }
 
     [RelayCommand]

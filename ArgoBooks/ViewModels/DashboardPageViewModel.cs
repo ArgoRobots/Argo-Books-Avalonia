@@ -265,6 +265,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ? "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate()
         : "Welcome back! Here is an overview of your business.".Translate();
 
+    /// <summary>
+    /// Whether the current company is a sample company (dashboard changes won't persist).
+    /// </summary>
+    public bool IsSampleCompany => _companyManager?.IsSampleCompany == true;
+
     #endregion
 
     #region Empty State Date Range Detection
