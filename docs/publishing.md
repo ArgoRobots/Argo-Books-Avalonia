@@ -43,41 +43,26 @@ The Linux distribution is packaged as an [AppImage](https://appimage.org/) using
 
 #### One-time setup
 
-1. Install appimagetool:
+Install FUSE (required to run AppImage tools) and appimagetool:
 
 ```bash
+sudo apt install libfuse2
 wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
 chmod +x appimagetool-x86_64.AppImage
 sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
 ```
 
-2. Place a 256x256 PNG icon at `packaging/linux/com.argobooks.ArgoBooks.png` (convert from `ArgoBooks/Assets/argo-logo.ico`).
-
 #### Build the AppImage
 
-**Option A: Use the build script**
+`cd` into the folder that contains both `publish/` and `packaging/`, then run the script with the version number:
 
 ```bash
+cd ~/Downloads
 chmod +x packaging/linux/build-appimage.sh
-./packaging/linux/build-appimage.sh
+./packaging/linux/build-appimage.sh 2.0.5
 ```
 
-This packages the published output and produces `ArgoBooks-{version}-linux-x64.AppImage`.
-
-**Option B: Manual steps**
-
-```bash
-# Create the AppDir structure
-mkdir -p AppDir/usr/bin
-cp -r publish/linux-x64/* AppDir/usr/bin/
-cp packaging/linux/com.argobooks.ArgoBooks.desktop AppDir/
-cp packaging/linux/com.argobooks.ArgoBooks.png AppDir/
-ln -sf usr/bin/"Argo Books" AppDir/AppRun
-chmod +x AppDir/usr/bin/"Argo Books"
-
-# Build the AppImage
-appimagetool AppDir ArgoBooks-2.0.5-linux-x64.AppImage
-```
+Replace `2.0.5` with the version from `Directory.Build.props`. This produces `ArgoBooks-2.0.5-linux-x64.AppImage`.
 
 ### Linux runtime dependencies
 
