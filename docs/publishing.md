@@ -3,6 +3,7 @@
 ## Before You Publish
 
 1. Update the version number in `Directory.Build.props`
+2. Run all tests: `dotnet test ArgoBooks.Tests`
 
 ## Windows
 
