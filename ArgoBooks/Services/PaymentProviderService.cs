@@ -1,5 +1,3 @@
-using ArgoBooks.Core.Models.Portal;
-
 namespace ArgoBooks.Services;
 
 /// <summary>

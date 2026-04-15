@@ -3,7 +3,6 @@ using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 
 namespace ArgoBooks.Modals;
 

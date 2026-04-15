@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using ArgoBooks.Core.Models.Telemetry;
-using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
 

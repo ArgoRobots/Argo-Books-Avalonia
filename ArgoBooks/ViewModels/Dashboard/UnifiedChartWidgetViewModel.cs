@@ -1,7 +1,6 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
-using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Dashboard;

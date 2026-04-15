@@ -1,7 +1,6 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -13,7 +12,6 @@ using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
-using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;

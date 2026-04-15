@@ -1,5 +1,3 @@
-using ArgoBooks.Data;
-
 namespace ArgoBooks.Services;
 
 /// <summary>

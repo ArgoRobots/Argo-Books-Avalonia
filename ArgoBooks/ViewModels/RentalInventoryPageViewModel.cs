@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Core.Models.Rentals;

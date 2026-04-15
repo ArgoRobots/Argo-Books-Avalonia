@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
