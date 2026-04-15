@@ -39,16 +39,16 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     private bool _hasError;
 
     [ObservableProperty]
-    private bool _windowsHelloAvailable;
+    private bool _biometricLoginAvailable;
 
     [ObservableProperty]
-    private bool _isWindowsHelloAuthenticating;
+    private bool _isBiometricAuthenticating;
 
     [ObservableProperty]
-    private bool _showWindowsHelloSuccess;
+    private bool _showBiometricSuccess;
 
     private TaskCompletionSource<string?>? _completionSource;
-    private TaskCompletionSource<bool>? _windowsHelloSuccessCompletionSource;
+    private TaskCompletionSource<bool>? _biometricSuccessCompletionSource;
 
     /// <summary>
     /// Event raised when the password textbox should be focused.
@@ -56,9 +56,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     public event EventHandler? FocusPasswordRequested;
 
     /// <summary>
-    /// Event raised when Windows Hello authentication is requested.
+    /// Event raised when biometric authentication is requested.
     /// </summary>
-    public event EventHandler? WindowsHelloAuthRequested;
+    public event EventHandler? BiometricAuthRequested;
 
     /// <summary>
     /// Gets the task that completes when the user submits a password.
@@ -91,10 +91,10 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     /// </summary>
     /// <param name="companyName">Name of the company file.</param>
     /// <param name="filePath">Path to the file.</param>
-    /// <param name="windowsHelloAvailable">Whether Windows Hello is available and enabled for this file.</param>
+    /// <param name="biometricLoginAvailable">Whether biometric is available and enabled for this file.</param>
     /// <param name="message">Optional custom message. If null, defaults to "Enter password for {companyName}".</param>
     /// <returns>The entered password, or null if cancelled.</returns>
-    public Task<string?> ShowAsync(string companyName, string filePath, bool windowsHelloAvailable = false, string? message = null)
+    public Task<string?> ShowAsync(string companyName, string filePath, bool biometricLoginAvailable = false, string? message = null)
     {
         CompanyName = companyName;
         FilePath = filePath;
@@ -104,9 +104,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         HasError = false;
         IsLoading = false;
         IsPasswordVisible = false;
-        WindowsHelloAvailable = windowsHelloAvailable;
-        IsWindowsHelloAuthenticating = false;
-        ShowWindowsHelloSuccess = false;
+        BiometricLoginAvailable = biometricLoginAvailable;
+        IsBiometricAuthenticating = false;
+        ShowBiometricSuccess = false;
         IsOpen = true;
 
         // Use RunContinuationsAsynchronously to prevent TrySetResult from running
@@ -123,7 +123,7 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         ErrorMessage = message;
         HasError = true;
         IsLoading = false;
-        IsWindowsHelloAuthenticating = false;
+        IsBiometricAuthenticating = false;
         IsOpen = true; // Ensure modal stays/reopens
 
         // Create a new completion source for the retry
@@ -135,14 +135,14 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called when Windows Hello authentication succeeds.
+    /// Called when biometric authentication succeeds.
     /// Shows success animation and then completes with a special marker.
     /// </summary>
-    public void OnWindowsHelloSuccess()
+    public void OnBiometricSuccess()
     {
-        IsWindowsHelloAuthenticating = false;
-        ShowWindowsHelloSuccess = true;
-        _windowsHelloSuccessCompletionSource = new TaskCompletionSource<bool>();
+        IsBiometricAuthenticating = false;
+        ShowBiometricSuccess = true;
+        _biometricSuccessCompletionSource = new TaskCompletionSource<bool>();
     }
 
     /// <summary>
@@ -151,19 +151,19 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     [RelayCommand]
     private void ContinueAfterSuccess()
     {
-        ShowWindowsHelloSuccess = false;
+        ShowBiometricSuccess = false;
         IsOpen = false;
-        _windowsHelloSuccessCompletionSource?.TrySetResult(true);
-        // Complete with special marker to indicate Windows Hello was used
-        _completionSource?.TrySetResult("__WINDOWS_HELLO__");
+        _biometricSuccessCompletionSource?.TrySetResult(true);
+        // Complete with special marker to indicate biometric was used
+        _completionSource?.TrySetResult("__BIOMETRIC__");
     }
 
     /// <summary>
-    /// Called when Windows Hello authentication fails.
+    /// Called when biometric authentication fails.
     /// </summary>
-    public void OnWindowsHelloFailed()
+    public void OnBiometricFailed()
     {
-        IsWindowsHelloAuthenticating = false;
+        IsBiometricAuthenticating = false;
         // Don't show error - user may have cancelled, just let them try password
     }
 
@@ -187,8 +187,8 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     {
         IsOpen = false;
         IsLoading = false;
-        IsWindowsHelloAuthenticating = false;
-        ShowWindowsHelloSuccess = false;
+        IsBiometricAuthenticating = false;
+        ShowBiometricSuccess = false;
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;
@@ -227,18 +227,18 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Authenticates using Windows Hello.
+    /// Authenticates using biometric.
     /// </summary>
     [RelayCommand]
-    private void UseWindowsHello()
+    private void UseBiometricLogin()
     {
-        if (!WindowsHelloAvailable) return;
+        if (!BiometricLoginAvailable) return;
 
         HasError = false;
-        IsWindowsHelloAuthenticating = true;
+        IsBiometricAuthenticating = true;
 
-        // Request Windows Hello authentication from the app
-        WindowsHelloAuthRequested?.Invoke(this, EventArgs.Empty);
+        // Request biometric authentication from the app
+        BiometricAuthRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -254,8 +254,8 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
 
         IsOpen = false;
         Password = string.Empty;
-        IsWindowsHelloAuthenticating = false;
-        ShowWindowsHelloSuccess = false;
+        IsBiometricAuthenticating = false;
+        ShowBiometricSuccess = false;
         _completionSource?.TrySetResult(null);
     }
 

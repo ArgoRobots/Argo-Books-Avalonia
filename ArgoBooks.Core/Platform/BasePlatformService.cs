@@ -62,6 +62,10 @@ public abstract class BasePlatformService : IPlatformService
     public virtual Task<bool> IsBiometricAvailableAsync() => Task.FromResult(false);
 
     /// <inheritdoc />
+    public virtual Task<string> GetBiometricAvailabilityDetailsAsync() =>
+        Task.FromResult("Biometric authentication is not supported on this platform.");
+
+    /// <inheritdoc />
     public virtual Task<bool> AuthenticateWithBiometricAsync(string reason) => Task.FromResult(false);
 
     /// <inheritdoc />

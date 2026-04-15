@@ -697,14 +697,14 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Windows Hello -->
+                                <!-- Biometric Login -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="{loc:Loc 'Windows Hello'}"
+                                            <TextBlock Text="{loc:Loc 'Biometric Login'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -712,12 +712,12 @@
                                             <TextBlock Text="{loc:Loc 'Use fingerprint or face recognition to unlock'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       IsVisible="{Binding CanEnableWindowsHello}" />
+                                                       IsVisible="{Binding CanEnableBiometricLogin}" />
                                             <!-- Show "requires password" message when has Premium but no password -->
                                             <TextBlock Text="{loc:Loc 'Requires a password to be set first'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       IsVisible="{Binding NeedsPasswordForWindowsHello}" />
+                                                       IsVisible="{Binding NeedsPasswordForBiometricLogin}" />
                                             <!-- Show "requires Premium" message when doesn't have Premium plan -->
                                             <TextBlock Text="{loc:Loc 'Requires Premium plan'}"
                                                        FontSize="12"
@@ -726,8 +726,8 @@
                                         </StackPanel>
                                         <!-- Toggle when user has Premium AND password -->
                                         <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding WindowsHelloEnabled}"
-                                                      IsVisible="{Binding CanEnableWindowsHello}"
+                                                      IsChecked="{Binding BiometricLoginEnabled}"
+                                                      IsVisible="{Binding CanEnableBiometricLogin}"
                                                       VerticalAlignment="Center" />
                                         <!-- Upgrade button when user doesn't have Premium -->
                                         <Button Grid.Column="1"

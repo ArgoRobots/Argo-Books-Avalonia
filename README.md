@@ -13,7 +13,7 @@
 - **Rental Management**: Manage equipment rentals, track availability, and handle bookings with ease.
 - **Customer Management**: Keep track of customer information, purchase history, and preferences.
 - **Invoicing**: Create, send, and track invoices with ease. Customize templates, set payment terms, and get paid faster.
-- **Security**: AES-256 encryption protects all your data. Your data stays on your computer, not in the cloud. Biometric authentication support with Windows Hello.
+- **Security**: AES-256 encryption protects all your data. Your data stays on your computer, not in the cloud. Biometric authentication support.
 
 ## Technologies Used
 
@@ -39,14 +39,4 @@ After building the solution, press F5 to run the application in Debug mode, or `
 
 ## Publishing
 
-1. Update the version number in Directory.Build.props.
-2. Build the app in Release configuration.
-
-### Windows
-The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/).
-
-### macOS
-The macOS `.dmg` installer is created using [create-dmg](https://github.com/create-dmg/create-dmg).
-
-### Linux
-The Linux distribution is packaged as an [AppImage](https://appimage.org/) using [appimagetool](https://github.com/AppImage/appimagetool).
+See [docs/publishing.md](docs/publishing.md) for platform-specific build and packaging instructions.

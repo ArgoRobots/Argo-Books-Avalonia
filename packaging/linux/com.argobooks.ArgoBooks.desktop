@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Argo Books
+Comment=Bookkeeping and accounting software
+Exec=ArgoBooks %f
+Icon=com.argobooks.ArgoBooks
+Categories=Office;Finance;
+MimeType=application/x-argo;
+Terminal=false
+StartupWMClass=Argo Books

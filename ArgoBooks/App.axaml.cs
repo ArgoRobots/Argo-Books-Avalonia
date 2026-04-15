@@ -1597,21 +1597,21 @@ public class App : Application
             var footer = await CompanyManager.GetFileInfoAsync(filePath);
             var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(filePath);
 
-            // Check if Windows Hello is enabled for this file and available on the system
-            var windowsHelloEnabled = footer?.BiometricEnabled ?? false;
-            var windowsHelloAvailable = false;
+            // Check if biometric login is enabled for this file and available on the system
+            var biometricEnabled = footer?.BiometricEnabled ?? false;
+            var biometricAvailable = false;
             var platformService = PlatformServiceFactory.GetPlatformService();
 
-            if (windowsHelloEnabled)
+            if (biometricEnabled)
             {
-                windowsHelloAvailable = await platformService.IsBiometricAvailableAsync();
+                biometricAvailable = await platformService.IsBiometricAvailableAsync();
             }
 
             var password = await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(
-                companyName, filePath, windowsHelloAvailable);
+                companyName, filePath, biometricAvailable);
 
-            // Handle Windows Hello success - retrieve stored password
-            if (password == "__WINDOWS_HELLO__")
+            // Handle biometric login success - retrieve stored password
+            if (password == "__BIOMETRIC__")
             {
                 var fileId = GetBiometricFileId(filePath);
                 password = platformService.GetPasswordForBiometric(fileId);
@@ -1635,8 +1635,8 @@ public class App : Application
             return password;
         };
 
-        // Wire up Windows Hello authentication request from password modal
-        _appShellViewModel.PasswordPromptModalViewModel.WindowsHelloAuthRequested += async (_, _) =>
+        // Wire up biometric login authentication request from password modal
+        _appShellViewModel.PasswordPromptModalViewModel.BiometricAuthRequested += async (_, _) =>
         {
             var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
             var platformService = PlatformServiceFactory.GetPlatformService();
@@ -1648,16 +1648,16 @@ public class App : Application
 
                 if (success)
                 {
-                    passwordModal.OnWindowsHelloSuccess();
+                    passwordModal.OnBiometricSuccess();
                 }
                 else
                 {
-                    passwordModal.OnWindowsHelloFailed();
+                    passwordModal.OnBiometricFailed();
                 }
             }
             catch
             {
-                passwordModal.OnWindowsHelloFailed();
+                passwordModal.OnBiometricFailed();
             }
         };
     }
@@ -2559,44 +2559,38 @@ public class App : Application
             }
         };
 
-        // Windows Hello authentication requested (before enabling)
-        settings.WindowsHelloAuthRequested += async (_, _) =>
+        // biometric login authentication requested (before enabling)
+        settings.BiometricAuthRequested += async (_, _) =>
         {
             var platformService = PlatformServiceFactory.GetPlatformService();
 
             try
             {
-                // Check if Windows Hello is available
+                // Check if biometric login is available
                 var available = await platformService.IsBiometricAvailableAsync();
                 if (!available)
                 {
-                    // Get detailed reason why Windows Hello is not available
-                    var details = "Unknown reason";
-                    if (platformService is WindowsPlatformService winService)
-                    {
-#pragma warning disable CA1416 // Platform compatibility - already checked by type check above
-                        details = await winService.GetBiometricAvailabilityDetailsAsync();
-#pragma warning restore CA1416
-                    }
+                    // Get detailed reason why biometric login is not available
+                    var details = await platformService.GetBiometricAvailabilityDetailsAsync();
 
                     var dialog = ConfirmationDialog;
                     if (dialog != null)
                     {
                         await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Windows Hello Not Available".Translate(),
-                            Message = "Windows Hello cannot be enabled on this device.\n\nReason: {0}".TranslateFormat(details),
+                            Title = "Biometric Login Not Available".Translate(),
+                            Message = "Biometric login cannot be enabled on this device.\n\nReason: {0}".TranslateFormat(details),
                             PrimaryButtonText = "OK".Translate(),
                             CancelButtonText = ""
                         });
                     }
-                    settings.OnWindowsHelloAuthResult(false);
+                    settings.OnBiometricAuthResult(false);
                     return;
                 }
 
                 // Request authentication
-                var success = await platformService.AuthenticateWithBiometricAsync("Verify your identity to enable Windows Hello".Translate());
-                settings.OnWindowsHelloAuthResult(success);
+                var success = await platformService.AuthenticateWithBiometricAsync("Verify your identity to enable biometric login".Translate());
+                settings.OnBiometricAuthResult(success);
 
                 if (!success)
                 {
@@ -2605,8 +2599,8 @@ public class App : Application
                     {
                         await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Windows Hello".Translate(),
-                            Message = "Authentication was cancelled or failed. Windows Hello has not been enabled.".Translate(),
+                            Title = "Biometric Login".Translate(),
+                            Message = "Authentication was cancelled or failed. Biometric login has not been enabled.".Translate(),
                             PrimaryButtonText = "OK".Translate(),
                             CancelButtonText = ""
                         });
@@ -2615,24 +2609,24 @@ public class App : Application
             }
             catch (Exception ex)
             {
-                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Windows Hello authentication failed");
+                ErrorLogger?.LogError(ex, ErrorCategory.Authentication, "Biometric authentication failed");
                 var dialog = ConfirmationDialog;
                 if (dialog != null)
                 {
                     await dialog.ShowAsync(new ConfirmationDialogOptions
                     {
-                        Title = "Windows Hello Error".Translate(),
-                        Message = "Failed to authenticate with Windows Hello:\n\n{0}".TranslateFormat(ex.Message),
+                        Title = "Biometric Login Error".Translate(),
+                        Message = "Failed to authenticate:\n\n{0}".TranslateFormat(ex.Message),
                         PrimaryButtonText = "OK".Translate(),
                         CancelButtonText = ""
                     });
                 }
-                settings.OnWindowsHelloAuthResult(false);
+                settings.OnBiometricAuthResult(false);
             }
         };
 
-        // Windows Hello setting changed (after successful authentication)
-        settings.WindowsHelloChanged += (_, args) =>
+        // biometric login setting changed (after successful authentication)
+        settings.BiometricLoginChanged += (_, args) =>
         {
             // Save to company settings
             if (CompanyManager?.CurrentCompanySettings != null)
@@ -2665,7 +2659,7 @@ public class App : Application
             }
         };
 
-        // Load Windows Hello setting when company opens
+        // Load biometric login setting when company opens
         if (CompanyManager != null)
         {
             CompanyManager.CompanyOpened += (_, _) =>
@@ -2673,8 +2667,8 @@ public class App : Application
                 var securitySettings = CompanyManager.CurrentCompanySettings?.Security;
                 if (securitySettings != null)
                 {
-                    // Use SetWindowsHelloWithoutAuth to avoid triggering authentication on load
-                    settings.SetWindowsHelloWithoutAuth(securitySettings.BiometricEnabled);
+                    // Use SetBiometricLoginWithoutAuth to avoid triggering authentication on load
+                    settings.SetBiometricLoginWithoutAuth(securitySettings.BiometricEnabled);
                 }
             };
         }
@@ -2714,16 +2708,16 @@ public class App : Application
             var companyName = CompanyManager.CompanyData!.Settings.Company.Name;
             var filePath = CompanyManager.CurrentFilePath ?? "";
 
-            // Check if Windows Hello is available for this file
-            var windowsHelloAvailable = false;
+            // Check if biometric login is available for this file
+            var biometricAvailable = false;
             var platformService = PlatformServiceFactory.GetPlatformService();
             var securitySettings = CompanyManager.CurrentCompanySettings?.Security;
             if (securitySettings?.BiometricEnabled == true)
             {
-                windowsHelloAvailable = await platformService.IsBiometricAvailableAsync();
+                biometricAvailable = await platformService.IsBiometricAvailableAsync();
             }
 
-            var password = await passwordModal.ShowAsync(companyName, filePath, windowsHelloAvailable,
+            var password = await passwordModal.ShowAsync(companyName, filePath, biometricAvailable,
                 "Password is required to make changes to the payment portal.".Translate());
 
             if (password == null)
@@ -2732,9 +2726,9 @@ public class App : Application
                 return false;
             }
 
-            if (password == "__WINDOWS_HELLO__")
+            if (password == "__BIOMETRIC__")
             {
-                // Windows Hello succeeded — retrieve stored password and verify
+                // biometric login succeeded — retrieve stored password and verify
                 var fileId = GetBiometricFileId(filePath);
                 var storedPassword = platformService.GetPasswordForBiometric(fileId);
                 if (!string.IsNullOrEmpty(storedPassword) && CompanyManager.VerifyCurrentPassword(storedPassword))
@@ -2764,8 +2758,8 @@ public class App : Application
                 if (password == null)
                     return false;
 
-                // Handle Windows Hello retry
-                if (password == "__WINDOWS_HELLO__")
+                // Handle biometric login retry
+                if (password == "__BIOMETRIC__")
                 {
                     var fileId = GetBiometricFileId(filePath);
                     var storedPassword = platformService.GetPasswordForBiometric(fileId);

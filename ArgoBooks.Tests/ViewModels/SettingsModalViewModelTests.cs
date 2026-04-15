@@ -100,30 +100,30 @@ public class SettingsModalViewModelTests
     #region Security Settings Tests
 
     [Fact]
-    public void CanEnableWindowsHello_WhenHasPremiumAndHasPassword_ReturnsTrue()
+    public void CanEnableBiometricLogin_WhenHasPremiumAndHasPassword_ReturnsTrue()
     {
         _viewModel.HasPremium = true;
         _viewModel.HasPassword = true;
 
-        Assert.True(_viewModel.CanEnableWindowsHello);
+        Assert.True(_viewModel.CanEnableBiometricLogin);
     }
 
     [Fact]
-    public void CanEnableWindowsHello_WhenNoPremium_ReturnsFalse()
+    public void CanEnableBiometricLogin_WhenNoPremium_ReturnsFalse()
     {
         _viewModel.HasPremium = false;
         _viewModel.HasPassword = true;
 
-        Assert.False(_viewModel.CanEnableWindowsHello);
+        Assert.False(_viewModel.CanEnableBiometricLogin);
     }
 
     [Fact]
-    public void NeedsPasswordForWindowsHello_WhenHasPremiumButNoPassword_ReturnsTrue()
+    public void NeedsPasswordForBiometricLogin_WhenHasPremiumButNoPassword_ReturnsTrue()
     {
         _viewModel.HasPremium = true;
         _viewModel.HasPassword = false;
 
-        Assert.True(_viewModel.NeedsPasswordForWindowsHello);
+        Assert.True(_viewModel.NeedsPasswordForBiometricLogin);
     }
 
     [Fact]

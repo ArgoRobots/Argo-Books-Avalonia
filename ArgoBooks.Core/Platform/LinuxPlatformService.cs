@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using ArgoBooks.Core.Platform.Linux;
+
 namespace ArgoBooks.Core.Platform;
 
 /// <summary>
@@ -71,7 +74,50 @@ public class LinuxPlatformService : BasePlatformService
     }
 
     /// <inheritdoc />
-    public override bool SupportsBiometrics => false; // Limited Linux support
+    public override bool SupportsBiometrics => true;
+
+    /// <inheritdoc />
+    public override async Task<bool> IsBiometricAvailableAsync()
+    {
+        return await Task.Run(() =>
+            LinuxSecretStorage.IsAvailable() && LinuxAuthenticator.IsAvailable());
+    }
+
+    /// <inheritdoc />
+    public override async Task<string> GetBiometricAvailabilityDetailsAsync()
+    {
+        if (!LinuxSecretStorage.IsAvailable())
+            return "secret-tool is not installed. Install libsecret-tools to enable biometric login.";
+
+        if (!LinuxAuthenticator.IsAvailable())
+            return "pkexec (polkit) is not available. Install polkit to enable biometric login.";
+
+        return await Task.FromResult("Available");
+    }
+
+    /// <inheritdoc />
+    public override async Task<bool> AuthenticateWithBiometricAsync(string reason)
+    {
+        return await LinuxAuthenticator.AuthenticateAsync();
+    }
+
+    /// <inheritdoc />
+    public override void StorePasswordForBiometric(string fileId, string password)
+    {
+        LinuxSecretStorage.Store(fileId, password);
+    }
+
+    /// <inheritdoc />
+    public override string? GetPasswordForBiometric(string fileId)
+    {
+        return LinuxSecretStorage.Lookup(fileId);
+    }
+
+    /// <inheritdoc />
+    public override void ClearPasswordForBiometric(string fileId)
+    {
+        LinuxSecretStorage.Clear(fileId);
+    }
 
     /// <inheritdoc />
     public override bool SupportsAutoUpdate => true; // AppImage/Flatpak can auto-update
@@ -116,5 +162,51 @@ public class LinuxPlatformService : BasePlatformService
         }
 
         return base.GetMachineId();
+    }
+
+    /// <inheritdoc />
+    public override void RegisterFileTypeAssociations(string iconPath)
+    {
+        try
+        {
+            // Register MIME type for .argo files
+            var mimeXmlPath = Path.Combine(AppContext.BaseDirectory, "com.argobooks.ArgoBooks.xml");
+            if (File.Exists(mimeXmlPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "xdg-mime",
+                    Arguments = $"install --novendor \"{mimeXmlPath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                })?.WaitForExit(5000);
+            }
+
+            // Register desktop entry
+            var desktopPath = Path.Combine(AppContext.BaseDirectory, "com.argobooks.ArgoBooks.desktop");
+            if (File.Exists(desktopPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "xdg-desktop-menu",
+                    Arguments = $"install --novendor \"{desktopPath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                })?.WaitForExit(5000);
+            }
+
+            // Set default application for .argo files
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "xdg-mime",
+                Arguments = "default com.argobooks.ArgoBooks.desktop application/x-argo",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            })?.WaitForExit(5000);
+        }
+        catch
+        {
+            // File type registration is best-effort on Linux
+        }
     }
 }

@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
 
@@ -18,9 +19,8 @@ public class ReportTemplateStorage
 
     public ReportTemplateStorage(IErrorLogger? errorLogger = null)
     {
-        // Default to AppData/Roaming/ArgoBooks/ReportTemplates
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        TemplatesDirectory = Path.Combine(appData, "ArgoBooks", "ReportTemplates");
+        TemplatesDirectory = Path.Combine(
+            PlatformServiceFactory.GetPlatformService().GetAppDataPath(), "ReportTemplates");
         _errorLogger = errorLogger;
     }
 

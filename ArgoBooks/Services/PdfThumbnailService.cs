@@ -39,7 +39,7 @@ public sealed class PdfThumbnailService
     }
 
     private static bool PlatformSupportsWebView =>
-        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
     private async Task<byte[]?> RenderPdfFirstPageCoreAsync(byte[] pdfData)
     {
