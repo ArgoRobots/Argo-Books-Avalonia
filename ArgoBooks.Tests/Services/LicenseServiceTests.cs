@@ -376,6 +376,7 @@ public class LicenseServiceTests
         public void ClearPasswordForBiometric(string key) { }
         public string? GetPasswordForBiometric(string key) => null;
         public Task<bool> IsBiometricAvailableAsync() => Task.FromResult(false);
+        public Task<string> GetBiometricAvailabilityDetailsAsync() => Task.FromResult("Not supported");
         public StringComparer PathComparer => StringComparer.OrdinalIgnoreCase;
         public void StorePasswordForBiometric(string key, string password) { }
 
