@@ -318,7 +318,7 @@ public class ChartLoaderService
     /// Creates a series for date-based data with proportional spacing.
     /// Points are positioned based on actual date values (converted to OADate), not evenly spaced.
     /// </summary>
-    private ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
+    public ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
     {
         // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
         // Use ObservablePoint which directly stores X,Y coordinates
@@ -1145,7 +1145,7 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ExpenseColor));
 
         StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
@@ -2759,7 +2759,7 @@ public class ChartLoaderService
     /// <summary>
     /// Stores export data for a chart, making it available for later retrieval by ChartDataType.
     /// </summary>
-    private void StoreExportData(ChartDataType chartDataType, ChartExportData data)
+    internal void StoreExportData(ChartDataType chartDataType, ChartExportData data)
     {
         CurrentExportData = data;
         _chartExportDataByType[chartDataType] = data;

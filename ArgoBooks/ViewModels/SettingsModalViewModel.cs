@@ -313,6 +313,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _newPassword = string.Empty;
 
     [ObservableProperty]
+    private int _passwordStrengthScore;
+
+    [ObservableProperty]
+    private string _passwordStrengthText = string.Empty;
+
+    [ObservableProperty]
+    private bool _showPasswordStrength;
+
+    [ObservableProperty]
     private string _confirmPassword = string.Empty;
 
     [ObservableProperty]
@@ -330,26 +339,49 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isCurrentPasswordVisible;
 
-    /// <summary>
-    /// Icon for new password visibility toggle.
-    /// </summary>
-    public string NewPasswordVisibilityIcon => IsNewPasswordVisible
-        ? "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
-        : "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+    public string NewPasswordVisibilityIcon => IsNewPasswordVisible ? Icons.EyeOff : Icons.Eye;
+    public string ConfirmPasswordVisibilityIcon => IsConfirmPasswordVisible ? Icons.EyeOff : Icons.Eye;
+    public string CurrentPasswordVisibilityIcon => IsCurrentPasswordVisible ? Icons.EyeOff : Icons.Eye;
 
     /// <summary>
-    /// Icon for confirm password visibility toggle.
+    /// Width in pixels for the strength bar, scaled to fit the password modal content area.
     /// </summary>
-    public string ConfirmPasswordVisibilityIcon => IsConfirmPasswordVisible
-        ? "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
-        : "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+    public double PasswordStrengthBarWidth => PasswordStrengthScore / 100.0 * 290;
 
     /// <summary>
-    /// Icon for current password visibility toggle.
+    /// Whether the password strength is weak (red).
     /// </summary>
-    public string CurrentPasswordVisibilityIcon => IsCurrentPasswordVisible
-        ? "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
-        : "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+    public bool IsStrengthWeak => PasswordStrengthScore < 40;
+
+    /// <summary>
+    /// Whether the password strength is fair (yellow/warning).
+    /// </summary>
+    public bool IsStrengthFair => PasswordStrengthScore is >= 40 and < 70;
+
+    /// <summary>
+    /// Whether the password strength is strong (green).
+    /// </summary>
+    public bool IsStrengthStrong => PasswordStrengthScore >= 70;
+
+    partial void OnNewPasswordChanged(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            ShowPasswordStrength = false;
+            PasswordStrengthScore = 0;
+            PasswordStrengthText = string.Empty;
+        }
+        else
+        {
+            ShowPasswordStrength = true;
+            PasswordStrengthScore = Core.Security.PasswordValidator.GetStrengthScore(value);
+            PasswordStrengthText = Core.Security.PasswordValidator.GetStrengthDescription(PasswordStrengthScore);
+        }
+        OnPropertyChanged(nameof(PasswordStrengthBarWidth));
+        OnPropertyChanged(nameof(IsStrengthWeak));
+        OnPropertyChanged(nameof(IsStrengthFair));
+        OnPropertyChanged(nameof(IsStrengthStrong));
+    }
 
     partial void OnIsNewPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(NewPasswordVisibilityIcon));
     partial void OnIsConfirmPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
@@ -1505,6 +1537,12 @@ public partial class SettingsModalViewModel : ViewModelBase
 
             // Restart the timer with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
+
+            // Persist company settings to the .argo file immediately
+            if (App.CompanyManager?.IsCompanyOpen == true && !App.CompanyManager.IsSampleCompany)
+            {
+                await App.CompanyManager.SaveCompanyAsync();
+            }
         }
 
         // Save max pie slices, language, timezone and time format to global settings
@@ -1657,14 +1695,10 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void ConfirmAddPassword()
     {
-        if (string.IsNullOrWhiteSpace(NewPassword))
+        var validationError = Core.Security.PasswordValidator.GetValidationError(NewPassword);
+        if (validationError != null)
         {
-            PasswordError = "Password is required";
-            return;
-        }
-        if (NewPassword.Length < 6)
-        {
-            PasswordError = "Password must be at least 6 characters";
+            PasswordError = validationError;
             return;
         }
         if (NewPassword != ConfirmPassword)
@@ -1690,14 +1724,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             PasswordError = "Current password is required";
             return;
         }
-        if (string.IsNullOrWhiteSpace(NewPassword))
+        var newPasswordError = Core.Security.PasswordValidator.GetValidationError(NewPassword);
+        if (newPasswordError != null)
         {
-            PasswordError = "New password is required";
-            return;
-        }
-        if (NewPassword.Length < 6)
-        {
-            PasswordError = "New password must be at least 6 characters";
+            PasswordError = newPasswordError;
             return;
         }
         if (NewPassword != ConfirmPassword)

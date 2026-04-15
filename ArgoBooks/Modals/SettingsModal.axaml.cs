@@ -28,6 +28,17 @@ public partial class SettingsModal : UserControl
         }
     }
 
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+
+        if (DataContext is SettingsModalViewModel vm && _eventsSubscribed)
+        {
+            vm.FocusPasswordRequested -= OnFocusPasswordRequested;
+            _eventsSubscribed = false;
+        }
+    }
+
     private void OnFocusPasswordRequested(object? sender, EventArgs e)
     {
         if (DataContext is not SettingsModalViewModel vm) return;

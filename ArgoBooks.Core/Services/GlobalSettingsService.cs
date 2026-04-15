@@ -13,6 +13,7 @@ public class GlobalSettingsService : IGlobalSettingsService
 
     private readonly IPlatformService _platformService;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the GlobalSettingsService.
@@ -74,20 +75,29 @@ public class GlobalSettingsService : IGlobalSettingsService
     /// <inheritdoc />
     public async Task SaveGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {
-        var settingsPath = GetGlobalSettingsPath();
-        var directory = Path.GetDirectoryName(settingsPath);
-
-        if (!string.IsNullOrEmpty(directory))
+        await _saveLock.WaitAsync(cancellationToken);
+        try
         {
-            _platformService.EnsureDirectoryExists(directory);
-        }
+            var settingsPath = GetGlobalSettingsPath();
+            var directory = Path.GetDirectoryName(settingsPath);
 
-        await using var fileStream = File.Create(settingsPath);
-        await JsonSerializer.SerializeAsync(
-            fileStream,
-            GlobalSettings,
-            _jsonOptions,
-            cancellationToken);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                _platformService.EnsureDirectoryExists(directory);
+            }
+
+            await using var fileStream = new FileStream(
+                settingsPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await JsonSerializer.SerializeAsync(
+                fileStream,
+                GlobalSettings,
+                _jsonOptions,
+                cancellationToken);
+        }
+        finally
+        {
+            _saveLock.Release();
+        }
     }
 
     /// <inheritdoc />

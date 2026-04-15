@@ -61,8 +61,21 @@
                     <TabItem Header="{loc:Loc General}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Some settings are not available for the sample company.'}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
+                                </Border>
                                 <!-- Language -->
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc Language}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -74,7 +87,7 @@
                                 </StackPanel>
 
                                 <!-- Date Format -->
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Date Format'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -177,12 +190,14 @@
                                                 <Button Classes="secondary-button"
                                                         Content="{loc:Loc 'View Data'}"
                                                         Command="{Binding OpenTelemetryFolderCommand}"
-                                                        Padding="12,6" />
+                                                        Padding="12,6"
+                                                        MinHeight="0" />
                                                 <Button Classes="danger-button"
                                                         Content="{loc:Loc 'Delete All Data'}"
                                                         Command="{Binding DeleteTelemetryDataCommand}"
                                                         IsEnabled="{Binding !IsDeletingTelemetry}"
-                                                        Padding="12,6" />
+                                                        Padding="12,6"
+                                                        MinHeight="0" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -195,6 +210,20 @@
                     <TabItem Header="{loc:Loc Notifications}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        Margin="0,0,0,12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
+                                </Border>
                                 <TextBlock Text="{loc:Loc 'Configure notification preferences'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
@@ -203,7 +232,8 @@
                                 <!-- Low Stock Alert -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Low Stock Alert'}"
@@ -223,7 +253,8 @@
                                 <!-- Out of Stock Alert -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Out of Stock Alert'}"
@@ -243,7 +274,8 @@
                                 <!-- Invoice Overdue -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Invoice Overdue'}"
@@ -263,7 +295,8 @@
                                 <!-- Rental Overdue -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Rental Overdue'}"
@@ -283,7 +316,8 @@
                                 <!-- Payment Notifications -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Payment Received'}"
@@ -303,7 +337,8 @@
                                 <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
                                     <StackPanel Spacing="12">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
@@ -599,10 +634,13 @@
                                         CornerRadius="8"
                                         Padding="12"
                                         IsVisible="{Binding IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Security settings are not available for the sample company. Save as a new company to enable password protection.'}"
-                                               FontSize="12"
+                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
                                                Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap" />
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
                                 </Border>
 
                                 <!-- Password - No password set -->
@@ -737,8 +775,21 @@
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
+                                <!-- Sample company notice -->
+                                <Border Background="{DynamicResource WarningLightBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        IsVisible="{Binding IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource WarningTextBrush}"
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
+                                </Border>
                                 <!-- Portal Company Name -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Company Name'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -747,13 +798,13 @@
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
-                                             Watermark="{loc:Loc 'Enter company name'}"
+                                             PlaceholderText="{loc:Loc 'Enter company name'}"
                                              Classes="form-input"
                                              MaxLength="255" />
                                 </StackPanel>
 
                                 <!-- Portal Logo -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Portal Logo'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -788,20 +839,22 @@
                                                         Content="{Binding PortalLogoButtonText}"
                                                         Command="{Binding BrowsePortalLogoCommand}"
                                                         IsEnabled="{Binding !IsUploadingPortalLogo}"
-                                                        Padding="12,6" />
+                                                        Padding="12,6"
+                                                        MinHeight="0" />
                                                 <Button Classes="danger-button"
                                                         Content="{loc:Loc Remove}"
                                                         Command="{Binding RemovePortalLogoCommand}"
                                                         IsVisible="{Binding HasPortalLogo}"
                                                         IsEnabled="{Binding !IsUploadingPortalLogo}"
-                                                        Padding="12,6" />
+                                                        Padding="12,6"
+                                                        MinHeight="0" />
                                             </StackPanel>
                                         </Grid>
                                     </Border>
                                 </StackPanel>
 
                                 <!-- Connected Payment Providers -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Connected Payment Providers'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -833,14 +886,16 @@
                                                     IsVisible="{Binding !StripeConnected}"
                                                     IsEnabled="{Binding !IsConnectingProvider}"
                                                     VerticalAlignment="Center"
-                                                    Padding="12,6" />
+                                                    Padding="12,6"
+                                                    MinHeight="0" />
                                             <Button Grid.Column="1"
                                                     Classes="danger-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectStripeCommand}"
                                                     IsVisible="{Binding StripeConnected}"
                                                     VerticalAlignment="Center"
-                                                    Padding="12,6" />
+                                                    Padding="12,6"
+                                                    MinHeight="0" />
                                         </Grid>
                                     </Border>
 
@@ -870,14 +925,16 @@
                                                     IsVisible="{Binding !PaypalConnected}"
                                                     IsEnabled="{Binding !IsConnectingProvider}"
                                                     VerticalAlignment="Center"
-                                                    Padding="12,6" />
+                                                    Padding="12,6"
+                                                    MinHeight="0" />
                                             <Button Grid.Column="1"
                                                     Classes="danger-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectPaypalCommand}"
                                                     IsVisible="{Binding PaypalConnected}"
                                                     VerticalAlignment="Center"
-                                                    Padding="12,6" />
+                                                    Padding="12,6"
+                                                    MinHeight="0" />
                                         </Grid>
                                     </Border>
 
@@ -907,20 +964,22 @@
                                                     IsVisible="{Binding !SquareConnected}"
                                                     IsEnabled="{Binding !IsConnectingProvider}"
                                                     VerticalAlignment="Center"
-                                                    Padding="12,6" />
+                                                    Padding="12,6"
+                                                    MinHeight="0" />
                                             <Button Grid.Column="1"
                                                     Classes="danger-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectSquareCommand}"
                                                     IsVisible="{Binding SquareConnected}"
                                                     VerticalAlignment="Center"
-                                                    Padding="12,6" />
+                                                    Padding="12,6"
+                                                    MinHeight="0" />
                                         </Grid>
                                     </Border>
                                 </StackPanel>
 
                                 <!-- Sync Interval -->
-                                <StackPanel Spacing="6" Margin="0,8,0,0">
+                                <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -964,7 +1023,7 @@
         </controls:ModalOverlay>
 
         <!-- Add Password Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsAddPasswordModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsAddPasswordModalOpen}" ClosingCommand="{Binding ClosePasswordModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -992,7 +1051,7 @@
                                              Text="{Binding NewPassword}"
                                              RevealPassword="{Binding IsNewPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleNewPasswordVisibilityCommand}">
@@ -1000,6 +1059,45 @@
                                     </Button>
                                 </Grid>
                             </Border>
+                            <!-- Password Strength Indicator -->
+                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding ShowPasswordStrength}">
+                                <Border Grid.Column="0" Height="4" CornerRadius="2" Background="{DynamicResource BorderBrush}">
+                                    <Border CornerRadius="2" HorizontalAlignment="Left"
+                                            Width="{Binding PasswordStrengthBarWidth}"
+                                            Classes.strength-weak="{Binding IsStrengthWeak}"
+                                            Classes.strength-fair="{Binding IsStrengthFair}"
+                                            Classes.strength-strong="{Binding IsStrengthStrong}">
+                                        <Border.Styles>
+                                            <Style Selector="Border.strength-weak">
+                                                <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-fair">
+                                                <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-strong">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+                                            </Style>
+                                        </Border.Styles>
+                                    </Border>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="{Binding PasswordStrengthText}" FontSize="11"
+                                           Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Classes.strength-weak="{Binding IsStrengthWeak}"
+                                           Classes.strength-fair="{Binding IsStrengthFair}"
+                                           Classes.strength-strong="{Binding IsStrengthStrong}">
+                                    <TextBlock.Styles>
+                                        <Style Selector="TextBlock.strength-weak">
+                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-fair">
+                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-strong">
+                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                        </Style>
+                                    </TextBlock.Styles>
+                                </TextBlock>
+                            </Grid>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Confirm Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1012,7 +1110,7 @@
                                              Text="{Binding ConfirmPassword}"
                                              RevealPassword="{Binding IsConfirmPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
@@ -1036,7 +1134,7 @@
         </controls:ModalOverlay>
 
         <!-- Change Password Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsChangePasswordModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsChangePasswordModalOpen}" ClosingCommand="{Binding ClosePasswordModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -1063,7 +1161,7 @@
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleCurrentPasswordVisibilityCommand}">
@@ -1083,7 +1181,7 @@
                                              Text="{Binding NewPassword}"
                                              RevealPassword="{Binding IsNewPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleNewPasswordVisibilityCommand}">
@@ -1091,6 +1189,45 @@
                                     </Button>
                                 </Grid>
                             </Border>
+                            <!-- Password Strength Indicator -->
+                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding ShowPasswordStrength}">
+                                <Border Grid.Column="0" Height="4" CornerRadius="2" Background="{DynamicResource BorderBrush}">
+                                    <Border CornerRadius="2" HorizontalAlignment="Left"
+                                            Width="{Binding PasswordStrengthBarWidth}"
+                                            Classes.strength-weak="{Binding IsStrengthWeak}"
+                                            Classes.strength-fair="{Binding IsStrengthFair}"
+                                            Classes.strength-strong="{Binding IsStrengthStrong}">
+                                        <Border.Styles>
+                                            <Style Selector="Border.strength-weak">
+                                                <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-fair">
+                                                <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+                                            </Style>
+                                            <Style Selector="Border.strength-strong">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+                                            </Style>
+                                        </Border.Styles>
+                                    </Border>
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="{Binding PasswordStrengthText}" FontSize="11"
+                                           Margin="8,0,0,0" VerticalAlignment="Center"
+                                           Classes.strength-weak="{Binding IsStrengthWeak}"
+                                           Classes.strength-fair="{Binding IsStrengthFair}"
+                                           Classes.strength-strong="{Binding IsStrengthStrong}">
+                                    <TextBlock.Styles>
+                                        <Style Selector="TextBlock.strength-weak">
+                                            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-fair">
+                                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                        </Style>
+                                        <Style Selector="TextBlock.strength-strong">
+                                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                        </Style>
+                                    </TextBlock.Styles>
+                                </TextBlock>
+                            </Grid>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="{loc:Loc 'Confirm New Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1103,7 +1240,7 @@
                                              Text="{Binding ConfirmPassword}"
                                              RevealPassword="{Binding IsConfirmPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
@@ -1127,7 +1264,7 @@
         </controls:ModalOverlay>
 
         <!-- Remove Password Modal -->
-        <controls:ModalOverlay IsOpen="{Binding IsRemovePasswordModalOpen}">
+        <controls:ModalOverlay IsOpen="{Binding IsRemovePasswordModalOpen}" ClosingCommand="{Binding ClosePasswordModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -1156,7 +1293,7 @@
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
                                              Classes="password-field"
-                                             MaxLength="128" />
+                                             MaxLength="64" />
                                     <Button Grid.Column="1"
                                             Classes="eye-toggle"
                                             Command="{Binding ToggleCurrentPasswordVisibilityCommand}">

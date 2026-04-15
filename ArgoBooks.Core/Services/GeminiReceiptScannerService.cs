@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using ArgoBooks.Core.Models.Telemetry;
-using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
 
@@ -76,26 +75,21 @@ Rules:
                 return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
 
-            // PDF is not supported by vision APIs
-            var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            if (extension == ".pdf")
-            {
-                return ReceiptScanResult.Failed("PDF receipt scanning is not supported. Please convert to JPEG or PNG.");
-            }
-
             if (!skipPreprocessing)
             {
                 // Preprocess image to improve OCR accuracy (contrast, sharpen).
-                // PreprocessForOcr already outputs JPEG, so no additional re-encoding needed.
+                // PreprocessForOcr returns PDFs unchanged and outputs JPEG for images.
                 imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
-                fileName = Path.ChangeExtension(fileName, ".jpg");
+                var extension = Path.GetExtension(fileName).ToLowerInvariant();
+                if (extension != ".pdf")
+                    fileName = Path.ChangeExtension(fileName, ".jpg");
             }
 
             // Validate file type
             var mimeType = ReceiptImageHelper.GetContentType(fileName);
             if (mimeType == null)
             {
-                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, or BMP files.");
+                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, BMP, or PDF files.");
             }
 
             // Convert to base64 for vision API
@@ -104,10 +98,10 @@ Rules:
             // Call Gemini 2.5 Flash vision for receipt scanning
             var response = await _geminiService.SendVisionChatAsync(
                 SystemPrompt,
-                "Extract all data from this receipt image. Respond with JSON only.",
+                "Extract all data from this receipt. Respond with JSON only.",
                 base64Image,
                 mimeType,
-                maxTokens: 8000,
+                maxTokens: 16000,
                 temperature: 0.0,
                 model: "gemini-2.5-flash",
                 cancellationToken: cancellationToken);

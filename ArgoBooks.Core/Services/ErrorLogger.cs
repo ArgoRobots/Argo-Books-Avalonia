@@ -77,13 +77,13 @@ public partial class ErrorLogger : IErrorLogger
         // Sanitize and truncate stack trace
         entry.StackTrace = SanitizeStackTrace(exception.StackTrace, maxFrames: 5);
 
-        AddEntry(entry);
-
-        // Log inner exceptions recursively (but don't create separate entries)
+        // Append inner exception before enqueueing so subscribers see the full message
         if (exception.InnerException != null)
         {
             entry.Message += $" | Inner: {SanitizeMessage(exception.InnerException.Message)}";
         }
+
+        AddEntry(entry);
 
         Debug.WriteLine($"[ERROR] [{category}] {entry.Message}");
     }

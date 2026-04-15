@@ -133,10 +133,10 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal margin.
-    /// Fullscreen = 24px vertical margin only (width is fixed), Normal = 0.
+    /// Fullscreen = 40px top margin (clears title bar) + 24px bottom, Normal = 0.
     /// </summary>
     public static readonly IValueConverter ToFullscreenMargin =
-        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 24, 0, 24) : new Thickness(0));
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0, 40, 0, 24) : new Thickness(0));
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal max width.
@@ -149,9 +149,7 @@ public static class BoolConverters
     /// Fullscreen = exit fullscreen icon, Normal = enter fullscreen icon.
     /// </summary>
     public static readonly IValueConverter ToFullscreenIcon =
-        new FuncValueConverter<bool, string>(value => value
-            ? "M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"  // Exit fullscreen
-            : "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"); // Enter fullscreen
+        new FuncValueConverter<bool, string>(value => value ? Icons.FullscreenExit : Icons.FullscreenEnter);
 
     /// <summary>
     /// Converts a file path string to a Bitmap image.

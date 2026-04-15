@@ -297,17 +297,21 @@ public partial class PaymentModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to Invoices page and opens the create invoice modal.
+    /// Opens the create invoice modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateInvoice()
+    private void OpenCreateInvoice()
     {
-        // Close the current modal
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
+        var invoiceModals = App.InvoiceModalsViewModel;
+        if (invoiceModals == null) return;
 
-        // Navigate to Invoices page with openAddModal parameter
-        App.NavigationService?.NavigateTo("Invoices", new Dictionary<string, object?> { { "openAddModal", true } });
+        void OnSaved(object? s, EventArgs e)
+        {
+            invoiceModals.InvoiceSaved -= OnSaved;
+            LoadInvoiceOptions();
+        }
+        invoiceModals.InvoiceSaved += OnSaved;
+        invoiceModals.OpenCreateModal();
     }
 
     [RelayCommand]
@@ -323,12 +327,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
         companyData.IdCounters.Payment++;
         var newId = $"PAY-{companyData.IdCounters.Payment:D3}";
 
-        var paymentMethod = ModalPaymentMethod switch
-        {
-            "Cash" => PaymentMethod.Cash,
-            "Check" => PaymentMethod.Check,
-            _ => PaymentMethod.Cash
-        };
+        var paymentMethod = PaymentMethodExtensions.ParseDisplayName(ModalPaymentMethod);
 
         var parsedAmount = decimal.Parse(ModalAmount);
         var currentCurrency = CurrencyService.CurrentCurrencyCode;
@@ -534,12 +533,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
             }
         }
 
-        var newPaymentMethod = ModalPaymentMethod switch
-        {
-            "Cash" => PaymentMethod.Cash,
-            "Check" => PaymentMethod.Check,
-            _ => PaymentMethod.Cash
-        };
+        var newPaymentMethod = PaymentMethodExtensions.ParseDisplayName(ModalPaymentMethod);
         var newReferenceNumber = string.IsNullOrWhiteSpace(ModalReferenceNumber) ? null : ModalReferenceNumber.Trim();
         var newNotesVal = ModalNotes.Trim();
 

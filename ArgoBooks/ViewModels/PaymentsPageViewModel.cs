@@ -385,6 +385,8 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to payment modal events to refresh data
         if (App.PaymentModalsViewModel != null)
@@ -420,6 +422,8 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     {
         base.Cleanup();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
         PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
     }
@@ -427,9 +431,25 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the payments.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Payments)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadPayments();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Payments && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadPayments();
+        }
     }
 
     /// <summary>
@@ -591,7 +611,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private void FilterPayments()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        var filtered = _allPayments.ToList();
+        IEnumerable<Payment> filtered = _allPayments;
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -615,48 +635,40 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         // Apply payment method filter
         if (FilterPaymentMethod != "All")
         {
-            var method = FilterPaymentMethod switch
-            {
-                "Cash" => PaymentMethod.Cash,
-                "Check" => PaymentMethod.Check,
-                "Stripe" => PaymentMethod.Stripe,
-                "PayPal" => PaymentMethod.PayPal,
-                "Square" => PaymentMethod.Square,
-                _ => PaymentMethod.Cash
-            };
-            filtered = filtered.Where(p => p.PaymentMethod == method).ToList();
+            var method = PaymentMethodExtensions.ParseDisplayName(FilterPaymentMethod);
+            filtered = filtered.Where(p => p.PaymentMethod == method);
         }
 
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(p => GetPaymentStatus(p) == FilterStatus).ToList();
+            filtered = filtered.Where(p => GetPaymentStatus(p) == FilterStatus);
         }
 
         // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
-            filtered = filtered.Where(p => p.CustomerId == FilterCustomerId).ToList();
+            filtered = filtered.Where(p => p.CustomerId == FilterCustomerId);
         }
 
         // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
-            filtered = filtered.Where(p => Math.Abs(p.Amount) >= minAmount).ToList();
+            filtered = filtered.Where(p => Math.Abs(p.Amount) >= minAmount);
         }
         if (decimal.TryParse(FilterAmountMax, out var maxAmount))
         {
-            filtered = filtered.Where(p => Math.Abs(p.Amount) <= maxAmount).ToList();
+            filtered = filtered.Where(p => Math.Abs(p.Amount) <= maxAmount);
         }
 
         // Apply date filter
         if (FilterDateFrom.HasValue)
         {
-            filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime);
         }
         if (FilterDateTo.HasValue)
         {
-            filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime);
         }
 
         // Create display items
@@ -684,6 +696,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
                 IsFromPortal = payment.Source == "Online",
+                IsHighlighted = payment.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -705,6 +718,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 },
                 p => p.Date);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -851,6 +867,9 @@ public partial class PaymentDisplayItem : ObservableObject
     /// Gets whether the amount is negative (refund).
     /// </summary>
     public bool IsRefund => Amount < 0;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

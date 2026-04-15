@@ -545,14 +545,14 @@ public class NavigationServiceTests
     #region Navigation Guard Tests
 
     [Fact]
-    public void UnregisterNavigationGuard_RemovesGuard()
+    public async Task UnregisterNavigationGuard_RemovesGuard()
     {
         NavigationGuardCallback guard = (_, _) => Task.FromResult(false);
         _navigationService.RegisterNavigationGuard(guard);
         _navigationService.UnregisterNavigationGuard(guard);
 
         _navigationService.RegisterPage("TestPage", _ => new object());
-        var result = _navigationService.NavigateToAsync("TestPage").Result;
+        var result = await _navigationService.NavigateToAsync("TestPage");
 
         Assert.True(result);
     }

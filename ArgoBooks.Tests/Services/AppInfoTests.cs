@@ -44,10 +44,8 @@ public class AppInfoTests
     {
         // AssemblyVersion may be null in test context (no entry assembly)
         // but accessing it should not throw
-        var version = Core.Services.AppInfo.AssemblyVersion;
-
-        // Either null or a valid Version object
-        Assert.True(version == null || version != null);
+        // Accessing AssemblyVersion should not throw even when entry assembly is null
+        _ = Core.Services.AppInfo.AssemblyVersion;
     }
 
     #endregion

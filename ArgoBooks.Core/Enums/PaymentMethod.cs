@@ -54,6 +54,19 @@ public static class PaymentMethodExtensions
     }
 
     /// <summary>
+    /// Parses a display name back to the PaymentMethod enum. Returns Cash if unrecognized.
+    /// </summary>
+    public static PaymentMethod ParseDisplayName(string? displayName)
+    {
+        foreach (var method in Enum.GetValues<PaymentMethod>())
+        {
+            if (string.Equals(method.GetDisplayName(), displayName, StringComparison.OrdinalIgnoreCase))
+                return method;
+        }
+        return PaymentMethod.Cash;
+    }
+
+    /// <summary>
     /// Gets the common payment method options for transaction forms.
     /// </summary>
     public static string[] GetCommonOptions()

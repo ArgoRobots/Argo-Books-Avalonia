@@ -242,6 +242,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
     private byte[]? _currentImageData;
     private string? _currentFileName;
+    private bool _suppressAiSuggestions;
 
     // Track entities created during receipt flow for undo
     private Supplier? _createdSupplierForUndo;
@@ -274,12 +275,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// Narrower for loading/error states, wider for results.
     /// NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult ? 1100 : 520);
+    public double ModalWidth => IsFullscreen ? double.NaN : (HasScanResult || IsBulkReviewOpen ? 1100 : 520);
 
     /// <summary>
     /// Gets the modal height. NaN when fullscreen (stretches to fill).
     /// </summary>
-    public double ModalHeight => IsFullscreen ? double.NaN : (HasScanResult ? 850 : 400);
+    public double ModalHeight => IsFullscreen ? double.NaN : (HasScanResult || IsBulkReviewOpen ? 850 : 400);
 
     /// <summary>
     /// Gets the modal margin. Zero when fullscreen, auto-centered otherwise.
@@ -375,6 +376,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnIsRevenueChanged(bool value)
     {
         OnPropertyChanged(nameof(TransactionTypeLabel));
+        ValidateCurrentBulkItem();
     }
 
     /// <summary>
@@ -420,6 +422,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasValidationMessage;
 
+    [ObservableProperty]
+    private bool _hasBulkIncompleteWarning;
+
+    [ObservableProperty]
+    private string _bulkIncompleteWarningMessage = string.Empty;
+
     partial void OnSelectedSupplierChanged(SupplierOption? value)
     {
         if (value != null)
@@ -428,9 +436,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             SupplierErrorMessage = string.Empty;
             ClearValidationMessageIfNoErrors();
         }
+        ValidateCurrentBulkItem();
     }
 
-    partial void OnExtractedTotalChanged(string value) => ValidateTotals();
+    partial void OnExtractedTotalChanged(string value) { ValidateTotals(); ValidateCurrentBulkItem(); }
     partial void OnExtractedSubtotalChanged(string value) => ValidateTotals();
     partial void OnExtractedTaxChanged(string value) => ValidateTotals();
     partial void OnExtractedDiscountChanged(string value) => ValidateTotals();
@@ -490,6 +499,834 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     #endregion
 
+    #region Bulk Scan State
+
+    [ObservableProperty]
+    private bool _isBulkDropZoneOpen;
+
+    [ObservableProperty]
+    private bool _isBulkScanning;
+
+    [ObservableProperty]
+    private bool _isBulkScanComplete;
+
+    [ObservableProperty]
+    private bool _isBulkReviewOpen;
+
+    public ObservableCollection<BulkScanItem> BulkItems { get; } = [];
+
+    [ObservableProperty]
+    private BulkScanItem? _currentBulkItem;
+
+    [ObservableProperty]
+    private int _currentBulkIndex;
+
+    [ObservableProperty]
+    private int _bulkScansCompleted;
+
+    [ObservableProperty]
+    private int _bulkScansSucceeded;
+
+    [ObservableProperty]
+    private int _bulkScansFailed;
+
+    public int BulkApprovedCount => BulkItems.Count(i => i.IsApproved);
+
+    /// <summary>
+    /// True when every succeeded item has been either approved or skipped (reviewed),
+    /// and no approved items have validation errors.
+    /// </summary>
+    public bool BulkAllReviewed =>
+        BulkApprovedCount > 0 &&
+        BulkItems.Where(i => i.Status == BulkScanStatus.Succeeded).All(i => i.IsApproved || i.IsSkipped) &&
+        !BulkItems.Any(i => i.IsApproved && i.HasValidationErrors);
+
+    public int BulkIncompleteCount => BulkItems.Count(i => i.IsApproved && i.HasValidationErrors);
+
+    public bool HasBulkIncompleteItems => BulkIncompleteCount > 0;
+
+    private List<BulkScanItem>? _bulkSucceededItemsCache;
+
+    public IReadOnlyList<BulkScanItem> BulkSucceededItems
+    {
+        get
+        {
+            _bulkSucceededItemsCache ??= BulkItems
+                .Where(i => i.Status == BulkScanStatus.Succeeded).ToList();
+            return _bulkSucceededItemsCache;
+        }
+    }
+
+    public int BulkProgressPercent => BulkItems.Count > 0
+        ? (int)(BulkScansCompleted / (double)BulkItems.Count * 100)
+        : 0;
+
+    /// <summary>
+    /// Usage summary text for the drop zone, e.g., "This will use 3 scans. 12/50 used this month."
+    /// </summary>
+    public string BulkUsageSummary
+    {
+        get
+        {
+            var count = BulkItems.Count;
+            var scanWord = count == 1 ? "scan" : "scans";
+            return $"This will use {count} {scanWord}. {ScansUsed}/{ScansLimit} used this month.";
+        }
+    }
+
+    partial void OnIsBulkReviewOpenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
+    }
+
+    partial void OnBulkScansCompletedChanged(int value)
+    {
+        _bulkSucceededItemsCache = null;
+        OnPropertyChanged(nameof(BulkProgressPercent));
+        OnPropertyChanged(nameof(BulkSucceededItems));
+    }
+
+    private CancellationTokenSource? _bulkCancellationSource;
+
+    #endregion
+
+    #region Bulk Scan Commands
+
+    public async void OpenBulkDropZone()
+    {
+        BulkItems.Clear();
+        BulkScansCompleted = 0;
+        BulkScansSucceeded = 0;
+        BulkScansFailed = 0;
+        IsBulkDropZoneOpen = true;
+        IsBulkScanning = false;
+        IsBulkScanComplete = false;
+        IsBulkReviewOpen = false;
+
+        // Fetch current usage so the summary text is accurate
+        _usageService ??= CreateUsageService();
+        if (_usageService != null)
+        {
+            try
+            {
+                var usageCheck = await _usageService.CheckUsageAsync();
+                UpdateUsageDisplay(usageCheck);
+                OnPropertyChanged(nameof(BulkUsageSummary));
+            }
+            catch { /* Non-critical — summary will show 0/0 until scan starts */ }
+        }
+    }
+
+    public void AddFilesToQueue(IEnumerable<string> filePaths)
+    {
+        foreach (var path in filePaths)
+        {
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            if (extension is not (".jpg" or ".jpeg" or ".png" or ".pdf"))
+                continue;
+
+            if (BulkItems.Any(i => i.FilePath.Equals(path, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            var item = new BulkScanItem
+            {
+                FilePath = path,
+                FileName = Path.GetFileName(path)
+            };
+            BulkItems.Add(item);
+
+            // Generate preview thumbnail in background for the drop zone cards
+            _ = GenerateQueuePreviewAsync(item);
+        }
+
+        OnPropertyChanged(nameof(BulkApprovedCount));
+        OnPropertyChanged(nameof(BulkUsageSummary));
+    }
+
+    private static async Task GenerateQueuePreviewAsync(BulkScanItem item)
+    {
+        try
+        {
+            var fileData = await File.ReadAllBytesAsync(item.FilePath);
+            var isPdf = item.IsPdf;
+
+            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
+            Directory.CreateDirectory(tempDir);
+            var thumbPath = Path.Combine(tempDir,
+                $"{Path.GetFileNameWithoutExtension(item.FileName)}_{Guid.NewGuid():N}_thumb.jpg");
+
+            await Task.Run(async () =>
+            {
+                // Use lightweight thumbnail for queue cards — skip heavy OCR preprocessing
+                var thumbBytes = isPdf
+                    ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData)
+                    : ReceiptImageHelper.GenerateThumbnail(fileData);
+
+                if (thumbBytes != null)
+                    await File.WriteAllBytesAsync(thumbPath, thumbBytes);
+                else
+                    return;
+            });
+
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                item.ThumbnailPath = thumbPath);
+        }
+        catch
+        {
+            // Non-critical — card will show placeholder icon
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveFromQueue(BulkScanItem? item)
+    {
+        if (item != null)
+        {
+            BulkItems.Remove(item);
+            OnPropertyChanged(nameof(BulkUsageSummary));
+        }
+    }
+
+    [RelayCommand]
+    private void CloseBulkDropZone()
+    {
+        IsBulkDropZoneOpen = false;
+        BulkItems.Clear();
+    }
+
+    /// <summary>
+    /// Requests to close the drop zone, showing a discard confirmation if files are queued.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseBulkDropZone()
+    {
+        if (BulkItems.Count > 0)
+        {
+            if (!await ConfirmDiscardNewAsync()) return;
+        }
+
+        CloseBulkDropZone();
+    }
+
+    [RelayCommand]
+    private async Task StartBulkScan()
+    {
+        if (BulkItems.Count == 0) return;
+
+        IsBulkDropZoneOpen = false;
+        IsBulkScanning = true;
+        IsBulkScanComplete = false;
+        BulkScansCompleted = 0;
+        BulkScansSucceeded = 0;
+        BulkScansFailed = 0;
+
+        _scannerService ??= CreateScannerService();
+        _usageService ??= CreateUsageService();
+        _bulkCancellationSource = new CancellationTokenSource();
+        var token = _bulkCancellationSource.Token;
+
+        if (_usageService != null)
+        {
+            var usageCheck = await _usageService.CheckUsageAsync();
+            UpdateUsageDisplay(usageCheck);
+
+            if (!usageCheck.CanScan)
+            {
+                IsBulkScanning = false;
+                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                    usageCheck.ScanCount, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
+                return;
+            }
+
+            if (usageCheck.Remaining < BulkItems.Count)
+            {
+                ScansRemaining = usageCheck.Remaining;
+            }
+        }
+
+        // Pipeline: each item reads, preprocesses, generates preview, and scans
+        // in a single task. SemaphoreSlim(3) gates concurrency across all stages.
+        var semaphore = new SemaphoreSlim(3);
+        var tasks = BulkItems
+            .Select(item => ProcessAndScanItemAsync(item, semaphore, token))
+            .ToList();
+
+        await Task.WhenAll(tasks);
+
+        IsBulkScanning = false;
+        IsBulkScanComplete = true;
+    }
+
+    /// <summary>
+    /// Pipelines a single item through: read file → preprocess → generate preview → scan API.
+    /// All stages run within the semaphore so up to 3 items process simultaneously.
+    /// </summary>
+    private async Task ProcessAndScanItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
+    {
+        await semaphore.WaitAsync(token);
+        try
+        {
+            if (token.IsCancellationRequested) return;
+
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                item.Status = BulkScanStatus.Scanning);
+
+            // 1. Read file
+            item.FileData = await File.ReadAllBytesAsync(item.FilePath, token);
+            var isPdf = item.IsPdf;
+            var fileData = item.FileData;
+            var fileName = item.FileName;
+
+            // 2. Preprocess (CPU-bound: EXIF fix, contrast, sharpen)
+            item.PreprocessedData = await Task.Run(() =>
+                ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
+            item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
+
+            // 3. Generate preview (fire-and-forget, non-blocking) — skip if already generated in queue
+            if (string.IsNullOrEmpty(item.PreviewImagePath))
+            {
+                _ = Task.Run(async () =>
+                {
+                    var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
+                    Directory.CreateDirectory(tempDir);
+                    var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
+
+                    var previewBytes = isPdf
+                        ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData)
+                        : item.PreprocessedData;
+
+                    if (previewBytes != null)
+                    {
+                        await File.WriteAllBytesAsync(previewPath, previewBytes);
+                        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            item.PreviewImagePath = previewPath);
+                    }
+                }, token);
+            }
+
+            // Free original file bytes — local `fileData` var keeps the reference for the preview task
+            item.FileData = null;
+
+            // 4. Check usage
+            if (_usageService != null)
+            {
+                var usageCheck = await _usageService.CheckUsageAsync();
+                if (!usageCheck.CanScan)
+                {
+                    await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        item.Status = BulkScanStatus.Failed;
+                        item.ErrorMessage = "Monthly scan limit reached";
+                        BulkScansCompleted++;
+                        BulkScansFailed++;
+                    });
+                    return;
+                }
+            }
+
+            // 5. Scan via API
+            var result = await Task.Run(() =>
+                _scannerService!.ScanReceiptAsync(item.PreprocessedData!, item.ScanFileName, skipPreprocessing: true, token), token);
+
+            if (result.IsSuccess)
+            {
+                if (_usageService != null)
+                    await _usageService.IncrementUsageAsync();
+
+                var supplier = result.SupplierName ?? "Unknown";
+                var total = result.TotalAmount?.ToString("F2") ?? "0.00";
+
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    item.ScanResult = result;
+                    item.Status = BulkScanStatus.Succeeded;
+                    item.SummaryText = $"{supplier} · ${total}";
+                    item.ConfidenceText = result.Confidence >= 0.85 ? "High" : result.Confidence >= 0.6 ? "Medium" : "Low";
+                    BulkScansCompleted++;
+                    BulkScansSucceeded++;
+                });
+            }
+            else
+            {
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    item.Status = BulkScanStatus.Failed;
+                    item.ErrorMessage = result.ErrorMessage ?? "Unknown error";
+                    BulkScansCompleted++;
+                    BulkScansFailed++;
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                item.Status = BulkScanStatus.Failed;
+                item.ErrorMessage = "Cancelled";
+                BulkScansCompleted++;
+                BulkScansFailed++;
+            });
+        }
+        catch (Exception ex)
+        {
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                item.Status = BulkScanStatus.Failed;
+                item.ErrorMessage = ex.Message;
+                BulkScansCompleted++;
+                BulkScansFailed++;
+            });
+        }
+        finally
+        {
+            semaphore.Release();
+        }
+    }
+
+    [RelayCommand]
+    private async Task RetryBulkItem(BulkScanItem? item)
+    {
+        if (item == null || item.PreprocessedData == null) return;
+
+        // Don't allow retry while scanning is still in progress (would cause duplicate concurrent scan)
+        if (IsBulkScanning) return;
+
+        // Reset cancelled token if user cancelled a previous batch
+        if (_bulkCancellationSource?.IsCancellationRequested == true)
+            _bulkCancellationSource = new CancellationTokenSource();
+
+        item.Status = BulkScanStatus.Queued;
+        item.ErrorMessage = string.Empty;
+        BulkScansFailed--;
+        BulkScansCompleted--;
+
+        var semaphore = new SemaphoreSlim(1);
+        await ProcessAndScanItemAsync(item, semaphore, _bulkCancellationSource?.Token ?? CancellationToken.None);
+    }
+
+    [RelayCommand]
+    private void CancelBulkScan()
+    {
+        // Signal cancellation — Task.WhenAll in StartBulkScan will set IsBulkScanComplete
+        // when all tasks finish. Don't set it here to avoid counter corruption from
+        // tasks that complete after this point.
+        _bulkCancellationSource?.Cancel();
+    }
+
+    /// <summary>
+    /// Requests to cancel bulk scan with discard confirmation.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCancelBulkScan()
+    {
+        if (!await ConfirmDiscardNewAsync()) return;
+        CancelBulkScan();
+        CloseBulkReview();
+    }
+
+    [RelayCommand]
+    private void OpenBulkReview()
+    {
+        var succeeded = BulkSucceededItems;
+        if (succeeded.Count == 0) return;
+
+        IsBulkScanComplete = false;
+        IsBulkReviewOpen = true;
+
+        LoadSupplierOptions();
+        LoadProductOptions();
+
+        NavigateToBulkItem(0);
+    }
+
+    private void NavigateToBulkItem(int index)
+    {
+        var succeeded = BulkSucceededItems;
+        if (index < 0 || index >= succeeded.Count) return;
+
+        // Save current form state before navigating away and mark as reviewed
+        if (CurrentBulkItem != null)
+        {
+            SaveCurrentFormToItem(CurrentBulkItem);
+            CurrentBulkItem.IsReviewed = true;
+            CurrentBulkItem.IsActive = false;
+            OnPropertyChanged(nameof(BulkAllReviewed));
+        }
+
+        CurrentBulkIndex = index;
+        CurrentBulkItem = succeeded[index];
+        CurrentBulkItem.IsActive = true;
+
+        PopulateScanResultsForBulkItem(CurrentBulkItem);
+        ValidateCurrentBulkItem();
+    }
+
+    [RelayCommand]
+    private void NavigateToBulkItemByRef(BulkScanItem? item)
+    {
+        if (item == null) return;
+        var succeeded = BulkSucceededItems;
+        var index = ((IList<BulkScanItem>)succeeded).IndexOf(item);
+        if (index >= 0)
+            NavigateToBulkItem(index);
+    }
+
+    private void PopulateScanResultsForBulkItem(BulkScanItem item)
+    {
+        if (item.ScanResult == null) return;
+
+        _currentImageData = item.PreprocessedData;
+        _currentFileName = item.ScanFileName;
+
+        ReceiptImagePath = item.PreviewImagePath;
+
+        // Only suppress AI suggestions if they've already run for this item.
+        // On first visit, let them run so supplier matching/suggestion works.
+        _suppressAiSuggestions = item.HasAiSuggestionsRun;
+        PopulateScanResults(item.ScanResult);
+        _suppressAiSuggestions = false;
+
+        // Restore per-item state that isn't on ScanResult
+        Notes = item.Notes;
+
+        if (item.IsRevenueOverride.HasValue)
+            IsRevenue = item.IsRevenueOverride.Value;
+
+        if (item.SelectedSupplierId != null)
+        {
+            var supplier = SupplierOptions.FirstOrDefault(s => s.Id == item.SelectedSupplierId);
+            if (supplier != null)
+                SelectedSupplier = supplier;
+        }
+
+        // Restore supplier suggestion state from previous visit
+        if (item.HasAiSuggestionsRun && item.SelectedSupplierId == null)
+        {
+            ShowCreateSupplierSuggestion = item.ShowCreateSupplierSuggestion;
+            SuggestedSupplierName = item.SuggestedSupplierName ?? string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private void ApproveBulkItem()
+    {
+        if (CurrentBulkItem == null) return;
+
+        SaveCurrentFormToItem(CurrentBulkItem);
+        CurrentBulkItem.IsApproved = true;
+        CurrentBulkItem.IsSkipped = false;
+        CurrentBulkItem.IsReviewed = true;
+        OnPropertyChanged(nameof(BulkApprovedCount));
+        OnPropertyChanged(nameof(BulkAllReviewed));
+
+        var succeeded = BulkSucceededItems;
+        var nextIndex = -1;
+
+        for (var i = CurrentBulkIndex + 1; i < succeeded.Count; i++)
+        {
+            if (!succeeded[i].IsApproved)
+            {
+                nextIndex = i;
+                break;
+            }
+        }
+
+        if (nextIndex == -1)
+        {
+            for (var i = 0; i < CurrentBulkIndex; i++)
+            {
+                if (!succeeded[i].IsApproved)
+                {
+                    nextIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (nextIndex >= 0)
+            NavigateToBulkItem(nextIndex);
+    }
+
+    [RelayCommand]
+    private void UnapproveBulkItem()
+    {
+        if (CurrentBulkItem == null) return;
+        CurrentBulkItem.IsApproved = false;
+        OnPropertyChanged(nameof(BulkApprovedCount));
+        OnPropertyChanged(nameof(BulkAllReviewed));
+        OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
+    }
+
+    [RelayCommand]
+    private void SkipBulkItem()
+    {
+        if (CurrentBulkItem != null)
+        {
+            CurrentBulkItem.IsApproved = false;
+            CurrentBulkItem.IsSkipped = true;
+            CurrentBulkItem.IsReviewed = true;
+            OnPropertyChanged(nameof(BulkApprovedCount));
+            OnPropertyChanged(nameof(BulkAllReviewed));
+            OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
+        }
+
+        var succeeded = BulkSucceededItems;
+        var nextIndex = CurrentBulkIndex + 1;
+        if (nextIndex < succeeded.Count)
+            NavigateToBulkItem(nextIndex);
+    }
+
+    private void SaveCurrentFormToItem(BulkScanItem item)
+    {
+        if (item.ScanResult == null) return;
+
+        item.ScanResult.SupplierName = ExtractedSupplier;
+        item.ScanResult.TransactionDate = ExtractedDate?.DateTime;
+
+        if (decimal.TryParse(ExtractedSubtotal, out var sub)) item.ScanResult.Subtotal = sub;
+        if (decimal.TryParse(ExtractedTax, out var tax)) item.ScanResult.TaxAmount = tax;
+        if (decimal.TryParse(ExtractedTotal, out var tot)) item.ScanResult.TotalAmount = tot;
+        if (decimal.TryParse(ExtractedDiscount, out var disc)) item.ScanResult.Discount = disc;
+
+        item.ScanResult.PaymentMethod = SelectedPaymentMethod;
+
+        // Persist per-item state that isn't on ScanResult
+        item.Notes = Notes;
+        item.IsRevenueOverride = IsRevenue;
+        item.SelectedSupplierId = SelectedSupplier?.Id;
+        item.ShowCreateSupplierSuggestion = ShowCreateSupplierSuggestion;
+        item.SuggestedSupplierName = SuggestedSupplierName;
+        item.HasAiSuggestionsRun = true;
+
+        item.ScanResult.LineItems = LineItems.Select(li =>
+        {
+            decimal.TryParse(li.Quantity, out var qty);
+            decimal.TryParse(li.UnitPrice, out var up);
+            decimal.TryParse(li.TotalPrice, out var tp);
+            return new ScannedLineItem
+            {
+                Description = li.Description,
+                Quantity = qty,
+                UnitPrice = up,
+                TotalPrice = tp,
+                Confidence = li.Confidence
+            };
+        }).ToList();
+
+        item.LineItemProductIds = LineItems.Select(li => li.SelectedProduct?.Id).ToList();
+
+        var supplier = ExtractedSupplier;
+        if (string.IsNullOrEmpty(supplier) && SelectedSupplier != null)
+            supplier = SelectedSupplier.Name;
+        item.SummaryText = $"{supplier} · ${ExtractedTotal}";
+
+        item.UpdateValidation();
+        OnPropertyChanged(nameof(BulkAllReviewed));
+        OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
+    }
+
+    [RelayCommand]
+    private async Task CreateAllApprovedTransactions()
+    {
+        var approvedItems = BulkItems.Where(i => i.IsApproved && i.ScanResult != null).ToList();
+        if (approvedItems.Count == 0) return;
+
+        if (CurrentBulkItem != null && CurrentBulkItem.IsApproved)
+            SaveCurrentFormToItem(CurrentBulkItem);
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var createdExpenses = new List<Expense>();
+        var createdRevenues = new List<Revenue>();
+        var createdReceipts = new List<Receipt>();
+
+        // Pre-encode all receipt images in parallel (CPU-bound FixOrientation + Base64)
+        var encodedImages = await Task.Run(() =>
+        {
+            var results = new Dictionary<BulkScanItem, string?>();
+            Parallel.ForEach(approvedItems, item =>
+            {
+                string? encoded = null;
+                if (item.PreprocessedData != null)
+                {
+                    var orientedData = ReceiptImageHelper.FixOrientation(item.PreprocessedData);
+                    encoded = Convert.ToBase64String(orientedData);
+                }
+                lock (results) results[item] = encoded;
+            });
+            return results;
+        });
+
+        foreach (var item in approvedItems)
+        {
+            var scanResult = item.ScanResult!;
+            var total = scanResult.TotalAmount ?? 0;
+            var subtotal = scanResult.Subtotal ?? 0;
+            var taxAmount = scanResult.TaxAmount ?? 0;
+            var discount = scanResult.Discount ?? 0;
+            var supplierName = scanResult.SupplierName ?? string.Empty;
+            var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
+            var isRevenue = item.IsRevenueOverride ?? false;
+            var notes = item.Notes ?? string.Empty;
+            var paymentMethod = scanResult.PaymentMethod ?? "Cash";
+
+            if (total <= 0) continue;
+
+            // Build line items directly from saved scan result + product IDs
+            var productIds = item.LineItemProductIds;
+            var lineItems = scanResult.LineItems.Select((li, idx) =>
+            {
+                var productId = productIds != null && idx < productIds.Count ? productIds[idx] : null;
+                Product? product = null;
+                if (productId != null)
+                    product = companyData.Products?.FirstOrDefault(p => p.Id == productId);
+                return new LineItem
+                {
+                    ProductId = productId,
+                    Description = product?.Name ?? li.Description,
+                    Quantity = li.Quantity > 0 ? li.Quantity : 1,
+                    UnitPrice = li.UnitPrice
+                };
+            }).Where(li => !string.IsNullOrWhiteSpace(li.Description) || li.ProductId != null).ToList();
+
+            companyData.IdCounters.Receipt++;
+            var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
+
+            var fileData = encodedImages.GetValueOrDefault(item);
+
+            var receipt = new Receipt
+            {
+                Id = receiptId,
+                TransactionType = isRevenue ? "Revenue" : "Expense",
+                FileName = item.ScanFileName,
+                FileType = GetMimeType(item.ScanFileName),
+                FileSize = item.PreprocessedData?.Length ?? 0,
+                FileData = fileData,
+                Amount = total,
+                Date = transactionDate,
+                Supplier = supplierName,
+                Source = "AI Scanned",
+                OcrData = CreateOcrDataFromScanResult(scanResult),
+                CreatedAt = DateTime.Now
+            };
+
+            if (isRevenue)
+            {
+                companyData.IdCounters.Revenue++;
+                var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
+
+                var revenue = new Revenue
+                {
+                    Id = revenueId,
+                    Date = transactionDate,
+                    CustomerId = null,
+                    Description = lineItems.Count > 0 ? lineItems[0].Description : supplierName,
+                    LineItems = lineItems,
+                    Quantity = lineItems.Sum(li => li.Quantity),
+                    UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
+                    Amount = subtotal > 0 ? subtotal : total,
+                    Subtotal = subtotal > 0 ? subtotal : total,
+                    TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
+                    TaxAmount = taxAmount,
+                    Discount = discount,
+                    Total = total,
+                    PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var rpm) ? rpm : PaymentMethod.Cash,
+                    PaymentStatus = "Paid",
+                    Notes = notes,
+                    ReceiptId = receiptId,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                receipt.TransactionId = revenueId;
+                companyData.Revenues.Add(revenue);
+                createdRevenues.Add(revenue);
+            }
+            else
+            {
+                companyData.IdCounters.Expense++;
+                var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
+
+                var expense = new Expense
+                {
+                    Id = expenseId,
+                    Date = transactionDate,
+                    SupplierId = item.SelectedSupplierId,
+                    Description = lineItems.Count > 0 ? lineItems[0].Description : supplierName,
+                    LineItems = lineItems,
+                    Quantity = lineItems.Sum(li => li.Quantity),
+                    UnitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal,
+                    Amount = subtotal > 0 ? subtotal : total,
+                    TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
+                    TaxAmount = taxAmount,
+                    Discount = discount,
+                    Total = total,
+                    PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var epm) ? epm : PaymentMethod.Cash,
+                    Notes = notes,
+                    ReceiptId = receiptId,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                receipt.TransactionId = expenseId;
+                companyData.Expenses.Add(expense);
+                createdExpenses.Add(expense);
+            }
+
+            companyData.Receipts.Add(receipt);
+            createdReceipts.Add(receipt);
+        }
+
+        var action = new DelegateAction(
+            $"Bulk scan {approvedItems.Count} receipts",
+            () =>
+            {
+                foreach (var e in createdExpenses) companyData.Expenses.Remove(e);
+                foreach (var r in createdRevenues) companyData.Revenues.Remove(r);
+                foreach (var r in createdReceipts) companyData.Receipts.Remove(r);
+            },
+            () =>
+            {
+                foreach (var e in createdExpenses) companyData.Expenses.Add(e);
+                foreach (var r in createdRevenues) companyData.Revenues.Add(r);
+                foreach (var r in createdReceipts) companyData.Receipts.Add(r);
+            });
+
+        App.UndoRedoManager.RecordAction(action);
+        App.CompanyManager?.MarkAsChanged();
+        ReceiptScanned?.Invoke(this, EventArgs.Empty);
+        CloseBulkReview();
+    }
+
+    [RelayCommand]
+    private void CloseBulkReview()
+    {
+        IsBulkReviewOpen = false;
+        IsBulkScanComplete = false;
+        IsBulkScanning = false;
+        _bulkSucceededItemsCache = null;
+        BulkItems.Clear();
+        CurrentBulkItem = null;
+        ResetScanModal();
+    }
+
+    /// <summary>
+    /// Requests to close bulk review/complete modals, showing discard confirmation.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseBulkReview()
+    {
+        if (!await ConfirmDiscardNewAsync()) return;
+        CloseBulkReview();
+    }
+
+    #endregion
+
     #region AI Scan Commands
 
     /// <summary>
@@ -529,21 +1366,16 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
         }
 
-        // Show modal immediately in loading state before reading the file
-        ResetScanModal();
-        IsScanReviewModalOpen = true;
-        IsScanning = true;
-        HasScanError = false;
-        HasScanResult = false;
-
         try
         {
-            _currentImageData = await File.ReadAllBytesAsync(filePath);
-            _currentFileName = Path.GetFileName(filePath);
-            await OpenScanModalWithDataAsync(_currentImageData, _currentFileName, filePath);
+            var imageData = await File.ReadAllBytesAsync(filePath);
+            var fileName = Path.GetFileName(filePath);
+            await OpenScanModalWithDataAsync(imageData, fileName, filePath);
         }
         catch (Exception ex)
         {
+            // If file read fails before OpenScanModalWithDataAsync, show error in modal
+            IsScanReviewModalOpen = true;
             IsScanning = false;
             HasScanError = true;
             ScanErrorMessage = "Failed to read file: {0}".TranslateFormat(ex.Message);
@@ -575,11 +1407,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Preprocess the image once on a background thread (EXIF fix + contrast + sharpen).
         // The result is used for both the preview image and the API call, avoiding
-        // a redundant FixOrientation decode/encode cycle.
+        // a redundant FixOrientation decode/encode cycle. PDFs are returned unchanged.
+        var isPdf = Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
         var preprocessedData = await Task.Run(() =>
             ReceiptImageHelper.PreprocessForOcr(imageData, fileName));
         _currentImageData = preprocessedData;
-        _currentFileName = Path.ChangeExtension(fileName, ".jpg");
+        _currentFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
 
         // Write preview image to disk off the UI thread
         _ = Task.Run(async () =>
@@ -587,8 +1420,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "ScanPreview");
             Directory.CreateDirectory(tempDir);
             var previewPath = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
-            await File.WriteAllBytesAsync(previewPath, preprocessedData);
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
+
+            // For PDFs, render the first page as JPEG for preview
+            var previewBytes = isPdf
+                ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(preprocessedData)
+                : preprocessedData;
+
+            if (previewBytes != null)
+            {
+                await File.WriteAllBytesAsync(previewPath, previewBytes);
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
+            }
         });
 
         // Start scanning (image is already preprocessed)
@@ -690,7 +1532,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsNearLimit = usageCheck.MonthlyLimit > 0 && usageCheck.Remaining > 0 && usageCheck.Remaining <= usageCheck.MonthlyLimit / 10;
     }
 
-    private async void PopulateScanResults(ReceiptScanResult result)
+    private void PopulateScanResults(ReceiptScanResult result)
     {
         try
         {
@@ -753,7 +1595,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ValidateTotals();
 
             // Fire AI suggestions in the background — don't block showing scan results
-            _ = GetAiSuggestionsAsync(result);
+            // Suppressed during bulk review carousel navigation to prevent cross-item suggestion corruption
+            if (!_suppressAiSuggestions)
+                _ = GetAiSuggestionsAsync(result);
         }
         catch (Exception ex)
         {
@@ -821,6 +1665,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             OnProductErrorCleared = ClearValidationMessageIfNoErrors,
             OnTotalPriceEdited = ValidateTotals
         });
+        ValidateCurrentBulkItem();
     }
 
     [RelayCommand]
@@ -830,6 +1675,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             LineItems.Remove(item);
             ValidateTotals();
+            ValidateCurrentBulkItem();
         }
     }
 
@@ -1017,8 +1863,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     companyData.Categories.Remove(capturedCategory);
                 if (capturedSupplier != null)
                     companyData.Suppliers.Remove(capturedSupplier);
-
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
@@ -1032,7 +1876,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
                 companyData.Expenses.Add(capturedExpense);
                 companyData.Receipts.Add(capturedReceipt);
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
         companyData.Expenses.Add(expense);
@@ -1107,8 +1950,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     companyData.Categories.Remove(capturedCategory);
                 if (capturedSupplier != null)
                     companyData.Suppliers.Remove(capturedSupplier);
-
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
@@ -1122,7 +1963,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
                 companyData.Revenues.Add(capturedRevenue);
                 companyData.Receipts.Add(capturedReceipt);
-                ReceiptScanned?.Invoke(this, EventArgs.Empty);
             });
 
         companyData.Revenues.Add(revenue);
@@ -1131,21 +1971,33 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void NavigateToCreateSupplier()
+    private void OpenCreateSupplier()
     {
-        // Close modal and navigate to suppliers page with add modal open
-        CloseScanReviewModal();
-        App.NavigationService?.NavigateTo("Suppliers");
-        App.SupplierModalsViewModel?.OpenAddModal();
+        var supplierModals = App.SupplierModalsViewModel;
+        if (supplierModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            supplierModals.SupplierSaved -= OnSaved;
+            LoadSupplierOptions();
+        }
+        supplierModals.SupplierSaved += OnSaved;
+        supplierModals.OpenAddModal();
     }
 
     [RelayCommand]
-    private void NavigateToCreateProduct()
+    private void OpenCreateProduct()
     {
-        // Close modal and navigate to products page with add modal open
-        CloseScanReviewModal();
-        App.NavigationService?.NavigateTo("Products");
-        App.ProductModalsViewModel?.OpenAddModal();
+        var productModals = App.ProductModalsViewModel;
+        if (productModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            productModals.ProductSaved -= OnSaved;
+            LoadProductOptions();
+        }
+        productModals.ProductSaved += OnSaved;
+        productModals.OpenAddModal();
     }
 
     /// <summary>
@@ -1253,6 +2105,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void UpdateHasUnmatchedProducts()
     {
         HasUnmatchedProducts = LineItems.Any(li => li.ShowCreateProductSuggestion);
+        ValidateCurrentBulkItem();
     }
 
     [RelayCommand]
@@ -1268,6 +2121,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private async Task GetAiSuggestionsAsync(ReceiptScanResult result)
     {
+        // Capture the bulk item (if any) so we can discard results if the user navigated away
+        var bulkItemAtStart = CurrentBulkItem;
+
         var geminiService = new GeminiService(App.ErrorLogger, App.TelemetryManager);
 
         if (!geminiService.IsConfigured)
@@ -1311,6 +2167,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             };
 
             var suggestion = await geminiService.GetSupplierCategorySuggestionAsync(request);
+
+            // If in bulk review and user navigated to a different item, discard stale results
+            if (IsBulkReviewOpen && CurrentBulkItem != bulkItemAtStart)
+                return;
 
             if (suggestion != null)
             {
@@ -1381,6 +2241,63 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TotalMismatchWarningMessage = string.Format(
                 "Line items ({0:C}) + tax ({1:C}) - discount ({2:C}) = {3:C}, but total is {4:C}. Some items may be incorrect.".Translate(),
                 lineItemSum, tax, discount, expectedTotal, total);
+        }
+    }
+
+    /// <summary>
+    /// Validates the current bulk item's required fields from live form state and updates
+    /// the item's validation errors, carousel badge, and warning message in real time.
+    /// </summary>
+    private void ValidateCurrentBulkItem()
+    {
+        if (!IsBulkReviewOpen || CurrentBulkItem == null || !CurrentBulkItem.IsApproved)
+        {
+            HasBulkIncompleteWarning = false;
+            BulkIncompleteWarningMessage = string.Empty;
+            return;
+        }
+
+        var missing = new List<string>();
+
+        if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
+            missing.Add("total amount".Translate());
+
+        if (!IsRevenue && SelectedSupplier == null)
+            missing.Add("supplier".Translate());
+
+        if (LineItems.Count == 0)
+            missing.Add("at least one line item".Translate());
+        else if (LineItems.Any(li => li.SelectedProduct == null))
+            missing.Add("product selection for all line items".Translate());
+
+        var hasErrors = missing.Count > 0;
+
+        // Update the BulkScanItem directly from live form state
+        CurrentBulkItem.LineItemProductIds = LineItems.Select(li => li.SelectedProduct?.Id).ToList();
+        CurrentBulkItem.IsRevenueOverride = IsRevenue;
+        CurrentBulkItem.SelectedSupplierId = SelectedSupplier?.Id;
+        if (CurrentBulkItem.ScanResult != null && decimal.TryParse(ExtractedTotal, out var t))
+            CurrentBulkItem.ScanResult.TotalAmount = t;
+
+        // Setting HasValidationErrors triggers OnHasValidationErrorsChanged which notifies
+        // IsApprovedWithErrors/IsApprovedWithoutErrors for carousel badge updates
+        CurrentBulkItem.HasValidationErrors = hasErrors;
+
+        OnPropertyChanged(nameof(BulkAllReviewed));
+        OnPropertyChanged(nameof(BulkIncompleteCount));
+        OnPropertyChanged(nameof(HasBulkIncompleteItems));
+
+        if (hasErrors)
+        {
+            HasBulkIncompleteWarning = true;
+            BulkIncompleteWarningMessage = string.Format(
+                "This receipt is missing required fields: {0}. Fill these in to enable bulk creation.".Translate(),
+                string.Join(", ", missing));
+        }
+        else
+        {
+            HasBulkIncompleteWarning = false;
+            BulkIncompleteWarningMessage = string.Empty;
         }
     }
 
@@ -1600,7 +2517,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Generate ID
         companyData.IdCounters.Supplier++;
-        var newId = $"SUP-{companyData.IdCounters.Supplier:D4}";
+        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
 
         // Create supplier
         var newSupplier = new Supplier
@@ -1770,6 +2687,28 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 };
             }).ToList(),
             ExtractedItems = LineItems.Select(li => li.Description).ToList()
+        };
+    }
+
+    private static OcrData CreateOcrDataFromScanResult(ReceiptScanResult result)
+    {
+        return new OcrData
+        {
+            ExtractedSupplier = result.SupplierName ?? string.Empty,
+            ExtractedDate = result.TransactionDate,
+            ExtractedAmount = result.TotalAmount ?? 0,
+            ExtractedSubtotal = result.Subtotal ?? 0,
+            ExtractedTaxAmount = result.TaxAmount ?? 0,
+            Confidence = result.Confidence,
+            LineItems = result.LineItems.Select(li => new OcrLineItem
+            {
+                Description = li.Description,
+                Quantity = li.Quantity,
+                UnitPrice = li.UnitPrice,
+                TotalPrice = li.TotalPrice,
+                Confidence = li.Confidence
+            }).ToList(),
+            ExtractedItems = result.LineItems.Select(li => li.Description).ToList()
         };
     }
 

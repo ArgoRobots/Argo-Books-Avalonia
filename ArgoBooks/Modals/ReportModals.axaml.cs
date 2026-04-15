@@ -6,7 +6,7 @@ namespace ArgoBooks.Modals;
 
 /// <summary>
 /// Modal dialogs for report template management.
-/// ESC key handling is now managed by ModalOverlay.
+/// ESC key handling is managed by ModalOverlay.
 /// </summary>
 public partial class ReportModals : UserControl
 {

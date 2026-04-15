@@ -29,7 +29,6 @@
 
         <!-- PDF -->
         <PackageReference Include="QuestPDF" />
-
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />
         <PackageReference Include="EPPlus" />

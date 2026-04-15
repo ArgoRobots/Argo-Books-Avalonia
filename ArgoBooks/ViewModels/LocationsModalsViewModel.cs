@@ -439,6 +439,24 @@ public partial class LocationsModalsViewModel : ViewModelBase
         {
             if (item == null) return;
 
+            // Check if location is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Inventory.Any(i => i.LocationId == item.Id))
+                    usages.Add("Inventory".Translate());
+                if (cd.StockTransfers.Any(t => t.SourceLocationId == item.Id || t.DestinationLocationId == item.Id))
+                    usages.Add("Stock Transfer".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This location cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var dialog = App.ConfirmationDialog;
             if (dialog == null) return;
 

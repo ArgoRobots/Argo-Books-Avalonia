@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -164,6 +165,8 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events to refresh when locations are saved
         if (App.LocationsModalsViewModel != null)
@@ -188,9 +191,25 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the locations.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Locations)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadLocations();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Locations && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadLocations();
+        }
     }
 
     /// <summary>

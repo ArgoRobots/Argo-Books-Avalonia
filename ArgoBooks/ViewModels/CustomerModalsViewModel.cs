@@ -1,3 +1,4 @@
+using ArgoBooks.Controls;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
@@ -90,6 +91,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalEmailError;
 
+    [ObservableProperty]
+    private string? _modalPhoneError;
+
     partial void OnModalFirstNameChanged(string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
@@ -104,6 +108,11 @@ public partial class CustomerModalsViewModel : ViewModelBase
         {
             ModalLastNameError = null;
         }
+    }
+
+    partial void OnModalPhoneChanged(string value)
+    {
+        ModalPhoneError = null;
     }
 
     partial void OnModalEmailChanged(string value)
@@ -572,6 +581,32 @@ public partial class CustomerModalsViewModel : ViewModelBase
             if (item == null)
                 return;
 
+            // Check if customer is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Invoices.Any(i => i.CustomerId == item.Id))
+                    usages.Add("Invoice".Translate());
+                if (cd.Revenues.Any(r => r.CustomerId == item.Id))
+                    usages.Add("Revenue".Translate());
+                if (cd.Rentals.Any(r => r.CustomerId == item.Id))
+                    usages.Add("Rental".Translate());
+                if (cd.RecurringInvoices.Any(ri => ri.CustomerId == item.Id))
+                    usages.Add("Recurring Invoice".Translate());
+                if (cd.Payments.Any(p => p.CustomerId == item.Id))
+                    usages.Add("Payment".Translate());
+                if (cd.Returns.Any(r => r.CustomerId == item.Id))
+                    usages.Add("Return".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This customer cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var dialog = App.ConfirmationDialog;
             if (dialog == null)
                 return;
@@ -795,12 +830,14 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var rentals = companyData.Rentals.Where(r => r.CustomerId == customerId);
         foreach (var rental in rentals)
         {
-            var item = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
+            var rentalItem = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
+            var invItem = rentalItem != null ? companyData.Inventory.FirstOrDefault(i => i.Id == rentalItem.InventoryItemId) : null;
+            var rentalProductName = invItem != null ? companyData.GetProduct(invItem.ProductId)?.Name : null;
             historyItems.Add(new CustomerHistoryItem
             {
                 Date = rental.StartDate,
                 Type = "Rental",
-                Description = $"Rental - {item?.Name ?? "Unknown Item"}",
+                Description = $"Rental - {rentalProductName ?? "Unknown Item"}",
                 Amount = rental.TotalCost ?? 0,
                 Status = rental.Status.ToString()
             });
@@ -977,6 +1014,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalFirstNameError = null;
         ModalLastNameError = null;
         ModalEmailError = null;
+        ModalPhoneError = null;
         HasValidationMessage = false;
     }
 
@@ -1003,6 +1041,56 @@ public partial class CustomerModalsViewModel : ViewModelBase
             {
                 ModalEmailError = "Please enter a valid email address.".Translate();
                 isValid = false;
+            }
+        }
+
+        // Duplicate detection
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData != null)
+        {
+            var fullName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}";
+            var existingWithSameName = companyData.Customers.Any(c =>
+                c.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase) &&
+                (_editingCustomer == null || c.Id != _editingCustomer.Id));
+
+            if (existingWithSameName)
+            {
+                ModalFirstNameError = "A customer with this name already exists.".Translate();
+                isValid = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(ModalEmail))
+            {
+                var existingWithSameEmail = companyData.Customers.Any(c =>
+                    !string.IsNullOrWhiteSpace(c.Email) &&
+                    c.Email.Equals(ModalEmail.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    (_editingCustomer == null || c.Id != _editingCustomer.Id));
+
+                if (existingWithSameEmail)
+                {
+                    ModalEmailError = "A customer with this email already exists.".Translate();
+                    isValid = false;
+                }
+            }
+
+            if (!PhoneInput.IsFullPhoneComplete(ModalPhone))
+            {
+                ModalPhoneError = "Please enter a complete phone number.".Translate();
+                isValid = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(ModalPhone))
+            {
+                var existingWithSamePhone = companyData.Customers.Any(c =>
+                    !string.IsNullOrWhiteSpace(c.Phone) &&
+                    c.Phone.Equals(ModalPhone.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                    (_editingCustomer == null || c.Id != _editingCustomer.Id));
+
+                if (existingWithSamePhone)
+                {
+                    ModalPhoneError = "A customer with this phone number already exists.".Translate();
+                    isValid = false;
+                }
             }
         }
 

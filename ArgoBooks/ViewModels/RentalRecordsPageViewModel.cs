@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -199,6 +200,8 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         if (App.RentalRecordsModalsViewModel != null)
         {
@@ -220,9 +223,25 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         }
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.RentalRecords)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadRecords();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.RentalRecords && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadRecords();
+        }
     }
 
     private void OnRecordSaved(object? sender, EventArgs e)
@@ -334,7 +353,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private void FilterRecords()
     {
-        var filtered = _allRecords.ToList();
+        IEnumerable<RentalRecord> filtered = _allRecords;
         var companyData = App.CompanyManager?.CompanyData;
 
         // Apply search filter
@@ -343,13 +362,13 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             filtered = filtered
                 .Select(r =>
                 {
-                    var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == r.RentalItemId);
+                    var itemName = RentalRecordsModalsViewModel.GetItemDisplayName(r, companyData);
                     var customer = companyData?.Customers.FirstOrDefault(c => c.Id == r.CustomerId);
                     return new
                     {
                         Record = r,
                         IdScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, r.Id),
-                        ItemScore = item != null ? LevenshteinDistance.ComputeSearchScore(SearchQuery, item.Name) : -1,
+                        ItemScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, itemName),
                         CustomerScore = customer != null ? LevenshteinDistance.ComputeSearchScore(SearchQuery, customer.Name) : -1
                     };
                 })
@@ -372,7 +391,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             };
             if (statusEnum.HasValue)
             {
-                filtered = filtered.Where(r => r.Status == statusEnum.Value).ToList();
+                filtered = filtered.Where(r => r.Status == statusEnum.Value);
             }
         }
 
@@ -382,36 +401,42 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             var customer = companyData?.Customers.FirstOrDefault(c => c.Name == FilterCustomer);
             if (customer != null)
             {
-                filtered = filtered.Where(r => r.CustomerId == customer.Id).ToList();
+                filtered = filtered.Where(r => r.CustomerId == customer.Id);
             }
         }
 
         // Apply item filter
         if (!string.IsNullOrWhiteSpace(FilterItem) && FilterItem != "All Items")
         {
-            var item = companyData?.RentalInventory.FirstOrDefault(i => i.Name == FilterItem);
-            if (item != null)
-            {
-                filtered = filtered.Where(r => r.RentalItemId == item.Id).ToList();
-            }
+            // Resolve filter item name through chain: find all RentalItems whose resolved name matches
+            var matchingRentalItemIds = companyData?.RentalInventory
+                .Where(ri =>
+                {
+                    var invItem = companyData.Inventory.FirstOrDefault(inv => inv.Id == ri.InventoryItemId);
+                    var product = invItem != null ? companyData.Products.FirstOrDefault(p => p.Id == invItem.ProductId) : null;
+                    return product?.Name == FilterItem;
+                })
+                .Select(ri => ri.Id)
+                .ToHashSet() ?? [];
+            filtered = filtered.Where(r => matchingRentalItemIds.Contains(r.RentalItemId));
         }
 
         // Apply date filters
         if (FilterStartDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.StartDate >= FilterStartDateFrom.Value).ToList();
+            filtered = filtered.Where(r => r.StartDate >= FilterStartDateFrom.Value);
         }
         if (FilterStartDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.StartDate <= FilterStartDateTo.Value).ToList();
+            filtered = filtered.Where(r => r.StartDate <= FilterStartDateTo.Value);
         }
         if (FilterDueDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.DueDate >= FilterDueDateFrom.Value).ToList();
+            filtered = filtered.Where(r => r.DueDate >= FilterDueDateFrom.Value);
         }
         if (FilterDueDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.DueDate <= FilterDueDateTo.Value).ToList();
+            filtered = filtered.Where(r => r.DueDate <= FilterDueDateTo.Value);
         }
 
         // Create display items

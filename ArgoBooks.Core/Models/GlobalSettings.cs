@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.Core.Models;
@@ -72,6 +73,13 @@ public class UiSettings
     /// Whether the grid is shown on the report designer canvas.
     /// </summary>
     public bool ReportsShowGrid { get; set; } = true;
+
+    public DashboardLayout? DashboardLayout { get; set; }
+
+    /// <summary>
+    /// Per-company dashboard layouts, keyed by company file path.
+    /// </summary>
+    public Dictionary<string, DashboardLayout> CompanyDashboardLayouts { get; set; } = new();
 }
 
 public class EmojiPickerSettings

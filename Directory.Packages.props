@@ -5,12 +5,15 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia packages -->
-    <PackageVersion Include="Avalonia" Version="11.3.13" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.13" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.13" />
-    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.13" />
-    <PackageVersion Include="Avalonia.Desktop" Version="11.3.13" />
-    <PackageVersion Include="Avalonia.Browser" Version="11.3.13" />
+    <PackageVersion Include="Avalonia" Version="12.0.0" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.0.0" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.0.0" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.0" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.0.0" />
+    <PackageVersion Include="Avalonia.Browser" Version="12.0.0" />
+    <PackageVersion Include="Avalonia.Controls.WebView" Version="12.0.0" />
+    <!-- Pin transitive dep (required by Avalonia.FreeDesktop) -->
+    <PackageVersion Include="Tmds.DBus.Protocol" Version="0.92.0" />
     <!-- MVVM -->
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- Dependency Injection -->
@@ -18,12 +21,10 @@
     <!-- Windows-specific (DPAPI for secure credential storage) -->
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.2" />
     <!-- Charts -->
-    <PackageVersion Include="LiveChartsCore.SkiaSharpView" Version="2.0.0" />
-    <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0" />
+    <PackageVersion Include="LiveChartsCore.SkiaSharpView" Version="2.0.1-av12.1" />
+    <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.1-av12.1" />
     <!-- Color Picker -->
     <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.11" />
-    <!-- HTML Rendering (WebView2 for Windows) -->
-    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3800.47" />
     <!-- Graphics (for report rendering) -->
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
     <!-- PDF -->

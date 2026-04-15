@@ -154,6 +154,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     #region Receipts Collection
 
     private readonly List<Receipt> _allReceipts = [];
+    private CancellationTokenSource? _imageLoadCts;
 
     public BatchObservableCollection<ReceiptDisplayItem> Receipts { get; } = [];
 
@@ -339,35 +340,35 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called by the view after a file is selected or dropped.
-    /// </summary>
-    public async Task HandleFileSelectedAsync(string filePath)
-    {
-        if (string.IsNullOrEmpty(filePath)) return;
-        if (App.ReceiptsModalsViewModel == null) return;
-
-        await App.ReceiptsModalsViewModel.OpenScanModalAsync(filePath);
-    }
-
-    /// <summary>
-    /// Called by the view when files are dropped.
+    /// Called by the view when files are dropped on the receipts page.
     /// </summary>
     public async Task HandleFilesDroppedAsync(IEnumerable<string> filePaths)
     {
-        var filePath = filePaths.FirstOrDefault();
-        if (string.IsNullOrEmpty(filePath)) return;
+        var validPaths = filePaths
+            .Where(p => !string.IsNullOrEmpty(p))
+            .Where(p =>
+            {
+                var ext = Path.GetExtension(p).ToLowerInvariant();
+                return ext is ".jpg" or ".jpeg" or ".png" or ".pdf";
+            })
+            .ToList();
 
-        // Validate file type
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
-        if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".pdf")
+        if (validPaths.Count == 0)
         {
             await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop a JPEG, PNG, or PDF file."));
+                Loc.Tr("Please drop JPEG, PNG, or PDF files."));
             return;
         }
 
-        await HandleFileSelectedAsync(filePath);
+        // Open bulk drop zone and add the files
+        var modalsVm = App.ReceiptsModalsViewModel;
+        if (modalsVm == null) return;
+
+        if (!modalsVm.IsBulkDropZoneOpen)
+            modalsVm.OpenBulkDropZone();
+
+        modalsVm.AddFilesToQueue(validPaths);
     }
 
     #endregion
@@ -381,20 +382,15 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to filter modal events
         if (App.ReceiptsModalsViewModel != null)
         {
             App.ReceiptsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReceiptsModalsViewModel.FiltersCleared += OnFiltersCleared;
-            App.ReceiptsModalsViewModel.ReceiptScanned += OnReceiptScanned;
         }
-    }
-
-    private void OnReceiptScanned(object? sender, EventArgs e)
-    {
-        // Refresh the receipts list after a new scan
-        LoadReceipts();
     }
 
     private void OnFiltersApplied(object? sender, EventArgs e)
@@ -410,9 +406,25 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         FilterReceipts();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Receipts)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadReceipts();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Receipts && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadReceipts();
+        }
     }
 
     #endregion
@@ -449,7 +461,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private void FilterReceipts()
     {
-        var filtered = _allReceipts.ToList();
+        IEnumerable<Receipt> filtered = _allReceipts;
 
         // Get filter values from modals view model
         var modals = App.ReceiptsModalsViewModel;
@@ -470,13 +482,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                 r.Supplier.ToLowerInvariant().Contains(query) ||
                 r.FileName.ToLowerInvariant().Contains(query) ||
                 r.TransactionId.ToLowerInvariant().Contains(query)
-            ).ToList();
+            );
         }
 
         // Apply type filter
         if (filterType != "All")
         {
-            filtered = filtered.Where(r => r.TransactionType == filterType).ToList();
+            filtered = filtered.Where(r => r.TransactionType == filterType);
         }
 
         // Apply source filter
@@ -484,8 +496,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             filtered = filterSource switch
             {
-                "AI Scanned" => filtered.Where(r => r.IsAiScanned).ToList(),
-                "Manual" => filtered.Where(r => !r.IsAiScanned).ToList(),
+                "AI Scanned" => filtered.Where(r => r.IsAiScanned),
+                "Manual" => filtered.Where(r => !r.IsAiScanned),
                 _ => filtered
             };
         }
@@ -495,8 +507,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             filtered = filterFileType switch
             {
-                "Image" => filtered.Where(r => IsImageFile(r.FileType)).ToList(),
-                "PDF" => filtered.Where(r => r.FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase)).ToList(),
+                "Image" => filtered.Where(r => IsImageFile(r.FileType)),
+                "PDF" => filtered.Where(r => r.FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase)),
                 _ => filtered
             };
         }
@@ -504,28 +516,43 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         // Apply amount filter
         if (decimal.TryParse(filterAmountMin, out var minAmount))
         {
-            filtered = filtered.Where(r => r.Amount >= minAmount).ToList();
+            filtered = filtered.Where(r => r.Amount >= minAmount);
         }
         if (decimal.TryParse(filterAmountMax, out var maxAmount))
         {
-            filtered = filtered.Where(r => r.Amount <= maxAmount).ToList();
+            filtered = filtered.Where(r => r.Amount <= maxAmount);
         }
 
         // Apply date filter
         if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime);
         }
         if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.Date <= filterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.Date <= filterDateTo.Value.DateTime);
         }
 
-        // Sort by date descending (newest first)
-        filtered = filtered.OrderByDescending(r => r.Date).ToList();
+        // Sort by date descending (newest first) — materialize for .Count and pagination
+        var sortedFiltered = filtered.OrderByDescending(r => r.Date).ToList();
 
-        // Create display items
-        var displayItems = filtered.Select(receipt => new ReceiptDisplayItem
+        // Calculate pagination on raw receipts (before creating display items)
+        var totalCount = sortedFiltered.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalCount);
+
+        // Paginate BEFORE creating display items — only process the visible page
+        var pagedReceipts = sortedFiltered
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        // Create display items with cached image paths (no file I/O for cache hits)
+        var displayItems = pagedReceipts.Select(receipt => new ReceiptDisplayItem
         {
             Id = receipt.Id,
             TransactionId = receipt.TransactionId,
@@ -539,23 +566,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             Source = receipt.Source,
             IsAiScanned = receipt.IsAiScanned,
             CreatedAt = receipt.CreatedAt,
-            ImagePath = GetReceiptImagePath(receipt)
+            ImagePath = GetCachedReceiptImagePath(receipt)
         }).ToList();
-
-        // Calculate pagination
-        var totalCount = displayItems.Count;
-        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
-        if (CurrentPage > TotalPages)
-            CurrentPage = TotalPages;
-
-        UpdatePageNumbers();
-        UpdatePaginationText(totalCount);
-
-        // Apply pagination and add to collection
-        var pagedReceipts = displayItems
-            .Skip((CurrentPage - 1) * PageSize)
-            .Take(PageSize)
-            .ToList();
 
         // Unsubscribe from previous receipt items before replacing
         foreach (var oldItem in Receipts)
@@ -563,12 +575,15 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             oldItem.PropertyChanged -= OnReceiptItemPropertyChanged;
         }
 
-        foreach (var item in pagedReceipts)
+        foreach (var item in displayItems)
         {
             item.PropertyChanged += OnReceiptItemPropertyChanged;
         }
 
-        Receipts.ReplaceAll(pagedReceipts);
+        Receipts.ReplaceAll(displayItems);
+
+        // Generate images async for cache misses (off the UI thread)
+        _ = LoadMissingImagesAsync(displayItems, pagedReceipts);
     }
 
     private void OnReceiptItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -620,20 +635,55 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
     }
 
-    private static string GetReceiptImagePath(Receipt receipt)
+    private static string GetCachedReceiptImagePath(Receipt receipt)
     {
         if (string.IsNullOrEmpty(receipt.FileData))
             return string.Empty;
 
         try
         {
-            // Create temp file from Base64 data stored in company file
+            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
+
+            var isPdf = receipt.FileType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) == true
+                        || receipt.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+            var path = isPdf
+                ? Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"))
+                : Path.Combine(tempDir, receipt.FileName);
+
+            return File.Exists(path) ? path : string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static async Task<string> GenerateReceiptImagePathAsync(Receipt receipt)
+    {
+        if (string.IsNullOrEmpty(receipt.FileData))
+            return string.Empty;
+
+        try
+        {
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, receipt.FileName);
             var bytes = Convert.FromBase64String(receipt.FileData);
-            var isImage = receipt.FileType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
-            var output = isImage ? ReceiptImageHelper.FixOrientation(bytes) : bytes;
+
+            var isPdf = receipt.FileType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) == true
+                        || receipt.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+            if (isPdf)
+            {
+                var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
+                if (rendered == null) return string.Empty;
+                var pdfPreviewPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
+                await File.WriteAllBytesAsync(pdfPreviewPath, rendered);
+                return pdfPreviewPath;
+            }
+
+            var tempPath = Path.Combine(tempDir, receipt.FileName);
+            var output = ReceiptImageHelper.FixOrientation(bytes);
             File.WriteAllBytes(tempPath, output);
             return tempPath;
         }
@@ -641,6 +691,60 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             return string.Empty;
         }
+    }
+
+    private async Task LoadMissingImagesAsync(List<ReceiptDisplayItem> displayItems, List<Receipt> receipts)
+    {
+        _imageLoadCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _imageLoadCts = cts;
+
+        try
+        {
+            var toLoad = new List<(ReceiptDisplayItem Display, Receipt Receipt)>();
+            for (var i = 0; i < displayItems.Count; i++)
+            {
+                if (string.IsNullOrEmpty(displayItems[i].ImagePath) && !string.IsNullOrEmpty(receipts[i].FileData))
+                    toLoad.Add((displayItems[i], receipts[i]));
+            }
+
+            if (toLoad.Count == 0) return;
+
+            // Process images in parallel (up to 4 at a time) instead of sequentially
+            const int maxParallelism = 4;
+            var semaphore = new SemaphoreSlim(maxParallelism);
+            var results = await Task.Run(async () =>
+            {
+                var tasks = toLoad.Select(async item =>
+                {
+                    await semaphore.WaitAsync(cts.Token);
+                    try
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
+                        var path = await GenerateReceiptImagePathAsync(item.Receipt);
+                        return !string.IsNullOrEmpty(path) ? (item.Display, path) : default;
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }).ToList();
+
+                var all = await Task.WhenAll(tasks);
+                return all.Where(r => r.Display != null).ToList();
+            }, cts.Token);
+
+            cts.Token.ThrowIfCancellationRequested();
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                foreach (var (display, path) in results)
+                {
+                    display.ImagePath = path;
+                }
+            });
+        }
+        catch (OperationCanceledException) { }
     }
 
     #endregion

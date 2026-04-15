@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
@@ -182,42 +181,4 @@ public partial class UndoRedoButtonGroup : UserControl
         }
     }
 
-    /// <summary>
-    /// Gets the position for the undo dropdown.
-    /// </summary>
-    public Point GetUndoDropdownPosition()
-    {
-        var button = this.FindControl<Button>("UndoDropdownButton");
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (button != null && topLevel != null)
-        {
-            var position = button.TranslatePoint(new Point(0, button.Bounds.Height), topLevel);
-            return position ?? new Point(0, 0);
-        }
-        return new Point(0, 0);
-    }
-
-    /// <summary>
-    /// Gets the position for the redo dropdown.
-    /// </summary>
-    public Point GetRedoDropdownPosition()
-    {
-        var button = this.FindControl<Button>("RedoDropdownButton");
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (button != null && topLevel != null)
-        {
-            var position = button.TranslatePoint(new Point(0, button.Bounds.Height), topLevel);
-            return position ?? new Point(0, 0);
-        }
-        return new Point(0, 0);
-    }
-
-    /// <summary>
-    /// Closes all popups.
-    /// </summary>
-    public void ClosePopups()
-    {
-        _undoPopup?.Close();
-        _redoPopup?.Close();
-    }
 }

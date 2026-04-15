@@ -1,7 +1,6 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -13,7 +12,6 @@ using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
-using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -192,11 +190,6 @@ public class App : Application
     public static PastPredictionsModalViewModel? PastPredictionsModalViewModel => _appShellViewModel?.PastPredictionsModalViewModel;
 
     /// <summary>
-    /// Gets the quick actions settings modal view model for shared access.
-    /// </summary>
-    public static QuickActionsSettingsModalViewModel? QuickActionsSettingsModalViewModel => _appShellViewModel?.QuickActionsSettingsModalViewModel;
-
-    /// <summary>
     /// Gets the settings modal view model for shared access.
     /// </summary>
     public static SettingsModalViewModel? SettingsModalViewModel => _appShellViewModel?.SettingsModalViewModel;
@@ -276,7 +269,7 @@ public class App : Application
         }
     }
 
-    private static bool _isAutoSyncing;
+    private static int _isAutoSyncing;
     private static Timer? _portalSyncTimer;
 
     /// <summary>
@@ -285,8 +278,7 @@ public class App : Application
     /// </summary>
     internal static async Task AutoSyncPortalPaymentsAsync()
     {
-        if (_isAutoSyncing) return;
-        _isAutoSyncing = true;
+        if (Interlocked.CompareExchange(ref _isAutoSyncing, 1, 0) != 0) return;
         try
         {
             var portalService = PaymentPortalService;
@@ -364,7 +356,7 @@ public class App : Application
         }
         finally
         {
-            _isAutoSyncing = false;
+            Interlocked.Exchange(ref _isAutoSyncing, 0);
         }
     }
 
@@ -498,26 +490,6 @@ public class App : Application
             AddNotification(
                 "Low Stock".Translate(),
                 "{0} is running low on stock.".TranslateFormat(productName),
-                NotificationType.Warning);
-        }
-    }
-
-    /// <summary>
-    /// Checks if an invoice is overdue and sends a notification if enabled.
-    /// Call this after saving an invoice.
-    /// </summary>
-    /// <param name="invoice">The invoice to check.</param>
-    public static void CheckAndNotifyInvoiceOverdue(Invoice invoice)
-    {
-        var settings = CompanyManager?.CompanyData?.Settings.Notifications;
-        if (settings == null || !settings.InvoiceOverdueAlert)
-            return;
-
-        if (invoice.IsOverdue)
-        {
-            AddNotification(
-                "Invoice Overdue".Translate(),
-                "Invoice {0} is overdue.".TranslateFormat(invoice.InvoiceNumber),
                 NotificationType.Warning);
         }
     }
@@ -728,6 +700,7 @@ public class App : Application
 
     // When true, the CompanySaved event handler skips showing the "Saved" indicator
     private static bool _suppressSavedFeedback;
+    private static bool _isOpeningCompany;
 
     /// <summary>
     /// Suppresses the "Saved" feedback label for the next save operation.
@@ -786,9 +759,6 @@ public class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
-            DisableAvaloniaDataAnnotationValidation();
-
             // Initialize error logging first so it's available for all services
             var errorLogger = new ErrorLogger();
             ErrorLogger = errorLogger;
@@ -877,7 +847,9 @@ public class App : Application
                             message,
                             NotificationType.Success);
 
-                        // Refresh the current page to update status badges and amounts
+                        // Refresh ViewModels so converted transactions show updated status and amounts
+                        _expensesPageViewModel?.RefreshExpensesCommand.Execute(null);
+                        _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
                         NavigationService.RefreshCurrentPage();
                     });
                 }
@@ -923,7 +895,9 @@ public class App : Application
                     // Sample company cannot be saved directly - redirect to Save As
                     if (CompanyManager.IsSampleCompany)
                     {
-                        await SaveCompanyAsDialogAsync(desktop);
+                        var saved = await SaveCompanyAsDialogAsync(desktop);
+                        if (!saved)
+                            _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                         return;
                     }
 
@@ -974,20 +948,19 @@ public class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
-            // Load settings and recent companies BEFORE showing window to prevent flicker
-            // Use Task.Run to avoid deadlock with synchronization context
+            // Load settings synchronously — sidebar state, theme, and language depend on them.
+            // Recent companies are loaded asynchronously in InitializeAsync after the window is shown.
             try
             {
                 Task.Run(async () =>
                 {
                     if (SettingsService != null)
                         await SettingsService.LoadGlobalSettingsAsync();
-                    await LoadRecentCompaniesAsync();
                 }).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                ErrorLogger.LogWarning($"Failed to load settings/recent companies during startup: {ex.Message}", "Startup");
+                ErrorLogger.LogWarning($"Failed to load settings during startup: {ex.Message}", "Startup");
             }
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
@@ -1034,14 +1007,16 @@ public class App : Application
     {
         try
         {
+            // Load recent companies asynchronously (footer reads from .argo files)
+            await LoadRecentCompaniesAsync();
+
             // Register file type associations on Windows
             RegisterFileTypeAssociationsAsync();
 
             // Post-update recovery: auto-reopen the last company after an update restart
             await TryAutoOpenRecentCompanyAfterUpdateAsync();
 
-            // Settings and recent companies are loaded synchronously before window is shown
-            // to prevent flicker. Just initialize services that depend on settings here.
+            // Initialize services that depend on settings.
             if (SettingsService != null)
             {
                 // Initialize theme service with settings
@@ -1440,12 +1415,13 @@ public class App : Application
 
         CompanyManager.CompanyOpened += async (_, args) =>
         {
-            _mainWindowViewModel.OpenCompany(args.CompanyName);
+            // Don't hide the welcome screen yet — keep it visible behind the loading
+            // overlay so the user doesn't see the half-initialized dashboard.
+            _mainWindowViewModel.CurrentCompanyName = args.CompanyName;
             var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
             _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath, logo);
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(args.FilePath);
-            _mainWindowViewModel.HideLoading();
 
             // Clear undo/redo history for fresh start with new company
             UndoRedoManager.Clear();
@@ -1545,6 +1521,11 @@ public class App : Application
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
+
+            // Now that the dashboard is ready, hide the welcome screen and loading
+            // overlay together so the user never sees a half-initialized dashboard.
+            _mainWindowViewModel.OpenCompany(args.CompanyName);
+            _mainWindowViewModel.HideLoading();
         };
 
         CompanyManager.CompanyClosed += async (_, _) =>
@@ -1559,7 +1540,8 @@ public class App : Application
             _appShellViewModel.SetCompanyInfo(null);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
-            _mainWindowViewModel.HideLoading();
+            if (!_isOpeningCompany)
+                _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
@@ -1710,48 +1692,11 @@ public class App : Application
             appShellVm.HeaderViewModel.HasUnsavedChanges = true;
         }
 
-        // Customer modals
-        _appShellViewModel.CustomerModalsViewModel.CustomerSaved += MarkUnsavedChanges;
-        _appShellViewModel.CustomerModalsViewModel.CustomerDeleted += MarkUnsavedChanges;
+        // Central handler for all modal save/delete events (wired lazily in each getter)
+        _appShellViewModel.UnsavedChangesMade += MarkUnsavedChanges;
 
-        // Product modals
-        _appShellViewModel.ProductModalsViewModel.ProductSaved += MarkUnsavedChanges;
-        _appShellViewModel.ProductModalsViewModel.ProductDeleted += MarkUnsavedChanges;
-
-        // Category modals
-        _appShellViewModel.CategoryModalsViewModel.CategorySaved += MarkUnsavedChanges;
-        _appShellViewModel.CategoryModalsViewModel.CategoryDeleted += MarkUnsavedChanges;
-
-        // Department modals
-        _appShellViewModel.DepartmentModalsViewModel.DepartmentSaved += MarkUnsavedChanges;
-        _appShellViewModel.DepartmentModalsViewModel.DepartmentDeleted += MarkUnsavedChanges;
-
-        // Supplier modals
-        _appShellViewModel.SupplierModalsViewModel.SupplierSaved += MarkUnsavedChanges;
-        _appShellViewModel.SupplierModalsViewModel.SupplierDeleted += MarkUnsavedChanges;
-
-        // Rental inventory modals
-        _appShellViewModel.RentalInventoryModalsViewModel.ItemSaved += MarkUnsavedChanges;
-        _appShellViewModel.RentalInventoryModalsViewModel.ItemDeleted += MarkUnsavedChanges;
-        _appShellViewModel.RentalInventoryModalsViewModel.RentalCreated += MarkUnsavedChanges;
-
-        // Rental records modals
-        _appShellViewModel.RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
-        _appShellViewModel.RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
-        _appShellViewModel.RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
-
-        // Payment modals
-        _appShellViewModel.PaymentModalsViewModel.PaymentSaved += MarkUnsavedChanges;
-        _appShellViewModel.PaymentModalsViewModel.PaymentDeleted += MarkUnsavedChanges;
-
-        // Invoice modals
-        // Note: InvoiceSaved is not wired to MarkUnsavedChanges because both call sites
-        // (CreateAndSendInvoice, SaveInvoice) auto-save immediately, which avoids a
-        // brief asterisk flash in the window title.
-        _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
-
-        // Invoice template designer
-        _appShellViewModel.InvoiceTemplateDesignerViewModel.TemplateSaved += MarkUnsavedChanges;
+        // Invoice template designer — BrowseLogoRequested needs desktop file picker access
+        // Note: TemplateSaved is already wired to RaiseUnsavedChanges in the lazy getter
         _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
         {
             if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
@@ -1775,14 +1720,6 @@ public class App : Application
                 _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
             }
         };
-
-        // Expense modals
-        _appShellViewModel.ExpenseModalsViewModel.ExpenseSaved += MarkUnsavedChanges;
-        _appShellViewModel.ExpenseModalsViewModel.ExpenseDeleted += MarkUnsavedChanges;
-
-        // Revenue modals
-        _appShellViewModel.RevenueModalsViewModel.RevenueSaved += MarkUnsavedChanges;
-        _appShellViewModel.RevenueModalsViewModel.RevenueDeleted += MarkUnsavedChanges;
     }
 
     /// <summary>
@@ -2208,6 +2145,9 @@ public class App : Application
         // Restart tutorial from help panel
         _appShellViewModel.RestartTutorialRequested += async (_, _) =>
         {
+            if (_welcomeScreenViewModel != null)
+                _welcomeScreenViewModel.IsTutorialMode = true;
+
             if (CompanyManager?.IsCompanyOpen == true)
             {
                 if (!CompanyManager.IsSampleCompany)
@@ -2217,9 +2157,6 @@ public class App : Application
                 }
                 await CompanyManager.CloseCompanyAsync();
             }
-
-            if (_welcomeScreenViewModel != null)
-                _welcomeScreenViewModel.IsTutorialMode = true;
         };
 
         // Wire up edit company modal events
@@ -3789,11 +3726,13 @@ public class App : Application
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
+        _isOpeningCompany = true;
         _mainWindowViewModel.ShowLoading("Opening company...".Translate());
 
         try
         {
             var success = await CompanyManager.OpenCompanyAsync(filePath);
+            _isOpeningCompany = false;
             if (success)
             {
                 // Close the password modal if it was open
@@ -3819,12 +3758,14 @@ public class App : Application
             else
             {
                 // User cancelled password prompt
+                _isOpeningCompany = false;
                 _mainWindowViewModel.HideLoading();
             }
         }
         catch (UnauthorizedAccessException)
         {
             // Wrong password - show error and retry
+            _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
 
             passwordModal.ShowError("Invalid password. Please try again.".Translate());
@@ -3845,6 +3786,7 @@ public class App : Application
         }
         catch (FileNotFoundException)
         {
+            _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
             if (ConfirmationDialog != null)
@@ -3863,6 +3805,7 @@ public class App : Application
         }
         catch (Exception ex)
         {
+            _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
@@ -3950,17 +3893,22 @@ public class App : Application
 
         try
         {
+            // Suppress the default CompanySaved feedback — we show our own with forceSaved
+            _suppressSavedFeedback = true;
             await CompanyManager!.SaveCompanyAsAsync(filePath);
 
             // Refresh UI with the (possibly updated) company name
             var newName = CompanyManager.CurrentCompanyName ?? "Company";
             RefreshCompanyUi(newName);
 
+            _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
+
             await LoadRecentCompaniesAsync();
             return true;
         }
         catch (Exception ex)
         {
+            _suppressSavedFeedback = false;
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
             await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
             return false;
@@ -4300,6 +4248,7 @@ public class App : Application
                 _invoicesPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             _invoicesPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            _invoicesPageViewModel.HighlightTransactionId = null;
             if (param is RentalInvoiceNavigationParameter rentalParam)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -4307,11 +4256,22 @@ public class App : Application
                     InvoiceModalsViewModel?.OpenCreateFromRental(rentalParam.RentalRecordId);
                 });
             }
+            else if (param is TransactionNavigationParameter navParam)
+            {
+                _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _invoicesPageViewModel.ApplyHighlight();
+            }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
         navigationService.RegisterPage("Payments", param =>
         {
             _paymentsPageViewModel ??= new PaymentsPageViewModel();
+            _paymentsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _paymentsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _paymentsPageViewModel.ApplyHighlight();
+            }
             _ = AutoSyncPortalPaymentsAsync();
             return new PaymentsPage { DataContext = _paymentsPageViewModel };
         });
@@ -4329,7 +4289,13 @@ public class App : Application
             _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
             // Reset modal state
             _productsPageViewModel.IsAddModalOpen = false;
-            if (param is Dictionary<string, object?> dict)
+            _productsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _productsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _productsPageViewModel.ApplyHighlight();
+            }
+            else if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
                 if (dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
@@ -4344,7 +4310,17 @@ public class App : Application
             }
             return new ProductsPage { DataContext = _productsPageViewModel };
         });
-        navigationService.RegisterPage("StockLevels", _ => new StockLevelsPage { DataContext = _stockLevelsPageViewModel ??= new StockLevelsPageViewModel() });
+        navigationService.RegisterPage("StockLevels", param =>
+        {
+            _stockLevelsPageViewModel ??= new StockLevelsPageViewModel();
+            _stockLevelsPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _stockLevelsPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _stockLevelsPageViewModel.ApplyHighlight();
+            }
+            return new StockLevelsPage { DataContext = _stockLevelsPageViewModel };
+        });
         navigationService.RegisterPage("Locations", param =>
         {
             _locationsPageViewModel ??= new LocationsPageViewModel();
@@ -4356,7 +4332,17 @@ public class App : Application
             return new LocationsPage { DataContext = _locationsPageViewModel };
         });
         navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = _stockAdjustmentsPageViewModel ??= new StockAdjustmentsPageViewModel() });
-        navigationService.RegisterPage("PurchaseOrders", _ => new PurchaseOrdersPage { DataContext = _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel() });
+        navigationService.RegisterPage("PurchaseOrders", param =>
+        {
+            _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel();
+            _purchaseOrdersPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _purchaseOrdersPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _purchaseOrdersPageViewModel.ApplyHighlight();
+            }
+            return new PurchaseOrdersPage { DataContext = _purchaseOrdersPageViewModel };
+        });
         navigationService.RegisterPage("Categories", param =>
         {
             _categoriesPageViewModel ??= new CategoriesPageViewModel();
@@ -4379,8 +4365,28 @@ public class App : Application
         });
 
         // Contacts Section
-        navigationService.RegisterPage("Customers", _ => new CustomersPage { DataContext = _customersPageViewModel ??= new CustomersPageViewModel() });
-        navigationService.RegisterPage("Suppliers", _ => new SuppliersPage { DataContext = _suppliersPageViewModel ??= new SuppliersPageViewModel() });
+        navigationService.RegisterPage("Customers", param =>
+        {
+            _customersPageViewModel ??= new CustomersPageViewModel();
+            _customersPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _customersPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _customersPageViewModel.ApplyHighlight();
+            }
+            return new CustomersPage { DataContext = _customersPageViewModel };
+        });
+        navigationService.RegisterPage("Suppliers", param =>
+        {
+            _suppliersPageViewModel ??= new SuppliersPageViewModel();
+            _suppliersPageViewModel.HighlightTransactionId = null;
+            if (param is TransactionNavigationParameter navParam)
+            {
+                _suppliersPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _suppliersPageViewModel.ApplyHighlight();
+            }
+            return new SuppliersPage { DataContext = _suppliersPageViewModel };
+        });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
         navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
         navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
@@ -4459,18 +4465,6 @@ public class App : Application
         }
     }
 
-    private void DisableAvaloniaDataAnnotationValidation()
-    {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
-        }
-    }
 }
 
 /// <summary>

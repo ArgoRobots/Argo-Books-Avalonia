@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
-using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
@@ -25,40 +24,32 @@ public partial class ReceiptsPage : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private ReceiptsPageViewModel? _previousViewModel;
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.ScanFileRequested -= OnScanFileRequested;
+            _previousViewModel = null;
+        }
+
         if (DataContext is ReceiptsPageViewModel viewModel)
         {
             viewModel.ScanFileRequested += OnScanFileRequested;
+            _previousViewModel = viewModel;
         }
     }
 
-    private async void OnScanFileRequested(object? sender, EventArgs e)
+    private void OnScanFileRequested(object? sender, EventArgs e)
     {
         try
         {
             var viewModel = DataContext as ReceiptsPageViewModel;
             if (viewModel == null) return;
 
-            var topLevel = TopLevel.GetTopLevel(this);
-            if (topLevel == null) return;
-
-            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Select Receipt to Scan",
-                AllowMultiple = false,
-                FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
-            });
-
-            if (files.Count > 0)
-            {
-                var file = files[0];
-                var path = file.TryGetLocalPath();
-                if (!string.IsNullOrEmpty(path))
-                {
-                    await viewModel.HandleFileSelectedAsync(path);
-                }
-            }
+            // Open the bulk drop zone modal instead of going straight to file picker
+            App.ReceiptsModalsViewModel?.OpenBulkDropZone();
         }
         catch (Exception ex)
         {
@@ -155,9 +146,7 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is not ReceiptsPageViewModel viewModel) return;
 
         // Check if the data contains files
-#pragma warning disable CS0618 // Using deprecated API until full migration path is clear
-        var files = e.Data.GetFiles();
-#pragma warning restore CS0618
+        var files = e.DataTransfer.TryGetFiles();
         if (files != null)
         {
             foreach (var file in files)
@@ -196,9 +185,7 @@ public partial class ReceiptsPage : UserControl
 
             viewModel.IsDragOver = false;
 
-#pragma warning disable CS0618 // Using deprecated API until full migration path is clear
-            var files = e.Data.GetFiles();
-#pragma warning restore CS0618
+            var files = e.DataTransfer.TryGetFiles();
             if (files != null)
             {
                 var filePaths = files

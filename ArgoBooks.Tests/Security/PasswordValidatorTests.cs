@@ -338,130 +338,129 @@ public class PasswordValidatorTests
     public void GetStrengthScore_SingleChar_ReturnsLowScore()
     {
         var score = PasswordValidator.GetStrengthScore("a");
-        // 1*2 (length) + 10 (lowercase) = 12
-        Assert.Equal(12, score);
+        // 1*3 (length) + 10 (lowercase) = 13
+        Assert.Equal(13, score);
     }
 
     [Fact]
     public void GetStrengthScore_ShortPasswordLowercaseOnly_CalculatesCorrectly()
     {
-        // "abcd" = 4*2 (length=8) + 10 (lowercase) = 18
-        // But "abcd" has sequential chars (a,b,c) so -10 penalty = 8
+        // "abcd" = 4*3 (length=12) + 10 (lowercase) = 22
+        // But "abcd" has sequential chars (a,b,c) so -5 penalty = 17
         var score = PasswordValidator.GetStrengthScore("abcd");
-        Assert.Equal(8, score);
+        Assert.Equal(17, score);
     }
 
     [Fact]
-    public void GetStrengthScore_LongPassword_LengthCappedAt30()
+    public void GetStrengthScore_LongPassword_LengthCappedAt55()
     {
-        // 20 chars of lowercase = 20*2=40, capped at 30 + 10 (lowercase) - 10 (repeating 'xxx...') = 30
+        // 20 chars: 36 + (20-12)*2 = 52 length points + 10 (lowercase) - 5 (repeating 'xxx...') = 57
         var password = new string('x', 20);
         var score = PasswordValidator.GetStrengthScore(password);
-        // 30 (length cap) + 10 (lowercase) - 10 (repeating) = 30
-        Assert.Equal(30, score);
+        Assert.Equal(57, score);
     }
 
     [Fact]
     public void GetStrengthScore_AllCharacterTypes_MaximizesVarietyBonus()
     {
-        // "Aa1!" = 4*2=8 (length) + 10 (lower) + 15 (upper) + 15 (digit) + 20 (special) = 68
+        // "Aa1!" = 4*3=12 (length) + 10 (lower) + 10 (upper) + 10 (digit) + 15 (special) = 57
         var score = PasswordValidator.GetStrengthScore("Aa1!");
-        Assert.Equal(68, score);
+        Assert.Equal(57, score);
     }
 
     [Fact]
     public void GetStrengthScore_LowercaseOnly_Gets10Bonus()
     {
-        // "x" = 1*2=2 (length) + 10 (lowercase) = 12
+        // "x" = 1*3=3 (length) + 10 (lowercase) = 13
         var score = PasswordValidator.GetStrengthScore("x");
-        Assert.Equal(12, score);
+        Assert.Equal(13, score);
     }
 
     [Fact]
-    public void GetStrengthScore_UppercaseOnly_Gets15Bonus()
+    public void GetStrengthScore_UppercaseOnly_Gets10Bonus()
     {
-        // "X" = 1*2=2 (length) + 15 (uppercase) = 17
+        // "X" = 1*3=3 (length) + 10 (uppercase) = 13
         var score = PasswordValidator.GetStrengthScore("X");
-        Assert.Equal(17, score);
+        Assert.Equal(13, score);
     }
 
     [Fact]
-    public void GetStrengthScore_DigitOnly_Gets15Bonus()
+    public void GetStrengthScore_DigitOnly_Gets10Bonus()
     {
-        // "5" = 1*2=2 (length) + 15 (digit) = 17
+        // "5" = 1*3=3 (length) + 10 (digit) = 13
         var score = PasswordValidator.GetStrengthScore("5");
-        Assert.Equal(17, score);
+        Assert.Equal(13, score);
     }
 
     [Fact]
-    public void GetStrengthScore_SpecialCharOnly_Gets20Bonus()
+    public void GetStrengthScore_SpecialCharOnly_Gets15Bonus()
     {
-        // "!" = 1*2=2 (length) + 20 (special) = 22
+        // "!" = 1*3=3 (length) + 15 (special) = 18
         var score = PasswordValidator.GetStrengthScore("!");
-        Assert.Equal(22, score);
+        Assert.Equal(18, score);
     }
 
     [Fact]
-    public void GetStrengthScore_RepeatingCharsPenalty_Minus10()
+    public void GetStrengthScore_RepeatingCharsPenalty_Minus5()
     {
-        // "aaa" has repeating chars -> penalty of 10
-        // 3*2=6 (length) + 10 (lowercase) - 10 (repeating) = 6
+        // "aaa" has repeating chars -> penalty of 5
+        // 3*3=9 (length) + 10 (lowercase) - 5 (repeating) = 14
         var score = PasswordValidator.GetStrengthScore("aaa");
-        Assert.Equal(6, score);
+        Assert.Equal(14, score);
     }
 
     [Fact]
     public void GetStrengthScore_SequentialCharsPenalty_Ascending()
     {
-        // "abc" has sequential ascending chars -> penalty of 10
-        // 3*2=6 (length) + 10 (lowercase) - 10 (sequential) = 6
+        // "abc" has sequential ascending chars -> penalty of 5
+        // 3*3=9 (length) + 10 (lowercase) - 5 (sequential) = 14
         var score = PasswordValidator.GetStrengthScore("abc");
-        Assert.Equal(6, score);
+        Assert.Equal(14, score);
     }
 
     [Fact]
     public void GetStrengthScore_SequentialCharsPenalty_Descending()
     {
-        // "cba" has sequential descending chars -> penalty of 10
-        // 3*2=6 (length) + 10 (lowercase) - 10 (sequential) = 6
+        // "cba" has sequential descending chars -> penalty of 5
+        // 3*3=9 (length) + 10 (lowercase) - 5 (sequential) = 14
         var score = PasswordValidator.GetStrengthScore("cba");
-        Assert.Equal(6, score);
+        Assert.Equal(14, score);
     }
 
     [Fact]
     public void GetStrengthScore_SequentialDigits_Ascending()
     {
-        // "123" has sequential ascending digits -> penalty of 10
-        // 3*2=6 (length) + 15 (digit) - 10 (sequential) = 11
+        // "123" has sequential ascending digits -> penalty of 5
+        // 3*3=9 (length) + 10 (digit) - 5 (sequential) = 14
         var score = PasswordValidator.GetStrengthScore("123");
-        Assert.Equal(11, score);
+        Assert.Equal(14, score);
     }
 
     [Fact]
     public void GetStrengthScore_SequentialDigits_Descending()
     {
-        // "321" has sequential descending digits -> penalty of 10
-        // 3*2=6 (length) + 15 (digit) - 10 (sequential) = 11
+        // "321" has sequential descending digits -> penalty of 5
+        // 3*3=9 (length) + 10 (digit) - 5 (sequential) = 14
         var score = PasswordValidator.GetStrengthScore("321");
-        Assert.Equal(11, score);
+        Assert.Equal(14, score);
     }
 
     [Fact]
     public void GetStrengthScore_BothPenalties_RepeatingAndSequential()
     {
         // "aaabcd" has repeating (aaa) and sequential (bcd)
-        // 6*2=12 (length) + 10 (lowercase) - 10 (repeating) - 10 (sequential) = 2
+        // 6*3=18 (length) + 10 (lowercase) - 5 (repeating) - 5 (sequential) = 18
         var score = PasswordValidator.GetStrengthScore("aaabcd");
-        Assert.Equal(2, score);
+        Assert.Equal(18, score);
     }
 
     [Fact]
     public void GetStrengthScore_SequentialCaseInsensitive()
     {
         // "ABC" should detect sequential even with uppercase
-        // 3*2=6 (length) + 15 (uppercase) - 10 (sequential) = 11
+        // 3*3=9 (length) + 10 (uppercase) - 5 (sequential) = 14
         var score = PasswordValidator.GetStrengthScore("ABC");
-        Assert.Equal(11, score);
+        Assert.Equal(14, score);
     }
 
     [Fact]
@@ -482,14 +481,12 @@ public class PasswordValidatorTests
     }
 
     [Fact]
-    public void GetStrengthScore_AllCharacterTypes_WithRepeatingPenalty_Scores80()
+    public void GetStrengthScore_AllCharacterTypes_WithRepeatingPenalty()
     {
-        // A very long password with all character types but repeating 'X's trigger -10 penalty
-        // 15+ chars = 30 (length cap) + 10 + 15 + 15 + 20 - 10 (repeating) = 80
+        // 18 chars: 36 + (18-12)*2 = 48 length + 10 (lower) + 10 (upper) + 10 (digit) + 15 (special) - 5 (repeating XXX) = 88
         var password = new string('X', 15) + "a1!";
         var score = PasswordValidator.GetStrengthScore(password);
-        // 18*2=36 capped at 30 + 10 (lower) + 15 (upper) + 15 (digit) + 20 (special) - 10 (repeating XXX) = 80
-        Assert.Equal(80, score);
+        Assert.Equal(88, score);
     }
 
     [Fact]
@@ -523,27 +520,27 @@ public class PasswordValidatorTests
     public void GetStrengthScore_NoRepeatingChars_NoPenalty()
     {
         // "abac" has no 3+ consecutive identical chars
-        // 4*2=8 + 10 (lowercase) = 18
+        // 4*3=12 + 10 (lowercase) = 22
         var score = PasswordValidator.GetStrengthScore("abac");
-        Assert.Equal(18, score);
+        Assert.Equal(22, score);
     }
 
     [Fact]
     public void GetStrengthScore_TwoRepeatingChars_NoPenalty()
     {
         // "aab" has only 2 consecutive identical chars, no penalty
-        // 3*2=6 + 10 (lowercase) = 16
+        // 3*3=9 + 10 (lowercase) = 19
         var score = PasswordValidator.GetStrengthScore("aab");
-        Assert.Equal(16, score);
+        Assert.Equal(19, score);
     }
 
     [Fact]
     public void GetStrengthScore_NonConsecutiveSequentialChars_NoPenalty()
     {
         // "axbxc" - a, b, c are present but not consecutive positions
-        // 5*2=10 + 10 (lowercase) = 20
+        // 5*3=15 + 10 (lowercase) = 25
         var score = PasswordValidator.GetStrengthScore("axbxc");
-        Assert.Equal(20, score);
+        Assert.Equal(25, score);
     }
 
     #endregion
@@ -697,13 +694,13 @@ public class PasswordValidatorTests
     }
 
     [Fact]
-    public void GetStrengthScore_FourRepeatingChars_StillOnlyMinus10()
+    public void GetStrengthScore_FourRepeatingChars_StillOnlyMinus5()
     {
         // "aaaa" has repeating chars (aaa detected at position 0 and 1)
         // but penalty is applied once via the boolean check
-        // 4*2=8 + 10 (lower) - 10 (repeating) = 8
+        // 4*3=12 + 10 (lower) - 5 (repeating) = 17
         var score = PasswordValidator.GetStrengthScore("aaaa");
-        Assert.Equal(8, score);
+        Assert.Equal(17, score);
     }
 
     [Fact]

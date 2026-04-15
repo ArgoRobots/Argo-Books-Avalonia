@@ -136,7 +136,7 @@ public class GoogleSheetsService
             return null;
 
         var seriesNames = data.First().Value.Keys.ToList();
-        var orderedSeriesNames = seriesNames.OrderBy(x => x.Contains("Sales")).ToList();
+        var orderedSeriesNames = seriesNames.OrderByDescending(x => x.Contains("Sales")).ToList();
 
         var headers = new List<string> { "Date" };
         headers.AddRange(orderedSeriesNames);

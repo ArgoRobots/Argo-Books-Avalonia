@@ -84,7 +84,7 @@ public class IdleDetectionService : IDisposable
     /// </summary>
     public void ResetIdleTimer()
     {
-        _lastActivityTime = DateTime.UtcNow;
+        RecordActivity();
     }
 
     /// <summary>

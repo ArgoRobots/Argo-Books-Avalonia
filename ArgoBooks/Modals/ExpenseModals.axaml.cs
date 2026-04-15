@@ -14,11 +14,20 @@ public partial class ExpenseModals : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private ExpenseModalsViewModel? _previousViewModel;
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.ScrollToLineItemsRequested -= OnScrollToLineItemsRequested;
+            _previousViewModel = null;
+        }
+
         if (DataContext is ExpenseModalsViewModel vm)
         {
             vm.ScrollToLineItemsRequested += OnScrollToLineItemsRequested;
+            _previousViewModel = vm;
         }
     }
 

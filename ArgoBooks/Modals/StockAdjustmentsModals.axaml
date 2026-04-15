@@ -53,7 +53,7 @@
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No inventory items available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateInventoryItemCommand}" />
+                                                            EmptyCreateCommand="{Binding OpenCreateInventoryItemCommand}" />
                                 <TextBlock Text="{loc:Loc 'Please select an inventory item'}"
                                            FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding HasInventoryError}" />
@@ -98,7 +98,7 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="{loc:Loc 'Enter quantity'}"
+                                             PlaceholderText="{loc:Loc 'Enter quantity'}"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                              MaxLength="7" />
                                     <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
@@ -126,7 +126,7 @@
                                 <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="{loc:Loc 'e.g., PO-12345 or RMA-67890'}"
+                                         PlaceholderText="{loc:Loc 'e.g., PO-12345 or RMA-67890'}"
                                          MaxLength="50" />
                             </StackPanel>
 
@@ -139,7 +139,7 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Enter reason for adjustment...'}"
+                                         PlaceholderText="{loc:Loc 'Enter reason for adjustment...'}"
                                          MaxLength="500" />
                             </StackPanel>
 

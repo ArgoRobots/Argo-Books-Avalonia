@@ -59,7 +59,7 @@
                                           Margin="{Binding #Root.SearchIconMargin}" />
                                 <TextBox Grid.Column="1"
                                          Text="{Binding #Root.SearchQuery, Mode=TwoWay}"
-                                         Watermark="{Binding #Root.SearchPlaceholder}"
+                                         PlaceholderText="{Binding #Root.SearchPlaceholder}"
                                          Classes="search-input"
                                          VerticalAlignment="Center"
                                          MaxLength="100" />

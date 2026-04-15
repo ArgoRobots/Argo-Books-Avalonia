@@ -36,7 +36,7 @@ public partial class ReceiptViewerModal : UserControl
     private const double MaxZoom = 4.0;
     private const double ZoomStep = 0.25;
 
-    // Panning (right-click or middle-click drag)
+    // Panning (any mouse button drag)
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
@@ -62,6 +62,9 @@ public partial class ReceiptViewerModal : UserControl
         if (_imageScrollViewer != null)
         {
             _imageScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
+            _imageScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            _imageScrollViewer.AddHandler(PointerMovedEvent, OnPreviewPointerMoved, RoutingStrategies.Tunnel);
+            _imageScrollViewer.AddHandler(PointerReleasedEvent, OnPreviewPointerReleased, RoutingStrategies.Tunnel);
         }
 
         // Subscribe to ViewModel property changes
@@ -389,66 +392,62 @@ public partial class ReceiptViewerModal : UserControl
 
     #region Panning and Overscroll
 
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        base.OnPointerPressed(e);
+        if (_imageScrollViewer == null) return;
 
-        var point = e.GetCurrentPoint(this);
-
-        // Start panning with right mouse button or middle mouse button
-        if (point.Properties.IsRightButtonPressed || point.Properties.IsMiddleButtonPressed)
+        var point = e.GetCurrentPoint(_imageScrollViewer);
+        if (point.Properties.IsLeftButtonPressed
+            || point.Properties.IsRightButtonPressed
+            || point.Properties.IsMiddleButtonPressed)
         {
             _isPanning = true;
             _panStartPoint = e.GetPosition(this);
-            _panStartOffset = new Vector(_imageScrollViewer?.Offset.X ?? 0, _imageScrollViewer?.Offset.Y ?? 0);
-            e.Pointer.Capture(this);
-            Cursor = new Cursor(StandardCursorType.SizeAll);
+            _panStartOffset = new Vector(_imageScrollViewer.Offset.X, _imageScrollViewer.Offset.Y);
+            e.Pointer.Capture(_imageScrollViewer);
+            _imageScrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
             e.Handled = true;
         }
     }
 
-    protected override void OnPointerMoved(PointerEventArgs e)
+    private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
     {
-        base.OnPointerMoved(e);
+        if (!_isPanning || _imageScrollViewer == null || _overscrollHelper == null) return;
 
-        if (_isPanning && _imageScrollViewer != null && _overscrollHelper != null)
-        {
-            var currentPoint = e.GetPosition(this);
-            var delta = _panStartPoint - currentPoint;
+        var currentPoint = e.GetPosition(this);
+        var delta = _panStartPoint - currentPoint;
 
-            var desiredX = _panStartOffset.X + delta.X;
-            var desiredY = _panStartOffset.Y + delta.Y;
+        var desiredX = _panStartOffset.X + delta.X;
+        var desiredY = _panStartOffset.Y + delta.Y;
 
-            var maxX = Math.Max(0, _imageScrollViewer.Extent.Width - _imageScrollViewer.Viewport.Width);
-            var maxY = Math.Max(0, _imageScrollViewer.Extent.Height - _imageScrollViewer.Viewport.Height);
+        var maxX = Math.Max(0, _imageScrollViewer.Extent.Width - _imageScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _imageScrollViewer.Extent.Height - _imageScrollViewer.Viewport.Height);
 
-            var (clampedX, clampedY, overscrollX, overscrollY) =
-                _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
+        var (clampedX, clampedY, overscrollX, overscrollY) =
+            _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
-            _imageScrollViewer.Offset = new Vector(clampedX, clampedY);
-            _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
+        _imageScrollViewer.Offset = new Vector(clampedX, clampedY);
+        _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
 
-            e.Handled = true;
-        }
+        e.Handled = true;
     }
 
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    private void OnPreviewPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        base.OnPointerReleased(e);
+        if (!_isPanning) return;
 
-        if (_isPanning)
+        _isPanning = false;
+        e.Pointer.Capture(null);
+
+        if (_imageScrollViewer != null)
+            _imageScrollViewer.Cursor = new Cursor(StandardCursorType.Hand); // restore hand
+
+        if (_overscrollHelper?.HasOverscroll == true)
         {
-            _isPanning = false;
-            e.Pointer.Capture(null);
-            Cursor = Cursor.Default;
-
-            if (_overscrollHelper?.HasOverscroll == true)
-            {
-                _ = _overscrollHelper.AnimateSnapBackAsync();
-            }
-
-            e.Handled = true;
+            _ = _overscrollHelper.AnimateSnapBackAsync();
         }
+
+        e.Handled = true;
     }
 
     #endregion

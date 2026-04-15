@@ -303,24 +303,4 @@ public class HeaderViewModelTests
 
     #endregion
 
-    #region Search Tests
-
-    [Fact]
-    public void ClearSearchCommand_WhenExecuted_ClearsSearchQuery()
-    {
-        _viewModel.SearchQuery = "test query";
-
-        _viewModel.ClearSearchCommand.Execute(null);
-
-        Assert.Null(_viewModel.SearchQuery);
-    }
-
-    [Fact]
-    public void Constructor_DefaultState_SearchPlaceholderIsSet()
-    {
-        Assert.Equal("Search transactions, customers, products...", _viewModel.SearchPlaceholder);
-    }
-
-    #endregion
-
 }

@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -290,6 +291,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to shared modal events to refresh data
         if (App.SupplierModalsViewModel != null)
@@ -336,9 +339,25 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the suppliers.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Suppliers)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadSuppliers();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Suppliers && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadSuppliers();
+        }
     }
 
     #endregion
@@ -472,10 +491,16 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 : filtered.Where(s => !suppliersWithProducts.Contains(s.Id));
         }
 
+        // Pre-build product count lookup for O(1) access per supplier
+        var productCountBySupplier = companyData.Products
+            .Where(p => !string.IsNullOrEmpty(p.SupplierId))
+            .GroupBy(p => p.SupplierId!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         // Convert to a list and create display items with additional computed properties
         var displayItems = filtered.Select(supplier =>
         {
-            var productCount = companyData.Products.Count(p => p.SupplierId == supplier.Id);
+            var productCount = productCountBySupplier.GetValueOrDefault(supplier.Id);
             var isActive = productCount > 0;
 
             // Format address as comma-separated parts
@@ -499,7 +524,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 Country = string.IsNullOrWhiteSpace(supplier.Address.Country) ? "-" : supplier.Address.Country,
                 ProductCount = productCount,
                 IsActive = isActive,
-                Initials = GetInitials(supplier.Name)
+                Initials = GetInitials(supplier.Name),
+                IsHighlighted = supplier.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -521,6 +547,9 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 },
                 s => s.Name);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalItems = displayItems.Count;
@@ -1030,4 +1059,7 @@ public partial class SupplierDisplayItem : ObservableObject
     /// Status text for display.
     /// </summary>
     public string StatusText => IsActive ? "Active" : "Inactive";
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

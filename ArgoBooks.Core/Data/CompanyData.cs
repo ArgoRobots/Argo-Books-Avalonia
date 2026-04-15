@@ -303,50 +303,183 @@ public class CompanyData
         return dates.Count > 0 ? dates.Min() : DateTime.Today;
     }
 
+    #region Cached Lookups
+
+    [JsonIgnore] private Dictionary<string, Customer>? _customerLookup;
+    [JsonIgnore] private int _customerLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Product>? _productLookup;
+    [JsonIgnore] private int _productLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Supplier>? _supplierLookup;
+    [JsonIgnore] private int _supplierLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Employee>? _employeeLookup;
+    [JsonIgnore] private int _employeeLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Department>? _departmentLookup;
+    [JsonIgnore] private int _departmentLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Category>? _categoryLookup;
+    [JsonIgnore] private int _categoryLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Accountant>? _accountantLookup;
+    [JsonIgnore] private int _accountantLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Location>? _locationLookup;
+    [JsonIgnore] private int _locationLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Invoice>? _invoiceLookup;
+    [JsonIgnore] private int _invoiceLookupCount = -1;
+
+    private static Dictionary<string, T> BuildLookup<T>(List<T> list, Func<T, string> keySelector)
+    {
+        var dict = new Dictionary<string, T>(list.Count, StringComparer.Ordinal);
+        foreach (var item in list)
+        {
+            var key = keySelector(item);
+            if (!string.IsNullOrEmpty(key))
+                dict[key] = item;
+        }
+        return dict;
+    }
+
+    /// <summary>
+    /// Invalidates all cached lookup dictionaries. Call after bulk modifications
+    /// that add and remove items in the same operation (count stays the same).
+    /// </summary>
+    public void InvalidateLookupCaches()
+    {
+        _customerLookup = null;
+        _productLookup = null;
+        _supplierLookup = null;
+        _employeeLookup = null;
+        _departmentLookup = null;
+        _categoryLookup = null;
+        _accountantLookup = null;
+        _locationLookup = null;
+        _invoiceLookup = null;
+    }
+
+    #endregion
+
     /// <summary>
     /// Gets a customer by ID.
     /// </summary>
-    public Customer? GetCustomer(string id) => Customers.FirstOrDefault(c => c.Id == id);
+    public Customer? GetCustomer(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_customerLookup == null || _customerLookupCount != Customers.Count)
+        {
+            _customerLookup = BuildLookup(Customers, c => c.Id);
+            _customerLookupCount = Customers.Count;
+        }
+        return _customerLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets a product by ID.
     /// </summary>
-    public Product? GetProduct(string id) => Products.FirstOrDefault(p => p.Id == id);
+    public Product? GetProduct(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_productLookup == null || _productLookupCount != Products.Count)
+        {
+            _productLookup = BuildLookup(Products, p => p.Id);
+            _productLookupCount = Products.Count;
+        }
+        return _productLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets a supplier by ID.
     /// </summary>
-    public Supplier? GetSupplier(string id) => Suppliers.FirstOrDefault(s => s.Id == id);
+    public Supplier? GetSupplier(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_supplierLookup == null || _supplierLookupCount != Suppliers.Count)
+        {
+            _supplierLookup = BuildLookup(Suppliers, s => s.Id);
+            _supplierLookupCount = Suppliers.Count;
+        }
+        return _supplierLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets an employee by ID.
     /// </summary>
-    public Employee? GetEmployee(string id) => Employees.FirstOrDefault(e => e.Id == id);
+    public Employee? GetEmployee(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_employeeLookup == null || _employeeLookupCount != Employees.Count)
+        {
+            _employeeLookup = BuildLookup(Employees, e => e.Id);
+            _employeeLookupCount = Employees.Count;
+        }
+        return _employeeLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets a department by ID.
     /// </summary>
-    public Department? GetDepartment(string id) => Departments.FirstOrDefault(d => d.Id == id);
+    public Department? GetDepartment(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_departmentLookup == null || _departmentLookupCount != Departments.Count)
+        {
+            _departmentLookup = BuildLookup(Departments, d => d.Id);
+            _departmentLookupCount = Departments.Count;
+        }
+        return _departmentLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets a category by ID.
     /// </summary>
-    public Category? GetCategory(string id) => Categories.FirstOrDefault(c => c.Id == id);
+    public Category? GetCategory(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_categoryLookup == null || _categoryLookupCount != Categories.Count)
+        {
+            _categoryLookup = BuildLookup(Categories, c => c.Id);
+            _categoryLookupCount = Categories.Count;
+        }
+        return _categoryLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets an accountant by ID.
     /// </summary>
-    public Accountant? GetAccountant(string id) => Accountants.FirstOrDefault(a => a.Id == id);
+    public Accountant? GetAccountant(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_accountantLookup == null || _accountantLookupCount != Accountants.Count)
+        {
+            _accountantLookup = BuildLookup(Accountants, a => a.Id);
+            _accountantLookupCount = Accountants.Count;
+        }
+        return _accountantLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets a location by ID.
     /// </summary>
-    public Location? GetLocation(string id) => Locations.FirstOrDefault(l => l.Id == id);
+    public Location? GetLocation(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_locationLookup == null || _locationLookupCount != Locations.Count)
+        {
+            _locationLookup = BuildLookup(Locations, l => l.Id);
+            _locationLookupCount = Locations.Count;
+        }
+        return _locationLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets an invoice by ID.
     /// </summary>
-    public Invoice? GetInvoice(string id) => Invoices.FirstOrDefault(i => i.Id == id);
+    public Invoice? GetInvoice(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_invoiceLookup == null || _invoiceLookupCount != Invoices.Count)
+        {
+            _invoiceLookup = BuildLookup(Invoices, i => i.Id);
+            _invoiceLookupCount = Invoices.Count;
+        }
+        return _invoiceLookup.GetValueOrDefault(id);
+    }
 
     /// <summary>
     /// Gets inventory item by product and location.

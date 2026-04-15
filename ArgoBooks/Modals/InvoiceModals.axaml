@@ -107,7 +107,7 @@
                                                                 ShowAddNew="False"
                                                                 EmptyMessage="{loc:Loc 'No customers found.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                                                                EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
                                 </StackPanel>
                             </Grid>
 
@@ -196,7 +196,7 @@
                                                                  ShowAddNew="False"
                                                                  EmptyMessage="{loc:Loc 'No products found.'}"
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                                  HasError="{Binding HasProductError}"
                                                                  ErrorMessage="{loc:Loc 'Please select a product'}" />
                                                     <NumericUpDown Grid.Column="1"
@@ -294,7 +294,7 @@
                                                        Foreground="{DynamicResource SuccessBrush}"
                                                        VerticalAlignment="Center" />
                                             <TextBox Text="{Binding CustomFeeLabel, Mode=TwoWay}"
-                                                     Watermark="{loc:Loc 'Fee label'}"
+                                                     PlaceholderText="{loc:Loc 'Fee label'}"
                                                      Classes="form-input"
                                                      Width="140" MaxLength="50" />
                                         </StackPanel>
@@ -386,7 +386,7 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="{loc:Loc 'Additional notes for this invoice...'}"
+                                         PlaceholderText="{loc:Loc 'Additional notes for this invoice...'}"
                                          MaxLength="500" />
                             </StackPanel>
                         </StackPanel>
@@ -629,7 +629,7 @@
                                         <TextBlock Text="{loc:Loc 'Min'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}"
                                                  Classes="form-input"
-                                                 Watermark="$0.00"
+                                                 PlaceholderText="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="13" />
                                     </StackPanel>
@@ -637,7 +637,7 @@
                                         <TextBlock Text="{loc:Loc 'Max'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}"
                                                  Classes="form-input"
-                                                 Watermark="$0.00"
+                                                 PlaceholderText="$0.00"
                                                  behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                  MaxLength="13" />
                                     </StackPanel>

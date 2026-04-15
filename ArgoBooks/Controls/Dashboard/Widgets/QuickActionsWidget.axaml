@@ -1,0 +1,288 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:local="using:ArgoBooks"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.QuickActionsWidget"
+             x:DataType="vm:QuickActionsWidgetViewModel">
+
+    <UserControl.Styles>
+        <!-- Compact Quick Action Button Style for responsive layout -->
+        <Style Selector="Button.quick-action-compact">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.quick-action-compact:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="RenderTransform" Value="scale(1.02)" />
+        </Style>
+        <Style Selector="Button.quick-action-compact:pressed">
+            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+            <Setter Property="RenderTransform" Value="scale(0.98)" />
+        </Style>
+        <Style Selector="Button.quick-action-compact:disabled">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Opacity" Value="0.45" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Padding="20">
+        <StackPanel>
+            <TextBlock Text="{loc:Loc 'Quick Actions'}"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+            <!-- Empty State -->
+            <Border Padding="40"
+                    IsVisible="{Binding HasNoVisibleQuickActions}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                    <PathIcon Data="{x:Static local:Icons.Adjustments}"
+                              Width="48" Height="48"
+                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                    <TextBlock Text="{loc:Loc 'No quick actions enabled'}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{loc:Loc 'Use the widget settings to enable quick actions'}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <controls:CenteringWrapPanel x:Name="QuickActionsWrapPanel" Margin="0,8,0,0"
+                                         IsVisible="{Binding HasVisibleQuickActions}">
+                <!-- New Invoice -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewInvoiceCommand}"
+                        IsVisible="{Binding ShowNewInvoice}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.Invoices}"
+                                      Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Invoice'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Expense -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding AddExpenseCommand}"
+                        IsVisible="{Binding ShowNewExpense}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource DangerIconBgBrush}">
+                            <PathIcon Data="{x:Static icons:Icons.ArrowDown}"
+                                      Width="16" Height="16" Foreground="{DynamicResource DangerBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Expense'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Revenue -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding RecordSaleCommand}"
+                        IsVisible="{Binding ShowNewRevenue}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
+                            <PathIcon Data="{x:Static icons:Icons.ArrowUp}"
+                                      Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Revenue'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Scan Receipt -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding ScanReceiptCommand}"
+                        IsVisible="{Binding ShowScanReceipt}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.ScanReceipt}"
+                                      Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'Scan Receipt'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Customer -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewCustomerCommand}"
+                        IsVisible="{Binding ShowNewCustomer}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.NewCustomer}"
+                                      Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Customer'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Supplier -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewSupplierCommand}"
+                        IsVisible="{Binding ShowNewSupplier}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.Suppliers}"
+                                      Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Supplier'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Product -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewProductCommand}"
+                        IsVisible="{Binding ShowNewProduct}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.NewProduct}"
+                                      Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Product'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Record Payment -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding RecordPaymentCommand}"
+                        IsVisible="{Binding ShowRecordPayment}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.Payments}"
+                                      Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'Record Payment'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Rental Item -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewRentalItemCommand}"
+                        IsVisible="{Binding ShowNewRentalItem}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.NewRentalItem}"
+                                      Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Rental Item'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Rental Record -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewRentalCommand}"
+                        IsVisible="{Binding ShowNewRentalRecord}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.RentalRecords}"
+                                      Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Rental'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Category -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewCategoryCommand}"
+                        IsVisible="{Binding ShowNewCategory}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
+                            <PathIcon Data="{x:Static icons:Icons.TriangleWarning}"
+                                      Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Category'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Department -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewDepartmentCommand}"
+                        IsVisible="{Binding ShowNewDepartment}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.Departments}"
+                                      Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Department'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Location -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewLocationCommand}"
+                        IsVisible="{Binding ShowNewLocation}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.Locations}"
+                                      Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'New Location'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Purchase Order -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewPurchaseOrderCommand}"
+                        IsVisible="{Binding ShowNewPurchaseOrder}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.NewPurchaseOrder}"
+                                      Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'Purchase Order'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- New Stock Adjustment -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding NewStockAdjustmentCommand}"
+                        IsVisible="{Binding ShowNewStockAdjustment}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.NewStockAdjustment}"
+                                      Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'Stock Adjustment'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </controls:CenteringWrapPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

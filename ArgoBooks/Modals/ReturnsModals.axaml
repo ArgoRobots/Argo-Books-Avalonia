@@ -316,7 +316,7 @@
                                     <Run Text="{loc:Loc '(optional)'}" Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding UndoReturnReason, Mode=TwoWay}"
-                                         Watermark="{loc:Loc 'Enter reason for undoing this return...'}"
+                                         PlaceholderText="{loc:Loc 'Enter reason for undoing this return...'}"
                                          Classes="form-input"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"

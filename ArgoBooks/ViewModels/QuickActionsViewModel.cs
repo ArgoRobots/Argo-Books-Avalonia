@@ -56,6 +56,16 @@ public partial class QuickActionsViewModel : ViewModelBase
     public ObservableCollection<QuickActionItem> TopResults { get; } = [];
 
     /// <summary>
+    /// Data search results from CompanyData (customers, products, invoices, etc.).
+    /// </summary>
+    public ObservableCollection<QuickActionItem> SearchResults { get; } = [];
+
+    /// <summary>
+    /// Gets whether there are any data search results visible.
+    /// </summary>
+    public bool HasSearchResults => SearchResults.Count > 0;
+
+    /// <summary>
     /// Gets whether there are any top results visible.
     /// </summary>
     public bool HasTopResults => TopResults.Count > 0;
@@ -78,7 +88,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     /// <summary>
     /// Gets whether there are any results at all.
     /// </summary>
-    public bool HasResults => HasTopResults || HasQuickActions || HasNavigationItems || HasToolsItems;
+    public bool HasResults => HasSearchResults || HasTopResults || HasQuickActions || HasNavigationItems || HasToolsItems;
 
     #endregion
 
@@ -223,6 +233,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         NavigationItems.Clear();
         ToolsItems.Clear();
         TopResults.Clear();
+        SearchResults.Clear();
 
         IEnumerable<(QuickActionItem Item, double Score, double TitleScore)> scoredItems;
 
@@ -310,6 +321,13 @@ public partial class QuickActionsViewModel : ViewModelBase
                 ToolsItems.Add(item);
         }
 
+        // Search CompanyData when there's a query
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            SearchCompanyData(query);
+        }
+
+        OnPropertyChanged(nameof(HasSearchResults));
         OnPropertyChanged(nameof(HasTopResults));
         OnPropertyChanged(nameof(HasQuickActions));
         OnPropertyChanged(nameof(HasNavigationItems));
@@ -378,11 +396,19 @@ public partial class QuickActionsViewModel : ViewModelBase
 
         if (!string.IsNullOrEmpty(action.NavigationTarget))
         {
-            _navigationService?.NavigateTo(action.NavigationTarget);
+            // For search results, navigate with highlight parameter
+            if (action.Type == QuickActionType.SearchResult && action.EntityId != null)
+            {
+                _navigationService?.NavigateTo(action.NavigationTarget, new TransactionNavigationParameter(action.EntityId));
+            }
+            else
+            {
+                _navigationService?.NavigateTo(action.NavigationTarget);
+            }
         }
 
-        // Execute action after navigation if specified
-        if (!string.IsNullOrEmpty(action.ActionName))
+        // Execute action after navigation if specified (not for search results)
+        if (action.Type != QuickActionType.SearchResult && !string.IsNullOrEmpty(action.ActionName))
         {
             ActionRequested?.Invoke(this, new QuickActionEventArgs(action.NavigationTarget, action.ActionName));
         }
@@ -399,7 +425,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void MoveUp()
     {
-        var totalCount = TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
+        var totalCount = SearchResults.Count + TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
         if (totalCount == 0) return;
         SelectedIndex = (SelectedIndex - 1 + totalCount) % totalCount;
     }
@@ -410,7 +436,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void MoveDown()
     {
-        var totalCount = TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
+        var totalCount = SearchResults.Count + TopResults.Count + QuickActions.Count + NavigationItems.Count + ToolsItems.Count;
         if (totalCount == 0) return;
         SelectedIndex = (SelectedIndex + 1) % totalCount;
     }
@@ -421,11 +447,144 @@ public partial class QuickActionsViewModel : ViewModelBase
     [RelayCommand]
     private void ExecuteSelected()
     {
-        var allItems = TopResults.Concat(QuickActions).Concat(NavigationItems).Concat(ToolsItems).ToList();
+        var allItems = SearchResults.Concat(TopResults).Concat(QuickActions).Concat(NavigationItems).Concat(ToolsItems).ToList();
         if (SelectedIndex >= 0 && SelectedIndex < allItems.Count)
         {
             ExecuteAction(allItems[SelectedIndex]);
         }
+    }
+
+    #endregion
+
+    #region Data Search
+
+    private const int MaxResultsPerType = 3;
+    private const int MaxTotalResults = 15;
+
+    /// <summary>
+    /// Searches CompanyData collections and populates SearchResults.
+    /// </summary>
+    private void SearchCompanyData(string query)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var results = new List<(QuickActionItem Item, double Score)>();
+
+        // Customers
+        foreach (var c in companyData.Customers)
+        {
+            var score = BestScore(query, c.Name, c.CompanyName ?? "", c.Email, c.Phone);
+            if (score > 0)
+                results.Add((new QuickActionItem(c.Name, string.IsNullOrWhiteSpace(c.CompanyName) ? c.Email : c.CompanyName, Icons.Customers, QuickActionType.SearchResult, "Customers", entityId: c.Id), score));
+        }
+
+        // Products
+        foreach (var p in companyData.Products)
+        {
+            var score = BestScore(query, p.Name, p.Sku, p.Description);
+            if (score > 0)
+                results.Add((new QuickActionItem(p.Name, string.IsNullOrWhiteSpace(p.Sku) ? p.Description : $"SKU: {p.Sku}", Icons.Products, QuickActionType.SearchResult, "Products", entityId: p.Id), score));
+        }
+
+        // Invoices
+        foreach (var inv in companyData.Invoices)
+        {
+            var customerName = companyData.Customers.FirstOrDefault(c => c.Id == inv.CustomerId)?.Name ?? "";
+            var score = BestScore(query, inv.InvoiceNumber, customerName, inv.Status.ToString());
+            if (score > 0)
+                results.Add((new QuickActionItem(inv.InvoiceNumber, $"{customerName} · {inv.Status}", Icons.Invoices, QuickActionType.SearchResult, "Invoices", entityId: inv.Id), score));
+        }
+
+        // Expenses
+        foreach (var e in companyData.Expenses)
+        {
+            var score = BestScore(query, e.Description, e.ReferenceNumber, e.Id);
+            if (score > 0)
+                results.Add((new QuickActionItem(e.Description, $"{CurrencyService.Format(e.Amount)} · {e.Date:MMM dd, yyyy}", Icons.Expenses, QuickActionType.SearchResult, "Expenses", entityId: e.Id), score));
+        }
+
+        // Revenues
+        foreach (var r in companyData.Revenues)
+        {
+            var score = BestScore(query, r.Description, r.ReferenceNumber, r.Id);
+            if (score > 0)
+                results.Add((new QuickActionItem(r.Description, $"{CurrencyService.Format(r.Amount)} · {r.Date:MMM dd, yyyy}", Icons.Revenue, QuickActionType.SearchResult, "Revenue", entityId: r.Id), score));
+        }
+
+        // Suppliers
+        foreach (var s in companyData.Suppliers)
+        {
+            var score = BestScore(query, s.Name, s.ContactPerson, s.Email);
+            if (score > 0)
+                results.Add((new QuickActionItem(s.Name, string.IsNullOrWhiteSpace(s.ContactPerson) ? s.Email : s.ContactPerson, Icons.Suppliers, QuickActionType.SearchResult, "Suppliers", entityId: s.Id), score));
+        }
+
+        // Payments
+        foreach (var p in companyData.Payments)
+        {
+            var score = BestScore(query, p.Id, p.ReferenceNumber ?? "", p.InvoiceId);
+            if (score > 0)
+                results.Add((new QuickActionItem(p.Id, $"{CurrencyService.Format(p.Amount)} · {p.PaymentMethod}", Icons.Payments, QuickActionType.SearchResult, "Payments", entityId: p.Id), score));
+        }
+
+        // Rental Records
+        foreach (var r in companyData.Rentals)
+        {
+            var customerName = companyData.Customers.FirstOrDefault(c => c.Id == r.CustomerId)?.Name ?? "";
+            var score = BestScore(query, r.Id, customerName, r.Status.ToString());
+            if (score > 0)
+                results.Add((new QuickActionItem(r.Id, $"{customerName} · {r.Status}", Icons.RentalRecords, QuickActionType.SearchResult, "RentalRecords", entityId: r.Id), score));
+        }
+
+        // Inventory Items
+        foreach (var i in companyData.Inventory)
+        {
+            var product = companyData.Products.FirstOrDefault(p => p.Id == i.ProductId);
+            var location = companyData.Locations.FirstOrDefault(l => l.Id == i.LocationId);
+            var productName = product?.Name ?? "";
+            var score = BestScore(query, productName, i.Sku, product?.Sku ?? "", location?.Name ?? "");
+            if (score > 0)
+                results.Add((new QuickActionItem($"{productName} @ {location?.Name ?? "Default"}", $"SKU: {i.Sku} · In Stock: {i.InStock}", Icons.StockLevels, QuickActionType.SearchResult, "StockLevels", entityId: i.Id), score));
+        }
+
+        // Purchase Orders
+        foreach (var po in companyData.PurchaseOrders)
+        {
+            var supplierName = companyData.Suppliers.FirstOrDefault(s => s.Id == po.SupplierId)?.Name ?? "";
+            var score = BestScore(query, po.PoNumber, supplierName, po.Status.ToString());
+            if (score > 0)
+                results.Add((new QuickActionItem(po.PoNumber, $"{supplierName} · {po.Status}", Icons.PurchaseOrders, QuickActionType.SearchResult, "PurchaseOrders", entityId: po.Id), score));
+        }
+
+        // Sort by score and take top results, max 3 per type
+        var typeCounts = new Dictionary<string, int>();
+        var added = 0;
+        foreach (var (item, _) in results.OrderByDescending(r => r.Score))
+        {
+            if (added >= MaxTotalResults) break;
+            var key = item.NavigationTarget ?? "";
+            typeCounts.TryGetValue(key, out var count);
+            if (count >= MaxResultsPerType) continue;
+            typeCounts[key] = count + 1;
+            SearchResults.Add(item);
+            added++;
+        }
+    }
+
+    /// <summary>
+    /// Returns the best fuzzy search score across multiple fields.
+    /// </summary>
+    private static double BestScore(string query, params string[] fields)
+    {
+        double best = -1;
+        foreach (var field in fields)
+        {
+            if (string.IsNullOrEmpty(field)) continue;
+            var score = LevenshteinDistance.ComputeSearchScore(query, field);
+            if (score > best) best = score;
+        }
+        return best;
     }
 
     #endregion
@@ -467,9 +626,14 @@ public class QuickActionItem
     public string? ActionName { get; }
 
     /// <summary>
+    /// Entity ID for search results (used for row highlighting on navigation).
+    /// </summary>
+    public string? EntityId { get; }
+
+    /// <summary>
     /// Creates a new QuickActionItem.
     /// </summary>
-    public QuickActionItem(string title, string description, string iconData, QuickActionType type, string? navigationTarget = null, string? actionName = null)
+    public QuickActionItem(string title, string description, string iconData, QuickActionType type, string? navigationTarget = null, string? actionName = null, string? entityId = null)
     {
         Title = title;
         Description = description;
@@ -477,6 +641,7 @@ public class QuickActionItem
         Type = type;
         NavigationTarget = navigationTarget;
         ActionName = actionName;
+        EntityId = entityId;
     }
 }
 
@@ -498,7 +663,12 @@ public enum QuickActionType
     /// <summary>
     /// Tools and settings.
     /// </summary>
-    Tools
+    Tools,
+
+    /// <summary>
+    /// Data search result from CompanyData.
+    /// </summary>
+    SearchResult
 }
 
 /// <summary>

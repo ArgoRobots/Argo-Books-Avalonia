@@ -100,7 +100,7 @@
                 <TextBox x:Name="SearchTextBox"
                          Grid.Column="0"
                          Text="{Binding SearchText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Mode=TwoWay}"
-                         Watermark="{Binding Placeholder, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                         PlaceholderText="{Binding Placeholder, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="8,6"

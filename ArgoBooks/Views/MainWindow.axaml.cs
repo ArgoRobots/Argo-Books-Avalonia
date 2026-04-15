@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using ArgoBooks.Controls;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -51,6 +52,13 @@ public partial class MainWindow : Window
         Opened += OnWindowOpened;
         Closing += OnWindowClosing;
         PositionChanged += OnPositionChanged;
+
+        // Update maximize/restore icon whenever the window state changes (e.g., drag-to-restore)
+        PropertyChanged += (_, e) =>
+        {
+            if (e.Property == WindowStateProperty)
+                UpdateMaximizeIcon();
+        };
     }
 
     /// <summary>
@@ -62,6 +70,35 @@ public partial class MainWindow : Window
     /// Gets the message box service for this window.
     /// </summary>
     public MessageBoxService? MessageBoxService { get; }
+
+    private void MinimizeButton_Click(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void MaximizeButton_Click(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized
+            ? WindowState.Normal
+            : WindowState.Maximized;
+        UpdateMaximizeIcon();
+    }
+
+    private void UpdateMaximizeIcon()
+    {
+        var maximizeRect = this.FindControl<Border>("MaximizeRect");
+        var restoreIcon = this.FindControl<Canvas>("RestoreIcon");
+        if (maximizeRect == null || restoreIcon == null) return;
+
+        var isMaximized = WindowState == WindowState.Maximized;
+        maximizeRect.IsVisible = !isMaximized;
+        restoreIcon.IsVisible = isMaximized;
+    }
+
+    private void CloseButton_Click(object? sender, RoutedEventArgs e)
+    {
+        Close();
+    }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {

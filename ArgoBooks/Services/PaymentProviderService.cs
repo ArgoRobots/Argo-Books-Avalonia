@@ -1,5 +1,3 @@
-using ArgoBooks.Core.Models.Portal;
-
 namespace ArgoBooks.Services;
 
 /// <summary>
@@ -19,25 +17,6 @@ public static class PaymentProviderService
     public static void NotifyProvidersChanged()
     {
         ProvidersChanged?.Invoke(null, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// Updates the local PortalSettings.ConnectedAccounts from a ConnectedPaymentAccounts
-    /// object (e.g. from a server response) and fires the ProvidersChanged event.
-    /// </summary>
-    public static void UpdateConnectedAccounts(ConnectedPaymentAccounts accounts)
-    {
-        var settings = App.CompanyManager?.CompanyData?.Settings?.PaymentPortal;
-        if (settings == null) return;
-
-        settings.ConnectedAccounts.StripeConnected = accounts.StripeConnected;
-        settings.ConnectedAccounts.StripeEmail = accounts.StripeEmail;
-        settings.ConnectedAccounts.PaypalConnected = accounts.PaypalConnected;
-        settings.ConnectedAccounts.PaypalEmail = accounts.PaypalEmail;
-        settings.ConnectedAccounts.SquareConnected = accounts.SquareConnected;
-        settings.ConnectedAccounts.SquareEmail = accounts.SquareEmail;
-
-        NotifyProvidersChanged();
     }
 
     /// <summary>

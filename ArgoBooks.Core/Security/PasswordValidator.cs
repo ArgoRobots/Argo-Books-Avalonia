@@ -94,24 +94,27 @@ public static class PasswordValidator
 
         var score = 0;
 
-        // Length scoring (up to 30 points)
-        score += Math.Min(password.Length * 2, 30);
+        // Length scoring (up to 55 points) — strong growth to 12 chars, then gradual
+        var lengthPoints = password.Length <= 12
+            ? password.Length * 3
+            : 36 + (password.Length - 12) * 2;
+        score += Math.Min(lengthPoints, 55);
 
-        // Character variety scoring
+        // Character variety scoring (up to 45 points)
         if (password.Any(char.IsLower))
             score += 10;
         if (password.Any(char.IsUpper))
-            score += 15;
+            score += 10;
         if (password.Any(char.IsDigit))
-            score += 15;
+            score += 10;
         if (password.Any(c => !char.IsLetterOrDigit(c)))
-            score += 20;
+            score += 15;
 
-        // Penalty for common patterns
+        // Minor penalty for common patterns
         if (HasRepeatingCharacters(password))
-            score -= 10;
+            score -= 5;
         if (HasSequentialCharacters(password))
-            score -= 10;
+            score -= 5;
 
         return Math.Clamp(score, 0, 100);
     }

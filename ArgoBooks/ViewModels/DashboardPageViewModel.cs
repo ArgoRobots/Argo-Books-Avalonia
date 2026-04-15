@@ -1,4 +1,3 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -7,18 +6,15 @@ using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.ViewModels.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using LiveChartsCore.SkiaSharpView.VisualElements;
 
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
 /// ViewModel for the Dashboard page.
 /// Provides an overview of key business metrics, recent transactions, and quick actions.
+/// Widget data loading is delegated to <see cref="DashboardLayoutViewModel"/>.
 /// </summary>
 public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 {
@@ -222,58 +218,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             });
     }
 
-    /// <summary>
-    /// Gets the comparison period dates based on the selected date range.
-    /// </summary>
-    private (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriod()
-    {
-        var now = DateTime.Now;
-        var preset = DateRangePresetExtensions.ParseDateRange(SelectedDateRange);
-
-        return preset switch
-        {
-            DateRangePreset.ThisMonth => (
-                new DateTime(now.Year, now.Month, 1).AddMonths(-1),
-                new DateTime(now.Year, now.Month, 1).AddDays(-1)
-            ),
-            DateRangePreset.LastMonth => (
-                new DateTime(now.Year, now.Month, 1).AddMonths(-2),
-                new DateTime(now.Year, now.Month, 1).AddMonths(-1).AddDays(-1)
-            ),
-            DateRangePreset.Last30Days => (
-                StartDate.AddDays(-30), StartDate.AddDays(-1)
-            ),
-            DateRangePreset.Last100Days => (
-                StartDate.AddDays(-100), StartDate.AddDays(-1)
-            ),
-            DateRangePreset.Last365Days => (
-                StartDate.AddDays(-365), StartDate.AddDays(-1)
-            ),
-            DateRangePreset.ThisQuarter => (
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3),
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1)
-            ),
-            DateRangePreset.LastQuarter => (
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-6),
-                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3).AddDays(-1)
-            ),
-            DateRangePreset.ThisYear => (
-                new DateTime(now.Year - 1, 1, 1),
-                new DateTime(now.Year - 1, 12, 31)
-            ),
-            DateRangePreset.LastYear => (
-                new DateTime(now.Year - 2, 1, 1),
-                new DateTime(now.Year - 2, 12, 31)
-            ),
-            DateRangePreset.AllTime => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
-            DateRangePreset.CustomRange => (
-                StartDate.AddDays(-(EndDate - StartDate).TotalDays - 1),
-                StartDate.AddDays(-1)
-            ),
-            _ => (StartDate.AddDays(-30), StartDate.AddDays(-1))
-        };
-    }
-
     #endregion
 
     #region Chart Type
@@ -319,122 +263,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ? "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate()
         : "Welcome back! Here is an overview of your business.".Translate();
 
-    #endregion
-
-    #region Statistics Properties
-
-    [ObservableProperty]
-    private string _totalRevenue = "$0.00";
-
-    [ObservableProperty]
-    private double? _revenueChangeValue;
-
-    [ObservableProperty]
-    private string? _revenueChangeText;
-
-    [ObservableProperty]
-    private string _totalExpenses = "$0.00";
-
-    [ObservableProperty]
-    private double? _expenseChangeValue;
-
-    [ObservableProperty]
-    private string? _expenseChangeText;
-
-    [ObservableProperty]
-    private string _outstandingInvoices = "$0.00";
-
-    [ObservableProperty]
-    private int _outstandingInvoiceCount;
-
-    [ObservableProperty]
-    private string _activeRentals = "0";
-
-    [ObservableProperty]
-    private int _overdueRentalCount;
-
-    #endregion
-
-    #region Net Profit Properties
-
-    [ObservableProperty]
-    private string _netProfit = "$0.00";
-
-    [ObservableProperty]
-    private double? _profitChangeValue;
-
-    [ObservableProperty]
-    private string? _profitChangeText;
-
-    #endregion
-
-    #region Recent Transactions
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasRecentTransactions))]
-    [NotifyPropertyChangedFor(nameof(HasNoRecentTransactions))]
-    private ObservableCollection<RecentTransactionItem> _recentTransactions = [];
-
-    public bool HasRecentTransactions => RecentTransactions.Count > 0;
-    public bool HasNoRecentTransactions => RecentTransactions.Count == 0;
-
-    #endregion
-
-    #region Active Rentals
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasActiveRentals))]
-    [NotifyPropertyChangedFor(nameof(HasNoActiveRentals))]
-    private ObservableCollection<ActiveRentalItem> _activeRentalsList = [];
-
-    public bool HasActiveRentals => ActiveRentalsList.Count > 0;
-    public bool HasNoActiveRentals => ActiveRentalsList.Count == 0;
-
-    #endregion
-
-    #region Profits Overview Chart
-
-    [ObservableProperty]
-    private ObservableCollection<ISeries> _profitsChartSeries = [];
-
-    [ObservableProperty]
-    private Axis[] _profitsChartXAxes = [new Axis()];
-
-    [ObservableProperty]
-    private Axis[] _profitsChartYAxes = [new Axis()];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ProfitsChartTitleVisual))]
-    private string _profitsChartTitle = "Total profits: $0.00";
-
     /// <summary>
-    /// Gets the visual title element for the profits chart.
+    /// Whether the current company is a sample company (dashboard changes won't persist).
     /// </summary>
-    public LabelVisual ProfitsChartTitleVisual => ChartLoaderService.CreateChartTitle(ProfitsChartTitle);
-
-    [ObservableProperty]
-    private bool _hasProfitsChartData;
-
-    #endregion
-
-    #region Revenue vs Expenses Chart
-
-    [ObservableProperty]
-    private ObservableCollection<ISeries> _revenueVsExpensesSeries = [];
-
-    [ObservableProperty]
-    private Axis[] _revenueVsExpensesXAxes = [new Axis()];
-
-    [ObservableProperty]
-    private Axis[] _revenueVsExpensesYAxes = [new Axis()];
-
-    [ObservableProperty]
-    private bool _hasRevenueVsExpensesData;
-
-    /// <summary>
-    /// Gets the visual title element for the expenses vs revenue chart.
-    /// </summary>
-    public LabelVisual RevenueVsExpensesChartTitle => ChartLoaderService.CreateChartTitle(ChartDataType.RevenueVsExpenses.GetDisplayName());
+    public bool IsSampleCompany => _companyManager?.IsSampleCompany == true;
 
     #endregion
 
@@ -455,12 +287,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
-    #region Setup Checklist
+    #region Widget Layout
 
     /// <summary>
-    /// Gets the setup checklist view model for first-time user guidance.
+    /// Gets the dashboard layout view model that manages all widgets.
     /// </summary>
-    public SetupChecklistViewModel SetupChecklist { get; } = new();
+    public DashboardLayoutViewModel LayoutViewModel { get; } = new();
 
     #endregion
 
@@ -468,12 +300,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     public DashboardPageViewModel()
     {
-        // Initialize with empty data - will be populated when company is loaded
-        RecentTransactions = [];
-        ActiveRentalsList = [];
-
-        // Wire up checklist navigation to use App's navigation
-        SetupChecklist.NavigationRequested += OnChecklistNavigationRequested;
+        // Wire up checklist navigation for SetupChecklist widgets
+        // (handled when widgets fire NavigationRequested)
 
         // Initialize the shared chart settings service
         ChartSettings.Initialize();
@@ -495,11 +323,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void OnThemeChanged(object? sender, ThemeMode e)
     {
         LoadDashboardData();
-        // Notify chart titles to recreate LabelVisuals with the new theme's text color.
-        // Without this, titles whose backing string hasn't changed won't re-evaluate
-        // the computed LabelVisual and will keep the previous theme's paint color.
-        OnPropertyChanged(nameof(ProfitsChartTitleVisual));
-        OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
     }
 
     private void OnDateFormatChanged(object? sender, EventArgs e)
@@ -539,11 +362,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the legend text paint based on the current theme.
-    /// </summary>
-    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
-
     #endregion
 
     #region Data Loading
@@ -554,42 +372,25 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     public void Initialize(CompanyManager companyManager)
     {
         _companyManager = companyManager;
+
+        // Initialize the widget layout system
+        LayoutViewModel.Initialize(companyManager!);
+
+        // Load data through the full flow (includes CorrectRentalStatuses)
         LoadDashboardData();
-
-        // Load quick action visibility settings
-        LoadQuickActionsSettings();
-
-        // Refresh setup checklist visibility
-        SetupChecklist.Refresh();
 
         // Mark dashboard as explored when initialized
         TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ExploreDashboard);
 
-        // Notify welcome subtitle since it depends on company manager
+        // Notify properties that depend on company manager
         OnPropertyChanged(nameof(WelcomeSubtitle));
+        OnPropertyChanged(nameof(IsSampleCompany));
 
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;
 
         // Subscribe to language changes to refresh translated chart titles
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
-
-        // Subscribe to quick actions settings changes
-        if (App.QuickActionsSettingsModalViewModel != null)
-        {
-            App.QuickActionsSettingsModalViewModel.SettingsSaved += OnQuickActionsSettingsSaved;
-        }
-    }
-
-    private void OnQuickActionsSettingsSaved(object? sender, EventArgs e)
-    {
-        LoadQuickActionsSettings();
-    }
-
-    private void OnChecklistNavigationRequested(object? sender, string pageName)
-    {
-        // Navigate to the requested page
-        _ = App.NavigationService?.NavigateToAsync(pageName);
     }
 
     /// <summary>
@@ -614,25 +415,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from language changes
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
 
-        // Unsubscribe from quick actions settings changes
-        if (App.QuickActionsSettingsModalViewModel != null)
-        {
-            App.QuickActionsSettingsModalViewModel.SettingsSaved -= OnQuickActionsSettingsSaved;
-        }
-
-        // Unsubscribe from checklist navigation
-        SetupChecklist.NavigationRequested -= OnChecklistNavigationRequested;
-
-        // Zoom handlers are managed by ChartExpandOverlay (fullscreen only)
+        // Cleanup widget layout
+        LayoutViewModel.Cleanup();
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
-        // Refresh chart titles that use Loc.Tr()
+        // Refresh all widget data for translation changes
         LoadDashboardData();
-
-        // Notify computed chart title properties to refresh
-        OnPropertyChanged(nameof(RevenueVsExpensesChartTitle));
 
         // Refresh welcome subtitle for translation
         OnPropertyChanged(nameof(WelcomeSubtitle));
@@ -688,11 +478,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             data.Expenses.Any(p => p.Date >= StartDate && p.Date <= EndDate));
         ShowFinancialDateRangeMessage = isFiltered && hasAnyData && !hasDataInRange;
 
-        LoadStatistics(data);
-        LoadRecentTransactions(data);
-        LoadActiveRentals(data);
-        LoadProfitsChart(data);
-        LoadRevenueVsExpensesChart(data);
+        // Delegate all widget data loading to the layout VM
+        LayoutViewModel.LoadAllWidgetData();
     }
 
     /// <summary>
@@ -717,192 +504,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 rental.Status = RentalStatus.Active;
             }
         }
-    }
-
-    private void LoadStatistics(CompanyData data)
-    {
-        // Calculate comparison period based on selected date range
-        var (prevStartDate, prevEndDate) = GetComparisonPeriod();
-
-        // Check if we have sufficient data for a meaningful prior period comparison.
-        // If the earliest transaction date is after the prior period start, the comparison
-        // would be misleading (e.g., comparing 365 days against partial data).
-        var hasSufficientPriorData = prevStartDate != DateTime.MinValue &&
-            HasSufficientPriorData(data, prevStartDate);
-
-        // Calculate current period revenue (pre-tax, since tax is a liability not revenue)
-        var currentRevenueUSD = data.Revenues
-            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
-            .Sum(s => s.EffectiveSubtotalUSD);
-
-        // Calculate previous period revenue for comparison
-        var prevRevenueUSD = data.Revenues
-            .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
-            .Sum(s => s.EffectiveSubtotalUSD);
-
-        TotalRevenue = FormatCurrencyFromUSD(currentRevenueUSD, DateTime.Now);
-        RevenueChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD) : null;
-        RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
-
-        // Calculate current period expenses (pre-tax, since tax is a liability not expense)
-        var currentExpensesUSD = data.Expenses
-            .Where(p => p.Date >= StartDate && p.Date <= EndDate)
-            .Sum(p => p.EffectiveSubtotalUSD);
-
-        // Calculate previous period expenses for comparison
-        var prevExpensesUSD = data.Expenses
-            .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
-            .Sum(p => p.EffectiveSubtotalUSD);
-
-        TotalExpenses = FormatCurrencyFromUSD(currentExpensesUSD, DateTime.Now);
-        ExpenseChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD) : null;
-        ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
-
-        // Calculate net profit
-        var netProfitUSD = currentRevenueUSD - currentExpensesUSD;
-        var prevProfitUSD = prevRevenueUSD - prevExpensesUSD;
-        NetProfit = (netProfitUSD < 0 ? "-" : "") + FormatCurrencyFromUSD(Math.Abs(netProfitUSD), DateTime.Now);
-        ProfitChangeValue = hasSufficientPriorData ? CalculatePercentageChange(prevProfitUSD, netProfitUSD) : null;
-        ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
-
-        // Calculate outstanding invoices (using USD), excluding Drafts to match Balance Sheet AR
-        var outstandingInvoices = data.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid
-                        && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft)
-            .ToList();
-
-        OutstandingInvoiceCount = outstandingInvoices.Count;
-        var outstandingAmountUSD = outstandingInvoices.Sum(i => i.EffectiveBalanceUSD);
-        OutstandingInvoices = FormatCurrencyFromUSD(outstandingAmountUSD, DateTime.Now);
-
-        // Calculate active rentals (including overdue)
-        var activeRentals = data.Rentals
-            .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue)
-            .ToList();
-
-        ActiveRentals = activeRentals.Count.ToString();
-        OverdueRentalCount = activeRentals.Count(r => r.Status == RentalStatus.Overdue);
-    }
-
-    private void LoadRecentTransactions(CompanyData data)
-    {
-        var recentItems = new List<RecentTransactionItem>();
-
-        // Get recent sales (no status badge needed for completed transactions)
-        var recentSales = data.Revenues
-            .OrderByDescending(s => s.Date)
-            .Take(10)
-            .Select(s => new RecentTransactionItem
-            {
-                Id = s.Id,
-                Type = "Revenue",
-                Description = string.IsNullOrEmpty(s.Description) ? "Revenue Transaction" : s.Description,
-                Amount = FormatCurrencyFromUSD(s.EffectiveSubtotalUSD, s.Date),
-                AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveSubtotalUSD, s.Date),
-                Date = s.Date,
-                DateFormatted = FormatDate(s.Date),
-                Status = string.Empty,
-                StatusVariant = string.Empty,
-                IsIncome = true,
-                CustomerName = GetCustomerName(data, s.CustomerId)
-            });
-
-        recentItems.AddRange(recentSales);
-
-        // Get recent purchases/expenses (no status badge needed for completed transactions)
-        var recentPurchases = data.Expenses
-            .OrderByDescending(p => p.Date)
-            .Take(10)
-            .Select(p => new RecentTransactionItem
-            {
-                Id = p.Id,
-                Type = "Expense",
-                Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
-                Amount = FormatCurrencyFromUSD(p.EffectiveSubtotalUSD, p.Date),
-                AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveSubtotalUSD, p.Date),
-                Date = p.Date,
-                DateFormatted = FormatDate(p.Date),
-                Status = string.Empty,
-                StatusVariant = string.Empty,
-                IsIncome = false,
-                CustomerName = GetSupplierName(data, p.SupplierId)
-            });
-
-        recentItems.AddRange(recentPurchases);
-
-        // Note: Invoices are intentionally excluded from recent transactions
-
-        // Sort by date and take top 10
-        var sortedItems = recentItems
-            .OrderByDescending(t => t.Date)
-            .Take(10)
-            .ToList();
-
-        RecentTransactions = new ObservableCollection<RecentTransactionItem>(sortedItems);
-    }
-
-    private void LoadActiveRentals(CompanyData data)
-    {
-        var activeRentals = data.Rentals
-            .Where(r => r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue)
-            .OrderBy(r => r.DueDate)
-            .Take(10)
-            .Select(r => new ActiveRentalItem
-            {
-                Id = r.Id,
-                ItemName = GetRentalItemName(data, r.RentalItemId),
-                CustomerName = GetCustomerName(data, r.CustomerId),
-                StartDate = r.StartDate,
-                StartDateFormatted = FormatDate(r.StartDate),
-                DueDate = r.DueDate,
-                DueDateFormatted = FormatDate(r.DueDate),
-                RateAmount = FormatCurrency(r.RateAmount),
-                RateType = r.RateType.ToString(),
-                Status = r.Status == RentalStatus.Overdue ? "Overdue" : "Active",
-                StatusVariant = r.Status == RentalStatus.Overdue ? "error" : "success",
-                DaysRemaining = CalculateDaysRemaining(r.DueDate),
-                IsOverdue = r.Status == RentalStatus.Overdue
-            })
-            .ToList();
-
-        ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
-    }
-
-    private void LoadProfitsChart(CompanyData data)
-    {
-        // Update theme colors and chart style
-        ChartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
-        ChartLoaderService.SelectedChartStyle = SelectedChartType switch
-        {
-            "Line" => ChartStyle.Line,
-            "Column" => ChartStyle.Column,
-            "Step Line" => ChartStyle.StepLine,
-            "Area" => ChartStyle.Area,
-            "Scatter" => ChartStyle.Scatter,
-            _ => ChartStyle.Line
-        };
-
-        // Load profits chart data for the selected date range
-        var (series, labels, dates, totalProfit) = ChartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
-
-        ProfitsChartSeries = series;
-        ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
-        ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        ProfitsChartTitle = $"Total profits: {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
-        HasProfitsChartData = series.Count > 0 && labels.Length > 0;
-    }
-
-    private void LoadRevenueVsExpensesChart(CompanyData data)
-    {
-        // Update theme colors based on current theme
-        ChartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
-
-        var (series, dates) = ChartLoaderService.LoadRevenueVsExpensesChart(data, StartDate, EndDate);
-        RevenueVsExpensesSeries = series;
-        RevenueVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
-        RevenueVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        HasRevenueVsExpensesData = series.Count > 0 && dates.Length > 0;
     }
 
     #endregion
@@ -938,7 +539,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var exportData = ChartLoaderService.GetGoogleSheetsExportData(SelectedChartDataType);
+        var loader = GetChartLoaderForType(SelectedChartDataType);
+        var exportData = loader.GetGoogleSheetsExportData(SelectedChartDataType);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -972,7 +574,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
 
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartExportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
+            var chartExportData = loader.GetExportDataForChart(SelectedChartDataType);
             var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";
 
             // Use Pie chart type for distribution charts, match chart style for time-based charts
@@ -983,7 +585,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = ChartLoaderService.SelectedChartStyle switch
+                chartType = loader.SelectedChartStyle switch
                 {
                     ChartStyle.Line => GoogleSheetsService.ChartType.Line,
                     ChartStyle.Area => GoogleSheetsService.ChartType.Area,
@@ -1078,7 +680,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var exportData = ChartLoaderService.GetExportDataForChart(SelectedChartDataType);
+        var loader = GetChartLoaderForType(SelectedChartDataType);
+        var exportData = loader.GetExportDataForChart(SelectedChartDataType);
         if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
@@ -1095,7 +698,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             Values = exportData.Values,
             SeriesName = exportData.SeriesName,
             ChartType = exportData.ChartType,
-            ChartStyle = ChartLoaderService.SelectedChartStyle,
+            ChartStyle = loader.SelectedChartStyle,
             AdditionalSeries = exportData.AdditionalSeries
         });
     }
@@ -1103,306 +706,48 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        switch (SelectedChartDataType)
+        if (SelectedChartDataType is not { } chartType) return;
+
+        foreach (var row in LayoutViewModel.Rows)
         {
-            case ChartDataType.TotalProfits:
-                ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
-                break;
-            case ChartDataType.RevenueVsExpenses:
-                ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
-                break;
-            case null:
-                // Fallback: reset all charts if no chart type set
-                ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
-                ChartLoaderService.ResetZoom(RevenueVsExpensesXAxes, RevenueVsExpensesYAxes);
-                break;
+            foreach (var widget in row.Widgets)
+            {
+                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                    && chartVm.ChartDataType == chartType)
+                {
+                    ChartLoaderService.ResetZoom(chartVm.XAxes, chartVm.YAxes);
+                    return;
+                }
+            }
         }
     }
 
     /// <summary>
-    /// Gets the chart loader service for external use (e.g., report generation).
+    /// Gets the chart loader service. Falls back to a shared instance for non-widget operations.
     /// </summary>
     public ChartLoaderService ChartLoaderService { get; } = new();
 
-
-    #endregion
-
-    #region Quick Actions Visibility
-
-    // Primary actions
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewInvoice = true;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewExpense = true;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewRevenue = true;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showScanReceipt = true;
-
-    // Contact actions
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewCustomer;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewSupplier;
-
-    // Product & Inventory actions
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewProduct;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showRecordPayment;
-
-    // Rental actions
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewRentalItem;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewRentalRecord = true;
-
-    // Organization actions
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewCategory;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewDepartment;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewLocation;
-
-    // Order & Stock actions
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewPurchaseOrder;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    private bool _showNewStockAdjustment;
-
     /// <summary>
-    /// Gets whether at least one quick action is visible.
+    /// Finds the ChartLoaderService for the widget matching the given chart type,
+    /// falling back to the dashboard-level instance.
     /// </summary>
-    public bool HasVisibleQuickActions =>
-        ShowNewInvoice || ShowNewExpense || ShowNewRevenue || ShowScanReceipt ||
-        ShowNewCustomer || ShowNewSupplier || ShowNewProduct || ShowRecordPayment ||
-        ShowNewRentalItem || ShowNewRentalRecord ||
-        ShowNewCategory || ShowNewDepartment || ShowNewLocation ||
-        ShowNewPurchaseOrder || ShowNewStockAdjustment;
-
-    /// <summary>
-    /// Loads quick action visibility settings from global settings.
-    /// </summary>
-    public void LoadQuickActionsSettings()
+    private ChartLoaderService GetChartLoaderForType(ChartDataType? chartDataType)
     {
-        var globalSettings = App.SettingsService?.GlobalSettings;
-        if (globalSettings != null)
+        if (chartDataType is not { } type) return ChartLoaderService;
+
+        foreach (var row in LayoutViewModel.Rows)
         {
-            var qa = globalSettings.Ui.QuickActions;
-
-            // Primary actions
-            ShowNewInvoice = qa.ShowNewInvoice;
-            ShowNewExpense = qa.ShowNewExpense;
-            ShowNewRevenue = qa.ShowNewRevenue;
-            ShowScanReceipt = qa.ShowScanReceipt;
-
-            // Contact actions
-            ShowNewCustomer = qa.ShowNewCustomer;
-            ShowNewSupplier = qa.ShowNewSupplier;
-
-            // Product & Inventory actions
-            ShowNewProduct = qa.ShowNewProduct;
-            ShowRecordPayment = qa.ShowRecordPayment;
-
-            // Rental actions
-            ShowNewRentalItem = qa.ShowNewRentalItem;
-            ShowNewRentalRecord = qa.ShowNewRentalRecord;
-
-            // Organization actions
-            ShowNewCategory = qa.ShowNewCategory;
-            ShowNewDepartment = qa.ShowNewDepartment;
-            ShowNewLocation = qa.ShowNewLocation;
-
-            // Order & Stock actions
-            ShowNewPurchaseOrder = qa.ShowNewPurchaseOrder;
-            ShowNewStockAdjustment = qa.ShowNewStockAdjustment;
+            foreach (var widget in row.Widgets)
+            {
+                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                    && chartVm.ChartDataType == type)
+                {
+                    return chartVm.ChartLoaderService;
+                }
+            }
         }
-    }
 
-    /// <summary>
-    /// Opens the quick actions settings modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenQuickActionsSettings()
-    {
-        App.QuickActionsSettingsModalViewModel?.OpenCommand.Execute(null);
-    }
-
-    #endregion
-
-    #region Quick Actions
-
-    [RelayCommand]
-    private void NewInvoice()
-    {
-        App.NavigationService?.NavigateTo("Invoices");
-        App.InvoiceModalsViewModel?.OpenCreateModal();
-    }
-
-    [RelayCommand]
-    private void AddExpense()
-    {
-        App.NavigationService?.NavigateTo("Expenses");
-        App.ExpenseModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void RecordSale()
-    {
-        App.NavigationService?.NavigateTo("Revenue");
-        App.RevenueModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private async Task ScanReceipt()
-    {
-        if (App.ReceiptsModalsViewModel == null) return;
-        if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
-
-        App.NavigationService?.NavigateTo("Receipts");
-    }
-
-    [RelayCommand]
-    private void NewCustomer()
-    {
-        App.NavigationService?.NavigateTo("Customers");
-        App.CustomerModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewSupplier()
-    {
-        App.NavigationService?.NavigateTo("Suppliers");
-        App.SupplierModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewProduct()
-    {
-        App.NavigationService?.NavigateTo("Products");
-        App.ProductModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void RecordPayment()
-    {
-        App.NavigationService?.NavigateTo("Payments");
-        App.PaymentModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewRentalItem()
-    {
-        App.NavigationService?.NavigateTo("RentalInventory");
-        App.RentalInventoryModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewRental()
-    {
-        App.NavigationService?.NavigateTo("RentalRecords");
-        App.RentalRecordsModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewCategory()
-    {
-        App.NavigationService?.NavigateTo("Categories");
-        App.CategoryModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewDepartment()
-    {
-        App.NavigationService?.NavigateTo("Departments");
-        App.DepartmentModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewLocation()
-    {
-        App.NavigationService?.NavigateTo("Locations");
-        App.LocationsModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewPurchaseOrder()
-    {
-        App.NavigationService?.NavigateTo("PurchaseOrders");
-        App.PurchaseOrdersModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewStockAdjustment()
-    {
-        App.NavigationService?.NavigateTo("Adjustments");
-        App.StockAdjustmentsModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NavigateToAnalytics()
-    {
-        App.NavigationService?.NavigateTo("Analytics");
-    }
-
-    [RelayCommand]
-    private void NavigateToReports()
-    {
-        App.NavigationService?.NavigateTo("Reports");
-    }
-
-    [RelayCommand]
-    private void NavigateToRevenue()
-    {
-        App.NavigationService?.NavigateTo("Revenue");
-    }
-
-    [RelayCommand]
-    private void NavigateToTransaction(RecentTransactionItem? transaction)
-    {
-        if (transaction == null) return;
-
-        var pageName = transaction.IsIncome ? "Revenue" : "Expenses";
-        App.NavigationService?.NavigateTo(pageName, new TransactionNavigationParameter(transaction.Id));
-    }
-
-    [RelayCommand]
-    private void NavigateToRentals()
-    {
-        App.NavigationService?.NavigateTo("RentalRecords");
-    }
-
-    [RelayCommand]
-    private void NavigateToRental(ActiveRentalItem? rental)
-    {
-        if (rental == null) return;
-
-        App.NavigationService?.NavigateTo("RentalRecords", new TransactionNavigationParameter(rental.Id));
+        return ChartLoaderService;
     }
 
     #endregion
@@ -1410,40 +755,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     #region Helper Methods
 
     /// <summary>
-    /// Formats a currency amount using the current display currency.
-    /// For legacy data (USD), converts to current currency if exchange rates are available.
-    /// </summary>
-    private static string FormatCurrency(decimal amount)
-    {
-        return CurrencyService.Format(amount);
-    }
-
-    /// <summary>
-    /// Formats a currency amount from USD using the current display currency with conversion.
-    /// </summary>
-    private static string FormatCurrencyFromUSD(decimal amountUSD, DateTime date)
-    {
-        return CurrencyService.FormatFromUSD(amountUSD, date);
-    }
-
-    private static string FormatDate(DateTime date)
-    {
-        var now = DateTime.Now;
-        if (date.Date == now.Date)
-            return "Today";
-        if (date.Date == now.Date.AddDays(-1))
-            return "Yesterday";
-        if (date.Date > now.Date.AddDays(-7))
-            return date.ToString("dddd");
-        return DateFormatService.Format(date);
-    }
-
-    /// <summary>
     /// Checks if there is sufficient data coverage for the prior comparison period.
     /// Returns false if the earliest transaction date is after the prior period start,
     /// which would make the comparison misleading.
     /// </summary>
-    private static bool HasSufficientPriorData(CompanyData data, DateTime prevStartDate)
+    internal static bool HasSufficientPriorData(CompanyData data, DateTime prevStartDate)
     {
         var earliestRevenue = data.Revenues.Count > 0 ? data.Revenues.Min(r => r.Date) : DateTime.MaxValue;
         var earliestExpense = data.Expenses.Count > 0 ? data.Expenses.Min(e => e.Date) : DateTime.MaxValue;
@@ -1456,7 +772,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         return earliestDate <= prevStartDate;
     }
 
-    private static double? CalculatePercentageChange(decimal previous, decimal current)
+    internal static double? CalculatePercentageChange(decimal previous, decimal current)
     {
         // Return null when there's no previous period data to compare against
         if (previous == 0)
@@ -1466,7 +782,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         return (double)((current - previous) / previous * 100);
     }
 
-    private static string? FormatPercentageChange(double? change)
+    internal static string? FormatPercentageChange(double? change)
     {
         if (!change.HasValue)
         {
@@ -1474,32 +790,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
         // Use absolute value since the arrow indicates direction
         return $"{Math.Abs(change.Value):F1}%";
-    }
-
-    private static string GetCustomerName(CompanyData data, string? customerId)
-    {
-        if (string.IsNullOrEmpty(customerId)) return "Unknown";
-        var customer = data.Customers.FirstOrDefault(c => c.Id == customerId);
-        return customer?.Name ?? "Unknown";
-    }
-
-    private static string GetSupplierName(CompanyData data, string? supplierId)
-    {
-        if (string.IsNullOrEmpty(supplierId)) return "Unknown";
-        var supplier = data.Suppliers.FirstOrDefault(s => s.Id == supplierId);
-        return supplier?.Name ?? "Unknown";
-    }
-
-    private static string GetRentalItemName(CompanyData data, string rentalItemId)
-    {
-        var item = data.RentalInventory.FirstOrDefault(r => r.Id == rentalItemId);
-        return item?.Name ?? "Unknown Item";
-    }
-
-    private static int CalculateDaysRemaining(DateTime dueDate)
-    {
-        var days = (dueDate.Date - DateTime.Now.Date).Days;
-        return days;
     }
 
     #endregion

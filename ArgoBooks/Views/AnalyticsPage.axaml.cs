@@ -43,12 +43,22 @@ public partial class AnalyticsPage : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private AnalyticsPageViewModel? _previousViewModel;
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
+            _previousViewModel.ExcelExportRequested -= OnExcelExportRequested;
+            _previousViewModel = null;
+        }
+
         if (DataContext is AnalyticsPageViewModel viewModel)
         {
             viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
             viewModel.ExcelExportRequested += OnExcelExportRequested;
+            _previousViewModel = viewModel;
         }
     }
 
@@ -129,6 +139,13 @@ public partial class AnalyticsPage : UserControl
         base.OnUnloaded(e);
 
         PointerPressed -= OnPagePointerPressed;
+
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.SaveChartImageRequested -= OnSaveChartImageRequested;
+            _previousViewModel.ExcelExportRequested -= OnExcelExportRequested;
+            _previousViewModel = null;
+        }
     }
 
     private AnalyticsPageViewModel? ViewModel => DataContext as AnalyticsPageViewModel;

@@ -614,7 +614,7 @@ public class HoltWintersForecasting
         {
             peakPeriod = maxIndex == 0 ? "first month" : "second month";
             troughPeriod = minIndex == 0 ? "first month" : "second month";
-            cycleDescription = "bi-monthly";
+            cycleDescription = "alternating";
         }
         else
         {

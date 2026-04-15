@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Helpers;
@@ -311,6 +312,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to shared modal events to refresh data
         if (App.CategoryModalsViewModel != null)
@@ -331,9 +334,25 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the categories.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Categories)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadCategories();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Categories && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadCategories();
+        }
     }
 
     #endregion
@@ -395,6 +414,12 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
+        // Pre-build product count lookup for O(1) access per category
+        var productCountByCategory = App.CompanyManager?.CompanyData?.Products
+            .Where(p => !string.IsNullOrEmpty(p.CategoryId))
+            .GroupBy(p => p.CategoryId!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         // Build display items list (flat, with parent-child info)
         var displayItems = new List<CategoryDisplayItem>();
 
@@ -404,14 +429,14 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         foreach (var parent in parentCategories)
         {
             var childCount = CountChildren(parent.Id);
-            displayItems.Add(CreateDisplayItem(parent, null, childCount));
+            displayItems.Add(CreateDisplayItem(parent, null, childCount, productCountByCategory));
 
             // Add children
             var children = categories.Where(c => c.ParentId == parent.Id);
             foreach (var child in children)
             {
                 var grandchildCount = CountChildren(child.Id);
-                displayItems.Add(CreateDisplayItem(child, parent.Name, grandchildCount, isChild: true));
+                displayItems.Add(CreateDisplayItem(child, parent.Name, grandchildCount, productCountByCategory, isChild: true));
             }
         }
 
@@ -423,7 +448,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         foreach (var orphan in orphans)
         {
             var childCount = CountChildren(orphan.Id);
-            displayItems.Add(CreateDisplayItem(orphan, "Unknown", childCount));
+            displayItems.Add(CreateDisplayItem(orphan, "Unknown", childCount, productCountByCategory));
         }
 
         // Apply sorting
@@ -461,11 +486,10 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         OnPropertyChanged(nameof(CurrentCategories));
     }
 
-    private CategoryDisplayItem CreateDisplayItem(Category category, string? parentName, int childCount, bool isChild = false)
+    private CategoryDisplayItem CreateDisplayItem(Category category, string? parentName, int childCount, Dictionary<string, int>? productCountByCategory, bool isChild = false)
     {
-        // Count products using this category
-        var productCount = App.CompanyManager?.CompanyData?.Products
-            .Count(p => p.CategoryId == category.Id) ?? 0;
+        // Look up product count from pre-built dictionary
+        var productCount = productCountByCategory?.GetValueOrDefault(category.Id) ?? 0;
 
         return new CategoryDisplayItem
         {

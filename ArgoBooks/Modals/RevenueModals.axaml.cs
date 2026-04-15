@@ -14,11 +14,20 @@ public partial class RevenueModals : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private RevenueModalsViewModel? _previousViewModel;
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.ScrollToLineItemsRequested -= OnScrollToLineItemsRequested;
+            _previousViewModel = null;
+        }
+
         if (DataContext is RevenueModalsViewModel vm)
         {
             vm.ScrollToLineItemsRequested += OnScrollToLineItemsRequested;
+            _previousViewModel = vm;
         }
     }
 

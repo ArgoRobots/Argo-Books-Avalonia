@@ -138,8 +138,9 @@ public partial class EmojiPickerViewModel : ObservableObject
         }
         else
         {
-            // Select first category tab (skip Recent and Favorites)
-            SelectTab(Tabs.FirstOrDefault(t => !t.IsSpecial) ?? Tabs.First());
+            // Default to Office tab (most relevant for a business app)
+            SelectTab(Tabs.FirstOrDefault(t => t.Name == "Office") ??
+                      Tabs.FirstOrDefault(t => !t.IsSpecial) ?? Tabs.First());
         }
 
         IsOpen = true;
@@ -251,18 +252,20 @@ public partial class EmojiPickerViewModel : ObservableObject
         }
         else if (SelectedTab.Name == "Recent")
         {
-            // Get recent emojis with their names
+            // Get recent emojis with their names (O(1) lookup via dictionary)
+            var emojiLookup = EmojiData.AllEmojis.GroupBy(e => e.Emoji).ToDictionary(g => g.Key, g => g.First());
             var recentEmojis = _settings.RecentEmojis
-                .Select(emoji => EmojiData.AllEmojis.FirstOrDefault(e => e.Emoji == emoji) ??
+                .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
                                  new EmojiData.EmojiItem(emoji, ""))
                 .ToList();
             emojis = recentEmojis;
         }
         else if (SelectedTab.Name == "Favorites")
         {
-            // Get favorite emojis with their names
+            // Get favorite emojis with their names (O(1) lookup via dictionary)
+            var emojiLookup = EmojiData.AllEmojis.GroupBy(e => e.Emoji).ToDictionary(g => g.Key, g => g.First());
             var favoriteEmojis = _settings.FavoriteEmojis
-                .Select(emoji => EmojiData.AllEmojis.FirstOrDefault(e => e.Emoji == emoji) ??
+                .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
                                  new EmojiData.EmojiItem(emoji, ""))
                 .ToList();
             emojis = favoriteEmojis;

@@ -92,7 +92,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = ColumnVisibilityHelper.Load("Expenses", "Id", true);
 
     [ObservableProperty]
-    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Expenses", "Accountant", false); // No Accountant column in Expenses UI
+    private bool _showAccountantColumn = ColumnVisibilityHelper.Load("Expenses", "Accountant", false);
 
     [ObservableProperty]
     private bool _showProductColumn = ColumnVisibilityHelper.Load("Expenses", "Product", true);
@@ -222,6 +222,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to expense modal events to refresh data
         if (App.ExpenseModalsViewModel != null)
@@ -276,9 +278,25 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         ColumnWidths.RecalculateWidths();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Expenses)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadExpenses();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Expenses && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadExpenses();
+        }
     }
 
     private void OnExpenseSaved(object? sender, EventArgs e)
@@ -361,8 +379,15 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
         // Returns count (linked to returns data)
         var companyData = App.CompanyManager?.CompanyData;
-        ReturnsCount = companyData?.Returns.Count(r =>
-            _allExpenses.Any(p => p.Id == r.OriginalTransactionId)) ?? 0;
+        if (companyData?.Returns.Count > 0)
+        {
+            var expenseIds = new HashSet<string>(_allExpenses.Select(p => p.Id));
+            ReturnsCount = companyData.Returns.Count(r => expenseIds.Contains(r.OriginalTransactionId));
+        }
+        else
+        {
+            ReturnsCount = 0;
+        }
     }
 
     [RelayCommand]
@@ -381,9 +406,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             companyData?.Returns
                 .Where(r => r.Status == ReturnStatus.Completed)
                 .Select(r => r.OriginalTransactionId ?? "") ?? []);
-        var returnIds = new HashSet<string>(
-            companyData?.Returns.Select(r => r.OriginalTransactionId ?? "") ?? []);
-
         IEnumerable<Expense> filtered = _allExpenses;
 
         // Apply search filter
@@ -407,7 +429,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(p => GetStatusDisplay(p, lostDamagedIds, returnedIds, returnIds) == FilterStatus);
+            filtered = filtered.Where(p => GetStatusDisplay(p, lostDamagedIds, returnedIds) == FilterStatus);
         }
 
         // Apply supplier filter
@@ -470,7 +492,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
-            var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, lostDamagedIds, returnedIds, returnIds);
+            var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, lostDamagedIds, returnedIds);
             var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
@@ -567,7 +589,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         return (firstName, $" +{remaining} more");
     }
 
-    private static string GetStatusDisplay(Expense purchase, HashSet<string> lostDamagedIds, HashSet<string> returnedIds, HashSet<string> returnIds)
+    private static string GetStatusDisplay(Expense purchase, HashSet<string> lostDamagedIds, HashSet<string> returnedIds)
     {
         if (lostDamagedIds.Contains(purchase.Id)) return "Lost / Damaged";
         if (returnedIds.Contains(purchase.Id)) return "Returned";

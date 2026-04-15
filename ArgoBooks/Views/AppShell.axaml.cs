@@ -95,9 +95,10 @@ public partial class AppShell : UserControl
         // Focus the shell to receive keyboard events
         Focus();
 
-        // Subscribe to file scan request from quick action
+        // Subscribe to file scan request from quick action (guard against duplicate subscriptions on re-load)
         if (DataContext is AppShellViewModel vm)
         {
+            vm.OpenFileScanRequested -= OnOpenFileScanRequested;
             vm.OpenFileScanRequested += OnOpenFileScanRequested;
         }
     }

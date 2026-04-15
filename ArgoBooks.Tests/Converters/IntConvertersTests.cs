@@ -66,22 +66,4 @@ public class IntConvertersTests
 
     #endregion
 
-    #region IsNotZero Tests
-
-    [Theory]
-    [InlineData(0, false)]
-    [InlineData(1, true)]
-    [InlineData(-1, true)]
-    [InlineData(100, true)]
-    public void IsNotZero_ReturnsCorrectValue(int input, bool expected)
-    {
-        var converter = IntConverters.IsNotZero;
-        Assert.NotNull(converter);
-
-        var result = converter.Convert(input, typeof(bool), null, null!);
-
-        Assert.Equal(expected, result);
-    }
-
-    #endregion
 }

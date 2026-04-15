@@ -446,11 +446,10 @@ public partial class DataValidator(CompanyData companyData)
     {
         var result = new ValidationResult();
 
-        if (string.IsNullOrWhiteSpace(item.Name))
-            result.AddError(nameof(item.Name), "Name is required.");
-
-        if (item.TotalQuantity < 0)
-            result.AddError(nameof(item.TotalQuantity), "Total quantity cannot be negative.");
+        if (string.IsNullOrWhiteSpace(item.InventoryItemId))
+            result.AddError(nameof(item.InventoryItemId), "Inventory item is required.");
+        else if (companyData.Inventory.All(i => i.Id != item.InventoryItemId))
+            result.AddError(nameof(item.InventoryItemId), "Inventory item not found.");
 
         if (item.DailyRate < 0)
             result.AddError(nameof(item.DailyRate), "Daily rate cannot be negative.");

@@ -3,13 +3,12 @@ using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 
 namespace ArgoBooks.Modals;
 
 /// <summary>
 /// Modal for designing invoice templates.
-/// Invoice preview is handled by InvoicePreviewControl which uses WebView2 on Windows.
+/// Invoice preview is handled by InvoicePreviewControl using NativeWebView.
 /// </summary>
 public partial class InvoiceTemplateDesignerModal : UserControl
 {

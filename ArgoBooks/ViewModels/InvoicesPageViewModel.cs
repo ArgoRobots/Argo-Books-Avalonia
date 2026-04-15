@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -349,6 +350,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to invoice modal events to refresh data
         if (App.InvoiceModalsViewModel != null)
@@ -428,6 +431,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         base.Cleanup();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
         PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
         if (App.CompanyManager != null)
@@ -435,9 +440,25 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.PlanStatusChanged -= OnPlanStatusChanged;
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Invoices)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadInvoices();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Invoices && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadInvoices();
+        }
     }
 
     private void OnInvoiceSaved(object? sender, EventArgs e)
@@ -558,13 +579,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void FilterInvoices()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        var filtered = _allInvoices.ToList();
+        IEnumerable<Invoice> filtered = _allInvoices;
 
         // Apply tab filter
         filtered = SelectedTab switch
         {
-            "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft).ToList(),
-            "Recurring" => filtered.Where(i => !string.IsNullOrEmpty(i.RecurringInvoiceId)).ToList(),
+            "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft),
+            "Recurring" => filtered.Where(i => !string.IsNullOrEmpty(i.RecurringInvoiceId)),
             _ => filtered
         };
 
@@ -592,44 +613,44 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             if (Enum.TryParse<InvoiceStatus>(FilterStatus, out var status))
             {
                 filtered = filtered.Where(i => i.Status == status ||
-                    (FilterStatus == "Overdue" && i.IsOverdue)).ToList();
+                    (FilterStatus == "Overdue" && i.IsOverdue));
             }
         }
 
         // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
-            filtered = filtered.Where(i => i.CustomerId == FilterCustomerId).ToList();
+            filtered = filtered.Where(i => i.CustomerId == FilterCustomerId);
         }
 
         // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, System.Globalization.CultureInfo.InvariantCulture, out var minAmount))
         {
-            filtered = filtered.Where(i => i.Total >= minAmount).ToList();
+            filtered = filtered.Where(i => i.Total >= minAmount);
         }
         if (decimal.TryParse(FilterAmountMax, System.Globalization.CultureInfo.InvariantCulture, out var maxAmount))
         {
-            filtered = filtered.Where(i => i.Total <= maxAmount).ToList();
+            filtered = filtered.Where(i => i.Total <= maxAmount);
         }
 
         // Apply issue date filter
         if (FilterIssueDateFrom.HasValue)
         {
-            filtered = filtered.Where(i => i.IssueDate >= FilterIssueDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.IssueDate >= FilterIssueDateFrom.Value.DateTime);
         }
         if (FilterIssueDateTo.HasValue)
         {
-            filtered = filtered.Where(i => i.IssueDate <= FilterIssueDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.IssueDate <= FilterIssueDateTo.Value.DateTime);
         }
 
         // Apply due date filter
         if (FilterDueDateFrom.HasValue)
         {
-            filtered = filtered.Where(i => i.DueDate >= FilterDueDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.DueDate >= FilterDueDateFrom.Value.DateTime);
         }
         if (FilterDueDateTo.HasValue)
         {
-            filtered = filtered.Where(i => i.DueDate <= FilterDueDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(i => i.DueDate <= FilterDueDateTo.Value.DateTime);
         }
 
         // Create display items
@@ -662,7 +683,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 StatusDisplay = statusDisplay,
                 Notes = invoice.Notes,
                 OriginalCurrency = invoice.OriginalCurrency,
-                IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId)
+                IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId),
+                IsHighlighted = invoice.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -683,6 +705,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 },
                 i => i.IssueDate);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -907,6 +932,9 @@ public partial class InvoiceDisplayItem : ObservableObject
     /// Whether this invoice can be sent via email (not drafts or cancelled).
     /// </summary>
     public bool CanSend => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

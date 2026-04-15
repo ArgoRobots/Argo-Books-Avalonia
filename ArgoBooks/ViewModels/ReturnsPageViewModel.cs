@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -202,6 +203,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events
         if (App.ReturnsModalsViewModel != null)
@@ -240,9 +243,25 @@ public partial class ReturnsPageViewModel : ViewModelBase
         LoadReturns();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Returns)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadReturns();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Returns && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadReturns();
+        }
     }
 
     #endregion
@@ -280,7 +299,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     private void FilterReturns()
     {
-        var filtered = _allReturns.ToList();
+        IEnumerable<Return> filtered = _allReturns;
 
         // Get filter values from modals view model
         var modals = App.ReturnsModalsViewModel;
@@ -290,7 +309,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Filter by tab (expense vs customer)
         var returnType = IsExpenseTabActive ? "Expense" : "Customer";
-        filtered = filtered.Where(r => r.ReturnType == returnType).ToList();
+        filtered = filtered.Where(r => r.ReturnType == returnType);
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -301,7 +320,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
                 r.OriginalTransactionId.ToLowerInvariant().Contains(query) ||
                 GetProductNames(r).ToLowerInvariant().Contains(query) ||
                 GetSupplierOrCustomerName(r).ToLowerInvariant().Contains(query)
-            ).ToList();
+            );
         }
 
         // Apply reason filter
@@ -309,24 +328,22 @@ public partial class ReturnsPageViewModel : ViewModelBase
         {
             filtered = filtered.Where(r =>
                 r.Items.Any(item => item.Reason.Equals(filterReason, StringComparison.OrdinalIgnoreCase))
-            ).ToList();
+            );
         }
 
         // Apply date filter
         if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.ReturnDate >= filterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.ReturnDate >= filterDateFrom.Value.DateTime);
         }
         if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.ReturnDate <= filterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.ReturnDate <= filterDateTo.Value.DateTime);
         }
 
-        // Sort by date descending (newest first)
-        filtered = filtered.OrderByDescending(r => r.ReturnDate).ToList();
-
-        // Create display items
-        var displayItems = filtered.Select(CreateDisplayItem).ToList();
+        // Sort by date descending (newest first) — materialize here for display + pagination
+        var displayItems = filtered.OrderByDescending(r => r.ReturnDate)
+            .Select(CreateDisplayItem).ToList();
 
         // Calculate pagination
         var totalCount = displayItems.Count;

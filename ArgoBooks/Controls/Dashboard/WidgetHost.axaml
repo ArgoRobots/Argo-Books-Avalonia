@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             x:Class="ArgoBooks.Controls.Dashboard.WidgetHost"
+             x:DataType="vm:WidgetHostViewModel">
+
+    <UserControl.Styles>
+        <!-- Edit mode indicator — adds accent border around the widget -->
+        <Style Selector="Border.editing">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <!-- Overlay buttons -->
+        <Style Selector="Button.widget-overlay-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="MinWidth" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.widget-overlay-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Border.drag-handle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel IsVisible="{Binding WidgetViewModel.IsWidgetVisible}">
+        <!-- Widget content — each widget provides its own card styling -->
+        <Border x:Name="WidgetContent"
+                Classes.editing="{Binding IsEditMode}" />
+
+        <!-- Edit mode overlay controls -->
+        <StackPanel x:Name="EditOverlay"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,8,8,0"
+                    Spacing="4"
+                    IsVisible="{Binding IsEditMode}">
+            <Border x:Name="DragHandle"
+                    Classes="widget-overlay-btn drag-handle"
+                    ToolTip.Tip="Drag to reorder"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    CornerRadius="6"
+                    Padding="4"
+                    MinWidth="28" MinHeight="28"
+                    Cursor="SizeAll">
+                <TextBlock Text="&#x2817;" FontSize="14"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <Button x:Name="SettingsButton"
+                    Classes="widget-overlay-btn"
+                    Command="{Binding ToggleConfigCommand}"
+                    ToolTip.Tip="Settings">
+                <TextBlock Text="&#x2699;" FontSize="12" />
+            </Button>
+            <Button Classes="widget-overlay-btn remove-btn"
+                    x:Name="RemoveButton"
+                    ToolTip.Tip="Remove widget">
+                <TextBlock Text="&#x2715;" FontSize="12" />
+            </Button>
+        </StackPanel>
+    </Panel>
+</UserControl>

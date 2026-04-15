@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.StatCardWidget"
+             x:DataType="vm:StatCardWidgetViewModel">
+    <controls:StatCard Label="{Binding Label}"
+                       Value="{Binding Value}"
+                       Icon="{Binding IconGeometry}"
+                       IconColor="{Binding IconColor}"
+                       ChangeValue="{Binding ChangeValue}"
+                       ChangeText="{Binding ChangeText}"
+                       ChangeLabel="{Binding ChangeLabel}"
+                       SecondaryText="{Binding SecondaryText}" />
+</UserControl>

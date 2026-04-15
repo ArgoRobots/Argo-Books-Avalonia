@@ -103,15 +103,6 @@ public class TutorialServiceTests
         Assert.False(_service.ShowFirstVisitHints);
     }
 
-    [Fact]
-    public void EnableFirstVisitHints_SetsFlag()
-    {
-        _service.DisableFirstVisitHints();
-        _service.EnableFirstVisitHints();
-
-        Assert.True(_service.ShowFirstVisitHints);
-    }
-
     #endregion
 
     #region Reset Tests
@@ -126,18 +117,6 @@ public class TutorialServiceTests
         _service.ResetAllTutorials();
 
         Assert.False(_service.HasCompletedWelcomeTutorial);
-        Assert.False(_service.HasCompletedAppTour);
-    }
-
-    [Fact]
-    public void ResetAppTour_ResetsOnlyTourFlag()
-    {
-        _service.CompleteWelcomeTutorial();
-        _service.CompleteAppTour();
-
-        _service.ResetAppTour();
-
-        Assert.True(_service.HasCompletedWelcomeTutorial);
         Assert.False(_service.HasCompletedAppTour);
     }
 

@@ -183,8 +183,10 @@ public class PendingConversionService
                 var rate = await exchangeService.GetExchangeRateAsync(
                     entry.OriginalCurrency, "USD", entry.TransactionDate, fetchIfMissing: true);
 
-                // If the specific date's rate is unavailable, try today's rate as a fallback
-                if (rate <= 0 && entry.TransactionDate.Date != DateTime.Today)
+                // If the specific date's rate is unavailable and the date is not in the future,
+                // try today's rate as a fallback. Future-dated transactions must wait until
+                // their date arrives so they get the correct historical rate.
+                if (rate <= 0 && entry.TransactionDate.Date != DateTime.Today && entry.TransactionDate.Date < DateTime.Today)
                 {
                     rate = await exchangeService.GetExchangeRateAsync(
                         entry.OriginalCurrency, "USD", DateTime.Today, fetchIfMissing: true);

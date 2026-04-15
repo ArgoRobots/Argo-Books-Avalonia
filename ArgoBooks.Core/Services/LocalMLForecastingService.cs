@@ -218,10 +218,6 @@ public class LocalMLForecastingService : ILocalMLForecastingService
                 .ToList();
             result.MethodUsed = "ML.NET SSA";
 
-            // Calculate confidence based on prediction interval width
-            result.ForecastedValues.Average();
-            result.UpperBounds.Zip(result.LowerBounds, (u, l) => u - l).Average();
-
             result.ConfidenceScore = CalculateConfidenceScore(data, null, null);
 
             // Detect seasonality for the result

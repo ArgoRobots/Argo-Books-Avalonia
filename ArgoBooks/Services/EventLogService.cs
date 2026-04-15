@@ -161,6 +161,14 @@ public class EventLogService
             ReconstructActions(companyData);
         }
 
+        // Free EntitySnapshot strings from memory — they've been consumed for action
+        // reconstruction and are no longer needed. They remain on disk in the .argo file
+        // and will be re-read on the next load.
+        foreach (var evt in _events)
+        {
+            evt.EntitySnapshot = null;
+        }
+
         EventsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -572,97 +580,6 @@ public class EventLogService
     }
 
     /// <summary>
-    /// Generates a batch of realistic test events for UI testing.
-    /// Call after Initialize() to populate the history timeline.
-    /// Remove or disable this method before shipping.
-    /// </summary>
-    public void GenerateTestEvents(int count = 80)
-    {
-        var random = new Random(42); // Fixed seed for reproducibility
-        var now = DateTime.UtcNow;
-
-        var entityTypes = new[] { "Customer", "Supplier", "Product", "Expense", "Revenue", "Invoice", "Payment", "Employee", "Category", "Inventory" };
-
-        var customerNames = new[] { "Acme Corp", "TechStart Inc", "Global Trade LLC", "City Bakery", "Metro Supplies", "Peak Fitness", "River Café", "Sunrise Solar", "Nordic Design", "Atlas Logistics" };
-        var productNames = new[] { "Widget A", "Premium Service Plan", "Consulting Hours", "Office Chair", "Laptop Stand", "USB Hub", "Webcam HD", "Desk Lamp", "Keyboard Pro", "Monitor 27\"" };
-        var supplierNames = new[] { "Office Depot", "Amazon Business", "Staples Direct", "Dell Technologies", "Costco Wholesale", "Grainger", "Uline Shipping", "Home Depot Pro", "Best Buy Business", "CDW" };
-        var employeeNames = new[] { "John Smith", "Maria Garcia", "David Chen", "Sarah Johnson", "Michael Brown", "Emily Davis", "James Wilson", "Lisa Anderson", "Robert Taylor", "Jennifer Martinez" };
-
-        var actions = new[] { AuditAction.Added, AuditAction.Modified, AuditAction.Deleted };
-        var actionWeights = new[] { 0.4, 0.85, 1.0 }; // 40% add, 45% modify, 15% delete
-
-        for (int i = 0; i < count; i++)
-        {
-            // Spread events across the last 14 days
-            var daysAgo = random.NextDouble() * 14;
-            var hoursOffset = random.NextDouble() * 10 + 8; // Between 8am-6pm
-            var timestamp = now.AddDays(-daysAgo).Date.AddHours(hoursOffset);
-
-            var entityType = entityTypes[random.Next(entityTypes.Length)];
-
-            // Pick a name based on entity type
-            var entityName = entityType switch
-            {
-                "Customer" => customerNames[random.Next(customerNames.Length)],
-                "Supplier" => supplierNames[random.Next(supplierNames.Length)],
-                "Product" => productNames[random.Next(productNames.Length)],
-                "Employee" => employeeNames[random.Next(employeeNames.Length)],
-                "Expense" => $"PUR-2026-{random.Next(1, 500):D5}",
-                "Revenue" => $"SAL-2026-{random.Next(1, 500):D5}",
-                "Invoice" => $"INV-2026-{random.Next(1, 200):D5}",
-                "Payment" => $"PAY-2026-{random.Next(1, 300):D5}",
-                "Category" => new[] { "Electronics", "Office Supplies", "Services", "Food & Beverage", "Software" }[random.Next(5)],
-                "Inventory" => productNames[random.Next(productNames.Length)],
-                _ => "Item"
-            };
-
-            // Pick action with weighted distribution
-            var roll = random.NextDouble();
-            var action = AuditAction.Added;
-            for (int j = 0; j < actionWeights.Length; j++)
-            {
-                if (roll < actionWeights[j])
-                {
-                    action = actions[j];
-                    break;
-                }
-            }
-
-            var actionVerb = action switch
-            {
-                AuditAction.Added => "Add",
-                AuditAction.Modified => "Edit",
-                AuditAction.Deleted => "Delete",
-                _ => "Update"
-            };
-
-            var description = $"{actionVerb} {entityType.ToLower()} '{entityName}'";
-
-            var evt = new AuditEvent
-            {
-                Id = GenerateEventId(),
-                Timestamp = timestamp,
-                Action = action,
-                EntityType = entityType,
-                EntityId = $"{random.Next(1, 1000)}",
-                EntityName = entityName,
-                Description = description
-            };
-
-            _events.Add(evt);
-
-            // Register a no-op undoable action so undo buttons appear in the UI
-            _undoableActions[evt.Id] = new NoOpUndoableAction(description);
-        }
-
-        // Sort by timestamp
-        _events.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
-
-        TrimIfNeeded();
-        EventsChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
     /// Reconstructs undoable actions for persisted events from a previous session.
     /// Uses EntitySnapshot (if available) or looks up entities in CompanyData.
     /// </summary>
@@ -917,17 +834,5 @@ public class EventLogService
     {
         if (string.IsNullOrEmpty(s)) return s;
         return char.ToUpper(s[0]) + s[1..];
-    }
-
-    /// <summary>
-    /// A no-op undoable action used for test events.
-    /// Undo/Redo are no-ops since the data isn't real.
-    /// Remove or disable this class before shipping.
-    /// </summary>
-    private class NoOpUndoableAction(string description) : IUndoableAction
-    {
-        public string Description => description;
-        public void Undo() { }
-        public void Redo() { }
     }
 }

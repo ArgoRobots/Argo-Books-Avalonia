@@ -332,23 +332,39 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to Suppliers page and opens the create supplier modal.
+    /// Opens the create supplier modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateSupplier()
+    private void OpenCreateSupplier()
     {
-        IsAddModalOpen = false;
-        App.NavigationService?.NavigateTo("Suppliers", new Dictionary<string, object?> { { "openAddModal", true } });
+        var supplierModals = App.SupplierModalsViewModel;
+        if (supplierModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            supplierModals.SupplierSaved -= OnSaved;
+            LoadSuppliers();
+        }
+        supplierModals.SupplierSaved += OnSaved;
+        supplierModals.OpenAddModal();
     }
 
     /// <summary>
-    /// Navigates to Products page and opens the create product modal.
+    /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void NavigateToCreateProduct()
+    private void OpenCreateProduct()
     {
-        IsAddModalOpen = false;
-        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true } });
+        var productModals = App.ProductModalsViewModel;
+        if (productModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            productModals.ProductSaved -= OnSaved;
+            LoadProducts();
+        }
+        productModals.ProductSaved += OnSaved;
+        productModals.OpenAddModal();
     }
 
     /// <summary>

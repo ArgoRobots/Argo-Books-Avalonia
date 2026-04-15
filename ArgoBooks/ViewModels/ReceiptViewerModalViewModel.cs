@@ -1,5 +1,4 @@
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia;

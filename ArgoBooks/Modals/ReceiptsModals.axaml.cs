@@ -6,8 +6,10 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using ArgoBooks.Helpers;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -19,17 +21,22 @@ public partial class ReceiptsModals : UserControl
 {
     // Zoom settings for scan preview
     private double _scanZoomLevel = 1.0;
+    private double _bulkZoomLevel = 1.0;
     private const double MinZoom = 0.25;
     private const double MaxZoom = 4.0;
     private const double ZoomStep = 0.25;
     private bool _updatingSlider;
+    private bool _updatingBulkSlider;
     private ReceiptsModalsViewModel? _subscribedVm;
 
-    // Panning (right-click or middle-click drag)
+    // Panning (any mouse button drag on preview areas)
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+    private ScrollViewer? _panScrollViewer;
     private OverscrollHelper? _overscrollHelper;
+    private OverscrollHelper? _bulkOverscrollHelper;
+    private OverscrollHelper? _activePanOverscroll;
 
     public ReceiptsModals()
     {
@@ -43,6 +50,9 @@ public partial class ReceiptsModals : UserControl
         if (ScanPreviewScrollViewer != null)
         {
             ScanPreviewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScanPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
+            ScanPreviewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            ScanPreviewScrollViewer.AddHandler(PointerMovedEvent, OnPreviewPointerMoved, RoutingStrategies.Tunnel);
+            ScanPreviewScrollViewer.AddHandler(PointerReleasedEvent, OnPreviewPointerReleased, RoutingStrategies.Tunnel);
         }
 
         if (ScanPreviewZoomTransform != null && _overscrollHelper == null)
@@ -55,6 +65,36 @@ public partial class ReceiptsModals : UserControl
             _updatingSlider = true;
             ScanPreviewZoomSlider.Value = _scanZoomLevel;
             _updatingSlider = false;
+        }
+
+        // Bulk preview zoom setup
+        if (BulkPreviewScrollViewer != null)
+        {
+            BulkPreviewScrollViewer.AddHandler(PointerWheelChangedEvent, OnBulkPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
+            BulkPreviewScrollViewer.AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+            BulkPreviewScrollViewer.AddHandler(PointerMovedEvent, OnPreviewPointerMoved, RoutingStrategies.Tunnel);
+            BulkPreviewScrollViewer.AddHandler(PointerReleasedEvent, OnPreviewPointerReleased, RoutingStrategies.Tunnel);
+        }
+
+        if (BulkPreviewZoomTransform != null && _bulkOverscrollHelper == null)
+        {
+            _bulkOverscrollHelper = new OverscrollHelper(BulkPreviewZoomTransform);
+        }
+
+        if (BulkPreviewZoomSlider != null)
+        {
+            _updatingBulkSlider = true;
+            BulkPreviewZoomSlider.Value = _bulkZoomLevel;
+            _updatingBulkSlider = false;
+        }
+
+        // Wire up drag-drop on the bulk scan drop zone
+        var dropZone = this.FindControl<Border>("DropZoneBorder");
+        if (dropZone != null)
+        {
+            DragDrop.SetAllowDrop(dropZone, true);
+            dropZone.AddHandler(DragDrop.DragOverEvent, OnDropZoneDragOver);
+            dropZone.AddHandler(DragDrop.DropEvent, OnDropZoneDrop);
         }
 
         // Subscribe to ViewModel to fit image when scan results arrive
@@ -96,6 +136,12 @@ public partial class ReceiptsModals : UserControl
         {
             // Re-fit after fullscreen toggle changes viewport size
             _ = FitScanPreviewAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptsModalsViewModel.CurrentBulkItem))
+        {
+            // Reset zoom and fit when navigating to a new receipt in carousel review
+            _bulkZoomLevel = 1.0;
+            _ = FitBulkPreviewAfterLayoutAsync();
         }
     }
 
@@ -176,8 +222,9 @@ public partial class ReceiptsModals : UserControl
         double imageWidth = 0, imageHeight = 0;
         if (ScanPreviewImage.Source is Bitmap bitmap)
         {
-            imageWidth = bitmap.PixelSize.Width;
-            imageHeight = bitmap.PixelSize.Height;
+            // Use DIP bounds when available (correct on HiDPI); fall back to PixelSize
+            imageWidth = ScanPreviewImage.Bounds.Width > 0 ? ScanPreviewImage.Bounds.Width : bitmap.PixelSize.Width;
+            imageHeight = ScanPreviewImage.Bounds.Height > 0 ? ScanPreviewImage.Bounds.Height : bitmap.PixelSize.Height;
         }
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
@@ -258,68 +305,248 @@ public partial class ReceiptsModals : UserControl
 
     #endregion
 
-    #region Scan Preview Panning
+    #region Preview Panning (Scan + Bulk)
 
-    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        base.OnPointerPressed(e);
+        if (sender is not ScrollViewer scrollViewer) return;
 
-        var point = e.GetCurrentPoint(this);
-        if (point.Properties.IsRightButtonPressed || point.Properties.IsMiddleButtonPressed)
+        var point = e.GetCurrentPoint(scrollViewer);
+        if (point.Properties.IsLeftButtonPressed
+            || point.Properties.IsRightButtonPressed
+            || point.Properties.IsMiddleButtonPressed)
         {
-            if (ScanPreviewScrollViewer != null)
-            {
-                _isPanning = true;
-                _panStartPoint = e.GetPosition(this);
-                _panStartOffset = new Vector(ScanPreviewScrollViewer.Offset.X, ScanPreviewScrollViewer.Offset.Y);
-                e.Pointer.Capture(this);
-                Cursor = new Cursor(StandardCursorType.SizeAll);
-                e.Handled = true;
-            }
+            _isPanning = true;
+            _panScrollViewer = scrollViewer;
+            _activePanOverscroll = scrollViewer == BulkPreviewScrollViewer
+                ? _bulkOverscrollHelper
+                : _overscrollHelper;
+            _panStartPoint = e.GetPosition(this);
+            _panStartOffset = new Vector(scrollViewer.Offset.X, scrollViewer.Offset.Y);
+            e.Pointer.Capture(scrollViewer);
+            scrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
+            e.Handled = true;
         }
     }
 
-    protected override void OnPointerMoved(PointerEventArgs e)
+    private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
     {
-        base.OnPointerMoved(e);
+        if (!_isPanning || _panScrollViewer == null) return;
 
-        if (_isPanning && ScanPreviewScrollViewer != null && _overscrollHelper != null)
+        var currentPoint = e.GetPosition(this);
+        var delta = _panStartPoint - currentPoint;
+
+        var desiredX = _panStartOffset.X + delta.X;
+        var desiredY = _panStartOffset.Y + delta.Y;
+
+        var maxX = Math.Max(0, _panScrollViewer.Extent.Width - _panScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _panScrollViewer.Extent.Height - _panScrollViewer.Viewport.Height);
+
+        if (_activePanOverscroll != null)
         {
-            var currentPoint = e.GetPosition(this);
-            var delta = _panStartPoint - currentPoint;
-
-            var desiredX = _panStartOffset.X + delta.X;
-            var desiredY = _panStartOffset.Y + delta.Y;
-
-            var maxX = Math.Max(0, ScanPreviewScrollViewer.Extent.Width - ScanPreviewScrollViewer.Viewport.Width);
-            var maxY = Math.Max(0, ScanPreviewScrollViewer.Extent.Height - ScanPreviewScrollViewer.Viewport.Height);
-
             var (clampedX, clampedY, overscrollX, overscrollY) =
-                _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
+                _activePanOverscroll.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
-            ScanPreviewScrollViewer.Offset = new Vector(clampedX, clampedY);
-            _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
+            _panScrollViewer.Offset = new Vector(clampedX, clampedY);
+            _activePanOverscroll.ApplyOverscroll(overscrollX, overscrollY);
+        }
+        else
+        {
+            _panScrollViewer.Offset = new Vector(
+                Math.Clamp(desiredX, 0, maxX),
+                Math.Clamp(desiredY, 0, maxY));
+        }
 
-            e.Handled = true;
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_isPanning) return;
+
+        var scrollViewer = _panScrollViewer;
+        _isPanning = false;
+        _panScrollViewer = null;
+        e.Pointer.Capture(null);
+
+        if (scrollViewer != null)
+            scrollViewer.Cursor = new Cursor(StandardCursorType.Hand); // restore hand
+
+        if (_activePanOverscroll?.HasOverscroll == true)
+        {
+            _ = _activePanOverscroll.AnimateSnapBackAsync();
+        }
+
+        _activePanOverscroll = null;
+        e.Handled = true;
+    }
+
+    #endregion
+
+    #region Bulk Preview Zoom
+
+    private void BulkPreviewZoomIn_Click(object? sender, RoutedEventArgs e) => BulkPreviewZoomTowardsCenter(true);
+    private void BulkPreviewZoomOut_Click(object? sender, RoutedEventArgs e) => BulkPreviewZoomTowardsCenter(false);
+
+    private void BulkPreviewZoomSlider_ValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingBulkSlider) return;
+        BulkPreviewZoomToLevel(e.NewValue);
+    }
+
+    private void BulkPreviewZoomToLevel(double newZoom)
+    {
+        if (BulkPreviewScrollViewer == null || BulkPreviewZoomTransform == null) return;
+
+        var oldZoom = _bulkZoomLevel;
+        newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        var viewportCenterX = BulkPreviewScrollViewer.Viewport.Width / 2;
+        var viewportCenterY = BulkPreviewScrollViewer.Viewport.Height / 2;
+        var contentCenterX = (BulkPreviewScrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (BulkPreviewScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        _bulkZoomLevel = newZoom;
+        ApplyBulkZoom();
+        BulkPreviewZoomTransform.UpdateLayout();
+
+        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+        var maxX = Math.Max(0, BulkPreviewScrollViewer.Extent.Width - BulkPreviewScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, BulkPreviewScrollViewer.Extent.Height - BulkPreviewScrollViewer.Viewport.Height);
+
+        BulkPreviewScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
+    }
+
+    private void BulkPreviewFitToWindow_Click(object? sender, RoutedEventArgs e) => BulkPreviewFitToWindow();
+
+    private void BulkPreviewFitToWindow()
+    {
+        if (BulkPreviewScrollViewer == null || BulkPreviewImage?.Source == null) return;
+
+        double imageWidth = 0, imageHeight = 0;
+        if (BulkPreviewImage.Source is Bitmap bitmap)
+        {
+            imageWidth = bitmap.PixelSize.Width;
+            imageHeight = bitmap.PixelSize.Height;
+        }
+
+        if (imageWidth <= 0 || imageHeight <= 0) return;
+
+        var viewportWidth = BulkPreviewScrollViewer.Bounds.Width;
+        var viewportHeight = BulkPreviewScrollViewer.Bounds.Height;
+        if (viewportWidth <= 0 || viewportHeight <= 0) return;
+
+        var scaleX = viewportWidth / imageWidth;
+        var scaleY = viewportHeight / imageHeight;
+
+        _bulkZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), 0.01, MaxZoom);
+        ApplyBulkZoom();
+    }
+
+    private void BulkPreviewZoomTowardsCenter(bool zoomIn)
+    {
+        var newZoom = zoomIn
+            ? Math.Min(_bulkZoomLevel + ZoomStep, MaxZoom)
+            : Math.Max(_bulkZoomLevel - ZoomStep, MinZoom);
+        BulkPreviewZoomToLevel(newZoom);
+    }
+
+    private void OnBulkPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        var delta = e.Delta.Y;
+        if (delta != 0 && BulkPreviewZoomTransform != null)
+        {
+            BulkPreviewZoomTowardsCenter(delta > 0);
+        }
+        e.Handled = true;
+    }
+
+    private void ApplyBulkZoom()
+    {
+        if (BulkPreviewZoomTransform == null) return;
+        BulkPreviewZoomTransform.LayoutTransform = new ScaleTransform(_bulkZoomLevel, _bulkZoomLevel);
+
+        if (BulkPreviewZoomSlider != null && !_updatingBulkSlider)
+        {
+            _updatingBulkSlider = true;
+            BulkPreviewZoomSlider.Value = _bulkZoomLevel;
+            _updatingBulkSlider = false;
+        }
+
+        if (BulkPreviewZoomText != null)
+        {
+            BulkPreviewZoomText.Text = $"{_bulkZoomLevel:P0}";
         }
     }
 
-    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    private async Task FitBulkPreviewAfterLayoutAsync()
     {
-        base.OnPointerReleased(e);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+        BulkPreviewFitToWindow();
+    }
 
-        if (_isPanning)
+    #endregion
+
+    #region Bulk Scan Drop Zone
+
+    private void OnDropZoneDragOver(object? sender, DragEventArgs e)
+    {
+        var files = e.DataTransfer.TryGetFiles();
+        if (files != null && files.Any())
         {
-            _isPanning = false;
-            e.Pointer.Capture(null);
-            Cursor = Cursor.Default;
+            e.DragEffects = DragDropEffects.Copy;
+            return;
+        }
+        e.DragEffects = DragDropEffects.None;
+    }
 
-            if (_overscrollHelper?.HasOverscroll == true)
+    private void OnDropZoneDrop(object? sender, DragEventArgs e)
+    {
+        var files = e.DataTransfer.TryGetFiles();
+        if (files == null) return;
+
+        var paths = files
+            .Select(f => f.TryGetLocalPath())
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToList();
+
+        if (DataContext is ReceiptsModalsViewModel vm)
+        {
+            vm.AddFilesToQueue(paths!);
+        }
+    }
+
+    private async void OnBrowseFilesClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel == null) return;
+
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                _ = _overscrollHelper.AnimateSnapBackAsync();
-            }
+                Title = "Select Receipts to Scan",
+                AllowMultiple = true,
+                FileTypeFilter = [FilePickerTypes.AllSupportedTypes, FilePickerTypes.ImageFileType, FilePickerTypes.PdfFileType]
+            });
 
-            e.Handled = true;
+            if (files.Count > 0 && DataContext is ReceiptsModalsViewModel vm)
+            {
+                var paths = files
+                    .Select(f => f.TryGetLocalPath())
+                    .Where(p => !string.IsNullOrEmpty(p))
+                    .ToList();
+                vm.AddFilesToQueue(paths!);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnBrowseFilesClick");
         }
     }
 

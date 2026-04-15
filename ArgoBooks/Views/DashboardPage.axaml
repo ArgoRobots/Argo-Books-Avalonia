@@ -4,11 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:local="using:ArgoBooks"
-             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:dashboard="using:ArgoBooks.Controls.Dashboard"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:enums="using:ArgoBooks.Core.Enums"
-             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
              x:DataType="vm:DashboardPageViewModel">
@@ -17,54 +14,9 @@
         <vm:DashboardPageViewModel />
     </Design.DataContext>
 
+    <!-- Widget views are created in code-behind via WidgetFactory.CreateView() -->
+
     <UserControl.Styles>
-        <!-- Quick Action Button Style - Transparent with colored accent -->
-        <Style Selector="Button.quick-action">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12,14" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.quick-action:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-        <Style Selector="Button.quick-action:pressed">
-            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
-        </Style>
-
-        <!-- Compact Quick Action Button Style for responsive layout -->
-        <Style Selector="Button.quick-action-compact">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.15" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Button.quick-action-compact:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-            <Setter Property="RenderTransform" Value="scale(1.02)" />
-        </Style>
-        <Style Selector="Button.quick-action-compact:pressed">
-            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
-            <Setter Property="RenderTransform" Value="scale(0.98)" />
-        </Style>
-        <Style Selector="Button.quick-action-compact:disabled">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="Opacity" Value="0.45" />
-            <Setter Property="Cursor" Value="Arrow" />
-        </Style>
-
         <!-- Card Style -->
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -73,726 +25,272 @@
             <Setter Property="CornerRadius" Value="12" />
         </Style>
 
-        <!-- Clickable Table Row Button Style -->
-        <Style Selector="Button.table-row-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.table-row-button:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.table-row-button:pointerover Border.table-row">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
-        <!-- Table Row Style -->
-        <Style Selector="Border.table-row">
-            <Setter Property="Padding" Value="16,14" />
+        <!-- Edit toolbar button style -->
+        <Style Selector="Button.edit-toolbar-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
-        <Style Selector="Border.table-row:pointerover">
+        <Style Selector="Button.edit-toolbar-btn:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
-        <!-- Remove bottom border from last row -->
-        <Style Selector="ItemsControl > ContentPresenter:nth-last-child(1) Border.table-row">
+        <Style Selector="Button.edit-toolbar-btn:pressed">
+            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+        </Style>
+        <Style Selector="Button.edit-toolbar-btn.primary">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="Button.edit-toolbar-btn.primary:pointerover">
+            <Setter Property="Opacity" Value="0.9" />
+        </Style>
+        <!-- Settings popup size buttons -->
+        <Style Selector="Button.size-btn">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.size-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.size-btn:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+        <Style Selector="Button.size-btn-selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
         </Style>
     </UserControl.Styles>
 
     <!-- Main Content -->
     <Panel>
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  Background="{DynamicResource BackgroundSecondaryBrush}">
-        <StackPanel x:Name="ContentPanel" Margin="24" Spacing="24">
-            <!-- Page Header -->
-            <Grid ColumnDefinitions="*,Auto,Auto">
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="{loc:Loc Dashboard}"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="{Binding WelcomeSubtitle}"
-                               FontSize="14"
-                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                </StackPanel>
-
-                <!-- Chart Type Selector -->
-                <controls:ChartTypeSelector Grid.Column="1" VerticalAlignment="Top" Margin="0,0,16,0" />
-
-                <!-- Date Range Selector -->
-                <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
-            </Grid>
-
-            <!-- Statistics Cards Row -->
-            <controls:StatCardsRow>
-                <controls:StatCard Label="{loc:Loc 'Total Expenses'}"
-                                   Value="{Binding TotalExpenses}"
-                                   Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
-                                   IconColor="Danger"
-                                   ChangeValue="{Binding ExpenseChangeValue}"
-                                   ChangeText="{Binding ExpenseChangeText}"
-                                   ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                <controls:StatCard Label="{loc:Loc 'Total Revenue'}"
-                                   Value="{Binding TotalRevenue}"
-                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
-                                   IconColor="Success"
-                                   ChangeValue="{Binding RevenueChangeValue}"
-                                   ChangeText="{Binding RevenueChangeText}"
-                                   ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                <controls:StatCard Label="{loc:Loc 'Outstanding Invoices'}"
-                                   Value="{Binding OutstandingInvoices}"
-                                   Icon="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                                   IconColor="Warning"
-                                   SecondaryText="{Binding OutstandingInvoiceCount, StringFormat='{}{0} invoices pending'}" />
-                <controls:StatCard Label="{loc:Loc 'Active Rentals'}"
-                                   Value="{Binding ActiveRentals}"
-                                   Icon="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
-                                   IconColor="Info"
-                                   SecondaryText="{Binding OverdueRentalCount, StringFormat='{}{0} overdue'}" />
-            </controls:StatCardsRow>
-
-            <!-- Setup Checklist for new users -->
-            <controls:SetupChecklist DataContext="{Binding SetupChecklist}" />
-
-            <!-- Quick Actions Section -->
-            <Border x:Name="QuickActionsCard" Classes="card" Padding="20" IsVisible="{Binding HasVisibleQuickActions}">
-                <StackPanel>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0"
-                                   Text="{loc:Loc 'Quick Actions'}"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
+        <ScrollViewer x:Name="MainScrollViewer"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Background="{DynamicResource BackgroundSecondaryBrush}">
+            <StackPanel Margin="24" Spacing="24">
+                <!-- Page Header -->
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="{loc:Loc Dashboard}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <Button Grid.Column="1"
-                                Classes="icon-button"
-                                ToolTip.Tip="{loc:Loc 'Configure Quick Actions'}"
-                                Command="{Binding OpenQuickActionsSettingsCommand}">
-                            <PathIcon Data="{x:Static local:Icons.Settings}"
-                                      Width="16" Height="16"
+                        <TextBlock Text="{Binding WelcomeSubtitle}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Edit Dashboard Button (hidden in edit mode) -->
+                    <Button Grid.Column="1"
+                            Classes="edit-toolbar-btn"
+                            VerticalAlignment="Top"
+                            Margin="0,0,12,0"
+                            Command="{Binding LayoutViewModel.EnterEditModeCommand}"
+                            IsVisible="{Binding !LayoutViewModel.IsEditMode}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                      Width="14" Height="14"
                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </Button>
-                    </Grid>
+                            <TextBlock Text="{loc:Loc 'Edit Dashboard'}" FontSize="13" />
+                        </StackPanel>
+                    </Button>
 
-                    <!-- Responsive WrapPanel for Quick Actions (centered per row) -->
-                    <controls:CenteringWrapPanel x:Name="QuickActionsWrapPanel" Margin="0,8,0,0">
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewInvoiceCommand}"
-                                IsVisible="{Binding ShowNewInvoice}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.Invoices}"
-                                              Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Invoice'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+                    <!-- Chart Type Selector -->
+                    <controls:ChartTypeSelector Grid.Column="2" VerticalAlignment="Top" Margin="0,0,16,0" />
 
-                        <!-- New Expense -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding AddExpenseCommand}"
-                                IsVisible="{Binding ShowNewExpense}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource DangerIconBgBrush}">
-                                    <PathIcon Data="{x:Static icons:Icons.ArrowDown}"
-                                              Width="16" Height="16" Foreground="{DynamicResource DangerBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Expense'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
+                    <!-- Date Range Selector -->
+                    <controls:DateRangeSelector Grid.Column="3" VerticalAlignment="Top" />
+                </Grid>
 
-                        <!-- New Revenue -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding RecordSaleCommand}"
-                                IsVisible="{Binding ShowNewRevenue}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
-                                    <PathIcon Data="{x:Static icons:Icons.ArrowUp}"
-                                              Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Revenue'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- Scan Receipt -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding ScanReceiptCommand}"
-                                IsVisible="{Binding ShowScanReceipt}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.ScanReceipt}"
-                                              Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'Scan Receipt'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Customer -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewCustomerCommand}"
-                                IsVisible="{Binding ShowNewCustomer}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.NewCustomer}"
-                                              Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Customer'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Supplier -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewSupplierCommand}"
-                                IsVisible="{Binding ShowNewSupplier}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.Suppliers}"
-                                              Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Supplier'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Product -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewProductCommand}"
-                                IsVisible="{Binding ShowNewProduct}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.NewProduct}"
-                                              Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Product'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- Record Payment -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding RecordPaymentCommand}"
-                                IsVisible="{Binding ShowRecordPayment}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.Payments}"
-                                              Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'Record Payment'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Rental Item -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewRentalItemCommand}"
-                                IsVisible="{Binding ShowNewRentalItem}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.NewRentalItem}"
-                                              Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Rental Item'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Rental Record -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewRentalCommand}"
-                                IsVisible="{Binding ShowNewRentalRecord}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource InfoIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.RentalRecords}"
-                                              Width="16" Height="16" Foreground="{DynamicResource InfoBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Rental'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Category -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewCategoryCommand}"
-                                IsVisible="{Binding ShowNewCategory}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
-                                    <PathIcon Data="{x:Static icons:Icons.TriangleWarning}"
-                                              Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Category'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Department -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewDepartmentCommand}"
-                                IsVisible="{Binding ShowNewDepartment}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.Departments}"
-                                              Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Department'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Location -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewLocationCommand}"
-                                IsVisible="{Binding ShowNewLocation}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.Locations}"
-                                              Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'New Location'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Purchase Order -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewPurchaseOrderCommand}"
-                                IsVisible="{Binding ShowNewPurchaseOrder}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.NewPurchaseOrder}"
-                                              Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'Purchase Order'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <!-- New Stock Adjustment -->
-                        <Button Classes="quick-action-compact" Margin="6" Width="165"
-                                Command="{Binding NewStockAdjustmentCommand}"
-                                IsVisible="{Binding ShowNewStockAdjustment}">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
-                                    <PathIcon Data="{x:Static local:Icons.NewStockAdjustment}"
-                                              Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <TextBlock Text="{loc:Loc 'Stock Adjustment'}" FontSize="12" FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                    </controls:CenteringWrapPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- Charts Section -->
-            <Grid ColumnDefinitions="*,*" Height="320">
-                <!-- Profits Overview Chart -->
-                <Border Grid.Column="0"
-                        Classes="card"
-                        Padding="8"
-                        Margin="0,0,12,0">
-                    <Grid>
-                        <!-- Chart with data -->
-                        <lvc:CartesianChart
-                            x:Name="ProfitsChart"
-                            Tag="{x:Static enums:ChartDataType.TotalProfits}"
-                            Title="{Binding ProfitsChartTitleVisual}"
-                            Series="{Binding ProfitsChartSeries}"
-                            XAxes="{Binding ProfitsChartXAxes}"
-                            YAxes="{Binding ProfitsChartYAxes}"
-                            TooltipPosition="Top"
-                            ZoomMode="Both"
-                            IsVisible="{Binding HasProfitsChartData}"
-                            PointerPressed="OnChartPointerPressed"
-                            PointerReleased="OnChartPointerReleased" />
-
-                        <!-- Empty state placeholder -->
-                        <controls:ChartEmptyState
-                            IsVisible="{Binding !HasProfitsChartData}"
-                            DefaultMessage="{loc:Loc 'No profit data'}"
-                            ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
-                    </Grid>
-                </Border>
-
-                <!-- Expenses vs Revenue Chart -->
-                <Border Grid.Column="1"
-                        Classes="card"
-                        Padding="8"
-                        Margin="12,0,0,0">
-                    <Grid>
-                        <lvc:CartesianChart
-                            x:Name="ExpensesVsRevenueChart"
-                            Tag="{x:Static enums:ChartDataType.RevenueVsExpenses}"
-                            Title="{Binding RevenueVsExpensesChartTitle}"
-                            Series="{Binding RevenueVsExpensesSeries}"
-                            XAxes="{Binding RevenueVsExpensesXAxes}"
-                            YAxes="{Binding RevenueVsExpensesYAxes}"
-                            TooltipPosition="Top"
-                            ZoomMode="Both"
-                            IsVisible="{Binding HasRevenueVsExpensesData}"
-                            PointerPressed="OnChartPointerPressed"
-                            PointerReleased="OnChartPointerReleased" />
-                        <controls:ChartEmptyState
-                            IsVisible="{Binding !HasRevenueVsExpensesData}"
-                            DefaultMessage="{loc:Loc 'No expense/revenue data available'}"
-                            ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
-                    </Grid>
-                </Border>
-            </Grid>
-
-            <!-- Tables Section -->
-            <Grid ColumnDefinitions="*,*">
-                <!-- Recent Transactions Table -->
-                <Border Grid.Column="0"
-                        Classes="card"
-                        ClipToBounds="True"
-                        Margin="0,0,12,0">
-                    <Grid RowDefinitions="Auto,*">
-                        <!-- Header -->
-                        <Border Grid.Row="0"
-                                Padding="20,16"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
-                            <TextBlock Text="{loc:Loc 'Recent Transactions'}"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                        </Border>
-
-                        <!-- Table Content -->
-                        <ScrollViewer Grid.Row="1"
-                                      VerticalScrollBarVisibility="Auto"
-                                      MaxHeight="400"
-                                      IsVisible="{Binding HasRecentTransactions}">
-                            <ItemsControl ItemsSource="{Binding RecentTransactions}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:RecentTransactionItem">
-                                        <Button Classes="table-row-button"
-                                                Command="{Binding $parent[ItemsControl].((vm:DashboardPageViewModel)DataContext).NavigateToTransactionCommand}"
-                                                CommandParameter="{Binding}">
-                                            <Border Classes="table-row">
-                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                                <!-- Type Icon -->
-                                                <Border Grid.Column="0"
-                                                        Width="36" Height="36"
-                                                        CornerRadius="8"
-                                                        Margin="0,0,12,0"
-                                                        Classes.income="{Binding IsIncome}"
-                                                        Classes.expense="{Binding !IsIncome}">
-                                                    <Border.Styles>
-                                                        <Style Selector="Border.income">
-                                                            <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
-                                                        </Style>
-                                                        <Style Selector="Border.expense">
-                                                            <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
-                                                        </Style>
-                                                    </Border.Styles>
-                                                    <PathIcon Width="18" Height="18"
-                                                              Classes.income="{Binding IsIncome}"
-                                                              Classes.expense="{Binding !IsIncome}">
-                                                        <PathIcon.Styles>
-                                                            <Style Selector="PathIcon.income">
-                                                                <Setter Property="Data" Value="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" />
-                                                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                                                            </Style>
-                                                            <Style Selector="PathIcon.expense">
-                                                                <Setter Property="Data" Value="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.9959.9959 0 00-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35z" />
-                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                                            </Style>
-                                                        </PathIcon.Styles>
-                                                    </PathIcon>
-                                                </Border>
-
-                                                <!-- Description & Customer -->
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                    <TextBlock Text="{Binding Description}"
-                                                               FontSize="13"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="180" />
-                                                    <TextBlock Text="{Binding CustomerName}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="180" />
-                                                </StackPanel>
-
-                                                <!-- Amount -->
-                                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
-                                                    <TextBlock Text="{Binding Amount}"
-                                                               FontSize="13"
-                                                               FontWeight="SemiBold"
-                                                               HorizontalAlignment="Right"
-                                                               Classes.income="{Binding IsIncome}"
-                                                               Classes.expense="{Binding !IsIncome}">
-                                                        <TextBlock.Styles>
-                                                            <Style Selector="TextBlock.income">
-                                                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                                                            </Style>
-                                                            <Style Selector="TextBlock.expense">
-                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                                            </Style>
-                                                        </TextBlock.Styles>
-                                                    </TextBlock>
-                                                    <TextBlock Text="{Binding DateFormatted}"
-                                                               FontSize="11"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               HorizontalAlignment="Right" />
-                                                </StackPanel>
-
-                                                <!-- Status Badge (only show when there's a status) -->
-                                                <Border Grid.Column="3"
-                                                        CornerRadius="12"
-                                                        Padding="8,4"
-                                                        VerticalAlignment="Center"
-                                                        IsVisible="{Binding HasStatus}"
-                                                        Classes.success="{Binding IsStatusSuccess}"
-                                                        Classes.warning="{Binding IsStatusWarning}"
-                                                        Classes.error="{Binding IsStatusError}"
-                                                        Classes.info="{Binding IsStatusInfo}"
-                                                        Classes.neutral="{Binding IsStatusNeutral}">
-                                                    <Border.Styles>
-                                                        <Style Selector="Border.success">
-                                                            <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
-                                                        </Style>
-                                                        <Style Selector="Border.success TextBlock">
-                                                            <Setter Property="Foreground" Value="White" />
-                                                        </Style>
-                                                        <Style Selector="Border.warning">
-                                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
-                                                        </Style>
-                                                        <Style Selector="Border.warning TextBlock">
-                                                            <Setter Property="Foreground" Value="White" />
-                                                        </Style>
-                                                        <Style Selector="Border.error">
-                                                            <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
-                                                        </Style>
-                                                        <Style Selector="Border.error TextBlock">
-                                                            <Setter Property="Foreground" Value="White" />
-                                                        </Style>
-                                                        <Style Selector="Border.info">
-                                                            <Setter Property="Background" Value="{DynamicResource InfoBrush}" />
-                                                        </Style>
-                                                        <Style Selector="Border.info TextBlock">
-                                                            <Setter Property="Foreground" Value="White" />
-                                                        </Style>
-                                                        <Style Selector="Border.neutral">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-                                                        </Style>
-                                                        <Style Selector="Border.neutral TextBlock">
-                                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                                        </Style>
-                                                    </Border.Styles>
-                                                    <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
-                                                               FontSize="11"
-                                                               FontWeight="Medium" />
-                                                </Border>
-                                                    </Grid>
-                                                </Border>
-                                            </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-
-                        <!-- Empty State -->
-                        <Border Grid.Row="1"
-                                Padding="40"
-                                IsVisible="{Binding HasNoRecentTransactions}">
-                            <StackPanel HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="12">
-                                <PathIcon Data="{x:Static icons:Icons.DocumentNotes}"
-                                          Width="48" Height="48"
-                                          Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'No recent transactions'}"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'Record a sale or expense to see it here'}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
-
-                <!-- Active Rentals Table -->
-                <Border Grid.Column="1"
-                        Classes="card"
-                        Margin="12,0,0,0">
-                    <Grid RowDefinitions="Auto,*">
-                        <!-- Header -->
-                        <Border Grid.Row="0"
-                                Padding="20,16"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="{loc:Loc 'Active Rentals'}"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <Button Grid.Column="1"
-                                        Classes="ghost"
-                                        Command="{Binding NavigateToRentalsCommand}">
-                                    <TextBlock Text="{loc:Loc 'View All'}" FontSize="13" />
+                <!-- Edit Mode Toolbar -->
+                <Border Classes="card"
+                        Padding="12,8"
+                        IsVisible="{Binding LayoutViewModel.IsEditMode}">
+                    <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <!-- Left: Add Widget and Reset -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <Button Classes="edit-toolbar-btn"
+                                        Command="{Binding LayoutViewModel.OpenCatalogCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="+" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'Add Widget'}" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Button>
-                            </Grid>
-                        </Border>
-
-                        <!-- Table Content -->
-                        <ScrollViewer Grid.Row="1"
-                                      VerticalScrollBarVisibility="Auto"
-                                      MaxHeight="400"
-                                      IsVisible="{Binding HasActiveRentals}">
-                            <ItemsControl ItemsSource="{Binding ActiveRentalsList}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ActiveRentalItem">
-                                        <Button Classes="table-row-button"
-                                                Command="{Binding $parent[ItemsControl].((vm:DashboardPageViewModel)DataContext).NavigateToRentalCommand}"
-                                                CommandParameter="{Binding}">
-                                            <Border Classes="table-row">
-                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                                    <!-- Status Indicator -->
-                                                    <Border Grid.Column="0"
-                                                            Width="36" Height="36"
-                                                            CornerRadius="8"
-                                                            Margin="0,0,12,0"
-                                                            Classes.active="{Binding !IsOverdue}"
-                                                            Classes.overdue="{Binding IsOverdue}">
-                                                        <Border.Styles>
-                                                            <Style Selector="Border.active">
-                                                                <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
-                                                            </Style>
-                                                            <Style Selector="Border.overdue">
-                                                                <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
-                                                            </Style>
-                                                        </Border.Styles>
-                                                        <PathIcon Data="{x:Static local:Icons.Bookmark}"
-                                                                  Width="18" Height="18"
-                                                                  Classes.active="{Binding !IsOverdue}"
-                                                                  Classes.overdue="{Binding IsOverdue}">
-                                                            <PathIcon.Styles>
-                                                                <Style Selector="PathIcon.active">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
-                                                                </Style>
-                                                                <Style Selector="PathIcon.overdue">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                                                </Style>
-                                                            </PathIcon.Styles>
-                                                        </PathIcon>
-                                                    </Border>
-
-                                                    <!-- Item & Customer -->
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                        <TextBlock Text="{Binding ItemName}"
-                                                                   FontSize="13"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding CustomerName}"
-                                                                   FontSize="12"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
-
-                                                    <!-- Due Date & Days Remaining -->
-                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding DueDateFormatted}"
-                                                                   FontSize="13"
-                                                                   FontWeight="Medium"
-                                                                   HorizontalAlignment="Right"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                        <TextBlock Text="{Binding DaysRemainingText}"
-                                                                   FontSize="11"
-                                                                   HorizontalAlignment="Right"
-                                                                   Classes.active="{Binding !IsOverdue}"
-                                                                   Classes.overdue="{Binding IsOverdue}">
-                                                            <TextBlock.Styles>
-                                                                <Style Selector="TextBlock.active">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                                                </Style>
-                                                                <Style Selector="TextBlock.overdue">
-                                                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                                                </Style>
-                                                            </TextBlock.Styles>
-                                                        </TextBlock>
-                                                    </StackPanel>
-
-                                                    <!-- Rate -->
-                                                    <StackPanel Grid.Column="3" VerticalAlignment="Center" MinWidth="80" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding RateAmount}"
-                                                                   FontSize="13"
-                                                                   FontWeight="SemiBold"
-                                                                   HorizontalAlignment="Right"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                        <TextBlock Text="{Binding RateType}"
-                                                                   FontSize="11"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   HorizontalAlignment="Right" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-
-                        <!-- Empty State -->
-                        <Border Grid.Row="1"
-                                Padding="40"
-                                IsVisible="{Binding HasNoActiveRentals}">
-                            <StackPanel HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="12">
-                                <PathIcon Data="{x:Static local:Icons.Bookmark}"
-                                          Width="48" Height="48"
-                                          Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'No active rentals'}"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'Start a new rental to see it here'}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center" />
+                                <Button Classes="edit-toolbar-btn"
+                                        Command="{Binding LayoutViewModel.ResetToDefaultCommand}">
+                                    <TextBlock Text="{loc:Loc 'Reset to Default'}" />
+                                </Button>
                             </StackPanel>
+
+                            <!-- Right: Cancel and Save -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                        VerticalAlignment="Center">
+                                <Button Classes="edit-toolbar-btn"
+                                        Command="{Binding LayoutViewModel.CancelEditCommand}">
+                                    <TextBlock Text="{loc:Loc Cancel}" />
+                                </Button>
+                                <Button Classes="edit-toolbar-btn primary"
+                                        Command="{Binding LayoutViewModel.SaveEditCommand}">
+                                    <TextBlock Text="{loc:Loc Save}" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Sample company warning -->
+                        <Border IsVisible="{Binding IsSampleCompany}"
+                                Background="{DynamicResource WarningLightBrush}"
+                                CornerRadius="6"
+                                Padding="10,6"
+                                HorizontalAlignment="Center">
+                            <TextBlock Text="{loc:Loc 'This is a sample company. Dashboard changes will not persist.'}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource WarningTextBrush}" />
                         </Border>
-                    </Grid>
+                    </StackPanel>
                 </Border>
-            </Grid>
 
-            <!-- Bottom Spacing -->
-            <Border Height="24" />
-        </StackPanel>
-    </ScrollViewer>
+                <!-- Date Range Message -->
+                <Border Classes="card"
+                        Padding="16"
+                        IsVisible="{Binding ShowFinancialDateRangeMessage}">
+                    <controls:ChartEmptyState
+                        ShowDateRangeMessage="True" />
+                </Border>
 
-    <!-- Global Chart Context Menu (rendered on top of everything) -->
-    <controls:ChartContextMenu x:Name="ChartContextMenu"
-                               IsOpen="{Binding IsChartContextMenuOpen}"
-                               MenuX="{Binding ChartContextMenuX}"
-                               MenuY="{Binding ChartContextMenuY}"
-                               ShowResetZoom="{Binding ShowChartResetZoom}"
-                               ShowExportOptions="{Binding ShowChartExportOptions}"
-                               ShowGoogleSheetsExport="{Binding ShowGoogleSheetsExport}"
-                               SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
-                               ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
-                               ExportToExcelCommand="{Binding ExportToExcelCommand}"
-                               ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
-                               CloseCommand="{Binding HideChartContextMenuCommand}" />
+                <!-- Empty dashboard message — normal mode -->
+                <Border x:Name="EmptyDashboardMessage"
+                        IsVisible="False"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="40"
+                        HorizontalAlignment="Stretch">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                        <TextBlock Text="Your dashboard is empty"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Click 'Edit Dashboard' to add widgets and customize your view."
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   MaxWidth="400" />
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Spacing="8"
+                                    Margin="0,8,0,0">
+                            <Button Content="Edit Dashboard"
+                                    Classes="edit-toolbar-btn primary"
+                                    Command="{Binding LayoutViewModel.EnterEditModeCommand}" />
+                            <Button Content="Reset to Default"
+                                    Classes="edit-toolbar-btn"
+                                    Command="{Binding LayoutViewModel.ResetToDefaultCommand}" />
+                        </StackPanel>
 
+                    </StackPanel>
+                </Border>
+
+                <!-- Empty dashboard message — edit mode -->
+                <Border x:Name="EmptyDashboardEditMessage"
+                        IsVisible="False"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="40"
+                        HorizontalAlignment="Stretch"
+                        Opacity="0.7">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                        <TextBlock Text="No widgets on your dashboard"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Use 'Add Widget' above to get started, or click 'Reset to Default' to restore the default layout."
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"
+                                   MaxWidth="400" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Widget Rows (wrapped in Panel so the drag ghost can overlay) -->
+                <Panel IsVisible="{Binding LayoutViewModel.HasWidgets}">
+                    <StackPanel x:Name="RowsContainer"
+                                Spacing="12" />
+                </Panel>
+
+                <!-- Add Row button (edit mode only) -->
+                <Button Classes="edit-toolbar-btn"
+                        Command="{Binding LayoutViewModel.AddRowCommand}"
+                        IsVisible="{Binding LayoutViewModel.IsEditMode}"
+                        HorizontalAlignment="Left"
+                        Margin="0,4,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="+" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBlock Text="Add Row" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Bottom Spacing -->
+                <Border Height="24" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Global Widget Settings Popup (rendered on top of everything) -->
+        <Border x:Name="SettingsBackdrop"
+                Background="Transparent"
+                IsVisible="False"
+                ZIndex="200" />
+        <Border x:Name="SettingsPopup"
+                IsVisible="False"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12"
+                Width="280"
+                ZIndex="201"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                BoxShadow="0 4 16 0 #30000000">
+            <StackPanel x:Name="SettingsContent" Spacing="8" MaxHeight="400" />
+        </Border>
+
+        <!-- Global Chart Context Menu (rendered on top of everything) -->
+        <controls:ChartContextMenu x:Name="ChartContextMenu"
+                                   IsOpen="{Binding IsChartContextMenuOpen}"
+                                   MenuX="{Binding ChartContextMenuX}"
+                                   MenuY="{Binding ChartContextMenuY}"
+                                   ShowResetZoom="{Binding ShowChartResetZoom}"
+                                   ShowExportOptions="{Binding ShowChartExportOptions}"
+                                   ShowGoogleSheetsExport="{Binding ShowGoogleSheetsExport}"
+                                   SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
+                                   ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
+                                   ExportToExcelCommand="{Binding ExportToExcelCommand}"
+                                   ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
+                                   CloseCommand="{Binding HideChartContextMenuCommand}" />
     </Panel>
 </UserControl>

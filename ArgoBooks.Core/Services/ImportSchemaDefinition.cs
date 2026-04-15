@@ -275,15 +275,11 @@ public static class ImportSchemaDefinition
             [SpreadsheetSheetType.RentalInventory] =
             [
                 new("ID", "string", "Unique identifier (e.g., RNT-ITM-001)", Required: true, JsonName: "id"),
-                new("Name", "string", "Rental item name", Required: true, JsonName: "name"),
-                new("Total Qty", "int", "Total quantity owned", JsonName: "totalQuantity"),
-                new("Available", "int", "Currently available quantity", JsonName: "availableQuantity"),
-                new("Rented", "int", "Currently rented quantity", JsonName: "rentedQuantity"),
+                new("Inventory Item ID", "string", "Linked inventory item identifier", Required: true, JsonName: "inventoryItemId"),
                 new("Daily Rate", "decimal", "Daily rental rate", JsonName: "dailyRate"),
                 new("Weekly Rate", "decimal", "Weekly rental rate", JsonName: "weeklyRate"),
                 new("Monthly Rate", "decimal", "Monthly rental rate", JsonName: "monthlyRate"),
                 new("Deposit", "decimal", "Security deposit required", JsonName: "securityDeposit"),
-                new("Product ID", "string", "Associated product identifier", JsonName: "productId"),
                 new("Status", "enum:Active,Inactive", "Item status", JsonName: "status"),
             ],
 

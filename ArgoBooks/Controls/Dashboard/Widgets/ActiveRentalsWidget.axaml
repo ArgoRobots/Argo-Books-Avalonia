@@ -1,0 +1,189 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
+             xmlns:dvm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             x:Class="ArgoBooks.Controls.Dashboard.Widgets.ActiveRentalsWidget"
+             x:DataType="vm:ActiveRentalsWidgetViewModel">
+
+    <UserControl.Styles>
+        <!-- Clickable Table Row Button Style -->
+        <Style Selector="Button.table-row-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.table-row-button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.table-row-button:pointerover Border.table-row">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Table Row Style -->
+        <Style Selector="Border.table-row">
+            <Setter Property="Padding" Value="16,14" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+        <Style Selector="Border.table-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Remove bottom border from last row -->
+        <Style Selector="ItemsControl > ContentPresenter:nth-last-child(1) Border.table-row">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            ClipToBounds="True">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{loc:Loc 'Active Rentals'}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <Button Grid.Column="1"
+                            Classes="ghost"
+                            Command="{Binding NavigateToRentalsCommand}">
+                        <TextBlock Text="{loc:Loc 'View All'}" FontSize="13" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Table Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="400"
+                          IsVisible="{Binding HasActiveRentals}">
+                <ItemsControl ItemsSource="{Binding ActiveRentalsList}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="dvm:ActiveRentalItem">
+                            <Button Classes="table-row-button"
+                                    Command="{Binding $parent[ItemsControl].((vm:ActiveRentalsWidgetViewModel)DataContext).NavigateToRentalCommand}"
+                                    CommandParameter="{Binding}">
+                                <Border Classes="table-row">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                        <!-- Status Indicator -->
+                                        <Border Grid.Column="0"
+                                                Width="36" Height="36"
+                                                CornerRadius="8"
+                                                Margin="0,0,12,0"
+                                                Classes.active="{Binding !IsOverdue}"
+                                                Classes.overdue="{Binding IsOverdue}">
+                                            <Border.Styles>
+                                                <Style Selector="Border.active">
+                                                    <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
+                                                </Style>
+                                                <Style Selector="Border.overdue">
+                                                    <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+                                                </Style>
+                                            </Border.Styles>
+                                            <PathIcon Data="{x:Static local:Icons.Bookmark}"
+                                                      Width="18" Height="18"
+                                                      Classes.active="{Binding !IsOverdue}"
+                                                      Classes.overdue="{Binding IsOverdue}">
+                                                <PathIcon.Styles>
+                                                    <Style Selector="PathIcon.active">
+                                                        <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                                                    </Style>
+                                                    <Style Selector="PathIcon.overdue">
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                    </Style>
+                                                </PathIcon.Styles>
+                                            </PathIcon>
+                                        </Border>
+
+                                        <!-- Item & Customer -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding ItemName}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding CustomerName}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <!-- Due Date & Days Remaining -->
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
+                                            <TextBlock Text="{Binding DueDateFormatted}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding DaysRemainingText}"
+                                                       FontSize="11"
+                                                       HorizontalAlignment="Right"
+                                                       Classes.active="{Binding !IsOverdue}"
+                                                       Classes.overdue="{Binding IsOverdue}">
+                                                <TextBlock.Styles>
+                                                    <Style Selector="TextBlock.active">
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                    </Style>
+                                                    <Style Selector="TextBlock.overdue">
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                    </Style>
+                                                </TextBlock.Styles>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Rate -->
+                                        <StackPanel Grid.Column="3" VerticalAlignment="Center" MinWidth="80" HorizontalAlignment="Right">
+                                            <TextBlock Text="{Binding RateAmount}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding RateType}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                       HorizontalAlignment="Right" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Empty State -->
+            <Border Grid.Row="1"
+                    Padding="40"
+                    IsVisible="{Binding HasNoActiveRentals}">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                    <PathIcon Data="{x:Static local:Icons.Bookmark}"
+                              Width="48" Height="48"
+                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                    <TextBlock Text="{loc:Loc 'No active rentals'}"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{loc:Loc 'Start a new rental to see it here'}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

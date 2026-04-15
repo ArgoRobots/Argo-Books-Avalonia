@@ -5,6 +5,7 @@ using ArgoBooks.Core;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -247,6 +248,8 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events to refresh when items are saved
         if (App.StockLevelsModalsViewModel != null)
@@ -279,9 +282,25 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the items.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.StockLevels)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadItems();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.StockLevels && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadItems();
+        }
     }
 
     #endregion
@@ -381,14 +400,14 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         if (companyData == null)
             return;
 
-        var filtered = _allItems.ToList();
+        IEnumerable<InventoryItem> filtered = _allItems;
 
         // Apply tab filter
         filtered = SelectedTabIndex switch
         {
-            1 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.LowStock).ToList(),
-            2 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.OutOfStock).ToList(),
-            3 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.Overstock).ToList(),
+            1 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.LowStock),
+            2 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.OutOfStock),
+            3 => filtered.Where(i => i.CalculateStatus() == InventoryStatus.Overstock),
             _ => filtered
         };
 
@@ -426,7 +445,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 .Select(p => p.Id)
                 .ToHashSet();
 
-            filtered = filtered.Where(i => categoryProducts.Contains(i.ProductId)).ToList();
+            filtered = filtered.Where(i => categoryProducts.Contains(i.ProductId));
         }
 
         // Apply location filter
@@ -437,7 +456,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
             if (locationId != null)
             {
-                filtered = filtered.Where(i => i.LocationId == locationId).ToList();
+                filtered = filtered.Where(i => i.LocationId == locationId);
             }
         }
 
@@ -455,7 +474,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
             if (targetStatus.HasValue)
             {
-                filtered = filtered.Where(i => i.CalculateStatus() == targetStatus.Value).ToList();
+                filtered = filtered.Where(i => i.CalculateStatus() == targetStatus.Value);
             }
         }
 
@@ -487,7 +506,8 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 StatusText = GetStatusText(status),
                 StatusColor = GetStatusColor(status),
                 StatusBackground = GetStatusBackground(status),
-                LastUpdated = item.LastUpdated
+                LastUpdated = item.LastUpdated,
+                IsHighlighted = item.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -511,6 +531,9 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 },
                 i => i.ProductName);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -690,4 +713,7 @@ public partial class StockLevelDisplayItem : ObservableObject
 
     [ObservableProperty]
     private DateTime _lastUpdated;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

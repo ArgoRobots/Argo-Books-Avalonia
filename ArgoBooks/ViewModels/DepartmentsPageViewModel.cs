@@ -2,9 +2,9 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core;
-using ArgoBooks.Core.Data;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -234,6 +234,8 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to shared modal events to refresh data
         if (App.DepartmentModalsViewModel != null)
@@ -254,9 +256,25 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the departments.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Departments)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadDepartments();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Departments && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadDepartments();
+        }
     }
 
     #endregion
@@ -335,8 +353,14 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
                 .Select(x => x.Department);
         }
 
+        // Pre-build employee count lookup for O(1) access per department
+        var employeeCountByDept = companyData?.Employees
+            .Where(e => !string.IsNullOrEmpty(e.DepartmentId))
+            .GroupBy(e => e.DepartmentId!)
+            .ToDictionary(g => g.Key, g => g.Count());
+
         // Create display items with employee counts
-        var displayItems = departments.Select(dept => CreateDisplayItem(dept, companyData)).ToList();
+        var displayItems = departments.Select(dept => CreateDisplayItem(dept, employeeCountByDept)).ToList();
 
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
@@ -380,10 +404,10 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Creates a display item for a department.
     /// </summary>
-    private DepartmentDisplayItem CreateDisplayItem(Department department, CompanyData? companyData)
+    private DepartmentDisplayItem CreateDisplayItem(Department department, Dictionary<string, int>? employeeCountByDept)
     {
-        // Count employees in this department
-        var employeeCount = companyData?.Employees.Count(e => e.DepartmentId == department.Id) ?? 0;
+        // Look up employee count from pre-built dictionary
+        var employeeCount = employeeCountByDept?.GetValueOrDefault(department.Id) ?? 0;
 
         return new DepartmentDisplayItem
         {
@@ -435,7 +459,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Generate new ID
         companyData.IdCounters.Department++;
-        var newId = $"DEP-{companyData.IdCounters.Department:D3}";
+        var newId = $"DEPT-{companyData.IdCounters.Department:D3}";
 
         var newDepartment = new Department
         {

@@ -159,18 +159,19 @@ public class FileService(
             contentStream = await encryptionService.EncryptAsync(compressedStream, password, salt, iv);
         }
 
-        // Create footer
+        // Create footer — read settings once and share across footer fields
+        var cachedSettings = ReadSettingsFromDirectory(tempDirectory);
         var footer = new FileFooter
         {
-            Version = GetAppVersionFromDirectory(tempDirectory),
+            Version = GetAppVersionFromDirectory(tempDirectory, cachedSettings),
             IsEncrypted = !string.IsNullOrEmpty(password),
             Salt = salt,
             Iv = iv,
             PasswordHash = passwordHash,
-            CompanyName = GetCompanyNameFromDirectory(tempDirectory),
+            CompanyName = GetCompanyNameFromDirectory(tempDirectory, cachedSettings),
             Accountants = await GetAccountantNamesAsync(tempDirectory, cancellationToken),
             ModifiedAt = DateTime.UtcNow,
-            BiometricEnabled = GetBiometricEnabledFromDirectory(tempDirectory),
+            BiometricEnabled = GetBiometricEnabledFromDirectory(cachedSettings),
             LogoThumbnail = GenerateLogoThumbnail(tempDirectory)
         };
 
@@ -375,24 +376,34 @@ public class FileService(
         return tempPath;
     }
 
-    private string GetCompanyNameFromDirectory(string tempDirectory)
+    /// <summary>
+    /// Reads and deserializes appSettings.json once from the given directory.
+    /// Returns null if the file is missing or cannot be parsed.
+    /// </summary>
+    private CompanySettings? ReadSettingsFromDirectory(string tempDirectory)
     {
-        // First try to read the company name from settings (in case it was renamed)
         try
         {
             var settingsPath = FindFileInDirectory(tempDirectory, "appSettings.json");
             if (settingsPath != null && File.Exists(settingsPath))
             {
                 var json = File.ReadAllText(settingsPath);
-                var settings = JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
-                if (!string.IsNullOrEmpty(settings?.Company.Name))
-                    return settings.Company.Name;
+                return JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
             }
         }
         catch
         {
-            // Fall back to directory name
+            // Unreadable or malformed settings
         }
+
+        return null;
+    }
+
+    private string GetCompanyNameFromDirectory(string tempDirectory, CompanySettings? settings = null)
+    {
+        settings ??= ReadSettingsFromDirectory(tempDirectory);
+        if (!string.IsNullOrEmpty(settings?.Company.Name))
+            return settings.Company.Name;
 
         // Look for company subdirectory
         var subdirs = Directory.GetDirectories(tempDirectory);
@@ -402,45 +413,15 @@ public class FileService(
         return Path.GetFileName(tempDirectory);
     }
 
-    private bool GetBiometricEnabledFromDirectory(string tempDirectory)
+    private static bool GetBiometricEnabledFromDirectory(CompanySettings? settings)
     {
-        // Read the biometric enabled setting from the company settings
-        try
-        {
-            var settingsPath = FindFileInDirectory(tempDirectory, "appSettings.json");
-            if (settingsPath != null && File.Exists(settingsPath))
-            {
-                var json = File.ReadAllText(settingsPath);
-                var settings = JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
-                return settings?.Security.BiometricEnabled ?? false;
-            }
-        }
-        catch
-        {
-            // Default to false
-        }
-
-        return false;
+        return settings?.Security.BiometricEnabled ?? false;
     }
 
-    private string GetAppVersionFromDirectory(string tempDirectory)
+    private static string GetAppVersionFromDirectory(string tempDirectory, CompanySettings? settings = null)
     {
-        // Read the app version from the company settings
-        try
-        {
-            var settingsPath = FindFileInDirectory(tempDirectory, "appSettings.json");
-            if (settingsPath != null && File.Exists(settingsPath))
-            {
-                var json = File.ReadAllText(settingsPath);
-                var settings = JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
-                if (!string.IsNullOrEmpty(settings?.AppVersion))
-                    return settings.AppVersion;
-            }
-        }
-        catch
-        {
-            // Default to 1.0.0
-        }
+        if (!string.IsNullOrEmpty(settings?.AppVersion))
+            return settings.AppVersion;
 
         return "1.0.0";
     }

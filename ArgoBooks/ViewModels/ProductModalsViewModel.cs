@@ -49,10 +49,12 @@ public partial class ProductModalsViewModel : ViewModelBase
     /// Gets whether a Product is selected (not Service) - used for showing threshold inputs.
     /// </summary>
     public bool IsProductSelected => ModalItemType == "Product";
+    public string EditModalTitle => IsProductSelected ? "Edit Product".Translate() : "Edit Service".Translate();
 
     partial void OnModalItemTypeChanged(string value)
     {
         OnPropertyChanged(nameof(IsProductSelected));
+        OnPropertyChanged(nameof(EditModalTitle));
     }
 
     [ObservableProperty]
@@ -68,6 +70,9 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private SupplierOption? _modalSupplier;
+
+    [ObservableProperty]
+    private bool _modalTrackInventory;
 
     [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
@@ -127,6 +132,7 @@ public partial class ProductModalsViewModel : ViewModelBase
     private string _originalItemType = "Product";
     private string? _originalCategoryId;
     private string? _originalSupplierId;
+    private bool _originalTrackInventory;
     private string _originalReorderPoint = string.Empty;
     private string _originalOverstockThreshold = string.Empty;
     private string _originalUnitPrice = string.Empty;
@@ -156,6 +162,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         ModalItemType != _originalItemType ||
         ModalCategory?.Id != _originalCategoryId ||
         ModalSupplier?.Id != _originalSupplierId ||
+        ModalTrackInventory != _originalTrackInventory ||
         ModalReorderPoint != _originalReorderPoint ||
         ModalOverstockThreshold != _originalOverstockThreshold ||
         ModalUnitPrice != _originalUnitPrice ||
@@ -218,8 +225,7 @@ public partial class ProductModalsViewModel : ViewModelBase
     public event EventHandler? ProductDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
-    public event EventHandler? OpenCategoriesRequested;
-    public event EventHandler? OpenSuppliersRequested;
+
 
     #endregion
 
@@ -265,17 +271,32 @@ public partial class ProductModalsViewModel : ViewModelBase
     [RelayCommand]
     public void OpenCategoriesWithAddModal()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        OpenCategoriesRequested?.Invoke(this, EventArgs.Empty);
+        var categoryModals = App.CategoryModalsViewModel;
+        if (categoryModals == null) return;
+
+        var isExpense = IsExpensesTab;
+        void OnSaved(object? s, EventArgs e)
+        {
+            categoryModals.CategorySaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        categoryModals.CategorySaved += OnSaved;
+        categoryModals.OpenAddModal(isExpense);
     }
 
     [RelayCommand]
     public void OpenSuppliersWithAddModal()
     {
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        OpenSuppliersRequested?.Invoke(this, EventArgs.Empty);
+        var supplierModals = App.SupplierModalsViewModel;
+        if (supplierModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            supplierModals.SupplierSaved -= OnSaved;
+            UpdateDropdownOptions();
+        }
+        supplierModals.SupplierSaved += OnSaved;
+        supplierModals.OpenAddModal();
     }
 
     [RelayCommand]
@@ -312,7 +333,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
             CostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0,
-            TrackInventory = ModalItemType == "Product" && (reorderPoint > 0 || overstockThreshold > 0),
+            TrackInventory = ModalTrackInventory,
             ReorderPoint = reorderPoint,
             OverstockThreshold = overstockThreshold,
             Status = EntityStatus.Active,
@@ -384,6 +405,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             ModalSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == product.SupplierId);
         }
 
+        ModalTrackInventory = product.TrackInventory;
         ModalReorderPoint = product.ReorderPoint > 0 ? product.ReorderPoint.ToString() : string.Empty;
         ModalOverstockThreshold = product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : string.Empty;
 
@@ -393,6 +415,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         _originalItemType = ModalItemType;
         _originalCategoryId = ModalCategory?.Id;
         _originalSupplierId = ModalSupplier?.Id;
+        _originalTrackInventory = ModalTrackInventory;
         _originalReorderPoint = ModalReorderPoint;
         _originalOverstockThreshold = ModalOverstockThreshold;
         _originalUnitPrice = ModalUnitPrice;
@@ -462,7 +485,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
         var newReorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
         var newOverstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
-        var newTrackInventory = ModalItemType == "Product" && (newReorderPoint > 0 || newOverstockThreshold > 0);
+        var newTrackInventory = ModalTrackInventory;
 
         // Check if anything actually changed
         var hasChanges = oldName != newName ||
@@ -556,6 +579,34 @@ public partial class ProductModalsViewModel : ViewModelBase
         {
             if (item == null)
                 return;
+
+            // Check if product is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Revenues.Any(r => r.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Revenue".Translate());
+                if (cd.Expenses.Any(e => e.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Expense".Translate());
+                if (cd.Invoices.Any(i => i.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Invoice".Translate());
+                if (cd.Inventory.Any(i => i.ProductId == item.Id))
+                    usages.Add("Inventory".Translate());
+                if (cd.PurchaseOrders.Any(po => po.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Purchase Order".Translate());
+                if (cd.Returns.Any(r => r.Items.Any(ri => ri.ProductId == item.Id)))
+                    usages.Add("Return".Translate());
+                if (cd.LostDamaged.Any(ld => ld.ProductId == item.Id))
+                    usages.Add("Lost/Damaged".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This product cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
 
             var dialog = App.ConfirmationDialog;
             if (dialog == null)
@@ -719,6 +770,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         ModalCategory = null;
         ModalCategoryId = null;
         ModalSupplier = null;
+        ModalTrackInventory = false;
         ModalReorderPoint = string.Empty;
         ModalOverstockThreshold = string.Empty;
         ModalUnitPrice = string.Empty;

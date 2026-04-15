@@ -587,6 +587,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             }
         }
 
+        companyData.Revenues.Add(revenue);
+
+        // Adjust inventory for tracked products
+        var inventoryResults = AdjustInventoryForLineItems(companyData, modelLineItems, revenueId, isExpense: false);
+
         var capturedReceipt = receipt;
         var action = new DelegateAction(
             $"Add revenue {revenueId}",
@@ -595,6 +600,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 companyData.Revenues.Remove(revenue);
                 if (capturedReceipt != null)
                     companyData.Receipts.Remove(capturedReceipt);
+                RevertInventoryAdjustments(companyData, inventoryResults);
                 RaiseTransactionSaved();
             },
             () =>
@@ -602,13 +608,15 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 companyData.Revenues.Add(revenue);
                 if (capturedReceipt != null)
                     companyData.Receipts.Add(capturedReceipt);
+                inventoryResults = AdjustInventoryForLineItems(companyData, modelLineItems, revenueId, isExpense: false);
                 RaiseTransactionSaved();
             });
 
-        companyData.Revenues.Add(revenue);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
+
+        ShowInventoryNotifications(inventoryResults, isExpense: false);
 
         // Mark the setup checklist item as complete
         TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.RecordRevenue);
@@ -693,6 +701,9 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             }
         }
 
+        // Adjust inventory with net diff (single adjustment per product)
+        var editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, revenue.Id, isExpense: false);
+
         var capturedNewReceipt = newReceipt;
         var action = new DelegateAction(
             $"Edit revenue {EditingTransactionId}",
@@ -701,6 +712,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 RestoreTransactionState(revenue, original);
                 if (capturedNewReceipt != null)
                     companyData.Receipts.Remove(capturedNewReceipt);
+                RevertInventoryAdjustments(companyData, editResults);
                 RaiseTransactionSaved();
             },
             () =>
@@ -726,12 +738,15 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                     revenue.ReceiptId = capturedNewReceipt.Id;
                     companyData.Receipts.Add(capturedNewReceipt);
                 }
+                editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, revenue.Id, isExpense: false);
                 RaiseTransactionSaved();
             });
 
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
+
+        ShowEditInventoryNotifications(editResults);
     }
 
     private Receipt? CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string supplier)
@@ -830,7 +845,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     #region Navigation Aliases
 
     [RelayCommand]
-    private void NavigateToCreateCustomer() => NavigateToCreateCounterparty();
+    private void OpenCreateCustomer() => OpenCreateCounterparty();
 
     #endregion
 }

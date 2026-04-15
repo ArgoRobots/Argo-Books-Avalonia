@@ -4,6 +4,7 @@ using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -194,6 +195,8 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events
         if (App.LostDamagedModalsViewModel != null)
@@ -230,9 +233,25 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         LoadItems();
     }
 
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.LostDamaged)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadItems();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.LostDamaged && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadItems();
+        }
     }
 
     #endregion
@@ -270,7 +289,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     private void FilterItems()
     {
-        var filtered = _allItems.ToList();
+        IEnumerable<LostDamaged> filtered = _allItems;
 
         // Get filter values from modals view model
         var modals = App.LostDamagedModalsViewModel;
@@ -287,7 +306,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
                 item.Id.ToLowerInvariant().Contains(query) ||
                 GetProductName(item.ProductId).ToLowerInvariant().Contains(query) ||
                 item.Notes.ToLowerInvariant().Contains(query)
-            ).ToList();
+            );
         }
 
         // Apply type filter
@@ -297,11 +316,11 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             {
                 "Lost" => filtered.Where(item =>
                     item.Reason == LostDamagedReason.Lost ||
-                    item.Reason == LostDamagedReason.Stolen).ToList(),
+                    item.Reason == LostDamagedReason.Stolen),
                 "Damaged" => filtered.Where(item =>
                     item.Reason == LostDamagedReason.Damaged ||
                     item.Reason == LostDamagedReason.Expired ||
-                    item.Reason == LostDamagedReason.Other).ToList(),
+                    item.Reason == LostDamagedReason.Other),
                 _ => filtered
             };
         }
@@ -310,21 +329,21 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         if (filterReason != "All")
         {
             var reason = Enum.TryParse<LostDamagedReason>(filterReason, out var r) ? r : LostDamagedReason.Other;
-            filtered = filtered.Where(item => item.Reason == reason).ToList();
+            filtered = filtered.Where(item => item.Reason == reason);
         }
 
         // Apply date filter
         if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(item => item.DateDiscovered >= filterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(item => item.DateDiscovered >= filterDateFrom.Value.DateTime);
         }
         if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(item => item.DateDiscovered <= filterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(item => item.DateDiscovered <= filterDateTo.Value.DateTime);
         }
 
         // Sort by date descending (newest first)
-        filtered = filtered.OrderByDescending(item => item.DateDiscovered).ToList();
+        filtered = filtered.OrderByDescending(item => item.DateDiscovered);
 
         // Create display items
         var displayItems = filtered.Select(CreateDisplayItem).ToList();

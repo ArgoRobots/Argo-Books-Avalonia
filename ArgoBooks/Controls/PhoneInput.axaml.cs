@@ -170,9 +170,9 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
                 field = value;
                 RaisePropertyChanged();
 
-                // Refresh the list when opening
                 if (value)
                 {
+                    // Refresh the list when opening
                     SelectedIndex = 0;
                     UpdateFilteredCountries();
                 }
@@ -228,6 +228,38 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     #endregion
 
     #region Static Data
+
+    /// <summary>
+    /// Checks if a full phone number string ("{dialCode} {digits}") is complete
+    /// based on its country's expected format.
+    /// Returns true if empty (optional field) or has the correct number of digits.
+    /// </summary>
+    public static bool IsFullPhoneComplete(string fullPhone)
+    {
+        if (string.IsNullOrWhiteSpace(fullPhone))
+            return true;
+
+        var parts = fullPhone.Split(' ', 2);
+        if (parts.Length < 2)
+            return true;
+
+        var dialCode = parts[0];
+        var numberPart = parts[1];
+        var digits = new string(numberPart.Where(char.IsDigit).ToArray());
+
+        if (string.IsNullOrEmpty(digits))
+            return true;
+
+        var country = AllDialCodes
+            .OrderByDescending(c => c.DialCode.Length)
+            .FirstOrDefault(c => dialCode.Equals(c.DialCode, StringComparison.OrdinalIgnoreCase));
+
+        if (country == null)
+            return true;
+
+        var expectedDigits = country.PhoneFormat.Count(c => c == 'X');
+        return digits.Length == expectedDigits;
+    }
 
     /// <summary>
     /// Complete list of country dial codes with phone format patterns.
@@ -401,7 +433,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
                 }
             }
 
-            _phoneNumberBox.Watermark = result.ToString();
+            _phoneNumberBox.PlaceholderText = result.ToString();
         }
     }
 
@@ -456,7 +488,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         _isFormattingPhone = false;
     }
 
-    private void OnCountrySearchBoxGotFocus(object? sender, GotFocusEventArgs e)
+    private void OnCountrySearchBoxGotFocus(object? sender, FocusChangedEventArgs e)
     {
         IsCountryDropdownOpen = true;
         _countrySearchBox?.SelectAll();

@@ -17,6 +17,7 @@ public static class InvoiceHtmlTemplates
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>Invoice {{InvoiceNumber}}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: {{FontFamily}}; background-color: #f3f4f6;">
@@ -246,6 +247,7 @@ public static class InvoiceHtmlTemplates
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>Invoice {{InvoiceNumber}}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: {{FontFamily}}; background-color: #f0f4f8;">
@@ -482,6 +484,7 @@ public static class InvoiceHtmlTemplates
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>Invoice {{InvoiceNumber}}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: {{FontFamily}}; background-color: #ffffff;">
@@ -660,6 +663,7 @@ public static class InvoiceHtmlTemplates
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>Invoice {{InvoiceNumber}}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: {{FontFamily}}; background-color: #f8f9fa;">
@@ -883,6 +887,7 @@ public static class InvoiceHtmlTemplates
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>{{HeaderText}} {{InvoiceNumber}}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: {{FontFamily}}; font-weight: 600; background-color: #f5f5f5; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 40px 20px;">

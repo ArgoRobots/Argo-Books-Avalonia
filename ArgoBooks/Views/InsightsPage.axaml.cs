@@ -18,11 +18,20 @@ public partial class InsightsPage : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private InsightsPageViewModel? _previousViewModel;
+
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
+        if (_previousViewModel != null)
+        {
+            _previousViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _previousViewModel = null;
+        }
+
         if (DataContext is InsightsPageViewModel vm)
         {
             vm.PropertyChanged += OnViewModelPropertyChanged;
+            _previousViewModel = vm;
             UpdateBlur(vm.ShowTeaser);
         }
     }

@@ -64,11 +64,11 @@ public class EmojiPickerViewModelTests
     }
 
     [Fact]
-    public void Constructor_FirstCategoryIsSmileys()
+    public void Constructor_FirstCategoryIsOffice()
     {
         var firstCategory = _viewModel.Tabs.First(t => !t.IsSpecial);
 
-        Assert.Equal("Smileys", firstCategory.Name);
+        Assert.Equal("Office", firstCategory.Name);
     }
 
     #endregion

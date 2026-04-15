@@ -135,9 +135,6 @@ public partial class HeaderViewModel : ViewModelBase
     private string? _userRole;
 
     [ObservableProperty]
-    private bool _showUserName;
-
-    [ObservableProperty]
     private bool _showUserInitials;
 
     [ObservableProperty]
@@ -314,27 +311,6 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     #region Commands
-
-    /// <summary>
-    /// Performs a global search.
-    /// </summary>
-    [RelayCommand]
-    private void Search()
-    {
-        if (string.IsNullOrWhiteSpace(SearchQuery))
-            return;
-
-        _navigationService?.NavigateTo("Search", new Dictionary<string, object?> { { "query", SearchQuery } });
-    }
-
-    /// <summary>
-    /// Clears the search query.
-    /// </summary>
-    [RelayCommand]
-    private void ClearSearch()
-    {
-        SearchQuery = null;
-    }
 
     /// <summary>
     /// Opens the quick actions panel.
@@ -636,7 +612,7 @@ public partial class HeaderViewModel : ViewModelBase
     /// Shows the appropriate feedback when save is clicked.
     /// Shows "Saved" if there were changes, or "No changes found" if there were none.
     /// </summary>
-    public async void ShowSavedFeedback()
+    public async void ShowSavedFeedback(bool forceSaved = false)
     {
         try
         {
@@ -648,9 +624,9 @@ public partial class HeaderViewModel : ViewModelBase
             var cts = new CancellationTokenSource();
             _savedFeedbackCts = cts;
 
-            if (HasUnsavedChanges)
+            if (HasUnsavedChanges || forceSaved)
             {
-                // There were changes - show "Saved"
+                // There were changes (or Save As) - show "Saved"
                 ShowNoChangesIndicator = false;
                 HasUnsavedChanges = false;
                 ShowSavedIndicator = true;
@@ -681,6 +657,10 @@ public partial class HeaderViewModel : ViewModelBase
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "ShowSavedFeedback");
+        }
+        finally
+        {
+            _savedFeedbackCts = null;
         }
     }
 

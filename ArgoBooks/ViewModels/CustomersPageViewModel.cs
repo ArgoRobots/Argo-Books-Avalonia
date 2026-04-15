@@ -5,6 +5,7 @@ using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -258,6 +259,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to customer modal events to refresh data
         if (App.CustomerModalsViewModel != null)
@@ -272,9 +275,25 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the customers.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Customers)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadCustomers();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Customers && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadCustomers();
+        }
     }
 
     /// <summary>
@@ -370,7 +389,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void FilterCustomers()
     {
-        var filtered = _allCustomers.ToList();
+        IEnumerable<Customer> filtered = _allCustomers;
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -400,17 +419,17 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 "Banned" => EntityStatus.Archived,
                 _ => EntityStatus.Active
             };
-            filtered = filtered.Where(c => c.Status == status).ToList();
+            filtered = filtered.Where(c => c.Status == status);
         }
 
         // Apply last rental date filter
         if (FilterLastRentalFrom.HasValue)
         {
-            filtered = filtered.Where(c => c.LastTransactionDate >= FilterLastRentalFrom.Value).ToList();
+            filtered = filtered.Where(c => c.LastTransactionDate >= FilterLastRentalFrom.Value);
         }
         if (FilterLastRentalTo.HasValue)
         {
-            filtered = filtered.Where(c => c.LastTransactionDate <= FilterLastRentalTo.Value).ToList();
+            filtered = filtered.Where(c => c.LastTransactionDate <= FilterLastRentalTo.Value);
         }
 
         // Create display items
@@ -435,7 +454,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 Address = addressString,
                 Country = string.IsNullOrWhiteSpace(customer.Address.Country) ? "-" : customer.Address.Country,
                 LastRental = customer.LastTransactionDate,
-                Status = customer.Status
+                Status = customer.Status,
+                IsHighlighted = customer.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -455,6 +475,9 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 },
                 c => c.Name);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -937,6 +960,9 @@ public partial class CustomerDisplayItem : ObservableObject
     /// Gets the formatted last rental date.
     /// </summary>
     public string LastRentalFormatted => LastRental?.ToString("MMM d, yyyy") ?? "-";
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>

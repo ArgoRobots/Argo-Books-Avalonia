@@ -92,12 +92,6 @@ public class Product
     public string? SupplierId { get; set; }
 
     /// <summary>
-    /// URL or path to product image.
-    /// </summary>
-    [JsonPropertyName("imageUrl")]
-    public string? ImageUrl { get; set; }
-
-    /// <summary>
     /// Product status.
     /// </summary>
     [JsonPropertyName("status")]

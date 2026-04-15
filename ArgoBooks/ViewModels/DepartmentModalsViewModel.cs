@@ -212,6 +212,22 @@ public partial class DepartmentModalsViewModel : ViewModelBase
         {
             if (item == null) return;
 
+            // Check if department is in use
+            var cd = App.CompanyManager?.CompanyData;
+            if (cd != null)
+            {
+                var usages = new List<string>();
+                if (cd.Employees.Any(e => e.DepartmentId == item.Id))
+                    usages.Add("Employee".Translate());
+                if (usages.Count > 0)
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "This department cannot be deleted because it is referenced by one or more: {0}.".TranslateFormat(string.Join(", ", usages)));
+                    return;
+                }
+            }
+
             var dialog = App.ConfirmationDialog;
             if (dialog == null) return;
 

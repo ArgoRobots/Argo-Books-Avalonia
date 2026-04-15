@@ -6,6 +6,7 @@ using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -202,6 +203,8 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to modal events to refresh when orders are saved
         if (App.PurchaseOrdersModalsViewModel != null)
@@ -235,9 +238,25 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the orders.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.PurchaseOrders)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadOrders();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.PurchaseOrders && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadOrders();
+        }
     }
 
     /// <summary>
@@ -306,7 +325,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         var suppliers = companyData?.Suppliers ?? [];
 
-        var filtered = _allOrders.ToList();
+        IEnumerable<PurchaseOrder> filtered = _allOrders;
 
         // Apply tab filter
         if (ActiveTab != "All")
@@ -322,7 +341,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
             if (tabStatus.Length > 0)
             {
-                filtered = filtered.Where(o => tabStatus.Contains(o.Status)).ToList();
+                filtered = filtered.Where(o => tabStatus.Contains(o.Status));
             }
         }
 
@@ -336,11 +355,11 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // Apply date range filter
         if (startDate.HasValue)
         {
-            filtered = filtered.Where(o => o.OrderDate.Date >= startDate.Value.Date).ToList();
+            filtered = filtered.Where(o => o.OrderDate.Date >= startDate.Value.Date);
         }
         if (endDate.HasValue)
         {
-            filtered = filtered.Where(o => o.OrderDate.Date <= endDate.Value.Date).ToList();
+            filtered = filtered.Where(o => o.OrderDate.Date <= endDate.Value.Date);
         }
 
         // Apply supplier filter
@@ -350,7 +369,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
             {
                 var supplier = suppliers.FirstOrDefault(s => s.Id == o.SupplierId);
                 return supplier?.Name == filterSupplier;
-            }).ToList();
+            });
         }
 
         // Apply status filter
@@ -360,7 +379,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
             if (statusEnum.HasValue)
             {
-                filtered = filtered.Where(o => o.Status == statusEnum.Value).ToList();
+                filtered = filtered.Where(o => o.Status == statusEnum.Value);
             }
         }
 
@@ -411,7 +430,8 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 ExpectedDisplay = order.ExpectedDeliveryDate.ToString("MMM dd, yyyy"),
                 Notes = order.Notes,
                 CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt
+                UpdatedAt = order.UpdatedAt,
+                IsHighlighted = order.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -433,6 +453,9 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 },
                 o => o.OrderDate);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -715,4 +738,7 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// Whether the order can be edited.
     /// </summary>
     public bool CanEdit => Status == PurchaseOrderStatus.Draft || Status == PurchaseOrderStatus.Pending;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

@@ -53,7 +53,7 @@
                 <TextBox x:Name="CategorySearchBox"
                          Grid.Column="0"
                          Text="{Binding #Root.SearchText, Mode=TwoWay}"
-                         Watermark="{loc:Loc 'Search categories...'}"
+                         PlaceholderText="{loc:Loc 'Search categories...'}"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="12,10"

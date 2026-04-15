@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -61,10 +62,13 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private bool _showSupplierColumn = ColumnVisibilityHelper.Load("Products", "Supplier", true);
 
     [ObservableProperty]
-    private bool _showReorderColumn = ColumnVisibilityHelper.Load("Products", "Reorder", true);
+    private bool _showReorderColumn = ColumnVisibilityHelper.Load("Products", "Reorder", false);
 
     [ObservableProperty]
-    private bool _showOverstockColumn = ColumnVisibilityHelper.Load("Products", "Overstock", true);
+    private bool _showOverstockColumn = ColumnVisibilityHelper.Load("Products", "Overstock", false);
+
+    [ObservableProperty]
+    private bool _showTrackInventoryColumn = ColumnVisibilityHelper.Load("Products", "TrackInventory", false);
 
     partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Products", "Name", value); }
     partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Products", "Type", value); }
@@ -73,6 +77,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("Products", "Supplier", value); }
     partial void OnShowReorderColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reorder", value); ColumnVisibilityHelper.Save("Products", "Reorder", value); }
     partial void OnShowOverstockColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Overstock", value); ColumnVisibilityHelper.Save("Products", "Overstock", value); }
+    partial void OnShowTrackInventoryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("TrackInventory", value); ColumnVisibilityHelper.Save("Products", "TrackInventory", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -96,8 +101,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         ShowDescriptionColumn = true;
         ShowCategoryColumn = true;
         ShowSupplierColumn = true;
-        ShowReorderColumn = true;
-        ShowOverstockColumn = true;
+        ShowReorderColumn = false;
+        ShowOverstockColumn = false;
+        ShowTrackInventoryColumn = false;
     }
 
     #endregion
@@ -315,6 +321,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private SupplierOption? _modalSupplier;
 
     [ObservableProperty]
+    private bool _modalTrackInventory;
+
+    [ObservableProperty]
     private string _modalReorderPoint = string.Empty;
 
     [ObservableProperty]
@@ -370,6 +379,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += OnNavigated;
 
         // Subscribe to product modal events to refresh data
         if (App.ProductModalsViewModel != null)
@@ -378,8 +389,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             App.ProductModalsViewModel.ProductDeleted += OnProductDeleted;
             App.ProductModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ProductModalsViewModel.FiltersCleared += OnFiltersCleared;
-            App.ProductModalsViewModel.OpenCategoriesRequested += OnOpenCategoriesRequested;
-            App.ProductModalsViewModel.OpenSuppliersRequested += OnOpenSuppliersRequested;
         }
 
         // Subscribe to plan status changes so we update when user upgrades
@@ -397,9 +406,25 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Handles undo/redo state changes by refreshing the products.
     /// </summary>
+    private bool _needsRefresh;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        if (App.NavigationService?.CurrentPageName != PageNames.Products)
+        {
+            _needsRefresh = true;
+            return;
+        }
         LoadProducts();
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.Products && _needsRefresh)
+        {
+            _needsRefresh = false;
+            LoadProducts();
+        }
     }
 
     private void OnProductSaved(object? sender, EventArgs e)
@@ -433,16 +458,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         SearchQuery = null;
         CurrentPage = 1;
         FilterProducts();
-    }
-
-    private void OnOpenCategoriesRequested(object? sender, EventArgs e)
-    {
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", SelectedTabIndex } });
-    }
-
-    private void OnOpenSuppliersRequested(object? sender, EventArgs e)
-    {
-        App.NavigationService?.NavigateTo("Suppliers", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
     #endregion
@@ -567,9 +582,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             .ToHashSet();
 
         // Filter products by category type
-        var filtered = _allProducts
-            .Where(p => string.IsNullOrEmpty(p.CategoryId) || categoryIds.Contains(p.CategoryId))
-            .ToList();
+        IEnumerable<Product> filtered = _allProducts
+            .Where(p => string.IsNullOrEmpty(p.CategoryId) || categoryIds.Contains(p.CategoryId));
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -597,8 +611,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 .ToHashSet();
 
             filtered = filtered
-                .Where(p => !string.IsNullOrEmpty(p.CategoryId) && itemTypeCategories.Contains(p.CategoryId))
-                .ToList();
+                .Where(p => !string.IsNullOrEmpty(p.CategoryId) && itemTypeCategories.Contains(p.CategoryId));
         }
 
         // Apply category filter
@@ -607,7 +620,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             var categoryOption = AvailableCategories.FirstOrDefault(c => c.Name == FilterCategory);
             if (categoryOption?.Id != null)
             {
-                filtered = filtered.Where(p => p.CategoryId == categoryOption.Id).ToList();
+                filtered = filtered.Where(p => p.CategoryId == categoryOption.Id);
             }
         }
 
@@ -617,7 +630,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             var supplierOption = AvailableSuppliers.FirstOrDefault(s => s.Name == FilterSupplier);
             if (supplierOption?.Id != null)
             {
-                filtered = filtered.Where(p => p.SupplierId == supplierOption.Id).ToList();
+                filtered = filtered.Where(p => p.SupplierId == supplierOption.Id);
             }
         }
 
@@ -640,7 +653,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 OverstockThreshold = product.TrackInventory && product.OverstockThreshold > 0 ? product.OverstockThreshold.ToString() : "-",
                 UnitPrice = product.UnitPrice,
                 CostPrice = product.CostPrice,
-                TrackInventory = product.TrackInventory
+                TrackInventory = product.TrackInventory,
+                IsHighlighted = product.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -660,6 +674,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 },
                 p => p.Name);
         }
+
+        // Navigate to highlighted item if set
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -752,7 +769,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
             CostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0,
-            TrackInventory = ModalItemType == "Product" && (reorderPoint > 0 || overstockThreshold > 0),
+            TrackInventory = ModalTrackInventory,
             ReorderPoint = reorderPoint,
             OverstockThreshold = overstockThreshold,
             Status = EntityStatus.Active,
@@ -844,7 +861,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
         var newReorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;
         var newOverstockThreshold = int.TryParse(ModalOverstockThreshold, out var ot) ? ot : 0;
-        var newTrackInventory = ModalItemType == "Product" && (newReorderPoint > 0 || newOverstockThreshold > 0);
+        var newTrackInventory = ModalTrackInventory;
 
         // Update the product
         var productToEdit = _editingProduct;
@@ -1135,6 +1152,9 @@ public partial class ProductDisplayItem : ObservableObject
     /// CSS-like badge class for item type.
     /// </summary>
     public string TypeBadgeClass => ItemType == "Product" ? "info" : "secondary";
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }
 
 /// <summary>
