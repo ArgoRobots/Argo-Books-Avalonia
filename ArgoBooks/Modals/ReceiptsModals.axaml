@@ -2275,6 +2275,7 @@
                                                             HorizontalAlignment="Right"
                                                             VerticalAlignment="Top"
                                                             Margin="0,-2,-2,0"
+                                                            ZIndex="1"
                                                             IsHitTestVisible="False">
                                                         <PathIcon Data="{x:Static icons:Icons.Check}"
                                                                   Width="10" Height="10"
@@ -2290,6 +2291,7 @@
                                                             HorizontalAlignment="Right"
                                                             VerticalAlignment="Top"
                                                             Margin="0,-2,-2,0"
+                                                            ZIndex="1"
                                                             IsHitTestVisible="False">
                                                         <PathIcon Data="{x:Static icons:Icons.Warning}"
                                                                   Width="10" Height="10"
@@ -2305,6 +2307,7 @@
                                                             HorizontalAlignment="Right"
                                                             VerticalAlignment="Top"
                                                             Margin="0,-2,-2,0"
+                                                            ZIndex="1"
                                                             IsHitTestVisible="False">
                                                         <PathIcon Data="{x:Static icons:Icons.ArrowForward}"
                                                                   Width="10" Height="10"
