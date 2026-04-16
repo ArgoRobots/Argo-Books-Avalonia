@@ -57,10 +57,10 @@ public partial class InvoicePreviewControl : UserControl
 
     /// <summary>
     /// Whether the current platform supports inline WebView embedding.
-    /// NativeWebView works inline on Windows and macOS but not on Linux.
+    /// Avalonia 12 NativeWebView supports Windows (WebView2), macOS (WKWebView), and Linux (WebKitGTK).
     /// </summary>
     private static bool PlatformSupportsInlineWebView =>
-        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
     public InvoicePreviewControl()
     {

@@ -64,7 +64,7 @@ public class FileFooter
     public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Whether biometric authentication (Windows Hello) is enabled for this file.
+    /// Whether biometric authentication is enabled for this file.
     /// Stored in footer so it can be read before decryption.
     /// </summary>
     [JsonPropertyName("biometricEnabled")]

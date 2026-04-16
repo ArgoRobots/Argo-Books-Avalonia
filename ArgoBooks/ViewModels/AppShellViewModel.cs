@@ -837,8 +837,7 @@ public partial class AppShellViewModel : ViewModelBase
                     ImportModalViewModel.OpenCommand.Execute(null);
                     break;
                 case QuickActionName.OpenScanModal:
-                    // Request file picker from view - can't open scan modal without a file
-                    OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
+                    App.ReceiptsModalsViewModel?.OpenBulkDropZone();
                     break;
                 case QuickActionName.OpenEditCompany:
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);

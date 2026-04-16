@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Data;
 
 namespace ArgoBooks.Services;
@@ -81,9 +82,8 @@ public partial class LanguageService
     /// </summary>
     private LanguageService()
     {
-        // Set up cache directory in AppData
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        _cacheDirectory = Path.Combine(appData, "ArgoBooks", "Languages");
+        _cacheDirectory = Path.Combine(
+            PlatformServiceFactory.GetPlatformService().GetCachePath(), "Languages");
 
         // Ensure directory exists
         Directory.CreateDirectory(_cacheDirectory);

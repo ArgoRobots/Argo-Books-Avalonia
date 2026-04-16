@@ -3,6 +3,7 @@ using System.Diagnostics;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
@@ -237,7 +238,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _hasPremium; // Whether user has Premium plan
 
     [ObservableProperty]
-    private bool _windowsHelloEnabled;
+    private bool _biometricLoginEnabled;
 
     [ObservableProperty]
     private string _selectedAutoLock = "5 minutes";
@@ -246,15 +247,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _hasPassword;
 
     /// <summary>
-    /// Whether Windows Hello can be enabled (requires Premium plan AND password).
+    /// Whether biometric login can be enabled (requires Premium plan AND password).
     /// </summary>
-    public bool CanEnableWindowsHello => HasPremium && HasPassword;
+    public bool CanEnableBiometricLogin => HasPremium && HasPassword;
 
     /// <summary>
-    /// Whether the user needs to set a password before enabling Windows Hello.
+    /// Whether the user needs to set a password before enabling biometric login.
     /// Shows when user has Premium plan but no password.
     /// </summary>
-    public bool NeedsPasswordForWindowsHello => HasPremium && !HasPassword;
+    public bool NeedsPasswordForBiometricLogin => HasPremium && !HasPassword;
 
     /// <summary>
     /// Whether the user needs to set a password before enabling Auto-Lock.
@@ -262,18 +263,18 @@ public partial class SettingsModalViewModel : ViewModelBase
     public bool NeedsPasswordForAutoLock => !HasPassword;
 
     /// <summary>
-    /// Event raised when Windows Hello setting changes (after successful authentication).
+    /// Event raised when biometric login setting changes (after successful authentication).
     /// </summary>
-    public event EventHandler<WindowsHelloEventArgs>? WindowsHelloChanged;
+    public event EventHandler<BiometricLoginEventArgs>? BiometricLoginChanged;
 
     /// <summary>
-    /// Event raised to request Windows Hello authentication before enabling.
-    /// The handler should authenticate and call OnWindowsHelloAuthResult with the result.
+    /// Event raised to request biometric login authentication before enabling.
+    /// The handler should authenticate and call OnBiometricAuthResult with the result.
     /// </summary>
-    public event EventHandler? WindowsHelloAuthRequested;
+    public event EventHandler? BiometricAuthRequested;
 
-    // Flag to prevent recursive updates when setting Windows Hello programmatically
-    private bool _isUpdatingWindowsHello;
+    // Flag to prevent recursive updates when setting biometric login programmatically
+    private bool _isUpdatingBiometricLogin;
 
     /// <summary>
     /// Event raised when user wants to upgrade their plan.
@@ -395,77 +396,77 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     partial void OnHasPasswordChanged(bool value)
     {
-        // Notify Windows Hello and Auto-Lock computed properties
-        OnPropertyChanged(nameof(CanEnableWindowsHello));
-        OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
+        // Notify biometric login and Auto-Lock computed properties
+        OnPropertyChanged(nameof(CanEnableBiometricLogin));
+        OnPropertyChanged(nameof(NeedsPasswordForBiometricLogin));
         OnPropertyChanged(nameof(NeedsPasswordForAutoLock));
 
-        // Disable Windows Hello if password is removed
-        if (!value && WindowsHelloEnabled)
+        // Disable biometric login if password is removed
+        if (!value && BiometricLoginEnabled)
         {
-            WindowsHelloEnabled = false;
+            BiometricLoginEnabled = false;
         }
     }
 
     /// <summary>
-    /// Called when HasPremium changes - notify Windows Hello properties.
+    /// Called when HasPremium changes - notify biometric login properties.
     /// </summary>
     partial void OnHasPremiumChanged(bool value)
     {
-        OnPropertyChanged(nameof(CanEnableWindowsHello));
-        OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
+        OnPropertyChanged(nameof(CanEnableBiometricLogin));
+        OnPropertyChanged(nameof(NeedsPasswordForBiometricLogin));
     }
 
     /// <summary>
-    /// Called when Windows Hello setting changes.
+    /// Called when biometric login setting changes.
     /// </summary>
-    partial void OnWindowsHelloEnabledChanged(bool value)
+    partial void OnBiometricLoginEnabledChanged(bool value)
     {
         // Skip if we're programmatically updating (e.g., after auth result)
-        if (_isUpdatingWindowsHello) return;
+        if (_isUpdatingBiometricLogin) return;
 
         if (value)
         {
             // User is trying to enable - request authentication first
-            WindowsHelloAuthRequested?.Invoke(this, EventArgs.Empty);
-            // The actual enabling will happen in OnWindowsHelloAuthResult
+            BiometricAuthRequested?.Invoke(this, EventArgs.Empty);
+            // The actual enabling will happen in OnBiometricAuthResult
         }
         else
         {
             // Disabling doesn't require authentication
-            WindowsHelloChanged?.Invoke(this, new WindowsHelloEventArgs(false));
+            BiometricLoginChanged?.Invoke(this, new BiometricLoginEventArgs(false));
         }
     }
 
     /// <summary>
-    /// Called after Windows Hello authentication attempt.
+    /// Called after biometric login authentication attempt.
     /// </summary>
     /// <param name="success">Whether authentication was successful.</param>
-    public void OnWindowsHelloAuthResult(bool success)
+    public void OnBiometricAuthResult(bool success)
     {
-        _isUpdatingWindowsHello = true;
+        _isUpdatingBiometricLogin = true;
         if (success)
         {
             // Authentication succeeded - keep enabled and fire event
-            WindowsHelloChanged?.Invoke(this, new WindowsHelloEventArgs(true));
+            BiometricLoginChanged?.Invoke(this, new BiometricLoginEventArgs(true));
         }
         else
         {
             // Authentication failed or cancelled - revert the toggle
-            WindowsHelloEnabled = false;
+            BiometricLoginEnabled = false;
         }
-        _isUpdatingWindowsHello = false;
+        _isUpdatingBiometricLogin = false;
     }
 
     /// <summary>
-    /// Sets Windows Hello enabled state without triggering authentication.
+    /// Sets biometric login enabled state without triggering authentication.
     /// Used when loading settings from company file.
     /// </summary>
-    public void SetWindowsHelloWithoutAuth(bool enabled)
+    public void SetBiometricLoginWithoutAuth(bool enabled)
     {
-        _isUpdatingWindowsHello = true;
-        WindowsHelloEnabled = enabled;
-        _isUpdatingWindowsHello = false;
+        _isUpdatingBiometricLogin = true;
+        BiometricLoginEnabled = enabled;
+        _isUpdatingBiometricLogin = false;
     }
 
     /// <summary>
@@ -1833,10 +1834,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         try
         {
-            // Use Roaming AppData on Windows to match TelemetryStorageService
             var telemetryPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "ArgoBooks",
+                PlatformServiceFactory.GetPlatformService().GetAppDataPath(),
                 "telemetry");
 
             if (!Directory.Exists(telemetryPath))
@@ -2037,12 +2036,12 @@ public class AutoLockSettingsEventArgs(string timeoutString) : EventArgs
 }
 
 /// <summary>
-/// Event args for Windows Hello setting changes.
+/// Event args for biometric login setting changes.
 /// </summary>
-public class WindowsHelloEventArgs(bool enabled) : EventArgs
+public class BiometricLoginEventArgs(bool enabled) : EventArgs
 {
     /// <summary>
-    /// Whether Windows Hello is enabled.
+    /// Whether biometric login is enabled.
     /// </summary>
     public bool Enabled { get; } = enabled;
 }

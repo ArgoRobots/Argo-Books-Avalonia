@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-argo">
+    <comment>Argo Books Company File</comment>
+    <glob pattern="*.argo"/>
+    <icon name="com.argobooks.ArgoBooks"/>
+  </mime-type>
+</mime-info>

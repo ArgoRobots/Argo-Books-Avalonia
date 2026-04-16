@@ -55,11 +55,9 @@ public class WindowsPlatformService : BasePlatformService
 #endif
     }
 
-    /// <summary>
-    /// Gets detailed information about Windows Hello availability.
-    /// </summary>
+    /// <inheritdoc />
     [SupportedOSPlatform("windows10.0.10240.0")]
-    public async Task<string> GetBiometricAvailabilityDetailsAsync()
+    public override async Task<string> GetBiometricAvailabilityDetailsAsync()
     {
 #if WINDOWS
         try

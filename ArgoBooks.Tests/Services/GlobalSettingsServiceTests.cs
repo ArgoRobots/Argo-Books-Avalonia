@@ -327,6 +327,7 @@ public class GlobalSettingsServiceTests : IDisposable
         public bool SupportsNativeDialogs => false;
         public bool SupportsBiometrics => false;
         public Task<bool> IsBiometricAvailableAsync() => Task.FromResult(false);
+        public Task<string> GetBiometricAvailabilityDetailsAsync() => Task.FromResult("Not supported");
         public Task<bool> AuthenticateWithBiometricAsync(string reason) => Task.FromResult(false);
         public void StorePasswordForBiometric(string fileId, string password) { }
         public string? GetPasswordForBiometric(string fileId) => null;

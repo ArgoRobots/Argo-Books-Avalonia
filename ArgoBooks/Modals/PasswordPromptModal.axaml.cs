@@ -47,9 +47,9 @@ public partial class PasswordPromptModal : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PasswordPromptModalViewModel.ShowWindowsHelloSuccess))
+        if (e.PropertyName == nameof(PasswordPromptModalViewModel.ShowBiometricSuccess))
         {
-            if (DataContext is PasswordPromptModalViewModel { ShowWindowsHelloSuccess: true })
+            if (DataContext is PasswordPromptModalViewModel { ShowBiometricSuccess: true })
             {
                 // Trigger the success animation
                 Dispatcher.UIThread.Post(() =>

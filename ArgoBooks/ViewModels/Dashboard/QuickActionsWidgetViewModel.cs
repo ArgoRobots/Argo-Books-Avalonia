@@ -217,6 +217,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         if (!await App.ReceiptsModalsViewModel.CanScanOrShowLimitAsync()) return;
 
         App.NavigationService?.NavigateTo("Receipts");
+        App.ReceiptsModalsViewModel.OpenBulkDropZone();
     }
 
     [RelayCommand]

@@ -11,7 +11,7 @@
         x:Class="ArgoBooks.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
-        Icon="/Assets/argo-logo.ico"
+        Icon="/Assets/argo-logo.png"
         MinWidth="1024"
         MinHeight="680"
         Width="{Binding WindowWidth, Mode=TwoWay}"
@@ -130,7 +130,7 @@
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
                                 IsHitTestVisible="False">
-                        <Image Source="/Assets/argo-logo.ico"
+                        <Image Source="/Assets/argo-logo.png"
                                Width="20" Height="20"
                                VerticalAlignment="Center" />
                         <TextBlock Text="{loc:Loc 'Argo Books'}"
