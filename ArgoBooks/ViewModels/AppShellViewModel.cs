@@ -837,7 +837,7 @@ public partial class AppShellViewModel : ViewModelBase
                     ImportModalViewModel.OpenCommand.Execute(null);
                     break;
                 case QuickActionName.OpenScanModal:
-                    App.ReceiptsModalsViewModel?.OpenBulkDropZone();
+                    OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
                     break;
                 case QuickActionName.OpenEditCompany:
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);

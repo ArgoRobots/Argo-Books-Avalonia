@@ -19,7 +19,7 @@
     <!-- Dependency Injection -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <!-- Windows-specific (DPAPI for secure credential storage) -->
-    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.2" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.6" />
     <!-- Charts -->
     <PackageVersion Include="LiveChartsCore.SkiaSharpView" Version="2.0.1-av12.1" />
     <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.1-av12.1" />
