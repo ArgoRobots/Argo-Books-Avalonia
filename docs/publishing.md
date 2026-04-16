@@ -33,7 +33,7 @@ dotnet publish ArgoBooks.Desktop -c Release -f net10.0 -r linux-x64 --self-conta
 
 ### Step 2: Copy to Linux VM
 
-Copy these to your Linux VM (e.g. via shared folder, SCP, or USB):
+Copy these to your Linux VM (e.g. via shared folder, Google Drive, or USB):
 - The `publish/linux-x64/` folder (the build output)
 - The `packaging/linux/` folder (desktop entry, MIME type, build script)
 
