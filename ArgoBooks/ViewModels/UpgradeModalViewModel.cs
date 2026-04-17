@@ -6,6 +6,7 @@ using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -76,47 +77,41 @@ public partial class UpgradeModalViewModel : ViewModelBase
     #region Pricing
 
     [ObservableProperty]
-    private string _premiumMonthlyPrice = "$10 CAD";
+    private string _premiumMonthlyPrice = "";
 
     [ObservableProperty]
-    private string _premiumBillingPeriod = "/month";
+    private string _premiumBillingPeriod = "";
 
     [ObservableProperty]
-    private string _premiumYearlyPrice = "or $100/year";
+    private string _premiumYearlyPrice = "";
 
     [ObservableProperty]
-    private string _premiumYearlySavings = "(save $20)";
+    private string _premiumYearlySavings = "";
+
+    [ObservableProperty]
+    private bool _isLoadingPlans;
+
+    [ObservableProperty]
+    private bool _hasLoadError;
+
+    /// <summary>
+    /// True when plans have been fetched successfully and should be displayed.
+    /// </summary>
+    public bool ShowPlans => !IsOffline && !IsLoadingPlans && !HasLoadError && _hasFetchedPlans;
+
+    partial void OnIsOfflineChanged(bool value) => OnPropertyChanged(nameof(ShowPlans));
+    partial void OnIsLoadingPlansChanged(bool value) => OnPropertyChanged(nameof(ShowPlans));
+    partial void OnHasLoadErrorChanged(bool value) => OnPropertyChanged(nameof(ShowPlans));
 
     private bool _hasFetchedPlans;
 
-    public ObservableCollection<string> FreePlanFeatures { get; } = new(TranslateDefaults(DefaultFreeFeatures));
+    public ObservableCollection<string> FreePlanFeatures { get; } = [];
 
-    public ObservableCollection<string> PremiumPlanFeatures { get; } = new(TranslateDefaults(DefaultPremiumFeatures));
+    public ObservableCollection<string> PremiumPlanFeatures { get; } = [];
 
-    private static readonly string[] DefaultFreeFeatures =
-    [
-        "Up to 10 products",
-        "Unlimited transactions",
-        "Real-time analytics",
-        "Receipt management",
-        "5 invoices / month",
-        "AI spreadsheet import (100/month)",
-        "AI receipt scanning (5/month)"
-    ];
-
-    private static readonly string[] DefaultPremiumFeatures =
-    [
-        "Everything in Free",
-        "Unlimited products",
-        "Biometric login security",
-        "Unlimited invoices & payments",
-        "AI receipt scanning (500/month)",
-        "Predictive analytics",
-        "Priority support"
-    ];
-
-    private static IEnumerable<string> TranslateDefaults(string[] features)
-        => features.Select(f => f.Translate());
+    // Raw label/detail pairs from the API, kept so we can re-translate when the language changes
+    private List<PlanFeature> _rawFreeFeatures = [];
+    private List<PlanFeature> _rawPremiumFeatures = [];
 
     #endregion
 
@@ -162,6 +157,23 @@ public partial class UpgradeModalViewModel : ViewModelBase
     /// </summary>
     public UpgradeModalViewModel()
     {
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        RefreshFeatureDisplay();
+    }
+
+    private void RefreshFeatureDisplay()
+    {
+        FreePlanFeatures.Clear();
+        foreach (var feature in _rawFreeFeatures)
+            FreePlanFeatures.Add(feature.DisplayText);
+
+        PremiumPlanFeatures.Clear();
+        foreach (var feature in _rawPremiumFeatures)
+            PremiumPlanFeatures.Add(feature.DisplayText);
     }
 
     #region Commands
@@ -171,10 +183,15 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsOpen = true;
 
-        // Retry fetching plans if the previous attempt failed (e.g. was offline at startup)
-        if (!_hasFetchedPlans || IsOffline)
+        // Fetch plans on first open, or retry if a previous attempt failed
+        if (!_hasFetchedPlans || IsOffline || HasLoadError)
         {
             _ = FetchPlansAsync();
+        }
+        else
+        {
+            // Rebuild display in case language changed while modal was closed
+            RefreshFeatureDisplay();
         }
     }
 
@@ -427,6 +444,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
     /// </summary>
     public async Task FetchPlansAsync()
     {
+        IsLoadingPlans = true;
+        HasLoadError = false;
+
         try
         {
             var response = await HttpClient.GetStringAsync(PricingApiUrl);
@@ -448,41 +468,32 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (apiResponse?.Plans != null)
             {
-                if (apiResponse.Plans.Free?.Features is { Count: > 0 })
-                {
-                    FreePlanFeatures.Clear();
-                    foreach (var feature in apiResponse.Plans.Free.Features)
-                        FreePlanFeatures.Add(feature.DisplayText.Translate());
-                }
-
-                if (apiResponse.Plans.Premium?.Features is { Count: > 0 })
-                {
-                    PremiumPlanFeatures.Clear();
-                    foreach (var feature in apiResponse.Plans.Premium.Features)
-                        PremiumPlanFeatures.Add(feature.DisplayText.Translate());
-                }
+                _rawFreeFeatures = apiResponse.Plans.Free?.Features ?? [];
+                _rawPremiumFeatures = apiResponse.Plans.Premium?.Features ?? [];
+                RefreshFeatureDisplay();
             }
 
             _hasFetchedPlans = true;
+            OnPropertyChanged(nameof(ShowPlans));
         }
         catch (Exception ex)
         {
-            // HttpRequestException with a status code means the server responded (not a connectivity issue)
             var isConnectivityError = ex is HttpRequestException { StatusCode: null }
                 || (ex is TaskCanceledException tce && (tce.InnerException is TimeoutException || tce.CancellationToken != default));
 
             if (isConnectivityError)
             {
                 IsOffline = true;
-                // Don't set _hasFetchedPlans so Open() will retry when the modal is opened
             }
             else
             {
-                // Server error or bad JSON — show plans with defaults, don't mark offline
-                IsOffline = false;
-                _hasFetchedPlans = true;
+                HasLoadError = true;
                 App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch plans from API");
             }
+        }
+        finally
+        {
+            IsLoadingPlans = false;
         }
     }
 
@@ -523,7 +534,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         [JsonPropertyName("detail")]
         public string? Detail { get; init; }
 
-        public string DisplayText => Detail != null ? $"{Label} ({Detail})" : Label;
+        public string DisplayText => Detail != null ? $"{Label.Translate()} ({Detail.Translate()})" : Label.Translate();
     }
 
     private class PricingData

@@ -4,7 +4,7 @@
 
 - **Do NOT build or run tests after every change.** Only build/test when explicitly asked.
 - **Do NOT amend commits or force push** unless explicitly told to. Always create new commits.
-- **Do NOT update the language files** like ArgoBooks.TranslationTool/translations/en.json and similar.
+- **Do NOT update the language files** like ArgoBooks.TranslationTool/languages/en.json and similar.
 
 ## Project Overview
 

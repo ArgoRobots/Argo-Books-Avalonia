@@ -131,7 +131,7 @@ cd ArgoBooks.TranslationTool
 | `dotnet run -- --languages fr,de,es,ja` | Translate to specific languages |
 | `dotnet run -- --output C:\MyTranslations` | Custom output directory |
 
-Output files are saved to `./translations/` by default (e.g., `en.json`, `fr.json`).
+Output files are saved to `./languages/` by default (e.g., `en.json`, `fr.json`).
 
 **For incremental translation:** Copy existing translation files to the output folder first. The tool will use `GetChangedStrings()` to only translate new/changed strings, avoiding redundant API calls.
 

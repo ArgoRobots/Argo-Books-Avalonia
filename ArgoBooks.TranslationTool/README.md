@@ -31,4 +31,4 @@ dotnet run -- --translate --output C:\MyTranslations
 ```
 
 ## Output
-Files are saved to `./translations/` (e.g., `en.json`, `fr.json`, `de.json`).
+Files are saved to `./languages/` (e.g., `en.json`, `fr.json`, `de.json`).

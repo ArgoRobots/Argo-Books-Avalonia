@@ -158,9 +158,61 @@ public partial class TranslationGenerator
             }
         }
 
+        // Fetch plan feature strings from the pricing API so they get translated
+        FetchPlanStrings(strings);
+
         ReportProgress($"Found {strings.Count} translatable strings", strings.Count, strings.Count);
 
         return strings;
+    }
+
+    /// <summary>
+    /// Fetches plan feature labels and details from the pricing API
+    /// and adds them to the translation dictionary.
+    /// </summary>
+    private void FetchPlanStrings(Dictionary<string, string> strings)
+    {
+        try
+        {
+            ReportProgress("Fetching plan strings from pricing API...", 0, 0);
+
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            var apiUrl = $"{Core.Services.ApiConfig.BaseUrl}/api/pricing/plans.php";
+            var response = httpClient.GetStringAsync(apiUrl).GetAwaiter().GetResult();
+            var doc = JsonSerializer.Deserialize<JsonElement>(response);
+
+            if (!doc.TryGetProperty("plans", out var plans))
+                return;
+
+            var count = 0;
+            foreach (var planName in new[] { "free", "premium" })
+            {
+                if (!plans.TryGetProperty(planName, out var plan) ||
+                    !plan.TryGetProperty("features", out var features))
+                    continue;
+
+                foreach (var feature in features.EnumerateArray())
+                {
+                    if (feature.TryGetProperty("label", out var label) && label.GetString() is { } labelText)
+                    {
+                        AddString(strings, labelText);
+                        count++;
+                    }
+
+                    if (feature.TryGetProperty("detail", out var detail) && detail.GetString() is { } detailText)
+                    {
+                        AddString(strings, detailText);
+                        count++;
+                    }
+                }
+            }
+
+            ReportProgress($"Added {count} plan strings from API", 0, 0);
+        }
+        catch (Exception ex)
+        {
+            ReportProgress($"Warning: Could not fetch plan strings from API: {ex.Message}", 0, 0);
+        }
     }
 
     /// <summary>

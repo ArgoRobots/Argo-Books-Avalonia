@@ -21,7 +21,7 @@ Console.WriteLine("=== Argo Books Translation Generator ===\n");
 var collectOnly = args.Contains("--collect");
 var skipConfirmation = args.Contains("--yes") || args.Contains("-y");
 var specificLanguages = new List<string>();
-var outputDir = "./translations";
+var outputDir = "./languages";
 var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "ArgoBooks"));
 
 for (int i = 0; i < args.Length; i++)

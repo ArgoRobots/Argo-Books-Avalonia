@@ -61,21 +61,8 @@
                     <TabItem Header="{loc:Loc General}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
-                                <!-- Sample company notice -->
-                                <Border Background="{DynamicResource WarningLightBrush}"
-                                        CornerRadius="8"
-                                        Padding="12"
-                                        IsVisible="{Binding IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Some settings are not available for the sample company.'}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Stretch" />
-                                </Border>
                                 <!-- Language -->
-                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
+                                <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc Language}"
                                                FontSize="13"
                                                FontWeight="Medium"
@@ -87,7 +74,7 @@
                                 </StackPanel>
 
                                 <!-- Date Format -->
-                                <StackPanel Spacing="6" IsEnabled="{Binding !IsSampleCompany}">
+                                <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Date Format'}"
                                                FontSize="13"
                                                FontWeight="Medium"
