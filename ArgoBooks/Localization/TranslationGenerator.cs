@@ -23,6 +23,12 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"\{loc:Loc\s+([^}]+)\}")]
     private static partial Regex LocExtensionRegex();
 
+    // Strips C# line comments (// ... and /// ...) up to end of line.
+    // Naive: a string literal containing "//" would be misidentified, but real-world
+    // false positives are rare and the alternative (real parser) is overkill.
+    [GeneratedRegex(@"//[^\n\r]*")]
+    private static partial Regex LineCommentRegex();
+
     [GeneratedRegex(@"Loc\.Tr\s*\(\s*""([^""]+)""")]
     private static partial Regex LocTrCallRegex();
 
@@ -64,7 +70,12 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"\[\s*""([^""]+)""")]
     private static partial Regex ArrayItemStartRegex();
 
-    [GeneratedRegex(@",\s*""([^""]+)""")]
+    // Continuation strings inside an array literal: matches `, "value"` only when the
+    // following token is another quoted string or a closing `]`. This filters out method
+    // call arguments like `Load("Page", "Column", true)` where the next token after a
+    // string is a non-string parameter, while still catching real array literals like
+    // `["A", "B", "C"]`.
+    [GeneratedRegex(@",\s*""([^""]+)""(?=\s*(?:,\s*""|\]))")]
     private static partial Regex ArrayItemContinueRegex();
 
     // Batch size for Azure API calls (max 100 texts per request, max 10000 chars)
@@ -100,6 +111,23 @@ public partial class TranslationGenerator
     /// Gets the total number of stale keys removed from translation files.
     /// </summary>
     public int StaleKeysRemoved { get; private set; }
+
+    /// <summary>
+    /// Per-language list of source strings legitimately unchanged in the target.
+    /// Loaded from translation-allowlist.json. Lookup uses ordinal comparison.
+    /// </summary>
+    public Dictionary<string, HashSet<string>> Allowlist { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Per-language counts of strings Azure returned unchanged from English (excluding allowlisted entries).
+    /// </summary>
+    public Dictionary<string, List<string>> SuspiciousNoOps { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Distinct English source strings that produce the same key after GetStringKey normalization
+    /// (50-char truncation can collide). The first one wins; others are silently dropped.
+    /// </summary>
+    public Dictionary<string, List<string>> KeyCollisions { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Gets the estimated cost based on Azure Translator S1 pricing ($10 per 1M characters).
@@ -237,6 +265,14 @@ public partial class TranslationGenerator
                     text = text[1..^1];
                 }
 
+                // Decode XML entities so AXAML "&amp;" matches C# "&" (otherwise both forms collide)
+                text = text
+                    .Replace("&amp;", "&")
+                    .Replace("&lt;", "<")
+                    .Replace("&gt;", ">")
+                    .Replace("&quot;", "\"")
+                    .Replace("&apos;", "'");
+
                 if (!string.IsNullOrWhiteSpace(text))
                 {
                     var key = LanguageService.GetStringKey(text);
@@ -258,6 +294,9 @@ public partial class TranslationGenerator
         try
         {
             var content = File.ReadAllText(filePath);
+            // Strip line comments (incl. /// doc comments) so example snippets in
+            // documentation aren't picked up as real translatable strings.
+            content = LineCommentRegex().Replace(content, "");
 
             // Find "text".Translate() patterns
             var translateMatches = StringTranslateRegex().Matches(content);
@@ -314,13 +353,14 @@ public partial class TranslationGenerator
             foreach (Match match in constStringMatches)
             {
                 var text = match.Groups[1].Value;
-                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code, not an SVG path)
+                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code, not an SVG path, not a code identifier)
                 if (!string.IsNullOrEmpty(text) && text.Length > 1 &&
                     !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
                     !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
                     !text.StartsWith("{") &&
                     !text.StartsWith('#') &&
-                    !IsSvgPathData(text))
+                    !IsSvgPathData(text) &&
+                    !LooksLikeCodeIdentifier(text))
                 {
                     AddString(strings, text);
                 }
@@ -340,25 +380,30 @@ public partial class TranslationGenerator
             }
 
             // Find switch expression display strings: => "Display Text"
-            // Only in files that likely contain display names (enums, services, viewmodels, configurations)
+            // Applied to all .cs files; the shape filter below guards against false positives.
+            // NOTE: object-initializer assignments like `Title = "Foo"` are NOT detected — wrap
+            // user-facing literals with .Translate()/.TranslateFormat() so the regex below picks them up.
+            var switchMatches = SwitchDisplayStringRegex().Matches(content);
+            foreach (Match match in switchMatches)
+            {
+                var text = match.Groups[1].Value;
+                // Only include strings that look like display text (starts with uppercase, has space or common pattern,
+                // and isn't a PascalCase code identifier like "InStock" or "ShowCompanyAddress")
+                if (!string.IsNullOrEmpty(text) && char.IsUpper(text[0]) &&
+                    (text.Contains(' ') || text.Length > 3) &&
+                    !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
+                    !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                    !LooksLikeCodeIdentifier(text))
+                {
+                    AddString(strings, text);
+                }
+            }
+
+            // Find string array items: ["Item1", "Item2", "Item3"] — used for ComboBox options
+            // Restricted to ViewModel/Service/Enum/Configuration files because plain arrays
+            // appear in many non-UI contexts and would generate noise.
             if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel") || filePath.Contains("Configuration"))
             {
-                var switchMatches = SwitchDisplayStringRegex().Matches(content);
-                foreach (Match match in switchMatches)
-                {
-                    var text = match.Groups[1].Value;
-                    // Only include strings that look like display text (starts with uppercase, has space or common pattern)
-                    if (!string.IsNullOrEmpty(text) && char.IsUpper(text[0]) &&
-                        (text.Contains(' ') || text.Length > 3) &&
-                        !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
-                        !text.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
-                        AddString(strings, text);
-                    }
-                }
-
-                // Find string array items: ["Item1", "Item2", "Item3"]
-                // These are commonly used for ComboBox options
                 var arrayStartMatches = ArrayItemStartRegex().Matches(content);
                 foreach (Match match in arrayStartMatches)
                 {
@@ -381,7 +426,7 @@ public partial class TranslationGenerator
     /// <summary>
     /// Adds a display string if it looks like user-facing text.
     /// </summary>
-    private static void AddDisplayString(Dictionary<string, string> strings, string text)
+    private void AddDisplayString(Dictionary<string, string> strings, string text)
     {
         if (string.IsNullOrEmpty(text) || text.Length < 2)
             return;
@@ -392,11 +437,39 @@ public partial class TranslationGenerator
             text.StartsWith("{") || text.Contains("{{"))
             return;
 
-        // Only include strings that look like display text
-        if (char.IsUpper(text[0]) || text.Contains(' '))
+        // Skip PascalCase/camelCase code identifiers (e.g., "InStock", "ShowCompanyAddress")
+        if (LooksLikeCodeIdentifier(text))
+            return;
+
+        // Display strings start with an uppercase letter or a digit. Skip lowercase-leading
+        // strings — those are usually internal parsing tokens (e.g., the "this month" /
+        // "last 30 days" arms in ReportConfiguration's case-insensitive switch).
+        if (!char.IsUpper(text[0]) && !char.IsDigit(text[0]))
+            return;
+
+        AddString(strings, text);
+    }
+
+    /// <summary>
+    /// Returns true if the text looks like a PascalCase or camelCase code identifier
+    /// (e.g., "InStock", "ShowCompanyAddress", "fontFamily"). Used to filter out
+    /// strings captured by blanket regexes (const string, switch arms, array items)
+    /// that match property/enum-value names rather than user-facing labels.
+    /// </summary>
+    private static bool LooksLikeCodeIdentifier(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return false;
+        if (text.Contains(' ')) return false;
+        if (!text.All(char.IsLetterOrDigit)) return false;
+
+        // A real identifier has a lowercase letter immediately followed by an uppercase letter.
+        // Pure-uppercase abbreviations like "SKU" don't trigger and stay treated as display text.
+        for (int i = 1; i < text.Length; i++)
         {
-            AddString(strings, text);
+            if (char.IsUpper(text[i]) && char.IsLower(text[i - 1]))
+                return true;
         }
+        return false;
     }
 
     /// <summary>
@@ -428,7 +501,7 @@ public partial class TranslationGenerator
     /// <summary>
     /// Adds a string to the collection if valid.
     /// </summary>
-    private static void AddString(Dictionary<string, string> strings, string text)
+    private void AddString(Dictionary<string, string> strings, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return;
@@ -443,6 +516,17 @@ public partial class TranslationGenerator
             return;
 
         var key = LanguageService.GetStringKey(text);
+        if (strings.TryGetValue(key, out var existing) && existing != text)
+        {
+            if (!KeyCollisions.TryGetValue(key, out var bucket))
+            {
+                bucket = new List<string> { existing };
+                KeyCollisions[key] = bucket;
+            }
+            if (!bucket.Contains(text))
+                bucket.Add(text);
+            return;
+        }
         strings.TryAdd(key, text);
     }
 
@@ -547,8 +631,13 @@ public partial class TranslationGenerator
                 StaleKeysRemoved += staleCount;
             }
 
+            // Sort by key for deterministic output (avoids spurious git diffs)
+            var sortedTranslation = fullTranslation
+                .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+
             // Save the file (with new translations added and stale keys pruned)
-            var json = JsonSerializer.Serialize(fullTranslation, jsonOptions);
+            var json = JsonSerializer.Serialize(sortedTranslation, jsonOptions);
             await File.WriteAllTextAsync(filePath, json);
             ReportProgress($"Saved {isoCode}.json ({stringsToTranslate.Count} new, {staleCount} removed, {fullTranslation.Count} total)", currentLanguage, totalLanguages);
         }
@@ -593,6 +682,8 @@ public partial class TranslationGenerator
         var batches = CreateBatches(textList);
         var processedCount = 0;
 
+        Allowlist.TryGetValue(targetIsoCode, out var allowlistForLang);
+
         foreach (var batch in batches)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -603,7 +694,25 @@ public partial class TranslationGenerator
             for (int i = 0; i < batch.Count && processedCount < keyList.Count; i++)
             {
                 var key = keyList[processedCount];
+                var sourceText = batch[i];
                 var translatedText = i < translatedBatch.Count ? translatedBatch[i] : englishStrings[key];
+
+                // Detect when Azure returned the source unchanged. Multi-word phrases that
+                // come back identical are usually mis-detection by Azure (e.g., "Select Premium").
+                // Allowlisted entries (legitimate loanwords like "Status" in Polish) are skipped.
+                if (string.Equals(translatedText, sourceText, StringComparison.Ordinal) &&
+                    sourceText.Contains(' ') &&
+                    sourceText.Length > 2 &&
+                    (allowlistForLang == null || !allowlistForLang.Contains(sourceText)))
+                {
+                    if (!SuspiciousNoOps.TryGetValue(targetIsoCode, out var noOpList))
+                    {
+                        noOpList = new List<string>();
+                        SuspiciousNoOps[targetIsoCode] = noOpList;
+                    }
+                    noOpList.Add(sourceText);
+                }
+
                 translations[key] = translatedText;
                 processedCount++;
             }

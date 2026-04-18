@@ -13,16 +13,20 @@ using ArgoBooks.Localization;
 //   --languages fr,de   Translate to specific languages only
 //   --output <path>     Output directory for JSON files
 //   --source <path>     Source directory to scan (default: ../ArgoBooks)
+//   --retry-same        Clear translations matching the English source (excluding allowlist)
+//                       so Azure re-translates them on the next run
 //   --yes               Skip confirmation prompt
 
 Console.WriteLine("=== Argo Books Translation Generator ===\n");
 
 // Parse command line arguments (args is provided by top-level statements)
 var collectOnly = args.Contains("--collect");
+var retrySame = args.Contains("--retry-same");
 var skipConfirmation = args.Contains("--yes") || args.Contains("-y");
 var specificLanguages = new List<string>();
 var outputDir = "./languages";
 var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "ArgoBooks"));
+var allowlistPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "translation-allowlist.json"));
 
 for (int i = 0; i < args.Length; i++)
 {
@@ -69,10 +73,73 @@ Directory.CreateDirectory(outputDir);
 var generator = new TranslationGenerator(azureKey ?? "", azureRegion);
 generator.Progress += (_, e) => Console.WriteLine($"  {e.Message}");
 
+// Load allowlist of source strings that legitimately stay unchanged in the target.
+// Suppresses no-op warnings and protects them from --retry-same.
+if (File.Exists(allowlistPath))
+{
+    try
+    {
+        var allowlistJson = await File.ReadAllTextAsync(allowlistPath);
+        var allowlistDoc = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(allowlistJson);
+        if (allowlistDoc != null)
+        {
+            foreach (var (iso, element) in allowlistDoc)
+            {
+                if (iso.StartsWith("_") || element.ValueKind != JsonValueKind.Array) continue;
+                var entries = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var entry in element.EnumerateArray())
+                {
+                    var s = entry.GetString();
+                    if (!string.IsNullOrEmpty(s)) entries.Add(s);
+                }
+                generator.Allowlist[iso] = entries;
+            }
+            var totalEntries = generator.Allowlist.Values.Sum(s => s.Count);
+            Console.WriteLine($"Loaded allowlist: {generator.Allowlist.Count} languages, {totalEntries} entries.\n");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: failed to read allowlist at {allowlistPath}: {ex.Message}\n");
+    }
+}
+
 // Step 1: Collect strings
 Console.WriteLine("Step 1: Collecting translatable strings...");
 var strings = generator.CollectStrings(sourceDir);
 Console.WriteLine($"\nFound {strings.Count} translatable strings.\n");
+
+// Warn about key collisions caused by 50-char truncation in GetStringKey.
+// Only the first source text wins; collided strings won't get translated separately.
+// Suppress "safe" collisions where all variants normalize to the same letters/digits
+// (e.g., "Tax ($)" vs "Tax", "Select Logo..." vs "Select Logo", "ID" vs "Id") — those
+// share a sensible single translation by design.
+if (generator.KeyCollisions.Count > 0)
+{
+    static string LooseNormalize(string s) =>
+        new(s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+
+    var realCollisions = generator.KeyCollisions
+        .Where(kv => kv.Value.Select(LooseNormalize).Distinct().Count() > 1)
+        .ToList();
+
+    var benignCount = generator.KeyCollisions.Count - realCollisions.Count;
+
+    if (realCollisions.Count > 0)
+    {
+        Console.WriteLine("[WARN] Key collisions detected (50-char truncation produced duplicate keys):");
+        foreach (var (key, sources) in realCollisions)
+        {
+            Console.WriteLine($"  Key '{key}' is shared by:");
+            foreach (var s in sources)
+                Console.WriteLine($"    - {s}");
+        }
+        Console.WriteLine("Shorten one of the conflicting source strings to disambiguate.\n");
+    }
+
+    if (benignCount > 0)
+        Console.WriteLine($"[INFO] {benignCount} benign collision(s) suppressed (variants share a sensible single translation).\n");
+}
 
 // Save English strings
 var englishPath = Path.Combine(outputDir, "en.json");
@@ -81,7 +148,11 @@ var options = new JsonSerializerOptions
     WriteIndented = true,
     Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
 };
-await File.WriteAllTextAsync(englishPath, JsonSerializer.Serialize(strings, options));
+// Sort by key for deterministic output (avoids spurious git diffs)
+var sortedStrings = strings
+    .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+    .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+await File.WriteAllTextAsync(englishPath, JsonSerializer.Serialize(sortedStrings, options));
 Console.WriteLine($"Saved English strings to: {englishPath}\n");
 
 // Show sample strings
@@ -115,6 +186,61 @@ foreach (var lang in languagesToTranslate)
         resolvedLanguages.Add((lang, Languages.GetLanguageName(lang)));
     else
         resolvedLanguages.Add((Languages.GetIsoCode(lang), lang));
+}
+
+// Optionally clear same-as-source translations so they get retried.
+// Useful when Azure previously returned the English source unchanged.
+if (retrySame)
+{
+    Console.WriteLine("Clearing same-as-source translations (--retry-same)...");
+    var totalCleared = 0;
+    var jsonOut = new JsonSerializerOptions
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+    foreach (var (isoCode, _) in resolvedLanguages)
+    {
+        if (isoCode == "en") continue;
+        var langFile = Path.Combine(outputDir, $"{isoCode}.json");
+        if (!File.Exists(langFile)) continue;
+
+        Dictionary<string, string>? existing;
+        try
+        {
+            existing = JsonSerializer.Deserialize<Dictionary<string, string>>(await File.ReadAllTextAsync(langFile));
+        }
+        catch
+        {
+            continue;
+        }
+        if (existing == null) continue;
+
+        generator.Allowlist.TryGetValue(isoCode, out var allowlistForLang);
+        var clearedHere = 0;
+        foreach (var (key, sourceText) in strings)
+        {
+            if (existing.TryGetValue(key, out var translated) &&
+                string.Equals(translated, sourceText, StringComparison.Ordinal) &&
+                sourceText.Contains(' ') &&
+                sourceText.Length > 2 &&
+                (allowlistForLang == null || !allowlistForLang.Contains(sourceText)))
+            {
+                existing[key] = "";
+                clearedHere++;
+            }
+        }
+        if (clearedHere > 0)
+        {
+            var sortedExisting = existing
+                .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+            await File.WriteAllTextAsync(langFile, JsonSerializer.Serialize(sortedExisting, jsonOut));
+            Console.WriteLine($"  {isoCode}: cleared {clearedHere} same-as-source entries");
+            totalCleared += clearedHere;
+        }
+    }
+    Console.WriteLine($"Cleared {totalCleared} entries total. They will be re-translated below.\n");
 }
 
 // Check existing translations and count new vs existing vs stale per language
@@ -248,6 +374,24 @@ try
         Console.WriteLine($"  Characters translated: {generator.TotalCharactersTranslated:N0}");
         Console.WriteLine($"  Estimated cost:        {FormatCost(generator.EstimatedCost, usdToCad)}");
         Console.WriteLine("----------------------------------");
+    }
+
+    // Print suspicious no-op summary so the user can review and allowlist
+    if (generator.SuspiciousNoOps.Count > 0)
+    {
+        Console.WriteLine();
+        Console.WriteLine("--- Suspicious no-op translations ---");
+        Console.WriteLine("Azure returned the source unchanged for these strings.");
+        Console.WriteLine("Add legitimate ones to translation-allowlist.json; rerun with --retry-same to retry the rest.");
+        foreach (var (iso, list) in generator.SuspiciousNoOps.OrderBy(kv => kv.Key))
+        {
+            Console.WriteLine($"  {iso}: {list.Count} entr{(list.Count == 1 ? "y" : "ies")}");
+            foreach (var src in list.Take(5))
+                Console.WriteLine($"    - {src}");
+            if (list.Count > 5)
+                Console.WriteLine($"    ... and {list.Count - 5} more");
+        }
+        Console.WriteLine("-------------------------------------");
     }
 }
 catch (Exception ex)

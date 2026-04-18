@@ -1,0 +1,18 @@
+{
+  "_comment": "Per-language list of English source strings that legitimately stay unchanged in the target language (loanwords, identifiers, brand names). Strings here are not flagged or retried by --retry-same. Format: { \"<isoCode>\": [\"<English source>\", ...] }. Run the tool with --translate to see warnings about new same-as-source values, then add legitimate ones here.",
+  "pl": [],
+  "de": [],
+  "fr": [],
+  "es": [],
+  "it": [],
+  "pt": [],
+  "nl": [],
+  "ja": [],
+  "zh-Hans": [],
+  "zh-Hant": [],
+  "ko": [],
+  "ar": [],
+  "ru": [],
+  "tr": [],
+  "hi": []
+}

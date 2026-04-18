@@ -15,8 +15,8 @@ public static class StringExtensions
         /// </summary>
         /// <returns>The translated text, or original if no translation found.</returns>
         /// <example>
-        /// var message = "Save changes?".Translate();
-        /// var error = "Customer {0} not found".Translate();
+        /// var message = "Discard your work?".Translate();
+        /// var error = "Customer not found".Translate();
         /// </example>
         public string Translate()
         {
