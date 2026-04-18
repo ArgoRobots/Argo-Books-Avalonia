@@ -21,7 +21,9 @@
     "Net 45",
     "Net 60",
     "Net 90",
-    "PO #"
+    "PO #",
+    "Excel Workbook",
+    "CSV File"
   ],
   "ar": [],
   "be": [],
