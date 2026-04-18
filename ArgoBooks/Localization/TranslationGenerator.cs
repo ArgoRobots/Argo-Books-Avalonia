@@ -683,6 +683,7 @@ public partial class TranslationGenerator
         var processedCount = 0;
 
         Allowlist.TryGetValue(targetIsoCode, out var allowlistForLang);
+        Allowlist.TryGetValue("*", out var globalAllowlist);
 
         foreach (var batch in batches)
         {
@@ -699,11 +700,14 @@ public partial class TranslationGenerator
 
                 // Detect when Azure returned the source unchanged. Multi-word phrases that
                 // come back identical are usually mis-detection by Azure (e.g., "Select Premium").
-                // Allowlisted entries (legitimate loanwords like "Status" in Polish) are skipped.
+                // Allowlisted entries (legitimate loanwords like "Status" in Polish, or
+                // global brand names / font families) are skipped.
+                var isAllowlisted = (allowlistForLang?.Contains(sourceText) ?? false)
+                                    || (globalAllowlist?.Contains(sourceText) ?? false);
                 if (string.Equals(translatedText, sourceText, StringComparison.Ordinal) &&
                     sourceText.Contains(' ') &&
                     sourceText.Length > 2 &&
-                    (allowlistForLang == null || !allowlistForLang.Contains(sourceText)))
+                    !isAllowlisted)
                 {
                     if (!SuspiciousNoOps.TryGetValue(targetIsoCode, out var noOpList))
                     {

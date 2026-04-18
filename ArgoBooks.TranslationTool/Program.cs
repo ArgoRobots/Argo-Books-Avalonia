@@ -75,6 +75,7 @@ generator.Progress += (_, e) => Console.WriteLine($"  {e.Message}");
 
 // Load allowlist of source strings that legitimately stay unchanged in the target.
 // Suppresses no-op warnings and protects them from --retry-same.
+// Format: { "*": [...] } applies globally; { "<iso>": [...] } adds language-specific entries.
 if (File.Exists(allowlistPath))
 {
     try
@@ -94,8 +95,9 @@ if (File.Exists(allowlistPath))
                 }
                 generator.Allowlist[iso] = entries;
             }
-            var totalEntries = generator.Allowlist.Values.Sum(s => s.Count);
-            Console.WriteLine($"Loaded allowlist: {generator.Allowlist.Count} languages, {totalEntries} entries.\n");
+            var globalCount = generator.Allowlist.TryGetValue("*", out var g) ? g.Count : 0;
+            var perLangCount = generator.Allowlist.Where(kv => kv.Key != "*").Sum(kv => kv.Value.Count);
+            Console.WriteLine($"Loaded allowlist: {globalCount} global + {perLangCount} language-specific entries.\n");
         }
     }
     catch (Exception ex)
@@ -217,14 +219,17 @@ if (retrySame)
         if (existing == null) continue;
 
         generator.Allowlist.TryGetValue(isoCode, out var allowlistForLang);
+        generator.Allowlist.TryGetValue("*", out var globalAllowlist);
         var clearedHere = 0;
         foreach (var (key, sourceText) in strings)
         {
+            var isAllowlisted = (allowlistForLang?.Contains(sourceText) ?? false)
+                                || (globalAllowlist?.Contains(sourceText) ?? false);
             if (existing.TryGetValue(key, out var translated) &&
                 string.Equals(translated, sourceText, StringComparison.Ordinal) &&
                 sourceText.Contains(' ') &&
                 sourceText.Length > 2 &&
-                (allowlistForLang == null || !allowlistForLang.Contains(sourceText)))
+                !isAllowlisted)
             {
                 existing[key] = "";
                 clearedHere++;
