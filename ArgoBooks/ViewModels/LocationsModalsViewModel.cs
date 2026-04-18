@@ -618,7 +618,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         // Validate name (required)
         if (string.IsNullOrWhiteSpace(ModalName))
         {
-            ModalNameError = "Location name is required.";
+            ModalNameError = "Location name is required.".Translate();
             isValid = false;
         }
 

@@ -938,7 +938,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         // Validate category name (required)
         if (string.IsNullOrWhiteSpace(ModalCategoryName))
         {
-            ModalCategoryNameError = "Category name is required.";
+            ModalCategoryNameError = "Category name is required.".Translate();
             isValid = false;
         }
         else
@@ -952,7 +952,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
             if (existingWithSameName)
             {
-                ModalCategoryNameError = "A category with this name already exists.";
+                ModalCategoryNameError = "A category with this name already exists.".Translate();
                 isValid = false;
             }
         }

@@ -978,7 +978,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         // Validate supplier name (required)
         if (string.IsNullOrWhiteSpace(ModalSupplierName))
         {
-            ModalSupplierNameError = "Supplier name is required.";
+            ModalSupplierNameError = "Supplier name is required.".Translate();
             isValid = false;
         }
         else
@@ -990,7 +990,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
             if (existingWithSameName)
             {
-                ModalSupplierNameError = "A supplier with this name already exists.";
+                ModalSupplierNameError = "A supplier with this name already exists.".Translate();
                 isValid = false;
             }
         }

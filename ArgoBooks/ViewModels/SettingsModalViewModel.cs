@@ -1704,7 +1704,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         if (NewPassword != ConfirmPassword)
         {
-            PasswordError = "Passwords do not match";
+            PasswordError = "Passwords do not match".Translate();
             return;
         }
 
@@ -1722,7 +1722,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(CurrentPassword))
         {
-            PasswordError = "Current password is required";
+            PasswordError = "Current password is required".Translate();
             return;
         }
         var newPasswordError = Core.Security.PasswordValidator.GetValidationError(NewPassword);
@@ -1733,7 +1733,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         if (NewPassword != ConfirmPassword)
         {
-            PasswordError = "Passwords do not match";
+            PasswordError = "Passwords do not match".Translate();
             return;
         }
 
@@ -1758,7 +1758,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(CurrentPassword))
         {
-            PasswordError = "Current password is required";
+            PasswordError = "Current password is required".Translate();
             return;
         }
 
@@ -1781,7 +1781,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public void OnPasswordVerificationFailed()
     {
-        PasswordError = "Incorrect password";
+        PasswordError = "Incorrect password".Translate();
         CurrentPassword = string.Empty;
 
         // Request focus on the current password textbox

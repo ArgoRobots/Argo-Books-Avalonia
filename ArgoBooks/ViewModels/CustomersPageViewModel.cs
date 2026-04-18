@@ -882,14 +882,14 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         // Validate first name (required)
         if (string.IsNullOrWhiteSpace(ModalFirstName))
         {
-            ModalFirstNameError = "First name is required.";
+            ModalFirstNameError = "First name is required.".Translate();
             isValid = false;
         }
 
         // Validate last name (required)
         if (string.IsNullOrWhiteSpace(ModalLastName))
         {
-            ModalLastNameError = "Last name is required.";
+            ModalLastNameError = "Last name is required.".Translate();
             isValid = false;
         }
 

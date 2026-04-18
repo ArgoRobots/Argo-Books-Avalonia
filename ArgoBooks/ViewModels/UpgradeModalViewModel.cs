@@ -113,6 +113,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private List<PlanFeature> _rawFreeFeatures = [];
     private List<PlanFeature> _rawPremiumFeatures = [];
 
+    // Raw pricing strings from the API, kept so we can re-translate when the language changes
+    private string? _rawPremiumYearlyPriceDisplay;
+    private string? _rawPremiumYearlySavingsDisplay;
+
     #endregion
 
     #region Plan Status
@@ -174,6 +178,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
         PremiumPlanFeatures.Clear();
         foreach (var feature in _rawPremiumFeatures)
             PremiumPlanFeatures.Add(feature.DisplayText);
+
+        RefreshPricingDisplay();
+    }
+
+    private void RefreshPricingDisplay()
+    {
+        PremiumBillingPeriod = "/month".Translate();
+        if (_rawPremiumYearlyPriceDisplay is not null && _rawPremiumYearlySavingsDisplay is not null)
+        {
+            PremiumYearlyPrice = "or {0}/year".TranslateFormat(_rawPremiumYearlyPriceDisplay);
+            PremiumYearlySavings = "(save {0})".TranslateFormat(_rawPremiumYearlySavingsDisplay);
+        }
     }
 
     #region Commands
@@ -457,13 +473,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
             if (apiResponse?.Pricing != null)
             {
                 PremiumMonthlyPrice = apiResponse.Pricing.PremiumPriceDisplay;
-                PremiumBillingPeriod = "/month";
-                if (apiResponse.Pricing.PremiumYearlyPriceDisplay is not null &&
-                    apiResponse.Pricing.PremiumYearlySavingsDisplay is not null)
-                {
-                    PremiumYearlyPrice = $"or {apiResponse.Pricing.PremiumYearlyPriceDisplay}/year";
-                    PremiumYearlySavings = $"(save {apiResponse.Pricing.PremiumYearlySavingsDisplay})";
-                }
+                _rawPremiumYearlyPriceDisplay = apiResponse.Pricing.PremiumYearlyPriceDisplay;
+                _rawPremiumYearlySavingsDisplay = apiResponse.Pricing.PremiumYearlySavingsDisplay;
+                RefreshPricingDisplay();
             }
 
             if (apiResponse?.Plans != null)

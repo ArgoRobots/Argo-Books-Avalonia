@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -1070,7 +1071,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         // Validate product name (required)
         if (string.IsNullOrWhiteSpace(ModalProductName))
         {
-            ModalProductNameError = "Product name is required.";
+            ModalProductNameError = "Product name is required.".Translate();
             isValid = false;
         }
         else
@@ -1082,7 +1083,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
             if (existingWithSameName)
             {
-                ModalProductNameError = "A product with this name already exists.";
+                ModalProductNameError = "A product with this name already exists.".Translate();
                 isValid = false;
             }
         }
