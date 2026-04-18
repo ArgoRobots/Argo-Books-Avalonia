@@ -1047,6 +1047,30 @@ public class App : Application
                 {
                     await LanguageService.Instance.SetLanguageAsync(language);
                 }
+
+                // Refresh cached translations once per app version. Without this, users
+                // never see translations added after their first language download because
+                // DownloadAndCacheLanguageAsync skips when a cached file exists.
+                var currentVersion = Services.AppInfo.VersionNumber;
+                if (SettingsService.GlobalSettings.Ui.LastLanguageVersion != currentVersion)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var refreshed = await LanguageService.Instance.UpdateAllCachedTranslationsAsync();
+                            if (refreshed)
+                            {
+                                SettingsService.GlobalSettings.Ui.LastLanguageVersion = currentVersion;
+                                await SettingsService.SaveGlobalSettingsAsync();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorLogger?.LogError(ex, ErrorCategory.Network, "Translation cache refresh failed");
+                        }
+                    });
+                }
             }
 
             // Initialize exchange rate service for currency conversion
@@ -3110,7 +3134,7 @@ public class App : Application
             _mainWindowViewModel?.HideLoading();
             await ShowErrorMessageBoxAsync(
                 "AI Not Configured".Translate(),
-                "Portal is not configured. Please register your company first to use AI-powered import.".Translate());
+                "AI-powered import requires portal access. Please register your company first.".Translate());
             return;
         }
 
@@ -3787,7 +3811,7 @@ public class App : Application
             {
                 await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
                 {
-                    Title = "File Not Found".Translate(),
+                    Title = "Company File Not Found".Translate(),
                     Message = "The company file no longer exists.".Translate(),
                     PrimaryButtonText = "OK".Translate(),
                     SecondaryButtonText = null,

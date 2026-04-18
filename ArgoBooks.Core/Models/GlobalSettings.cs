@@ -38,6 +38,13 @@ public class UiSettings
     public string Theme { get; set; } = "Dark";
     public string AccentColor { get; set; } = "Blue";
     public string Language { get; set; } = "English";
+
+    /// <summary>
+    /// App version that last refreshed cached translation files. When this differs from
+    /// the running version, cached translations are re-downloaded so users on the new
+    /// version get the latest translations.
+    /// </summary>
+    public string? LastLanguageVersion { get; set; }
     /// <summary>
     /// User's preferred timezone for displaying times. Defaults to UTC.
     /// Uses system timezone identifiers.

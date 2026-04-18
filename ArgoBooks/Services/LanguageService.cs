@@ -195,7 +195,10 @@ public partial class LanguageService
                 var filePath = GetLanguageFilePath(isoCode);
                 if (!File.Exists(filePath)) // Don't overwrite existing per-language files
                 {
-                    File.WriteAllText(filePath, JsonSerializer.Serialize(translations, options));
+                    var sorted = translations
+                        .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+                    File.WriteAllText(filePath, JsonSerializer.Serialize(sorted, options));
                 }
             }
 
@@ -217,7 +220,11 @@ public partial class LanguageService
         try
         {
             var options = new JsonSerializerOptions { WriteIndented = true };
-            var jsonContent = JsonSerializer.Serialize(translations, options);
+            // Sort by key for deterministic output (matches the translation tool's repo files)
+            var sorted = translations
+                .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+            var jsonContent = JsonSerializer.Serialize(sorted, options);
             File.WriteAllText(GetLanguageFilePath(isoCode), jsonContent);
         }
         catch (Exception ex)
@@ -320,6 +327,14 @@ public partial class LanguageService
 
             if (!response.IsSuccessStatusCode)
             {
+                // 404 typically means the server hasn't been updated with this version's
+                // translations yet. Keep the existing cache intact rather than failing hard.
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    App.ErrorLogger?.LogDebug($"LanguageService: No translations published for version {version} ({isoCode}); keeping cached copy");
+                    TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "No update available"));
+                    return File.Exists(GetLanguageFilePath(isoCode));
+                }
                 App.ErrorLogger?.LogWarning($"LanguageService: Download failed with status {response.StatusCode}");
                 TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "Download failed"));
                 return false;
