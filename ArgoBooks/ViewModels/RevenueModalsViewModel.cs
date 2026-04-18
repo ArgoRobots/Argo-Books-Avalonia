@@ -135,8 +135,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         "Customer return",
         "Wrong item sent",
         "Quality issues",
-        "Not as described",
-        "Changed mind",
+        "Not as Described",
+        "Changed Mind",
         "Defective",
         "Other"
     ];

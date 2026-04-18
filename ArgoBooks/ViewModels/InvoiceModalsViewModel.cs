@@ -1150,14 +1150,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
             {
                 HasCustomerError = true;
-                errorMessages.Add("Please select a customer".Translate());
+                errorMessages.Add("Please select a customer.".Translate());
                 hasErrors = true;
             }
 
             // Check line items
             if (LineItems.Count == 0)
             {
-                errorMessages.Add("Please add at least one line item".Translate());
+                errorMessages.Add("Please add at least one line item.".Translate());
                 hasErrors = true;
             }
             else
@@ -1239,7 +1239,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // since the portal server handles email delivery via sendEmail: true)
         if (!PortalSettings.IsConfigured)
         {
-            await ShowSendErrorAsync("Portal is not configured. Please register your company first to send invoice emails.".Translate());
+            await ShowSendErrorAsync("Sending invoice emails requires portal access. Please register your company first.".Translate());
             return;
         }
 
@@ -1608,7 +1608,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
             HasCustomerError = true;
-            ValidationMessage = "Please select a customer".Translate();
+            ValidationMessage = "Please select a customer.".Translate();
             HasValidationMessage = true;
             return;
         }

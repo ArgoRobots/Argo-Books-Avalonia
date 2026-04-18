@@ -864,7 +864,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (LineItems.Count == 0)
         {
-            ValidationMessage = "Please add at least one line item".Translate();
+            ValidationMessage = "Please add at least one line item.".Translate();
             HasValidationMessage = true;
             return;
         }

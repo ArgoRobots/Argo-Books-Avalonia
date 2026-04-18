@@ -74,7 +74,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private bool _isRecurringTab;
 
     [ObservableProperty]
-    private string _emptyStateTitle = "No invoices found";
+    private string _emptyStateTitle = "No invoices found.";
 
     [ObservableProperty]
     private string _emptyStateMessage = "Create your first invoice to start tracking your billing.";
@@ -97,7 +97,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         {
             "Drafts" => "No Draft Invoices",
             "Recurring" => "No Recurring Invoices",
-            _ => "No invoices found"
+            _ => "No invoices found."
         };
 
         EmptyStateMessage = tab switch

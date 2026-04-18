@@ -598,7 +598,7 @@ public partial class ProductModalsViewModel : ViewModelBase
                 if (cd.Returns.Any(r => r.Items.Any(ri => ri.ProductId == item.Id)))
                     usages.Add("Return".Translate());
                 if (cd.LostDamaged.Any(ld => ld.ProductId == item.Id))
-                    usages.Add("Lost/Damaged".Translate());
+                    usages.Add("Lost / Damaged".Translate());
                 if (usages.Count > 0)
                 {
                     await App.ShowWarningMessageBoxAsync(

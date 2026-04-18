@@ -103,7 +103,7 @@
                                                                 Placeholder="{loc:Loc 'Search for a customer...'}"
                                                                 IsRequired="True"
                                                                 HasError="{Binding HasCustomerError}"
-                                                                ErrorMessage="{loc:Loc 'Please select a customer'}"
+                                                                ErrorMessage="{loc:Loc 'Please select a customer.'}"
                                                                 ShowAddNew="False"
                                                                 EmptyMessage="{loc:Loc 'No customers found.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
@@ -198,7 +198,7 @@
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                                  HasError="{Binding HasProductError}"
-                                                                 ErrorMessage="{loc:Loc 'Please select a product'}" />
+                                                                 ErrorMessage="{loc:Loc 'Please select a product.'}" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
                                                                    Minimum="1"

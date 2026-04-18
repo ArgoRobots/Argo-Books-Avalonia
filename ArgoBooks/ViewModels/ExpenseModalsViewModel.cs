@@ -124,9 +124,9 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     [
         "Wrong item received",
         "Quality issues",
-        "Not as described",
+        "Not as Described",
         "Duplicate order",
-        "Changed mind",
+        "Changed Mind",
         "Better price elsewhere",
         "Other"
     ];

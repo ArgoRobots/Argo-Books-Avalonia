@@ -159,8 +159,8 @@ public partial class UndoRedoButtonGroup : UserControl
         {
             int count = _currentUndoHoverIndex + 1;
             _undoCountLabel.Text = count == 1
-                ? "Undo 1 action".Translate()
-                : "Undo {0} actions".TranslateFormat(count);
+                ? "Undo 1 Action".Translate()
+                : "Undo {0} Actions".TranslateFormat(count);
         }
     }
 
@@ -176,8 +176,8 @@ public partial class UndoRedoButtonGroup : UserControl
         {
             int count = _currentRedoHoverIndex + 1;
             _redoCountLabel.Text = count == 1
-                ? "Redo 1 action".Translate()
-                : "Redo {0} actions".TranslateFormat(count);
+                ? "Redo 1 Action".Translate()
+                : "Redo {0} Actions".TranslateFormat(count);
         }
     }
 

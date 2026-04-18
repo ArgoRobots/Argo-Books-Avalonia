@@ -460,28 +460,28 @@ public static class DatePresetNames
 {
     public const string Today = "Today";
     public const string Yesterday = "Yesterday";
-    public const string Last7Days = "Last 7 days";
-    public const string Last30Days = "Last 30 days";
-    public const string Last100Days = "Last 100 days";
-    public const string Last365Days = "Last 365 days";
-    public const string ThisWeek = "This week";
-    public const string LastWeek = "Last week";
-    public const string ThisMonth = "This month";
-    public const string LastMonth = "Last month";
-    public const string ThisQuarter = "This quarter";
-    public const string LastQuarter = "Last quarter";
-    public const string YearToDate = "This year";
-    public const string LastYear = "Last year";
-    public const string AllTime = "All time";
+    public const string Last7Days = "Last 7 Days";
+    public const string Last30Days = "Last 30 Days";
+    public const string Last100Days = "Last 100 Days";
+    public const string Last365Days = "Last 365 Days";
+    public const string ThisWeek = "This Week";
+    public const string LastWeek = "Last Week";
+    public const string ThisMonth = "This Month";
+    public const string LastMonth = "Last Month";
+    public const string ThisQuarter = "This Quarter";
+    public const string LastQuarter = "Last Quarter";
+    public const string YearToDate = "This Year";
+    public const string LastYear = "Last Year";
+    public const string AllTime = "All Time";
     public const string Custom = "Custom";
 
     // Future date range presets (for insights/forecasting)
-    public const string NextMonth = "Next month";
-    public const string NextQuarter = "Next quarter";
-    public const string NextYear = "Next year";
-    public const string NextMonthToDate = "Next month to date";
-    public const string NextQuarterToDate = "Next quarter to date";
-    public const string NextYearToDate = "Next year to date";
+    public const string NextMonth = "Next Month";
+    public const string NextQuarter = "Next Quarter";
+    public const string NextYear = "Next Year";
+    public const string NextMonthToDate = "Next Month to Date";
+    public const string NextQuarterToDate = "Next Quarter to Date";
+    public const string NextYearToDate = "Next Year to Date";
 
     /// <summary>
     /// Gets the date range for a preset name.

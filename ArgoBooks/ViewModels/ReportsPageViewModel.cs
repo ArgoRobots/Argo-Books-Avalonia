@@ -1162,7 +1162,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         SelectedElement.ZOrder = maxZ + 1;
         var newZOrders = Configuration.Elements.ToDictionary(e => e.Id, e => e.ZOrder);
 
-        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Bring to front".Translate()));
+        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Bring to Front".Translate()));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -1182,7 +1182,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         SelectedElement.ZOrder = minZ;
 
         var newZOrders = Configuration.Elements.ToDictionary(e => e.Id, e => e.ZOrder);
-        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Send to back".Translate()));
+        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Send to Back".Translate()));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -2504,13 +2504,13 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             new(ChartDataType.AverageTransactionValue, "Average Transaction", "Average transaction amounts", "Transactions", transactionIcon, transactionColor, transactionLight),
             new(ChartDataType.TotalTransactions, "Total Transactions", "Transaction volume", "Transactions", barChartIcon, transactionColor, transactionLight),
-            new(ChartDataType.AverageShippingCosts, "Average Shipping Costs", "Average shipping costs", "Transactions", shippingIcon, transactionColor, transactionLight)
+            new(ChartDataType.AverageShippingCosts, "Average Shipping Costs", "Mean shipping cost per period", "Transactions", shippingIcon, transactionColor, transactionLight)
         };
 
         // Geographic charts
         var geographicCharts = new ObservableCollection<ChartOption>
         {
-            new(ChartDataType.WorldMap, "Geographic Distribution", "Geographic distribution", "Geographic", globeIcon, geographicColor, geographicLight),
+            new(ChartDataType.WorldMap, "Geographic Distribution", "Sales distribution on a world map", "Geographic", globeIcon, geographicColor, geographicLight),
             new(ChartDataType.CountriesOfOrigin, "Countries of Origin", "Sales by origin country", "Geographic", locationIcon, geographicColor, geographicLight),
             new(ChartDataType.CountriesOfDestination, "Countries of Destination", "Sales by destination country", "Geographic", locationIcon, geographicColor, geographicLight),
             new(ChartDataType.CompaniesOfOrigin, "Companies of Origin", "Sales by supplier company", "Geographic", buildingIcon, geographicColor, geographicLight),
@@ -2520,7 +2520,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Accountant charts
         var accountantCharts = new ObservableCollection<ChartOption>
         {
-            new(ChartDataType.AccountantsTransactions, "Transactions by Accountant", "Transactions by accountant", "Personnel", personIcon, accountantColor, accountantLight)
+            new(ChartDataType.AccountantsTransactions, "Transactions by Accountant", "Volume of transactions per accountant", "Personnel", personIcon, accountantColor, accountantLight)
         };
 
         // Customer charts
@@ -2539,10 +2539,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             new(ChartDataType.ReturnsOverTime, "Returns Over Time", "Return trends", "Returns", returnIcon, returnColor, returnLight),
             new(ChartDataType.ReturnReasons, "Return Reasons", "Why items are returned", "Returns", reasonIcon, returnColor, returnLight),
-            new(ChartDataType.ReturnFinancialImpact, "Return Financial Impact", "Financial impact of returns", "Returns", impactIcon, returnColor, returnLight),
-            new(ChartDataType.ReturnsByCategory, "Returns by Category", "Returns by category", "Returns", categoryIcon, returnColor, returnLight),
-            new(ChartDataType.ReturnsByProduct, "Returns by Product", "Returns by product", "Returns", productIcon, returnColor, returnLight),
-            new(ChartDataType.ExpenseVsRevenueReturns, "Expense vs Revenue Returns", "Expense vs revenue returns", "Returns", vsIcon, returnColor, returnLight)
+            new(ChartDataType.ReturnFinancialImpact, "Return Financial Impact", "Total cost of returns", "Returns", impactIcon, returnColor, returnLight),
+            new(ChartDataType.ReturnsByCategory, "Returns by Category", "Return volume grouped by category", "Returns", categoryIcon, returnColor, returnLight),
+            new(ChartDataType.ReturnsByProduct, "Returns by Product", "Return volume grouped by product", "Returns", productIcon, returnColor, returnLight),
+            new(ChartDataType.ExpenseVsRevenueReturns, "Expense vs Revenue Returns", "Compare expense and revenue returns", "Returns", vsIcon, returnColor, returnLight)
         };
 
         // Loss charts
@@ -2550,10 +2550,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             new(ChartDataType.LossesOverTime, "Losses Over Time", "Loss trends", "Losses", lossIcon, lossColor, lossLight),
             new(ChartDataType.LossReasons, "Loss Reasons", "Why items are lost", "Losses", reasonIcon, lossColor, lossLight),
-            new(ChartDataType.LossFinancialImpact, "Loss Financial Impact", "Financial impact of losses", "Losses", impactIcon, lossColor, lossLight),
-            new(ChartDataType.LossesByCategory, "Losses by Category", "Losses by category", "Losses", categoryIcon, lossColor, lossLight),
-            new(ChartDataType.LossesByProduct, "Losses by Product", "Losses by product", "Losses", productIcon, lossColor, lossLight),
-            new(ChartDataType.ExpenseVsRevenueLosses, "Expense vs Revenue Losses", "Expense vs revenue losses", "Losses", vsIcon, lossColor, lossLight)
+            new(ChartDataType.LossFinancialImpact, "Loss Financial Impact", "Total cost of losses", "Losses", impactIcon, lossColor, lossLight),
+            new(ChartDataType.LossesByCategory, "Losses by Category", "Loss volume grouped by category", "Losses", categoryIcon, lossColor, lossLight),
+            new(ChartDataType.LossesByProduct, "Losses by Product", "Loss volume grouped by product", "Losses", productIcon, lossColor, lossLight),
+            new(ChartDataType.ExpenseVsRevenueLosses, "Expense vs Revenue Losses", "Compare expense and revenue losses", "Losses", vsIcon, lossColor, lossLight)
         };
 
         // Add all charts to AvailableCharts (flat list for backward compatibility)

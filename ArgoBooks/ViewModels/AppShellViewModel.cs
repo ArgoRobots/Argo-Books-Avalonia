@@ -977,7 +977,7 @@ public partial class AppShellViewModel : ViewModelBase
         // Show unsaved changes dialog
         var result2 = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
             "Unsaved Report Changes".Translate(),
-            "You have unsaved changes in the report designer. Would you like to save them before leaving?".Translate());
+            "You have unsaved changes in the report designer. Would you like to save them?".Translate());
 
         switch (result2)
         {

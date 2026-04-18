@@ -150,7 +150,7 @@
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              HasError="{Binding HasProductError}"
-                                                             ErrorMessage="{loc:Loc 'Please select a product'}" />
+                                                             ErrorMessage="{loc:Loc 'Please select a product.'}" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay, TargetNullValue=1}"
                                                                    Minimum="1"
