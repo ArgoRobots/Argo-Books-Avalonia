@@ -332,11 +332,11 @@ public static class ReportEnumExtensions
         return chartType switch
         {
             // Revenue charts
-            ChartDataType.TotalRevenue => "Revenue Trends",
+            ChartDataType.TotalRevenue => "Total Revenue",
             ChartDataType.RevenueDistribution => "Revenue Distribution",
 
             // Expense charts
-            ChartDataType.TotalExpenses => "Expense Trends",
+            ChartDataType.TotalExpenses => "Total Expenses",
             ChartDataType.ExpensesDistribution => "Expense Distribution",
 
             // Financial charts
@@ -349,7 +349,7 @@ public static class ReportEnumExtensions
             ChartDataType.AverageShippingCosts => "Average Shipping Costs",
 
             // Geographic charts
-            ChartDataType.WorldMap => "World Map Overview",
+            ChartDataType.WorldMap => "Geographic Distribution",
             ChartDataType.CountriesOfOrigin => "Countries of Origin",
             ChartDataType.CountriesOfDestination => "Countries of Destination",
             ChartDataType.CompaniesOfOrigin => "Companies of Origin",

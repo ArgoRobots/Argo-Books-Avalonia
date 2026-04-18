@@ -4066,7 +4066,7 @@ public class ReportRenderer : IDisposable
         return SKColors.Black;
     }
 
-    private static string GetChartTitle(ChartDataType chartType) => chartType.GetDisplayName();
+    private string GetChartTitle(ChartDataType chartType) => Tr(chartType.GetDisplayName());
 
     private static List<string> GetVisibleColumns(TableReportElement table)
     {

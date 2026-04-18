@@ -7,6 +7,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Drawing;
@@ -1131,7 +1132,7 @@ public class ChartLoaderService
         {
             StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
             {
-                ChartTitle = "Expenses Overview",
+                ChartTitle = ChartDataType.TotalExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Expense,
                 Labels = [],
                 Values = [],
@@ -1149,7 +1150,7 @@ public class ChartLoaderService
 
         StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
-            ChartTitle = "Expenses Overview",
+            ChartTitle = ChartDataType.TotalExpenses.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
@@ -1180,7 +1181,7 @@ public class ChartLoaderService
         {
             StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
             {
-                ChartTitle = "Revenue Overview",
+                ChartTitle = ChartDataType.TotalRevenue.GetDisplayName().Translate(),
                 ChartType = ChartType.Revenue,
                 Labels = [],
                 Values = [],
@@ -1198,7 +1199,7 @@ public class ChartLoaderService
 
         StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
         {
-            ChartTitle = "Revenue Overview",
+            ChartTitle = ChartDataType.TotalRevenue.GetDisplayName().Translate(),
             ChartType = ChartType.Revenue,
             Labels = labels,
             Values = values,
@@ -1231,7 +1232,7 @@ public class ChartLoaderService
         {
             StoreExportData(ChartDataType.TotalProfits, new ChartExportData
             {
-                ChartTitle = "Profits Overview",
+                ChartTitle = ChartDataType.TotalProfits.GetDisplayName().Translate(),
                 ChartType = ChartType.Profit,
                 Labels = [],
                 Values = [],
@@ -1256,7 +1257,7 @@ public class ChartLoaderService
 
         StoreExportData(ChartDataType.TotalProfits, new ChartExportData
         {
-            ChartTitle = "Profits Overview",
+            ChartTitle = ChartDataType.TotalProfits.GetDisplayName().Translate(),
             ChartType = ChartType.Profit,
             Labels = labels,
             Values = values,
@@ -1287,7 +1288,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
-                ChartTitle = "Expenses vs Revenue",
+                ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -1304,7 +1305,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
-                ChartTitle = "Expenses vs Revenue",
+                ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -1325,7 +1326,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
-                ChartTitle = "Expenses vs Revenue",
+                ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -1365,7 +1366,7 @@ public class ChartLoaderService
         // Store export data for multi-series chart
         _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
         {
-            ChartTitle = "Expenses vs Revenue",
+            ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = expenseValues,
@@ -1398,7 +1399,7 @@ public class ChartLoaderService
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
         {
-            ChartTitle = "Revenue Distribution",
+            ChartTitle = ChartDataType.RevenueDistribution.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1433,7 +1434,7 @@ public class ChartLoaderService
         // Store export data for Google Sheets/Excel export
         PieChartExportData = new ChartExportData
         {
-            ChartTitle = "Expense Distribution",
+            ChartTitle = ChartDataType.ExpensesDistribution.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1483,7 +1484,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerGrowth] = new ChartExportData
         {
-            ChartTitle = "Customer Growth",
+            ChartTitle = ChartDataType.CustomerGrowth.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = values,
@@ -1544,7 +1545,7 @@ public class ChartLoaderService
         var labels = revenueSeriesData.DataPoints.Select(p => p.Label).ToArray();
         _chartExportDataByType[ChartDataType.AverageTransactionValue] = new ChartExportData
         {
-            ChartTitle = "Average Transaction Value",
+            ChartTitle = ChartDataType.AverageTransactionValue.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray(),
@@ -1607,7 +1608,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TotalTransactions] = new ChartExportData
         {
-            ChartTitle = "Total Transactions",
+            ChartTitle = ChartDataType.TotalTransactions.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = totalValues,
@@ -1652,7 +1653,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.AverageShippingCosts] = new ChartExportData
         {
-            ChartTitle = "Average Shipping Costs",
+            ChartTitle = ChartDataType.AverageShippingCosts.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = avgShipping,
@@ -1683,7 +1684,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfOrigin] = new ChartExportData
         {
-            ChartTitle = "Countries of Origin",
+            ChartTitle = ChartDataType.CountriesOfOrigin.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1715,7 +1716,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfDestination] = new ChartExportData
         {
-            ChartTitle = "Countries of Destination",
+            ChartTitle = ChartDataType.CountriesOfDestination.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1746,7 +1747,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfOrigin] = new ChartExportData
         {
-            ChartTitle = "Companies of Origin",
+            ChartTitle = ChartDataType.CompaniesOfOrigin.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1777,7 +1778,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfDestination] = new ChartExportData
         {
-            ChartTitle = "Companies of Destination",
+            ChartTitle = ChartDataType.CompaniesOfDestination.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1808,7 +1809,7 @@ public class ChartLoaderService
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
         var exportData = new ChartExportData
         {
-            ChartTitle = "Transactions by Accountant",
+            ChartTitle = ChartDataType.AccountantsTransactions.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1840,7 +1841,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerPaymentStatus] = new ChartExportData
         {
-            ChartTitle = "Customer Payment Status",
+            ChartTitle = ChartDataType.CustomerPaymentStatus.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1871,7 +1872,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ActiveVsInactiveCustomers] = new ChartExportData
         {
-            ChartTitle = "Active vs Inactive Customers",
+            ChartTitle = ChartDataType.ActiveVsInactiveCustomers.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1903,7 +1904,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.LossReasons] = new ChartExportData
         {
-            ChartTitle = "Loss Reasons",
+            ChartTitle = ChartDataType.LossReasons.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1935,7 +1936,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByProduct] = new ChartExportData
         {
-            ChartTitle = "Losses by Product",
+            ChartTitle = ChartDataType.LossesByProduct.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1975,7 +1976,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsOverTime] = new ChartExportData
         {
-            ChartTitle = "Returns Over Time",
+            ChartTitle = ChartDataType.ReturnsOverTime.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
@@ -2007,7 +2008,7 @@ public class ChartLoaderService
         // Store export data
         var exportData = new ChartExportData
         {
-            ChartTitle = "Return Reasons",
+            ChartTitle = ChartDataType.ReturnReasons.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2040,7 +2041,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByCategory] = new ChartExportData
         {
-            ChartTitle = "Returns by Category",
+            ChartTitle = ChartDataType.ReturnsByCategory.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2086,7 +2087,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnFinancialImpact] = new ChartExportData
         {
-            ChartTitle = "Financial Impact of Returns",
+            ChartTitle = ChartDataType.ReturnFinancialImpact.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = impactValues,
@@ -2126,7 +2127,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.LossesOverTime] = new ChartExportData
         {
-            ChartTitle = "Losses Over Time",
+            ChartTitle = ChartDataType.LossesOverTime.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
@@ -2171,7 +2172,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.LossFinancialImpact] = new ChartExportData
         {
-            ChartTitle = "Financial Impact of Losses",
+            ChartTitle = ChartDataType.LossFinancialImpact.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = impactValues,
@@ -2203,7 +2204,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByProduct] = new ChartExportData
         {
-            ChartTitle = "Returns by Product",
+            ChartTitle = ChartDataType.ReturnsByProduct.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2236,7 +2237,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByCategory] = new ChartExportData
         {
-            ChartTitle = "Losses by Category",
+            ChartTitle = ChartDataType.LossesByCategory.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2268,7 +2269,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Returns",
+                ChartTitle = ChartDataType.ExpenseVsRevenueReturns.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2284,7 +2285,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Returns",
+                ChartTitle = ChartDataType.ExpenseVsRevenueReturns.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2310,7 +2311,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
         {
-            ChartTitle = "Expense vs Revenue Returns",
+            ChartTitle = ChartDataType.ExpenseVsRevenueReturns.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueReturnValues,
@@ -2343,7 +2344,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Losses",
+                ChartTitle = ChartDataType.ExpenseVsRevenueLosses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2359,7 +2360,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Losses",
+                ChartTitle = ChartDataType.ExpenseVsRevenueLosses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2385,7 +2386,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
         {
-            ChartTitle = "Expense vs Revenue Losses",
+            ChartTitle = ChartDataType.ExpenseVsRevenueLosses.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = expenseLossValues,
@@ -2416,7 +2417,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
             {
-                ChartTitle = "Tax Collected vs Paid",
+                ChartTitle = ChartDataType.TaxCollectedVsPaid.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2432,7 +2433,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
             {
-                ChartTitle = "Tax Collected vs Paid",
+                ChartTitle = ChartDataType.TaxCollectedVsPaid.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2457,7 +2458,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
         {
-            ChartTitle = "Tax Collected vs Paid",
+            ChartTitle = ChartDataType.TaxCollectedVsPaid.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = collectedValues,
@@ -2495,7 +2496,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxLiabilityTrend] = new ChartExportData
         {
-            ChartTitle = "Net Tax Liability",
+            ChartTitle = ChartDataType.TaxLiabilityTrend.GetDisplayName().Translate(),
             ChartType = ChartType.Revenue,
             Labels = labels,
             Values = values,
@@ -2525,7 +2526,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxByCategory] = new ChartExportData
         {
-            ChartTitle = "Tax by Category",
+            ChartTitle = ChartDataType.TaxByCategory.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2554,7 +2555,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.TaxRateDistribution] = new ChartExportData
             {
-                ChartTitle = "Tax Rate Distribution",
+                ChartTitle = ChartDataType.TaxRateDistribution.GetDisplayName().Translate(),
                 ChartType = ChartType.Distribution,
                 Labels = [],
                 Values = [],
@@ -2599,7 +2600,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxRateDistribution] = new ChartExportData
         {
-            ChartTitle = "Tax Rate Distribution",
+            ChartTitle = ChartDataType.TaxRateDistribution.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueValues,
@@ -2630,7 +2631,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxByProduct] = new ChartExportData
         {
-            ChartTitle = "Tax by Product",
+            ChartTitle = ChartDataType.TaxByProduct.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2660,7 +2661,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Tax",
+                ChartTitle = ChartDataType.ExpenseVsRevenueTax.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2676,7 +2677,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Tax",
+                ChartTitle = ChartDataType.ExpenseVsRevenueTax.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2701,7 +2702,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
         {
-            ChartTitle = "Expense vs Revenue Tax",
+            ChartTitle = ChartDataType.ExpenseVsRevenueTax.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueValues,
