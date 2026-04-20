@@ -4,6 +4,7 @@ using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -1030,8 +1031,25 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 description, $"template:{callerName}", setter, oldValue, newValue));
     }
 
+    private DispatcherTimer? _previewDebounceTimer;
+    private static readonly TimeSpan PreviewDebounceInterval = TimeSpan.FromMilliseconds(300);
+
     private void UpdatePreview()
     {
+        // Debounce re-renders so rapid edits (e.g. fast typing) don't trigger
+        // a NavigateToString flash on every keystroke.
+        if (_previewDebounceTimer == null)
+        {
+            _previewDebounceTimer = new DispatcherTimer { Interval = PreviewDebounceInterval };
+            _previewDebounceTimer.Tick += OnPreviewDebounceTick;
+        }
+        _previewDebounceTimer.Stop();
+        _previewDebounceTimer.Start();
+    }
+
+    private void OnPreviewDebounceTick(object? sender, EventArgs e)
+    {
+        _previewDebounceTimer?.Stop();
         var template = BuildTemplateFromForm();
         var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
         PreviewHtml = _emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);

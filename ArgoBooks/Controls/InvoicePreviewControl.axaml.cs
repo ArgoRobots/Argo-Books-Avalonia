@@ -50,6 +50,9 @@ public partial class InvoicePreviewControl : UserControl
     private bool _isInitialized;
     private bool _webViewReady;
     private double _currentZoom = 1.0;
+    private double _pendingScrollX;
+    private double _pendingScrollY;
+    private bool _hasPendingScroll;
 
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.25;
@@ -177,7 +180,13 @@ public partial class InvoicePreviewControl : UserControl
 
     private void OnNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
     {
-        // Content is loaded and ready
+        if (_hasPendingScroll && _webView != null)
+        {
+            var sx = _pendingScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var sy = _pendingScrollY.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            _ = _webView.InvokeScript($"window.scrollTo({sx}, {sy})");
+            _hasPendingScroll = false;
+        }
     }
 
     private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
@@ -221,6 +230,28 @@ public partial class InvoicePreviewControl : UserControl
     {
         if (!_webViewReady || _webView == null || string.IsNullOrEmpty(Html))
             return;
+
+        // Capture current scroll position so NavigationCompleted can restore it
+        // after NavigateToString resets the page. Skip re-capture while a prior
+        // navigation is still in flight — the live page is mid-reload and would
+        // report scroll=0, clobbering the position we're trying to preserve.
+        if (!_hasPendingScroll)
+        {
+            try
+            {
+                var result = await _webView.InvokeScript("JSON.stringify([window.scrollX||0,window.scrollY||0])");
+                if (TryParseScrollResult(result, out var sx, out var sy))
+                {
+                    _pendingScrollX = sx;
+                    _pendingScrollY = sy;
+                    _hasPendingScroll = true;
+                }
+            }
+            catch
+            {
+                // No saved scroll; reload will keep scroll at 0
+            }
+        }
 
         // Inject interaction scripts for zoom and pan handling
         var interactionScript = @"
@@ -486,6 +517,25 @@ public partial class InvoicePreviewControl : UserControl
         {
             return null;
         }
+    }
+
+    private static bool TryParseScrollResult(string? result, out double x, out double y)
+    {
+        x = 0;
+        y = 0;
+        if (string.IsNullOrEmpty(result))
+            return false;
+
+        // InvokeScript may return the JSON string wrapped in quotes with escaped inner quotes.
+        var trimmed = result.Trim();
+        if (trimmed.StartsWith('"') && trimmed.EndsWith('"'))
+            trimmed = trimmed[1..^1].Replace("\\\"", "\"");
+
+        trimmed = trimmed.Trim('[', ']');
+        var parts = trimmed.Split(',');
+        return parts.Length == 2
+            && double.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+            && double.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y);
     }
 
     private void OpenInBrowserButton_Click(object? sender, RoutedEventArgs e)
