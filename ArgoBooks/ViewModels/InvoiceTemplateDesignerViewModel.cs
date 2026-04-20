@@ -49,6 +49,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private bool _isDeleteConfirmOpen;
 
     [ObservableProperty]
+    private bool _isProcessingFeeInfoOpen;
+
+    [ObservableProperty]
     private string _modalTitle = "Create Invoice Template";
 
     [ObservableProperty]
@@ -388,6 +391,24 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         TemplateToDelete = string.Empty;
     }
 
+    private bool _previewWasVisibleBeforeInfo;
+
+    [RelayCommand]
+    private void OpenProcessingFeeInfo()
+    {
+        _previewWasVisibleBeforeInfo = IsPreviewVisible;
+        IsPreviewVisible = false;
+        IsProcessingFeeInfoOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseProcessingFeeInfo()
+    {
+        IsProcessingFeeInfoOpen = false;
+        if (_previewWasVisibleBeforeInfo)
+            IsPreviewVisible = true;
+    }
+
     [RelayCommand]
     private void ConfirmDeleteTemplate()
     {
@@ -505,6 +526,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         IsPreviewVisible = false;
         IsTemplateListMode = false;
         IsDeleteConfirmOpen = false;
+        IsProcessingFeeInfoOpen = false;
         IsOpen = false;
         IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
