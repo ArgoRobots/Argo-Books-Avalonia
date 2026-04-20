@@ -342,6 +342,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ModalTitle = "Invoice Templates".Translate();
         IsOpen = true;
         IsPreviewVisible = false;
+        _undoRedoManager.Clear();
     }
 
     private void LoadSavedTemplates()
