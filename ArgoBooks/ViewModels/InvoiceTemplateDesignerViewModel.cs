@@ -429,12 +429,14 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 {
                     companyData.InvoiceTemplates.Add(deletedTemplate);
                     App.CompanyManager?.MarkAsChanged();
+                    LoadSavedTemplates();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
                     companyData.InvoiceTemplates.Remove(deletedTemplate);
                     App.CompanyManager?.MarkAsChanged();
+                    LoadSavedTemplates();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 }));
 
