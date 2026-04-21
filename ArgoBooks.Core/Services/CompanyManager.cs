@@ -401,12 +401,9 @@ public class CompanyManager : IDisposable
                 ReleaseFileLock();
                 try
                 {
-                    if (File.Exists(PendingRenamePath))
-                    {
-                        throw new IOException($"Cannot rename: a file already exists at '{PendingRenamePath}'.");
-                    }
-
-                    File.Move(CurrentFilePath, PendingRenamePath);
+                    // overwrite: false makes File.Move atomic — the OS rejects an existing
+                    // destination, so there's no TOCTOU window between the check and the move.
+                    File.Move(CurrentFilePath, PendingRenamePath, overwrite: false);
                     CurrentFilePath = PendingRenamePath;
                 }
                 finally
