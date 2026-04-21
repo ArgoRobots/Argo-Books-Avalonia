@@ -143,7 +143,7 @@ public partial class InvoicePreviewControl : UserControl
 
     private void ActivateWebView()
     {
-        if (_webView == null)
+        if (_webView == null || _webViewReady)
             return;
 
         _webView.IsVisible = true;
