@@ -3115,7 +3115,7 @@ public class App : Application
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
         // Check rate limit via server-side API
-        var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
+        using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
         var usageCheck = await usageService.CheckUsageAsync();
 
         if (!usageCheck.CanImport)

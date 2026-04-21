@@ -7,15 +7,17 @@ namespace ArgoBooks.Core.Services;
 /// Service for tracking and enforcing AI import usage limits via server-side API.
 /// Communicates with the server API to track usage per license key.
 /// </summary>
-public class AiImportUsageService
+public class AiImportUsageService : IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/ai-import/usage.php";
     private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
+    private readonly bool _ownsHttpClient;
     private readonly LicenseService? _licenseService;
     private readonly IConnectivityService _connectivityService;
     private readonly IErrorLogger? _errorLogger;
+    private bool _disposed;
 
     // Cache the last known usage to reduce API calls
     private AiImportUsageStatus? _cachedUsage;
@@ -28,6 +30,7 @@ public class AiImportUsageService
     public AiImportUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null)
         : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService(), errorLogger)
     {
+        _ownsHttpClient = true;
     }
 
     /// <summary>
@@ -126,8 +129,9 @@ public class AiImportUsageService
         }
         catch (HttpRequestException)
         {
-            // Network error - allow import if we have cached data showing capacity
-            if (_cachedUsage != null && _cachedUsage.CanImport)
+            // Network error — allow import if we have non-expired cached data showing capacity.
+            // Without the expiry check a stale cache could permit imports past the server-side quota.
+            if (_cachedUsage != null && _cachedUsage.CanImport && DateTime.UtcNow < _cacheExpiry)
             {
                 return new AiImportCheckResult
                 {
@@ -251,6 +255,22 @@ public class AiImportUsageService
 
     /// <inheritdoc />
     public AiImportUsageStatus? GetCachedUsage() => _cachedUsage;
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing && _ownsHttpClient)
+        {
+            _httpClient.Dispose();
+        }
+        _disposed = true;
+    }
 
     private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
     {
