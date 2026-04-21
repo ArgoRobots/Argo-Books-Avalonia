@@ -237,6 +237,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     public void InvalidateScanServices()
     {
         _usageService?.InvalidateCache();
+        // Dispose before dropping the reference — IReceiptUsageService now owns
+        // an HttpClient when constructed via the parameterless overload.
+        _usageService?.Dispose();
         _usageService = null;
         _scannerService = null;
     }

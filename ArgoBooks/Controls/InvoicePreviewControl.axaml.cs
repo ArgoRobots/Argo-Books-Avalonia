@@ -440,6 +440,11 @@ public partial class InvoicePreviewControl : UserControl
         }
         catch (Exception ex)
         {
+            // NavigateToString never delivered the navigation, so OnNavigationCompleted
+            // won't fire to reset _hasPendingScroll. Clear it here so the next
+            // UpdateWebViewContent can recapture a fresh scroll position instead of
+            // being blocked indefinitely by a stale pending capture.
+            _hasPendingScroll = false;
             System.Diagnostics.Debug.WriteLine($"InvoicePreview error: {ex.Message}");
         }
     }

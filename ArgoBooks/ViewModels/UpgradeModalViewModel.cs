@@ -192,6 +192,13 @@ public partial class UpgradeModalViewModel : ViewModelBase
             // it leaves "(save {0})" unchanged for several languages (mt, nl, sk).
             PremiumYearlySavings = "(" + "save {0}".TranslateFormat(_rawPremiumYearlySavingsDisplay) + ")";
         }
+        else
+        {
+            // Clear stale text from a prior fetch — otherwise an API response that omits
+            // the yearly fields would leave the previous yearly pricing visible.
+            PremiumYearlyPrice = string.Empty;
+            PremiumYearlySavings = string.Empty;
+        }
     }
 
     #region Commands

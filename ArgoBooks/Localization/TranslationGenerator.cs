@@ -23,10 +23,13 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"\{loc:Loc\s+([^}]+)\}")]
     private static partial Regex LocExtensionRegex();
 
-    // Strips C# line comments (// ... and /// ...) up to end of line.
-    // Naive: a string literal containing "//" would be misidentified, but real-world
-    // false positives are rare and the alternative (real parser) is overkill.
-    [GeneratedRegex(@"//[^\n\r]*")]
+    // Strips whole-line C# comments (// ... and /// ...). Only matches when the //
+    // is at the start of a line (after optional whitespace), so URLs inside string
+    // literals like "https://example.com" aren't truncated and any .Translate() calls
+    // sharing the line aren't silently dropped. End-of-line comments after code are
+    // left intact — picking up a stray translatable string from one would produce a
+    // visible spurious entry, which is preferable to silently losing a real one.
+    [GeneratedRegex(@"(?m)^[\t ]*//.*$")]
     private static partial Regex LineCommentRegex();
 
     [GeneratedRegex(@"Loc\.Tr\s*\(\s*""([^""]+)""")]
