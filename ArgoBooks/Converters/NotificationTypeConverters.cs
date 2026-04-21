@@ -61,8 +61,21 @@ public static class NotificationTypeConverters
         _ => Color.Parse(AppColors.Primary)
     };
 
-    private static SolidColorBrush BrushFor(NotificationType type) =>
+    /// <summary>
+    /// Returns the accent brush for a notification type. Public so view models can
+    /// expose pre-converted brushes and avoid binding errors when the source notification is null.
+    /// </summary>
+    public static SolidColorBrush BrushFor(NotificationType type) =>
         new(ColorFor(type));
+
+    /// <summary>
+    /// Returns the tinted background brush (10% opacity) for a notification type.
+    /// </summary>
+    public static SolidColorBrush BackgroundBrushFor(NotificationType type)
+    {
+        var color = ColorFor(type);
+        return new SolidColorBrush(new Color(0x1A, color.R, color.G, color.B));
+    }
 
     /// <summary>
     /// Converter that returns font weight based on read status.

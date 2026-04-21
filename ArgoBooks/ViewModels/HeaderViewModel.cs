@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -103,7 +104,36 @@ public partial class HeaderViewModel : ViewModelBase
     private bool _showNotificationToast;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToastTitle))]
+    [NotifyPropertyChangedFor(nameof(ToastMessage))]
+    [NotifyPropertyChangedFor(nameof(ToastBackgroundBrush))]
+    [NotifyPropertyChangedFor(nameof(ToastBorderBrush))]
     private NotificationItem? _toastNotification;
+
+    /// <summary>
+    /// Pre-resolved title for the toast popup. Returns empty when no toast is active,
+    /// so the binding never has to traverse a null ToastNotification.
+    /// </summary>
+    public string ToastTitle => ToastNotification?.Title ?? string.Empty;
+
+    /// <summary>
+    /// Pre-resolved message for the toast popup.
+    /// </summary>
+    public string ToastMessage => ToastNotification?.Message ?? string.Empty;
+
+    /// <summary>
+    /// Pre-resolved background brush for the toast popup. Returns Transparent when no toast is active.
+    /// </summary>
+    public IBrush ToastBackgroundBrush => ToastNotification != null
+        ? NotificationTypeConverters.BackgroundBrushFor(ToastNotification.Type)
+        : Brushes.Transparent;
+
+    /// <summary>
+    /// Pre-resolved border brush for the toast popup.
+    /// </summary>
+    public IBrush ToastBorderBrush => ToastNotification != null
+        ? NotificationTypeConverters.BrushFor(ToastNotification.Type)
+        : Brushes.Transparent;
 
     private CancellationTokenSource? _toastCancellationTokenSource;
     private CancellationTokenSource? _savedFeedbackCts;
