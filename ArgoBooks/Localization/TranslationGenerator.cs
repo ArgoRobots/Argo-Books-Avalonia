@@ -502,10 +502,49 @@ public partial class TranslationGenerator
     }
 
     /// <summary>
+    /// Interprets C# string-literal escape sequences in raw text captured from source files.
+    /// Without this, a source string like "Line one.\n\nLine two" was captured by the regex
+    /// as the literal characters "Line one.\n\nLine two" and serialized to JSON as "\\n\\n",
+    /// which the JSON reader then decoded back to literal "\n" text — so the UI displayed
+    /// "\n\n" instead of two newlines.
+    /// </summary>
+    private static string InterpretCSharpEscapes(string source)
+    {
+        if (string.IsNullOrEmpty(source) || source.IndexOf('\\') < 0)
+            return source;
+
+        var sb = new StringBuilder(source.Length);
+        for (var i = 0; i < source.Length; i++)
+        {
+            if (source[i] == '\\' && i + 1 < source.Length)
+            {
+                switch (source[i + 1])
+                {
+                    case 'n': sb.Append('\n'); i++; continue;
+                    case 'r': sb.Append('\r'); i++; continue;
+                    case 't': sb.Append('\t'); i++; continue;
+                    case '\\': sb.Append('\\'); i++; continue;
+                    case '"': sb.Append('"'); i++; continue;
+                    case '\'': sb.Append('\''); i++; continue;
+                    case '0': sb.Append('\0'); i++; continue;
+                    // Other escapes (\\u####, \\x##, etc.) are uncommon in user-facing
+                    // strings; pass them through untouched rather than risk mis-interpreting.
+                }
+            }
+            sb.Append(source[i]);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>
     /// Adds a string to the collection if valid.
     /// </summary>
     private void AddString(Dictionary<string, string> strings, string text)
     {
+        // Decode C# escape sequences captured as literal text by the regex extractors,
+        // so newlines, tabs, and quotes round-trip correctly through the JSON output.
+        text = InterpretCSharpEscapes(text);
+
         if (string.IsNullOrWhiteSpace(text))
             return;
 
