@@ -142,7 +142,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Gets the text showing remaining invoices for the current month.
     /// </summary>
-    public string RemainingInvoicesText => $"{RemainingInvoices} of {InvoiceMonthlyLimit} remaining";
+    public string RemainingInvoicesText => $"{RemainingInvoices} of {InvoiceMonthlyLimit} remaining this month";
 
     /// <summary>
     /// Gets whether to show the remaining invoices label (only on Free plan).
