@@ -1611,6 +1611,16 @@ public class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
         };
 
+        // When the open company's file is renamed during a save, the watcher's
+        // Renamed handler strips the old path from the recent-companies UI caches,
+        // but the new path was only added to settings.json — never to those caches.
+        // Refresh from disk so the welcome screen, file menu, and switcher all see
+        // the new entry.
+        CompanyManager.CompanyRenamed += async (_, _) =>
+        {
+            await LoadRecentCompaniesAsync();
+        };
+
         // Use async callback for password requests (allows proper awaiting)
         CompanyManager.PasswordRequestCallback = async (filePath) =>
         {
@@ -4092,9 +4102,20 @@ public class App : Application
     /// </summary>
     private static void OnRecentCompanyFileDeleted(object sender, FileSystemEventArgs e)
     {
+        // FileService.SaveCompanyAsync writes to <path>.tmp then File.Move(tmp, path,
+        // overwrite: true). On Windows that overwrite-move emits a Deleted event for
+        // the destination even though the rename itself is atomic — by the time we
+        // observe it, the file is already back. Treating it as a real deletion would
+        // strip the entry from settings.json on every save. Skip if the file exists.
+        if (File.Exists(e.FullPath))
+            return;
+
         // Run on UI thread
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
+            // Re-check on the UI thread in case the file came back during the post hop.
+            if (File.Exists(e.FullPath))
+                return;
             RemoveRecentCompanyFromUi(e.FullPath);
         });
     }
