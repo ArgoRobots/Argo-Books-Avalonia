@@ -518,6 +518,40 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private BulkScanItem? _currentBulkItem;
 
+    /// <summary>
+    /// Whether the Approve button should be visible. False when no item is loaded
+    /// or when the current item is already approved. Bound directly so the XAML
+    /// doesn't have to traverse a possibly-null CurrentBulkItem path.
+    /// </summary>
+    public bool ShowApproveBulkButton => CurrentBulkItem is { IsApproved: false };
+
+    /// <summary>
+    /// Whether the Un-approve button should be visible. True only when the current
+    /// item is loaded and already approved.
+    /// </summary>
+    public bool ShowUnapproveBulkButton => CurrentBulkItem is { IsApproved: true };
+
+    partial void OnCurrentBulkItemChanging(BulkScanItem? oldValue, BulkScanItem? newValue)
+    {
+        if (oldValue != null) oldValue.PropertyChanged -= OnCurrentBulkItemPropertyChanged;
+        if (newValue != null) newValue.PropertyChanged += OnCurrentBulkItemPropertyChanged;
+    }
+
+    partial void OnCurrentBulkItemChanged(BulkScanItem? value)
+    {
+        OnPropertyChanged(nameof(ShowApproveBulkButton));
+        OnPropertyChanged(nameof(ShowUnapproveBulkButton));
+    }
+
+    private void OnCurrentBulkItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(BulkScanItem.IsApproved))
+        {
+            OnPropertyChanged(nameof(ShowApproveBulkButton));
+            OnPropertyChanged(nameof(ShowUnapproveBulkButton));
+        }
+    }
+
     [ObservableProperty]
     private int _currentBulkIndex;
 
