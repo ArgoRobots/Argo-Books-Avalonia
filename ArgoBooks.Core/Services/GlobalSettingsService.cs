@@ -115,13 +115,31 @@ public class GlobalSettingsService : IGlobalSettingsService
                 _platformService.EnsureDirectoryExists(directory);
             }
 
-            await using var fileStream = new FileStream(
-                settingsPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await JsonSerializer.SerializeAsync(
-                fileStream,
-                GlobalSettings,
-                _jsonOptions,
-                cancellationToken);
+            // Write atomically: write to temp, then move. A crash mid-write would
+            // otherwise leave a truncated settings.json and lose recent companies,
+            // theme, and language on next launch.
+            var tempPath = settingsPath + ".tmp";
+            try
+            {
+                await using (var fileStream = new FileStream(
+                    tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await JsonSerializer.SerializeAsync(
+                        fileStream,
+                        GlobalSettings,
+                        _jsonOptions,
+                        cancellationToken);
+                }
+                File.Move(tempPath, settingsPath, overwrite: true);
+            }
+            catch
+            {
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); } catch { /* best effort */ }
+                }
+                throw;
+            }
         }
         finally
         {

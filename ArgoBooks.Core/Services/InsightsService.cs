@@ -517,9 +517,11 @@ public class InsightsService(
 
         var historicalStart = dateRange.StartDate.AddDays(-periodDays * 3); // 3x the period for baseline
 
+        // Include the year in the day bucket so a baseline that spans a year boundary
+        // doesn't collapse Jan 5 2024 and Jan 5 2025 into the same statistical bucket.
         var historicalData = companyData.Revenues
             .Where(s => s.Date >= historicalStart && s.Date < dateRange.StartDate)
-            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
+            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.Year * 1000 + s.Date.DayOfYear)
             .Select(g => g.Sum(s => s.EffectiveSubtotalUSD))
             .ToList();
 
@@ -530,7 +532,7 @@ public class InsightsService(
         // Check current period data points
         var currentData = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
-            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
+            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.Year * 1000 + s.Date.DayOfYear)
             .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD) })
             .ToList();
 
