@@ -46,6 +46,7 @@ public class GeoLocationService : IGeoLocationService
         // Single-flight: if a lookup is already running, return its task instead of
         // hitting the upstream APIs again. ipapi.co rate-limits aggressively (429) and
         // concurrent callers were each tripping the limit independently.
+        Task<GeoLocationData> lookupTask;
         lock (_inFlightLock)
         {
             if (_cachedData != null && DateTime.UtcNow - _cacheTime < CacheDuration)
@@ -54,34 +55,49 @@ public class GeoLocationService : IGeoLocationService
             }
             if (_inFlightLookup != null)
             {
-                return _inFlightLookup;
+                lookupTask = _inFlightLookup;
             }
-            _inFlightLookup = LookupAsync(cancellationToken);
-            return _inFlightLookup;
+            else
+            {
+                // Run the shared lookup with CancellationToken.None so one caller
+                // cancelling their await cannot poison the result for every other
+                // caller waiting on the same in-flight task. Individual callers still
+                // honor their own token via WaitAsync below.
+                _inFlightLookup = LookupAsync();
+                lookupTask = _inFlightLookup;
+            }
         }
+
+        return lookupTask.WaitAsync(cancellationToken);
     }
 
-    private async Task<GeoLocationData> LookupAsync(CancellationToken cancellationToken)
+    private async Task<GeoLocationData> LookupAsync()
     {
         try
         {
             var locationData = new GeoLocationData();
 
             // Try HTTPS APIs first, fall back to HTTP-only ip-api.com last
-            _ = await TryIpApiCoAsync(locationData, cancellationToken) ||
-                await TryIpInfoAsync(locationData, cancellationToken) ||
-                await TryIpApiAsync(locationData, cancellationToken);
+            var gotLocation = await TryIpApiCoAsync(locationData, CancellationToken.None) ||
+                              await TryIpInfoAsync(locationData, CancellationToken.None) ||
+                              await TryIpApiAsync(locationData, CancellationToken.None);
 
             // Get and hash IP address
-            var ip = await GetIpAddressAsync(cancellationToken);
+            var ip = await GetIpAddressAsync(CancellationToken.None);
             if (!string.IsNullOrEmpty(ip))
             {
                 locationData.HashedIp = HashIpAddress(ip);
             }
 
-            // Cache the result
-            _cachedData = locationData;
-            _cacheTime = DateTime.UtcNow;
+            // Only cache when we actually got location data. The Try*Async methods
+            // swallow all exceptions (including OperationCanceledException) and return
+            // false, so without this guard a transient failure would pin an all-Unknown
+            // result for the full cache duration.
+            if (gotLocation)
+            {
+                _cachedData = locationData;
+                _cacheTime = DateTime.UtcNow;
+            }
 
             return locationData;
         }
