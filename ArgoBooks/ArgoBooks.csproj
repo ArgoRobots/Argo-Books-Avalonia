@@ -42,6 +42,9 @@
 
         <!-- Color Picker -->
         <PackageReference Include="PixiEditor.ColorPicker.AvaloniaUI" />
+
+        <!-- Pinned to patch vulnerability in transitive 10.0.0 -->
+        <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
     <ItemGroup>

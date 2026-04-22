@@ -36,6 +36,9 @@
         <!-- Machine Learning (for local forecasting) -->
         <PackageReference Include="Microsoft.ML" />
         <PackageReference Include="Microsoft.ML.TimeSeries" />
+
+        <!-- Pinned to patch vulnerability in transitive 10.0.0 (pulled in via ClosedXML/OpenXML) -->
+        <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.17763.0'">
