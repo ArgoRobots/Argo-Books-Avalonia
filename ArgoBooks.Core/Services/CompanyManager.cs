@@ -645,33 +645,37 @@ public class CompanyManager : IDisposable
     /// <returns>List of recent company info.</returns>
     public async Task<List<RecentCompanyInfo>> GetRecentCompaniesAsync(CancellationToken cancellationToken = default)
     {
-        var result = new List<RecentCompanyInfo>();
         var recentPaths = _settingsService.GetValidRecentCompanies();
 
-        foreach (var path in recentPaths)
+        // Footer reads are pure I/O on independent files opened with FileShare.Read, so we can
+        // run them concurrently. Per-task try/catch preserves the previous skip-on-error behavior;
+        // Task.WhenAll returns results in input order, preserving most-recent-first ordering.
+        var tasks = recentPaths.Select(async path =>
         {
             try
             {
                 var footer = await GetFileInfoAsync(path, cancellationToken);
-                if (footer != null)
+                if (footer == null)
+                    return null;
+
+                return new RecentCompanyInfo
                 {
-                    result.Add(new RecentCompanyInfo
-                    {
-                        FilePath = path,
-                        CompanyName = footer.CompanyName,
-                        IsEncrypted = footer.IsEncrypted,
-                        ModifiedAt = footer.ModifiedAt,
-                        LogoThumbnail = footer.LogoThumbnail
-                    });
-                }
+                    FilePath = path,
+                    CompanyName = footer.CompanyName,
+                    IsEncrypted = footer.IsEncrypted,
+                    ModifiedAt = footer.ModifiedAt,
+                    LogoThumbnail = footer.LogoThumbnail
+                };
             }
             catch
             {
                 // File may be corrupted or inaccessible, skip it
+                return null;
             }
-        }
+        });
 
-        return result;
+        var results = await Task.WhenAll(tasks);
+        return results.Where(r => r != null).Cast<RecentCompanyInfo>().ToList();
     }
 
     /// <summary>

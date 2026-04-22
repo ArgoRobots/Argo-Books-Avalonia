@@ -72,6 +72,35 @@ public class GlobalSettingsService : IGlobalSettingsService
         }
     }
 
+    /// <summary>
+    /// Synchronously loads global settings from disk. Intended for use on the UI thread
+    /// during startup, where the sidebar/theme/language read settings before the first
+    /// window is shown. The settings file is small, so a sync read avoids the thread-pool
+    /// marshaling overhead of sync-over-async.
+    /// </summary>
+    public void LoadGlobalSettings()
+    {
+        var settingsPath = GetGlobalSettingsPath();
+
+        if (!File.Exists(settingsPath))
+        {
+            GlobalSettings = new GlobalSettings();
+            return;
+        }
+
+        try
+        {
+            var bytes = File.ReadAllBytes(settingsPath);
+            var settings = JsonSerializer.Deserialize<GlobalSettings>(bytes, _jsonOptions);
+            GlobalSettings = settings ?? new GlobalSettings();
+        }
+        catch (JsonException)
+        {
+            // Corrupted settings file, use defaults
+            GlobalSettings = new GlobalSettings();
+        }
+    }
+
     /// <inheritdoc />
     public async Task SaveGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {

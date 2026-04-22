@@ -949,14 +949,12 @@ public class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             // Load settings synchronously — sidebar state, theme, and language depend on them.
-            // Recent companies are loaded asynchronously in InitializeAsync after the window is shown.
+            // Direct sync read avoids the thread-pool marshaling cost of sync-over-async;
+            // the settings file is small (<10KB). Recent companies are loaded asynchronously
+            // in InitializeAsync after the window is shown.
             try
             {
-                Task.Run(async () =>
-                {
-                    if (SettingsService != null)
-                        await SettingsService.LoadGlobalSettingsAsync();
-                }).GetAwaiter().GetResult();
+                SettingsService?.LoadGlobalSettings();
             }
             catch (Exception ex)
             {
