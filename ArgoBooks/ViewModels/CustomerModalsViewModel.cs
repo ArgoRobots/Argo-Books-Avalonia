@@ -559,29 +559,26 @@ public partial class CustomerModalsViewModel : ViewModelBase
         _originalNotes = ModalNotes;
 
         // Load existing avatar (if any) into the modal preview.
+        // Track _originalHasAvatar based on the customer's stored AvatarFileName, not
+        // on whether the bitmap actually decoded — that way if the file is missing or
+        // corrupted, the user can still hit Remove to clear the dangling reference.
         _pendingAvatarSourcePath = null;
         _shouldRemoveAvatarOnSave = false;
+        _originalHasAvatar = !string.IsNullOrEmpty(customer.AvatarFileName);
+        HasModalAvatar = _originalHasAvatar;
+        ModalAvatarSource = null;
+
         var avatarPath = App.CompanyManager?.GetCustomerAvatarPath(customer);
         if (avatarPath != null)
         {
             try
             {
                 ModalAvatarSource = new Bitmap(avatarPath);
-                HasModalAvatar = true;
-                _originalHasAvatar = true;
             }
             catch
             {
                 ModalAvatarSource = null;
-                HasModalAvatar = false;
-                _originalHasAvatar = false;
             }
-        }
-        else
-        {
-            ModalAvatarSource = null;
-            HasModalAvatar = false;
-            _originalHasAvatar = false;
         }
         OnPropertyChanged(nameof(ModalInitialsPreview));
 
@@ -838,6 +835,18 @@ public partial class CustomerModalsViewModel : ViewModelBase
             {
                 var deletedCustomer = customer;
                 App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
+
+                // Clean up the avatar file before removing the customer. This avoids
+                // bloat (and retention of deleted-customer images) inside the .argo
+                // archive on next save. Undo of delete restores the customer record
+                // but the avatar is gone — acceptable degradation for a file the user
+                // explicitly chose to delete.
+                if (App.CompanyManager != null && !string.IsNullOrEmpty(deletedCustomer.AvatarFileName))
+                {
+                    try { await App.CompanyManager.RemoveCustomerAvatarAsync(deletedCustomer); }
+                    catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to remove customer avatar on delete: {ex.Message}", "Customer.Delete"); }
+                }
+
                 companyData.Customers.Remove(customer);
                 companyData.MarkAsModified();
 

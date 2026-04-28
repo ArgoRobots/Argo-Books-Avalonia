@@ -115,16 +115,42 @@ public class CompanyManager : IDisposable
     private const int CustomerAvatarMaxDimension = 256;
 
     /// <summary>
+    /// Resolves an avatar's relative path to an absolute path within the company temp
+    /// directory, or null if the relative path escapes that directory. Defends against
+    /// crafted .argo files that set <c>avatarFileName</c> to a traversal path
+    /// (e.g. <c>../../etc/passwd</c>) which would otherwise let a load read — or a
+    /// remove/rename operation delete or move — files outside the temp directory.
+    /// </summary>
+    private string? ResolveAvatarPathSafely(string? relativeAvatarPath)
+    {
+        if (string.IsNullOrEmpty(relativeAvatarPath) || _currentTempDirectory == null)
+            return null;
+
+        if (Path.IsPathRooted(relativeAvatarPath))
+            return null;
+
+        var candidate = Path.GetFullPath(Path.Combine(_currentTempDirectory, relativeAvatarPath));
+        var tempRoot = Path.GetFullPath(_currentTempDirectory);
+        var rootWithSep = tempRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? tempRoot
+            : tempRoot + Path.DirectorySeparatorChar;
+
+        return candidate.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase)
+            ? candidate
+            : null;
+    }
+
+    /// <summary>
     /// Gets the absolute on-disk path to a customer's avatar image, or null when there is no
-    /// avatar set or the file is missing.
+    /// avatar set, the file is missing, or the stored path escapes the company temp directory.
     /// </summary>
     public string? GetCustomerAvatarPath(Customer customer)
     {
-        if (customer == null || string.IsNullOrEmpty(customer.AvatarFileName) || _currentTempDirectory == null)
+        if (customer == null)
             return null;
 
-        var path = Path.Combine(_currentTempDirectory, customer.AvatarFileName);
-        return File.Exists(path) ? path : null;
+        var path = ResolveAvatarPathSafely(customer.AvatarFileName);
+        return path != null && File.Exists(path) ? path : null;
     }
 
     /// <summary>
@@ -683,8 +709,10 @@ public class CompanyManager : IDisposable
         if (string.IsNullOrEmpty(existing))
             return;
 
-        var fullPath = Path.Combine(_currentTempDirectory, existing);
-        if (File.Exists(fullPath))
+        // Only delete files that resolve safely under the temp directory — guard against
+        // a crafted AvatarFileName escaping into the rest of the filesystem.
+        var fullPath = ResolveAvatarPathSafely(existing);
+        if (fullPath != null && File.Exists(fullPath))
         {
             await Task.Run(() => File.Delete(fullPath));
         }
@@ -750,19 +778,25 @@ public class CompanyManager : IDisposable
         {
             try
             {
-                var oldPath = Path.Combine(_currentTempDirectory, customer.AvatarFileName);
+                // Validate the old path stays inside the temp directory before doing any
+                // file ops — a crafted AvatarFileName must not be able to coerce a move
+                // (or implicit overwrite) of files outside the company's temp dir.
+                var oldPath = ResolveAvatarPathSafely(customer.AvatarFileName);
                 var ext = Path.GetExtension(customer.AvatarFileName);
                 var safeNewId = SanitizeForFileName(trimmed);
                 var newRelative = Path.Combine(CustomerAvatarSubdirectory, safeNewId + ext).Replace('\\', '/');
                 var newPath = Path.Combine(_currentTempDirectory, newRelative);
 
-                if (File.Exists(oldPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
+                if (oldPath != null && File.Exists(oldPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
                     if (File.Exists(newPath))
                         File.Delete(newPath);
                     File.Move(oldPath, newPath);
                 }
+                // Always update AvatarFileName to the new relative path: even if the old
+                // file was missing or unsafe, the customer record should now point inside
+                // the temp dir using the new Id.
                 customer.AvatarFileName = newRelative;
             }
             catch

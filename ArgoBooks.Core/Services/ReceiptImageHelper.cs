@@ -232,38 +232,46 @@ public static class ReceiptImageHelper
     /// </summary>
     public static bool ResizeAndSaveAsPng(string sourcePath, string destPath, int maxDimension)
     {
+        // Read the EXIF origin via SKCodec, then decode pixels separately from the path.
+        // Phone JPEGs encode rotation in EXIF rather than re-encoding the pixels, so
+        // portrait photos would otherwise end up sideways at the avatar size.
+        SKEncodedOrigin origin;
+        using (var orientationStream = File.OpenRead(sourcePath))
+        using (var codec = SKCodec.Create(orientationStream))
+        {
+            if (codec == null)
+                return false;
+            origin = codec.EncodedOrigin;
+        }
+
         using var bitmap = SKBitmap.Decode(sourcePath);
         if (bitmap == null)
             return false;
 
+        var swapDims = origin is SKEncodedOrigin.LeftBottom or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightBottom;
+        var orientedWidth = swapDims ? bitmap.Height : bitmap.Width;
+        var orientedHeight = swapDims ? bitmap.Width : bitmap.Height;
+
         var scale = Math.Min(
-            (float)maxDimension / bitmap.Width,
-            (float)maxDimension / bitmap.Height);
+            (float)maxDimension / orientedWidth,
+            (float)maxDimension / orientedHeight);
+        if (scale > 1f)
+            scale = 1f;
 
-        SKBitmap target;
-        if (scale >= 1f)
-        {
-            target = bitmap;
-        }
-        else
-        {
-            var newWidth = Math.Max(1, (int)(bitmap.Width * scale));
-            var newHeight = Math.Max(1, (int)(bitmap.Height * scale));
-            target = ResizeBitmap(bitmap, newWidth, newHeight);
-        }
+        var targetWidth = Math.Max(1, (int)(orientedWidth * scale));
+        var targetHeight = Math.Max(1, (int)(orientedHeight * scale));
 
-        try
-        {
-            using var image = SKImage.FromBitmap(target);
-            using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
-            using var stream = File.Create(destPath);
-            encoded.SaveTo(stream);
-        }
-        finally
-        {
-            if (!ReferenceEquals(target, bitmap))
-                target.Dispose();
-        }
+        using var surface = SKSurface.Create(new SKImageInfo(targetWidth, targetHeight));
+        var canvas = surface.Canvas;
+        canvas.Scale(scale, scale);
+        ApplyExifTransform(canvas, origin, bitmap.Width, bitmap.Height, orientedWidth, orientedHeight);
+        canvas.DrawBitmap(bitmap, 0, 0);
+
+        using var image = surface.Snapshot();
+        using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+        using var stream = File.Create(destPath);
+        encoded.SaveTo(stream);
 
         return true;
     }
