@@ -124,24 +124,45 @@ public partial class InsightsPageViewModel : ViewModelBase
         AnomaliesDetected = "2";
         Opportunities = "3";
 
-        ForecastedRevenue = "$24,800";
-        RevenueGrowthValue = 12.4;
-        RevenueGrowth = "12.4%";
-        ForecastedExpenses = "$18,200";
-        ExpenseGrowthValue = -3.1;
-        ExpenseGrowth = "3.1%";
-        ForecastedProfit = "$6,600";
-        ProfitGrowthValue = 28.7;
-        ProfitGrowth = "28.7%";
-        ForecastedCustomers = "47";
-        CustomerGrowthValue = 8.2;
-        CustomerGrowth = "8.2%";
+        // Build a synthetic ForecastData for the Conservative/Baseline/Optimistic options
+        var sampleForecast = new ForecastData
+        {
+            ForecastedRevenue = 24800m,
+            ForecastedRevenueLower = 21400m,
+            ForecastedRevenueUpper = 28200m,
+            RevenueGrowthPercent = 12.4m,
+            RevenueGrowthPercentLower = -3.0m,
+            RevenueGrowthPercentUpper = 27.8m,
+
+            ForecastedExpenses = 18200m,
+            ForecastedExpensesLower = 17200m,
+            ForecastedExpensesUpper = 19000m,
+            ExpenseGrowthPercent = 3.1m,
+            ExpenseGrowthPercentLower = -2.5m,
+            ExpenseGrowthPercentUpper = 7.7m,
+
+            ForecastedProfit = 6600m,
+            ForecastedProfitLower = 2400m,
+            ForecastedProfitUpper = 11000m,
+            ProfitGrowthPercent = 28.7m,
+            ProfitGrowthPercentLower = -53.2m,
+            ProfitGrowthPercentUpper = 114.5m,
+
+            ExpectedNewCustomers = 47,
+            ExpectedNewCustomersLower = 39,
+            ExpectedNewCustomersUpper = 56,
+            CustomerGrowthPercent = 8.2m,
+            CustomerGrowthPercentLower = -10.3m,
+            CustomerGrowthPercentUpper = 28.7m
+        };
+        _latestForecast = sampleForecast;
+        ApplyForecastToCards(sampleForecast);
 
         PredictionConfidence = "82% High";
         DataMonthsNote = "Based on 14 months of data using Linear Regression";
         ForecastMethod = "Linear Regression";
         RevenueRange = "Range: $21,400 - $28,200";
-        ExpensesRange = string.Empty;
+        ExpensesRange = "Range: $17,200 - $19,000";
         HasAccuracyData = true;
         HistoricalAccuracy = "79%";
         AccuracyDescription = string.Empty;
@@ -245,6 +266,45 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private DateTime _endDate;
+
+    /// <summary>
+    /// Most recent forecast result, retained so we can re-render cards when the scenario mode changes
+    /// without re-running the ML pipeline.
+    /// </summary>
+    private ForecastData? _latestForecast;
+
+    public List<string> ScenarioModeOptions { get; } = ["Conservative", "Baseline", "Optimistic"];
+
+    [ObservableProperty]
+    private int _selectedScenarioModeIndex = (int)ForecastScenario.Baseline;
+
+    [ObservableProperty]
+    private bool _scenarioToggleEnabled;
+
+    [ObservableProperty]
+    private string _scenarioOutlookHint = string.Empty;
+
+    partial void OnSelectedScenarioModeIndexChanged(int value)
+    {
+        if (_latestForecast != null)
+        {
+            ApplyForecastToCards(_latestForecast);
+        }
+        else
+        {
+            UpdateScenarioOutlookHint();
+        }
+    }
+
+    private void UpdateScenarioOutlookHint()
+    {
+        ScenarioOutlookHint = (ForecastScenario)SelectedScenarioModeIndex switch
+        {
+            ForecastScenario.Conservative => "Conservative outlook: revenue, profit, and customers at the low end of the range; expenses at the high end.",
+            ForecastScenario.Optimistic => "Optimistic outlook: revenue, profit, and customers at the high end of the range; expenses at the low end.",
+            _ => "Baseline outlook: the middle of the forecast range, between conservative and optimistic."
+        };
+    }
 
     /// <summary>
     /// Gets or sets the currently selected date range string.
@@ -779,22 +839,8 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     private void UpdateForecastDisplay(ForecastData forecast)
     {
-        // Main forecast values
-        ForecastedRevenue = forecast.ForecastedRevenue.ToString("C0");
-        RevenueGrowthValue = (double)forecast.RevenueGrowthPercent;
-        RevenueGrowth = $"{Math.Abs(forecast.RevenueGrowthPercent):F1}%";
-
-        ForecastedExpenses = forecast.ForecastedExpenses.ToString("C0");
-        ExpenseGrowthValue = -(double)forecast.ExpenseGrowthPercent; // Negative because increased expenses is bad
-        ExpenseGrowth = $"{Math.Abs(forecast.ExpenseGrowthPercent):F1}%";
-
-        ForecastedProfit = forecast.ForecastedProfit.ToString("C0");
-        ProfitGrowthValue = (double)forecast.ProfitGrowthPercent;
-        ProfitGrowth = $"{Math.Abs(forecast.ProfitGrowthPercent):F1}%";
-
-        ForecastedCustomers = forecast.ExpectedNewCustomers.ToString();
-        CustomerGrowthValue = (double)forecast.CustomerGrowthPercent;
-        CustomerGrowth = $"{Math.Abs(forecast.CustomerGrowthPercent):F1}%";
+        _latestForecast = forecast;
+        ApplyForecastToCards(forecast);
 
         PredictionConfidence = $"{forecast.ConfidenceScore:F0}% {forecast.ConfidenceLevel}";
 
@@ -808,7 +854,7 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         ForecastMethod = forecast.ForecastMethod ?? string.Empty;
 
-        // Confidence bounds/ranges
+        // Confidence bounds/ranges (always show the full envelope, independent of selected scenario)
         if (forecast.ForecastedRevenueLower > 0 || forecast.ForecastedRevenueUpper > 0)
         {
             RevenueRange = $"Range: {forecast.ForecastedRevenueLower:C0} - {forecast.ForecastedRevenueUpper:C0}";
@@ -856,6 +902,66 @@ public partial class InsightsPageViewModel : ViewModelBase
             SeasonalPatternDescription = string.Empty;
             TrendDirection = string.Empty;
         }
+    }
+
+    /// <summary>
+    /// Renders the four forecast cards (revenue, expenses, profit, customers) using the
+    /// currently selected scenario mode. Conservative shows lower bounds for revenue/profit/customers
+    /// and the upper bound for expenses (since high expenses are the conservative case); Optimistic
+    /// is the inverse; Baseline shows the point forecast.
+    /// </summary>
+    private void ApplyForecastToCards(ForecastData forecast)
+    {
+        ScenarioToggleEnabled = forecast.ForecastedRevenueUpper > forecast.ForecastedRevenueLower
+                             || forecast.ForecastedExpensesUpper > forecast.ForecastedExpensesLower;
+
+        // If bounds aren't meaningful (insufficient data), pin to Baseline regardless of selection.
+        var scenario = ScenarioToggleEnabled
+            ? (ForecastScenario)SelectedScenarioModeIndex
+            : ForecastScenario.Baseline;
+
+        var (revenue, revenueGrowth) = scenario switch
+        {
+            ForecastScenario.Conservative => (forecast.ForecastedRevenueLower, forecast.RevenueGrowthPercentLower),
+            ForecastScenario.Optimistic => (forecast.ForecastedRevenueUpper, forecast.RevenueGrowthPercentUpper),
+            _ => (forecast.ForecastedRevenue, forecast.RevenueGrowthPercent)
+        };
+        ForecastedRevenue = revenue.ToString("C0");
+        RevenueGrowthValue = (double)revenueGrowth;
+        RevenueGrowth = $"{Math.Abs(revenueGrowth):F1}%";
+
+        // Expenses flip: conservative = high expenses (upper bound), optimistic = low expenses.
+        var (expenses, expenseGrowth) = scenario switch
+        {
+            ForecastScenario.Conservative => (forecast.ForecastedExpensesUpper, forecast.ExpenseGrowthPercentUpper),
+            ForecastScenario.Optimistic => (forecast.ForecastedExpensesLower, forecast.ExpenseGrowthPercentLower),
+            _ => (forecast.ForecastedExpenses, forecast.ExpenseGrowthPercent)
+        };
+        ForecastedExpenses = expenses.ToString("C0");
+        ExpenseGrowthValue = -(double)expenseGrowth;
+        ExpenseGrowth = $"{Math.Abs(expenseGrowth):F1}%";
+
+        var (profit, profitGrowth) = scenario switch
+        {
+            ForecastScenario.Conservative => (forecast.ForecastedProfitLower, forecast.ProfitGrowthPercentLower),
+            ForecastScenario.Optimistic => (forecast.ForecastedProfitUpper, forecast.ProfitGrowthPercentUpper),
+            _ => (forecast.ForecastedProfit, forecast.ProfitGrowthPercent)
+        };
+        ForecastedProfit = profit.ToString("C0");
+        ProfitGrowthValue = (double)profitGrowth;
+        ProfitGrowth = $"{Math.Abs(profitGrowth):F1}%";
+
+        var (customers, customerGrowth) = scenario switch
+        {
+            ForecastScenario.Conservative => (forecast.ExpectedNewCustomersLower, forecast.CustomerGrowthPercentLower),
+            ForecastScenario.Optimistic => (forecast.ExpectedNewCustomersUpper, forecast.CustomerGrowthPercentUpper),
+            _ => (forecast.ExpectedNewCustomers, forecast.CustomerGrowthPercent)
+        };
+        ForecastedCustomers = customers.ToString();
+        CustomerGrowthValue = (double)customerGrowth;
+        CustomerGrowth = $"{Math.Abs(customerGrowth):F1}%";
+
+        UpdateScenarioOutlookHint();
     }
 
     /// <summary>
@@ -909,6 +1015,10 @@ public partial class InsightsPageViewModel : ViewModelBase
         TrendsDetected = "0";
         AnomaliesDetected = "0";
         Opportunities = "0";
+
+        _latestForecast = null;
+        ScenarioToggleEnabled = false;
+        ScenarioOutlookHint = string.Empty;
 
         ForecastedRevenue = "$0";
         RevenueGrowthValue = 0;

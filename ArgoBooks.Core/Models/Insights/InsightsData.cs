@@ -140,6 +140,16 @@ public class ForecastData
     public decimal ForecastedProfit { get; set; }
 
     /// <summary>
+    /// Lower bound of profit forecast (conservative scenario: low revenue, high expenses).
+    /// </summary>
+    public decimal ForecastedProfitLower { get; set; }
+
+    /// <summary>
+    /// Upper bound of profit forecast (optimistic scenario: high revenue, low expenses).
+    /// </summary>
+    public decimal ForecastedProfitUpper { get; set; }
+
+    /// <summary>
     /// Profit growth percentage.
     /// </summary>
     public decimal ProfitGrowthPercent { get; set; }
@@ -150,9 +160,31 @@ public class ForecastData
     public int ExpectedNewCustomers { get; set; }
 
     /// <summary>
+    /// Lower bound of new-customer forecast (conservative scenario).
+    /// </summary>
+    public int ExpectedNewCustomersLower { get; set; }
+
+    /// <summary>
+    /// Upper bound of new-customer forecast (optimistic scenario).
+    /// </summary>
+    public int ExpectedNewCustomersUpper { get; set; }
+
+    /// <summary>
     /// Customer growth percentage.
     /// </summary>
     public decimal CustomerGrowthPercent { get; set; }
+
+    /// <summary>
+    /// Growth percentages for the conservative bound, for showing "vs avg" consistent with displayed values.
+    /// </summary>
+    public decimal RevenueGrowthPercentLower { get; set; }
+    public decimal RevenueGrowthPercentUpper { get; set; }
+    public decimal ExpenseGrowthPercentLower { get; set; }
+    public decimal ExpenseGrowthPercentUpper { get; set; }
+    public decimal ProfitGrowthPercentLower { get; set; }
+    public decimal ProfitGrowthPercentUpper { get; set; }
+    public decimal CustomerGrowthPercentLower { get; set; }
+    public decimal CustomerGrowthPercentUpper { get; set; }
 
     /// <summary>
     /// Confidence score for the predictions (0-100).
@@ -266,6 +298,18 @@ public class InsightItem
     /// Whether this insight has an actionable recommendation.
     /// </summary>
     public bool HasRecommendation => !string.IsNullOrEmpty(Recommendation);
+}
+
+/// <summary>
+/// Display scenario for the forecast cards.
+/// Conservative shows the lower bound (revenue/profit/customers) and upper bound (expenses).
+/// Baseline shows the point forecast. Optimistic is the inverse of Conservative.
+/// </summary>
+public enum ForecastScenario
+{
+    Conservative = 0,
+    Baseline = 1,
+    Optimistic = 2
 }
 
 /// <summary>

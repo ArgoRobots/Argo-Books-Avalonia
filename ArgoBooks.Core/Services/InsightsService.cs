@@ -662,6 +662,8 @@ public class InsightsService(
             if (historicalRevenue > 0)
             {
                 forecast.RevenueGrowthPercent = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenue);
+                forecast.RevenueGrowthPercentLower = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenueLower);
+                forecast.RevenueGrowthPercentUpper = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenueUpper);
             }
         }
 
@@ -681,11 +683,15 @@ public class InsightsService(
             if (historicalExpenses > 0)
             {
                 forecast.ExpenseGrowthPercent = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpenses);
+                forecast.ExpenseGrowthPercentLower = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpensesLower);
+                forecast.ExpenseGrowthPercentUpper = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpensesUpper);
             }
         }
 
-        // Calculate profit forecast
+        // Calculate profit forecast (point and bounds — conservative profit pairs low revenue with high expenses)
         forecast.ForecastedProfit = forecast.ForecastedRevenue - forecast.ForecastedExpenses;
+        forecast.ForecastedProfitLower = forecast.ForecastedRevenueLower - forecast.ForecastedExpensesUpper;
+        forecast.ForecastedProfitUpper = forecast.ForecastedRevenueUpper - forecast.ForecastedExpensesLower;
 
         // Calculate profit growth
         var historicalProfit = GetScaledHistoricalValue(monthlyRevenue, periodMonths) -
@@ -693,6 +699,8 @@ public class InsightsService(
         if (historicalProfit != 0)
         {
             forecast.ProfitGrowthPercent = CalculatePercentChange(historicalProfit, forecast.ForecastedProfit);
+            forecast.ProfitGrowthPercentLower = CalculatePercentChange(historicalProfit, forecast.ForecastedProfitLower);
+            forecast.ProfitGrowthPercentUpper = CalculatePercentChange(historicalProfit, forecast.ForecastedProfitUpper);
         }
 
         // Customer growth forecast using ML
@@ -706,11 +714,15 @@ public class InsightsService(
 
             var scaleFactor = periodMonths / periodsToForecast;
             forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(customerForecast.ForecastedValues.Sum() * scaleFactor));
+            forecast.ExpectedNewCustomersLower = Math.Max(0, (int)Math.Round(customerForecast.LowerBounds.Sum() * scaleFactor));
+            forecast.ExpectedNewCustomersUpper = Math.Max(0, (int)Math.Round(customerForecast.UpperBounds.Sum() * scaleFactor));
 
             var historicalCustomers = GetScaledHistoricalValue(customerData, periodMonths);
             if (historicalCustomers > 0)
             {
                 forecast.CustomerGrowthPercent = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomers);
+                forecast.CustomerGrowthPercentLower = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomersLower);
+                forecast.CustomerGrowthPercentUpper = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomersUpper);
             }
         }
 

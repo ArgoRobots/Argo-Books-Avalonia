@@ -37,7 +37,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <TextBlock Text="Smart forecasting powered by machine learning"
                                        FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                         </StackPanel>
                         <Button Grid.Column="1"
                                 Classes="icon-button"
@@ -45,7 +45,7 @@
                                 Command="{Binding CloseCommand}">
                             <PathIcon Data="{x:Static icons:Icons.Close}"
                                       Width="16" Height="16"
-                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                      Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Button>
                     </Grid>
                 </Border>
@@ -62,7 +62,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                        Text="Our forecasting system uses multiple ML algorithms to predict future revenue, expenses, and customer growth. It continuously tests predictions against actual outcomes and adapts its methods based on what works best for your business. Everything runs locally - your data never leaves your computer." />
                         </StackPanel>
 
@@ -96,7 +96,7 @@
                                         <TextBlock Text="Automatically detects if your business has patterns - like higher sales in December or slower months in summer. The forecast adjusts for these cycles."
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -124,7 +124,7 @@
                                         <TextBlock Text="Understands whether your business is growing, stable, or declining - and factors this into predictions so they're not just based on averages."
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -152,7 +152,7 @@
                                         <TextBlock Text="Compares past predictions to what actually happened. Over time, you'll see how accurate the forecasts have been for your specific business."
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -180,7 +180,7 @@
                                         <TextBlock Text="The Historical Accuracy percentage shows how close predictions were to actual results. For example, 85% accuracy means predictions were typically within 15% of the actual values. It's calculated by comparing each past forecast to the actual outcome, then averaging the results."
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -208,7 +208,7 @@
                                         <TextBlock Text="The system learns which prediction method works best for your business. Methods that have been more accurate historically are weighted more heavily in future forecasts."
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -233,10 +233,38 @@
                                                    FontSize="13"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Shows a range (low to high estimate) instead of just one number. This gives you a realistic picture of what to expect."
+                                        <TextBlock Text="Shows a range (low to high estimate) instead of just one number — a band of plausible outcomes rather than a single guaranteed figure."
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Scenario Outlooks (Conservative / Baseline / Optimistic) -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource PrimaryLightBrush}"
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Top">
+                                        <PathIcon Data="{x:Static icons:Icons.TrendUp}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="Conservative / Baseline / Optimistic"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Switch between three views of the same forecast. Conservative shows the low end of the range (lower revenue and customers, higher expenses); Optimistic shows the high end; Baseline is the middle. Useful for stress-testing plans against both downside and upside without picking one number to bet on."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -250,7 +278,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                        Text="The confidence score (0-100%) tells you how reliable the prediction is likely to be:" />
                             <Grid ColumnDefinitions="*,*,*" Margin="0,8,0,0">
                                 <Border Grid.Column="0" Background="{DynamicResource SuccessDarkBrush}" CornerRadius="6" Padding="12" Margin="0,0,4,0">
@@ -277,6 +305,56 @@
                             </Grid>
                         </StackPanel>
 
+                        <!-- When Forecasts May Miss -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="When Forecasts May Miss"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource WarningLightBrush}"
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Top">
+                                        <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource WarningBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="6">
+                                        <TextBlock Text="Forecasts learn from your past, so they can't see things that haven't happened before. Treat the numbers with extra skepticism in these situations:"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="• Big changes the model can't predict — losing or winning a major customer, opening a new location, hiring, layoffs, or a price change."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="• One-off events — a single large invoice or refund can skew a whole month and pull the forecast off course."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="• New businesses with less than 12 months of data — there isn't enough history yet to tell real patterns from noise."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="• Customer-count predictions — these are the lumpiest of the four. Use them as a rough sanity check, not a hiring plan."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="• Anything used for taxes, loan applications, or formal financial reporting — forecasts here are not a substitute for an accountant."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
                         <!-- Tips -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="Tips for Better Predictions"
@@ -290,19 +368,19 @@
                                     <TextBlock Text="• More data = better predictions. 12+ months is ideal."
                                                FontSize="12"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="• The system improves over time as it learns from your data."
                                                FontSize="12"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="• Keep your records consistent and up to date."
                                                FontSize="12"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="• Use forecasts as a guide, not a guarantee."
                                                FontSize="12"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -321,7 +399,7 @@
                                 <TextBlock Grid.Column="1"
                                            TextWrapping="Wrap"
                                            FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                            Text="All calculations happen on your device. Your financial data is never sent to any external server or cloud service." />
                             </Grid>
                         </Border>
