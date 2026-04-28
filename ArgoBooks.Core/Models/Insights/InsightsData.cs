@@ -175,7 +175,9 @@ public class ForecastData
     public decimal CustomerGrowthPercent { get; set; }
 
     /// <summary>
-    /// Growth percentages for the conservative bound, for showing "vs avg" consistent with displayed values.
+    /// Growth percentages for the lower and upper forecast bounds, used to show "vs avg" consistent with
+    /// the displayed scenario (Conservative uses the lower bound for revenue/profit/customers and the upper
+    /// for expenses; Optimistic is the inverse).
     /// </summary>
     public decimal RevenueGrowthPercentLower { get; set; }
     public decimal RevenueGrowthPercentUpper { get; set; }

@@ -273,8 +273,6 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     private ForecastData? _latestForecast;
 
-    public List<string> ScenarioModeOptions { get; } = ["Conservative", "Baseline", "Optimistic"];
-
     [ObservableProperty]
     private int _selectedScenarioModeIndex = (int)ForecastScenario.Baseline;
 
@@ -913,12 +911,18 @@ public partial class InsightsPageViewModel : ViewModelBase
     private void ApplyForecastToCards(ForecastData forecast)
     {
         ScenarioToggleEnabled = forecast.ForecastedRevenueUpper > forecast.ForecastedRevenueLower
-                             || forecast.ForecastedExpensesUpper > forecast.ForecastedExpensesLower;
+                             || forecast.ForecastedExpensesUpper > forecast.ForecastedExpensesLower
+                             || forecast.ExpectedNewCustomersUpper > forecast.ExpectedNewCustomersLower;
 
-        // If bounds aren't meaningful (insufficient data), pin to Baseline regardless of selection.
-        var scenario = ScenarioToggleEnabled
-            ? (ForecastScenario)SelectedScenarioModeIndex
-            : ForecastScenario.Baseline;
+        // If bounds aren't meaningful, snap selection back to Baseline so the tab/hint match the cards.
+        // The property setter re-enters this method via OnSelectedScenarioModeIndexChanged, but the second
+        // pass is a no-op (Index already Baseline) so it terminates after one extra render.
+        if (SelectedScenarioModeIndex != (int)ForecastScenario.Baseline && !ScenarioToggleEnabled)
+        {
+            SelectedScenarioModeIndex = (int)ForecastScenario.Baseline;
+        }
+
+        var scenario = (ForecastScenario)SelectedScenarioModeIndex;
 
         var (revenue, revenueGrowth) = scenario switch
         {
