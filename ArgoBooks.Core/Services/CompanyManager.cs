@@ -934,19 +934,21 @@ public class CompanyManager : IDisposable
 
         foreach (var item in CompanyData.Inventory)
             if (item.ProductId == oldId) item.ProductId = trimmed;
-        foreach (var po in CompanyData.PurchaseOrders)
-            if (po.ProductId == oldId) po.ProductId = trimmed;
         foreach (var ld in CompanyData.LostDamaged)
             if (ld.ProductId == oldId) ld.ProductId = trimmed;
 
-        // Line items live on the parent (Invoice / Revenue / Expense) — both Revenue
-        // and Expense derive from Transaction which exposes LineItems.
+        // Line items live on the parent (Invoice / Revenue / Expense / PurchaseOrder).
+        // Revenue and Expense derive from Transaction which exposes LineItems<LineItem>;
+        // PurchaseOrder uses its own PurchaseOrderLineItem so the loop is inlined.
         foreach (var inv in CompanyData.Invoices)
             CascadeProductIdInLineItems(inv.LineItems, oldId, trimmed);
         foreach (var rev in CompanyData.Revenues)
             CascadeProductIdInLineItems(rev.LineItems, oldId, trimmed);
         foreach (var exp in CompanyData.Expenses)
             CascadeProductIdInLineItems(exp.LineItems, oldId, trimmed);
+        foreach (var po in CompanyData.PurchaseOrders)
+            foreach (var line in po.LineItems)
+                if (line.ProductId == oldId) line.ProductId = trimmed;
 
         // Return items live nested inside Return.Items
         foreach (var ret in CompanyData.Returns)
