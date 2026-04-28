@@ -49,7 +49,11 @@ public static class FaviconService
 
         try
         {
-            using var response = await _client.Value.GetAsync(faviconUrl, cancellationToken).ConfigureAwait(false);
+            // ResponseHeadersRead returns as soon as the headers arrive. We can then
+            // inspect Content-Length / Content-Type before pulling the body — important
+            // because a hostile server could otherwise force us to buffer a giant
+            // response just to discover it's over the cap.
+            using var response = await _client.Value.GetAsync(faviconUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
                 return null;
 
@@ -63,11 +67,28 @@ public static class FaviconService
                 return null;
             }
 
-            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-            if (bytes.Length == 0 || bytes.Length > MaxFaviconBytes)
+            // Reject upfront when the server is honest about an oversized payload.
+            var declaredLength = response.Content.Headers.ContentLength;
+            if (declaredLength.HasValue && declaredLength.Value > MaxFaviconBytes)
                 return null;
 
-            return bytes;
+            // Stream into a bounded buffer; abort the moment we cross the cap so a
+            // server lying about / omitting Content-Length can't force a huge alloc.
+            await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var buffer = new MemoryStream(capacity: declaredLength.HasValue ? (int)Math.Min(declaredLength.Value, MaxFaviconBytes) : 16 * 1024);
+            var chunk = new byte[8192];
+            while (true)
+            {
+                var read = await contentStream.ReadAsync(chunk.AsMemory(), cancellationToken).ConfigureAwait(false);
+                if (read <= 0) break;
+                if (buffer.Length + read > MaxFaviconBytes)
+                    return null; // Server overran the cap mid-stream.
+                buffer.Write(chunk, 0, read);
+            }
+
+            if (buffer.Length == 0)
+                return null;
+            return buffer.ToArray();
         }
         catch
         {

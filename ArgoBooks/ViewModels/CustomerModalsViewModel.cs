@@ -559,13 +559,14 @@ public partial class CustomerModalsViewModel : ViewModelBase
         _originalNotes = ModalNotes;
 
         // Load existing avatar (if any) into the modal preview.
-        // Track _originalHasAvatar based on the customer's stored AvatarFileName, not
-        // on whether the bitmap actually decoded — that way if the file is missing or
-        // corrupted, the user can still hit Remove to clear the dangling reference.
+        // _originalHasAvatar tracks the persisted state (used for change detection so
+        // a missing/corrupt file can still be cleared on save). HasModalAvatar drives
+        // the *visual* — only set it when the bitmap actually decoded, otherwise the
+        // UI would show a blank Image control instead of falling back to initials.
         _pendingAvatarSourcePath = null;
         _shouldRemoveAvatarOnSave = false;
         _originalHasAvatar = !string.IsNullOrEmpty(customer.AvatarFileName);
-        HasModalAvatar = _originalHasAvatar;
+        HasModalAvatar = false;
         ModalAvatarSource = null;
 
         var avatarPath = App.CompanyManager?.GetCustomerAvatarPath(customer);
@@ -574,6 +575,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
             try
             {
                 ModalAvatarSource = new Bitmap(avatarPath);
+                HasModalAvatar = true;
             }
             catch
             {
@@ -710,17 +712,10 @@ public partial class CustomerModalsViewModel : ViewModelBase
         if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
         if (oldStatus != newStatus) changes["Status"] = new FieldChange { OldValue = oldStatus.ToString(), NewValue = newStatus.ToString() };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
-        customerToEdit.Name = newName;
-        customerToEdit.CompanyName = newCompanyName;
-        customerToEdit.Email = newEmail;
-        customerToEdit.Phone = newPhone;
-        customerToEdit.Address = newAddress;
-        customerToEdit.Notes = newNotes;
-        customerToEdit.Status = newStatus;
-        customerToEdit.UpdatedAt = DateTime.UtcNow;
 
-        // Renaming the Id cascades to every reference (invoices, revenues, etc.)
-        // and moves the avatar file. Validation has already ensured uniqueness.
+        // Apply the Id rename FIRST so a failure (e.g. unique-constraint race) doesn't
+        // leave the entity with new field values but the old Id. Validation already
+        // prevents conflicts; this ordering is defense-in-depth.
         if (hasIdChange)
         {
             try
@@ -735,6 +730,15 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 return;
             }
         }
+
+        customerToEdit.Name = newName;
+        customerToEdit.CompanyName = newCompanyName;
+        customerToEdit.Email = newEmail;
+        customerToEdit.Phone = newPhone;
+        customerToEdit.Address = newAddress;
+        customerToEdit.Notes = newNotes;
+        customerToEdit.Status = newStatus;
+        customerToEdit.UpdatedAt = DateTime.UtcNow;
 
         companyData.MarkAsModified();
 

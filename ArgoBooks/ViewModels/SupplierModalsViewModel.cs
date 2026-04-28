@@ -150,11 +150,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
         ModalIdError = null;
     }
 
-    partial void OnModalSupplierNameChanged(string value)
-    {
-        OnPropertyChanged(nameof(ModalInitialsPreview));
-    }
-
     partial void OnModalWebsiteChanged(string value)
     {
         // Auto-fetch the supplier's /favicon.ico — but only when the user has not
@@ -306,7 +301,16 @@ public partial class SupplierModalsViewModel : ViewModelBase
     /// </summary>
     private void TriggerFaviconFetch(string? websiteUrl)
     {
-        _faviconCts?.Cancel();
+        // Cancel and dispose the previous CTS — keystroke-driven calls would otherwise
+        // leak a CancellationTokenSource (and its underlying timer) per keystroke.
+        var previous = _faviconCts;
+        if (previous != null)
+        {
+            previous.Cancel();
+            previous.Dispose();
+        }
+        _faviconCts = null;
+
         if (string.IsNullOrWhiteSpace(websiteUrl))
             return;
 
@@ -356,6 +360,14 @@ public partial class SupplierModalsViewModel : ViewModelBase
             catch (Exception ex)
             {
                 App.ErrorLogger?.LogWarning($"Favicon fetch failed: {ex.Message}", "Supplier.Favicon");
+            }
+            finally
+            {
+                // Drop our reference if the field still points at this CTS (i.e. no newer
+                // keystroke has replaced it). The CTS is disposable; release it.
+                if (ReferenceEquals(_faviconCts, cts))
+                    _faviconCts = null;
+                cts.Dispose();
             }
         });
     }
@@ -498,16 +510,25 @@ public partial class SupplierModalsViewModel : ViewModelBase
         // Load the existing avatar BEFORE setting ModalWebsite — that way the
         // OnModalWebsiteChanged hook sees HasModalAvatar=true and skips the favicon
         // fetch instead of racing to overwrite the existing avatar.
+        // _originalHasAvatar tracks the persisted state for change detection;
+        // HasModalAvatar drives the *visual* and is only set when the bitmap actually
+        // decoded — otherwise the UI would show a blank Image instead of falling back
+        // to initials. (If decode fails and the supplier has a website, the favicon
+        // hook will then auto-fetch a replacement, which is graceful recovery.)
         _pendingAvatarSourcePath = null;
         _pendingFaviconBytes = null;
         _shouldRemoveAvatarOnSave = false;
         _originalHasAvatar = !string.IsNullOrEmpty(supplier.AvatarFileName);
-        HasModalAvatar = _originalHasAvatar;
+        HasModalAvatar = false;
         ModalAvatarSource = null;
         var existingAvatarPath = App.CompanyManager?.GetSupplierAvatarPath(supplier);
         if (existingAvatarPath != null)
         {
-            try { ModalAvatarSource = new Bitmap(existingAvatarPath); }
+            try
+            {
+                ModalAvatarSource = new Bitmap(existingAvatarPath);
+                HasModalAvatar = true;
+            }
             catch { ModalAvatarSource = null; }
         }
         OnPropertyChanged(nameof(ModalInitialsPreview));
@@ -649,14 +670,10 @@ public partial class SupplierModalsViewModel : ViewModelBase
         if (oldAddr != newAddr) changes["Address"] = new FieldChange { OldValue = oldAddr, NewValue = newAddr };
         if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
-        supplierToEdit.Name = newName;
-        supplierToEdit.Email = newEmail;
-        supplierToEdit.Phone = newPhone;
-        supplierToEdit.Website = newWebsite;
-        supplierToEdit.Address = newAddress;
-        supplierToEdit.Notes = newNotes;
-        supplierToEdit.UpdatedAt = DateTime.UtcNow;
 
+        // Apply the Id rename FIRST so a failure doesn't leave the entity with new
+        // field values but the old Id. Validation already prevents conflicts; this
+        // ordering is defense-in-depth.
         if (hasIdChange)
         {
             try
@@ -671,6 +688,14 @@ public partial class SupplierModalsViewModel : ViewModelBase
                 return;
             }
         }
+
+        supplierToEdit.Name = newName;
+        supplierToEdit.Email = newEmail;
+        supplierToEdit.Phone = newPhone;
+        supplierToEdit.Website = newWebsite;
+        supplierToEdit.Address = newAddress;
+        supplierToEdit.Notes = newNotes;
+        supplierToEdit.UpdatedAt = DateTime.UtcNow;
 
         companyData.MarkAsModified();
 
@@ -849,6 +874,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         {
             ModalSupplierNameError = null;
         }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
     partial void OnModalEmailChanged(string value)
@@ -875,8 +901,13 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
     private void ClearModalFields()
     {
-        // Cancel any in-flight favicon fetch from a previous open of the modal.
-        _faviconCts?.Cancel();
+        // Cancel and dispose any in-flight favicon fetch from a previous open of the modal.
+        var fetchInFlight = _faviconCts;
+        if (fetchInFlight != null)
+        {
+            fetchInFlight.Cancel();
+            fetchInFlight.Dispose();
+        }
         _faviconCts = null;
 
         ModalId = string.Empty;

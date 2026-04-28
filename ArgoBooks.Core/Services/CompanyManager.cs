@@ -132,13 +132,22 @@ public class CompanyManager : IDisposable
 
         var candidate = Path.GetFullPath(Path.Combine(_currentTempDirectory, relativeAvatarPath));
         var tempRoot = Path.GetFullPath(_currentTempDirectory);
-        var rootWithSep = tempRoot.EndsWith(Path.DirectorySeparatorChar)
-            ? tempRoot
-            : tempRoot + Path.DirectorySeparatorChar;
 
-        return candidate.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase)
-            ? candidate
-            : null;
+        // Use Path.GetRelativePath instead of a string-prefix check: on case-sensitive
+        // filesystems (Linux/macOS) a string compare needs Ordinal, on Windows it needs
+        // OrdinalIgnoreCase, and a mismatch either rejects valid paths or admits invalid
+        // ones. GetRelativePath uses the platform's native rules, and ".."-prefixed
+        // results unambiguously mean the candidate is outside tempRoot.
+        var relativeFromRoot = Path.GetRelativePath(tempRoot, candidate);
+        if (Path.IsPathRooted(relativeFromRoot)
+            || relativeFromRoot == ".."
+            || relativeFromRoot.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            || relativeFromRoot.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return candidate;
     }
 
     private string? GetEntityAvatarPath(IAvatarOwner? entity)

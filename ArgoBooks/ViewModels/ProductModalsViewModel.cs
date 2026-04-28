@@ -535,18 +535,10 @@ public partial class ProductModalsViewModel : ViewModelBase
         if (oldReorderPoint != newReorderPoint) changes["Reorder Point"] = new FieldChange { OldValue = oldReorderPoint.ToString(), NewValue = newReorderPoint.ToString() };
         if (oldOverstockThreshold != newOverstockThreshold) changes["Overstock Threshold"] = new FieldChange { OldValue = oldOverstockThreshold.ToString(), NewValue = newOverstockThreshold.ToString() };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
-        productToEdit.Name = newName;
-        productToEdit.Description = newDescription;
-        productToEdit.Sku = newSku;
-        productToEdit.CategoryId = newCategoryId;
-        productToEdit.SupplierId = newSupplierId;
-        productToEdit.UnitPrice = newUnitPrice;
-        productToEdit.CostPrice = newCostPrice;
-        productToEdit.TrackInventory = newTrackInventory;
-        productToEdit.ReorderPoint = newReorderPoint;
-        productToEdit.OverstockThreshold = newOverstockThreshold;
-        productToEdit.UpdatedAt = DateTime.UtcNow;
 
+        // Apply the Id rename FIRST so a failure doesn't leave the product with new
+        // field values but the old Id. Validation already prevents conflicts; this
+        // ordering is defense-in-depth.
         if (hasIdChange)
         {
             try
@@ -560,6 +552,18 @@ public partial class ProductModalsViewModel : ViewModelBase
                 return;
             }
         }
+
+        productToEdit.Name = newName;
+        productToEdit.Description = newDescription;
+        productToEdit.Sku = newSku;
+        productToEdit.CategoryId = newCategoryId;
+        productToEdit.SupplierId = newSupplierId;
+        productToEdit.UnitPrice = newUnitPrice;
+        productToEdit.CostPrice = newCostPrice;
+        productToEdit.TrackInventory = newTrackInventory;
+        productToEdit.ReorderPoint = newReorderPoint;
+        productToEdit.OverstockThreshold = newOverstockThreshold;
+        productToEdit.UpdatedAt = DateTime.UtcNow;
 
         companyData.MarkAsModified();
 
