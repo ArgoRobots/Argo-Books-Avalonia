@@ -259,6 +259,11 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         var dates = dated.Select(p => p.Date!.Value).ToArray();
         var values = dated.Select(p => p.Value).ToArray();
 
+        if (ChartDataType == ChartDataType.TotalProfits)
+        {
+            ChartTitle = $"Total profits: {CurrencyService.FormatFromUSD((decimal)values.Sum(), DateTime.Now)}";
+        }
+
         var series = new ObservableCollection<ISeries>();
         series.Add(ChartLoaderService.CreateDateTimeSeries(
             dates, values, ChartDataType.GetDisplayName(), SKColor.Parse(AppColors.Palette[0])));

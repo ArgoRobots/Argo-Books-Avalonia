@@ -964,7 +964,7 @@ public class App : Application
             // Apply saved sidebar collapsed state after settings are loaded from disk.
             // The SidebarViewModel was created before settings were loaded, so its constructor
             // read the default value. Re-apply the persisted state now.
-            var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
+            var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
             if (savedCollapsed)
             {
                 _appShellViewModel.SidebarViewModel.IsCollapsed = true;
