@@ -1752,6 +1752,42 @@ public class App : Application
                 _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
             }
         };
+
+        // Customer modals — let the user pick an avatar image. The bitmap is loaded for
+        // an immediate preview; the file is staged and copied/resized into the company
+        // temp directory only when the modal is saved.
+        _appShellViewModel.CustomerModalsViewModel.BrowseAvatarRequested += async (_, _) =>
+        {
+            if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Customer Avatar".Translate(),
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                    }
+                ]
+            });
+
+            if (files.Count > 0)
+            {
+                var path = files[0].Path.LocalPath;
+                try
+                {
+                    var bitmap = new Bitmap(path);
+                    _appShellViewModel.CustomerModalsViewModel.SetPendingAvatar(path, bitmap);
+                }
+                catch (Exception ex)
+                {
+                    ErrorLogger?.LogWarning($"Failed to load avatar image: {ex.Message}", "CustomerAvatar");
+                }
+            }
+        };
     }
 
     /// <summary>

@@ -6,6 +6,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -94,12 +95,62 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalPhoneError;
 
+    [ObservableProperty]
+    private Bitmap? _modalAvatarSource;
+
+    [ObservableProperty]
+    private bool _hasModalAvatar;
+
+    /// <summary>
+    /// Path of an avatar image picked in the modal that should be applied on save.
+    /// Null if the user did not pick a new image during this session.
+    /// </summary>
+    private string? _pendingAvatarSourcePath;
+
+    /// <summary>
+    /// True when the user clicked Remove on an existing avatar; on save the customer's
+    /// avatar file should be deleted.
+    /// </summary>
+    private bool _shouldRemoveAvatarOnSave;
+
+    /// <summary>
+    /// Snapshot of whether the customer had an avatar when the edit modal was opened —
+    /// used for change detection.
+    /// </summary>
+    private bool _originalHasAvatar;
+
+    /// <summary>
+    /// Live preview of the initials that would be shown if no avatar is set,
+    /// driven from ModalFirstName + ModalLastName so the avatar circle in the
+    /// modal updates as the user types.
+    /// </summary>
+    public string ModalInitialsPreview
+    {
+        get
+        {
+            var first = ModalFirstName?.Trim() ?? string.Empty;
+            var last = ModalLastName?.Trim() ?? string.Empty;
+            if (first.Length > 0 && last.Length > 0)
+                return $"{char.ToUpperInvariant(first[0])}{char.ToUpperInvariant(last[0])}";
+            if (first.Length >= 2)
+                return first[..2].ToUpperInvariant();
+            if (first.Length == 1)
+                return first.ToUpperInvariant();
+            if (last.Length >= 2)
+                return last[..2].ToUpperInvariant();
+            if (last.Length == 1)
+                return last.ToUpperInvariant();
+            return "?";
+        }
+    }
+
     partial void OnModalFirstNameChanged(string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
         {
             ModalFirstNameError = null;
         }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
     partial void OnModalLastNameChanged(string value)
@@ -108,6 +159,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         {
             ModalLastNameError = null;
         }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
     partial void OnModalPhoneChanged(string value)
@@ -158,7 +210,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
         !string.IsNullOrWhiteSpace(ModalStateProvince) ||
         !string.IsNullOrWhiteSpace(ModalZipCode) ||
         !string.IsNullOrWhiteSpace(ModalCountry) ||
-        !string.IsNullOrWhiteSpace(ModalNotes);
+        !string.IsNullOrWhiteSpace(ModalNotes) ||
+        HasModalAvatar;
 
     /// <summary>
     /// Returns true if any changes have been made in the Edit modal.
@@ -174,7 +227,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalStateProvince != _originalStateProvince ||
         ModalZipCode != _originalZipCode ||
         ModalCountry != _originalCountry ||
-        ModalNotes != _originalNotes;
+        ModalNotes != _originalNotes ||
+        _pendingAvatarSourcePath != null ||
+        _shouldRemoveAvatarOnSave;
 
     #endregion
 
@@ -273,6 +328,44 @@ public partial class CustomerModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? FiltersCleared;
 
+    /// <summary>
+    /// Fired when the user clicks the avatar in the modal to pick a new image.
+    /// App.axaml.cs subscribes and shows the OS file picker.
+    /// </summary>
+    public event EventHandler? BrowseAvatarRequested;
+
+    #endregion
+
+    #region Avatar Commands
+
+    [RelayCommand]
+    private void BrowseAvatar()
+    {
+        BrowseAvatarRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void RemoveAvatar()
+    {
+        ModalAvatarSource = null;
+        HasModalAvatar = false;
+        _pendingAvatarSourcePath = null;
+        _shouldRemoveAvatarOnSave = _originalHasAvatar;
+        OnPropertyChanged(nameof(ModalInitialsPreview));
+    }
+
+    /// <summary>
+    /// Called by App.axaml.cs after the user picks an avatar image. Updates the
+    /// preview bitmap and stages the source path to be applied on save.
+    /// </summary>
+    public void SetPendingAvatar(string path, Bitmap bitmap)
+    {
+        _pendingAvatarSourcePath = path;
+        _shouldRemoveAvatarOnSave = false;
+        ModalAvatarSource = bitmap;
+        HasModalAvatar = true;
+    }
+
     #endregion
 
     #region Add Customer
@@ -308,7 +401,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveNewCustomer()
+    public async Task SaveNewCustomerAsync()
     {
         if (!ValidateModal())
             return;
@@ -352,6 +445,10 @@ public partial class CustomerModalsViewModel : ViewModelBase
         companyData.Customers.Add(newCustomer);
         companyData.MarkAsModified();
 
+        // Persist the avatar image (if one was picked) into the company temp directory
+        // *after* the customer is in the collection so its Id is stable.
+        await ApplyPendingAvatarChangeAsync(newCustomer);
+
         var customerToUndo = newCustomer;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
@@ -370,6 +467,34 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
         CustomerSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
+    }
+
+    /// <summary>
+    /// Applies any pending avatar add/remove from the modal to the customer record.
+    /// Avatar changes are not part of the undo stack — they are intentionally one-way
+    /// to keep the implementation simple and avoid juggling files in undo callbacks.
+    /// </summary>
+    private async Task ApplyPendingAvatarChangeAsync(Customer customer)
+    {
+        var manager = App.CompanyManager;
+        if (manager == null)
+            return;
+
+        try
+        {
+            if (_pendingAvatarSourcePath != null)
+            {
+                await manager.SetCustomerAvatarAsync(customer, _pendingAvatarSourcePath);
+            }
+            else if (_shouldRemoveAvatarOnSave)
+            {
+                await manager.RemoveCustomerAvatarAsync(customer);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.ApplyAvatarChange");
+        }
     }
 
     #endregion
@@ -422,6 +547,33 @@ public partial class CustomerModalsViewModel : ViewModelBase
         _originalCountry = ModalCountry;
         _originalNotes = ModalNotes;
 
+        // Load existing avatar (if any) into the modal preview.
+        _pendingAvatarSourcePath = null;
+        _shouldRemoveAvatarOnSave = false;
+        var avatarPath = App.CompanyManager?.GetCustomerAvatarPath(customer);
+        if (avatarPath != null)
+        {
+            try
+            {
+                ModalAvatarSource = new Bitmap(avatarPath);
+                HasModalAvatar = true;
+                _originalHasAvatar = true;
+            }
+            catch
+            {
+                ModalAvatarSource = null;
+                HasModalAvatar = false;
+                _originalHasAvatar = false;
+            }
+        }
+        else
+        {
+            ModalAvatarSource = null;
+            HasModalAvatar = false;
+            _originalHasAvatar = false;
+        }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
+
         ClearModalErrors();
         IsEditModalOpen = true;
     }
@@ -450,7 +602,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveEditedCustomer()
+    public async Task SaveEditedCustomerAsync()
     {
         if (!ValidateModal() || _editingCustomer == null)
             return;
@@ -496,7 +648,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         // Check if anything actually changed
-        var hasChanges = oldName != newName ||
+        var hasFieldChanges = oldName != newName ||
                          oldCompanyName != newCompanyName ||
                          oldEmail != newEmail ||
                          oldPhone != newPhone ||
@@ -508,9 +660,26 @@ public partial class CustomerModalsViewModel : ViewModelBase
                          oldNotes != newNotes ||
                          oldStatus != newStatus;
 
+        var hasAvatarChanges = _pendingAvatarSourcePath != null || _shouldRemoveAvatarOnSave;
+
         // If nothing changed, just close the modal without recording an action
-        if (!hasChanges)
+        if (!hasFieldChanges && !hasAvatarChanges)
         {
+            CloseEditModal();
+            return;
+        }
+
+        // Apply avatar changes (not undoable — see ApplyPendingAvatarChangeAsync).
+        if (hasAvatarChanges)
+        {
+            await ApplyPendingAvatarChangeAsync(_editingCustomer);
+        }
+
+        if (!hasFieldChanges)
+        {
+            // Only the avatar changed — still notify so list views refresh, then close.
+            companyData.MarkAsModified();
+            CustomerSaved?.Invoke(this, EventArgs.Empty);
             CloseEditModal();
             return;
         }
@@ -1006,6 +1175,12 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalCountry = string.Empty;
         ModalNotes = string.Empty;
         ModalStatus = "Active";
+        ModalAvatarSource = null;
+        HasModalAvatar = false;
+        _pendingAvatarSourcePath = null;
+        _shouldRemoveAvatarOnSave = false;
+        _originalHasAvatar = false;
+        OnPropertyChanged(nameof(ModalInitialsPreview));
         ClearModalErrors();
     }
 

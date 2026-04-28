@@ -224,6 +224,50 @@ public static class ReceiptImageHelper
         return encoded.ToArray();
     }
 
+    /// <summary>
+    /// Loads an image from disk, downscales it to fit within <paramref name="maxDimension"/>
+    /// preserving aspect ratio, and writes it as PNG to <paramref name="destPath"/>.
+    /// PNG is used (lossless) so logos with text and small icons stay crisp at avatar sizes.
+    /// Returns false if the source could not be decoded.
+    /// </summary>
+    public static bool ResizeAndSaveAsPng(string sourcePath, string destPath, int maxDimension)
+    {
+        using var bitmap = SKBitmap.Decode(sourcePath);
+        if (bitmap == null)
+            return false;
+
+        var scale = Math.Min(
+            (float)maxDimension / bitmap.Width,
+            (float)maxDimension / bitmap.Height);
+
+        SKBitmap target;
+        if (scale >= 1f)
+        {
+            target = bitmap;
+        }
+        else
+        {
+            var newWidth = Math.Max(1, (int)(bitmap.Width * scale));
+            var newHeight = Math.Max(1, (int)(bitmap.Height * scale));
+            target = ResizeBitmap(bitmap, newWidth, newHeight);
+        }
+
+        try
+        {
+            using var image = SKImage.FromBitmap(target);
+            using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+            using var stream = File.Create(destPath);
+            encoded.SaveTo(stream);
+        }
+        finally
+        {
+            if (!ReferenceEquals(target, bitmap))
+                target.Dispose();
+        }
+
+        return true;
+    }
+
     internal static byte[] EncodeAsJpeg(SKBitmap bitmap, int quality)
     {
         using var image = SKImage.FromBitmap(bitmap);

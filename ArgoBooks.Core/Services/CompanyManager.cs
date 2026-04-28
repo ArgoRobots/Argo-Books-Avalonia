@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
@@ -107,6 +108,22 @@ public class CompanyManager : IDisposable
             var logoPath = Path.Combine(_currentTempDirectory, CompanyData.Settings.Company.LogoFileName);
             return File.Exists(logoPath) ? logoPath : null;
         }
+    }
+
+    private const string CustomerAvatarSubdirectory = "customer_avatars";
+    private const int CustomerAvatarMaxDimension = 256;
+
+    /// <summary>
+    /// Gets the absolute on-disk path to a customer's avatar image, or null when there is no
+    /// avatar set or the file is missing.
+    /// </summary>
+    public string? GetCustomerAvatarPath(Customer customer)
+    {
+        if (customer == null || string.IsNullOrEmpty(customer.AvatarFileName) || _currentTempDirectory == null)
+            return null;
+
+        var path = Path.Combine(_currentTempDirectory, customer.AvatarFileName);
+        return File.Exists(path) ? path : null;
     }
 
     /// <summary>
@@ -614,6 +631,78 @@ public class CompanyManager : IDisposable
         CompanyData.ChangesMade = true;
 
         CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Sets a customer's avatar from a source image on disk. The image is resized down
+    /// to a small PNG inside the company temp directory, so it gets bundled into the
+    /// encrypted .argo file on next save.
+    /// </summary>
+    public async Task SetCustomerAvatarAsync(Customer customer, string sourceImagePath)
+    {
+        ArgumentNullException.ThrowIfNull(customer);
+        ArgumentException.ThrowIfNullOrEmpty(sourceImagePath);
+
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        if (!File.Exists(sourceImagePath))
+            throw new FileNotFoundException("Avatar source file not found.", sourceImagePath);
+
+        var avatarsDir = Path.Combine(_currentTempDirectory, CustomerAvatarSubdirectory);
+        Directory.CreateDirectory(avatarsDir);
+
+        var safeId = SanitizeForFileName(customer.Id);
+        var fileName = $"{safeId}.png";
+        var destPath = Path.Combine(avatarsDir, fileName);
+        var relativePath = Path.Combine(CustomerAvatarSubdirectory, fileName).Replace('\\', '/');
+
+        var ok = await Task.Run(() => ReceiptImageHelper.ResizeAndSaveAsPng(sourceImagePath, destPath, CustomerAvatarMaxDimension));
+        if (!ok)
+            throw new InvalidOperationException("Selected file could not be loaded as an image.");
+
+        customer.AvatarFileName = relativePath;
+        customer.UpdatedAt = DateTime.UtcNow;
+        CompanyData.ChangesMade = true;
+
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Removes a customer's avatar image. Safe to call when no avatar is set.
+    /// </summary>
+    public async Task RemoveCustomerAvatarAsync(Customer customer)
+    {
+        ArgumentNullException.ThrowIfNull(customer);
+
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var existing = customer.AvatarFileName;
+        if (string.IsNullOrEmpty(existing))
+            return;
+
+        var fullPath = Path.Combine(_currentTempDirectory, existing);
+        if (File.Exists(fullPath))
+        {
+            await Task.Run(() => File.Delete(fullPath));
+        }
+
+        customer.AvatarFileName = null;
+        customer.UpdatedAt = DateTime.UtcNow;
+        CompanyData.ChangesMade = true;
+
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static string SanitizeForFileName(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return Guid.NewGuid().ToString("N");
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var cleaned = new string(raw.Where(c => !invalid.Contains(c) && c != '.').ToArray()).Trim();
+        return string.IsNullOrEmpty(cleaned) ? Guid.NewGuid().ToString("N") : cleaned;
     }
 
     /// <summary>

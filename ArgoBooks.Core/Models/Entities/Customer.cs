@@ -49,4 +49,11 @@ public class Customer : BaseEntity
     /// </summary>
     [JsonPropertyName("lastTransactionDate")]
     public DateTime? LastTransactionDate { get; set; }
+
+    /// <summary>
+    /// Relative path (within the company temp directory) to the customer's avatar image,
+    /// or null if no custom avatar is set. When null, initials are displayed instead.
+    /// </summary>
+    [JsonPropertyName("avatarFileName")]
+    public string? AvatarFileName { get; set; }
 }

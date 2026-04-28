@@ -1,11 +1,13 @@
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Helpers;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -488,6 +490,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
+            var customerAvatar = LoadCustomerAvatar(customer);
 
             return new RevenueDisplayItem
             {
@@ -523,7 +526,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 IsHighlighted = revenue.Id == HighlightTransactionId,
                 InvoiceId = revenue.InvoiceId ?? string.Empty,
                 IsPendingConversion = revenue.IsPendingConversion,
-                OriginalCurrency = revenue.OriginalCurrency
+                OriginalCurrency = revenue.OriginalCurrency,
+                CustomerAvatarBitmap = customerAvatar,
+                HasCustomerAvatar = customerAvatar != null
             };
         }).ToList();
 
@@ -693,6 +698,25 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         App.ReceiptViewerModal?.Show(receiptPath, item.Id);
     }
 
+    private static Bitmap? LoadCustomerAvatar(Customer? customer)
+    {
+        if (customer == null)
+            return null;
+
+        var path = App.CompanyManager?.GetCustomerAvatarPath(customer);
+        if (path == null)
+            return null;
+
+        try
+        {
+            return new Bitmap(path);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static string? GetReceiptImagePath(string revenueId)
     {
         // Always load from company file to ensure consistency
@@ -816,6 +840,12 @@ public partial class RevenueDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _originalCurrency = "USD";
+
+    [ObservableProperty]
+    private Bitmap? _customerAvatarBitmap;
+
+    [ObservableProperty]
+    private bool _hasCustomerAvatar;
 
     public string DateFormatted => DateFormatService.Format(Date);
     public string TotalFormatted => IsPendingConversion

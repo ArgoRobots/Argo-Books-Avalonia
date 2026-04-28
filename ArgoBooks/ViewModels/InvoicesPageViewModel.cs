@@ -2,11 +2,13 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ArgoBooks.Helpers;
@@ -662,6 +664,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 : null;
             var statusDisplay = GetStatusDisplay(invoice);
 
+            var avatarBitmap = LoadCustomerAvatar(customer);
+
             return new InvoiceDisplayItem
             {
                 Id = invoice.Id,
@@ -670,6 +674,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 CustomerId = invoice.CustomerId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 CustomerInitials = GetInitials(customer?.Name ?? "?"),
+                CustomerAvatarBitmap = avatarBitmap,
+                HasCustomerAvatar = avatarBitmap != null,
                 IssueDate = invoice.IssueDate,
                 DueDate = invoice.DueDate,
                 Subtotal = invoice.Subtotal,
@@ -743,6 +749,25 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             InvoiceStatus.Cancelled => "Cancelled",
             _ => "Unknown"
         };
+    }
+
+    private static Bitmap? LoadCustomerAvatar(Customer? customer)
+    {
+        if (customer == null)
+            return null;
+
+        var path = App.CompanyManager?.GetCustomerAvatarPath(customer);
+        if (path == null)
+            return null;
+
+        try
+        {
+            return new Bitmap(path);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string GetInitials(string name)
@@ -875,6 +900,12 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _customerInitials = string.Empty;
+
+    [ObservableProperty]
+    private Bitmap? _customerAvatarBitmap;
+
+    [ObservableProperty]
+    private bool _hasCustomerAvatar;
 
     [ObservableProperty]
     private DateTime _issueDate;
