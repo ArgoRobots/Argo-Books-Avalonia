@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -664,7 +663,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 : null;
             var statusDisplay = GetStatusDisplay(invoice);
 
-            var avatarBitmap = LoadCustomerAvatar(customer);
+            var avatarBitmap = AvatarBitmapLoader.LoadCustomer(customer);
 
             return new InvoiceDisplayItem
             {
@@ -749,25 +748,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             InvoiceStatus.Cancelled => "Cancelled",
             _ => "Unknown"
         };
-    }
-
-    private static Bitmap? LoadCustomerAvatar(Customer? customer)
-    {
-        if (customer == null)
-            return null;
-
-        var path = App.CompanyManager?.GetCustomerAvatarPath(customer);
-        if (path == null)
-            return null;
-
-        try
-        {
-            return new Bitmap(path);
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private static string GetInitials(string name)

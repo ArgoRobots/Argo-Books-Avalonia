@@ -6,7 +6,7 @@ namespace ArgoBooks.Core.Models.Entities;
 /// <summary>
 /// Represents a customer in the system.
 /// </summary>
-public class Customer : BaseEntity
+public class Customer : BaseEntity, IAvatarOwner
 {
     /// <summary>
     /// Customer name (person or company).

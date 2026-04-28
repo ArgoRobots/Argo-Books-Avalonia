@@ -245,6 +245,33 @@ public static class ReceiptImageHelper
         }
 
         using var bitmap = SKBitmap.Decode(sourcePath);
+        return WriteResizedPng(bitmap, origin, destPath, maxDimension);
+    }
+
+    /// <summary>
+    /// Bytes-based variant of <see cref="ResizeAndSaveAsPng(string,string,int)"/> for callers
+    /// that already have the source image in memory (e.g. a downloaded favicon). Handles
+    /// .ico, .png, .jpg, and other Skia-supported formats.
+    /// </summary>
+    public static bool ResizeBytesAndSaveAsPng(byte[] sourceBytes, string destPath, int maxDimension)
+    {
+        if (sourceBytes == null || sourceBytes.Length == 0)
+            return false;
+
+        SKEncodedOrigin origin = SKEncodedOrigin.TopLeft;
+        using (var stream = new MemoryStream(sourceBytes, writable: false))
+        using (var codec = SKCodec.Create(stream))
+        {
+            if (codec != null)
+                origin = codec.EncodedOrigin;
+        }
+
+        using var bitmap = SKBitmap.Decode(sourceBytes);
+        return WriteResizedPng(bitmap, origin, destPath, maxDimension);
+    }
+
+    private static bool WriteResizedPng(SKBitmap? bitmap, SKEncodedOrigin origin, string destPath, int maxDimension)
+    {
         if (bitmap == null)
             return false;
 

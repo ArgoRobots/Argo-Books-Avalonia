@@ -446,7 +446,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 addressParts.Add(customer.Address.State);
             var addressString = addressParts.Count > 0 ? string.Join(", ", addressParts) : "-";
 
-            var avatarBitmap = LoadCustomerAvatarBitmap(customer);
+            var avatarBitmap = AvatarBitmapLoader.LoadCustomer(customer);
 
             return new CustomerDisplayItem
             {
@@ -499,22 +499,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             .Take(PageSize);
 
         Customers.ReplaceAll(pagedCustomers);
-    }
-
-    private static Bitmap? LoadCustomerAvatarBitmap(Customer customer)
-    {
-        var path = App.CompanyManager?.GetCustomerAvatarPath(customer);
-        if (path == null)
-            return null;
-
-        try
-        {
-            return new Bitmap(path);
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     protected override void UpdatePageNumbers()

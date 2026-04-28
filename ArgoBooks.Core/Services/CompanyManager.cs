@@ -112,7 +112,8 @@ public class CompanyManager : IDisposable
     }
 
     private const string CustomerAvatarSubdirectory = "customer_avatars";
-    private const int CustomerAvatarMaxDimension = 256;
+    private const string SupplierAvatarSubdirectory = "supplier_avatars";
+    private const int AvatarMaxDimension = 256;
 
     /// <summary>
     /// Resolves an avatar's relative path to an absolute path within the company temp
@@ -140,18 +141,135 @@ public class CompanyManager : IDisposable
             : null;
     }
 
+    private string? GetEntityAvatarPath(IAvatarOwner? entity)
+    {
+        if (entity == null) return null;
+        var path = ResolveAvatarPathSafely(entity.AvatarFileName);
+        return path != null && File.Exists(path) ? path : null;
+    }
+
+    private async Task SetEntityAvatarFromPathAsync(IAvatarOwner entity, string sourceImagePath, string subdirectory)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        ArgumentException.ThrowIfNullOrEmpty(sourceImagePath);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+        if (!File.Exists(sourceImagePath))
+            throw new FileNotFoundException("Avatar source file not found.", sourceImagePath);
+
+        var (destPath, relativePath) = PrepareAvatarDestination(entity.Id, subdirectory);
+        var ok = await Task.Run(() => ReceiptImageHelper.ResizeAndSaveAsPng(sourceImagePath, destPath, AvatarMaxDimension));
+        if (!ok)
+            throw new InvalidOperationException("Selected file could not be loaded as an image.");
+
+        FinalizeAvatarUpdate(entity, relativePath);
+    }
+
+    private async Task SetEntityAvatarFromBytesAsync(IAvatarOwner entity, byte[] sourceBytes, string subdirectory)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        ArgumentNullException.ThrowIfNull(sourceBytes);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var (destPath, relativePath) = PrepareAvatarDestination(entity.Id, subdirectory);
+        var ok = await Task.Run(() => ReceiptImageHelper.ResizeBytesAndSaveAsPng(sourceBytes, destPath, AvatarMaxDimension));
+        if (!ok)
+            throw new InvalidOperationException("Provided bytes could not be decoded as an image.");
+
+        FinalizeAvatarUpdate(entity, relativePath);
+    }
+
+    private (string DestPath, string RelativePath) PrepareAvatarDestination(string entityId, string subdirectory)
+    {
+        var avatarsDir = Path.Combine(_currentTempDirectory!, subdirectory);
+        Directory.CreateDirectory(avatarsDir);
+        var safeId = SanitizeForFileName(entityId);
+        var fileName = $"{safeId}.png";
+        var destPath = Path.Combine(avatarsDir, fileName);
+        var relativePath = Path.Combine(subdirectory, fileName).Replace('\\', '/');
+        return (destPath, relativePath);
+    }
+
+    private void FinalizeAvatarUpdate(IAvatarOwner entity, string relativePath)
+    {
+        entity.AvatarFileName = relativePath;
+        entity.UpdatedAt = DateTime.UtcNow;
+        CompanyData!.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async Task RemoveEntityAvatarAsync(IAvatarOwner entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var existing = entity.AvatarFileName;
+        if (string.IsNullOrEmpty(existing))
+            return;
+
+        // Only delete files that resolve safely under the temp directory — guard against
+        // a crafted AvatarFileName escaping into the rest of the filesystem.
+        var fullPath = ResolveAvatarPathSafely(existing);
+        if (fullPath != null && File.Exists(fullPath))
+        {
+            await Task.Run(() => File.Delete(fullPath));
+        }
+
+        entity.AvatarFileName = null;
+        entity.UpdatedAt = DateTime.UtcNow;
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Move the avatar file to track a renamed entity Id. Failure is non-fatal — if the
+    /// file move can't complete, AvatarFileName is left at its previous value and the
+    /// avatar simply won't load until the user re-uploads.
+    /// </summary>
+    private void TryMoveEntityAvatarOnRename(IAvatarOwner entity, string newId, string subdirectory)
+    {
+        if (string.IsNullOrEmpty(entity.AvatarFileName) || _currentTempDirectory == null)
+            return;
+
+        try
+        {
+            var oldPath = ResolveAvatarPathSafely(entity.AvatarFileName);
+            var ext = Path.GetExtension(entity.AvatarFileName);
+            var safeNewId = SanitizeForFileName(newId);
+            var newRelative = Path.Combine(subdirectory, safeNewId + ext).Replace('\\', '/');
+            var newPath = Path.Combine(_currentTempDirectory, newRelative);
+
+            if (oldPath != null && File.Exists(oldPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                if (File.Exists(newPath))
+                    File.Delete(newPath);
+                File.Move(oldPath, newPath);
+            }
+            // Always update AvatarFileName to the new relative path: even if the old
+            // file was missing or unsafe, the entity record should now point inside
+            // the temp dir using the new Id.
+            entity.AvatarFileName = newRelative;
+        }
+        catch
+        {
+            // Leave AvatarFileName as-is.
+        }
+    }
+
     /// <summary>
     /// Gets the absolute on-disk path to a customer's avatar image, or null when there is no
     /// avatar set, the file is missing, or the stored path escapes the company temp directory.
     /// </summary>
-    public string? GetCustomerAvatarPath(Customer customer)
-    {
-        if (customer == null)
-            return null;
+    public string? GetCustomerAvatarPath(Customer customer) => GetEntityAvatarPath(customer);
 
-        var path = ResolveAvatarPathSafely(customer.AvatarFileName);
-        return path != null && File.Exists(path) ? path : null;
-    }
+    /// <summary>
+    /// Gets the absolute on-disk path to a supplier's avatar image, or null when there is no
+    /// avatar set, the file is missing, or the stored path escapes the company temp directory.
+    /// </summary>
+    public string? GetSupplierAvatarPath(Supplier supplier) => GetEntityAvatarPath(supplier);
 
     /// <summary>
     /// Schedules a file rename to be applied on the next save.
@@ -665,64 +783,35 @@ public class CompanyManager : IDisposable
     /// to a small PNG inside the company temp directory, so it gets bundled into the
     /// encrypted .argo file on next save.
     /// </summary>
-    public async Task SetCustomerAvatarAsync(Customer customer, string sourceImagePath)
-    {
-        ArgumentNullException.ThrowIfNull(customer);
-        ArgumentException.ThrowIfNullOrEmpty(sourceImagePath);
-
-        if (CompanyData == null || _currentTempDirectory == null)
-            throw new InvalidOperationException("No company is currently open.");
-
-        if (!File.Exists(sourceImagePath))
-            throw new FileNotFoundException("Avatar source file not found.", sourceImagePath);
-
-        var avatarsDir = Path.Combine(_currentTempDirectory, CustomerAvatarSubdirectory);
-        Directory.CreateDirectory(avatarsDir);
-
-        var safeId = SanitizeForFileName(customer.Id);
-        var fileName = $"{safeId}.png";
-        var destPath = Path.Combine(avatarsDir, fileName);
-        var relativePath = Path.Combine(CustomerAvatarSubdirectory, fileName).Replace('\\', '/');
-
-        var ok = await Task.Run(() => ReceiptImageHelper.ResizeAndSaveAsPng(sourceImagePath, destPath, CustomerAvatarMaxDimension));
-        if (!ok)
-            throw new InvalidOperationException("Selected file could not be loaded as an image.");
-
-        customer.AvatarFileName = relativePath;
-        customer.UpdatedAt = DateTime.UtcNow;
-        CompanyData.ChangesMade = true;
-
-        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
-    }
+    public Task SetCustomerAvatarAsync(Customer customer, string sourceImagePath)
+        => SetEntityAvatarFromPathAsync(customer, sourceImagePath, CustomerAvatarSubdirectory);
 
     /// <summary>
     /// Removes a customer's avatar image. Safe to call when no avatar is set.
     /// </summary>
-    public async Task RemoveCustomerAvatarAsync(Customer customer)
-    {
-        ArgumentNullException.ThrowIfNull(customer);
+    public Task RemoveCustomerAvatarAsync(Customer customer)
+        => RemoveEntityAvatarAsync(customer);
 
-        if (CompanyData == null || _currentTempDirectory == null)
-            throw new InvalidOperationException("No company is currently open.");
+    /// <summary>
+    /// Sets a supplier's avatar from a source image on disk. Same semantics as the
+    /// customer variant — image is resized to a PNG inside the company temp directory.
+    /// </summary>
+    public Task SetSupplierAvatarAsync(Supplier supplier, string sourceImagePath)
+        => SetEntityAvatarFromPathAsync(supplier, sourceImagePath, SupplierAvatarSubdirectory);
 
-        var existing = customer.AvatarFileName;
-        if (string.IsNullOrEmpty(existing))
-            return;
+    /// <summary>
+    /// Sets a supplier's avatar from already-loaded bytes (e.g. a downloaded favicon).
+    /// The bytes can be in any Skia-supported format (ICO, PNG, JPG, ...) and are
+    /// re-encoded to PNG.
+    /// </summary>
+    public Task SetSupplierAvatarFromBytesAsync(Supplier supplier, byte[] imageBytes)
+        => SetEntityAvatarFromBytesAsync(supplier, imageBytes, SupplierAvatarSubdirectory);
 
-        // Only delete files that resolve safely under the temp directory — guard against
-        // a crafted AvatarFileName escaping into the rest of the filesystem.
-        var fullPath = ResolveAvatarPathSafely(existing);
-        if (fullPath != null && File.Exists(fullPath))
-        {
-            await Task.Run(() => File.Delete(fullPath));
-        }
-
-        customer.AvatarFileName = null;
-        customer.UpdatedAt = DateTime.UtcNow;
-        CompanyData.ChangesMade = true;
-
-        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
-    }
+    /// <summary>
+    /// Removes a supplier's avatar image. Safe to call when no avatar is set.
+    /// </summary>
+    public Task RemoveSupplierAvatarAsync(Supplier supplier)
+        => RemoveEntityAvatarAsync(supplier);
 
     private static string SanitizeForFileName(string raw)
     {
@@ -771,39 +860,7 @@ public class CompanyManager : IDisposable
         foreach (var ret in CompanyData.Returns)
             if (ret.CustomerId == oldId) ret.CustomerId = trimmed;
 
-        // Move the avatar file so its name still tracks the customer Id.
-        // Failure is non-fatal: the rename still succeeds, the avatar simply
-        // won't load until the user re-uploads.
-        if (!string.IsNullOrEmpty(customer.AvatarFileName))
-        {
-            try
-            {
-                // Validate the old path stays inside the temp directory before doing any
-                // file ops — a crafted AvatarFileName must not be able to coerce a move
-                // (or implicit overwrite) of files outside the company's temp dir.
-                var oldPath = ResolveAvatarPathSafely(customer.AvatarFileName);
-                var ext = Path.GetExtension(customer.AvatarFileName);
-                var safeNewId = SanitizeForFileName(trimmed);
-                var newRelative = Path.Combine(CustomerAvatarSubdirectory, safeNewId + ext).Replace('\\', '/');
-                var newPath = Path.Combine(_currentTempDirectory, newRelative);
-
-                if (oldPath != null && File.Exists(oldPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
-                    if (File.Exists(newPath))
-                        File.Delete(newPath);
-                    File.Move(oldPath, newPath);
-                }
-                // Always update AvatarFileName to the new relative path: even if the old
-                // file was missing or unsafe, the customer record should now point inside
-                // the temp dir using the new Id.
-                customer.AvatarFileName = newRelative;
-            }
-            catch
-            {
-                // Leave AvatarFileName as-is; renaming the customer Id should not block on avatar I/O.
-            }
-        }
+        TryMoveEntityAvatarOnRename(customer, trimmed, CustomerAvatarSubdirectory);
 
         customer.Id = trimmed;
         customer.UpdatedAt = DateTime.UtcNow;
@@ -843,6 +900,8 @@ public class CompanyManager : IDisposable
             if (ret.SupplierId == oldId) ret.SupplierId = trimmed;
         foreach (var exp in CompanyData.Expenses)
             if (exp.SupplierId == oldId) exp.SupplierId = trimmed;
+
+        TryMoveEntityAvatarOnRename(supplier, trimmed, SupplierAvatarSubdirectory);
 
         supplier.Id = trimmed;
         supplier.UpdatedAt = DateTime.UtcNow;

@@ -4,8 +4,11 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -88,9 +91,80 @@ public partial class SupplierModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalPhoneError;
 
+    [ObservableProperty]
+    private Bitmap? _modalAvatarSource;
+
+    [ObservableProperty]
+    private bool _hasModalAvatar;
+
+    /// <summary>
+    /// Local file path picked via the file picker. Applied on save.
+    /// </summary>
+    private string? _pendingAvatarSourcePath;
+
+    /// <summary>
+    /// Bytes downloaded from the supplier's website /favicon.ico. Applied on save
+    /// only when the user has not picked their own image.
+    /// </summary>
+    private byte[]? _pendingFaviconBytes;
+
+    /// <summary>
+    /// True when the user clicked Remove on an existing avatar; on save the supplier's
+    /// avatar file should be deleted.
+    /// </summary>
+    private bool _shouldRemoveAvatarOnSave;
+
+    /// <summary>
+    /// Snapshot of whether the supplier had an avatar when the edit modal was opened —
+    /// used for change detection.
+    /// </summary>
+    private bool _originalHasAvatar;
+
+    /// <summary>
+    /// Cancels an in-flight favicon download when the user keeps typing or closes the modal.
+    /// </summary>
+    private CancellationTokenSource? _faviconCts;
+
+    /// <summary>
+    /// Live preview of the initials shown when no avatar is set.
+    /// Driven from ModalSupplierName so the avatar circle updates as the user types.
+    /// </summary>
+    public string ModalInitialsPreview
+    {
+        get
+        {
+            var name = ModalSupplierName?.Trim() ?? string.Empty;
+            if (name.Length == 0) return "?";
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+                return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[1][0])}";
+            if (parts[0].Length >= 2)
+                return parts[0][..2].ToUpperInvariant();
+            return parts[0].ToUpperInvariant();
+        }
+    }
+
     partial void OnModalIdChanged(string value)
     {
         ModalIdError = null;
+    }
+
+    partial void OnModalSupplierNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(ModalInitialsPreview));
+    }
+
+    partial void OnModalWebsiteChanged(string value)
+    {
+        // Auto-fetch the supplier's /favicon.ico — but only when the user has not
+        // already picked or kept their own image. The check on HasModalAvatar handles
+        // every "image already there" case (existing avatar in edit mode, prior favicon
+        // fetch in this session, manual file pick).
+        if (HasModalAvatar || _pendingAvatarSourcePath != null)
+            return;
+
+        TriggerFaviconFetch(value);
     }
 
     private Supplier? _editingSupplier;
@@ -137,7 +211,10 @@ public partial class SupplierModalsViewModel : ViewModelBase
         ModalStateProvince != _originalStateProvince ||
         ModalZipCode != _originalZipCode ||
         ModalCountry != _originalCountry ||
-        ModalNotes != _originalNotes;
+        ModalNotes != _originalNotes ||
+        _pendingAvatarSourcePath != null ||
+        _pendingFaviconBytes != null ||
+        _shouldRemoveAvatarOnSave;
 
     #endregion
 
@@ -181,6 +258,108 @@ public partial class SupplierModalsViewModel : ViewModelBase
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
 
+    /// <summary>
+    /// Fired when the user clicks the avatar in the modal to pick a new image.
+    /// App.axaml.cs subscribes and shows the OS file picker.
+    /// </summary>
+    public event EventHandler? BrowseAvatarRequested;
+
+    #endregion
+
+    #region Avatar Commands
+
+    [RelayCommand]
+    private void BrowseAvatar() => BrowseAvatarRequested?.Invoke(this, EventArgs.Empty);
+
+    [RelayCommand]
+    private void RemoveAvatar()
+    {
+        ModalAvatarSource = null;
+        HasModalAvatar = false;
+        _pendingAvatarSourcePath = null;
+        _pendingFaviconBytes = null;
+        _shouldRemoveAvatarOnSave = _originalHasAvatar;
+
+        // Re-evaluate the website: with no avatar showing, the favicon fetch becomes
+        // applicable again. Mirrors the rule "if the user did not select an image,
+        // pull the website's favicon".
+        TriggerFaviconFetch(ModalWebsite);
+    }
+
+    /// <summary>
+    /// Called by App.axaml.cs after the user picks an avatar image. Updates the preview
+    /// bitmap and stages the source path to be applied on save. Manual pick wins over
+    /// any pending favicon.
+    /// </summary>
+    public void SetPendingAvatar(string path, Bitmap bitmap)
+    {
+        _pendingAvatarSourcePath = path;
+        _pendingFaviconBytes = null;
+        _shouldRemoveAvatarOnSave = false;
+        ModalAvatarSource = bitmap;
+        HasModalAvatar = true;
+    }
+
+    /// <summary>
+    /// Cancels any in-flight favicon download and kicks off a new one (debounced)
+    /// for the given URL. Silently does nothing on bad URLs / network failures.
+    /// </summary>
+    private void TriggerFaviconFetch(string? websiteUrl)
+    {
+        _faviconCts?.Cancel();
+        if (string.IsNullOrWhiteSpace(websiteUrl))
+            return;
+
+        var cts = new CancellationTokenSource();
+        _faviconCts = cts;
+        var urlSnapshot = websiteUrl;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Debounce — give the user time to keep typing before we hit the network.
+                await Task.Delay(500, cts.Token).ConfigureAwait(false);
+                if (cts.IsCancellationRequested) return;
+
+                var bytes = await FaviconService.TryFetchFaviconAsync(urlSnapshot, cts.Token).ConfigureAwait(false);
+                if (bytes == null || cts.IsCancellationRequested) return;
+
+                Bitmap? bitmap;
+                try
+                {
+                    using var ms = new MemoryStream(bytes);
+                    bitmap = new Bitmap(ms);
+                }
+                catch
+                {
+                    return; // Format Avalonia can't decode; ignore.
+                }
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    if (cts.IsCancellationRequested) return;
+                    // Re-check the gating conditions on the UI thread — the user may
+                    // have picked a file or removed-with-empty-website while we were
+                    // waiting on the network.
+                    if (HasModalAvatar || _pendingAvatarSourcePath != null)
+                    {
+                        bitmap.Dispose();
+                        return;
+                    }
+                    ModalAvatarSource = bitmap;
+                    HasModalAvatar = true;
+                    _pendingFaviconBytes = bytes;
+                });
+            }
+            catch (TaskCanceledException) { /* user kept typing */ }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogWarning($"Favicon fetch failed: {ex.Message}", "Supplier.Favicon");
+            }
+        });
+    }
+
     #endregion
 
     #region Add Supplier
@@ -216,7 +395,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveNewSupplier()
+    public async Task SaveNewSupplierAsync()
     {
         if (!ValidateModal()) return;
 
@@ -257,6 +436,10 @@ public partial class SupplierModalsViewModel : ViewModelBase
         companyData.Suppliers.Add(newSupplier);
         companyData.MarkAsModified();
 
+        // Persist the avatar (manual pick or auto-fetched favicon) into the company
+        // temp directory after the supplier is in the collection so its Id is stable.
+        await ApplyPendingAvatarChangeAsync(newSupplier);
+
         var supplierToUndo = newSupplier;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add supplier '{newSupplier.Name}'",
@@ -265,6 +448,32 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
         SupplierSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
+    }
+
+    /// <summary>
+    /// Applies any pending avatar change (manual upload, fetched favicon, or removal)
+    /// to the supplier record. Avatar changes are not part of the undo stack — keeps
+    /// the implementation simple and avoids juggling files in undo callbacks.
+    /// Manual upload wins over a pending favicon if both somehow exist.
+    /// </summary>
+    private async Task ApplyPendingAvatarChangeAsync(Supplier supplier)
+    {
+        var manager = App.CompanyManager;
+        if (manager == null) return;
+
+        try
+        {
+            if (_pendingAvatarSourcePath != null)
+                await manager.SetSupplierAvatarAsync(supplier, _pendingAvatarSourcePath);
+            else if (_pendingFaviconBytes != null)
+                await manager.SetSupplierAvatarFromBytesAsync(supplier, _pendingFaviconBytes);
+            else if (_shouldRemoveAvatarOnSave)
+                await manager.RemoveSupplierAvatarAsync(supplier);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Supplier.ApplyAvatarChange");
+        }
     }
 
     #endregion
@@ -285,6 +494,24 @@ public partial class SupplierModalsViewModel : ViewModelBase
         ModalSupplierName = supplier.Name;
         ModalEmail = supplier.Email;
         ModalPhone = supplier.Phone;
+
+        // Load the existing avatar BEFORE setting ModalWebsite — that way the
+        // OnModalWebsiteChanged hook sees HasModalAvatar=true and skips the favicon
+        // fetch instead of racing to overwrite the existing avatar.
+        _pendingAvatarSourcePath = null;
+        _pendingFaviconBytes = null;
+        _shouldRemoveAvatarOnSave = false;
+        _originalHasAvatar = !string.IsNullOrEmpty(supplier.AvatarFileName);
+        HasModalAvatar = _originalHasAvatar;
+        ModalAvatarSource = null;
+        var existingAvatarPath = App.CompanyManager?.GetSupplierAvatarPath(supplier);
+        if (existingAvatarPath != null)
+        {
+            try { ModalAvatarSource = new Bitmap(existingAvatarPath); }
+            catch { ModalAvatarSource = null; }
+        }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
+
         ModalWebsite = supplier.Website;
         ModalStreetAddress = supplier.Address.Street;
         ModalCity = supplier.Address.City;
@@ -333,7 +560,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveEditedSupplier()
+    public async Task SaveEditedSupplierAsync()
     {
         if (!ValidateModal() || _editingSupplier == null) return;
 
@@ -372,7 +599,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
         // Check if anything actually changed
         var hasIdChange = oldId != newId;
-        var hasChanges = hasIdChange ||
+        var hasFieldChanges = hasIdChange ||
                          oldName != newName ||
                          oldEmail != newEmail ||
                          oldPhone != newPhone ||
@@ -384,9 +611,27 @@ public partial class SupplierModalsViewModel : ViewModelBase
                          oldAddress.Country != newAddress.Country ||
                          oldNotes != newNotes;
 
+        var hasAvatarChanges = _pendingAvatarSourcePath != null
+                            || _pendingFaviconBytes != null
+                            || _shouldRemoveAvatarOnSave;
+
         // If nothing changed, just close the modal without recording an action
-        if (!hasChanges)
+        if (!hasFieldChanges && !hasAvatarChanges)
         {
+            CloseEditModal();
+            return;
+        }
+
+        // Apply avatar changes (not undoable — see ApplyPendingAvatarChangeAsync).
+        if (hasAvatarChanges)
+        {
+            await ApplyPendingAvatarChangeAsync(_editingSupplier);
+        }
+
+        if (!hasFieldChanges)
+        {
+            companyData.MarkAsModified();
+            SupplierSaved?.Invoke(this, EventArgs.Empty);
             CloseEditModal();
             return;
         }
@@ -497,6 +742,17 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
             var deletedSupplier = supplier;
             App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
+
+            // Clean up the avatar file before removing the supplier — avoids bloat and
+            // retention of deleted-supplier images in the .argo archive on next save.
+            // Mirrors the customer-delete behavior. Undo of delete restores the supplier
+            // record but not the avatar.
+            if (App.CompanyManager != null && !string.IsNullOrEmpty(deletedSupplier.AvatarFileName))
+            {
+                try { await App.CompanyManager.RemoveSupplierAvatarAsync(deletedSupplier); }
+                catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to remove supplier avatar on delete: {ex.Message}", "Supplier.Delete"); }
+            }
+
             companyData?.Suppliers.Remove(supplier);
             companyData?.MarkAsModified();
 
@@ -619,6 +875,10 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
     private void ClearModalFields()
     {
+        // Cancel any in-flight favicon fetch from a previous open of the modal.
+        _faviconCts?.Cancel();
+        _faviconCts = null;
+
         ModalId = string.Empty;
         _originalId = string.Empty;
         ModalIdError = null;
@@ -637,6 +897,14 @@ public partial class SupplierModalsViewModel : ViewModelBase
         ModalEmailError = null;
         ModalPhoneError = null;
         HasValidationMessage = false;
+
+        ModalAvatarSource = null;
+        HasModalAvatar = false;
+        _pendingAvatarSourcePath = null;
+        _pendingFaviconBytes = null;
+        _shouldRemoveAvatarOnSave = false;
+        _originalHasAvatar = false;
+        OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
     private bool ValidateModal()

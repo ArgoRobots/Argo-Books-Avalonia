@@ -1,7 +1,6 @@
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -490,7 +489,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
-            var customerAvatar = LoadCustomerAvatar(customer);
+            var customerAvatar = AvatarBitmapLoader.LoadCustomer(customer);
 
             return new RevenueDisplayItem
             {
@@ -696,25 +695,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         // Use the shared receipt viewer modal
         App.ReceiptViewerModal?.Show(receiptPath, item.Id);
-    }
-
-    private static Bitmap? LoadCustomerAvatar(Customer? customer)
-    {
-        if (customer == null)
-            return null;
-
-        var path = App.CompanyManager?.GetCustomerAvatarPath(customer);
-        if (path == null)
-            return null;
-
-        try
-        {
-            return new Bitmap(path);
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private static string? GetReceiptImagePath(string revenueId)
