@@ -84,6 +84,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private string _modalStatus = "Active";
 
     [ObservableProperty]
+    private string? _modalIdError;
+
+    [ObservableProperty]
     private string? _modalFirstNameError;
 
     [ObservableProperty]
@@ -94,6 +97,11 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _modalPhoneError;
+
+    partial void OnModalIdChanged(string value)
+    {
+        ModalIdError = null;
+    }
 
     [ObservableProperty]
     private Bitmap? _modalAvatarSource;
@@ -184,6 +192,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private CustomerDisplayItem? _historyCustomer;
 
     // Original values for change detection in edit mode
+    private string _originalId = string.Empty;
     private string _originalFirstName = string.Empty;
     private string _originalLastName = string.Empty;
     private string _originalCompanyName = string.Empty;
@@ -217,6 +226,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     /// Returns true if any changes have been made in the Edit modal.
     /// </summary>
     public bool HasEditModalChanges =>
+        ModalId.Trim() != _originalId ||
         ModalFirstName != _originalFirstName ||
         ModalLastName != _originalLastName ||
         ModalCompanyName != _originalCompanyName ||
@@ -535,6 +545,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         // Store original values for change detection
+        _originalId = ModalId;
         _originalFirstName = ModalFirstName;
         _originalLastName = ModalLastName;
         _originalCompanyName = ModalCompanyName;
@@ -611,6 +622,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         if (companyData == null)
             return;
 
+        var oldId = _editingCustomer.Id;
         var oldName = _editingCustomer.Name;
         var oldCompanyName = _editingCustomer.CompanyName;
         var oldEmail = _editingCustomer.Email;
@@ -626,6 +638,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var oldNotes = _editingCustomer.Notes;
         var oldStatus = _editingCustomer.Status;
 
+        var newId = ModalId.Trim();
         var newName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim();
         var newCompanyName = string.IsNullOrWhiteSpace(ModalCompanyName) ? null : ModalCompanyName.Trim();
         var newEmail = ModalEmail.Trim();
@@ -648,7 +661,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         // Check if anything actually changed
-        var hasFieldChanges = oldName != newName ||
+        var hasIdChange = oldId != newId;
+        var hasFieldChanges = hasIdChange ||
+                         oldName != newName ||
                          oldCompanyName != newCompanyName ||
                          oldEmail != newEmail ||
                          oldPhone != newPhone ||
@@ -687,6 +702,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var customerToEdit = _editingCustomer;
         App.EventLogService?.CapturePreModificationSnapshot("Customer", customerToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
+        if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldCompanyName != newCompanyName) changes["Company"] = new FieldChange { OldValue = oldCompanyName ?? "", NewValue = newCompanyName ?? "" };
         if (oldEmail != newEmail) changes["Email"] = new FieldChange { OldValue = oldEmail, NewValue = newEmail };
@@ -706,12 +722,31 @@ public partial class CustomerModalsViewModel : ViewModelBase
         customerToEdit.Status = newStatus;
         customerToEdit.UpdatedAt = DateTime.UtcNow;
 
+        // Renaming the Id cascades to every reference (invoices, revenues, etc.)
+        // and moves the avatar file. Validation has already ensured uniqueness.
+        if (hasIdChange)
+        {
+            try
+            {
+                App.CompanyManager?.ChangeCustomerId(customerToEdit, newId);
+            }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.ChangeId");
+                ModalIdError = ex.Message;
+                HasValidationMessage = true;
+                return;
+            }
+        }
+
         companyData.MarkAsModified();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit customer '{newName}'",
             () =>
             {
+                if (hasIdChange)
+                    App.CompanyManager?.ChangeCustomerId(customerToEdit, oldId);
                 customerToEdit.Name = oldName;
                 customerToEdit.CompanyName = oldCompanyName;
                 customerToEdit.Email = oldEmail;
@@ -724,6 +759,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
             },
             () =>
             {
+                if (hasIdChange)
+                    App.CompanyManager?.ChangeCustomerId(customerToEdit, newId);
                 customerToEdit.Name = newName;
                 customerToEdit.CompanyName = newCompanyName;
                 customerToEdit.Email = newEmail;
@@ -1163,6 +1200,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private void ClearModalFields()
     {
         ModalId = string.Empty;
+        _originalId = string.Empty;
         ModalFirstName = string.Empty;
         ModalLastName = string.Empty;
         ModalCompanyName = string.Empty;
@@ -1186,6 +1224,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
     private void ClearModalErrors()
     {
+        ModalIdError = null;
         ModalFirstNameError = null;
         ModalLastNameError = null;
         ModalEmailError = null;
@@ -1223,6 +1262,24 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData != null)
         {
+            var trimmedId = ModalId.Trim();
+            if (_editingCustomer != null && string.IsNullOrEmpty(trimmedId))
+            {
+                ModalIdError = "ID cannot be empty.".Translate();
+                isValid = false;
+            }
+            else if (!string.IsNullOrEmpty(trimmedId))
+            {
+                var existingWithSameId = companyData.Customers.Any(c =>
+                    c.Id == trimmedId &&
+                    (_editingCustomer == null || !ReferenceEquals(c, _editingCustomer)));
+                if (existingWithSameId)
+                {
+                    ModalIdError = "A customer with this ID already exists.".Translate();
+                    isValid = false;
+                }
+            }
+
             var fullName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}";
             var existingWithSameName = companyData.Customers.Any(c =>
                 c.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase) &&

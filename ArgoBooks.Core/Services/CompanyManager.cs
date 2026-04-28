@@ -4,6 +4,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Models.Common;
 
 namespace ArgoBooks.Core.Services;
 
@@ -703,6 +704,175 @@ public class CompanyManager : IDisposable
         var invalid = Path.GetInvalidFileNameChars();
         var cleaned = new string(raw.Where(c => !invalid.Contains(c) && c != '.').ToArray()).Trim();
         return string.IsNullOrEmpty(cleaned) ? Guid.NewGuid().ToString("N") : cleaned;
+    }
+
+    /// <summary>
+    /// Renames a customer's Id, cascading to every reference inside the open company
+    /// (invoices, revenues, payments, rentals, recurring invoices, returns) and moving
+    /// the avatar file. Throws if newId is empty, equals an existing customer's Id,
+    /// or if no company is open. A no-op when newId equals the current Id.
+    /// </summary>
+    public void ChangeCustomerId(Customer customer, string newId)
+    {
+        ArgumentNullException.ThrowIfNull(customer);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var trimmed = newId?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+            throw new ArgumentException("Customer ID cannot be empty.", nameof(newId));
+
+        var oldId = customer.Id;
+        if (string.Equals(oldId, trimmed, StringComparison.Ordinal))
+            return;
+
+        if (CompanyData.Customers.Any(c => !ReferenceEquals(c, customer) && c.Id == trimmed))
+            throw new InvalidOperationException($"Another customer already uses ID '{trimmed}'.");
+
+        // Cascade FK references
+        foreach (var inv in CompanyData.Invoices)
+            if (inv.CustomerId == oldId) inv.CustomerId = trimmed;
+        foreach (var rev in CompanyData.Revenues)
+            if (rev.CustomerId == oldId) rev.CustomerId = trimmed;
+        foreach (var pay in CompanyData.Payments)
+            if (pay.CustomerId == oldId) pay.CustomerId = trimmed;
+        foreach (var rent in CompanyData.Rentals)
+            if (rent.CustomerId == oldId) rent.CustomerId = trimmed;
+        foreach (var ri in CompanyData.RecurringInvoices)
+            if (ri.CustomerId == oldId) ri.CustomerId = trimmed;
+        foreach (var ret in CompanyData.Returns)
+            if (ret.CustomerId == oldId) ret.CustomerId = trimmed;
+
+        // Move the avatar file so its name still tracks the customer Id.
+        // Failure is non-fatal: the rename still succeeds, the avatar simply
+        // won't load until the user re-uploads.
+        if (!string.IsNullOrEmpty(customer.AvatarFileName))
+        {
+            try
+            {
+                var oldPath = Path.Combine(_currentTempDirectory, customer.AvatarFileName);
+                var ext = Path.GetExtension(customer.AvatarFileName);
+                var safeNewId = SanitizeForFileName(trimmed);
+                var newRelative = Path.Combine(CustomerAvatarSubdirectory, safeNewId + ext).Replace('\\', '/');
+                var newPath = Path.Combine(_currentTempDirectory, newRelative);
+
+                if (File.Exists(oldPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                    if (File.Exists(newPath))
+                        File.Delete(newPath);
+                    File.Move(oldPath, newPath);
+                }
+                customer.AvatarFileName = newRelative;
+            }
+            catch
+            {
+                // Leave AvatarFileName as-is; renaming the customer Id should not block on avatar I/O.
+            }
+        }
+
+        customer.Id = trimmed;
+        customer.UpdatedAt = DateTime.UtcNow;
+        // Cached Id→Customer lookup is keyed on the old Id; invalidate so the next
+        // GetCustomer(newId) rebuilds the dictionary.
+        CompanyData.InvalidateLookupCaches();
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Renames a supplier's Id, cascading to every reference inside the open company
+    /// (products, purchase orders, returns, expenses).
+    /// </summary>
+    public void ChangeSupplierId(Supplier supplier, string newId)
+    {
+        ArgumentNullException.ThrowIfNull(supplier);
+        if (CompanyData == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var trimmed = newId?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+            throw new ArgumentException("Supplier ID cannot be empty.", nameof(newId));
+
+        var oldId = supplier.Id;
+        if (string.Equals(oldId, trimmed, StringComparison.Ordinal))
+            return;
+
+        if (CompanyData.Suppliers.Any(s => !ReferenceEquals(s, supplier) && s.Id == trimmed))
+            throw new InvalidOperationException($"Another supplier already uses ID '{trimmed}'.");
+
+        foreach (var prod in CompanyData.Products)
+            if (prod.SupplierId == oldId) prod.SupplierId = trimmed;
+        foreach (var po in CompanyData.PurchaseOrders)
+            if (po.SupplierId == oldId) po.SupplierId = trimmed;
+        foreach (var ret in CompanyData.Returns)
+            if (ret.SupplierId == oldId) ret.SupplierId = trimmed;
+        foreach (var exp in CompanyData.Expenses)
+            if (exp.SupplierId == oldId) exp.SupplierId = trimmed;
+
+        supplier.Id = trimmed;
+        supplier.UpdatedAt = DateTime.UtcNow;
+        CompanyData.InvalidateLookupCaches();
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Renames a product's Id, cascading to every reference inside the open company
+    /// (inventory items, line items on invoices/revenues/expenses, purchase orders,
+    /// lost-damaged records, return items).
+    /// </summary>
+    public void ChangeProductId(Product product, string newId)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+        if (CompanyData == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var trimmed = newId?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+            throw new ArgumentException("Product ID cannot be empty.", nameof(newId));
+
+        var oldId = product.Id;
+        if (string.Equals(oldId, trimmed, StringComparison.Ordinal))
+            return;
+
+        if (CompanyData.Products.Any(p => !ReferenceEquals(p, product) && p.Id == trimmed))
+            throw new InvalidOperationException($"Another product already uses ID '{trimmed}'.");
+
+        foreach (var item in CompanyData.Inventory)
+            if (item.ProductId == oldId) item.ProductId = trimmed;
+        foreach (var po in CompanyData.PurchaseOrders)
+            if (po.ProductId == oldId) po.ProductId = trimmed;
+        foreach (var ld in CompanyData.LostDamaged)
+            if (ld.ProductId == oldId) ld.ProductId = trimmed;
+
+        // Line items live on the parent (Invoice / Revenue / Expense) — both Revenue
+        // and Expense derive from Transaction which exposes LineItems.
+        foreach (var inv in CompanyData.Invoices)
+            CascadeProductIdInLineItems(inv.LineItems, oldId, trimmed);
+        foreach (var rev in CompanyData.Revenues)
+            CascadeProductIdInLineItems(rev.LineItems, oldId, trimmed);
+        foreach (var exp in CompanyData.Expenses)
+            CascadeProductIdInLineItems(exp.LineItems, oldId, trimmed);
+
+        // Return items live nested inside Return.Items
+        foreach (var ret in CompanyData.Returns)
+        {
+            foreach (var ri in ret.Items)
+                if (ri.ProductId == oldId) ri.ProductId = trimmed;
+        }
+
+        product.Id = trimmed;
+        product.UpdatedAt = DateTime.UtcNow;
+        CompanyData.InvalidateLookupCaches();
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static void CascadeProductIdInLineItems(List<LineItem> lineItems, string oldId, string newId)
+    {
+        foreach (var li in lineItems)
+            if (li.ProductId == oldId) li.ProductId = newId;
     }
 
     /// <summary>

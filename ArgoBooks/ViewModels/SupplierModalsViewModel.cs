@@ -77,6 +77,9 @@ public partial class SupplierModalsViewModel : ViewModelBase
     private string? _modalError;
 
     [ObservableProperty]
+    private string? _modalIdError;
+
+    [ObservableProperty]
     private string? _modalSupplierNameError;
 
     [ObservableProperty]
@@ -85,9 +88,15 @@ public partial class SupplierModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalPhoneError;
 
+    partial void OnModalIdChanged(string value)
+    {
+        ModalIdError = null;
+    }
+
     private Supplier? _editingSupplier;
 
     // Original values for change detection in edit mode
+    private string _originalId = string.Empty;
     private string _originalSupplierName = string.Empty;
     private string _originalEmail = string.Empty;
     private string _originalPhone = string.Empty;
@@ -118,6 +127,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
     /// Returns true if any changes have been made in the Edit modal.
     /// </summary>
     public bool HasEditModalChanges =>
+        ModalId.Trim() != _originalId ||
         ModalSupplierName != _originalSupplierName ||
         ModalEmail != _originalEmail ||
         ModalPhone != _originalPhone ||
@@ -271,6 +281,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
         _editingSupplier = supplier;
         ModalId = supplier.Id;
+        _originalId = supplier.Id;
         ModalSupplierName = supplier.Name;
         ModalEmail = supplier.Email;
         ModalPhone = supplier.Phone;
@@ -329,6 +340,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
+        var oldId = _editingSupplier.Id;
         var oldName = _editingSupplier.Name;
         var oldEmail = _editingSupplier.Email;
         var oldPhone = _editingSupplier.Phone;
@@ -343,6 +355,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         };
         var oldNotes = _editingSupplier.Notes;
 
+        var newId = ModalId.Trim();
         var newName = ModalSupplierName.Trim();
         var newEmail = string.IsNullOrWhiteSpace(ModalEmail) ? string.Empty : ModalEmail.Trim();
         var newPhone = string.IsNullOrWhiteSpace(ModalPhone) ? string.Empty : ModalPhone.Trim();
@@ -358,7 +371,9 @@ public partial class SupplierModalsViewModel : ViewModelBase
         var newNotes = string.IsNullOrWhiteSpace(ModalNotes) ? string.Empty : ModalNotes.Trim();
 
         // Check if anything actually changed
-        var hasChanges = oldName != newName ||
+        var hasIdChange = oldId != newId;
+        var hasChanges = hasIdChange ||
+                         oldName != newName ||
                          oldEmail != newEmail ||
                          oldPhone != newPhone ||
                          oldWebsite != newWebsite ||
@@ -379,6 +394,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         var supplierToEdit = _editingSupplier;
         App.EventLogService?.CapturePreModificationSnapshot("Supplier", supplierToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
+        if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldEmail != newEmail) changes["Email"] = new FieldChange { OldValue = oldEmail, NewValue = newEmail };
         if (oldPhone != newPhone) changes["Phone"] = new FieldChange { OldValue = oldPhone, NewValue = newPhone };
@@ -395,12 +411,34 @@ public partial class SupplierModalsViewModel : ViewModelBase
         supplierToEdit.Address = newAddress;
         supplierToEdit.Notes = newNotes;
         supplierToEdit.UpdatedAt = DateTime.UtcNow;
+
+        if (hasIdChange)
+        {
+            try
+            {
+                App.CompanyManager?.ChangeSupplierId(supplierToEdit, newId);
+            }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Supplier.ChangeId");
+                ModalIdError = ex.Message;
+                HasValidationMessage = true;
+                return;
+            }
+        }
+
         companyData.MarkAsModified();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit supplier '{newName}'",
-            () => { supplierToEdit.Name = oldName; supplierToEdit.Email = oldEmail; supplierToEdit.Phone = oldPhone; supplierToEdit.Website = oldWebsite; supplierToEdit.Address = oldAddress; supplierToEdit.Notes = oldNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); },
-            () => { supplierToEdit.Name = newName; supplierToEdit.Email = newEmail; supplierToEdit.Phone = newPhone; supplierToEdit.Website = newWebsite; supplierToEdit.Address = newAddress; supplierToEdit.Notes = newNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); }));
+            () => {
+                if (hasIdChange) App.CompanyManager?.ChangeSupplierId(supplierToEdit, oldId);
+                supplierToEdit.Name = oldName; supplierToEdit.Email = oldEmail; supplierToEdit.Phone = oldPhone; supplierToEdit.Website = oldWebsite; supplierToEdit.Address = oldAddress; supplierToEdit.Notes = oldNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty);
+            },
+            () => {
+                if (hasIdChange) App.CompanyManager?.ChangeSupplierId(supplierToEdit, newId);
+                supplierToEdit.Name = newName; supplierToEdit.Email = newEmail; supplierToEdit.Phone = newPhone; supplierToEdit.Website = newWebsite; supplierToEdit.Address = newAddress; supplierToEdit.Notes = newNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty);
+            }));
 
         SupplierSaved?.Invoke(this, EventArgs.Empty);
         CloseEditModal();
@@ -582,6 +620,8 @@ public partial class SupplierModalsViewModel : ViewModelBase
     private void ClearModalFields()
     {
         ModalId = string.Empty;
+        _originalId = string.Empty;
+        ModalIdError = null;
         ModalSupplierName = string.Empty;
         ModalEmail = string.Empty;
         ModalPhone = string.Empty;
@@ -602,10 +642,33 @@ public partial class SupplierModalsViewModel : ViewModelBase
     private bool ValidateModal()
     {
         ModalError = null;
+        ModalIdError = null;
         ModalSupplierNameError = null;
         ModalEmailError = null;
         ModalPhoneError = null;
         var isValid = true;
+
+        var companyDataForId = App.CompanyManager?.CompanyData;
+        if (companyDataForId != null)
+        {
+            var trimmedId = ModalId.Trim();
+            if (_editingSupplier != null && string.IsNullOrEmpty(trimmedId))
+            {
+                ModalIdError = "ID cannot be empty.".Translate();
+                isValid = false;
+            }
+            else if (!string.IsNullOrEmpty(trimmedId))
+            {
+                var existingWithSameId = companyDataForId.Suppliers.Any(s =>
+                    s.Id == trimmedId &&
+                    (_editingSupplier == null || !ReferenceEquals(s, _editingSupplier)));
+                if (existingWithSameId)
+                {
+                    ModalIdError = "A supplier with this ID already exists.".Translate();
+                    isValid = false;
+                }
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(ModalSupplierName))
         {

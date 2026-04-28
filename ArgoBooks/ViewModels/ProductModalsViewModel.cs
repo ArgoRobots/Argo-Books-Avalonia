@@ -93,10 +93,18 @@ public partial class ProductModalsViewModel : ViewModelBase
     private string? _modalError;
 
     [ObservableProperty]
+    private string? _modalIdError;
+
+    [ObservableProperty]
     private string? _modalProductNameError;
 
     [ObservableProperty]
     private string? _modalCategoryError;
+
+    partial void OnModalIdChanged(string value)
+    {
+        ModalIdError = null;
+    }
 
     partial void OnModalProductNameChanged(string value)
     {
@@ -127,6 +135,7 @@ public partial class ProductModalsViewModel : ViewModelBase
     private bool _isExpensesTab = true;
 
     // Original values for change detection in edit mode
+    private string _originalId = string.Empty;
     private string _originalProductName = string.Empty;
     private string _originalDescription = string.Empty;
     private string _originalItemType = "Product";
@@ -157,6 +166,7 @@ public partial class ProductModalsViewModel : ViewModelBase
     /// Returns true if any changes have been made in the Edit modal.
     /// </summary>
     public bool HasEditModalChanges =>
+        ModalId.Trim() != _originalId ||
         ModalProductName != _originalProductName ||
         ModalDescription != _originalDescription ||
         ModalItemType != _originalItemType ||
@@ -386,6 +396,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         UpdateDropdownOptions();
 
         ModalId = product.Id;
+        _originalId = product.Id;
         ModalProductName = product.Name;
         ModalDescription = product.Description;
         ModalSku = product.Sku;
@@ -465,6 +476,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         if (companyData == null)
             return;
 
+        var oldId = _editingProduct.Id;
         var oldName = _editingProduct.Name;
         var oldDescription = _editingProduct.Description;
         var oldSku = _editingProduct.Sku;
@@ -476,9 +488,11 @@ public partial class ProductModalsViewModel : ViewModelBase
         var oldReorderPoint = _editingProduct.ReorderPoint;
         var oldOverstockThreshold = _editingProduct.OverstockThreshold;
 
+        var newId = ModalId.Trim();
         var newName = ModalProductName.Trim();
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? string.Empty : ModalDescription.Trim();
-        var newSku = string.IsNullOrWhiteSpace(ModalSku) ? _editingProduct.Id : ModalSku.Trim();
+        // SKU defaults to the product's *new* Id when blank, so the fallback follows a rename.
+        var newSku = string.IsNullOrWhiteSpace(ModalSku) ? newId : ModalSku.Trim();
         var newCategoryId = ModalCategory?.Id;
         var newSupplierId = ModalSupplier?.Id;
         var newUnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0;
@@ -488,7 +502,9 @@ public partial class ProductModalsViewModel : ViewModelBase
         var newTrackInventory = ModalTrackInventory;
 
         // Check if anything actually changed
-        var hasChanges = oldName != newName ||
+        var hasIdChange = oldId != newId;
+        var hasChanges = hasIdChange ||
+                         oldName != newName ||
                          oldDescription != newDescription ||
                          oldSku != newSku ||
                          oldCategoryId != newCategoryId ||
@@ -509,6 +525,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         var productToEdit = _editingProduct;
         App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
+        if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription, NewValue = newDescription };
         if (oldSku != newSku) changes["SKU"] = new FieldChange { OldValue = oldSku, NewValue = newSku };
@@ -530,12 +547,27 @@ public partial class ProductModalsViewModel : ViewModelBase
         productToEdit.OverstockThreshold = newOverstockThreshold;
         productToEdit.UpdatedAt = DateTime.UtcNow;
 
+        if (hasIdChange)
+        {
+            try
+            {
+                App.CompanyManager?.ChangeProductId(productToEdit, newId);
+            }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Product.ChangeId");
+                ModalIdError = ex.Message;
+                return;
+            }
+        }
+
         companyData.MarkAsModified();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
             () =>
             {
+                if (hasIdChange) App.CompanyManager?.ChangeProductId(productToEdit, oldId);
                 productToEdit.Name = oldName;
                 productToEdit.Description = oldDescription;
                 productToEdit.Sku = oldSku;
@@ -551,6 +583,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             },
             () =>
             {
+                if (hasIdChange) App.CompanyManager?.ChangeProductId(productToEdit, newId);
                 productToEdit.Name = newName;
                 productToEdit.Description = newDescription;
                 productToEdit.Sku = newSku;
@@ -764,6 +797,8 @@ public partial class ProductModalsViewModel : ViewModelBase
     private void ClearModalFields()
     {
         ModalId = string.Empty;
+        _originalId = string.Empty;
+        ModalIdError = null;
         ModalProductName = string.Empty;
         ModalDescription = string.Empty;
         ModalItemType = "Product";
@@ -784,10 +819,33 @@ public partial class ProductModalsViewModel : ViewModelBase
     private bool ValidateModal()
     {
         ModalError = null;
+        ModalIdError = null;
         ModalProductNameError = null;
         ModalCategoryError = null;
 
         var isValid = true;
+
+        var companyDataForId = App.CompanyManager?.CompanyData;
+        if (companyDataForId != null)
+        {
+            var trimmedId = ModalId.Trim();
+            if (_editingProduct != null && string.IsNullOrEmpty(trimmedId))
+            {
+                ModalIdError = "ID cannot be empty.".Translate();
+                isValid = false;
+            }
+            else if (!string.IsNullOrEmpty(trimmedId))
+            {
+                var existingWithSameId = companyDataForId.Products.Any(p =>
+                    p.Id == trimmedId &&
+                    (_editingProduct == null || !ReferenceEquals(p, _editingProduct)));
+                if (existingWithSameId)
+                {
+                    ModalIdError = "A product with this ID already exists.".Translate();
+                    isValid = false;
+                }
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(ModalProductName))
         {
