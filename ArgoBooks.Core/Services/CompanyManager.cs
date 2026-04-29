@@ -2,7 +2,9 @@ using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Models.Common;
 
 namespace ArgoBooks.Core.Services;
 
@@ -108,6 +110,253 @@ public class CompanyManager : IDisposable
             return File.Exists(logoPath) ? logoPath : null;
         }
     }
+
+    private const string CustomerAvatarSubdirectory = "customer_avatars";
+    private const string SupplierAvatarSubdirectory = "supplier_avatars";
+    private const int AvatarMaxDimension = 256;
+
+    /// <summary>
+    /// Resolves an avatar's relative path to an absolute path within the company temp
+    /// directory, or null if the relative path escapes that directory. Defends against
+    /// crafted .argo files that set <c>avatarFileName</c> to a traversal path
+    /// (e.g. <c>../../etc/passwd</c>) which would otherwise let a load read — or a
+    /// remove/rename operation delete or move — files outside the temp directory.
+    /// </summary>
+    private string? ResolveAvatarPathSafely(string? relativeAvatarPath)
+    {
+        if (string.IsNullOrEmpty(relativeAvatarPath) || _currentTempDirectory == null)
+            return null;
+
+        if (Path.IsPathRooted(relativeAvatarPath))
+            return null;
+
+        var candidate = Path.GetFullPath(Path.Combine(_currentTempDirectory, relativeAvatarPath));
+        var tempRoot = Path.GetFullPath(_currentTempDirectory);
+
+        // Use Path.GetRelativePath instead of a string-prefix check: on case-sensitive
+        // filesystems (Linux/macOS) a string compare needs Ordinal, on Windows it needs
+        // OrdinalIgnoreCase, and a mismatch either rejects valid paths or admits invalid
+        // ones. GetRelativePath uses the platform's native rules, and ".."-prefixed
+        // results unambiguously mean the candidate is outside tempRoot.
+        var relativeFromRoot = Path.GetRelativePath(tempRoot, candidate);
+        if (Path.IsPathRooted(relativeFromRoot)
+            || relativeFromRoot == ".."
+            || relativeFromRoot.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            || relativeFromRoot.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return candidate;
+    }
+
+    private string? GetEntityAvatarPath(IAvatarOwner? entity)
+    {
+        if (entity == null) return null;
+        var path = ResolveAvatarPathSafely(entity.AvatarFileName);
+        return path != null && File.Exists(path) ? path : null;
+    }
+
+    private async Task SetEntityAvatarFromPathAsync(IAvatarOwner entity, string sourceImagePath, string subdirectory)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        ArgumentException.ThrowIfNullOrEmpty(sourceImagePath);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+        if (!File.Exists(sourceImagePath))
+            throw new FileNotFoundException("Avatar source file not found.", sourceImagePath);
+
+        var (destPath, relativePath) = PrepareAvatarDestination(entity.Id, subdirectory);
+        var ok = await Task.Run(() => ReceiptImageHelper.ResizeAndSaveAsPng(sourceImagePath, destPath, AvatarMaxDimension));
+        if (!ok)
+            throw new InvalidOperationException("Selected file could not be loaded as an image.");
+
+        FinalizeAvatarUpdate(entity, relativePath);
+    }
+
+    private async Task SetEntityAvatarFromBytesAsync(IAvatarOwner entity, byte[] sourceBytes, string subdirectory)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        ArgumentNullException.ThrowIfNull(sourceBytes);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var (destPath, relativePath) = PrepareAvatarDestination(entity.Id, subdirectory);
+        var ok = await Task.Run(() => ReceiptImageHelper.ResizeBytesAndSaveAsPng(sourceBytes, destPath, AvatarMaxDimension));
+        if (!ok)
+            throw new InvalidOperationException("Provided bytes could not be decoded as an image.");
+
+        FinalizeAvatarUpdate(entity, relativePath);
+    }
+
+    private (string DestPath, string RelativePath) PrepareAvatarDestination(string entityId, string subdirectory)
+    {
+        var avatarsDir = Path.Combine(_currentTempDirectory!, subdirectory);
+        Directory.CreateDirectory(avatarsDir);
+        var safeId = SanitizeForFileName(entityId);
+        var fileName = $"{safeId}.png";
+        var destPath = Path.Combine(avatarsDir, fileName);
+        var relativePath = Path.Combine(subdirectory, fileName).Replace('\\', '/');
+        return (destPath, relativePath);
+    }
+
+    private void FinalizeAvatarUpdate(IAvatarOwner entity, string relativePath)
+    {
+        entity.AvatarFileName = relativePath;
+        entity.UpdatedAt = DateTime.UtcNow;
+        CompanyData!.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async Task RemoveEntityAvatarAsync(IAvatarOwner entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var existing = entity.AvatarFileName;
+        if (string.IsNullOrEmpty(existing))
+            return;
+
+        // Only delete files that resolve safely under the temp directory — guard against
+        // a crafted AvatarFileName escaping into the rest of the filesystem.
+        var fullPath = ResolveAvatarPathSafely(existing);
+        if (fullPath != null && File.Exists(fullPath))
+        {
+            await Task.Run(() => File.Delete(fullPath));
+        }
+
+        entity.AvatarFileName = null;
+        entity.UpdatedAt = DateTime.UtcNow;
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Reads the bytes of an entity's avatar file, or null if there's no avatar set or
+    /// the file can't be read. Used by the undo system to capture a snapshot before
+    /// the avatar is changed so it can be restored later.
+    /// </summary>
+    private byte[]? ReadEntityAvatarBytes(IAvatarOwner entity)
+    {
+        var path = GetEntityAvatarPath(entity);
+        if (path == null) return null;
+        try { return File.ReadAllBytes(path); }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Restores an avatar to an exact prior state. Pass <paramref name="bytes"/> = null
+    /// to restore "no avatar" (deletes the file and clears AvatarFileName); pass bytes
+    /// to write them back as the avatar (no resize — the bytes are already a resized
+    /// PNG captured by an earlier <see cref="ReadEntityAvatarBytes"/>). Synchronous so
+    /// it can be called directly from undo/redo callbacks.
+    /// </summary>
+    private void RestoreEntityAvatarSync(IAvatarOwner entity, byte[]? bytes, string subdirectory)
+    {
+        if (CompanyData == null || _currentTempDirectory == null) return;
+
+        if (bytes == null)
+        {
+            var existing = entity.AvatarFileName;
+            if (!string.IsNullOrEmpty(existing))
+            {
+                var path = ResolveAvatarPathSafely(existing);
+                if (path != null && File.Exists(path))
+                {
+                    try { File.Delete(path); } catch { /* best effort */ }
+                }
+            }
+            entity.AvatarFileName = null;
+        }
+        else
+        {
+            var (destPath, relativePath) = PrepareAvatarDestination(entity.Id, subdirectory);
+            try
+            {
+                File.WriteAllBytes(destPath, bytes);
+                entity.AvatarFileName = relativePath;
+            }
+            catch
+            {
+                // If the write fails, leave the entity without an avatar reference rather
+                // than pointing at a partially-written file.
+                entity.AvatarFileName = null;
+            }
+        }
+
+        entity.UpdatedAt = DateTime.UtcNow;
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Reads the customer's avatar file as bytes, or null if none/unreadable.</summary>
+    public byte[]? ReadCustomerAvatarBytes(Customer customer) => ReadEntityAvatarBytes(customer);
+
+    /// <summary>Reads the supplier's avatar file as bytes, or null if none/unreadable.</summary>
+    public byte[]? ReadSupplierAvatarBytes(Supplier supplier) => ReadEntityAvatarBytes(supplier);
+
+    /// <summary>
+    /// Restores a customer's avatar to a prior state captured via
+    /// <see cref="ReadCustomerAvatarBytes"/>. Null restores "no avatar".
+    /// </summary>
+    public void RestoreCustomerAvatar(Customer customer, byte[]? bytes)
+        => RestoreEntityAvatarSync(customer, bytes, CustomerAvatarSubdirectory);
+
+    /// <summary>
+    /// Restores a supplier's avatar to a prior state captured via
+    /// <see cref="ReadSupplierAvatarBytes"/>. Null restores "no avatar".
+    /// </summary>
+    public void RestoreSupplierAvatar(Supplier supplier, byte[]? bytes)
+        => RestoreEntityAvatarSync(supplier, bytes, SupplierAvatarSubdirectory);
+
+    /// <summary>
+    /// Move the avatar file to track a renamed entity Id. Failure is non-fatal — if the
+    /// file move can't complete, AvatarFileName is left at its previous value and the
+    /// avatar simply won't load until the user re-uploads.
+    /// </summary>
+    private void TryMoveEntityAvatarOnRename(IAvatarOwner entity, string newId, string subdirectory)
+    {
+        if (string.IsNullOrEmpty(entity.AvatarFileName) || _currentTempDirectory == null)
+            return;
+
+        try
+        {
+            var oldPath = ResolveAvatarPathSafely(entity.AvatarFileName);
+            var ext = Path.GetExtension(entity.AvatarFileName);
+            var safeNewId = SanitizeForFileName(newId);
+            var newRelative = Path.Combine(subdirectory, safeNewId + ext).Replace('\\', '/');
+            var newPath = Path.Combine(_currentTempDirectory, newRelative);
+
+            if (oldPath != null && File.Exists(oldPath) && !string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                if (File.Exists(newPath))
+                    File.Delete(newPath);
+                File.Move(oldPath, newPath);
+            }
+            // Always update AvatarFileName to the new relative path: even if the old
+            // file was missing or unsafe, the entity record should now point inside
+            // the temp dir using the new Id.
+            entity.AvatarFileName = newRelative;
+        }
+        catch
+        {
+            // Leave AvatarFileName as-is.
+        }
+    }
+
+    /// <summary>
+    /// Gets the absolute on-disk path to a customer's avatar image, or null when there is no
+    /// avatar set, the file is missing, or the stored path escapes the company temp directory.
+    /// </summary>
+    public string? GetCustomerAvatarPath(Customer customer) => GetEntityAvatarPath(customer);
+
+    /// <summary>
+    /// Gets the absolute on-disk path to a supplier's avatar image, or null when there is no
+    /// avatar set, the file is missing, or the stored path escapes the company temp directory.
+    /// </summary>
+    public string? GetSupplierAvatarPath(Supplier supplier) => GetEntityAvatarPath(supplier);
 
     /// <summary>
     /// Schedules a file rename to be applied on the next save.
@@ -614,6 +863,198 @@ public class CompanyManager : IDisposable
         CompanyData.ChangesMade = true;
 
         CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Sets a customer's avatar from a source image on disk. The image is resized down
+    /// to a small PNG inside the company temp directory, so it gets bundled into the
+    /// encrypted .argo file on next save.
+    /// </summary>
+    public Task SetCustomerAvatarAsync(Customer customer, string sourceImagePath)
+        => SetEntityAvatarFromPathAsync(customer, sourceImagePath, CustomerAvatarSubdirectory);
+
+    /// <summary>
+    /// Removes a customer's avatar image. Safe to call when no avatar is set.
+    /// </summary>
+    public Task RemoveCustomerAvatarAsync(Customer customer)
+        => RemoveEntityAvatarAsync(customer);
+
+    /// <summary>
+    /// Sets a supplier's avatar from a source image on disk. Same semantics as the
+    /// customer variant — image is resized to a PNG inside the company temp directory.
+    /// </summary>
+    public Task SetSupplierAvatarAsync(Supplier supplier, string sourceImagePath)
+        => SetEntityAvatarFromPathAsync(supplier, sourceImagePath, SupplierAvatarSubdirectory);
+
+    /// <summary>
+    /// Sets a supplier's avatar from already-loaded bytes (e.g. a downloaded favicon).
+    /// The bytes can be in any Skia-supported format (ICO, PNG, JPG, ...) and are
+    /// re-encoded to PNG.
+    /// </summary>
+    public Task SetSupplierAvatarFromBytesAsync(Supplier supplier, byte[] imageBytes)
+        => SetEntityAvatarFromBytesAsync(supplier, imageBytes, SupplierAvatarSubdirectory);
+
+    /// <summary>
+    /// Removes a supplier's avatar image. Safe to call when no avatar is set.
+    /// </summary>
+    public Task RemoveSupplierAvatarAsync(Supplier supplier)
+        => RemoveEntityAvatarAsync(supplier);
+
+    private static string SanitizeForFileName(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return Guid.NewGuid().ToString("N");
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var cleaned = new string(raw.Where(c => !invalid.Contains(c) && c != '.').ToArray()).Trim();
+        return string.IsNullOrEmpty(cleaned) ? Guid.NewGuid().ToString("N") : cleaned;
+    }
+
+    /// <summary>
+    /// Renames a customer's Id, cascading to every reference inside the open company
+    /// (invoices, revenues, payments, rentals, recurring invoices, returns) and moving
+    /// the avatar file. Throws if newId is empty, equals an existing customer's Id,
+    /// or if no company is open. A no-op when newId equals the current Id.
+    /// </summary>
+    public void ChangeCustomerId(Customer customer, string newId)
+    {
+        ArgumentNullException.ThrowIfNull(customer);
+        if (CompanyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var trimmed = newId?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+            throw new ArgumentException("Customer ID cannot be empty.", nameof(newId));
+
+        var oldId = customer.Id;
+        if (string.Equals(oldId, trimmed, StringComparison.Ordinal))
+            return;
+
+        if (CompanyData.Customers.Any(c => !ReferenceEquals(c, customer) && c.Id == trimmed))
+            throw new InvalidOperationException($"Another customer already uses ID '{trimmed}'.");
+
+        // Cascade FK references
+        foreach (var inv in CompanyData.Invoices)
+            if (inv.CustomerId == oldId) inv.CustomerId = trimmed;
+        foreach (var rev in CompanyData.Revenues)
+            if (rev.CustomerId == oldId) rev.CustomerId = trimmed;
+        foreach (var pay in CompanyData.Payments)
+            if (pay.CustomerId == oldId) pay.CustomerId = trimmed;
+        foreach (var rent in CompanyData.Rentals)
+            if (rent.CustomerId == oldId) rent.CustomerId = trimmed;
+        foreach (var ri in CompanyData.RecurringInvoices)
+            if (ri.CustomerId == oldId) ri.CustomerId = trimmed;
+        foreach (var ret in CompanyData.Returns)
+            if (ret.CustomerId == oldId) ret.CustomerId = trimmed;
+
+        TryMoveEntityAvatarOnRename(customer, trimmed, CustomerAvatarSubdirectory);
+
+        customer.Id = trimmed;
+        customer.UpdatedAt = DateTime.UtcNow;
+        // Cached Id→Customer lookup is keyed on the old Id; invalidate so the next
+        // GetCustomer(newId) rebuilds the dictionary.
+        CompanyData.InvalidateLookupCaches();
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Renames a supplier's Id, cascading to every reference inside the open company
+    /// (products, purchase orders, returns, expenses).
+    /// </summary>
+    public void ChangeSupplierId(Supplier supplier, string newId)
+    {
+        ArgumentNullException.ThrowIfNull(supplier);
+        if (CompanyData == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var trimmed = newId?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+            throw new ArgumentException("Supplier ID cannot be empty.", nameof(newId));
+
+        var oldId = supplier.Id;
+        if (string.Equals(oldId, trimmed, StringComparison.Ordinal))
+            return;
+
+        if (CompanyData.Suppliers.Any(s => !ReferenceEquals(s, supplier) && s.Id == trimmed))
+            throw new InvalidOperationException($"Another supplier already uses ID '{trimmed}'.");
+
+        foreach (var prod in CompanyData.Products)
+            if (prod.SupplierId == oldId) prod.SupplierId = trimmed;
+        foreach (var po in CompanyData.PurchaseOrders)
+            if (po.SupplierId == oldId) po.SupplierId = trimmed;
+        foreach (var ret in CompanyData.Returns)
+            if (ret.SupplierId == oldId) ret.SupplierId = trimmed;
+        foreach (var exp in CompanyData.Expenses)
+            if (exp.SupplierId == oldId) exp.SupplierId = trimmed;
+
+        TryMoveEntityAvatarOnRename(supplier, trimmed, SupplierAvatarSubdirectory);
+
+        supplier.Id = trimmed;
+        supplier.UpdatedAt = DateTime.UtcNow;
+        CompanyData.InvalidateLookupCaches();
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Renames a product's Id, cascading to every reference inside the open company
+    /// (inventory items, line items on invoices/revenues/expenses, purchase orders,
+    /// lost-damaged records, return items).
+    /// </summary>
+    public void ChangeProductId(Product product, string newId)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+        if (CompanyData == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var trimmed = newId?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+            throw new ArgumentException("Product ID cannot be empty.", nameof(newId));
+
+        var oldId = product.Id;
+        if (string.Equals(oldId, trimmed, StringComparison.Ordinal))
+            return;
+
+        if (CompanyData.Products.Any(p => !ReferenceEquals(p, product) && p.Id == trimmed))
+            throw new InvalidOperationException($"Another product already uses ID '{trimmed}'.");
+
+        foreach (var item in CompanyData.Inventory)
+            if (item.ProductId == oldId) item.ProductId = trimmed;
+        foreach (var ld in CompanyData.LostDamaged)
+            if (ld.ProductId == oldId) ld.ProductId = trimmed;
+
+        // Line items live on the parent (Invoice / Revenue / Expense / PurchaseOrder).
+        // Revenue and Expense derive from Transaction which exposes LineItems<LineItem>;
+        // PurchaseOrder uses its own PurchaseOrderLineItem so the loop is inlined.
+        foreach (var inv in CompanyData.Invoices)
+            CascadeProductIdInLineItems(inv.LineItems, oldId, trimmed);
+        foreach (var rev in CompanyData.Revenues)
+            CascadeProductIdInLineItems(rev.LineItems, oldId, trimmed);
+        foreach (var exp in CompanyData.Expenses)
+            CascadeProductIdInLineItems(exp.LineItems, oldId, trimmed);
+        foreach (var po in CompanyData.PurchaseOrders)
+            foreach (var line in po.LineItems)
+                if (line.ProductId == oldId) line.ProductId = trimmed;
+
+        // Return items live nested inside Return.Items
+        foreach (var ret in CompanyData.Returns)
+        {
+            foreach (var ri in ret.Items)
+                if (ri.ProductId == oldId) ri.ProductId = trimmed;
+        }
+
+        product.Id = trimmed;
+        product.UpdatedAt = DateTime.UtcNow;
+        CompanyData.InvalidateLookupCaches();
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static void CascadeProductIdInLineItems(List<LineItem> lineItems, string oldId, string newId)
+    {
+        foreach (var li in lineItems)
+            if (li.ProductId == oldId) li.ProductId = newId;
     }
 
     /// <summary>

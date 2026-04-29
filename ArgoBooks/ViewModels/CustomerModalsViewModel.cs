@@ -6,6 +6,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -83,6 +84,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private string _modalStatus = "Active";
 
     [ObservableProperty]
+    private string? _modalIdError;
+
+    [ObservableProperty]
     private string? _modalFirstNameError;
 
     [ObservableProperty]
@@ -94,12 +98,67 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalPhoneError;
 
+    partial void OnModalIdChanged(string value)
+    {
+        ModalIdError = null;
+    }
+
+    [ObservableProperty]
+    private Bitmap? _modalAvatarSource;
+
+    [ObservableProperty]
+    private bool _hasModalAvatar;
+
+    /// <summary>
+    /// Path of an avatar image picked in the modal that should be applied on save.
+    /// Null if the user did not pick a new image during this session.
+    /// </summary>
+    private string? _pendingAvatarSourcePath;
+
+    /// <summary>
+    /// True when the user clicked Remove on an existing avatar; on save the customer's
+    /// avatar file should be deleted.
+    /// </summary>
+    private bool _shouldRemoveAvatarOnSave;
+
+    /// <summary>
+    /// Snapshot of whether the customer had an avatar when the edit modal was opened —
+    /// used for change detection.
+    /// </summary>
+    private bool _originalHasAvatar;
+
+    /// <summary>
+    /// Live preview of the initials that would be shown if no avatar is set,
+    /// driven from ModalFirstName + ModalLastName so the avatar circle in the
+    /// modal updates as the user types.
+    /// </summary>
+    public string ModalInitialsPreview
+    {
+        get
+        {
+            var first = ModalFirstName?.Trim() ?? string.Empty;
+            var last = ModalLastName?.Trim() ?? string.Empty;
+            if (first.Length > 0 && last.Length > 0)
+                return $"{char.ToUpperInvariant(first[0])}{char.ToUpperInvariant(last[0])}";
+            if (first.Length >= 2)
+                return first[..2].ToUpperInvariant();
+            if (first.Length == 1)
+                return first.ToUpperInvariant();
+            if (last.Length >= 2)
+                return last[..2].ToUpperInvariant();
+            if (last.Length == 1)
+                return last.ToUpperInvariant();
+            return "?";
+        }
+    }
+
     partial void OnModalFirstNameChanged(string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
         {
             ModalFirstNameError = null;
         }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
     partial void OnModalLastNameChanged(string value)
@@ -108,6 +167,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         {
             ModalLastNameError = null;
         }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
     partial void OnModalPhoneChanged(string value)
@@ -132,6 +192,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private CustomerDisplayItem? _historyCustomer;
 
     // Original values for change detection in edit mode
+    private string _originalId = string.Empty;
     private string _originalFirstName = string.Empty;
     private string _originalLastName = string.Empty;
     private string _originalCompanyName = string.Empty;
@@ -158,12 +219,14 @@ public partial class CustomerModalsViewModel : ViewModelBase
         !string.IsNullOrWhiteSpace(ModalStateProvince) ||
         !string.IsNullOrWhiteSpace(ModalZipCode) ||
         !string.IsNullOrWhiteSpace(ModalCountry) ||
-        !string.IsNullOrWhiteSpace(ModalNotes);
+        !string.IsNullOrWhiteSpace(ModalNotes) ||
+        HasModalAvatar;
 
     /// <summary>
     /// Returns true if any changes have been made in the Edit modal.
     /// </summary>
     public bool HasEditModalChanges =>
+        ModalId.Trim() != _originalId ||
         ModalFirstName != _originalFirstName ||
         ModalLastName != _originalLastName ||
         ModalCompanyName != _originalCompanyName ||
@@ -174,7 +237,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalStateProvince != _originalStateProvince ||
         ModalZipCode != _originalZipCode ||
         ModalCountry != _originalCountry ||
-        ModalNotes != _originalNotes;
+        ModalNotes != _originalNotes ||
+        _pendingAvatarSourcePath != null ||
+        _shouldRemoveAvatarOnSave;
 
     #endregion
 
@@ -273,6 +338,44 @@ public partial class CustomerModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? FiltersCleared;
 
+    /// <summary>
+    /// Fired when the user clicks the avatar in the modal to pick a new image.
+    /// App.axaml.cs subscribes and shows the OS file picker.
+    /// </summary>
+    public event EventHandler? BrowseAvatarRequested;
+
+    #endregion
+
+    #region Avatar Commands
+
+    [RelayCommand]
+    private void BrowseAvatar()
+    {
+        BrowseAvatarRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void RemoveAvatar()
+    {
+        ModalAvatarSource = null;
+        HasModalAvatar = false;
+        _pendingAvatarSourcePath = null;
+        _shouldRemoveAvatarOnSave = _originalHasAvatar;
+        OnPropertyChanged(nameof(ModalInitialsPreview));
+    }
+
+    /// <summary>
+    /// Called by App.axaml.cs after the user picks an avatar image. Updates the
+    /// preview bitmap and stages the source path to be applied on save.
+    /// </summary>
+    public void SetPendingAvatar(string path, Bitmap bitmap)
+    {
+        _pendingAvatarSourcePath = path;
+        _shouldRemoveAvatarOnSave = false;
+        ModalAvatarSource = bitmap;
+        HasModalAvatar = true;
+    }
+
     #endregion
 
     #region Add Customer
@@ -308,7 +411,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveNewCustomer()
+    public async Task SaveNewCustomerAsync()
     {
         if (!ValidateModal())
             return;
@@ -352,11 +455,20 @@ public partial class CustomerModalsViewModel : ViewModelBase
         companyData.Customers.Add(newCustomer);
         companyData.MarkAsModified();
 
+        // Persist the avatar image (if one was picked) into the company temp directory
+        // *after* the customer is in the collection so its Id is stable.
+        await ApplyPendingAvatarChangeAsync(newCustomer);
+
+        // Snapshot the saved avatar bytes so undo can delete the file and redo can
+        // recreate it. Tiny PNG so the closure capture is cheap.
+        var newAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(newCustomer);
         var customerToUndo = newCustomer;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
             () =>
             {
+                if (newAvatarBytes != null)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToUndo, null);
                 companyData.Customers.Remove(customerToUndo);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
@@ -364,12 +476,42 @@ public partial class CustomerModalsViewModel : ViewModelBase
             () =>
             {
                 companyData.Customers.Add(customerToUndo);
+                if (newAvatarBytes != null)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToUndo, newAvatarBytes);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             }));
 
         CustomerSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
+    }
+
+    /// <summary>
+    /// Applies any pending avatar add/remove from the modal to the customer record.
+    /// Callers capture the resulting bytes via ReadCustomerAvatarBytes if they need
+    /// to include the change in an undo action.
+    /// </summary>
+    private async Task ApplyPendingAvatarChangeAsync(Customer customer)
+    {
+        var manager = App.CompanyManager;
+        if (manager == null)
+            return;
+
+        try
+        {
+            if (_pendingAvatarSourcePath != null)
+            {
+                await manager.SetCustomerAvatarAsync(customer, _pendingAvatarSourcePath);
+            }
+            else if (_shouldRemoveAvatarOnSave)
+            {
+                await manager.RemoveCustomerAvatarAsync(customer);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.ApplyAvatarChange");
+        }
     }
 
     #endregion
@@ -410,6 +552,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         // Store original values for change detection
+        _originalId = ModalId;
         _originalFirstName = ModalFirstName;
         _originalLastName = ModalLastName;
         _originalCompanyName = ModalCompanyName;
@@ -421,6 +564,32 @@ public partial class CustomerModalsViewModel : ViewModelBase
         _originalZipCode = ModalZipCode;
         _originalCountry = ModalCountry;
         _originalNotes = ModalNotes;
+
+        // Load existing avatar (if any) into the modal preview.
+        // _originalHasAvatar tracks the persisted state (used for change detection so
+        // a missing/corrupt file can still be cleared on save). HasModalAvatar drives
+        // the *visual* — only set it when the bitmap actually decoded, otherwise the
+        // UI would show a blank Image control instead of falling back to initials.
+        _pendingAvatarSourcePath = null;
+        _shouldRemoveAvatarOnSave = false;
+        _originalHasAvatar = !string.IsNullOrEmpty(customer.AvatarFileName);
+        HasModalAvatar = false;
+        ModalAvatarSource = null;
+
+        var avatarPath = App.CompanyManager?.GetCustomerAvatarPath(customer);
+        if (avatarPath != null)
+        {
+            try
+            {
+                ModalAvatarSource = new Bitmap(avatarPath);
+                HasModalAvatar = true;
+            }
+            catch
+            {
+                ModalAvatarSource = null;
+            }
+        }
+        OnPropertyChanged(nameof(ModalInitialsPreview));
 
         ClearModalErrors();
         IsEditModalOpen = true;
@@ -450,7 +619,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public void SaveEditedCustomer()
+    public async Task SaveEditedCustomerAsync()
     {
         if (!ValidateModal() || _editingCustomer == null)
             return;
@@ -459,6 +628,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         if (companyData == null)
             return;
 
+        var oldId = _editingCustomer.Id;
         var oldName = _editingCustomer.Name;
         var oldCompanyName = _editingCustomer.CompanyName;
         var oldEmail = _editingCustomer.Email;
@@ -474,6 +644,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var oldNotes = _editingCustomer.Notes;
         var oldStatus = _editingCustomer.Status;
 
+        var newId = ModalId.Trim();
         var newName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim();
         var newCompanyName = string.IsNullOrWhiteSpace(ModalCompanyName) ? null : ModalCompanyName.Trim();
         var newEmail = ModalEmail.Trim();
@@ -496,7 +667,9 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         // Check if anything actually changed
-        var hasChanges = oldName != newName ||
+        var hasIdChange = oldId != newId;
+        var hasFieldChanges = hasIdChange ||
+                         oldName != newName ||
                          oldCompanyName != newCompanyName ||
                          oldEmail != newEmail ||
                          oldPhone != newPhone ||
@@ -508,9 +681,49 @@ public partial class CustomerModalsViewModel : ViewModelBase
                          oldNotes != newNotes ||
                          oldStatus != newStatus;
 
+        var hasAvatarChanges = _pendingAvatarSourcePath != null || _shouldRemoveAvatarOnSave;
+
         // If nothing changed, just close the modal without recording an action
-        if (!hasChanges)
+        if (!hasFieldChanges && !hasAvatarChanges)
         {
+            CloseEditModal();
+            return;
+        }
+
+        // Snapshot the avatar bytes BEFORE applying the change so the undo callback
+        // can write them back; capture again AFTER so redo restores the new state.
+        // Tiny resized PNG, so closure capture is cheap.
+        byte[]? oldAvatarBytes = null;
+        byte[]? newAvatarBytes = null;
+        if (hasAvatarChanges)
+        {
+            oldAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(_editingCustomer);
+            await ApplyPendingAvatarChangeAsync(_editingCustomer);
+            newAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(_editingCustomer);
+        }
+
+        if (!hasFieldChanges)
+        {
+            // Only the avatar changed — record a dedicated undo entry so the user
+            // can revert just the image change.
+            var customerForAvatarUndo = _editingCustomer;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Change customer '{customerForAvatarUndo.Name}' photo",
+                () =>
+                {
+                    App.CompanyManager?.RestoreCustomerAvatar(customerForAvatarUndo, oldAvatarBytes);
+                    companyData.MarkAsModified();
+                    CustomerSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    App.CompanyManager?.RestoreCustomerAvatar(customerForAvatarUndo, newAvatarBytes);
+                    companyData.MarkAsModified();
+                    CustomerSaved?.Invoke(this, EventArgs.Empty);
+                }));
+
+            companyData.MarkAsModified();
+            CustomerSaved?.Invoke(this, EventArgs.Empty);
             CloseEditModal();
             return;
         }
@@ -518,6 +731,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var customerToEdit = _editingCustomer;
         App.EventLogService?.CapturePreModificationSnapshot("Customer", customerToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
+        if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldCompanyName != newCompanyName) changes["Company"] = new FieldChange { OldValue = oldCompanyName ?? "", NewValue = newCompanyName ?? "" };
         if (oldEmail != newEmail) changes["Email"] = new FieldChange { OldValue = oldEmail, NewValue = newEmail };
@@ -528,6 +742,25 @@ public partial class CustomerModalsViewModel : ViewModelBase
         if (oldNotes != newNotes) changes["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes };
         if (oldStatus != newStatus) changes["Status"] = new FieldChange { OldValue = oldStatus.ToString(), NewValue = newStatus.ToString() };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
+
+        // Apply the Id rename FIRST so a failure (e.g. unique-constraint race) doesn't
+        // leave the entity with new field values but the old Id. Validation already
+        // prevents conflicts; this ordering is defense-in-depth.
+        if (hasIdChange)
+        {
+            try
+            {
+                App.CompanyManager?.ChangeCustomerId(customerToEdit, newId);
+            }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.ChangeId");
+                ModalIdError = ex.Message;
+                HasValidationMessage = true;
+                return;
+            }
+        }
+
         customerToEdit.Name = newName;
         customerToEdit.CompanyName = newCompanyName;
         customerToEdit.Email = newEmail;
@@ -543,6 +776,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
             $"Edit customer '{newName}'",
             () =>
             {
+                if (hasIdChange)
+                    App.CompanyManager?.ChangeCustomerId(customerToEdit, oldId);
                 customerToEdit.Name = oldName;
                 customerToEdit.CompanyName = oldCompanyName;
                 customerToEdit.Email = oldEmail;
@@ -550,11 +785,15 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 customerToEdit.Address = oldAddress;
                 customerToEdit.Notes = oldNotes;
                 customerToEdit.Status = oldStatus;
+                if (hasAvatarChanges)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToEdit, oldAvatarBytes);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
+                if (hasIdChange)
+                    App.CompanyManager?.ChangeCustomerId(customerToEdit, newId);
                 customerToEdit.Name = newName;
                 customerToEdit.CompanyName = newCompanyName;
                 customerToEdit.Email = newEmail;
@@ -562,6 +801,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 customerToEdit.Address = newAddress;
                 customerToEdit.Notes = newNotes;
                 customerToEdit.Status = newStatus;
+                if (hasAvatarChanges)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToEdit, newAvatarBytes);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -632,6 +873,23 @@ public partial class CustomerModalsViewModel : ViewModelBase
             {
                 var deletedCustomer = customer;
                 App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
+
+                // Snapshot the avatar bytes BEFORE deleting so undo can restore the
+                // file alongside the customer record. The customer's AvatarFileName is
+                // also captured implicitly — the customer object stays alive in the
+                // closure and is mutated in place by RestoreCustomerAvatar.
+                var deletedAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(deletedCustomer);
+                var savedAvatarFileName = deletedCustomer.AvatarFileName;
+
+                // Clean up the avatar file before removing the customer. This avoids
+                // bloat (and retention of deleted-customer images) inside the .argo
+                // archive on next save.
+                if (App.CompanyManager != null && !string.IsNullOrEmpty(savedAvatarFileName))
+                {
+                    try { await App.CompanyManager.RemoveCustomerAvatarAsync(deletedCustomer); }
+                    catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to remove customer avatar on delete: {ex.Message}", "Customer.Delete"); }
+                }
+
                 companyData.Customers.Remove(customer);
                 companyData.MarkAsModified();
 
@@ -640,11 +898,15 @@ public partial class CustomerModalsViewModel : ViewModelBase
                     () =>
                     {
                         companyData.Customers.Add(deletedCustomer);
+                        if (deletedAvatarBytes != null)
+                            App.CompanyManager?.RestoreCustomerAvatar(deletedCustomer, deletedAvatarBytes);
                         companyData.MarkAsModified();
                         CustomerDeleted?.Invoke(this, EventArgs.Empty);
                     },
                     () =>
                     {
+                        if (deletedAvatarBytes != null)
+                            App.CompanyManager?.RestoreCustomerAvatar(deletedCustomer, null);
                         companyData.Customers.Remove(deletedCustomer);
                         companyData.MarkAsModified();
                         CustomerDeleted?.Invoke(this, EventArgs.Empty);
@@ -994,6 +1256,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private void ClearModalFields()
     {
         ModalId = string.Empty;
+        _originalId = string.Empty;
         ModalFirstName = string.Empty;
         ModalLastName = string.Empty;
         ModalCompanyName = string.Empty;
@@ -1006,11 +1269,18 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalCountry = string.Empty;
         ModalNotes = string.Empty;
         ModalStatus = "Active";
+        ModalAvatarSource = null;
+        HasModalAvatar = false;
+        _pendingAvatarSourcePath = null;
+        _shouldRemoveAvatarOnSave = false;
+        _originalHasAvatar = false;
+        OnPropertyChanged(nameof(ModalInitialsPreview));
         ClearModalErrors();
     }
 
     private void ClearModalErrors()
     {
+        ModalIdError = null;
         ModalFirstNameError = null;
         ModalLastNameError = null;
         ModalEmailError = null;
@@ -1048,6 +1318,24 @@ public partial class CustomerModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData != null)
         {
+            var trimmedId = ModalId.Trim();
+            if (_editingCustomer != null && string.IsNullOrEmpty(trimmedId))
+            {
+                ModalIdError = "ID cannot be empty.".Translate();
+                isValid = false;
+            }
+            else if (!string.IsNullOrEmpty(trimmedId))
+            {
+                var existingWithSameId = companyData.Customers.Any(c =>
+                    c.Id == trimmedId &&
+                    (_editingCustomer == null || !ReferenceEquals(c, _editingCustomer)));
+                if (existingWithSameId)
+                {
+                    ModalIdError = "A customer with this ID already exists.".Translate();
+                    isValid = false;
+                }
+            }
+
             var fullName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}";
             var existingWithSameName = companyData.Customers.Any(c =>
                 c.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase) &&

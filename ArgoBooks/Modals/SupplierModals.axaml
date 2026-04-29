@@ -26,10 +26,46 @@
                    </Border>
                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                        <StackPanel Margin="24" Spacing="16">
+                           <!-- Avatar — auto-fills from website favicon when the user has not picked an image -->
+                           <Grid HorizontalAlignment="Center" Width="96" Height="96">
+                               <Button Classes="link"
+                                       Padding="0"
+                                       Background="Transparent"
+                                       BorderThickness="0"
+                                       Cursor="Hand"
+                                       ToolTip.Tip="{loc:Loc 'Click to upload photo'}"
+                                       Command="{Binding BrowseAvatarCommand}">
+                                   <Border Width="80" Height="80" CornerRadius="8"
+                                           Background="{DynamicResource PrimaryBrush}"
+                                           ClipToBounds="True">
+                                       <Panel>
+                                           <TextBlock Text="{Binding ModalInitialsPreview}"
+                                                      FontSize="28" FontWeight="SemiBold"
+                                                      Foreground="White"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      IsVisible="{Binding !HasModalAvatar}" />
+                                           <Image Source="{Binding ModalAvatarSource}"
+                                                  Stretch="UniformToFill"
+                                                  IsVisible="{Binding HasModalAvatar}" />
+                                       </Panel>
+                                   </Border>
+                               </Button>
+                               <Button Classes="icon-button"
+                                       Width="24" Height="24"
+                                       Padding="0"
+                                       HorizontalAlignment="Right" VerticalAlignment="Top"
+                                       ToolTip.Tip="{loc:Loc 'Remove photo'}"
+                                       Command="{Binding RemoveAvatarCommand}"
+                                       IsVisible="{Binding HasModalAvatar}">
+                                   <PathIcon Data="{x:Static local:Icons.Close}" Width="12" Height="12" />
+                               </Button>
+                           </Grid>
+
                            <Grid ColumnDefinitions="Auto,16,*">
                                <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'SUP-xxx'}" MaxLength="20" />
+                                   <TextBlock Text="{Binding ModalIdError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" IsVisible="{Binding ModalIdError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
@@ -124,10 +160,46 @@
                    </Border>
                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                        <StackPanel Margin="24" Spacing="16">
+                           <!-- Avatar — auto-fills from website favicon when the user has not picked an image -->
+                           <Grid HorizontalAlignment="Center" Width="96" Height="96">
+                               <Button Classes="link"
+                                       Padding="0"
+                                       Background="Transparent"
+                                       BorderThickness="0"
+                                       Cursor="Hand"
+                                       ToolTip.Tip="{loc:Loc 'Click to upload photo'}"
+                                       Command="{Binding BrowseAvatarCommand}">
+                                   <Border Width="80" Height="80" CornerRadius="8"
+                                           Background="{DynamicResource PrimaryBrush}"
+                                           ClipToBounds="True">
+                                       <Panel>
+                                           <TextBlock Text="{Binding ModalInitialsPreview}"
+                                                      FontSize="28" FontWeight="SemiBold"
+                                                      Foreground="White"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      IsVisible="{Binding !HasModalAvatar}" />
+                                           <Image Source="{Binding ModalAvatarSource}"
+                                                  Stretch="UniformToFill"
+                                                  IsVisible="{Binding HasModalAvatar}" />
+                                       </Panel>
+                                   </Border>
+                               </Button>
+                               <Button Classes="icon-button"
+                                       Width="24" Height="24"
+                                       Padding="0"
+                                       HorizontalAlignment="Right" VerticalAlignment="Top"
+                                       ToolTip.Tip="{loc:Loc 'Remove photo'}"
+                                       Command="{Binding RemoveAvatarCommand}"
+                                       IsVisible="{Binding HasModalAvatar}">
+                                   <PathIcon Data="{x:Static local:Icons.Close}" Width="12" Height="12" />
+                               </Button>
+                           </Grid>
+
                            <Grid ColumnDefinitions="Auto,16,*">
                                <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                    <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                    <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" MaxLength="20" />
+                                   <TextBlock Text="{Binding ModalIdError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" IsVisible="{Binding ModalIdError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                </StackPanel>
                                <StackPanel Grid.Column="2" Spacing="6">
                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">

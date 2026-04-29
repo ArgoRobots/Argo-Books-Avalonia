@@ -1752,6 +1752,63 @@ public class App : Application
                 _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
             }
         };
+
+        // Customer modals — let the user pick an avatar image. The bitmap is loaded for
+        // an immediate preview; the file is staged and copied/resized into the company
+        // temp directory only when the modal is saved.
+        _appShellViewModel.CustomerModalsViewModel.BrowseAvatarRequested += async (_, _) =>
+        {
+            await PickAvatarAsync(
+                "Select Customer Avatar".Translate(),
+                (path, bmp) => _appShellViewModel.CustomerModalsViewModel.SetPendingAvatar(path, bmp),
+                "CustomerAvatar");
+        };
+
+        // Supplier modals — same pattern as customer.
+        _appShellViewModel.SupplierModalsViewModel.BrowseAvatarRequested += async (_, _) =>
+        {
+            await PickAvatarAsync(
+                "Select Supplier Avatar".Translate(),
+                (path, bmp) => _appShellViewModel.SupplierModalsViewModel.SetPendingAvatar(path, bmp),
+                "SupplierAvatar");
+        };
+    }
+
+    /// <summary>
+    /// Shows the OS image-picker, decodes the result into a Bitmap, and hands the
+    /// pair off to the caller. Centralized so customer and supplier avatar pickers
+    /// share the file-type filter and error handling.
+    /// </summary>
+    private static async Task PickAvatarAsync(string title, Action<string, Bitmap> onPicked, string errorTag)
+    {
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Images")
+                {
+                    Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                }
+            ]
+        });
+
+        if (files.Count == 0) return;
+
+        var path = files[0].Path.LocalPath;
+        try
+        {
+            var bitmap = new Bitmap(path);
+            onPicked(path, bitmap);
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Failed to load avatar image: {ex.Message}", errorTag);
+        }
     }
 
     /// <summary>

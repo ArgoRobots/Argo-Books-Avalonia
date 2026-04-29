@@ -9,6 +9,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -445,6 +446,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 addressParts.Add(customer.Address.State);
             var addressString = addressParts.Count > 0 ? string.Join(", ", addressParts) : "-";
 
+            var avatarBitmap = AvatarBitmapLoader.LoadCustomer(customer);
+
             return new CustomerDisplayItem
             {
                 Id = customer.Id,
@@ -455,7 +458,9 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 Country = string.IsNullOrWhiteSpace(customer.Address.Country) ? "-" : customer.Address.Country,
                 LastRental = customer.LastTransactionDate,
                 Status = customer.Status,
-                IsHighlighted = customer.Id == HighlightTransactionId
+                IsHighlighted = customer.Id == HighlightTransactionId,
+                AvatarBitmap = avatarBitmap,
+                HasAvatar = avatarBitmap != null
             };
         }).ToList();
 
@@ -937,6 +942,12 @@ public partial class CustomerDisplayItem : ObservableObject
 
     [ObservableProperty]
     private EntityStatus _status = EntityStatus.Active;
+
+    [ObservableProperty]
+    private Bitmap? _avatarBitmap;
+
+    [ObservableProperty]
+    private bool _hasAvatar;
 
     /// <summary>
     /// Gets the initials from the customer name for avatar display.

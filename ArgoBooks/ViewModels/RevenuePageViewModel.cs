@@ -6,6 +6,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Helpers;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -488,6 +489,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
             var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
+            var customerAvatar = AvatarBitmapLoader.LoadCustomer(customer);
 
             return new RevenueDisplayItem
             {
@@ -523,7 +525,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 IsHighlighted = revenue.Id == HighlightTransactionId,
                 InvoiceId = revenue.InvoiceId ?? string.Empty,
                 IsPendingConversion = revenue.IsPendingConversion,
-                OriginalCurrency = revenue.OriginalCurrency
+                OriginalCurrency = revenue.OriginalCurrency,
+                CustomerAvatarBitmap = customerAvatar,
+                HasCustomerAvatar = customerAvatar != null
             };
         }).ToList();
 
@@ -816,6 +820,12 @@ public partial class RevenueDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _originalCurrency = "USD";
+
+    [ObservableProperty]
+    private Bitmap? _customerAvatarBitmap;
+
+    [ObservableProperty]
+    private bool _hasCustomerAvatar;
 
     public string DateFormatted => DateFormatService.Format(Date);
     public string TotalFormatted => IsPendingConversion

@@ -200,13 +200,20 @@
                                             <table:ArgoTableCell.CellContent>
                                                 <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
                                                     <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16"
-                                                            Background="{DynamicResource PrimaryBrush}" Margin="0,0,10,0">
-                                                        <TextBlock Text="{Binding CustomerInitials}"
-                                                                   FontSize="12"
-                                                                   FontWeight="SemiBold"
-                                                                   Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center" />
+                                                            Background="{DynamicResource PrimaryBrush}" Margin="0,0,10,0"
+                                                            ClipToBounds="True">
+                                                        <Panel>
+                                                            <TextBlock Text="{Binding CustomerInitials}"
+                                                                       FontSize="12"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="White"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       IsVisible="{Binding !HasCustomerAvatar}" />
+                                                            <Image Source="{Binding CustomerAvatarBitmap}"
+                                                                   Stretch="UniformToFill"
+                                                                   IsVisible="{Binding HasCustomerAvatar}" />
+                                                        </Panel>
                                                     </Border>
                                                     <TextBlock Grid.Column="1" Text="{Binding CustomerName}"
                                                                FontSize="14"

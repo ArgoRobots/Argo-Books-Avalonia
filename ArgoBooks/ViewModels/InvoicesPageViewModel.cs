@@ -7,6 +7,7 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ArgoBooks.Helpers;
@@ -662,6 +663,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 : null;
             var statusDisplay = GetStatusDisplay(invoice);
 
+            var avatarBitmap = AvatarBitmapLoader.LoadCustomer(customer);
+
             return new InvoiceDisplayItem
             {
                 Id = invoice.Id,
@@ -670,6 +673,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 CustomerId = invoice.CustomerId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 CustomerInitials = GetInitials(customer?.Name ?? "?"),
+                CustomerAvatarBitmap = avatarBitmap,
+                HasCustomerAvatar = avatarBitmap != null,
                 IssueDate = invoice.IssueDate,
                 DueDate = invoice.DueDate,
                 Subtotal = invoice.Subtotal,
@@ -875,6 +880,12 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _customerInitials = string.Empty;
+
+    [ObservableProperty]
+    private Bitmap? _customerAvatarBitmap;
+
+    [ObservableProperty]
+    private bool _hasCustomerAvatar;
 
     [ObservableProperty]
     private DateTime _issueDate;
