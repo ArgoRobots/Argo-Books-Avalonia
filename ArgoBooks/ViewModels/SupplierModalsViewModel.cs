@@ -452,11 +452,28 @@ public partial class SupplierModalsViewModel : ViewModelBase
         // temp directory after the supplier is in the collection so its Id is stable.
         await ApplyPendingAvatarChangeAsync(newSupplier);
 
+        // Snapshot the saved avatar bytes so undo can delete the file and redo can
+        // recreate it.
+        var newAvatarBytes = App.CompanyManager?.ReadSupplierAvatarBytes(newSupplier);
         var supplierToUndo = newSupplier;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add supplier '{newSupplier.Name}'",
-            () => { companyData.Suppliers.Remove(supplierToUndo); companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); },
-            () => { companyData.Suppliers.Add(supplierToUndo); companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); }));
+            () =>
+            {
+                if (newAvatarBytes != null)
+                    App.CompanyManager?.RestoreSupplierAvatar(supplierToUndo, null);
+                companyData.Suppliers.Remove(supplierToUndo);
+                companyData.MarkAsModified();
+                SupplierSaved?.Invoke(this, EventArgs.Empty);
+            },
+            () =>
+            {
+                companyData.Suppliers.Add(supplierToUndo);
+                if (newAvatarBytes != null)
+                    App.CompanyManager?.RestoreSupplierAvatar(supplierToUndo, newAvatarBytes);
+                companyData.MarkAsModified();
+                SupplierSaved?.Invoke(this, EventArgs.Empty);
+            }));
 
         SupplierSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
@@ -464,8 +481,8 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
     /// <summary>
     /// Applies any pending avatar change (manual upload, fetched favicon, or removal)
-    /// to the supplier record. Avatar changes are not part of the undo stack — keeps
-    /// the implementation simple and avoids juggling files in undo callbacks.
+    /// to the supplier record. Callers capture the resulting bytes via
+    /// ReadSupplierAvatarBytes if they need to include the change in an undo action.
     /// Manual upload wins over a pending favicon if both somehow exist.
     /// </summary>
     private async Task ApplyPendingAvatarChangeAsync(Supplier supplier)
@@ -643,14 +660,37 @@ public partial class SupplierModalsViewModel : ViewModelBase
             return;
         }
 
-        // Apply avatar changes (not undoable — see ApplyPendingAvatarChangeAsync).
+        // Snapshot the avatar bytes BEFORE applying the change so undo can write them
+        // back; capture again AFTER so redo restores the new state.
+        byte[]? oldAvatarBytes = null;
+        byte[]? newAvatarBytes = null;
         if (hasAvatarChanges)
         {
+            oldAvatarBytes = App.CompanyManager?.ReadSupplierAvatarBytes(_editingSupplier);
             await ApplyPendingAvatarChangeAsync(_editingSupplier);
+            newAvatarBytes = App.CompanyManager?.ReadSupplierAvatarBytes(_editingSupplier);
         }
 
         if (!hasFieldChanges)
         {
+            // Only the avatar changed — record a dedicated undo entry so the user
+            // can revert just the image change.
+            var supplierForAvatarUndo = _editingSupplier;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Change supplier '{supplierForAvatarUndo.Name}' photo",
+                () =>
+                {
+                    App.CompanyManager?.RestoreSupplierAvatar(supplierForAvatarUndo, oldAvatarBytes);
+                    companyData.MarkAsModified();
+                    SupplierSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    App.CompanyManager?.RestoreSupplierAvatar(supplierForAvatarUndo, newAvatarBytes);
+                    companyData.MarkAsModified();
+                    SupplierSaved?.Invoke(this, EventArgs.Empty);
+                }));
+
             companyData.MarkAsModified();
             SupplierSaved?.Invoke(this, EventArgs.Empty);
             CloseEditModal();
@@ -703,11 +743,15 @@ public partial class SupplierModalsViewModel : ViewModelBase
             $"Edit supplier '{newName}'",
             () => {
                 if (hasIdChange) App.CompanyManager?.ChangeSupplierId(supplierToEdit, oldId);
-                supplierToEdit.Name = oldName; supplierToEdit.Email = oldEmail; supplierToEdit.Phone = oldPhone; supplierToEdit.Website = oldWebsite; supplierToEdit.Address = oldAddress; supplierToEdit.Notes = oldNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty);
+                supplierToEdit.Name = oldName; supplierToEdit.Email = oldEmail; supplierToEdit.Phone = oldPhone; supplierToEdit.Website = oldWebsite; supplierToEdit.Address = oldAddress; supplierToEdit.Notes = oldNotes;
+                if (hasAvatarChanges) App.CompanyManager?.RestoreSupplierAvatar(supplierToEdit, oldAvatarBytes);
+                companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty);
             },
             () => {
                 if (hasIdChange) App.CompanyManager?.ChangeSupplierId(supplierToEdit, newId);
-                supplierToEdit.Name = newName; supplierToEdit.Email = newEmail; supplierToEdit.Phone = newPhone; supplierToEdit.Website = newWebsite; supplierToEdit.Address = newAddress; supplierToEdit.Notes = newNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty);
+                supplierToEdit.Name = newName; supplierToEdit.Email = newEmail; supplierToEdit.Phone = newPhone; supplierToEdit.Website = newWebsite; supplierToEdit.Address = newAddress; supplierToEdit.Notes = newNotes;
+                if (hasAvatarChanges) App.CompanyManager?.RestoreSupplierAvatar(supplierToEdit, newAvatarBytes);
+                companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty);
             }));
 
         SupplierSaved?.Invoke(this, EventArgs.Empty);
@@ -768,10 +812,12 @@ public partial class SupplierModalsViewModel : ViewModelBase
             var deletedSupplier = supplier;
             App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
 
+            // Snapshot the avatar bytes BEFORE deleting so undo can restore the
+            // file alongside the supplier record.
+            var deletedAvatarBytes = App.CompanyManager?.ReadSupplierAvatarBytes(deletedSupplier);
+
             // Clean up the avatar file before removing the supplier — avoids bloat and
             // retention of deleted-supplier images in the .argo archive on next save.
-            // Mirrors the customer-delete behavior. Undo of delete restores the supplier
-            // record but not the avatar.
             if (App.CompanyManager != null && !string.IsNullOrEmpty(deletedSupplier.AvatarFileName))
             {
                 try { await App.CompanyManager.RemoveSupplierAvatarAsync(deletedSupplier); }
@@ -783,8 +829,20 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete supplier '{supplier.Name}'",
-                () => { companyData?.Suppliers.Add(deletedSupplier); companyData?.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); },
-                () => { companyData?.Suppliers.Remove(deletedSupplier); companyData?.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); }));
+                () => {
+                    companyData?.Suppliers.Add(deletedSupplier);
+                    if (deletedAvatarBytes != null)
+                        App.CompanyManager?.RestoreSupplierAvatar(deletedSupplier, deletedAvatarBytes);
+                    companyData?.MarkAsModified();
+                    SupplierDeleted?.Invoke(this, EventArgs.Empty);
+                },
+                () => {
+                    if (deletedAvatarBytes != null)
+                        App.CompanyManager?.RestoreSupplierAvatar(deletedSupplier, null);
+                    companyData?.Suppliers.Remove(deletedSupplier);
+                    companyData?.MarkAsModified();
+                    SupplierDeleted?.Invoke(this, EventArgs.Empty);
+                }));
 
             SupplierDeleted?.Invoke(this, EventArgs.Empty);
         }

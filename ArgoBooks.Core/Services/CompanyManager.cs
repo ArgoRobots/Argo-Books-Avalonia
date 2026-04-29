@@ -233,6 +233,84 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Reads the bytes of an entity's avatar file, or null if there's no avatar set or
+    /// the file can't be read. Used by the undo system to capture a snapshot before
+    /// the avatar is changed so it can be restored later.
+    /// </summary>
+    private byte[]? ReadEntityAvatarBytes(IAvatarOwner entity)
+    {
+        var path = GetEntityAvatarPath(entity);
+        if (path == null) return null;
+        try { return File.ReadAllBytes(path); }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// Restores an avatar to an exact prior state. Pass <paramref name="bytes"/> = null
+    /// to restore "no avatar" (deletes the file and clears AvatarFileName); pass bytes
+    /// to write them back as the avatar (no resize — the bytes are already a resized
+    /// PNG captured by an earlier <see cref="ReadEntityAvatarBytes"/>). Synchronous so
+    /// it can be called directly from undo/redo callbacks.
+    /// </summary>
+    private void RestoreEntityAvatarSync(IAvatarOwner entity, byte[]? bytes, string subdirectory)
+    {
+        if (CompanyData == null || _currentTempDirectory == null) return;
+
+        if (bytes == null)
+        {
+            var existing = entity.AvatarFileName;
+            if (!string.IsNullOrEmpty(existing))
+            {
+                var path = ResolveAvatarPathSafely(existing);
+                if (path != null && File.Exists(path))
+                {
+                    try { File.Delete(path); } catch { /* best effort */ }
+                }
+            }
+            entity.AvatarFileName = null;
+        }
+        else
+        {
+            var (destPath, relativePath) = PrepareAvatarDestination(entity.Id, subdirectory);
+            try
+            {
+                File.WriteAllBytes(destPath, bytes);
+                entity.AvatarFileName = relativePath;
+            }
+            catch
+            {
+                // If the write fails, leave the entity without an avatar reference rather
+                // than pointing at a partially-written file.
+                entity.AvatarFileName = null;
+            }
+        }
+
+        entity.UpdatedAt = DateTime.UtcNow;
+        CompanyData.ChangesMade = true;
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Reads the customer's avatar file as bytes, or null if none/unreadable.</summary>
+    public byte[]? ReadCustomerAvatarBytes(Customer customer) => ReadEntityAvatarBytes(customer);
+
+    /// <summary>Reads the supplier's avatar file as bytes, or null if none/unreadable.</summary>
+    public byte[]? ReadSupplierAvatarBytes(Supplier supplier) => ReadEntityAvatarBytes(supplier);
+
+    /// <summary>
+    /// Restores a customer's avatar to a prior state captured via
+    /// <see cref="ReadCustomerAvatarBytes"/>. Null restores "no avatar".
+    /// </summary>
+    public void RestoreCustomerAvatar(Customer customer, byte[]? bytes)
+        => RestoreEntityAvatarSync(customer, bytes, CustomerAvatarSubdirectory);
+
+    /// <summary>
+    /// Restores a supplier's avatar to a prior state captured via
+    /// <see cref="ReadSupplierAvatarBytes"/>. Null restores "no avatar".
+    /// </summary>
+    public void RestoreSupplierAvatar(Supplier supplier, byte[]? bytes)
+        => RestoreEntityAvatarSync(supplier, bytes, SupplierAvatarSubdirectory);
+
+    /// <summary>
     /// Move the avatar file to track a renamed entity Id. Failure is non-fatal — if the
     /// file move can't complete, AvatarFileName is left at its previous value and the
     /// avatar simply won't load until the user re-uploads.

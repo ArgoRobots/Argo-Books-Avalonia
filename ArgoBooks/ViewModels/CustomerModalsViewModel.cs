@@ -459,11 +459,16 @@ public partial class CustomerModalsViewModel : ViewModelBase
         // *after* the customer is in the collection so its Id is stable.
         await ApplyPendingAvatarChangeAsync(newCustomer);
 
+        // Snapshot the saved avatar bytes so undo can delete the file and redo can
+        // recreate it. Tiny PNG so the closure capture is cheap.
+        var newAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(newCustomer);
         var customerToUndo = newCustomer;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
             () =>
             {
+                if (newAvatarBytes != null)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToUndo, null);
                 companyData.Customers.Remove(customerToUndo);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
@@ -471,6 +476,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
             () =>
             {
                 companyData.Customers.Add(customerToUndo);
+                if (newAvatarBytes != null)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToUndo, newAvatarBytes);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -481,8 +488,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
     /// <summary>
     /// Applies any pending avatar add/remove from the modal to the customer record.
-    /// Avatar changes are not part of the undo stack — they are intentionally one-way
-    /// to keep the implementation simple and avoid juggling files in undo callbacks.
+    /// Callers capture the resulting bytes via ReadCustomerAvatarBytes if they need
+    /// to include the change in an undo action.
     /// </summary>
     private async Task ApplyPendingAvatarChangeAsync(Customer customer)
     {
@@ -683,15 +690,38 @@ public partial class CustomerModalsViewModel : ViewModelBase
             return;
         }
 
-        // Apply avatar changes (not undoable — see ApplyPendingAvatarChangeAsync).
+        // Snapshot the avatar bytes BEFORE applying the change so the undo callback
+        // can write them back; capture again AFTER so redo restores the new state.
+        // Tiny resized PNG, so closure capture is cheap.
+        byte[]? oldAvatarBytes = null;
+        byte[]? newAvatarBytes = null;
         if (hasAvatarChanges)
         {
+            oldAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(_editingCustomer);
             await ApplyPendingAvatarChangeAsync(_editingCustomer);
+            newAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(_editingCustomer);
         }
 
         if (!hasFieldChanges)
         {
-            // Only the avatar changed — still notify so list views refresh, then close.
+            // Only the avatar changed — record a dedicated undo entry so the user
+            // can revert just the image change.
+            var customerForAvatarUndo = _editingCustomer;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Change customer '{customerForAvatarUndo.Name}' photo",
+                () =>
+                {
+                    App.CompanyManager?.RestoreCustomerAvatar(customerForAvatarUndo, oldAvatarBytes);
+                    companyData.MarkAsModified();
+                    CustomerSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    App.CompanyManager?.RestoreCustomerAvatar(customerForAvatarUndo, newAvatarBytes);
+                    companyData.MarkAsModified();
+                    CustomerSaved?.Invoke(this, EventArgs.Empty);
+                }));
+
             companyData.MarkAsModified();
             CustomerSaved?.Invoke(this, EventArgs.Empty);
             CloseEditModal();
@@ -755,6 +785,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 customerToEdit.Address = oldAddress;
                 customerToEdit.Notes = oldNotes;
                 customerToEdit.Status = oldStatus;
+                if (hasAvatarChanges)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToEdit, oldAvatarBytes);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -769,6 +801,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 customerToEdit.Address = newAddress;
                 customerToEdit.Notes = newNotes;
                 customerToEdit.Status = newStatus;
+                if (hasAvatarChanges)
+                    App.CompanyManager?.RestoreCustomerAvatar(customerToEdit, newAvatarBytes);
                 companyData.MarkAsModified();
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -840,12 +874,17 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 var deletedCustomer = customer;
                 App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
 
+                // Snapshot the avatar bytes BEFORE deleting so undo can restore the
+                // file alongside the customer record. The customer's AvatarFileName is
+                // also captured implicitly — the customer object stays alive in the
+                // closure and is mutated in place by RestoreCustomerAvatar.
+                var deletedAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(deletedCustomer);
+                var savedAvatarFileName = deletedCustomer.AvatarFileName;
+
                 // Clean up the avatar file before removing the customer. This avoids
                 // bloat (and retention of deleted-customer images) inside the .argo
-                // archive on next save. Undo of delete restores the customer record
-                // but the avatar is gone — acceptable degradation for a file the user
-                // explicitly chose to delete.
-                if (App.CompanyManager != null && !string.IsNullOrEmpty(deletedCustomer.AvatarFileName))
+                // archive on next save.
+                if (App.CompanyManager != null && !string.IsNullOrEmpty(savedAvatarFileName))
                 {
                     try { await App.CompanyManager.RemoveCustomerAvatarAsync(deletedCustomer); }
                     catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to remove customer avatar on delete: {ex.Message}", "Customer.Delete"); }
@@ -859,11 +898,15 @@ public partial class CustomerModalsViewModel : ViewModelBase
                     () =>
                     {
                         companyData.Customers.Add(deletedCustomer);
+                        if (deletedAvatarBytes != null)
+                            App.CompanyManager?.RestoreCustomerAvatar(deletedCustomer, deletedAvatarBytes);
                         companyData.MarkAsModified();
                         CustomerDeleted?.Invoke(this, EventArgs.Empty);
                     },
                     () =>
                     {
+                        if (deletedAvatarBytes != null)
+                            App.CompanyManager?.RestoreCustomerAvatar(deletedCustomer, null);
                         companyData.Customers.Remove(deletedCustomer);
                         companyData.MarkAsModified();
                         CustomerDeleted?.Invoke(this, EventArgs.Empty);
