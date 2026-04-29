@@ -138,13 +138,6 @@ public partial class HeaderViewModel : ViewModelBase
     private CancellationTokenSource? _toastCancellationTokenSource;
     private CancellationTokenSource? _savedFeedbackCts;
 
-    private bool _toastsEnabled;
-
-    /// <summary>
-    /// Enables toast popups. Call after startup notifications have been sent.
-    /// </summary>
-    public void EnableToasts() => _toastsEnabled = true;
-
     #endregion
 
     #region User
@@ -532,7 +525,7 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Adds a notification and shows a toast popup for 5 seconds.
+    /// Adds a notification and shows a toast popup for 10 seconds.
     /// </summary>
     /// <param name="notification">Notification to add.</param>
     public void AddNotification(NotificationItem notification)
@@ -548,15 +541,12 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Shows a toast popup for the given notification. Auto-dismisses after 5 seconds.
+    /// Shows a toast popup for the given notification. Auto-dismisses after 10 seconds.
     /// </summary>
     private async void ShowToast(NotificationItem notification)
     {
         try
         {
-            if (!_toastsEnabled)
-                return;
-
             // Cancel and dispose any existing toast timer
             _toastCancellationTokenSource?.Cancel();
             _toastCancellationTokenSource?.Dispose();

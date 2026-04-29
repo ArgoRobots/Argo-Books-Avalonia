@@ -43,13 +43,13 @@ public static class NotificationTypeConverters
 
     /// <summary>
     /// Converter that returns a tinted background brush based on notification type.
-    /// Uses 10% opacity of the accent color.
+    /// Uses 60% opacity of the accent color.
     /// </summary>
     public static readonly IValueConverter TypeToBackgroundBrush =
         new FuncValueConverter<NotificationType, IBrush>(type =>
         {
             var color = ColorFor(type);
-            return new SolidColorBrush(new Color(0x1A, color.R, color.G, color.B));
+            return new SolidColorBrush(new Color(0x99, color.R, color.G, color.B));
         });
 
     private static Color ColorFor(NotificationType type) => type switch
@@ -69,12 +69,12 @@ public static class NotificationTypeConverters
         new(ColorFor(type));
 
     /// <summary>
-    /// Returns the tinted background brush (10% opacity) for a notification type.
+    /// Returns the tinted background brush (60% opacity) for a notification type.
     /// </summary>
     public static SolidColorBrush BackgroundBrushFor(NotificationType type)
     {
         var color = ColorFor(type);
-        return new SolidColorBrush(new Color(0x1A, color.R, color.G, color.B));
+        return new SolidColorBrush(new Color(0x99, color.R, color.G, color.B));
     }
 
     /// <summary>

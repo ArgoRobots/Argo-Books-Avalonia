@@ -173,7 +173,7 @@
                         ToolTip.Tip="Dismiss">
                     <PathIcon Data="{x:Static icons:Icons.Close}"
                               Width="14" Height="14"
-                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                              Foreground="White" />
                 </Button>
             </Grid>
         </Border>
