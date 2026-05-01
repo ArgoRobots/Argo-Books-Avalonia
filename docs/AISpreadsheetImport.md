@@ -21,7 +21,7 @@ The import follows a five-step pipeline: analyze, review, validate, import, and 
 
 ![AI Analysis Flow](diagrams/ai-spreadsheet-import/analysis-flow.svg)
 
-The `SpreadsheetAnalysisService` reads the file and sends a summary to the OpenAI API for analysis.
+The `SpreadsheetAnalysisService` reads the file and sends a summary to the Gemini API (via the argorobots.com server proxy) for analysis.
 
 **Sampling strategy** — For large files, the service sends a representative sample to the LLM rather than all rows:
 - First 5 rows
