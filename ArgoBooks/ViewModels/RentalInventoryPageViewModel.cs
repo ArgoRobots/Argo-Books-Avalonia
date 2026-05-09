@@ -492,6 +492,12 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
         App.RentalInventoryModalsViewModel?.OpenRentOutModal(item);
     }
 
+    [RelayCommand]
+    private void OpenAvailabilityModal(RentalItemDisplayItem? item)
+    {
+        App.RentalAvailabilityModalViewModel?.OpenForItem(item);
+    }
+
     #endregion
 }
 

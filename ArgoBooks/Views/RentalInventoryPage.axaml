@@ -192,6 +192,13 @@
                                                             VerticalAlignment="Center"
                                                             Spacing="4">
                                                     <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'View Availability Calendar'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).OpenAvailabilityModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Calendar}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'Rent Out'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).OpenRentOutModalCommand}"
                                                             CommandParameter="{Binding}"
