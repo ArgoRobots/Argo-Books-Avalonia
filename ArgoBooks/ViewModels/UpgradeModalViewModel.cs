@@ -471,13 +471,15 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsLoadingPlans = true;
         HasLoadError = false;
+        // Reset IsOffline so this attempt's outcome isn't blended with a previous one.
+        // The catch path re-sets it only on connectivity errors; a non-connectivity
+        // failure (e.g. 5xx) must not leave the offline panel from a prior call visible.
+        IsOffline = false;
 
         try
         {
             var response = await HttpClient.GetStringAsync(PricingApiUrl);
             var apiResponse = JsonSerializer.Deserialize<PlansApiResponse>(response);
-
-            IsOffline = false;
 
             if (apiResponse?.Pricing != null)
             {
