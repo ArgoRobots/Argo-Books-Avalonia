@@ -338,6 +338,89 @@ public class PaymentPortalService : IDisposable
             companyData.IdCounters.Payment = nextId;
             var paymentId = $"PAY-{DateTime.UtcNow:yyyy}-{nextId:D5}";
 
+            Payment payment;
+
+            if (portalPayment.IsRefund)
+            {
+                // ----- Refund row -----
+                // The server's amount is already negative for refund rows. Find the
+                // local Payment that this refund offsets so we can link them.
+                string? refundedFromLocalId = null;
+                if (!string.IsNullOrEmpty(portalPayment.RefundedProviderPaymentId))
+                {
+                    refundedFromLocalId = companyData.Payments
+                        .FirstOrDefault(p => !string.IsNullOrEmpty(p.PortalPaymentId)
+                            && (p.ReferenceNumber == portalPayment.RefundedProviderPaymentId
+                                || string.Equals(p.Notes, portalPayment.RefundedProviderPaymentId, StringComparison.Ordinal)
+                                || p.PortalPaymentId == portalPayment.RefundedProviderPaymentId))
+                        ?.Id;
+                }
+
+                payment = new Payment
+                {
+                    Id = paymentId,
+                    InvoiceId = portalPayment.InvoiceId,
+                    CustomerId = invoice.CustomerId,
+                    Date = portalPayment.CreatedAt,
+                    Amount = portalPayment.Amount, // already negative
+                    PaymentMethod = method,
+                    ReferenceNumber = portalPayment.ReferenceNumber,
+                    Notes = string.IsNullOrEmpty(portalPayment.RefundReason)
+                        ? $"Refund issued via {providerName}"
+                        : $"Refund issued via {providerName} — {portalPayment.RefundReason}",
+                    CreatedAt = DateTime.UtcNow,
+                    OriginalCurrency = portalPayment.Currency,
+                    AmountUSD = portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase)
+                        ? portalPayment.Amount
+                        : (invoice.TotalUSD > 0 && invoice.Total > 0
+                            ? Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2)
+                            : 0m),
+                    Source = "Online",
+                    PortalPaymentId = portalPayment.Id.ToString(),
+                    IsRefund = true,
+                    RefundedFromPaymentId = refundedFromLocalId,
+                    RefundRequestId = portalPayment.RefundRequestId?.ToString(),
+                    RefundReason = portalPayment.RefundReason,
+                };
+
+                companyData.Payments.Add(payment);
+                newPayments.Add(payment);
+
+                // Update invoice.AmountRefunded (absolute sum of refund Payments for this invoice)
+                var invoiceCurrencyRf = string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency;
+                invoice.AmountRefunded = companyData.Payments
+                    .Where(p => p.InvoiceId == invoice.Id && p.IsRefund
+                        && string.Equals(string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
+                                         invoiceCurrencyRf, StringComparison.OrdinalIgnoreCase))
+                    .Sum(p => Math.Abs(p.Amount));
+
+                // Status recompute (refunded > 0 with payments > 0 → Refunded/PartiallyRefunded)
+                if (invoice.AmountPaid > 0)
+                {
+                    if (invoice.AmountRefunded >= invoice.AmountPaid)
+                    {
+                        invoice.Status = InvoiceStatus.Refunded;
+                    }
+                    else if (invoice.AmountRefunded > 0)
+                    {
+                        invoice.Status = InvoiceStatus.PartiallyRefunded;
+                    }
+                }
+
+                invoice.History.Add(new InvoiceHistoryEntry
+                {
+                    Action = "Refund Issued",
+                    Details = string.IsNullOrEmpty(portalPayment.RefundReason)
+                        ? $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName}"
+                        : $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName} — \"{portalPayment.RefundReason}\"",
+                    Timestamp = DateTime.UtcNow
+                });
+
+                invoice.UpdatedAt = DateTime.UtcNow;
+                continue;
+            }
+
+            // ----- Regular payment row (existing logic) -----
             // The invoice amount is the total charged minus any processing fee
             var invoiceAmount = Math.Max(0m, portalPayment.Amount - portalPayment.ProcessingFee);
 
@@ -363,7 +446,7 @@ public class PaymentPortalService : IDisposable
                 ? $"Online payment via {providerName} (processing fee: {portalPayment.Currency} {portalPayment.ProcessingFee:N2})"
                 : $"Online payment via {providerName}";
 
-            var payment = new Payment
+            payment = new Payment
             {
                 Id = paymentId,
                 InvoiceId = portalPayment.InvoiceId,
@@ -377,7 +460,8 @@ public class PaymentPortalService : IDisposable
                 OriginalCurrency = portalPayment.Currency,
                 AmountUSD = amountUSD,
                 Source = "Online",
-                PortalPaymentId = portalPayment.Id.ToString()
+                PortalPaymentId = portalPayment.Id.ToString(),
+                ProviderPaymentId = portalPayment.ProviderPaymentId
             };
 
             // Add to company data

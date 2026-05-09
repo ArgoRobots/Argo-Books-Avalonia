@@ -27,7 +27,13 @@ public enum InvoiceStatus
     Overdue,
 
     /// <summary>Invoice has been cancelled.</summary>
-    Cancelled
+    Cancelled,
+
+    /// <summary>Invoice was paid and has since been fully refunded.</summary>
+    Refunded,
+
+    /// <summary>Invoice was paid and has been refunded in part.</summary>
+    PartiallyRefunded
 }
 
 /// <summary>
@@ -65,7 +71,9 @@ public static class InvoiceStatusExtensions
             nameof(InvoiceStatus.Partial),
             nameof(InvoiceStatus.Paid),
             nameof(InvoiceStatus.Overdue),
-            nameof(InvoiceStatus.Cancelled)
+            nameof(InvoiceStatus.Cancelled),
+            nameof(InvoiceStatus.PartiallyRefunded),
+            nameof(InvoiceStatus.Refunded)
         ];
     }
 }

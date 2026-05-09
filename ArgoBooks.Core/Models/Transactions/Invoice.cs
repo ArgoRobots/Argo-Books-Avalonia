@@ -105,16 +105,32 @@ public class Invoice
     public decimal Total { get; set; }
 
     /// <summary>
-    /// Amount already paid.
+    /// Gross amount paid by the customer (sum of positive Payment rows for this invoice).
+    /// Refunds do NOT reduce this — see <see cref="AmountRefunded"/> and <see cref="NetPaid"/>.
     /// </summary>
     [JsonPropertyName("amountPaid")]
     public decimal AmountPaid { get; set; }
 
     /// <summary>
-    /// Remaining balance.
+    /// Amount returned to the customer via refunds (absolute value, always &gt;= 0).
+    /// Sum of |Amount| over Payment rows where IsRefund is true for this invoice.
+    /// </summary>
+    [JsonPropertyName("amountRefunded")]
+    public decimal AmountRefunded { get; set; }
+
+    /// <summary>
+    /// Remaining balance the customer still owes. Computed as Math.Max(0, Total - AmountPaid).
+    /// Refunds do NOT raise the balance — once a customer paid, they don't owe again just
+    /// because we returned money to them.
     /// </summary>
     [JsonPropertyName("balance")]
     public decimal Balance { get; set; }
+
+    /// <summary>
+    /// Net amount kept after refunds. Used for revenue/profit aggregations.
+    /// </summary>
+    [JsonIgnore]
+    public decimal NetPaid => AmountPaid - AmountRefunded;
 
     /// <summary>
     /// Invoice status.

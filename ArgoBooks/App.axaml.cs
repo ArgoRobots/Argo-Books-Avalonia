@@ -55,6 +55,12 @@ public class App : Application
     public static PaymentPortalService? PaymentPortalService { get; private set; }
 
     /// <summary>
+    /// Client for the portal refund + email-verification + email-change endpoints.
+    /// Created once at startup; reads the active per-company API key on each call.
+    /// </summary>
+    public static RefundService? RefundService { get; private set; }
+
+    /// <summary>
     /// Gets the invoice usage service for tracking free-tier send limits.
     /// </summary>
     public static InvoiceUsageService? InvoiceUsageService { get; private set; }
@@ -794,6 +800,9 @@ public class App : Application
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
             InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
+
+            // Initialize refund service (uses the same shared HttpClient)
+            RefundService = new RefundService(httpClient);
 
             // Create navigation service
             NavigationService = new NavigationService();

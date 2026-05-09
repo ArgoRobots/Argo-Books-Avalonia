@@ -7,6 +7,9 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using ArgoBooks.Views;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -689,7 +692,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 Notes = invoice.Notes,
                 OriginalCurrency = invoice.OriginalCurrency,
                 IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId),
-                IsHighlighted = invoice.Id == HighlightTransactionId
+                IsHighlighted = invoice.Id == HighlightTransactionId,
+                CanRefund = ComputeCanRefund(invoice, companyData)
             };
         }).ToList();
 
@@ -761,6 +765,35 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (parts is [{ Length: >= 1 }])
             return parts[0][0].ToString().ToUpper();
         return "?";
+    }
+
+    /// <summary>
+    /// True when the invoice has at least one online (portal) payment with money
+    /// still refundable. This decides whether the row's Refund icon button is
+    /// enabled.
+    /// </summary>
+    private static bool ComputeCanRefund(Invoice invoice, ArgoBooks.Core.Data.CompanyData? companyData)
+    {
+        if (companyData == null) return false;
+        if (invoice.Status == InvoiceStatus.Draft || invoice.Status == InvoiceStatus.Cancelled)
+            return false;
+
+        var portalPayments = companyData.Payments
+            .Where(p => p.InvoiceId == invoice.Id
+                        && !p.IsRefund
+                        && p.Source == "Online"
+                        && !string.IsNullOrEmpty(p.ProviderPaymentId))
+            .ToList();
+        if (portalPayments.Count == 0) return false;
+
+        foreach (var p in portalPayments)
+        {
+            var refunded = companyData.Payments
+                .Where(r => r.IsRefund && r.RefundedFromPaymentId == p.Id)
+                .Sum(r => Math.Abs(r.Amount));
+            if (p.Amount - refunded > 0.01m) return true;
+        }
+        return false;
     }
 
     protected override void UpdatePageNumbers()
@@ -847,6 +880,56 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void OpenHistoryModal(InvoiceDisplayItem? item)
     {
         App.InvoiceModalsViewModel?.OpenHistoryModal(item);
+    }
+
+    [RelayCommand]
+    private async Task OpenRefundModal(InvoiceDisplayItem? item)
+    {
+        if (item == null) return;
+        var refundService = App.RefundService;
+        if (refundService == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var invoice = companyData?.GetInvoice(item.Id);
+        if (companyData == null || invoice == null) return;
+
+        var invoicePayments = companyData.Payments.Where(p => p.InvoiceId == invoice.Id).ToList();
+        var customer = companyData.GetCustomer(invoice.CustomerId);
+        var customerName = customer?.Name ?? item.CustomerName;
+
+        // Reach the MainWindow's ModalService through the Avalonia application
+        // lifetime (same pattern as App.ShowErrorMessageBoxAsync). There is no
+        // DI container in this codebase; ModalService is owned by MainWindow.
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop
+            || desktop.MainWindow is not MainWindow mainWindow
+            || mainWindow.ModalService is not { } modalService)
+        {
+            return;
+        }
+
+        var modalVm = new RefundModalViewModel(refundService, invoice, invoicePayments, customerName);
+        try
+        {
+            var view = new ArgoBooks.Views.RefundModalView { DataContext = modalVm };
+            await modalService.ShowAsync(view, new ArgoBooks.Core.Services.ModalOptions
+            {
+                Title = string.Empty,
+                Subtitle = string.Empty,
+                ShowCloseButton = true,
+                Size = ArgoBooks.Core.Enums.ModalSize.Medium,
+                CloseOnBackdropClick = false,
+                CloseOnEscape = true,
+                PrimaryButtonText = string.Empty,
+                SecondaryButtonText = string.Empty,
+            });
+        }
+        finally
+        {
+            modalVm.Dispose();
+        }
+
+        // Trigger a refresh so any newly-arrived refund Payment shows in the list.
+        LoadInvoices();
     }
 
     [RelayCommand]
@@ -943,6 +1026,14 @@ public partial class InvoiceDisplayItem : ObservableObject
     /// Whether this invoice can be sent via email (not drafts or cancelled).
     /// </summary>
     public bool CanSend => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
+
+    /// <summary>
+    /// True when this invoice has at least one refundable portal payment with
+    /// money still available to return. Set by the parent VM when constructing
+    /// the display item from the underlying Invoice + Payment list.
+    /// </summary>
+    [ObservableProperty]
+    private bool _canRefund;
 
     [ObservableProperty]
     private bool _isHighlighted;
