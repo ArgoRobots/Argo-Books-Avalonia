@@ -96,4 +96,19 @@ public static class StringConverters
     /// Converts revenue status to badge foreground color.
     /// </summary>
     public static readonly IValueConverter ToRevenueStatusForeground = StatusConverters.TransactionStatusForeground;
+
+    /// <summary>
+    /// Converts rental availability day state ("Met"/"Partial"/"Full"/"Outside"/"Empty") to background brush.
+    /// </summary>
+    public static readonly IValueConverter ToAvailabilityDayBackground = StatusConverters.AvailabilityDayBackground;
+
+    /// <summary>
+    /// Converts rental availability day state to border brush.
+    /// </summary>
+    public static readonly IValueConverter ToAvailabilityDayBorder = StatusConverters.AvailabilityDayBorder;
+
+    /// <summary>
+    /// Converts rental availability day state to free-count text color.
+    /// </summary>
+    public static readonly IValueConverter ToAvailabilityDayForeground = StatusConverters.AvailabilityDayForeground;
 }

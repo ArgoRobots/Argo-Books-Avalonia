@@ -244,6 +244,7 @@
         <modals:PurchaseOrdersModals DataContext="{Binding PurchaseOrdersModalsViewModel}" />
         <modals:StockLevelsModals DataContext="{Binding StockLevelsModalsViewModel}" />
         <modals:RentalInventoryModals DataContext="{Binding RentalInventoryModalsViewModel}" />
+        <modals:RentalAvailabilityModal DataContext="{Binding RentalAvailabilityModalViewModel}" />
 
         <!-- Entity creation modals (top layer, opened from other modals) -->
         <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />

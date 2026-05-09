@@ -110,6 +110,11 @@ public class App : Application
     public static RentalInventoryModalsViewModel? RentalInventoryModalsViewModel => _appShellViewModel?.RentalInventoryModalsViewModel;
 
     /// <summary>
+    /// Gets the rental availability modal view model for shared access (per-item calendar).
+    /// </summary>
+    public static RentalAvailabilityModalViewModel? RentalAvailabilityModalViewModel => _appShellViewModel?.RentalAvailabilityModalViewModel;
+
+    /// <summary>
     /// Gets the rental records modals view model for shared access.
     /// </summary>
     public static RentalRecordsModalsViewModel? RentalRecordsModalsViewModel => _appShellViewModel?.RentalRecordsModalsViewModel;

@@ -187,6 +187,40 @@ public static class StatusConverters
 
     #endregion
 
+    #region Availability Day (rental availability calendar)
+
+    public static readonly IValueConverter AvailabilityDayBackground = new StatusToBrushConverter(
+        new Dictionary<string, string>
+        {
+            ["Met"] = GreenBg,
+            ["Partial"] = YellowBg,
+            ["Full"] = AppColors.ErrorLightest,
+            ["Outside"] = "Transparent",
+            ["Empty"] = "Transparent"
+        }, "Transparent");
+
+    public static readonly IValueConverter AvailabilityDayBorder = new StatusToBrushConverter(
+        new Dictionary<string, string>
+        {
+            ["Met"] = AppColors.Success,
+            ["Partial"] = AppColors.Warning,
+            ["Full"] = AppColors.ErrorLight,
+            ["Outside"] = "Transparent",
+            ["Empty"] = AppColors.GrayLightest
+        }, AppColors.GrayLightest);
+
+    public static readonly IValueConverter AvailabilityDayForeground = new StatusToBrushConverter(
+        new Dictionary<string, string>
+        {
+            ["Met"] = GreenFg,
+            ["Partial"] = YellowFg,
+            ["Full"] = RedFg,
+            ["Outside"] = GrayFg,
+            ["Empty"] = GrayFg
+        }, GrayFg);
+
+    #endregion
+
     #region Payment Transaction Status
 
     public static readonly IValueConverter PaymentTransactionStatusBackground = new StatusToBrushConverter(

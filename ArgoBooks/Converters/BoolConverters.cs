@@ -202,6 +202,30 @@ public static class BoolConverters
     public static readonly IValueConverter ToCircleBorderThickness =
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(0) : new Thickness(2));
 
+    /// <summary>
+    /// Converts bool (isOutsideMonth) to opacity for calendar day cells.
+    /// Outside month = 0.35 (dim), inside month = 1.0 (full).
+    /// </summary>
+    public static readonly IValueConverter OutsideMonthOpacity =
+        new FuncValueConverter<bool, double>(value => value ? 0.35 : 1.0);
+
+    /// <summary>
+    /// Converts bool (exceedsLimit) to ErrorBrush when true, TextTertiaryBrush when false.
+    /// Used to highlight hint labels that should turn red when their associated value is invalid.
+    /// </summary>
+    public static readonly IValueConverter ToErrorOrTertiaryBrush =
+        new FuncValueConverter<bool, IBrush>(value =>
+        {
+            var key = value ? "ErrorBrush" : "TextTertiaryBrush";
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.TryGetResource(key, Application.Current.ActualThemeVariant, out var resource) &&
+                resource is IBrush brush)
+            {
+                return brush;
+            }
+            return new SolidColorBrush(Color.Parse(value ? AppColors.Error : AppColors.GrayText));
+        });
+
 }
 
 /// <summary>

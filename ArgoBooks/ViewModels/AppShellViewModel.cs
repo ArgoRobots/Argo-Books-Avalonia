@@ -25,6 +25,7 @@ public partial class AppShellViewModel : ViewModelBase
     private DepartmentModalsViewModel? _departmentModalsViewModel;
     private SupplierModalsViewModel? _supplierModalsViewModel;
     private RentalInventoryModalsViewModel? _rentalInventoryModalsViewModel;
+    private RentalAvailabilityModalViewModel? _rentalAvailabilityModalViewModel;
     private RentalRecordsModalsViewModel? _rentalRecordsModalsViewModel;
     private PaymentModalsViewModel? _paymentModalsViewModel;
     private InvoiceModalsViewModel? _invoiceModalsViewModel;
@@ -277,6 +278,22 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _rentalInventoryModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the rental availability modal view model (per-item calendar).
+    /// </summary>
+    public RentalAvailabilityModalViewModel RentalAvailabilityModalViewModel
+    {
+        get
+        {
+            if (_rentalAvailabilityModalViewModel == null)
+            {
+                _rentalAvailabilityModalViewModel = new RentalAvailabilityModalViewModel();
+                OnPropertyChanged();
+            }
+            return _rentalAvailabilityModalViewModel;
         }
     }
 
