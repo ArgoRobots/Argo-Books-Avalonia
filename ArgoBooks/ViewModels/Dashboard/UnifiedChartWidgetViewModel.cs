@@ -6,6 +6,7 @@ using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Dashboard;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
@@ -261,7 +262,9 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         if (ChartDataType == ChartDataType.TotalProfits)
         {
-            ChartTitle = $"Total profits: {CurrencyService.FormatFromUSD((decimal)values.Sum(), DateTime.Now)}";
+            var localizedName = ChartDataType.TotalProfits.GetDisplayName().Translate();
+            var formattedSum = CurrencyService.FormatFromUSD((decimal)values.Sum(), DateTime.Now);
+            ChartTitle = $"{localizedName}: {formattedSum}";
         }
 
         var series = new ObservableCollection<ISeries>();
