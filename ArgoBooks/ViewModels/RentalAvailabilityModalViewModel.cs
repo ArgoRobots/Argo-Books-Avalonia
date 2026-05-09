@@ -98,13 +98,12 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
         ItemSubtitle = BuildSubtitle(item, displayItem);
         TotalQty = ComputeTotalFleet(data, item.Id, displayItem.InStock);
 
-        // Reset quantity to 1 each open so the user starts fresh.
+        // Reset quantity to 1 each open so the user starts fresh on a new item.
         _syncingQuantity = true;
         try
         {
-            if (QuantityNeeded < 1) QuantityNeeded = 1;
-            if (QuantityNeeded > TotalQty && TotalQty > 0) QuantityNeeded = TotalQty;
-            QuantityNeededText = QuantityNeeded.ToString(CultureInfo.InvariantCulture);
+            QuantityNeeded = 1;
+            QuantityNeededText = "1";
         }
         finally
         {
@@ -166,11 +165,22 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
     partial void OnQuantityNeededTextChanged(string value)
     {
         if (_syncingQuantity) return;
-        if (string.IsNullOrWhiteSpace(value)) return;
-        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)) return;
-        if (parsed < 1) parsed = 1;
-        // Don't clamp to TotalQty — we want the calendar and answer card to clearly
-        // show that the user's request is impossible (all cells unmet, "Need exceeds fleet").
+
+        int parsed;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            // Treat empty/whitespace as 1 so the calendar doesn't lag behind a cleared
+            // textbox. We don't sync the text back here — that would interfere with the
+            // user mid-edit; the textbox visually stays blank until they type a digit.
+            parsed = 1;
+        }
+        else
+        {
+            if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed)) return;
+            if (parsed < 1) parsed = 1;
+            // Don't clamp to TotalQty — we want the calendar and answer card to clearly
+            // show that the user's request is impossible (all cells unmet, "Need exceeds fleet").
+        }
 
         _syncingQuantity = true;
         try
@@ -300,13 +310,18 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
 
     private void UpdateNextAvailable(List<RentalSpan> rentals, int qtyNeeded)
     {
-        if (TotalQty == 0 || qtyNeeded > TotalQty)
+        if (TotalQty == 0)
         {
             HasNextAvailable = false;
             NextAvailableDate = "—";
-            NextAvailableDetail = qtyNeeded > TotalQty
-                ? Loc.Tr("Need exceeds total fleet of {0}", TotalQty)
-                : Loc.Tr("No items in fleet");
+            NextAvailableDetail = Loc.Tr("No items in fleet");
+            return;
+        }
+        if (qtyNeeded > TotalQty)
+        {
+            HasNextAvailable = false;
+            NextAvailableDate = "—";
+            NextAvailableDetail = Loc.Tr("Need exceeds total fleet of {0}", TotalQty);
             return;
         }
 
@@ -369,7 +384,7 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
             var endLabel = span.End.ToString("MMM d", CultureInfo.CurrentCulture);
             ActiveRentals.Add(new ActiveRentalDisplay
             {
-                Description = $"{span.Quantity}× {Loc.Tr("until")} {endLabel} — {customerName}",
+                Description = Loc.Tr("{0}× until {1} — {2}", span.Quantity, endLabel, customerName),
                 IsOverdue = span.IsOverdue
             });
         }
