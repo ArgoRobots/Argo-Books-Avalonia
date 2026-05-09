@@ -86,6 +86,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     public bool IsLossesTabSelected => SelectedTabIndex == 7;
 
+    /// <summary>
+    /// Gets whether the Refunds tab is selected.
+    /// </summary>
+    public bool IsRefundsTabSelected => SelectedTabIndex == 8;
+
     partial void OnSelectedTabIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsDashboardTabSelected));
@@ -96,6 +101,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         OnPropertyChanged(nameof(IsReturnsTabSelected));
         OnPropertyChanged(nameof(IsLossesTabSelected));
         OnPropertyChanged(nameof(IsTaxesTabSelected));
+        OnPropertyChanged(nameof(IsRefundsTabSelected));
+
+        if (IsRefundsTabSelected) RefreshRefundMetrics();
     }
 
     #endregion
@@ -2452,4 +2460,66 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     }
 
     #endregion
+
+    #region Refunds Tab
+
+    [ObservableProperty] private string _refundsTotal = "0.00";
+    [ObservableProperty] private string _refundsRate = "0.0%";
+    [ObservableProperty] private string _refundsAvgLatency = "—";
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopCustomers = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopProducts = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopReasons = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsChannelBreakdown = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsMonthBucket> _refundsMonthlyTotals = new();
+    [ObservableProperty] private bool _hasAnyRefunds;
+
+    /// <summary>
+    /// Refresh the Refunds tab metrics from the company's Payment list.
+    /// Called automatically when the user switches to the Refunds tab.
+    /// </summary>
+    public void RefreshRefundMetrics()
+    {
+        var company = App.CompanyManager?.CompanyData;
+        if (company == null) return;
+
+        var since = DateTime.Today.AddDays(-90);
+
+        var totalDecimal = ArgoBooks.Core.Services.RefundAnalyticsService.TotalRefunded(company, since);
+        var rateDecimal = ArgoBooks.Core.Services.RefundAnalyticsService.RefundRate(company, since);
+        var avgLatency = ArgoBooks.Core.Services.RefundAnalyticsService.AverageRefundLatencyDays(company, since);
+
+        RefundsTotal = totalDecimal.ToString("C");
+        RefundsRate = (rateDecimal * 100).ToString("F1") + "%";
+        RefundsAvgLatency = avgLatency > 0 ? $"{avgLatency:F1} days" : "—";
+        HasAnyRefunds = totalDecimal > 0;
+
+        RefundsTopCustomers.Clear();
+        foreach (var c in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedCustomers(company, since, 10))
+            RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, c.Amount.ToString("C"), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
+
+        RefundsTopProducts.Clear();
+        foreach (var p in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedProducts(company, since, 10))
+            RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, p.Amount.ToString("C"), null));
+
+        RefundsTopReasons.Clear();
+        foreach (var r in ArgoBooks.Core.Services.RefundAnalyticsService.TopReasons(company, since, 5))
+            RefundsTopReasons.Add(new RefundsRow(r.Reason, r.TotalAmount.ToString("C"), $"{r.Count}"));
+
+        RefundsChannelBreakdown.Clear();
+        foreach (var (channel, amount) in ArgoBooks.Core.Services.RefundAnalyticsService.ChannelBreakdown(company, since)
+                     .OrderByDescending(kv => kv.Value))
+            RefundsChannelBreakdown.Add(new RefundsRow(channel, amount.ToString("C"), null));
+
+        RefundsMonthlyTotals.Clear();
+        foreach (var m in ArgoBooks.Core.Services.RefundAnalyticsService.MonthlyTotals(company, 12))
+            RefundsMonthlyTotals.Add(new RefundsMonthBucket(m.Month.ToString("MMM yyyy"), m.Amount));
+    }
+
+    #endregion
 }
+
+/// <summary>Generic display row for the Refunds tab tables.</summary>
+public record RefundsRow(string Label, string Amount, string? Detail);
+
+/// <summary>Monthly bucket for the Refunds-over-time chart.</summary>
+public record RefundsMonthBucket(string MonthLabel, decimal Amount);

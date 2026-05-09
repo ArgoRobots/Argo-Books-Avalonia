@@ -344,15 +344,15 @@ public class PaymentPortalService : IDisposable
             {
                 // ----- Refund row -----
                 // The server's amount is already negative for refund rows. Find the
-                // local Payment that this refund offsets so we can link them.
+                // local Payment that this refund offsets via ProviderPaymentId,
+                // which the original payment carries from sync.
                 string? refundedFromLocalId = null;
                 if (!string.IsNullOrEmpty(portalPayment.RefundedProviderPaymentId))
                 {
                     refundedFromLocalId = companyData.Payments
-                        .FirstOrDefault(p => !string.IsNullOrEmpty(p.PortalPaymentId)
-                            && (p.ReferenceNumber == portalPayment.RefundedProviderPaymentId
-                                || string.Equals(p.Notes, portalPayment.RefundedProviderPaymentId, StringComparison.Ordinal)
-                                || p.PortalPaymentId == portalPayment.RefundedProviderPaymentId))
+                        .FirstOrDefault(p => !p.IsRefund
+                                          && !string.IsNullOrEmpty(p.ProviderPaymentId)
+                                          && p.ProviderPaymentId == portalPayment.RefundedProviderPaymentId)
                         ?.Id;
                 }
 
@@ -493,7 +493,23 @@ public class PaymentPortalService : IDisposable
                 invoice.BalanceUSD = Math.Max(0, invoice.TotalUSD - totalPaidUSD);
             }
 
-            if (invoice.Balance <= 0)
+            // If this invoice has prior refunds, factor them into the status
+            // so a new positive payment after a refund correctly lands on
+            // PartiallyRefunded rather than masking the refund history.
+            var refundedSoFar = companyData.Payments
+                .Where(p => p.InvoiceId == invoice.Id && p.IsRefund
+                    && string.Equals(string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
+                                     invoiceCurrency, StringComparison.OrdinalIgnoreCase))
+                .Sum(p => Math.Abs(p.Amount));
+            invoice.AmountRefunded = refundedSoFar;
+
+            if (refundedSoFar > 0 && totalPaidOriginal > 0)
+            {
+                invoice.Status = refundedSoFar >= totalPaidOriginal
+                    ? InvoiceStatus.Refunded
+                    : InvoiceStatus.PartiallyRefunded;
+            }
+            else if (invoice.Balance <= 0)
             {
                 invoice.Status = InvoiceStatus.Paid;
             }

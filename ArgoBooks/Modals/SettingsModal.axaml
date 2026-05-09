@@ -983,6 +983,29 @@
                                                    IsVisible="{Binding IsSyncIntervalNumeric}" />
                                     </StackPanel>
                                 </StackPanel>
+
+                                <!-- Owner Email (locked, change-via-flow) -->
+                                <StackPanel Spacing="6" Margin="0,16,0,0" IsEnabled="{Binding !IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Portal Owner Email'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Used for refund verification codes and account recovery. Cannot be edited in place — use Change to update via two-factor email confirmation.'}"
+                                               FontSize="11"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Border Background="{DynamicResource AltSurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="4"
+                                                Padding="10,6" MinWidth="280">
+                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13" />
+                                        </Border>
+                                        <Button Content="{loc:Loc 'Change…'}"
+                                                Command="{Binding OpenEmailChangeModalCommand}"
+                                                Padding="12,6" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

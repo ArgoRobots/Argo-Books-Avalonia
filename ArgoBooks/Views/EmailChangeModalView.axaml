@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             x:Class="ArgoBooks.Views.EmailChangeModalView"
+             x:DataType="vm:EmailChangeModalViewModel">
+    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Width="540">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0" Padding="24,18" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <StackPanel>
+                    <TextBlock Text="Change owner email"
+                               FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding CurrentOwnerEmail, StringFormat='Currently: {0}'}"
+                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" Padding="24,18" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="14">
+
+                    <!-- Step 1: new email -->
+                    <StackPanel IsVisible="{Binding IsEnterNewEmail}" Spacing="10">
+                        <TextBlock Text="Enter the new email address that should own this portal account." TextWrapping="Wrap" />
+                        <TextBox Text="{Binding NewEmail, Mode=TwoWay}" PlaceholderText="new@example.com" />
+                        <TextBlock Text="A verification code will be sent to BOTH the old and the new email so the change can be confirmed end-to-end."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Step 2: file password -->
+                    <StackPanel IsVisible="{Binding IsEnterPassword}" Spacing="10">
+                        <TextBlock Text="Enter your .argo file password to confirm you control this company file." TextWrapping="Wrap" />
+                        <TextBox Text="{Binding FilePassword, Mode=TwoWay}" PasswordChar="•" />
+                    </StackPanel>
+
+                    <!-- Step 3: old-email code -->
+                    <StackPanel IsVisible="{Binding IsEnterOldCode}" Spacing="10">
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="{Binding MaskedOldEmail, StringFormat='Enter the 6-digit code sent to {0} (your current email).'}" />
+                        <TextBox Text="{Binding OldCode, Mode=TwoWay}" PlaceholderText="123456" MaxLength="6"
+                                 FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
+                        <Button Content="Resend code" HorizontalAlignment="Right"
+                                Command="{Binding ResendOldCodeCommand}" />
+                    </StackPanel>
+
+                    <!-- Step 4: new-email code -->
+                    <StackPanel IsVisible="{Binding IsEnterNewCode}" Spacing="10">
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="{Binding MaskedNewEmail, StringFormat='Enter the 6-digit code sent to {0} to confirm the new email is reachable.'}" />
+                        <TextBox Text="{Binding NewCode, Mode=TwoWay}" PlaceholderText="123456" MaxLength="6"
+                                 FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
+                        <Button Content="Resend code" HorizontalAlignment="Right"
+                                Command="{Binding ResendNewCodeCommand}" />
+                    </StackPanel>
+
+                    <!-- Success -->
+                    <StackPanel IsVisible="{Binding IsSuccess}" Spacing="10">
+                        <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
+                        <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Status / errors common -->
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                               IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2" Padding="24,14" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <ProgressBar Grid.Column="0" Width="120" Height="4" IsIndeterminate="True"
+                                 IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Content="Continue →"
+                            IsVisible="{Binding IsEnterNewEmail}"
+                            IsEnabled="{Binding CanContinueFromNewEmail}"
+                            Classes="primary"
+                            Command="{Binding ContinueFromNewEmailCommand}" />
+                    <Button Grid.Column="2" Content="Continue →"
+                            IsVisible="{Binding IsEnterPassword}"
+                            IsEnabled="{Binding CanContinueFromPassword}"
+                            Classes="primary"
+                            Command="{Binding ContinueFromPasswordCommand}" />
+                    <Button Grid.Column="2" Content="Verify code"
+                            IsVisible="{Binding IsEnterOldCode}"
+                            IsEnabled="{Binding CanSubmitOldCode}"
+                            Classes="primary"
+                            Command="{Binding SubmitOldCodeCommand}" />
+                    <Button Grid.Column="2" Content="Confirm email change"
+                            IsVisible="{Binding IsEnterNewCode}"
+                            IsEnabled="{Binding CanSubmitNewCode}"
+                            Classes="primary"
+                            Command="{Binding SubmitNewCodeCommand}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

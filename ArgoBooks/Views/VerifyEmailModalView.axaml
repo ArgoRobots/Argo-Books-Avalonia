@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             x:Class="ArgoBooks.Views.VerifyEmailModalView"
+             x:DataType="vm:VerifyEmailModalViewModel">
+    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Width="480">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0" Padding="24,18" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <TextBlock Text="Verify your email"
+                           FontSize="18" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </Border>
+
+            <ScrollViewer Grid.Row="1" Padding="24,18" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="14">
+                    <!-- Pre-verify state -->
+                    <StackPanel IsVisible="{Binding !IsVerified}" Spacing="14">
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="{Binding MaskedEmail, StringFormat='We sent a 6-digit verification code to {0}. Enter it below to enable refunds for this account.'}" />
+                        <TextBox Text="{Binding Code, Mode=TwoWay}"
+                                 PlaceholderText="123456" MaxLength="6"
+                                 FontSize="22" FontWeight="SemiBold"
+                                 HorizontalContentAlignment="Center" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding StatusMessage}"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Content="{Binding ResendButtonText}"
+                                    IsEnabled="{Binding CanResend}"
+                                    Command="{Binding ResendCommand}" />
+                        </Grid>
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+
+                    <!-- Verified state -->
+                    <StackPanel IsVisible="{Binding IsVerified}" Spacing="10">
+                        <TextBlock Text="✓ Email verified" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="#059669" />
+                        <TextBlock TextWrapping="Wrap"
+                                   Text="Refunds are now enabled for this account. You can close this dialog." />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2" Padding="24,14" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <ProgressBar Grid.Column="0" Width="120" Height="4" IsIndeterminate="True"
+                                 IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Content="Verify"
+                            Classes="primary"
+                            IsVisible="{Binding !IsVerified}"
+                            IsEnabled="{Binding CanSubmit}"
+                            Command="{Binding SubmitCommand}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

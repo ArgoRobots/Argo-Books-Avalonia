@@ -708,6 +708,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _stripeEmail;
 
+    /// <summary>
+    /// The company's owner email — bound by the Portal Settings UI as a
+    /// read-only display next to a "Change…" button. Mutated only via the
+    /// 4-step EmailChangeModal flow (locked to in-place edits).
+    /// </summary>
+    [ObservableProperty]
+    private string? _companyEmail;
+
     [ObservableProperty]
     private bool _paypalConnected;
 
@@ -994,6 +1002,16 @@ public partial class SettingsModalViewModel : ViewModelBase
                 if (portalSettings != null)
                 {
                     portalSettings.PersistedApiKey = result.ApiKey;
+                    PortalSettings.ActivateApiKey(portalSettings);
+                }
+
+                // If the server says verification is required, kick the
+                // VerifyEmailModalView so the user can enter the 6-digit code
+                // emailed to them. Until they do, refund endpoints will return
+                // 412 (email_not_verified).
+                if (result.EmailVerificationRequired)
+                {
+                    _ = ShowEmailVerificationModalAsync(ownerEmail);
                 }
                 return true;
             }
@@ -1129,6 +1147,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         PaypalEmail = settings.ConnectedAccounts.PaypalEmail;
         SquareConnected = settings.ConnectedAccounts.SquareConnected;
         SquareEmail = settings.ConnectedAccounts.SquareEmail;
+        CompanyEmail = App.CompanyManager?.CompanyData?.Settings.Company.Email;
 
         // Fetch fresh provider status from the server in the background
         _ = RefreshProviderStatusAsync();
@@ -1977,6 +1996,106 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Refund-feature email verification + change
+
+    /// <summary>
+    /// Opens the registration email-verification modal. Called automatically
+    /// after a successful portal registration when the server says verification
+    /// is required.
+    /// </summary>
+    private async Task ShowEmailVerificationModalAsync(string? maskedEmail)
+    {
+        var refundService = App.RefundService;
+        if (refundService == null) return;
+        if (Avalonia.Application.Current?.ApplicationLifetime is not Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            || desktop.MainWindow is not Views.MainWindow mainWindow
+            || mainWindow.ModalService is not { } modalService)
+        {
+            return;
+        }
+        var vm = new VerifyEmailModalViewModel(refundService, maskedEmail);
+        try
+        {
+            var view = new Views.VerifyEmailModalView { DataContext = vm };
+            await modalService.ShowAsync(view, new Core.Services.ModalOptions
+            {
+                Title = string.Empty, Subtitle = string.Empty,
+                ShowCloseButton = true, Size = Core.Enums.ModalSize.Small,
+                CloseOnBackdropClick = false, CloseOnEscape = true,
+                PrimaryButtonText = string.Empty, SecondaryButtonText = string.Empty,
+            });
+        }
+        finally { vm.Dispose(); }
+    }
+
+    /// <summary>
+    /// Opens the 4-step "Change owner email" modal. Bound to a button in
+    /// PortalSettings.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenEmailChangeModalAsync()
+    {
+        var refundService = App.RefundService;
+        var companyData = App.CompanyManager?.CompanyData;
+        var companyManager = App.CompanyManager;
+        if (refundService == null || companyData == null || companyManager == null) return;
+
+        var currentEmail = companyData.Settings.Company.Email ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(currentEmail))
+        {
+            await ShowErrorDialogAsync("No email on file".Translate(),
+                "This company has no owner email yet. Set one in the company details first.".Translate());
+            return;
+        }
+
+        if (Avalonia.Application.Current?.ApplicationLifetime is not Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            || desktop.MainWindow is not Views.MainWindow mainWindow
+            || mainWindow.ModalService is not { } modalService)
+        {
+            return;
+        }
+
+        var vm = new EmailChangeModalViewModel(
+            refundService,
+            currentEmail,
+            companyManager.IsEncrypted,
+            password => companyManager.VerifyCurrentPassword(password));
+
+        try
+        {
+            var view = new Views.EmailChangeModalView { DataContext = vm };
+            await modalService.ShowAsync(view, new Core.Services.ModalOptions
+            {
+                Title = string.Empty, Subtitle = string.Empty,
+                ShowCloseButton = true, Size = Core.Enums.ModalSize.Medium,
+                CloseOnBackdropClick = false, CloseOnEscape = true,
+                PrimaryButtonText = string.Empty, SecondaryButtonText = string.Empty,
+            });
+
+            // If the user closed the dialog mid-flow with an in-flight change,
+            // abort the server-side request so it doesn't sit around.
+            if (vm.CurrentStep != EmailChangeModalViewModel.Step.Success
+                && vm.CurrentStep != EmailChangeModalViewModel.Step.Failure)
+            {
+                await vm.CancelChangeCommand.ExecuteAsync(null);
+            }
+
+            // If the change succeeded, update the local company email so the
+            // settings UI reflects the new value.
+            if (vm.CurrentStep == EmailChangeModalViewModel.Step.Success)
+            {
+                companyData.Settings.Company.Email = vm.NewEmail.Trim();
+                companyData.ChangesMade = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorDialogAsync("Email change failed".Translate(), ex.Message);
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -2033,6 +2152,7 @@ public class AutoLockSettingsEventArgs(string timeoutString) : EventArgs
 
         return 0;
     }
+
 }
 
 /// <summary>
