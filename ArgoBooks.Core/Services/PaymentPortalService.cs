@@ -306,10 +306,21 @@ public class PaymentPortalService : IDisposable
 
         foreach (var portalPayment in portalPayments)
         {
-            // Skip if we already have this portal payment (duplicate prevention)
-            var alreadySynced = companyData.Payments.Any(p =>
+            // Skip if we already have this portal payment (duplicate prevention).
+            // BUT first backfill any new fields the local row is missing so the
+            // refund feature works for payments that were synced before this
+            // release — without re-creating duplicate rows.
+            var existing = companyData.Payments.FirstOrDefault(p =>
                 p.PortalPaymentId == portalPayment.Id.ToString());
-            if (alreadySynced) continue;
+            if (existing != null)
+            {
+                if (string.IsNullOrEmpty(existing.ProviderPaymentId)
+                    && !string.IsNullOrEmpty(portalPayment.ProviderPaymentId))
+                {
+                    existing.ProviderPaymentId = portalPayment.ProviderPaymentId;
+                }
+                continue;
+            }
 
             // Find the matching invoice
             var invoice = companyData.GetInvoice(portalPayment.InvoiceId);

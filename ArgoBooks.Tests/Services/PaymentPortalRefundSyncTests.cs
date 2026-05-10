@@ -197,6 +197,41 @@ public class PaymentPortalRefundSyncTests
     }
 
     [Fact]
+    public void Sync_BackfillsProviderPaymentId_OnAlreadySyncedRow()
+    {
+        // Existing customers had Payment rows synced before this release, with
+        // ProviderPaymentId still null because the field didn't exist. The next
+        // sync touches these rows and backfills the new field — without
+        // creating duplicates — so the Refund button can appear retroactively.
+        var (company, invoice, _) = Seed(invoiceTotal: 100m);
+
+        // Simulate a pre-update Payment: PortalPaymentId is set (it was synced)
+        // but ProviderPaymentId is null (the field was new).
+        var stalePayment = new Payment
+        {
+            Id = "PAY-old",
+            InvoiceId = invoice.Id,
+            CustomerId = "CUST-001",
+            Amount = 100m,
+            PaymentMethod = PaymentMethod.Stripe,
+            Source = "Online",
+            PortalPaymentId = "42",
+            ProviderPaymentId = null, // pre-update state
+            OriginalCurrency = "USD",
+        };
+        company.Payments.Add(stalePayment);
+
+        // Sync the same row again with a populated ProviderPaymentId
+        PaymentPortalService.ProcessSyncedPayments(
+            new List<PortalPaymentRecord> { MakeOriginalPayment(invoice.Id, 100m, serverId: 42, providerPaymentId: "pi_backfilled") },
+            company);
+
+        // Backfill happened, no duplicate created
+        Assert.Single(company.Payments);
+        Assert.Equal("pi_backfilled", company.Payments[0].ProviderPaymentId);
+    }
+
+    [Fact]
     public void Sync_RegularPayment_AfterRefund_DoesNotResetRefundedStatus()
     {
         // Edge case: a customer pays, gets refunded, then pays again. The new
