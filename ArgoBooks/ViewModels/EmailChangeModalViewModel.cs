@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Validation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -29,6 +30,12 @@ public partial class EmailChangeModalViewModel : ObservableObject
     private readonly bool _fileIsEncrypted;
     private readonly Func<string, bool> _verifyFilePassword;
     private long _changeId;
+
+    /// <summary>Set by the coordinator so the in-modal X button can close it.</summary>
+    public Action? RequestClose { get; set; }
+
+    [RelayCommand]
+    private void Close() => RequestClose?.Invoke();
 
     public string CurrentOwnerEmail { get; }
 
@@ -92,12 +99,34 @@ public partial class EmailChangeModalViewModel : ObservableObject
     private string? _statusMessage;
 
     public bool CanContinueFromNewEmail
-        => !IsBusy && IsValidEmail(NewEmail) && !string.Equals(NewEmail.Trim(), CurrentOwnerEmail, StringComparison.OrdinalIgnoreCase);
+        => !IsBusy && DataValidator.IsValidEmail(NewEmail) && !string.Equals(NewEmail.Trim(), CurrentOwnerEmail, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// User-facing reason the Continue button is disabled, or null when valid.
+    /// Empty input is silent (don't shout at someone who just hasn't typed yet).
+    /// </summary>
+    public string? NewEmailValidationMessage
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(NewEmail)) return null;
+            if (string.Equals(NewEmail.Trim(), CurrentOwnerEmail, StringComparison.OrdinalIgnoreCase))
+                return "That's already the email on file. Enter a different address.";
+            if (!DataValidator.IsValidEmail(NewEmail))
+                return "Enter a valid email address.";
+            return null;
+        }
+    }
+
     public bool CanContinueFromPassword => !IsBusy && FilePassword.Length > 0;
     public bool CanSubmitOldCode => !IsBusy && OldCode.Length == 6 && OldCode.All(char.IsDigit);
     public bool CanSubmitNewCode => !IsBusy && NewCode.Length == 6 && NewCode.All(char.IsDigit);
 
-    partial void OnNewEmailChanged(string value)    => OnPropertyChanged(nameof(CanContinueFromNewEmail));
+    partial void OnNewEmailChanged(string value)
+    {
+        OnPropertyChanged(nameof(CanContinueFromNewEmail));
+        OnPropertyChanged(nameof(NewEmailValidationMessage));
+    }
     partial void OnFilePasswordChanged(string value)=> OnPropertyChanged(nameof(CanContinueFromPassword));
     partial void OnOldCodeChanged(string value)     => OnPropertyChanged(nameof(CanSubmitOldCode));
     partial void OnNewCodeChanged(string value)     => OnPropertyChanged(nameof(CanSubmitNewCode));
@@ -109,12 +138,6 @@ public partial class EmailChangeModalViewModel : ObservableObject
         OnPropertyChanged(nameof(CanSubmitNewCode));
     }
 
-    private static bool IsValidEmail(string s)
-    {
-        if (string.IsNullOrWhiteSpace(s)) return false;
-        try { var addr = new System.Net.Mail.MailAddress(s); return addr.Address == s.Trim(); }
-        catch { return false; }
-    }
 
     [RelayCommand]
     private void ContinueFromNewEmail()
@@ -206,6 +229,23 @@ public partial class EmailChangeModalViewModel : ObservableObject
                 ErrorMessage = result.ErrorCode == "WRONG_CODE" ? "Wrong code. Try again." : (result.Message ?? "Could not verify code.");
                 return;
             }
+
+            // Mirror the new email into local CompanyData and persist (scoped
+            // save — only appSettings.json — so other in-memory edits stay
+            // un-flushed). Without this, a restart leaves the UI showing
+            // the OLD email even though the server has the new one.
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData != null && !string.IsNullOrWhiteSpace(result.NewEmail))
+            {
+                companyData.Settings.Company.Email = result.NewEmail;
+                companyData.ChangesMade = true;
+                if (App.CompanyManager != null)
+                {
+                    try { await App.CompanyManager.SaveSettingsOnlyAsync(); }
+                    catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to persist email change: {ex.Message}", "OwnerEmail"); }
+                }
+            }
+
             CurrentStep = Step.Success;
             StatusMessage = $"Owner email is now {result.NewEmail}. The OLD address received a revert link valid for 30 days.";
         }

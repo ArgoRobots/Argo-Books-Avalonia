@@ -238,6 +238,7 @@
 
         <!-- Mid-level modals (may open entity creation modals on top) -->
         <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
+        <modals:RefundModals DataContext="{Binding RefundModalsViewModel}" />
         <modals:InvoiceTemplateDesignerModal DataContext="{Binding InvoiceTemplateDesignerViewModel}" />
         <modals:ExpenseModals DataContext="{Binding ExpenseModalsViewModel}" />
         <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />

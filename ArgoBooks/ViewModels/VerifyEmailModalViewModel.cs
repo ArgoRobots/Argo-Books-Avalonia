@@ -14,6 +14,12 @@ public partial class VerifyEmailModalViewModel : ObservableObject
     private readonly RefundService _refundService;
     private System.Timers.Timer? _resendCooldownTimer;
 
+    /// <summary>Set by the coordinator so the in-modal X button can close it.</summary>
+    public Action? RequestClose { get; set; }
+
+    [RelayCommand]
+    private void Close() => RequestClose?.Invoke();
+
     public VerifyEmailModalViewModel(RefundService refundService, string? maskedEmail)
     {
         _refundService = refundService;

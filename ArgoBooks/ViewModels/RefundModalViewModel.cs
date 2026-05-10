@@ -24,6 +24,7 @@ public partial class RefundModalViewModel : ObservableObject
         Polling,
         Success,
         Failure,
+        Details,
     }
 
     private readonly RefundService _refundService;
@@ -32,6 +33,15 @@ public partial class RefundModalViewModel : ObservableObject
     private long _requestId;
     private CancellationTokenSource? _pollCts;
     private System.Timers.Timer? _countdownTimer;
+
+    /// <summary>
+    /// Set by the coordinator (RefundModalsViewModel) so the in-modal X button
+    /// can close the modal without knowing about the coordinator directly.
+    /// </summary>
+    public Action? RequestClose { get; set; }
+
+    [RelayCommand]
+    private void Close() => RequestClose?.Invoke();
 
     // ---------- header ----------
     public string InvoiceNumber => _invoice.InvoiceNumber;
@@ -57,6 +67,16 @@ public partial class RefundModalViewModel : ObservableObject
     public bool IsPollingStep => CurrentStep == Step.Polling;
     public bool IsSuccessStep => CurrentStep == Step.Success;
     public bool IsFailureStep => CurrentStep == Step.Failure;
+    public bool IsDetailsStep => CurrentStep == Step.Details;
+
+    /// <summary>
+    /// Read-only states where the only action is dismiss. Drives the footer
+    /// "Done" button's visibility.
+    /// </summary>
+    public bool IsTerminalStep =>
+        CurrentStep == Step.Success ||
+        CurrentStep == Step.Failure ||
+        CurrentStep == Step.Details;
 
     partial void OnCurrentStepChanged(Step value)
     {
@@ -65,11 +85,16 @@ public partial class RefundModalViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPollingStep));
         OnPropertyChanged(nameof(IsSuccessStep));
         OnPropertyChanged(nameof(IsFailureStep));
+        OnPropertyChanged(nameof(IsDetailsStep));
+        OnPropertyChanged(nameof(IsTerminalStep));
     }
 
     // ---------- step 1: payments + line items ----------
     public ObservableCollection<RefundablePaymentRow> Payments { get; } = new();
     public ObservableCollection<RefundableLineRow> LineRows { get; } = new();
+
+    // ---------- read-only details (when invoice is fully refunded) ----------
+    public ObservableCollection<RefundHistoryRow> RefundHistory { get; } = new();
 
     [ObservableProperty]
     private string _reason = string.Empty;
@@ -96,6 +121,18 @@ public partial class RefundModalViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _maskedEmail;
+
+    /// <summary>
+    /// Body text for Step 2's "code was sent to..." message. Falls back to a
+    /// generic phrasing if the server didn't return a masked email (e.g. a
+    /// race during account setup), so the user never sees a sentence with a
+    /// dangling blank where the address should be.
+    /// </summary>
+    public string CodeSentMessage => string.IsNullOrWhiteSpace(MaskedEmail)
+        ? "A 6-digit code was sent to your portal owner email. Enter it below to confirm the refund."
+        : $"A 6-digit code was sent to {MaskedEmail}. Enter it below to confirm the refund.";
+
+    partial void OnMaskedEmailChanged(string? value) => OnPropertyChanged(nameof(CodeSentMessage));
 
     [ObservableProperty]
     private int _codeExpiresInSeconds;
@@ -128,6 +165,32 @@ public partial class RefundModalViewModel : ObservableObject
 
         BuildPaymentRows();
         BuildLineRows();
+        BuildRefundHistory();
+
+        // No money left to refund but past refunds exist → open in read-only
+        // details mode. If neither, fall through to LineItems and let it show
+        // its own validation.
+        if (Payments.Count == 0 && RefundHistory.Count > 0)
+        {
+            CurrentStep = Step.Details;
+        }
+    }
+
+    private void BuildRefundHistory()
+    {
+        var refunds = _allPayments
+            .Where(p => p.IsRefund)
+            .OrderByDescending(p => p.Date);
+        foreach (var r in refunds)
+        {
+            RefundHistory.Add(new RefundHistoryRow
+            {
+                Date = r.Date,
+                Amount = Math.Abs(r.Amount),
+                Reason = r.RefundReason,
+                Currency = string.IsNullOrEmpty(r.OriginalCurrency) ? "USD" : r.OriginalCurrency,
+            });
+        }
     }
 
     private void BuildPaymentRows()
@@ -294,7 +357,17 @@ public partial class RefundModalViewModel : ObservableObject
             var result = await _refundService.RequestRefundAsync(draft);
             if (!result.Ok)
             {
-                ErrorMessage = result.Message ?? result.ErrorCode ?? "Refund request failed.";
+                // Build a diagnostic-friendly message: include HTTP status and
+                // ErrorCode so it's clear when the failure is server-side
+                // (e.g. 404 = endpoints not deployed yet, 401 = bad API key,
+                // 412 = email not verified, etc.) vs the friendly server message.
+                var bits = new List<string>();
+                if (result.HttpStatus > 0) bits.Add($"HTTP {result.HttpStatus}");
+                if (!string.IsNullOrEmpty(result.ErrorCode)) bits.Add(result.ErrorCode);
+                if (!string.IsNullOrEmpty(result.Message)) bits.Add(result.Message);
+                ErrorMessage = bits.Count > 0
+                    ? string.Join(" — ", bits)
+                    : "Refund request failed (no response).";
                 return;
             }
             _requestId = result.RequestId;
@@ -342,6 +415,7 @@ public partial class RefundModalViewModel : ObservableObject
                 case "completed":
                     TerminalMessage = "Refund issued. The customer will see the money returned to their original payment method in 5–10 business days.";
                     CurrentStep = Step.Success;
+                    _ = App.AutoSyncPortalPaymentsAsync();
                     break;
                 case "cooling_off":
                     CoolingOffMessage = $"This refund is held for review for {result.CoolingOffSeconds / 60} minutes. You can cancel it from the email we just sent. Otherwise it will process automatically.";
@@ -453,6 +527,7 @@ public partial class RefundModalViewModel : ObservableObject
                             TerminalMessage = "Refund completed.";
                             CurrentStep = Step.Success;
                         });
+                        _ = App.AutoSyncPortalPaymentsAsync();
                         return;
                     }
                     if (status.State == "failed" || status.State == "cancelled")
@@ -512,4 +587,15 @@ public partial class RefundableLineRow : ObservableObject
 
     [ObservableProperty]
     private bool _isSelected;
+}
+
+public class RefundHistoryRow
+{
+    public DateTime Date { get; set; }
+    public decimal Amount { get; set; }
+    public string? Reason { get; set; }
+    public string Currency { get; set; } = "USD";
+
+    public string DateDisplay => Date.ToString("MMM d, yyyy");
+    public string ReasonDisplay => string.IsNullOrWhiteSpace(Reason) ? "No reason given" : Reason!;
 }

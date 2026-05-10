@@ -790,6 +790,44 @@
                                              MaxLength="255" />
                                 </StackPanel>
 
+                                <!-- Portal Owner Email -->
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Owner Email'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{loc:Loc 'Required. Used for refund verification codes and account recovery.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                    <!-- Empty state: editable input + Set button (initial setup) -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                                IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                        <TextBox Text="{Binding PendingOwnerEmail, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 PlaceholderText="you@example.com"
+                                                 Width="280" />
+                                        <Button Content="{loc:Loc 'Set'}"
+                                                Classes="primary-button"
+                                                Command="{Binding SetInitialOwnerEmailCommand}"
+                                                Padding="12,6" />
+                                    </StackPanel>
+
+                                    <!-- Set state: read-only display + Change button (locked, change-via-flow) -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                                IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <Border Background="{DynamicResource AltSurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="4"
+                                                Padding="10,6" MinWidth="280">
+                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13" />
+                                        </Border>
+                                        <Button Content="{loc:Loc 'Change…'}"
+                                                Command="{Binding OpenEmailChangeModalCommand}"
+                                                Padding="12,6" />
+                                    </StackPanel>
+                                </StackPanel>
+
                                 <!-- Portal Logo -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Portal Logo'}"
@@ -981,29 +1019,6 @@
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    VerticalAlignment="Center"
                                                    IsVisible="{Binding IsSyncIntervalNumeric}" />
-                                    </StackPanel>
-                                </StackPanel>
-
-                                <!-- Owner Email (locked, change-via-flow) -->
-                                <StackPanel Spacing="6" Margin="0,16,0,0" IsEnabled="{Binding !IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Portal Owner Email'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Used for refund verification codes and account recovery. Cannot be edited in place — use Change to update via two-factor email confirmation.'}"
-                                               FontSize="11"
-                                               TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <Border Background="{DynamicResource AltSurfaceBrush}"
-                                                BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1" CornerRadius="4"
-                                                Padding="10,6" MinWidth="280">
-                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13" />
-                                        </Border>
-                                        <Button Content="{loc:Loc 'Change…'}"
-                                                Command="{Binding OpenEmailChangeModalCommand}"
-                                                Padding="12,6" />
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>

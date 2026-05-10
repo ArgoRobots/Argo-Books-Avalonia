@@ -61,6 +61,12 @@ public class App : Application
     public static RefundService? RefundService { get; private set; }
 
     /// <summary>
+    /// Coordinator for the refund / email-verify / email-change modals.
+    /// Hosted at AppShell level so the ModalOverlay can dim the whole window.
+    /// </summary>
+    public static RefundModalsViewModel? RefundModalsViewModel => _appShellViewModel?.RefundModalsViewModel;
+
+    /// <summary>
     /// Gets the invoice usage service for tracking free-tier send limits.
     /// </summary>
     public static InvoiceUsageService? InvoiceUsageService { get; private set; }

@@ -1,14 +1,28 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks"
              x:Class="ArgoBooks.Views.VerifyEmailModalView"
              x:DataType="vm:VerifyEmailModalViewModel">
-    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Width="480">
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Width="480"
+            MaxHeight="500"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
         <Grid RowDefinitions="Auto,*,Auto">
             <Border Grid.Row="0" Padding="24,18" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                <TextBlock Text="Verify your email"
-                           FontSize="18" FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Text="Verify your email"
+                               FontSize="18" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}"
+                            VerticalAlignment="Top">
+                        <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                    </Button>
+                </Grid>
             </Border>
 
             <ScrollViewer Grid.Row="1" Padding="24,18" VerticalScrollBarVisibility="Auto">

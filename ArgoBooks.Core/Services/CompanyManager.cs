@@ -1242,6 +1242,42 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Persists ONLY appSettings.json — used when a single setting (e.g. owner
+    /// email) changes and we don't want to flush other in-memory edits to disk.
+    /// Writes the latest <see cref="CompanyData.Settings"/> to the temp dir
+    /// and re-zips the .argo. The other 29 domain JSON files in the temp dir
+    /// are left untouched (they still hold whatever was last saved). Does NOT
+    /// call <c>MarkAsSaved</c> so an outstanding ChangesMade flag for OTHER
+    /// edits is preserved.
+    /// </summary>
+    public async Task SaveSettingsOnlyAsync(CancellationToken cancellationToken = default)
+    {
+        await _saveLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
+                return;
+
+            var companyDir = GetCompanyDirectory(_currentTempDirectory);
+            await _fileService.WriteJsonAsync(companyDir, "appSettings.json", CompanyData.Settings, cancellationToken);
+
+            ReleaseFileLock();
+            try
+            {
+                await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+            }
+            finally
+            {
+                AcquireFileLock(CurrentFilePath);
+            }
+        }
+        finally
+        {
+            _saveLock.Release();
+        }
+    }
+
+    /// <summary>
     /// Marks the company data as changed.
     /// </summary>
     public void MarkAsChanged()

@@ -5,6 +5,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -1011,7 +1012,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 // 412 (email_not_verified).
                 if (result.EmailVerificationRequired)
                 {
-                    _ = ShowEmailVerificationModalAsync(ownerEmail);
+                    ShowEmailVerificationModal(ownerEmail);
                 }
                 return true;
             }
@@ -2004,29 +2005,130 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// after a successful portal registration when the server says verification
     /// is required.
     /// </summary>
-    private async Task ShowEmailVerificationModalAsync(string? maskedEmail)
+    private void ShowEmailVerificationModal(string? maskedEmail)
+    {
+        App.RefundModalsViewModel?.OpenVerifyEmailModal(maskedEmail);
+    }
+
+    /// <summary>
+    /// Working text for the "set initial owner email" inline input shown when
+    /// the company has no owner email yet. The Set button is enabled once
+    /// this contains a syntactically valid address.
+    /// NotifyCanExecuteChangedFor wires the property change to the command's
+    /// CanExecute reevaluation so the button enables as the user types.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SetInitialOwnerEmailCommand))]
+    private string _pendingOwnerEmail = string.Empty;
+
+    public bool CanSetInitialOwnerEmail
+    {
+        get
+        {
+            return DataValidator.IsValidEmail(PendingOwnerEmail);
+        }
+    }
+
+    /// <summary>
+    /// First-time setup of the portal owner email. The server stores
+    /// owner_email but does NOT mark email_verified_at — instead it emails
+    /// a verification code to the new address. We immediately open the
+    /// VerifyEmailModal so the user finishes the loop. Until they confirm
+    /// the code, refund endpoints will return 412 EMAIL_NOT_VERIFIED.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSetInitialOwnerEmail))]
+    private async Task SetInitialOwnerEmailAsync()
     {
         var refundService = App.RefundService;
-        if (refundService == null) return;
-        if (Avalonia.Application.Current?.ApplicationLifetime is not Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-            || desktop.MainWindow is not Views.MainWindow mainWindow
-            || mainWindow.ModalService is not { } modalService)
+        var companyData = App.CompanyManager?.CompanyData;
+        if (refundService == null || companyData == null) return;
+
+        var email = PendingOwnerEmail.Trim();
+
+        var result = await refundService.SetInitialOwnerEmailAsync(email);
+
+        // Recovery path: server says email is already set on the company,
+        // but the local .argo doesn't have it (likely because an earlier
+        // Set succeeded server-side before the local-persist fix landed).
+        // The 409 response now includes the existing email — if it matches
+        // what the user just typed, silently reconcile local state. If it
+        // differs, surface the existing email so the user can act.
+        if (!result.Ok && result.ErrorCode == "OWNER_EMAIL_ALREADY_SET")
         {
+            var existing = result.OwnerEmail?.Trim();
+            if (!string.IsNullOrEmpty(existing) &&
+                string.Equals(existing, email, StringComparison.OrdinalIgnoreCase))
+            {
+                // Reconcile silently: mirror server's value locally and persist.
+                await ReconcileOwnerEmailAsync(companyData, existing);
+                return;
+            }
+
+            await ShowErrorDialogAsync(
+                "Owner email already set".Translate(),
+                string.IsNullOrEmpty(existing)
+                    ? "An owner email is already on file. Use the Change flow to update it.".Translate()
+                    : $"This portal account already has the owner email {existing}. Use the Change flow to update it.".Translate());
+
+            // Even on the "different email" branch, the local .argo may still
+            // be out of sync — pull the server's value down so the UI reflects
+            // reality and the refund pre-flight stops false-blocking.
+            if (!string.IsNullOrEmpty(existing))
+            {
+                await ReconcileOwnerEmailAsync(companyData, existing);
+            }
             return;
         }
-        var vm = new VerifyEmailModalViewModel(refundService, maskedEmail);
-        try
+
+        if (!result.Ok)
         {
-            var view = new Views.VerifyEmailModalView { DataContext = vm };
-            await modalService.ShowAsync(view, new Core.Services.ModalOptions
-            {
-                Title = string.Empty, Subtitle = string.Empty,
-                ShowCloseButton = true, Size = Core.Enums.ModalSize.Small,
-                CloseOnBackdropClick = false, CloseOnEscape = true,
-                PrimaryButtonText = string.Empty, SecondaryButtonText = string.Empty,
-            });
+            var detail = result.Message
+                ?? result.ErrorCode
+                ?? $"The server rejected the request (HTTP {result.HttpStatus}).";
+            await ShowErrorDialogAsync("Could not set owner email".Translate(), detail.Translate());
+            return;
         }
-        finally { vm.Dispose(); }
+
+        // Mirror into local company data so the rest of the app sees it.
+        companyData.Settings.Company.Email = email;
+        CompanyEmail = email;
+        PendingOwnerEmail = string.Empty;
+        companyData.ChangesMade = true;
+
+        // Persist the change to the .argo file immediately. Scoped save so
+        // we ONLY write appSettings.json — any other in-memory edits the
+        // user has open elsewhere stay un-flushed (their asterisk stays).
+        // Without this, a restart leaves Settings.Company.Email empty even
+        // though the server has it; refund pre-flight wrongly errors with
+        // "owner email required".
+        if (App.CompanyManager != null)
+        {
+            try { await App.CompanyManager.SaveSettingsOnlyAsync(); }
+            catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to persist owner email: {ex.Message}", "OwnerEmail"); }
+        }
+
+        // Server sent a code to the new email; pop the verify modal so the
+        // user can confirm it. The masked email comes back in the response
+        // so we display the same masking server-side.
+        App.RefundModalsViewModel?.OpenVerifyEmailModal(result.MaskedEmail);
+    }
+
+    /// <summary>
+    /// Mirror the server-known owner email into local state and persist via
+    /// the scoped settings-only save. Used by the OWNER_EMAIL_ALREADY_SET
+    /// recovery path so a restart-with-broken-local-state can self-heal.
+    /// </summary>
+    private async Task ReconcileOwnerEmailAsync(ArgoBooks.Core.Data.CompanyData companyData, string serverEmail)
+    {
+        companyData.Settings.Company.Email = serverEmail;
+        CompanyEmail = serverEmail;
+        PendingOwnerEmail = string.Empty;
+        companyData.ChangesMade = true;
+        if (App.CompanyManager != null)
+        {
+            try { await App.CompanyManager.SaveSettingsOnlyAsync(); }
+            catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to persist reconciled owner email: {ex.Message}", "OwnerEmail"); }
+        }
     }
 
     /// <summary>
@@ -2036,10 +2138,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task OpenEmailChangeModalAsync()
     {
-        var refundService = App.RefundService;
         var companyData = App.CompanyManager?.CompanyData;
         var companyManager = App.CompanyManager;
-        if (refundService == null || companyData == null || companyManager == null) return;
+        if (companyData == null || companyManager == null) return;
 
         var currentEmail = companyData.Settings.Company.Email ?? string.Empty;
         if (string.IsNullOrWhiteSpace(currentEmail))
@@ -2049,50 +2150,19 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        if (Avalonia.Application.Current?.ApplicationLifetime is not Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-            || desktop.MainWindow is not Views.MainWindow mainWindow
-            || mainWindow.ModalService is not { } modalService)
-        {
-            return;
-        }
-
-        var vm = new EmailChangeModalViewModel(
-            refundService,
+        // Hand off to the AppShell-level RefundModals coordinator. On success
+        // it invokes the callback below, which mirrors the new email into the
+        // local Company settings and marks the file dirty.
+        App.RefundModalsViewModel?.OpenEmailChangeModal(
             currentEmail,
             companyManager.IsEncrypted,
-            password => companyManager.VerifyCurrentPassword(password));
-
-        try
-        {
-            var view = new Views.EmailChangeModalView { DataContext = vm };
-            await modalService.ShowAsync(view, new Core.Services.ModalOptions
+            password => companyManager.VerifyCurrentPassword(password),
+            onCompleted: newEmail =>
             {
-                Title = string.Empty, Subtitle = string.Empty,
-                ShowCloseButton = true, Size = Core.Enums.ModalSize.Medium,
-                CloseOnBackdropClick = false, CloseOnEscape = true,
-                PrimaryButtonText = string.Empty, SecondaryButtonText = string.Empty,
-            });
-
-            // If the user closed the dialog mid-flow with an in-flight change,
-            // abort the server-side request so it doesn't sit around.
-            if (vm.CurrentStep != EmailChangeModalViewModel.Step.Success
-                && vm.CurrentStep != EmailChangeModalViewModel.Step.Failure)
-            {
-                await vm.CancelChangeCommand.ExecuteAsync(null);
-            }
-
-            // If the change succeeded, update the local company email so the
-            // settings UI reflects the new value.
-            if (vm.CurrentStep == EmailChangeModalViewModel.Step.Success)
-            {
-                companyData.Settings.Company.Email = vm.NewEmail.Trim();
+                companyData.Settings.Company.Email = newEmail;
+                CompanyEmail = newEmail;
                 companyData.ChangesMade = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            await ShowErrorDialogAsync("Email change failed".Translate(), ex.Message);
-        }
+            });
     }
 
     #endregion

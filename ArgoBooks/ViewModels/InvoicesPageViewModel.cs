@@ -750,6 +750,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             InvoiceStatus.Paid => "Paid",
             InvoiceStatus.Overdue => "Overdue",
             InvoiceStatus.Cancelled => "Cancelled",
+            InvoiceStatus.PartiallyRefunded => "Partially Refunded",
+            InvoiceStatus.Refunded => "Refunded",
             _ => "Unknown"
         };
     }
@@ -768,9 +770,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
-    /// True when the invoice has at least one online (portal) payment with money
-    /// still refundable. This decides whether the row's Refund icon button is
-    /// enabled.
+    /// True when the row's Refund icon button should be visible.
+    /// Returns true when either money is still refundable OR a past refund
+    /// exists (so the user can open the modal to view refund history).
     /// </summary>
     private static bool ComputeCanRefund(Invoice invoice, ArgoBooks.Core.Data.CompanyData? companyData)
     {
@@ -785,6 +787,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                         && !string.IsNullOrEmpty(p.ProviderPaymentId))
             .ToList();
         if (portalPayments.Count == 0) return false;
+
+        // Any past refund on this invoice keeps the button visible so the
+        // modal can show details, even if nothing's left to refund.
+        var hasRefundHistory = companyData.Payments
+            .Any(r => r.InvoiceId == invoice.Id && r.IsRefund);
+        if (hasRefundHistory) return true;
 
         foreach (var p in portalPayments)
         {
@@ -886,50 +894,42 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private async Task OpenRefundModal(InvoiceDisplayItem? item)
     {
         if (item == null) return;
-        var refundService = App.RefundService;
-        if (refundService == null) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         var invoice = companyData?.GetInvoice(item.Id);
         if (companyData == null || invoice == null) return;
 
+        // Refunds require an owner email so the verification code has somewhere
+        // to be delivered. Pre-flight this client-side so the user gets a
+        // clear actionable error (with a path to fix it) rather than getting
+        // halfway through the modal and hitting the server's 412 gate.
+        if (string.IsNullOrWhiteSpace(companyData.Settings.Company.Email))
+        {
+            await ShowRefundEmailRequiredAsync();
+            return;
+        }
+
         var invoicePayments = companyData.Payments.Where(p => p.InvoiceId == invoice.Id).ToList();
         var customer = companyData.GetCustomer(invoice.CustomerId);
         var customerName = customer?.Name ?? item.CustomerName;
 
-        // Reach the MainWindow's ModalService through the Avalonia application
-        // lifetime (same pattern as App.ShowErrorMessageBoxAsync). There is no
-        // DI container in this codebase; ModalService is owned by MainWindow.
+        // Hand off to the AppShell-level RefundModals — the same pattern as
+        // every other modal in the app. The onClosed callback refreshes the
+        // invoice list so any newly-arrived refund Payment appears.
+        App.RefundModalsViewModel?.OpenRefundModal(invoice, invoicePayments, customerName, onClosed: LoadInvoices);
+    }
+
+    private static async Task ShowRefundEmailRequiredAsync()
+    {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop
             || desktop.MainWindow is not MainWindow mainWindow
-            || mainWindow.ModalService is not { } modalService)
+            || mainWindow.MessageBoxService is not { } mbox)
         {
             return;
         }
-
-        var modalVm = new RefundModalViewModel(refundService, invoice, invoicePayments, customerName);
-        try
-        {
-            var view = new ArgoBooks.Views.RefundModalView { DataContext = modalVm };
-            await modalService.ShowAsync(view, new ArgoBooks.Core.Services.ModalOptions
-            {
-                Title = string.Empty,
-                Subtitle = string.Empty,
-                ShowCloseButton = true,
-                Size = ArgoBooks.Core.Enums.ModalSize.Medium,
-                CloseOnBackdropClick = false,
-                CloseOnEscape = true,
-                PrimaryButtonText = string.Empty,
-                SecondaryButtonText = string.Empty,
-            });
-        }
-        finally
-        {
-            modalVm.Dispose();
-        }
-
-        // Trigger a refresh so any newly-arrived refund Payment shows in the list.
-        LoadInvoices();
+        await mbox.ShowErrorAsync(
+            "Owner email required",
+            "You need to set your portal owner email before issuing a refund. The verification code is sent to that address.\n\nOpen Settings → Payment Portal and set your owner email, then try again.");
     }
 
     [RelayCommand]

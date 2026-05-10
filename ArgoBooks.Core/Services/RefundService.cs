@@ -105,6 +105,17 @@ public class RefundService
     public async Task<ApiResult> ConfirmRegistrationCodeAsync(string code, CancellationToken ct = default)
         => await SendAsync<ApiResult>(BuildRequest(HttpMethod.Post, "/api/portal/account/verify-email/confirm.php", new { code }), ct);
 
+    /// <summary>
+    /// First-time setup of owner_email when the portal company row has none.
+    /// Server returns 409 OWNER_EMAIL_ALREADY_SET if there's already an
+    /// email on file (user must use the Change flow in that case).
+    /// On success the server stores owner_email AND emails a verification
+    /// code to it; email_verified_at is NOT set until the caller confirms
+    /// that code via /verify-email/confirm.php.
+    /// </summary>
+    public async Task<SetInitialOwnerEmailResult> SetInitialOwnerEmailAsync(string email, CancellationToken ct = default)
+        => await SendAsync<SetInitialOwnerEmailResult>(BuildRequest(HttpMethod.Post, "/api/portal/account/set-initial-email.php", new { email }), ct);
+
     public async Task<EmailChangeRequestResult> RequestEmailChangeAsync(string newEmail, bool passwordVerified, CancellationToken ct = default)
         => await SendAsync<EmailChangeRequestResult>(
             BuildRequest(HttpMethod.Post, "/api/portal/account/email-change/request.php", new { new_email = newEmail, password_verified = passwordVerified }), ct);
@@ -197,7 +208,18 @@ public record RefundDraft(
 public class ApiResult
 {
     [JsonPropertyName("success")] public bool Success { get; set; }
-    [JsonPropertyName("error")]   public string? ErrorCode { get; set; }
+
+    // The portal API has two error-code field shapes in flight: refund-flow
+    // endpoints return `error`; the older `send_error_response()` helper
+    // returns `errorCode`. Accept either so we never lose the code.
+    [JsonPropertyName("error")] public string? ErrorCode { get; set; }
+    [JsonPropertyName("errorCode")]
+    public string? ErrorCodeCamelCase
+    {
+        get => null;
+        set { if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(ErrorCode)) ErrorCode = value; }
+    }
+
     [JsonPropertyName("message")] public string? Message { get; set; }
     [JsonIgnore] public int HttpStatus { get; set; }
     [JsonIgnore] public bool Ok { get; set; }
@@ -242,4 +264,10 @@ public class EmailChangeStateResult : ApiResult
     [JsonPropertyName("state")] public string? State { get; set; }
     [JsonPropertyName("maskedNewEmail")] public string? MaskedNewEmail { get; set; }
     [JsonPropertyName("newEmail")] public string? NewEmail { get; set; }
+}
+
+public class SetInitialOwnerEmailResult : ApiResult
+{
+    [JsonPropertyName("ownerEmail")] public string? OwnerEmail { get; set; }
+    [JsonPropertyName("maskedEmail")] public string? MaskedEmail { get; set; }
 }

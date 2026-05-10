@@ -1,17 +1,31 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks"
              x:Class="ArgoBooks.Views.EmailChangeModalView"
              x:DataType="vm:EmailChangeModalViewModel">
-    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Width="540">
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Width="540"
+            MaxHeight="640"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
         <Grid RowDefinitions="Auto,*,Auto">
             <Border Grid.Row="0" Padding="24,18" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                <StackPanel>
-                    <TextBlock Text="Change owner email"
-                               FontSize="18" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding CurrentOwnerEmail, StringFormat='Currently: {0}'}"
-                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
-                </StackPanel>
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Change owner email"
+                                   FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding CurrentOwnerEmail, StringFormat='Currently: {0}'}"
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}"
+                            VerticalAlignment="Top">
+                        <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                    </Button>
+                </Grid>
             </Border>
 
             <ScrollViewer Grid.Row="1" Padding="24,18" VerticalScrollBarVisibility="Auto">
@@ -21,6 +35,9 @@
                     <StackPanel IsVisible="{Binding IsEnterNewEmail}" Spacing="10">
                         <TextBlock Text="Enter the new email address that should own this portal account." TextWrapping="Wrap" />
                         <TextBox Text="{Binding NewEmail, Mode=TwoWay}" PlaceholderText="new@example.com" />
+                        <TextBlock Text="{Binding NewEmailValidationMessage}"
+                                   FontSize="12" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
+                                   IsVisible="{Binding NewEmailValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         <TextBlock Text="A verification code will be sent to BOTH the old and the new email so the change can be confirmed end-to-end."
                                    FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
