@@ -70,17 +70,9 @@ public partial class RefundModalViewModel : ObservableObject
     public bool IsDetailsStep => CurrentStep == Step.Details;
 
     /// <summary>
-    /// Read-only states where the only action is dismiss. Drives the footer
-    /// "Done" button's visibility.
-    /// </summary>
-    public bool IsTerminalStep =>
-        CurrentStep == Step.Success ||
-        CurrentStep == Step.Failure ||
-        CurrentStep == Step.Details;
-
-    /// <summary>
-    /// Same as IsTerminalStep minus Success — the footer Done button hides
-    /// on Success because the SuccessAnimation overlay supplies its own.
+    /// Read-only terminal states where the only action is dismiss, MINUS
+    /// Success (the SuccessAnimation overlay supplies its own Done button,
+    /// so the footer Done would double-up). Drives the footer Done button.
     /// </summary>
     public bool IsNonSuccessTerminalStep =>
         CurrentStep == Step.Failure ||
@@ -122,7 +114,6 @@ public partial class RefundModalViewModel : ObservableObject
         OnPropertyChanged(nameof(BusyLabel));
         OnPropertyChanged(nameof(BusySubLabel));
         OnPropertyChanged(nameof(IsDetailsStep));
-        OnPropertyChanged(nameof(IsTerminalStep));
     }
 
     // ---------- step 1: payments + line items ----------
@@ -374,9 +365,20 @@ public partial class RefundModalViewModel : ObservableObject
         RefundTotal = LineRows.Where(r => r.IsSelected).Sum(r => r.Amount);
         SelectedPaymentsRefundable = Payments.Where(p => p.IsSelected).Sum(p => p.Refundable);
 
-        if (Payments.All(p => !p.IsSelected))
+        var selectedPaymentCount = Payments.Count(p => p.IsSelected);
+        if (selectedPaymentCount == 0)
         {
             LineItemsValidationMessage = "Pick at least one payment to refund against.";
+        }
+        else if (selectedPaymentCount > 1)
+        {
+            // ContinueAsync only sends the FIRST selected payment to the
+            // refund API — multi-payment refunds aren't wired through to
+            // the server yet. Block selecting >1 here so the user gets a
+            // clear error instead of a confusing AMOUNT_EXCEEDS_REFUNDABLE
+            // from the server when the refund total exceeds the first
+            // payment's individual refundable amount.
+            LineItemsValidationMessage = "Refund only one payment at a time. Issue a separate refund for each.";
         }
         else if (RefundTotal <= 0)
         {
@@ -384,7 +386,7 @@ public partial class RefundModalViewModel : ObservableObject
         }
         else if (RefundTotal > SelectedPaymentsRefundable)
         {
-            LineItemsValidationMessage = $"Refund total ({RefundTotal:C}) exceeds the selected payments' refundable amount ({SelectedPaymentsRefundable:C}).";
+            LineItemsValidationMessage = $"Refund total ({RefundTotal:C}) exceeds the selected payment's refundable amount ({SelectedPaymentsRefundable:C}).";
         }
         else
         {
@@ -484,7 +486,13 @@ public partial class RefundModalViewModel : ObservableObject
                     _ = App.AutoSyncPortalPaymentsAsync();
                     break;
                 case "cooling_off":
-                    CoolingOffMessage = $"This refund is held for review for {result.CoolingOffSeconds / 60} minutes. You can cancel it from the email we just sent. Otherwise it will process automatically.";
+                    // Null-coalesce because CoolingOffSeconds is int? — without
+                    // it, a missing value prints as empty ("...for  minutes").
+                    // Round-up so 899s reads as "15 minutes" instead of the
+                    // truncated 14 that integer division would produce.
+                    var coolingMinutes = (int)Math.Ceiling((result.CoolingOffSeconds ?? 0) / 60.0);
+                    if (coolingMinutes < 1) coolingMinutes = 1;
+                    CoolingOffMessage = $"This refund is held for review for {coolingMinutes} minute(s). You can cancel it from the email we just sent. Otherwise it will process automatically.";
                     CurrentStep = Step.Polling;
                     BeginPolling();
                     break;
@@ -575,6 +583,11 @@ public partial class RefundModalViewModel : ObservableObject
 
     private void BeginPolling()
     {
+        // Cancel any pre-existing polling loop before starting a new one.
+        // Without this, a second BeginPolling() call (e.g. re-entering the
+        // Polling step after a re-test) would leak the prior background
+        // task and let it race-mutate CurrentStep alongside the new loop.
+        StopPolling();
         _pollCts = new CancellationTokenSource();
         _ = Task.Run(async () =>
         {

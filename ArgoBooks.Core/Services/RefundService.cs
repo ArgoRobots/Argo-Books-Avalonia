@@ -212,6 +212,15 @@ public class ApiResult
     // The portal API has two error-code field shapes in flight: refund-flow
     // endpoints return `error`; the older `send_error_response()` helper
     // returns `errorCode`. Accept either so we never lose the code.
+    //
+    // Precedence (deterministic regardless of JSON key order):
+    //   `error` always wins when present.
+    //   - error first  : direct setter assigns ErrorCode = "error_val".
+    //                    errorCode-setter runs next, sees non-empty ErrorCode,
+    //                    skips → final = error_val.
+    //   - errorCode first: errorCode-setter sees empty ErrorCode and assigns.
+    //                    error setter runs next, overwrites directly → final = error_val.
+    //   If only errorCode is present, it's used as fallback.
     [JsonPropertyName("error")] public string? ErrorCode { get; set; }
     [JsonPropertyName("errorCode")]
     public string? ErrorCodeCamelCase
