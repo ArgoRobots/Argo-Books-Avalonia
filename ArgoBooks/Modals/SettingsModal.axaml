@@ -7,7 +7,6 @@
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -179,7 +178,7 @@
                                                         Command="{Binding OpenTelemetryFolderCommand}"
                                                         Padding="12,6"
                                                         MinHeight="0" />
-                                                <Button Classes="danger-button"
+                                                <Button Classes="danger-outline-button"
                                                         Content="{loc:Loc 'Delete All Data'}"
                                                         Command="{Binding DeleteTelemetryDataCommand}"
                                                         IsEnabled="{Binding !IsDeletingTelemetry}"
@@ -822,7 +821,8 @@
                                                 Padding="10,6" MinWidth="280">
                                             <TextBlock Text="{Binding CompanyEmail}" FontSize="13" />
                                         </Border>
-                                        <Button Content="{loc:Loc 'Change…'}"
+                                        <Button Content="{loc:Loc 'Change'}"
+                                                Classes="secondary-button"
                                                 Command="{Binding OpenEmailChangeModalCommand}"
                                                 Padding="12,6" />
                                     </StackPanel>
@@ -866,7 +866,7 @@
                                                         IsEnabled="{Binding !IsUploadingPortalLogo}"
                                                         Padding="12,6"
                                                         MinHeight="0" />
-                                                <Button Classes="danger-button"
+                                                <Button Classes="danger-outline-button"
                                                         Content="{loc:Loc Remove}"
                                                         Command="{Binding RemovePortalLogoCommand}"
                                                         IsVisible="{Binding HasPortalLogo}"
@@ -914,7 +914,7 @@
                                                     Padding="12,6"
                                                     MinHeight="0" />
                                             <Button Grid.Column="1"
-                                                    Classes="danger-button"
+                                                    Classes="danger-outline-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectStripeCommand}"
                                                     IsVisible="{Binding StripeConnected}"
@@ -953,7 +953,7 @@
                                                     Padding="12,6"
                                                     MinHeight="0" />
                                             <Button Grid.Column="1"
-                                                    Classes="danger-button"
+                                                    Classes="danger-outline-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectPaypalCommand}"
                                                     IsVisible="{Binding PaypalConnected}"
@@ -992,7 +992,7 @@
                                                     Padding="12,6"
                                                     MinHeight="0" />
                                             <Button Grid.Column="1"
-                                                    Classes="danger-button"
+                                                    Classes="danger-outline-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectSquareCommand}"
                                                     IsVisible="{Binding SquareConnected}"
