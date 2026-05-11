@@ -122,7 +122,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Default fallback limit used when the server hasn't been reached yet.
     /// </summary>
-    internal const int DefaultFreeInvoiceLimit = 5;
+    // Must match the server's free-tier default (config/pricing.php
+    // FREE_INVOICE_MONTHLY_LIMIT). Used only as a fallback before the
+    // server check completes; the real value comes from CheckUsageAsync.
+    internal const int DefaultFreeInvoiceLimit = 25;
 
     [ObservableProperty]
     private bool _hasPremium;
@@ -398,12 +401,23 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (usageService == null || HasPremium) return;
 
         var result = await usageService.CheckUsageAsync();
-        if (result.Success)
+        if (!result.Success) return;
+
+        // Server returns monthly_limit = -1 as a sentinel for Premium /
+        // unlimited. If we update SendCount but not the limit, the UI ends
+        // up with SendCount > stale-default-limit and falsely flags
+        // "limit reached" — exactly what bit us before. Treat the sentinel
+        // as a Premium-equivalent: mark HasPremium so RemainingInvoices is
+        // ignored downstream.
+        if (result.MonthlyLimit < 0 || string.Equals(result.Tier, "premium", StringComparison.OrdinalIgnoreCase))
         {
-            if (result.MonthlyLimit > 0)
-                InvoiceMonthlyLimit = result.MonthlyLimit;
-            SentInvoicesThisMonthCount = result.SendCount;
+            HasPremium = true;
+            return;
         }
+
+        if (result.MonthlyLimit > 0)
+            InvoiceMonthlyLimit = result.MonthlyLimit;
+        SentInvoicesThisMonthCount = result.SendCount;
     }
 
     private void OnCurrencyChanged(object? sender, EventArgs e)
