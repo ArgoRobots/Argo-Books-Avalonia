@@ -196,8 +196,26 @@ stored `AmountPaid` value the import gave them.
 | `Paid` | `AmountPaid >= Total`. | First positive payment that closes the balance. |
 | `Overdue` | Today is past `DueDate` and not fully paid / cancelled. | Derived (`IsOverdue` getter), not a stored transition. |
 | `Cancelled` | Invoice voided. | Explicit user action. |
-| `PartiallyRefunded` | Was paid, then some (but not all) was refunded. | `0 < AmountRefunded < AmountPaid`. |
-| `Refunded` | Was paid, then fully refunded. | `AmountRefunded >= Total`. |
+| `PartiallyRefunded` | Was paid, then some (but not all) was refunded — OR was fully refunded and then paid again. | See refund rule below. |
+| `Refunded` | Was paid, then fully refunded with no subsequent payment. | See refund rule below. |
+
+**Refund status rule.** `AmountRefunded vs Total` alone isn't enough,
+because two scenarios both produce `AmountPaid > Total`:
+
+1. *Single payment + processing fee, fully refunded.* AmountPaid = $103
+   ($100 invoice + $3 fee customer absorbed), AmountRefunded = $100
+   (refunds don't include the fee). Status should be `Refunded`.
+2. *Pay → refund → pay again.* AmountPaid = $200, AmountRefunded = $100.
+   Status should be `PartiallyRefunded` so the refund history stays
+   visible alongside the new payment.
+
+The discriminator is **net paid** (`AmountPaid − AmountRefunded`). If it
+is less than one full invoice value (`Total`), the gap is fee residue —
+status is `Refunded`. If it is at least one full invoice value, the
+customer paid the invoice over again on top of the refund — status is
+`PartiallyRefunded`.
+
+Owned by `InvoiceTotalsService.RecalculateStatus`.
 
 Heuristics:
 - `Overdue` is a *display state*, not a write. Always compute it from

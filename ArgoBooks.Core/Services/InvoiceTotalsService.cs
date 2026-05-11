@@ -72,11 +72,18 @@ public static class InvoiceTotalsService
     /// states (Draft / Pending / Sent / Viewed / Cancelled / Overdue) are
     /// owned by the surfaces that drive them and are not overwritten here.
     ///
-    /// Status comparisons use invoice.Total (the nominal amount) rather than
-    /// AmountPaid, because AmountPaid includes any processing fee the
-    /// customer absorbed but a refund does not include that fee — so a
-    /// "full" refund of $X reaches Total but never reaches AmountPaid once
-    /// a processing fee is involved. Tiny epsilon for cent-level float drift.
+    /// The refund-status rule has two competing inputs:
+    ///   (a) Processing fees make AmountPaid &gt; Total even when a single
+    ///       full refund returns the entire invoice value (refunds don't
+    ///       include the fee). Status should be Refunded.
+    ///   (b) A second payment after a refund also makes AmountPaid &gt;&gt; Total,
+    ///       but the refund history should stay visible. Status should be
+    ///       PartiallyRefunded.
+    /// The discriminator: net paid (AmountPaid − AmountRefunded). If it's
+    /// less than one full invoice value it's fee residue (case a); if it's
+    /// at least one full invoice value the customer has paid the invoice
+    /// over again on top of the refund (case b).
+    /// Tiny epsilon for cent-level float drift.
     /// </summary>
     public static void RecalculateStatus(Invoice invoice)
     {
@@ -96,9 +103,20 @@ public static class InvoiceTotalsService
 
         if (invoice.AmountRefunded > 0 && invoice.AmountPaid > 0)
         {
-            invoice.Status = invoice.AmountRefunded + 0.01m >= invoice.Total
-                ? InvoiceStatus.Refunded
-                : InvoiceStatus.PartiallyRefunded;
+            if (invoice.AmountRefunded + 0.01m >= invoice.Total)
+            {
+                // Refund covers a full invoice value. Distinguish "single
+                // pay + fee, fully refunded" from "pay → refund → pay again":
+                // the latter leaves a net of at least one invoice value.
+                var netPaid = invoice.AmountPaid - invoice.AmountRefunded;
+                invoice.Status = netPaid + 0.01m < invoice.Total
+                    ? InvoiceStatus.Refunded
+                    : InvoiceStatus.PartiallyRefunded;
+            }
+            else
+            {
+                invoice.Status = InvoiceStatus.PartiallyRefunded;
+            }
             return;
         }
 
