@@ -365,11 +365,10 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
 
         // Total monthly revenue, net of refunds (cash-basis: refund counts on
-        // the day it was issued). Mirrors RefundAggregator semantics used by
-        // the dashboard so the two never drift.
-        var monthlyGrossUSD = _allRevenue
-            .Where(s => s.Date >= startOfMonth)
-            .Sum(s => s.EffectiveTotalUSD);
+        // the day it was issued). Mirrors the dashboard's stat-card semantics
+        // exactly so the two never drift: paid-only, capped at end of month.
+        var monthlyGrossUSD = RevenueAggregator.SumCollectedRevenueUSD(
+            _allRevenue, startOfMonth, endOfMonth);
         var monthlyRefundsUSD = companyData?.Payments != null
             ? RefundAggregator.GetRefundedInDateRangeUSD(companyData.Payments, startOfMonth, endOfMonth)
             : 0m;

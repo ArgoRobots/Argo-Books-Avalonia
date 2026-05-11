@@ -139,7 +139,11 @@ public partial class RefundModalsViewModel : ObservableObject
             }
             else if (vm.CurrentStep == EmailChangeModalViewModel.Step.Success)
             {
-                _onEmailChangeCompleted?.Invoke(vm.NewEmail.Trim());
+                // Prefer the server-confirmed value over raw user input,
+                // since the server may have normalized (trim / casing).
+                var confirmed = vm.ConfirmedNewEmail?.Trim();
+                _onEmailChangeCompleted?.Invoke(
+                    string.IsNullOrEmpty(confirmed) ? vm.NewEmail.Trim() : confirmed);
             }
         }
         ActiveEmailChangeVm = null;

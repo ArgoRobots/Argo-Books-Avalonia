@@ -34,6 +34,14 @@ public partial class EmailChangeModalViewModel : ObservableObject
     /// <summary>Set by the coordinator so the in-modal X button can close it.</summary>
     public Action? RequestClose { get; set; }
 
+    /// <summary>
+    /// Server-authoritative new owner email, populated when the change
+    /// completes successfully. Differs from <see cref="NewEmail"/> (raw
+    /// user input) by any normalisation the server applied (trim/case).
+    /// Coordinator reads this for the completion callback.
+    /// </summary>
+    public string? ConfirmedNewEmail { get; private set; }
+
     [RelayCommand]
     private void Close() => RequestClose?.Invoke();
 
@@ -140,13 +148,22 @@ public partial class EmailChangeModalViewModel : ObservableObject
 
 
     [RelayCommand]
-    private void ContinueFromNewEmail()
+    private async Task ContinueFromNewEmailAsync()
     {
         if (!CanContinueFromNewEmail) return;
         ErrorMessage = null;
-        // Skip password step entirely if the file isn't encrypted.
-        CurrentStep = _fileIsEncrypted ? Step.EnterPassword : Step.EnterOldCode;
-        if (CurrentStep == Step.EnterOldCode) _ = RequestEmailChangeAsync(passwordVerified: false);
+        if (_fileIsEncrypted)
+        {
+            // Password step is local; only the password command itself sends
+            // a server request, so a straight step transition is safe here.
+            CurrentStep = Step.EnterPassword;
+            return;
+        }
+        // Unencrypted file: send the change request and let it advance to
+        // EnterOldCode on success. Awaiting (instead of fire-and-forget)
+        // ensures we don't sit on the code-entry step when the request
+        // failed (network error, EMAIL_IN_USE, COOLDOWN_ACTIVE, etc.).
+        await RequestEmailChangeAsync(passwordVerified: false);
     }
 
     [RelayCommand]
@@ -246,6 +263,10 @@ public partial class EmailChangeModalViewModel : ObservableObject
                 }
             }
 
+            // Capture the server-authoritative value for the coordinator's
+            // completion callback (don't fall back to the user's NewEmail
+            // string, which may differ by trim/case).
+            ConfirmedNewEmail = result.NewEmail;
             CurrentStep = Step.Success;
             StatusMessage = $"Owner email is now {result.NewEmail}. The OLD address received a revert link valid for 30 days.";
         }

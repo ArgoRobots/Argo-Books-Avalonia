@@ -148,8 +148,12 @@ public class RefundService
         if (method == HttpMethod.Post)
         {
             req.Headers.TryAddWithoutValidation("Idempotency-Key", Guid.NewGuid().ToString("N"));
+            // Send "{}" (empty JSON object) rather than "" for body-less POSTs.
+            // The Content-Type is application/json, and an empty string is not
+            // valid JSON — endpoints that unconditionally json_decode the body
+            // can choke on it. An empty object decodes cleanly to {} / null.
             req.Content = body is null
-                ? new StringContent("", System.Text.Encoding.UTF8, "application/json")
+                ? new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
                 : JsonContent.Create(body, options: s_json);
         }
         return req;
