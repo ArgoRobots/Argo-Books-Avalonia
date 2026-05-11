@@ -432,8 +432,12 @@ public class PaymentPortalService : IDisposable
             }
 
             // ----- Regular payment row (existing logic) -----
-            // The invoice amount is the total charged minus any processing fee
-            var invoiceAmount = Math.Max(0m, portalPayment.Amount - portalPayment.ProcessingFee);
+            // Use the gross amount the customer was actually charged on the
+            // portal (invoice balance + processing fee). This matches both
+            // the customer's email/portal display and what arrived on the
+            // Stripe/PayPal/Square charge — so the Payments page totals line
+            // up with what the merchant sees in their provider dashboard.
+            var invoiceAmount = Math.Max(0m, portalPayment.Amount);
 
             // Convert non-USD payment amount to USD using the invoice's conversion ratio
             decimal amountUSD;
@@ -536,14 +540,6 @@ public class PaymentPortalService : IDisposable
             {
                 revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid ? "Paid" : "Unpaid";
             }
-
-            // Add history entry
-            invoice.History.Add(new InvoiceHistoryEntry
-            {
-                Action = "Payment Received",
-                Details = $"Online payment of {portalPayment.Currency} {portalPayment.Amount:N2} received via {providerName}",
-                Timestamp = DateTime.UtcNow
-            });
 
             invoice.UpdatedAt = DateTime.UtcNow;
         }

@@ -370,7 +370,8 @@
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
                                                     <Button Classes="icon-button" ToolTip.Tip="{loc:Loc Edit}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).OpenEditModalCommand}"
-                                                            CommandParameter="{Binding}">
+                                                            CommandParameter="{Binding}"
+                                                            IsVisible="{Binding !IsFromPortal}">
                                                         <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc Delete}"

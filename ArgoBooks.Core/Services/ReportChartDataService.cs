@@ -29,15 +29,35 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var (startDate, endDate) = GetDateRange();
 
-        return companyData.Revenues
+        var grossByDay = companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
-            .OrderBy(g => g.Key)
-            .Select(g => new ChartDataPoint
+            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveSubtotalUSD));
+
+        // Subtract refund Payments cash-basis: a refund reduces revenue on the
+        // date the refund was issued. Same-day refund nets to 0; multi-day
+        // leaves the original day's revenue intact and shows a negative on
+        // the refund's day. Mirror RefundAggregator.GetRefundedInDateRangeUSD.
+        if (companyData.Payments != null)
+        {
+            var refundsByDay = companyData.Payments
+                .Where(p => p.IsRefund && p.Date >= startDate && p.Date <= endDate)
+                .GroupBy(p => p.Date.Date)
+                .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.EffectiveAmountUSD)));
+
+            foreach (var (day, refunded) in refundsByDay)
             {
-                Label = g.Key.ToString("MMM dd"),
-                Value = (double)g.Sum(s => s.EffectiveSubtotalUSD),
-                Date = g.Key
+                grossByDay[day] = (grossByDay.TryGetValue(day, out var v) ? v : 0m) - refunded;
+            }
+        }
+
+        return grossByDay
+            .OrderBy(kv => kv.Key)
+            .Select(kv => new ChartDataPoint
+            {
+                Label = kv.Key.ToString("MMM dd"),
+                Value = (double)kv.Value,
+                Date = kv.Key
             })
             .ToList();
     }

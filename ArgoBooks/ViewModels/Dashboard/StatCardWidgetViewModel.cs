@@ -2,6 +2,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Dashboard;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -155,17 +156,21 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
 
     private void LoadRevenue(CompanyData data, DateTime startDate, DateTime endDate)
     {
-        var currentUSD = data.Revenues
+        var grossUSD = data.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .Sum(s => s.EffectiveSubtotalUSD);
+        var refundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, startDate, endDate);
+        var currentUSD = grossUSD - refundsUSD;
         Value = CurrencyService.FormatFromUSD(currentUSD, DateTime.Now);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
         if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
         {
-            var prevUSD = data.Revenues
+            var prevGrossUSD = data.Revenues
                 .Where(s => s.Date >= prevStart && s.Date <= prevEnd)
                 .Sum(s => s.EffectiveSubtotalUSD);
+            var prevRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, prevStart, prevEnd);
+            var prevUSD = prevGrossUSD - prevRefundsUSD;
             ChangeValue = DashboardCalculations.CalculatePercentageChange(prevUSD, currentUSD);
             ChangeText = DashboardCalculations.FormatPercentageChange(ChangeValue);
         }
@@ -225,10 +230,11 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         var revenueUSD = data.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .Sum(s => s.EffectiveSubtotalUSD);
+        var refundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, startDate, endDate);
         var expenseUSD = data.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .Sum(p => p.EffectiveSubtotalUSD);
-        var profitUSD = revenueUSD - expenseUSD;
+        var profitUSD = revenueUSD - refundsUSD - expenseUSD;
         Value = CurrencyService.FormatFromUSD(profitUSD, DateTime.Now);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
@@ -237,10 +243,11 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
             var prevRevenue = data.Revenues
                 .Where(s => s.Date >= prevStart && s.Date <= prevEnd)
                 .Sum(s => s.EffectiveSubtotalUSD);
+            var prevRefunds = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, prevStart, prevEnd);
             var prevExpense = data.Expenses
                 .Where(p => p.Date >= prevStart && p.Date <= prevEnd)
                 .Sum(p => p.EffectiveSubtotalUSD);
-            var prevProfit = prevRevenue - prevExpense;
+            var prevProfit = prevRevenue - prevRefunds - prevExpense;
             ChangeValue = DashboardCalculations.CalculatePercentageChange(prevProfit, profitUSD);
             ChangeText = DashboardCalculations.FormatPercentageChange(ChangeValue);
         }
