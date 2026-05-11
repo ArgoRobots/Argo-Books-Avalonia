@@ -405,14 +405,21 @@ public class PaymentPortalService : IDisposable
                                          invoiceCurrencyRf, StringComparison.OrdinalIgnoreCase))
                     .Sum(p => Math.Abs(p.Amount));
 
-                // Status recompute (refunded > 0 with payments > 0 → Refunded/PartiallyRefunded)
-                if (invoice.AmountPaid > 0)
+                // Status recompute. Compare AmountRefunded against the
+                // invoice's nominal Total (the base amount), NOT AmountPaid.
+                // AmountPaid now stores the gross customer charge including
+                // any processing fee the customer absorbed; AmountRefunded
+                // is just the refund itself (the fee isn't refunded). A full
+                // refund of a $X invoice covers $X — comparing against
+                // AmountPaid would always read as Partially Refunded once
+                // a fee is involved. Tiny epsilon for cent-level float drift.
+                if (invoice.AmountPaid > 0 && invoice.AmountRefunded > 0)
                 {
-                    if (invoice.AmountRefunded >= invoice.AmountPaid)
+                    if (invoice.AmountRefunded + 0.01m >= invoice.Total)
                     {
                         invoice.Status = InvoiceStatus.Refunded;
                     }
-                    else if (invoice.AmountRefunded > 0)
+                    else
                     {
                         invoice.Status = InvoiceStatus.PartiallyRefunded;
                     }
@@ -520,7 +527,13 @@ public class PaymentPortalService : IDisposable
 
             if (refundedSoFar > 0 && totalPaidOriginal > 0)
             {
-                invoice.Status = refundedSoFar >= totalPaidOriginal
+                // Compare against invoice.Total (nominal amount), not the
+                // gross customer charge — see explanation at the matching
+                // status-recompute block earlier in this file. Refunds don't
+                // include the processing fee the customer absorbed, so a
+                // full refund would never reach AmountPaid once a fee
+                // applies.
+                invoice.Status = refundedSoFar + 0.01m >= invoice.Total
                     ? InvoiceStatus.Refunded
                     : InvoiceStatus.PartiallyRefunded;
             }

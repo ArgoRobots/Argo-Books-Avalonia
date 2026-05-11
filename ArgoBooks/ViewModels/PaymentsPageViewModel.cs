@@ -699,7 +699,17 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             string status;
             if (refunded > 0)
             {
-                status = refunded + 0.01m >= payment.Amount ? "Refunded" : "Partially Refunded";
+                // Compare against the invoice's nominal Total (not the gross
+                // payment amount, which now includes any processing fee the
+                // customer absorbed). A full invoice-base refund covers the
+                // invoice; the unrefunded fee shouldn't make this read as
+                // "partially refunded". Falls back to payment.Amount when
+                // there's no linked invoice (manual payments, edge cases).
+                var linkedInvoice = !string.IsNullOrEmpty(payment.InvoiceId)
+                    ? companyData?.Invoices.FirstOrDefault(i => i.Id == payment.InvoiceId)
+                    : null;
+                var refundCeiling = linkedInvoice?.Total ?? payment.Amount;
+                status = refunded + 0.01m >= refundCeiling ? "Refunded" : "Partially Refunded";
             }
             else
             {

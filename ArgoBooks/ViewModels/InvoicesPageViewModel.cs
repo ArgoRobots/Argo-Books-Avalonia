@@ -754,6 +754,17 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (invoice.IsOverdue && invoice.Status != InvoiceStatus.Paid && invoice.Status != InvoiceStatus.Cancelled)
             return "Overdue";
 
+        // Self-heal: even if invoice.Status is stale (PartiallyRefunded
+        // persisted from before the comparison-against-Total fix), derive
+        // the correct refund status fresh at display time. Same comparison
+        // the sync recompute now uses.
+        if (invoice.AmountRefunded > 0 && invoice.Total > 0)
+        {
+            if (invoice.AmountRefunded + 0.01m >= invoice.Total)
+                return "Refunded";
+            return "Partially Refunded";
+        }
+
         return invoice.Status switch
         {
             InvoiceStatus.Draft => "Draft",
