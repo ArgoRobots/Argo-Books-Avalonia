@@ -411,6 +411,35 @@
                                                IsPlaying="{Binding IsShowingSuccess}"
                                                IsVisible="{Binding IsShowingSuccess}" />
 
+                    <!-- Content - Sending Overlay (visible while the API call is in flight) -->
+                    <!-- Explicit Cursor="Arrow" guards against the embedded HTML
+                         preview occasionally suppressing the system cursor when
+                         it loses hit-testing to this overlay. -->
+                    <Panel Grid.Row="1" Grid.RowSpan="3"
+                           Background="{DynamicResource SurfaceBrush}"
+                           Cursor="Arrow"
+                           IsVisible="{Binding IsSending}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="20">
+                            <ProgressBar IsIndeterminate="True"
+                                         Width="220"
+                                         Height="4" />
+                            <TextBlock Text="{loc:Loc 'Sending invoice...'}"
+                                       FontSize="16"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       MaxWidth="320"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Panel>
+
                     <!-- Footer - Edit Mode -->
                     <Border Grid.Row="3"
                             Padding="24,16"

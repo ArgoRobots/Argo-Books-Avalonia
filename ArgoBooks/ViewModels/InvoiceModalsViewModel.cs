@@ -101,14 +101,23 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private string _saveButtonText = "Create Invoice";
 
     /// <summary>
+    /// Set true while the Create &amp; Send pipeline is in flight (publish to
+    /// portal + send email). Hides the preview HTML and the footer so the
+    /// only thing visible inside the modal body is a centered spinner —
+    /// removes ambiguity about whether the click registered.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSending;
+
+    /// <summary>
     /// Gets whether to show the edit form content.
     /// </summary>
-    public bool ShowEditContent => !IsShowingPreview && !IsShowingSuccess;
+    public bool ShowEditContent => !IsShowingPreview && !IsShowingSuccess && !IsSending;
 
     /// <summary>
     /// Gets whether to show the preview content.
     /// </summary>
-    public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess;
+    public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess && !IsSending;
 
     /// <summary>
     /// Gets the modal width based on current state.
@@ -136,6 +145,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ModalHeight));
     }
 
+    partial void OnIsSendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEditContent));
+        OnPropertyChanged(nameof(ShowPreviewContent));
+    }
+
     #endregion
 
     #region Create/Edit Modal Fields
@@ -161,7 +176,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
     [ObservableProperty]
-    private DateTimeOffset? _modalDueDate = DateTimeOffset.Now.AddDays(30);
+    private DateTimeOffset? _modalDueDate = DateTimeOffset.Now.AddMonths(1);
 
     [ObservableProperty]
     private string _modalStatus = "Draft";
@@ -1080,7 +1095,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             InvoiceNumber = PeekNextInvoiceNumber(),
             CustomerId = SelectedCustomer?.Id ?? string.Empty,
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
             TaxRate = TaxRate,
             CustomFeeLabel = CustomFeeLabel,
             CustomFeeAmount = CustomFeeAmount,
@@ -1258,6 +1273,29 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
+        // From here down: the user is committed to sending. Flip IsSending so
+        // the modal swaps the preview + footer for a centered spinner — the
+        // 1-2 second silent gap was confusing because nothing visibly happened
+        // after the click.
+        IsSending = true;
+        try
+        {
+            await CreateAndSendInvoiceCore();
+        }
+        finally
+        {
+            IsSending = false;
+        }
+    }
+
+    private async Task CreateAndSendInvoiceCore()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var customer = companyData.GetCustomer(SelectedCustomer!.Id!);
+        if (customer == null) return;
+
         // Check if we're continuing a draft invoice or creating a new one
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
@@ -1277,7 +1315,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice = existingDraft;
             invoice.CustomerId = SelectedCustomer!.Id!;
             invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
-            invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
+            invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1);
             invoice.TaxRate = TaxRate;
             invoice.SecurityDeposit = SecurityDeposit;
             invoice.CustomFeeLabel = CustomFeeLabel;
@@ -1312,7 +1350,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 InvoiceNumber = invoiceNumber,
                 CustomerId = SelectedCustomer!.Id!,
                 IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-                DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+                DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
                 TaxRate = TaxRate,
                 SecurityDeposit = SecurityDeposit,
                 CustomFeeLabel = CustomFeeLabel,
@@ -1387,16 +1425,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                             Details = "Invoice published to online payment portal",
                             Timestamp = DateTime.UtcNow
                         });
-
-                        if (publishResponse.EmailSent)
-                        {
-                            invoice.History.Add(new InvoiceHistoryEntry
-                            {
-                                Action = "Email Sent",
-                                Details = $"Invoice notification emailed to {customer.Email} by portal",
-                                Timestamp = DateTime.UtcNow
-                            });
-                        }
 
                         // Update local provider state from the server's response so the
                         // desktop app stays in sync with which methods are available.
@@ -1627,7 +1655,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             InvoiceNumber = invoiceNumber,
             CustomerId = SelectedCustomer!.Id!,
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
             TaxRate = TaxRate,
             SecurityDeposit = SecurityDeposit,
             CustomFeeLabel = CustomFeeLabel,
@@ -1862,7 +1890,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsViewOnly = false;
         SelectedCustomer = null;
         ModalIssueDate = DateTimeOffset.Now;
-        ModalDueDate = DateTimeOffset.Now.AddDays(30);
+        ModalDueDate = DateTimeOffset.Now.AddMonths(1);
         ModalStatus = "Draft";
         ModalNotes = string.Empty;
         TaxRate = 0;

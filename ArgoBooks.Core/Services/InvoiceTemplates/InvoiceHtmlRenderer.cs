@@ -293,13 +293,19 @@ public partial class InvoiceHtmlRenderer
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
 
-            // Processing fee (calculated at render time, shown on portal invoices)
-            ["ShowProcessingFee"] = template.PassProcessingFee && invoice.Balance > 0,
+            // Processing fee — shown on any unpaid invoice as long as the
+            // company has a payment provider connected (so the customer can
+            // actually pay through the portal and would be charged the fee).
+            // We deliberately don't gate on template.PassProcessingFee here:
+            // the portal page always shows the fee when one applies, so the
+            // in-app viewer / sent-invoice view should match. Otherwise the
+            // user sees a different total here than the customer sees online.
+            ["ShowProcessingFee"] = invoice.Balance > 0 && IsPortalConfigured(companySettings),
             ["ProcessingFeeLabel"] = BuildProcessingFeeLabel(companySettings),
-            ["ProcessingFeeAmount"] = template.PassProcessingFee && invoice.Balance > 0
+            ["ProcessingFeeAmount"] = invoice.Balance > 0 && IsPortalConfigured(companySettings)
                 ? $"{currencySymbol}{CalculateProcessingFee(invoice.Balance):N2}"
                 : "",
-            ["AmountToPay"] = template.PassProcessingFee && invoice.Balance > 0
+            ["AmountToPay"] = invoice.Balance > 0 && IsPortalConfigured(companySettings)
                 ? $"{currencySymbol}{invoice.Balance + CalculateProcessingFee(invoice.Balance):N2}"
                 : "",
 
@@ -525,6 +531,18 @@ public partial class InvoiceHtmlRenderer
 
         var providerName = providers.Count > 0 ? string.Join(" / ", providers) : "Payment";
         return $"{providerName} processing fee";
+    }
+
+    /// <summary>
+    /// True when at least one online payment provider is connected — i.e.
+    /// the customer can actually pay through the portal, which is when a
+    /// processing fee would be charged on top of the invoice balance.
+    /// </summary>
+    private static bool IsPortalConfigured(CompanySettings companySettings)
+    {
+        var accounts = companySettings.PaymentPortal?.ConnectedAccounts;
+        if (accounts == null) return false;
+        return accounts.StripeConnected || accounts.PaypalConnected || accounts.SquareConnected;
     }
 
     /// <summary>
