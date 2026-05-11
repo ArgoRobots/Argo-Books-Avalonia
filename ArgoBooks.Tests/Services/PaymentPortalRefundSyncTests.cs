@@ -214,7 +214,7 @@ public class PaymentPortalRefundSyncTests
             CustomerId = "CUST-001",
             Amount = 100m,
             PaymentMethod = PaymentMethod.Stripe,
-            Source = "Online",
+            Source = PaymentSource.Online,
             PortalPaymentId = "42",
             ProviderPaymentId = null, // pre-update state
             OriginalCurrency = "USD",

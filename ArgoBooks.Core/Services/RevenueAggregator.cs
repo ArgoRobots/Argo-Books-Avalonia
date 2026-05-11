@@ -1,0 +1,59 @@
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Transactions;
+
+namespace ArgoBooks.Core.Services;
+
+/// <summary>
+/// Helpers for filtering and aggregating Revenue rows, so dashboard /
+/// analytics charts and stat cards only count revenue the company has
+/// actually received (cash-basis), not invoices it has merely issued.
+///
+/// Paid and Complete are the only statuses that mean the customer has
+/// settled the full amount; the others are not yet (fully) collected.
+/// See docs/Calculations.md §7.
+/// </summary>
+public static class RevenueAggregator
+{
+    /// <summary>
+    /// True when a Revenue row is considered fully collected. Accepts both
+    /// Paid (the modern default) and Complete (legacy alias from older imports).
+    /// </summary>
+    public static bool IsCollected(Revenue revenue) =>
+        revenue.PaymentStatus == RevenuePaymentStatus.Paid ||
+        revenue.PaymentStatus == RevenuePaymentStatus.Complete;
+
+    /// <summary>
+    /// Filters a Revenue sequence to only fully-collected rows.
+    /// </summary>
+    public static IEnumerable<Revenue> OnlyCollected(IEnumerable<Revenue> revenues) =>
+        revenues.Where(IsCollected);
+
+    /// <summary>
+    /// Sum gross-of-tax USD revenue (EffectiveTotalUSD) inside a date range,
+    /// counting only collected rows. This is the figure the Revenue stat
+    /// card and revenue charts display — what the customer was actually
+    /// billed and has actually paid.
+    /// </summary>
+    public static decimal SumCollectedRevenueUSD(
+        IEnumerable<Revenue> revenues, DateTime start, DateTime end)
+    {
+        return revenues
+            .Where(s => s.Date >= start && s.Date <= end)
+            .Where(IsCollected)
+            .Sum(s => s.EffectiveTotalUSD);
+    }
+
+    /// <summary>
+    /// Sum pre-tax USD revenue (EffectiveSubtotalUSD) inside a date range,
+    /// counting only collected rows. This is the figure profit calculations
+    /// use — sales tax collected is owed to the government, not kept.
+    /// </summary>
+    public static decimal SumCollectedRevenuePreTaxUSD(
+        IEnumerable<Revenue> revenues, DateTime start, DateTime end)
+    {
+        return revenues
+            .Where(s => s.Date >= start && s.Date <= end)
+            .Where(IsCollected)
+            .Sum(s => s.EffectiveSubtotalUSD);
+    }
+}

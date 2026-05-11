@@ -808,7 +808,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var portalPayments = companyData.Payments
             .Where(p => p.InvoiceId == invoice.Id
                         && !p.IsRefund
-                        && p.Source == "Online"
+                        && p.Source == PaymentSource.Online
                         && !string.IsNullOrEmpty(p.ProviderPaymentId))
             .ToList();
         if (portalPayments.Count == 0) return false;

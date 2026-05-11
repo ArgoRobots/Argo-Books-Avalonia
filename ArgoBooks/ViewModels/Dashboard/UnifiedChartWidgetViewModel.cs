@@ -152,20 +152,26 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         var isDonut = ChartStyle == "donut";
         var series = new ObservableCollection<ISeries>();
 
+        // Convert USD aggregates to display currency once at this boundary
+        // so pie slices / tooltips / export all agree with the stat cards.
+        // See docs/Calculations.md §3.
         var top = points.OrderByDescending(p => p.Value).Take(8).ToList();
+        var displayValues = ChartLoaderService.ConvertUSDValuesToDisplay(
+            top.Select(p => p.Value).ToArray());
         for (int i = 0; i < top.Count; i++)
         {
             var point = top[i];
             var colorHex = AppColors.Palette[i % AppColors.Palette.Length];
             series.Add(new PieSeries<double>
             {
-                Values = [Math.Round(point.Value, 2)],
+                Values = [Math.Round(displayValues[i], 2)],
                 Name = TruncateLabel(point.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
                 InnerRadius = isDonut ? 50 : 0,
                 Pushout = 0,
+                // Values are already in display currency, so just format.
                 ToolTipLabelFormatter = p =>
-                    CurrencyService.FormatFromUSD((decimal)p.Coordinate.PrimaryValue, DateTime.Now)
+                    CurrencyService.Format((decimal)p.Coordinate.PrimaryValue)
             });
         }
 
@@ -177,7 +183,7 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             ChartTitle = ChartTitle,
             ChartType = ChartType.Distribution,
             Labels = top.Select(p => p.Label).ToArray(),
-            Values = top.Select(p => Math.Round(p.Value, 2)).ToArray(),
+            Values = displayValues.Select(v => Math.Round(v, 2)).ToArray(),
             SeriesName = ChartDataType.GetDisplayName()
         });
     }
@@ -195,16 +201,20 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             .SelectMany(s => s.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value))
             .Distinct().OrderBy(d => d).ToArray();
 
+        // CreateDateTimeSeries converts USD aggregates to display currency
+        // internally — pass USD values straight through.
         var series = new ObservableCollection<ISeries>();
+        var seriesUsdValues = new List<double[]>();
         for (int i = 0; i < seriesData.Count; i++)
         {
             var sd = seriesData[i];
-            var values = allDates.Select(date =>
+            var usdValues = allDates.Select(date =>
                 sd.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
+            seriesUsdValues.Add(usdValues);
 
             var colorHex = sd.Color ?? AppColors.Palette[i % AppColors.Palette.Length];
             series.Add(ChartLoaderService.CreateDateTimeSeries(
-                allDates, values, sd.Name, SKColor.Parse(colorHex)));
+                allDates, usdValues, sd.Name, SKColor.Parse(colorHex)));
         }
 
         XAxes = ChartLoaderService.CreateDateXAxes(allDates);
@@ -214,24 +224,20 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         if (seriesData.Count > 0)
         {
-            var primary = seriesData[0];
-            var primaryValues = allDates.Select(date =>
-                primary.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
-            var additional = seriesData.Skip(1).Select(sd =>
-            {
-                var vals = allDates.Select(date =>
-                    sd.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
-                return (sd.Name, vals);
-            }).ToList();
-
+            // Export values in display currency too, so spreadsheet/PDF
+            // exports match what the chart shows.
+            var primaryDisplay = ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[0]);
             ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
             {
                 ChartTitle = ChartTitle,
                 ChartType = ChartDataType.GetChartExportType(),
                 Labels = allDates.Select(d => d.ToString("yyyy-MM-dd")).ToArray(),
-                Values = primaryValues,
-                SeriesName = primary.Name,
-                AdditionalSeries = additional
+                Values = primaryDisplay,
+                SeriesName = seriesData[0].Name,
+                AdditionalSeries = seriesData
+                    .Skip(1)
+                    .Select((sd, idx) => (sd.Name, ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[idx + 1])))
+                    .ToList()
             });
         }
     }
@@ -258,30 +264,33 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         }
 
         var dates = dated.Select(p => p.Date!.Value).ToArray();
-        var values = dated.Select(p => p.Value).ToArray();
+        var usdValues = dated.Select(p => p.Value).ToArray();
 
         if (ChartDataType == ChartDataType.TotalProfits)
         {
             var localizedName = ChartDataType.TotalProfits.GetDisplayName().Translate();
-            var formattedSum = CurrencyService.FormatFromUSD((decimal)values.Sum(), DateTime.Now);
+            var formattedSum = CurrencyService.FormatFromUSD((decimal)usdValues.Sum(), DateTime.Now);
             ChartTitle = $"{localizedName}: {formattedSum}";
         }
 
+        // CreateDateTimeSeries converts USD → display currency internally.
         var series = new ObservableCollection<ISeries>();
         series.Add(ChartLoaderService.CreateDateTimeSeries(
-            dates, values, ChartDataType.GetDisplayName(), SKColor.Parse(AppColors.Palette[0])));
+            dates, usdValues, ChartDataType.GetDisplayName(), SKColor.Parse(AppColors.Palette[0])));
 
         XAxes = ChartLoaderService.CreateDateXAxes(dates);
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = dates.Length > 0;
 
+        // Export values in display currency too, so spreadsheet/PDF
+        // exports match what the chart shows.
         ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
         {
             ChartTitle = ChartTitle,
             ChartType = ChartDataType.GetChartExportType(),
             Labels = dated.Select(p => p.Label).ToArray(),
-            Values = values,
+            Values = ChartLoaderService.ConvertUSDValuesToDisplay(usdValues),
             SeriesName = ChartDataType.GetDisplayName()
         });
     }

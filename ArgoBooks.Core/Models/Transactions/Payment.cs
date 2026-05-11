@@ -64,11 +64,11 @@ public class Payment
     #region Portal Support
 
     /// <summary>
-    /// The source of this payment: "Manual" (entered in Argo Books) or "Online" (received via payment portal).
-    /// Defaults to "Manual" for backward compatibility.
+    /// The source of this payment: Manual (entered in Argo Books) or
+    /// Online (received via payment portal). Defaults to Manual.
     /// </summary>
     [JsonPropertyName("source")]
-    public string Source { get; set; } = "Manual";
+    public PaymentSource Source { get; set; } = PaymentSource.Manual;
 
     /// <summary>
     /// The portal payment ID from the server, used to prevent duplicate syncs.

@@ -582,6 +582,23 @@ public class CompanyManager : IDisposable
             // Load company data
             CompanyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
 
+            // One-time recalc: heal any historic drift between Invoice
+            // totals and the Payment rows that drive them. Only runs for
+            // invoices that actually have Payment rows — spreadsheet
+            // imports without payments record AmountPaid directly on the
+            // invoice and would otherwise be wiped to zero here.
+            var invoicesWithPayments = CompanyData.Payments
+                .Select(p => p.InvoiceId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .ToHashSet();
+            foreach (var invoice in CompanyData.Invoices)
+            {
+                if (invoicesWithPayments.Contains(invoice.Id))
+                {
+                    InvoiceTotalsService.RecalculateFromPayments(invoice, CompanyData.Payments);
+                }
+            }
+
             CurrentFilePath = filePath;
             _currentPassword = password;
 

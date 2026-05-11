@@ -852,7 +852,7 @@ internal class TransactionState
     public decimal Fee { get; set; }
     public decimal Total { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
-    public string PaymentStatus { get; set; } = "Paid";
+    public RevenuePaymentStatus PaymentStatus { get; set; } = RevenuePaymentStatus.Paid;
     public string Notes { get; set; } = string.Empty;
     public string ReferenceNumber { get; set; } = string.Empty;
     public string? ReceiptId { get; set; }

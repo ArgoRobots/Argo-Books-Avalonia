@@ -194,7 +194,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         SaveButtonText = "Save Changes";
 
         SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == revenue.CustomerId);
-        ModalPaid = revenue.PaymentStatus == "Paid";
+        ModalPaid = revenue.PaymentStatus == RevenuePaymentStatus.Paid;
         PopulateFormFromTransaction(revenue);
 
         IsAddEditModalOpen = true;
@@ -537,7 +537,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             Fee = ModalFee,
             Total = Total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
-            PaymentStatus = ModalPaid ? "Paid" : "Unpaid",
+            PaymentStatus = ModalPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid,
             Notes = ModalNotes,
             ReferenceNumber = string.Empty,
             CreatedAt = DateTime.Now,
@@ -649,7 +649,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.Fee = ModalFee;
         revenue.Total = Total;
         revenue.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
-        revenue.PaymentStatus = ModalPaid ? "Paid" : "Unpaid";
+        revenue.PaymentStatus = ModalPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid;
         revenue.Notes = ModalNotes;
         revenue.UpdatedAt = DateTime.Now;
         // USD conversion fields
@@ -731,7 +731,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 revenue.Fee = ModalFee;
                 revenue.Total = Total;
                 revenue.PaymentMethod = pm;
-                revenue.PaymentStatus = ModalPaid ? "Paid" : "Unpaid";
+                revenue.PaymentStatus = ModalPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid;
                 revenue.Notes = ModalNotes;
                 if (capturedNewReceipt != null)
                 {

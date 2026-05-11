@@ -2090,15 +2090,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadDashboardStatistics(CompanyData data)
     {
-        // Filter transactions by date range
-        var purchases = data.Expenses.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList();
-        var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
-
-        // Calculate totals (pre-tax, USD-normalized to match dashboard)
-        var totalPurchasesUSD = purchases.Sum(p => p.EffectiveSubtotalUSD);
-        var totalRevenueUSD = sales.Sum(s => s.EffectiveSubtotalUSD);
-        var netProfitUSD = totalRevenueUSD - totalPurchasesUSD;
-        var margin = totalRevenueUSD > 0 ? (netProfitUSD / totalRevenueUSD) * 100 : 0;
+        // Revenue stat uses gross-of-tax (Total) per Calculations.md §2 Rule 1,
+        // refunds subtracted at full amount. Profit/margin use pre-tax revenue
+        // and refunds subtracted at pre-tax portion (handled in ProfitCalculator).
+        var totalPurchasesUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, StartDate, EndDate);
+        var grossRevenueUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, StartDate, EndDate);
+        var refundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, StartDate, EndDate);
+        var totalRevenueUSD = grossRevenueUSD - refundsUSD;
+        var totalRevenuePreTaxUSD = RevenueAggregator.SumCollectedRevenuePreTaxUSD(data.Revenues, StartDate, EndDate);
+        var netProfitUSD = ProfitCalculator.CalculateNetProfitUSD(data, StartDate, EndDate);
+        var margin = totalRevenuePreTaxUSD > 0 ? (netProfitUSD / totalRevenuePreTaxUSD) * 100 : 0;
 
         // Calculate previous period for comparison (guard against overflow for very large date ranges like "All Time")
         var periodLength = EndDate - StartDate;
@@ -2107,10 +2108,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             : DateTime.MinValue;
         var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
 
-        var prevPurchasesUSD = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).Sum(p => p.EffectiveSubtotalUSD);
-        var prevSalesUSD = data.Revenues.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).Sum(s => s.EffectiveSubtotalUSD);
-        var prevNetProfit = prevSalesUSD - prevPurchasesUSD;
-        var prevMargin = prevSalesUSD > 0 ? (prevNetProfit / prevSalesUSD) * 100 : 0;
+        var prevPurchasesUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, prevStartDate, prevEndDate);
+        var prevGrossRevenueUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, prevStartDate, prevEndDate);
+        var prevRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, prevStartDate, prevEndDate);
+        var prevSalesUSD = prevGrossRevenueUSD - prevRefundsUSD;
+        var prevSalesPreTaxUSD = RevenueAggregator.SumCollectedRevenuePreTaxUSD(data.Revenues, prevStartDate, prevEndDate);
+        var prevNetProfit = ProfitCalculator.CalculateNetProfitUSD(data, prevStartDate, prevEndDate);
+        var prevMargin = prevSalesPreTaxUSD > 0 ? (prevNetProfit / prevSalesPreTaxUSD) * 100 : 0;
 
         // Check if there's any previous period data to compare against
         var hasPrevPeriodData = prevPurchasesUSD > 0 || prevSalesUSD > 0;
@@ -2180,12 +2184,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadPerformanceStatistics(CompanyData data)
     {
-        // Filter transactions by date range
-        var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
+        // Filter transactions by date range; revenues are paid-only so
+        // unpaid invoices don't pad avg-transaction-value / growth stats.
+        var sales = data.Revenues
+            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
+            .Where(RevenueAggregator.IsCollected)
+            .ToList();
         var purchases = data.Expenses.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList();
 
         var totalTransactionsCount = sales.Count + purchases.Count;
-        var allTransactionValues = sales.Select(s => s.EffectiveSubtotalUSD).Concat(purchases.Select(p => p.EffectiveSubtotalUSD)).ToList();
+        var allTransactionValues = sales.Select(s => s.EffectiveTotalUSD).Concat(purchases.Select(p => p.EffectiveTotalUSD)).ToList();
         var avgTransactionValue = allTransactionValues.Count > 0 ? allTransactionValues.Average() : 0;
 
         // Shipping costs from purchases
@@ -2198,11 +2206,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             : DateTime.MinValue;
         var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
 
-        var prevSales = data.Revenues.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).ToList();
+        var prevSales = data.Revenues
+            .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
+            .Where(RevenueAggregator.IsCollected)
+            .ToList();
         var prevPurchases = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).ToList();
 
         var prevTotalTransactionsCount = prevSales.Count + prevPurchases.Count;
-        var prevAllTransactionValues = prevSales.Select(s => s.EffectiveSubtotalUSD).Concat(prevPurchases.Select(p => p.EffectiveSubtotalUSD)).ToList();
+        var prevAllTransactionValues = prevSales.Select(s => s.EffectiveTotalUSD).Concat(prevPurchases.Select(p => p.EffectiveTotalUSD)).ToList();
         var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
         var prevAvgShipping = prevPurchases.Count > 0 ? prevPurchases.Average(p => p.ShippingCost) : 0;
 
@@ -2210,8 +2221,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var hasPrevPeriodData = prevTotalTransactionsCount > 0;
 
         // Revenue growth (period over period)
-        var currentRevenueTotal = sales.Sum(s => s.EffectiveSubtotalUSD);
-        var prevRevenueTotal = prevSales.Sum(s => s.EffectiveSubtotalUSD);
+        var currentRevenueTotal = sales.Sum(s => s.EffectiveTotalUSD);
+        var prevRevenueTotal = prevSales.Sum(s => s.EffectiveTotalUSD);
         var revenueGrowthValue = prevRevenueTotal > 0 ? ((currentRevenueTotal - prevRevenueTotal) / prevRevenueTotal) * 100 : 0;
 
         var transactionsChange = prevTotalTransactionsCount > 0 ? ((double)(totalTransactionsCount - prevTotalTransactionsCount) / prevTotalTransactionsCount) * 100 : 0;
@@ -2265,9 +2276,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Retention rate and avg customer value are complex calculations
         // For now, calculate avg customer value based on revenue per customer
-        var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
+        var sales = data.Revenues
+            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
+            .Where(RevenueAggregator.IsCollected)
+            .ToList();
         var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
-        var avgValueUSD = customerIds.Count > 0 ? sales.Sum(s => s.EffectiveSubtotalUSD) / customerIds.Count : 0;
+        var avgValueUSD = customerIds.Count > 0 ? sales.Sum(s => s.EffectiveTotalUSD) / customerIds.Count : 0;
 
         RetentionRate = "N/A";
         RetentionChangeValue = null;

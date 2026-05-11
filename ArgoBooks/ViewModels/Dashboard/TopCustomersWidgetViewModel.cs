@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Dashboard;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -76,11 +77,12 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
 
         var grouped = data.Revenues
             .Where(r => !string.IsNullOrEmpty(r.CustomerId))
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(r => r.CustomerId!)
             .Select(g => new
             {
                 CustomerId = g.Key,
-                TotalRevenue = g.Sum(r => r.EffectiveSubtotalUSD)
+                TotalRevenue = g.Sum(r => r.EffectiveTotalUSD)
                                 - (refundsByCustomer.TryGetValue(g.Key, out var rf) ? rf : 0m),
                 Count = g.Count()
             });

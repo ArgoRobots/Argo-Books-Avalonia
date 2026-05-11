@@ -497,7 +497,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var netTotal = Math.Max(0, revenue.Total - refundedAmount);
             var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds, refundedAmount);
             var isFromPortal = !string.IsNullOrEmpty(revenue.InvoiceId) &&
-                allPayments.Any(p => p.InvoiceId == revenue.InvoiceId && p.Source == "Online");
+                allPayments.Any(p => p.InvoiceId == revenue.InvoiceId && p.Source == PaymentSource.Online);
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
@@ -522,7 +522,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 DiscountUSD = revenue.DiscountUSD > 0 ? revenue.DiscountUSD : revenue.Discount,
                 UnitPriceUSD = revenue.EffectiveUnitPriceUSD,
                 StatusDisplay = statusDisplay,
-                Paid = revenue.PaymentStatus == "Paid",
+                Paid = RevenueAggregator.IsCollected(revenue),
                 Notes = revenue.Notes,
                 CustomerId = revenue.CustomerId,
                 CategoryId = categoryId,
@@ -610,7 +610,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             // (within a cent — float drift safety). Otherwise it's partial.
             return refundedAmount + 0.01m >= revenue.Total ? "Refunded" : "Partially Refunded";
         }
-        if (revenue.PaymentStatus != "Paid") return "Unpaid";
+        if (!RevenueAggregator.IsCollected(revenue)) return "Unpaid";
         return "Completed";
     }
 

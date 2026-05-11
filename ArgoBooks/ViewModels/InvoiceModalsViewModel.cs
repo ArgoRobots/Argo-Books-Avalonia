@@ -781,7 +781,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
 
         var renderer = new InvoiceHtmlRenderer();
-        var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+        // Customer-facing surfaces show the invoice in the currency it was
+        // issued in, not the user's display currency. See Calculations.md §2.
+        var currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
         PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol);
 
         // Open modal in view-only preview mode
@@ -1381,13 +1383,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
-        // Calculate invoice totals
+        // Calculate invoice totals (Subtotal / TaxAmount / Total — these are
+        // invoice-level math, not Payment-derived).
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
         var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
         var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
         invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit + feeCalc - discCalc;
-        invoice.Balance = invoice.Total - invoice.AmountPaid;
 
         // Set currency fields for multi-currency support
         var invoiceCurrency = CurrencyService.CurrentCurrencyCode;
@@ -1401,15 +1403,18 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (rate > 0)
                 {
                     invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
-                    invoice.BalanceUSD = Math.Round(invoice.Balance * rate, 2);
                 }
             }
         }
         else
         {
             invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
         }
+
+        // Payment-derived totals (AmountPaid / Balance / BalanceUSD) come
+        // from InvoiceTotalsService so the rule "stored totals always match
+        // the Payment list" is preserved. See docs/Calculations.md §5.
+        InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
         // Publish and send: portal handles both publishing and email delivery via sendEmail: true.
         // When portal is not configured, fall back to desktop email sending.
@@ -1420,7 +1425,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 var portalService = App.PaymentPortalService;
                 if (portalService != null)
                 {
-                    var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+                    // Portal publishes / customer-facing flow uses the
+                    // invoice's issued currency, not user display currency.
+                    var currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
                     var publishResponse = await portalService.PublishInvoiceAsync(
                         invoice, companyData, SelectedTemplate, currencySymbol);
                     if (publishResponse.Success)
@@ -1464,7 +1471,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 var emailService = new InvoiceEmailService();
                 var emailSettings = companyData.Settings.InvoiceEmail;
-                var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+                // Email goes to the customer in the invoice's issued currency.
+                var currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
 
                 var response = await emailService.SendInvoiceAsync(
                     invoice,
@@ -1685,11 +1693,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }).ToList()
         };
 
-        // Compute and store totals on the model before setting USD fields
+        // Compute and store invoice-level totals (Subtotal / TaxAmount /
+        // Total). Payment-derived fields are set by InvoiceTotalsService
+        // below — see docs/Calculations.md §5.
         invoice.Subtotal = Subtotal;
         invoice.TaxAmount = TaxAmount;
         invoice.Total = Total;
-        invoice.Balance = Total; // No payments yet for a new draft
 
         // Set currency fields for multi-currency support
         var draftCurrency = CurrencyService.CurrentCurrencyCode;
@@ -1703,15 +1712,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (rate > 0)
                 {
                     invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
-                    invoice.BalanceUSD = Math.Round(invoice.Balance * rate, 2);
                 }
             }
         }
         else
         {
             invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
         }
+
+        InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
         // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
@@ -1831,7 +1840,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Discount = discountAmount,
             Total = invoice.Total,
             PaymentMethod = PaymentMethod.Other,
-            PaymentStatus = "Unpaid",
+            PaymentStatus = RevenuePaymentStatus.Unpaid,
             Notes = $"Auto-created from invoice {invoice.InvoiceNumber}",
             InvoiceId = invoice.Id,
             ReferenceNumber = invoice.InvoiceNumber,

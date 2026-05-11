@@ -200,7 +200,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
         var onlineReceivedUSD = _allPayments
-            .Where(p => p.Date >= startOfMonth && p.Source == "Online" && p.Amount > 0)
+            .Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0)
             .Sum(p => p.EffectiveAmountUSD);
 
         OnlineReceivedThisMonth = CurrencyService.FormatFromUSD(onlineReceivedUSD, now);
@@ -725,7 +725,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
                 PaymentMethod = payment.PaymentMethod,
-                PaymentMethodDisplay = payment.Source == "Online"
+                PaymentMethodDisplay = payment.Source == PaymentSource.Online
                     ? $"Payment Portal - {payment.PaymentMethod.GetDisplayName()}"
                     : payment.PaymentMethod.GetDisplayName(),
                 Amount = netAmount,
@@ -734,7 +734,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
-                IsFromPortal = payment.Source == "Online",
+                IsFromPortal = payment.Source == PaymentSource.Online,
                 IsHighlighted = payment.Id == HighlightTransactionId
             };
         }).ToList();

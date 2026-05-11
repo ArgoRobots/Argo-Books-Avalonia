@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Net.Http;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -231,7 +232,7 @@ public partial class RefundModalViewModel : ObservableObject
         // associated with the same providerPaymentId (best-effort linkage via local payments
         // where IsRefund=true and notes/reference match).
         var portalPayments = _allPayments
-            .Where(p => !p.IsRefund && p.Source == "Online" && !string.IsNullOrEmpty(p.ProviderPaymentId))
+            .Where(p => !p.IsRefund && p.Source == PaymentSource.Online && !string.IsNullOrEmpty(p.ProviderPaymentId))
             .ToList();
 
         foreach (var p in portalPayments)

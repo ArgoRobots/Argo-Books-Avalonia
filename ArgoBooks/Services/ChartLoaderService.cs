@@ -39,6 +39,25 @@ public class ChartLoaderService
     private SKColor _gridColor = SKColor.Parse(AppColors.ChartAxis);
 
     /// <summary>
+    /// Convert an array of USD amounts to the user's display currency.
+    /// Chart aggregations are all USD-normalized (so multi-currency data
+    /// rolls up consistently), but charts must render in the display
+    /// currency or the bars / tooltips disagree with the stat cards.
+    /// Apply this at the boundary right before passing values to LiveCharts.
+    /// </summary>
+    public static double[] ConvertUSDValuesToDisplay(double[] usdValues)
+    {
+        if (usdValues.Length == 0) return usdValues;
+        var now = DateTime.Now;
+        var result = new double[usdValues.Length];
+        for (int i = 0; i < usdValues.Length; i++)
+        {
+            result[i] = (double)CurrencyService.GetDisplayAmount((decimal)usdValues[i], now);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Gets the legend text paint based on the current theme.
     /// </summary>
     public static SolidColorPaint GetLegendTextPaint()
@@ -319,10 +338,17 @@ public class ChartLoaderService
     /// Creates a series for date-based data with proportional spacing.
     /// Points are positioned based on actual date values (converted to OADate), not evenly spaced.
     /// </summary>
-    public ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
+    public ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color,
+        bool convertFromUSD = true)
     {
         // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
-        // Use ObservablePoint which directly stores X,Y coordinates
+        // Use ObservablePoint which directly stores X,Y coordinates.
+        // Most chart series carry currency aggregates that originate in USD
+        // — convert to display currency at this boundary so bars / tooltips
+        // / axis labels all agree with stat cards. Callers passing counts
+        // (returns, losses, transaction counts) pass convertFromUSD=false.
+        if (convertFromUSD)
+            values = ConvertUSDValuesToDisplay(values);
         var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
 
         return SelectedChartStyle switch
@@ -381,6 +407,11 @@ public class ChartLoaderService
     /// </summary>
     private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
     {
+        // Profit values are always USD-aggregated currency — convert to
+        // display currency at this boundary so bars / tooltips / axis
+        // agree with the stat cards and chart titles.
+        values = ConvertUSDValuesToDisplay(values);
+
         // For column charts, split into positive (green) and negative (red) series
         // Column is the default when not Line, StepLine, Area, or Scatter
         var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
@@ -434,8 +465,10 @@ public class ChartLoaderService
             yield break;
         }
 
-        // For line-based charts, use single series with green color
-        yield return CreateDateTimeSeries(dates, values, name, ProfitColor);
+        // For line-based charts, use single series with green color.
+        // Values were already converted to display currency above, so
+        // skip the conversion inside CreateDateTimeSeries.
+        yield return CreateDateTimeSeries(dates, values, name, ProfitColor, convertFromUSD: false);
     }
 
     /// <summary>
@@ -1836,7 +1869,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Values are counts of revenues per status, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerPaymentStatus] = new ChartExportData
@@ -1867,7 +1901,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Customer counts, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ActiveVsInactiveCustomers] = new ChartExportData
@@ -1899,7 +1934,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Loss counts grouped by reason, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossReasons] = new ChartExportData
@@ -1931,7 +1967,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Loss counts per product, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByProduct] = new ChartExportData
@@ -1971,7 +2008,8 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
+        // Returns count, not amount — skip USD→display conversion.
+        series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor, convertFromUSD: false));
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsOverTime] = new ChartExportData
@@ -2003,7 +2041,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Return counts grouped by reason, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         var exportData = new ChartExportData
@@ -2036,7 +2075,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Return counts grouped by category, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByCategory] = new ChartExportData
@@ -2122,7 +2162,8 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
+        // Losses count, not amount — skip USD→display conversion.
+        series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor, convertFromUSD: false));
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesOverTime] = new ChartExportData
@@ -2199,7 +2240,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Return counts per product, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByProduct] = new ChartExportData
@@ -2232,7 +2274,8 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Loss counts per category, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByCategory] = new ChartExportData
@@ -2875,10 +2918,11 @@ public class ChartLoaderService
     /// <param name="dataPoints">The source data points.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
-        List<ChartDataPoint> dataPoints)
+        List<ChartDataPoint> dataPoints,
+        bool convertFromUSD = true)
     {
         var maxSlices = ChartSettingsService.GetMaxPieSlices();
-        return CreatePieSeriesWithLegend(dataPoints, maxSlices);
+        return CreatePieSeriesWithLegend(dataPoints, maxSlices, convertFromUSD);
     }
 
     /// <summary>
@@ -2886,16 +2930,33 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
     /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
+    /// <param name="convertFromUSD">
+    /// True (default) when the values are USD aggregates that should be
+    /// displayed in the user's currency. False for count-based pies
+    /// (return reasons, customer counts, etc.).
+    /// </param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints,
-        int maxSlices)
+        int maxSlices,
+        bool convertFromUSD = true)
     {
         var series = new ObservableCollection<ISeries>();
         var legendItems = new ObservableCollection<PieLegendItem>();
 
         if (dataPoints.Count == 0)
             return (series, legendItems);
+
+        // Convert USD aggregates to display currency at this boundary so
+        // slice values / tooltips / legend numbers all agree with stat cards.
+        var now = DateTime.Now;
+        decimal Convert(double v) => convertFromUSD
+            ? CurrencyService.GetDisplayAmount((decimal)v, now)
+            : (decimal)v;
+
+        string FormatTooltip(double v) => convertFromUSD
+            ? CurrencyService.Format((decimal)v)
+            : ((decimal)v).ToString("N0");
 
         // Sort by value descending
         var sortedPoints = dataPoints.OrderByDescending(p => p.Value).ToList();
@@ -2918,21 +2979,21 @@ public class ChartLoaderService
             var item = topItems[i];
             var colorHex = GetColorHexForIndex(i);
             var percentage = total > 0 ? (item.Value / total) * 100 : 0;
-            var roundedValue = Math.Round(item.Value, 2);
+            var displayValue = Math.Round((double)Convert(item.Value), 2);
 
             series.Add(new PieSeries<double>
             {
-                Values = [roundedValue],
+                Values = [displayValue],
                 Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => CurrencyService.FormatFromUSD((decimal)point.Coordinate.PrimaryValue, DateTime.Now)
+                ToolTipLabelFormatter = point => FormatTooltip(point.Coordinate.PrimaryValue)
             });
 
             legendItems.Add(new PieLegendItem
             {
                 Label = item.Label,
-                Value = roundedValue,
+                Value = displayValue,
                 Percentage = percentage,
                 ColorHex = colorHex
             });
@@ -2941,8 +3002,9 @@ public class ChartLoaderService
         // Create "Other" category if needed
         if (otherItems.Count > 0)
         {
-            var otherValue = Math.Round(otherItems.Sum(p => p.Value), 2);
-            var otherPercentage = total > 0 ? (otherValue / total) * 100 : 0;
+            var otherTotalUSD = otherItems.Sum(p => p.Value);
+            var otherValue = Math.Round((double)Convert(otherTotalUSD), 2);
+            var otherPercentage = total > 0 ? (otherTotalUSD / total) * 100 : 0;
             var otherColorHex = AppColors.Gray;
 
             series.Add(new PieSeries<double>
@@ -2951,7 +3013,7 @@ public class ChartLoaderService
                 Name = LanguageService.Instance.Translate("Other"),
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => CurrencyService.FormatFromUSD((decimal)point.Coordinate.PrimaryValue, DateTime.Now)
+                ToolTipLabelFormatter = point => FormatTooltip(point.Coordinate.PrimaryValue)
             });
 
             var itemsText = LanguageService.Instance.Translate("items");

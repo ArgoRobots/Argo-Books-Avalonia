@@ -386,7 +386,7 @@ public class PaymentPortalService : IDisposable
                         : (invoice.TotalUSD > 0 && invoice.Total > 0
                             ? Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2)
                             : 0m),
-                    Source = "Online",
+                    Source = PaymentSource.Online,
                     PortalPaymentId = portalPayment.Id.ToString(),
                     IsRefund = true,
                     RefundedFromPaymentId = refundedFromLocalId,
@@ -397,33 +397,10 @@ public class PaymentPortalService : IDisposable
                 companyData.Payments.Add(payment);
                 newPayments.Add(payment);
 
-                // Update invoice.AmountRefunded (absolute sum of refund Payments for this invoice)
-                var invoiceCurrencyRf = string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency;
-                invoice.AmountRefunded = companyData.Payments
-                    .Where(p => p.InvoiceId == invoice.Id && p.IsRefund
-                        && string.Equals(string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
-                                         invoiceCurrencyRf, StringComparison.OrdinalIgnoreCase))
-                    .Sum(p => Math.Abs(p.Amount));
-
-                // Status recompute. Compare AmountRefunded against the
-                // invoice's nominal Total (the base amount), NOT AmountPaid.
-                // AmountPaid now stores the gross customer charge including
-                // any processing fee the customer absorbed; AmountRefunded
-                // is just the refund itself (the fee isn't refunded). A full
-                // refund of a $X invoice covers $X — comparing against
-                // AmountPaid would always read as Partially Refunded once
-                // a fee is involved. Tiny epsilon for cent-level float drift.
-                if (invoice.AmountPaid > 0 && invoice.AmountRefunded > 0)
-                {
-                    if (invoice.AmountRefunded + 0.01m >= invoice.Total)
-                    {
-                        invoice.Status = InvoiceStatus.Refunded;
-                    }
-                    else
-                    {
-                        invoice.Status = InvoiceStatus.PartiallyRefunded;
-                    }
-                }
+                // Recalc invoice totals + status from the full Payments list.
+                // Status only flips to Refunded / PartiallyRefunded when
+                // AmountPaid is also > 0 — see InvoiceTotalsService.
+                InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
                 invoice.History.Add(new InvoiceHistoryEntry
                 {
@@ -481,7 +458,7 @@ public class PaymentPortalService : IDisposable
                 CreatedAt = DateTime.UtcNow,
                 OriginalCurrency = portalPayment.Currency,
                 AmountUSD = amountUSD,
-                Source = "Online",
+                Source = PaymentSource.Online,
                 PortalPaymentId = portalPayment.Id.ToString(),
                 ProviderPaymentId = portalPayment.ProviderPaymentId
             };
@@ -490,68 +467,17 @@ public class PaymentPortalService : IDisposable
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
 
-            // Update invoice balance using USD-normalized amounts to avoid currency mixing
-            var totalPaidUSD = companyData.Payments
-                .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0)
-                .Sum(p => p.EffectiveAmountUSD);
-
-            // Also track original-currency paid for display
-            // Normalize currency comparison: treat null/empty as "USD" and compare case-insensitively
-            var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency;
-            var totalPaidOriginal = companyData.Payments
-                .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0
-                    && string.Equals(
-                        string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
-                        invoiceCurrency,
-                        StringComparison.OrdinalIgnoreCase))
-                .Sum(p => p.Amount);
-
-            invoice.AmountPaid = totalPaidOriginal;
-            invoice.Balance = Math.Max(0, invoice.Total - totalPaidOriginal);
-
-            // Keep USD fields in sync
-            if (invoice.TotalUSD > 0)
-            {
-                invoice.BalanceUSD = Math.Max(0, invoice.TotalUSD - totalPaidUSD);
-            }
-
-            // If this invoice has prior refunds, factor them into the status
-            // so a new positive payment after a refund correctly lands on
-            // PartiallyRefunded rather than masking the refund history.
-            var refundedSoFar = companyData.Payments
-                .Where(p => p.InvoiceId == invoice.Id && p.IsRefund
-                    && string.Equals(string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
-                                     invoiceCurrency, StringComparison.OrdinalIgnoreCase))
-                .Sum(p => Math.Abs(p.Amount));
-            invoice.AmountRefunded = refundedSoFar;
-
-            if (refundedSoFar > 0 && totalPaidOriginal > 0)
-            {
-                // Compare against invoice.Total (nominal amount), not the
-                // gross customer charge — see explanation at the matching
-                // status-recompute block earlier in this file. Refunds don't
-                // include the processing fee the customer absorbed, so a
-                // full refund would never reach AmountPaid once a fee
-                // applies.
-                invoice.Status = refundedSoFar + 0.01m >= invoice.Total
-                    ? InvoiceStatus.Refunded
-                    : InvoiceStatus.PartiallyRefunded;
-            }
-            else if (invoice.Balance <= 0)
-            {
-                invoice.Status = InvoiceStatus.Paid;
-            }
-            else if (totalPaidOriginal > 0)
-            {
-                invoice.Status = InvoiceStatus.Partial;
-            }
+            // Recalc invoice totals + status from the full Payments list.
+            InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
             // Update linked revenue records
             var linkedRevenues = companyData.Revenues
                 .Where(r => r.InvoiceId == invoice.Id);
             foreach (var revenue in linkedRevenues)
             {
-                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid ? "Paid" : "Unpaid";
+                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid
+                    ? RevenuePaymentStatus.Paid
+                    : RevenuePaymentStatus.Unpaid;
             }
 
             invoice.UpdatedAt = DateTime.UtcNow;

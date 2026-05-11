@@ -76,7 +76,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             Quantity = (int)(revenue.LineItems.Sum(i => i.Quantity)),
             UnitPrice = primaryItem?.UnitPrice ?? revenue.UnitPrice,
             Total = revenue.EffectiveSubtotalUSD,
-            Status = revenue.PaymentStatus,
+            Status = revenue.PaymentStatus.ToString(),
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = revenue.ShippingCost,
             Country = customer?.Address.Country ?? "",
