@@ -412,13 +412,17 @@
                                                IsVisible="{Binding IsShowingSuccess}" />
 
                     <!-- Content - Sending Overlay (visible while the API call is in flight) -->
-                    <!-- Explicit Cursor="Arrow" guards against the embedded HTML
-                         preview occasionally suppressing the system cursor when
-                         it loses hit-testing to this overlay. -->
-                    <Panel Grid.Row="1" Grid.RowSpan="3"
-                           Background="{DynamicResource SurfaceBrush}"
-                           Cursor="Arrow"
-                           IsVisible="{Binding IsSending}">
+                    <!-- Border (not Panel) so CornerRadius matches the parent
+                         modal shell — Panel doesn't honor a parent Border's
+                         rounded corners and renders a hard rectangle.
+                         Explicit Cursor="Arrow" guards against the embedded
+                         HTML preview occasionally suppressing the system
+                         cursor when it loses hit-testing to this overlay. -->
+                    <Border Grid.Row="0" Grid.RowSpan="4"
+                            Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            Cursor="Arrow"
+                            IsVisible="{Binding IsSending}">
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Spacing="20">
@@ -438,7 +442,7 @@
                                        MaxWidth="320"
                                        TextWrapping="Wrap" />
                         </StackPanel>
-                    </Panel>
+                    </Border>
 
                     <!-- Footer - Edit Mode -->
                     <Border Grid.Row="3"

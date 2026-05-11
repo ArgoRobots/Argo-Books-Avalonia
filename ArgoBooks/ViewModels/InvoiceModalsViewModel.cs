@@ -1296,6 +1296,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var customer = companyData.GetCustomer(SelectedCustomer!.Id!);
         if (customer == null) return;
 
+        // The outer CreateAndSendInvoice already guards on SelectedTemplate
+        // being non-null, but the compiler can't see across method boundaries —
+        // re-assert here so the SendInvoiceAsync call site doesn't warn.
+        var selectedTemplate = SelectedTemplate;
+        if (selectedTemplate == null) return;
+
         // Check if we're continuing a draft invoice or creating a new one
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
@@ -1462,7 +1468,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
                 var response = await emailService.SendInvoiceAsync(
                     invoice,
-                    SelectedTemplate,
+                    selectedTemplate,
                     companyData,
                     emailSettings,
                     currencySymbol);
