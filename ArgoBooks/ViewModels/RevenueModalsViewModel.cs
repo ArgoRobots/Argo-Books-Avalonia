@@ -813,7 +813,14 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             Notes = revenue.Notes,
             ReferenceNumber = revenue.ReferenceNumber,
             ReceiptId = revenue.ReceiptId,
-            IsPendingConversion = revenue.IsPendingConversion
+            IsPendingConversion = revenue.IsPendingConversion,
+            OriginalCurrency = revenue.OriginalCurrency,
+            TotalUSD = revenue.TotalUSD,
+            UnitPriceUSD = revenue.UnitPriceUSD,
+            ShippingCostUSD = revenue.ShippingCostUSD,
+            TaxAmountUSD = revenue.TaxAmountUSD,
+            DiscountUSD = revenue.DiscountUSD,
+            FeeUSD = revenue.FeeUSD
         };
     }
 
@@ -838,6 +845,13 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.ReferenceNumber = state.ReferenceNumber;
         revenue.ReceiptId = state.ReceiptId;
         revenue.IsPendingConversion = state.IsPendingConversion;
+        revenue.OriginalCurrency = state.OriginalCurrency;
+        revenue.TotalUSD = state.TotalUSD;
+        revenue.UnitPriceUSD = state.UnitPriceUSD;
+        revenue.ShippingCostUSD = state.ShippingCostUSD;
+        revenue.TaxAmountUSD = state.TaxAmountUSD;
+        revenue.DiscountUSD = state.DiscountUSD;
+        revenue.FeeUSD = state.FeeUSD;
     }
 
     #endregion
