@@ -78,6 +78,38 @@ public partial class RefundModalViewModel : ObservableObject
         CurrentStep == Step.Failure ||
         CurrentStep == Step.Details;
 
+    /// <summary>
+    /// Same as IsTerminalStep minus Success — the footer Done button hides
+    /// on Success because the SuccessAnimation overlay supplies its own.
+    /// </summary>
+    public bool IsNonSuccessTerminalStep =>
+        CurrentStep == Step.Failure ||
+        CurrentStep == Step.Details;
+
+    /// <summary>
+    /// Whether the footer Border should render. Hidden while the busy overlay
+    /// is active OR the success animation is showing, since both of those
+    /// fully cover the modal body and the footer would otherwise leak through
+    /// on top (XAML draw order — footer is declared after the overlays).
+    /// </summary>
+    public bool ShowRefundFooter => !IsBusy && CurrentStep != Step.Success;
+
+    /// <summary>Headline shown in the busy overlay (depends on what the user just clicked).</summary>
+    public string BusyLabel => CurrentStep switch
+    {
+        Step.LineItems => "Sending verification code...",
+        Step.EnterCode => "Issuing refund...",
+        _ => "Working..."
+    };
+
+    /// <summary>Sub-label shown in the busy overlay.</summary>
+    public string BusySubLabel => CurrentStep switch
+    {
+        Step.LineItems => "We're emailing a 6-digit code to your owner email so you can confirm this refund.",
+        Step.EnterCode => "Confirming the code and sending the refund through to the payment provider.",
+        _ => string.Empty
+    };
+
     partial void OnCurrentStepChanged(Step value)
     {
         OnPropertyChanged(nameof(IsLineItemsStep));
@@ -85,6 +117,10 @@ public partial class RefundModalViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPollingStep));
         OnPropertyChanged(nameof(IsSuccessStep));
         OnPropertyChanged(nameof(IsFailureStep));
+        OnPropertyChanged(nameof(IsNonSuccessTerminalStep));
+        OnPropertyChanged(nameof(ShowRefundFooter));
+        OnPropertyChanged(nameof(BusyLabel));
+        OnPropertyChanged(nameof(BusySubLabel));
         OnPropertyChanged(nameof(IsDetailsStep));
         OnPropertyChanged(nameof(IsTerminalStep));
     }
@@ -146,7 +182,11 @@ public partial class RefundModalViewModel : ObservableObject
     public bool CanSubmitCode => Code.Length == 6 && Code.All(char.IsDigit) && !IsBusy;
 
     partial void OnCodeChanged(string value) => OnPropertyChanged(nameof(CanSubmitCode));
-    partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanSubmitCode));
+    partial void OnIsBusyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSubmitCode));
+        OnPropertyChanged(nameof(ShowRefundFooter));
+    }
 
     // ---------- step 3: polling / cooling-off ----------
     [ObservableProperty]
@@ -295,6 +335,32 @@ public partial class RefundModalViewModel : ObservableObject
                 Amount = _invoice.SecurityDeposit,
                 IsSelected = true,
                 Kind = "deposit",
+            };
+            row.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(RefundableLineRow.IsSelected)) RecomputeTotals(); };
+            LineRows.Add(row);
+        }
+
+        // Discount — added as a negative-amount row so the refund total
+        // reflects what the customer actually paid (gross minus discount).
+        // Without this, refunding all line items + tax + fee inflates the
+        // total by the discount amount and trips the "exceeds refundable"
+        // guard. Mirrors InvoiceHtmlRenderer.CalculateDiscount for the
+        // percent-vs-fixed resolution.
+        if (_invoice.DiscountAmount > 0)
+        {
+            var discountValue = _invoice.DiscountIsPercent
+                ? _invoice.Subtotal * (_invoice.DiscountAmount / 100m)
+                : _invoice.DiscountAmount;
+            var label = _invoice.DiscountIsPercent
+                ? $"Discount ({_invoice.DiscountAmount}%)"
+                : "Discount";
+            var row = new RefundableLineRow
+            {
+                Label = label,
+                Detail = "",
+                Amount = -discountValue,
+                IsSelected = true,
+                Kind = "discount",
             };
             row.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(RefundableLineRow.IsSelected)) RecomputeTotals(); };
             LineRows.Add(row);

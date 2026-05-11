@@ -50,8 +50,18 @@
                                         <ItemsControl ItemsSource="{Binding Payments}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate DataType="vm:RefundablePaymentRow">
-                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                              Content="{Binding DisplayLabel}" Margin="0,2" />
+                                                    <!-- Match the line-items row layout below so the
+                                                         checkbox-to-label gap is identical between
+                                                         "Refund against" and "What to refund". -->
+                                                    <Grid ColumnDefinitions="Auto,*" Margin="0,2">
+                                                        <CheckBox Grid.Column="0"
+                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                  VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   Margin="8,0"
+                                                                   Text="{Binding DisplayLabel}"
+                                                                   VerticalAlignment="Center" />
+                                                    </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -99,8 +109,10 @@
                                     </Border>
 
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Reason (optional)" FontSize="12"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="Reason (optional — shown to the customer in their refund email)"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   TextWrapping="Wrap" />
                                         <TextBox Text="{Binding Reason, Mode=TwoWay}" Classes="form-input"
                                                  PlaceholderText="e.g. Wrong item shipped" MaxLength="250" />
                                     </StackPanel>
@@ -160,13 +172,7 @@
                                     </ItemsControl>
                                 </StackPanel>
 
-                                <!-- Terminal: success -->
-                                <StackPanel IsVisible="{Binding IsSuccessStep}" Spacing="14">
-                                    <TextBlock Text="✓ Refund issued" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
-                                    <TextBlock Text="{Binding TerminalMessage}" TextWrapping="Wrap" />
-                                </StackPanel>
-
-                                <!-- Terminal: failure -->
+                                <!-- Terminal: failure (success is rendered as a SuccessAnimation overlay below) -->
                                 <StackPanel IsVisible="{Binding IsFailureStep}" Spacing="14">
                                     <TextBlock Text="Refund did not complete" FontSize="16" FontWeight="SemiBold" Foreground="#dc2626" />
                                     <TextBlock Text="{Binding TerminalMessage}" TextWrapping="Wrap" />
@@ -174,8 +180,14 @@
                             </StackPanel>
                         </ScrollViewer>
 
-                        <!-- Footer -->
-                        <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <!-- Footer — hidden while the busy overlay or success
+                             animation is on screen. The overlays are placed
+                             AFTER the footer in XAML so they always draw on
+                             top — IsVisible is the primary mechanism but the
+                             draw order is the safety net against the footer's
+                             top-border separator leaking through. -->
+                        <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                IsVisible="{Binding ShowRefundFooter}">
                             <Grid ColumnDefinitions="Auto,*,Auto">
                                 <ProgressBar Grid.Column="0" Width="120" Height="4" IsIndeterminate="True"
                                              IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
@@ -197,12 +209,57 @@
                                             IsEnabled="{Binding CanSubmitCode}"
                                             Classes="primary-button"
                                             Command="{Binding SubmitCodeCommand}" />
+                                    <!-- Done shows on Failure / Details only — Success has the
+                                         SuccessAnimation overlay's own Continue button. -->
                                     <Button Content="Done"
-                                            IsVisible="{Binding IsTerminalStep}"
+                                            IsVisible="{Binding IsNonSuccessTerminalStep}"
                                             Classes="primary-button"
                                             Command="{Binding CloseCommand}" />
                                 </StackPanel>
                             </Grid>
+                        </Border>
+
+                        <!-- Sending overlay — drawn AFTER the footer in XAML so
+                             it covers the footer's top-border separator if any
+                             visibility-toggle timing glitch occurs. Border (not
+                             Panel) so CornerRadius matches the parent modal shell. -->
+                        <Border Grid.Row="0" Grid.RowSpan="3"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="12"
+                                Cursor="Arrow"
+                                IsVisible="{Binding IsBusy}">
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="20">
+                                <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                                <TextBlock Text="{Binding BusyLabel}"
+                                           FontSize="16" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding BusySubLabel}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           MaxWidth="320"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Success overlay (refund completed) — also drawn
+                             AFTER the footer so its background covers the
+                             footer's top-border line. -->
+                        <Border Grid.Row="0" Grid.RowSpan="3"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="12"
+                                IsVisible="{Binding IsSuccessStep}">
+                            <controls:SuccessAnimation Title="Refund Issued!"
+                                                       Message="{Binding TerminalMessage}"
+                                                       ShowContinueButton="True"
+                                                       ContinueButtonText="Done"
+                                                       ContinueButtonDelayMs="300"
+                                                       ContinueCommand="{Binding CloseCommand}"
+                                                       IsPlaying="{Binding IsSuccessStep}" />
                         </Border>
                     </Grid>
                 </Border>
