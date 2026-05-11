@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using ArgoBooks.Core;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
@@ -2021,11 +2022,21 @@ public partial class SettingsModalViewModel : ViewModelBase
     [NotifyCanExecuteChangedFor(nameof(SetInitialOwnerEmailCommand))]
     private string _pendingOwnerEmail = string.Empty;
 
+    /// <summary>
+    /// True while the SetInitialOwnerEmail request is in flight. Disables
+    /// the command's CanExecute so a rapid second click can't send a
+    /// concurrent request (which would race the verify-modal open and
+    /// produce confusing 409 recovery flows).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SetInitialOwnerEmailCommand))]
+    private bool _isSettingOwnerEmail;
+
     public bool CanSetInitialOwnerEmail
     {
         get
         {
-            return DataValidator.IsValidEmail(PendingOwnerEmail);
+            return !IsSettingOwnerEmail && DataValidator.IsValidEmail(PendingOwnerEmail);
         }
     }
 
@@ -2045,6 +2056,20 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         var email = PendingOwnerEmail.Trim();
 
+        IsSettingOwnerEmail = true;
+        try
+        {
+            await SetInitialOwnerEmailCoreAsync(refundService, companyData, email);
+        }
+        finally
+        {
+            IsSettingOwnerEmail = false;
+        }
+    }
+
+    private async Task SetInitialOwnerEmailCoreAsync(
+        RefundService refundService, CompanyData companyData, string email)
+    {
         var result = await refundService.SetInitialOwnerEmailAsync(email);
 
         // Recovery path: server says email is already set on the company,

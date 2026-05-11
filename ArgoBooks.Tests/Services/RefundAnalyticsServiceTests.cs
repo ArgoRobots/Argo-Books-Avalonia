@@ -41,7 +41,7 @@ public class RefundAnalyticsServiceTests
         c.Payments.Add(Payment("p3", "C1", -75m, isRefund: true));
         c.Payments.Add(Payment("p4", "C1", -10m, isRefund: true, date: DateTime.Today.AddYears(-2)));
 
-        var total = RefundAnalyticsService.TotalRefunded(c, DateTime.Today.AddDays(-30));
+        var total = RefundAnalyticsService.TotalRefundedUSD(c, DateTime.Today.AddDays(-30));
         Assert.Equal(100m, total);
     }
 
@@ -76,7 +76,7 @@ public class RefundAnalyticsServiceTests
         var top = RefundAnalyticsService.TopRefundedCustomers(c, DateTime.Today.AddDays(-30), 2);
         Assert.Equal(2, top.Count);
         Assert.Equal("Beta Inc", top[0].CustomerName);
-        Assert.Equal(50m, top[0].Amount);
+        Assert.Equal(50m, top[0].AmountUSD);
         Assert.Equal("Charlie LLC", top[1].CustomerName);
     }
 
@@ -129,8 +129,8 @@ public class RefundAnalyticsServiceTests
 
         var months = RefundAnalyticsService.MonthlyTotals(c, 3);
         Assert.Equal(3, months.Count);
-        Assert.Equal(50m, months[0].Amount);
-        Assert.Equal(0m, months[1].Amount);  // empty middle month still represented
-        Assert.Equal(25m, months[2].Amount);
+        Assert.Equal(50m, months[0].AmountUSD);
+        Assert.Equal(0m, months[1].AmountUSD);  // empty middle month still represented
+        Assert.Equal(25m, months[2].AmountUSD);
     }
 }

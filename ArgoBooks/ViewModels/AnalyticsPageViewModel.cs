@@ -2500,36 +2500,40 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         if (company == null) return;
 
         var since = DateTime.Today.AddDays(-90);
+        var now = DateTime.Now;
 
-        var totalDecimal = ArgoBooks.Core.Services.RefundAnalyticsService.TotalRefunded(company, since);
+        // RefundAnalyticsService returns USD-normalized amounts so multi-
+        // currency portals roll up consistently; display goes through
+        // CurrencyService.FormatFromUSD per Calculations.md §3.
+        var totalUSD = ArgoBooks.Core.Services.RefundAnalyticsService.TotalRefundedUSD(company, since);
         var rateDecimal = ArgoBooks.Core.Services.RefundAnalyticsService.RefundRate(company, since);
         var avgLatency = ArgoBooks.Core.Services.RefundAnalyticsService.AverageRefundLatencyDays(company, since);
 
-        RefundsTotal = totalDecimal.ToString("C");
+        RefundsTotal = CurrencyService.FormatFromUSD(totalUSD, now);
         RefundsRate = (rateDecimal * 100).ToString("F1") + "%";
         RefundsAvgLatency = avgLatency > 0 ? $"{avgLatency:F1} days" : "—";
-        HasAnyRefunds = totalDecimal > 0;
+        HasAnyRefunds = totalUSD > 0;
 
         RefundsTopCustomers.Clear();
         foreach (var c in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedCustomers(company, since, 10))
-            RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, c.Amount.ToString("C"), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
+            RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, CurrencyService.FormatFromUSD(c.AmountUSD, now), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
 
         RefundsTopProducts.Clear();
         foreach (var p in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedProducts(company, since, 10))
-            RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, p.Amount.ToString("C"), null));
+            RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, CurrencyService.FormatFromUSD(p.AmountUSD, now), null));
 
         RefundsTopReasons.Clear();
         foreach (var r in ArgoBooks.Core.Services.RefundAnalyticsService.TopReasons(company, since, 5))
-            RefundsTopReasons.Add(new RefundsRow(r.Reason, r.TotalAmount.ToString("C"), $"{r.Count}"));
+            RefundsTopReasons.Add(new RefundsRow(r.Reason, CurrencyService.FormatFromUSD(r.TotalAmountUSD, now), $"{r.Count}"));
 
         RefundsChannelBreakdown.Clear();
         foreach (var (channel, amount) in ArgoBooks.Core.Services.RefundAnalyticsService.ChannelBreakdown(company, since)
                      .OrderByDescending(kv => kv.Value))
-            RefundsChannelBreakdown.Add(new RefundsRow(channel, amount.ToString("C"), null));
+            RefundsChannelBreakdown.Add(new RefundsRow(channel, CurrencyService.FormatFromUSD(amount, now), null));
 
         RefundsMonthlyTotals.Clear();
         foreach (var m in ArgoBooks.Core.Services.RefundAnalyticsService.MonthlyTotals(company, 12))
-            RefundsMonthlyTotals.Add(new RefundsMonthBucket(m.Month.ToString("MMM yyyy"), m.Amount));
+            RefundsMonthlyTotals.Add(new RefundsMonthBucket(m.Month.ToString("MMM yyyy"), m.AmountUSD));
     }
 
     #endregion

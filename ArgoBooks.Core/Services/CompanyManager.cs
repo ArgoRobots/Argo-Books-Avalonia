@@ -587,6 +587,9 @@ public class CompanyManager : IDisposable
             // invoices that actually have Payment rows — spreadsheet
             // imports without payments record AmountPaid directly on the
             // invoice and would otherwise be wiped to zero here.
+            // Recalculate (not just RecalculateFromPayments) so stored
+            // Status is also healed — e.g. Paid → PartiallyRefunded for
+            // historic invoices saved before the refund-status rules.
             var invoicesWithPayments = CompanyData.Payments
                 .Select(p => p.InvoiceId)
                 .Where(id => !string.IsNullOrEmpty(id))
@@ -595,7 +598,7 @@ public class CompanyManager : IDisposable
             {
                 if (invoicesWithPayments.Contains(invoice.Id))
                 {
-                    InvoiceTotalsService.RecalculateFromPayments(invoice, CompanyData.Payments);
+                    InvoiceTotalsService.Recalculate(invoice, CompanyData.Payments);
                 }
             }
 
