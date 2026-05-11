@@ -886,6 +886,13 @@ public class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = hasChanges;
             };
 
+            // After any undo/redo, fire CompanyDataChanged so pages
+            // subscribed to it (Dashboard, Analytics, Invoices, etc.) refresh
+            // their derived data. Individual undo callbacks only call
+            // companyData.MarkAsModified() which doesn't fire the event.
+            UndoRedoManager.ActionUndone += (_, _) => CompanyManager?.NotifyDataChanged();
+            UndoRedoManager.ActionRedone += (_, _) => CompanyManager?.NotifyDataChanged();
+
             // Wire up file menu events
             WireFileMenuEvents(desktop);
 

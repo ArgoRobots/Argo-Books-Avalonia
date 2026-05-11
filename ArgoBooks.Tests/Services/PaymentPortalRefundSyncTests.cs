@@ -99,7 +99,7 @@ public class PaymentPortalRefundSyncTests
 
         var refundRow = company.Payments.Single(p => p.IsRefund);
         Assert.Equal(-100m, refundRow.Amount);
-        Assert.Equal("Online", refundRow.Source);
+        Assert.Equal(PaymentSource.Online, refundRow.Source);
     }
 
     [Fact]

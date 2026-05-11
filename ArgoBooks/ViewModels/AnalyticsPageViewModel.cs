@@ -278,8 +278,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         App.CustomDateRangeModal?.Open(modalStartDate, EndDate,
             onApply: (start, end) =>
             {
-                StartDate = start;
-                EndDate = end;
+                StartDate = start.Date;
+                // Inclusive end-of-day so transactions stored later in the
+                // user's day (or with a UTC timestamp ahead of local time)
+                // aren't filtered out of stat-card aggregations.
+                EndDate = end.Date.AddDays(1).AddTicks(-1);
                 HasAppliedCustomRange = true;
                 OnPropertyChanged(nameof(AppliedDateRangeText));
                 OnPropertyChanged(nameof(DateRangeDisplayText));

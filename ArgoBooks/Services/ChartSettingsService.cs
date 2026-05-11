@@ -266,40 +266,48 @@ public partial class ChartSettingsService : ObservableObject
     public void UpdateDateRangeFromSelection()
     {
         var now = DateTime.Now;
+        // End-of-today, used as the inclusive upper bound for any "current"
+        // range. Without this, EndDate is the moment the dashboard refreshed
+        // (e.g., 11:43 AM) and transactions stored later in the day —
+        // including rows saved with DateTime.UtcNow on a behind-UTC clock —
+        // get filtered out of stat cards even though the chart's own
+        // end-of-day normalization includes them.
+        var endOfToday = now.Date.AddDays(1).AddTicks(-1);
 
         var preset = DateRangePresetExtensions.ParseDateRange(SelectedDateRange);
         switch (preset)
         {
             case DateRangePreset.ThisMonth:
                 StartDate = new DateTime(now.Year, now.Month, 1);
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.LastMonth:
                 var lastMonth = now.AddMonths(-1);
                 StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+                EndDate = new DateTime(lastMonth.Year, lastMonth.Month,
+                    DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month)).AddDays(1).AddTicks(-1);
                 break;
 
             case DateRangePreset.Last30Days:
                 StartDate = now.AddDays(-29).Date;
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.Last100Days:
                 StartDate = now.AddDays(-99).Date;
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.Last365Days:
                 StartDate = now.AddDays(-364).Date;
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.ThisQuarter:
                 var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
                 StartDate = quarterStart;
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.LastQuarter:
@@ -307,22 +315,22 @@ public partial class ChartSettingsService : ObservableObject
                 var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
                 lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
                 StartDate = lastQuarterStart;
-                EndDate = lastQuarterEnd;
+                EndDate = lastQuarterEnd.Date.AddDays(1).AddTicks(-1);
                 break;
 
             case DateRangePreset.ThisYear:
                 StartDate = new DateTime(now.Year, 1, 1);
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.LastYear:
                 StartDate = new DateTime(now.Year - 1, 1, 1);
-                EndDate = new DateTime(now.Year - 1, 12, 31);
+                EndDate = new DateTime(now.Year - 1, 12, 31).AddDays(1).AddTicks(-1);
                 break;
 
             case DateRangePreset.AllTime:
                 StartDate = App.CompanyManager?.CompanyData?.GetEarliestDate() ?? DateTime.Today;
-                EndDate = now;
+                EndDate = endOfToday;
                 break;
 
             case DateRangePreset.CustomRange:
