@@ -283,7 +283,8 @@
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <PathIcon Data="{x:Static icons:Icons.DocumentBlank}"
                                                       Width="14" Height="14" />
-                                            <TextBlock Text="{loc:Loc 'Attach'}" />
+                                            <TextBlock Text="{loc:Loc 'Attach'}" IsVisible="{Binding !HasReceipt}" />
+                                            <TextBlock Text="{loc:Loc 'Change'}" IsVisible="{Binding HasReceipt}" />
                                         </StackPanel>
                                     </Button>
                                 </Grid>

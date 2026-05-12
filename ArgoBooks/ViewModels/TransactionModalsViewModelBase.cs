@@ -198,7 +198,10 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private bool _hasValidationMessage;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasReceipt))]
     private string _receiptFileName = "No receipt attached";
+
+    public bool HasReceipt => !string.IsNullOrEmpty(ReceiptFileName) && ReceiptFileName != "No receipt attached";
 
     [ObservableProperty]
     private bool _hasTotalMismatchWarning;
