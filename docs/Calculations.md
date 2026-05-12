@@ -202,10 +202,10 @@ stored `AmountPaid` value the import gave them.
 **Refund status rule.** `AmountRefunded vs Total` alone isn't enough,
 because two scenarios both produce `AmountPaid > Total`:
 
-1. *Single payment + processing fee, fully refunded.* AmountPaid = $103
-   ($100 invoice + $3 fee customer absorbed), AmountRefunded = $100
+1. *Single payment + processing fee, fully refunded.* AmountPaid = \$103
+   (\$100 invoice + \$3 fee customer absorbed), AmountRefunded = \$100
    (refunds don't include the fee). Status should be `Refunded`.
-2. *Pay → refund → pay again.* AmountPaid = $200, AmountRefunded = $100.
+2. *Pay → refund → pay again.* AmountPaid = \$200, AmountRefunded = \$100.
    Status should be `PartiallyRefunded` so the refund history stays
    visible alongside the new payment.
 
@@ -288,12 +288,12 @@ profit surfaces should reuse `ProfitCalculator.CalculateNetProfitUSD` or
 `CalculateNetProfitByDayUSD` rather than re-deriving the formula.
 
 Worked example:
-- Invoice: $86.91 subtotal + $32.09 tax = $119 total.
-- Customer pays $119; profit picks up $86.91; we owe gov $32.09.
-- Full refund of $119 issued.
-- Profit reduces by $86.91 (not $119) — the $32.09 tax was never ours.
-- Tax owed simultaneously drops by $32.09 (we owe nothing on a refunded
-  transaction). Net profit impact on this transaction: $0. Correct.
+- Invoice: \$86.91 subtotal + \$32.09 tax = \$119 total.
+- Customer pays \$119; profit picks up \$86.91; we owe gov \$32.09.
+- Full refund of \$119 issued.
+- Profit reduces by \$86.91 (not \$119) — the \$32.09 tax was never ours.
+- Tax owed simultaneously drops by \$32.09 (we owe nothing on a refunded
+  transaction). Net profit impact on this transaction: \$0. Correct.
 
 ### Effect on invoice status
 
