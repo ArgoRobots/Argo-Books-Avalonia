@@ -818,8 +818,10 @@
                                         <Border Background="{DynamicResource AltSurfaceBrush}"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1" CornerRadius="4"
-                                                Padding="10,6" MinWidth="280">
-                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13" />
+                                                Padding="12,0" MinWidth="280"
+                                                MinHeight="{StaticResource FormControlHeight}">
+                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13"
+                                                       VerticalAlignment="Center" />
                                         </Border>
                                         <Button Content="{loc:Loc 'Change'}"
                                                 Classes="secondary-button"
