@@ -460,7 +460,8 @@ public class PaymentPortalService : IDisposable
                 AmountUSD = amountUSD,
                 Source = PaymentSource.Online,
                 PortalPaymentId = portalPayment.Id.ToString(),
-                ProviderPaymentId = portalPayment.ProviderPaymentId
+                ProviderPaymentId = portalPayment.ProviderPaymentId,
+                ProcessingFee = portalPayment.ProcessingFee,
             };
 
             // Add to company data

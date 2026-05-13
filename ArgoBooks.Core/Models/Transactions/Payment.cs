@@ -83,6 +83,16 @@ public class Payment
     [JsonPropertyName("providerPaymentId")]
     public string? ProviderPaymentId { get; set; }
 
+    /// <summary>
+    /// The processing fee the customer paid on top of the invoice (for
+    /// <c>pass_processing_fee</c> invoices). Zero when the fee was absorbed
+    /// by the merchant or for manual / non-portal payments. The refund modal
+    /// shows this as a checkable line so the merchant can return it to the
+    /// customer along with the invoice items.
+    /// </summary>
+    [JsonPropertyName("processingFee")]
+    public decimal ProcessingFee { get; set; }
+
     #endregion
 
     #region Currency Support

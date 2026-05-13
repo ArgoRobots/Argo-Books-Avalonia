@@ -252,10 +252,18 @@ public partial class RefundModalViewModel : ObservableObject
                 OriginalAmount = p.Amount,
                 AlreadyRefunded = alreadyRefunded,
                 Refundable = refundable,
+                ProcessingFee = p.ProcessingFee,
                 Currency = string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
                 IsSelected = false,
             };
-            row.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(RefundablePaymentRow.IsSelected)) RecomputeTotals(); };
+            row.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(RefundablePaymentRow.IsSelected))
+                {
+                    UpdateProcessingFeeRow();
+                    RecomputeTotals();
+                }
+            };
             Payments.Add(row);
         }
 
@@ -358,7 +366,47 @@ public partial class RefundModalViewModel : ObservableObject
             LineRows.Add(row);
         }
 
+        UpdateProcessingFeeRow();
         RecomputeTotals();
+    }
+
+    /// <summary>
+    /// Adds, updates, or removes the "Processing fee" line row based on the
+    /// currently-selected payment's <see cref="RefundablePaymentRow.ProcessingFee"/>.
+    /// Kept distinct from the invoice-derived rows in <see cref="BuildLineRows"/>
+    /// because the fee is per-payment, not per-invoice — multi-payment invoices
+    /// can have a different fee per payment.
+    /// </summary>
+    private void UpdateProcessingFeeRow()
+    {
+        var existing = LineRows.FirstOrDefault(r => r.Kind == "processingFee");
+        var selectedPayment = Payments.FirstOrDefault(p => p.IsSelected);
+        var targetFee = selectedPayment?.ProcessingFee ?? 0m;
+
+        if (targetFee > 0)
+        {
+            if (existing != null)
+            {
+                existing.Amount = targetFee;
+            }
+            else
+            {
+                var feeRow = new RefundableLineRow
+                {
+                    Label = "Payment processing fee",
+                    Detail = "",
+                    Amount = targetFee,
+                    IsSelected = true,
+                    Kind = "processingFee",
+                };
+                feeRow.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(RefundableLineRow.IsSelected)) RecomputeTotals(); };
+                LineRows.Add(feeRow);
+            }
+        }
+        else if (existing != null)
+        {
+            LineRows.Remove(existing);
+        }
     }
 
     private void RecomputeTotals()
@@ -648,6 +696,7 @@ public partial class RefundablePaymentRow : ObservableObject
     public decimal OriginalAmount { get; set; }
     public decimal AlreadyRefunded { get; set; }
     public decimal Refundable { get; set; }
+    public decimal ProcessingFee { get; set; }
     public string Currency { get; set; } = "USD";
 
     [ObservableProperty]
@@ -663,7 +712,7 @@ public partial class RefundableLineRow : ObservableObject
     public string Label { get; set; } = string.Empty;
     public string Detail { get; set; } = string.Empty;
     public decimal Amount { get; set; }
-    public string Kind { get; set; } = "lineItem"; // lineItem | tax | fee | deposit
+    public string Kind { get; set; } = "lineItem"; // lineItem | tax | fee | deposit | discount | processingFee
 
     [ObservableProperty]
     private bool _isSelected;
