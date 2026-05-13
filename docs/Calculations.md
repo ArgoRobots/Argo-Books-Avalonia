@@ -182,6 +182,29 @@ to heal any historic drift, scoped to invoices that actually have Payment
 rows — invoices imported from spreadsheets without payments keep the
 stored `AmountPaid` value the import gave them.
 
+### `Payment.Amount` is the gross money movement and never changes after creation
+
+A `Payment` row records a single money movement: a positive `Amount` when
+money came in, a negative `Amount` (with `IsRefund=true`) when money went
+out. Once written, neither field is mutated — a refund is a **separate row**,
+not a downward edit of the original payment.
+
+This matters for any surface that shows individual payments:
+
+- The **Payments page list** displays `Payment.Amount` (the original gross,
+  including any processing fee the customer absorbed). It does **not** show
+  a net "remaining" figure. Refund context is conveyed by the **Status**
+  column flipping to "Refunded" / "Partially Refunded". Refund rows
+  themselves are hidden from the list so each transaction appears once.
+- Net-of-refund figures are still available where they're needed —
+  `Invoice.NetPaid`, `RefundAggregator.GetRefundedForPayment(...)`, and
+  the dashboard stats subtract refunds from gross at aggregation time. But
+  the per-row Amount column always shows the gross.
+
+If you find code that subtracts refunds from a `Payment.Amount` before
+displaying it, that's a bug — netting belongs in aggregations, not in row
+data.
+
 ---
 
 ## 6. Invoice status — what each one means and when it applies

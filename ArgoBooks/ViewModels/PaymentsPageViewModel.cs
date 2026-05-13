@@ -691,10 +691,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         {
             var customer = companyData?.GetCustomer(payment.CustomerId);
             var refunded = RefundAggregator.GetRefundedForPayment(payment, _allPayments);
-            var refundedRatio = payment.Amount > 0 ? refunded / payment.Amount : 0m;
-            var refundedUSD = payment.EffectiveAmountUSD * refundedRatio;
-            var netAmount = payment.Amount - refunded;
-            var netAmountUSD = payment.EffectiveAmountUSD - refundedUSD;
 
             string status;
             if (refunded > 0)
@@ -728,8 +724,8 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 PaymentMethodDisplay = payment.Source == PaymentSource.Online
                     ? $"Payment Portal - {payment.PaymentMethod.GetDisplayName()}"
                     : payment.PaymentMethod.GetDisplayName(),
-                Amount = netAmount,
-                AmountUSD = netAmountUSD,
+                Amount = payment.Amount,
+                AmountUSD = payment.EffectiveAmountUSD,
                 OriginalCurrency = payment.OriginalCurrency,
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
