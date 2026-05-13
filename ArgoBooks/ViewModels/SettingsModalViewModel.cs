@@ -1165,15 +1165,14 @@ public partial class SettingsModalViewModel : ViewModelBase
             var status = await portalService.CheckStatusAsync();
             if (status.Success && status.ConnectedProviders != null)
             {
-                // Stripe Express accounts may not have an email, so just check the connected flag.
-                // PayPal and Square require a valid email to confirm OAuth completed.
+                // Connection is real once the server has a merchant/account ID stored;
+                // emails are informational and may be blank (Stripe Express, Square
+                // locations without a business_email, etc.).
                 StripeConnected = status.ConnectedProviders.StripeConnected;
                 StripeEmail = status.ConnectedProviders.StripeEmail;
-                PaypalConnected = status.ConnectedProviders.PaypalConnected
-                    && !string.IsNullOrEmpty(status.ConnectedProviders.PaypalEmail);
+                PaypalConnected = status.ConnectedProviders.PaypalConnected;
                 PaypalEmail = status.ConnectedProviders.PaypalEmail;
-                SquareConnected = status.ConnectedProviders.SquareConnected
-                    && !string.IsNullOrEmpty(status.ConnectedProviders.SquareEmail);
+                SquareConnected = status.ConnectedProviders.SquareConnected;
                 SquareEmail = status.ConnectedProviders.SquareEmail;
                 SavePortalSettings();
 
@@ -1233,21 +1232,10 @@ public partial class SettingsModalViewModel : ViewModelBase
                         _ => false
                     };
 
-                    // Require both connected flag AND a valid email to confirm OAuth completed
-                    var email = provider switch
-                    {
-                        "stripe" => status.ConnectedProviders.StripeEmail,
-                        "paypal" => status.ConnectedProviders.PaypalEmail,
-                        "square" => status.ConnectedProviders.SquareEmail,
-                        _ => null
-                    };
-
-                    // Require connected flag. For Stripe, the account ID alone
-                    // is sufficient (Express accounts may not have an email).
-                    // For PayPal and Square, also require a valid email.
-                    var needsEmail = provider != "stripe";
-
-                    if (connected && (!needsEmail || !string.IsNullOrEmpty(email)))
+                    // A merchant/account ID in the DB is what makes the connection
+                    // real — emails are informational and may be blank (Stripe Express
+                    // accounts, Square locations without a business_email, etc.).
+                    if (connected)
                     {
                         // Dispatch property updates to the UI thread to ensure bindings refresh
                         Dispatcher.UIThread.Post(() =>
