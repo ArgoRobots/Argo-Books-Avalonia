@@ -1,12 +1,20 @@
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ArgoBooks.Core.Models.Transactions;
 
 /// <summary>
 /// Represents an invoice.
 /// </summary>
-public class Invoice
+/// <remarks>
+/// Inherits from <see cref="ObservableObject"/> so that fields written by
+/// <see cref="Services.InvoiceTotalsService.Recalculate"/> during portal sync
+/// (Status, AmountPaid, AmountRefunded, Balance, BalanceUSD) raise
+/// PropertyChanged and refresh any bound UI immediately. The remaining
+/// properties are static after creation and remain plain auto-properties.
+/// </remarks>
+public partial class Invoice : ObservableObject
 {
     /// <summary>
     /// Unique identifier (e.g., INV-2024-00001).
@@ -108,23 +116,29 @@ public class Invoice
     /// Gross amount paid by the customer (sum of positive Payment rows for this invoice).
     /// Refunds do NOT reduce this — see <see cref="AmountRefunded"/> and <see cref="NetPaid"/>.
     /// </summary>
-    [JsonPropertyName("amountPaid")]
-    public decimal AmountPaid { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("amountPaid")]
+    [NotifyPropertyChangedFor(nameof(NetPaid))]
+    private decimal _amountPaid;
 
     /// <summary>
     /// Amount returned to the customer via refunds (absolute value, always &gt;= 0).
     /// Sum of |Amount| over Payment rows where IsRefund is true for this invoice.
     /// </summary>
-    [JsonPropertyName("amountRefunded")]
-    public decimal AmountRefunded { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("amountRefunded")]
+    [NotifyPropertyChangedFor(nameof(NetPaid))]
+    private decimal _amountRefunded;
 
     /// <summary>
     /// Remaining balance the customer still owes. Computed as Math.Max(0, Total - AmountPaid).
     /// Refunds do NOT raise the balance — once a customer paid, they don't owe again just
     /// because we returned money to them.
     /// </summary>
-    [JsonPropertyName("balance")]
-    public decimal Balance { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("balance")]
+    [NotifyPropertyChangedFor(nameof(EffectiveBalanceUSD))]
+    private decimal _balance;
 
     /// <summary>
     /// Net amount kept after refunds. Used for revenue/profit aggregations.
@@ -135,8 +149,10 @@ public class Invoice
     /// <summary>
     /// Invoice status.
     /// </summary>
-    [JsonPropertyName("status")]
-    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+    [ObservableProperty]
+    [property: JsonPropertyName("status")]
+    [NotifyPropertyChangedFor(nameof(IsOverdue))]
+    private InvoiceStatus _status = InvoiceStatus.Draft;
 
     /// <summary>
     /// Additional notes.
@@ -206,8 +222,10 @@ public class Invoice
     /// <summary>
     /// The balance converted to USD.
     /// </summary>
-    [JsonPropertyName("balanceUSD")]
-    public decimal BalanceUSD { get; set; }
+    [ObservableProperty]
+    [property: JsonPropertyName("balanceUSD")]
+    [NotifyPropertyChangedFor(nameof(EffectiveBalanceUSD))]
+    private decimal _balanceUSD;
 
     /// <summary>
     /// Whether this invoice's original currency is USD (including legacy data which defaults to USD).
