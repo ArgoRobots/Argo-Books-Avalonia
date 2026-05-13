@@ -897,7 +897,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding StripeEmail}"
+                                                <TextBlock Text="{loc:Loc 'Connected'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}"
                                                            IsVisible="{Binding StripeConnected}" />
@@ -936,7 +936,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding PaypalEmail}"
+                                                <TextBlock Text="{loc:Loc 'Connected'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}"
                                                            IsVisible="{Binding PaypalConnected}" />
@@ -975,7 +975,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding SquareEmail}"
+                                                <TextBlock Text="{loc:Loc 'Connected'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}"
                                                            IsVisible="{Binding SquareConnected}" />
