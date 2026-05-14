@@ -672,6 +672,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }
 
         // Create display items
+        var allPayments = companyData?.Payments ?? new List<Payment>();
         var displayItems = filtered.Select(invoice =>
         {
             var customer = companyData?.GetCustomer(invoice.CustomerId);
@@ -681,6 +682,30 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             var statusDisplay = GetStatusDisplay(invoice);
 
             var avatarBitmap = AvatarBitmapLoader.LoadCustomer(customer);
+
+            // Sum of processor fees the customer actually paid on top of
+            // the invoice (pass_processing_fee portal payments). Lets the
+            // Amount column reflect the gross customer charge — what they
+            // were actually billed — rather than only the line-item total.
+            // Revenue page intentionally does NOT include this (fees are
+            // not revenue, just pass-through).
+            var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency)
+                ? "USD" : invoice.OriginalCurrency;
+            decimal processorFeesPaid = 0m;
+            decimal processorFeesPaidUSD = 0m;
+            foreach (var p in allPayments)
+            {
+                if (p.InvoiceId != invoice.Id || p.IsRefund || p.ProcessingFee <= 0)
+                    continue;
+                var paymentCurrency = string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency;
+                if (!string.Equals(paymentCurrency, invoiceCurrency, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                processorFeesPaid += p.ProcessingFee;
+                if (invoice.TotalUSD > 0 && invoice.Total > 0)
+                    processorFeesPaidUSD += Math.Round(p.ProcessingFee * (invoice.TotalUSD / invoice.Total), 2);
+                else
+                    processorFeesPaidUSD += p.ProcessingFee;
+            }
 
             return new InvoiceDisplayItem
             {
@@ -698,6 +723,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 TaxAmount = invoice.TaxAmount,
                 Total = invoice.Total,
                 TotalUSD = invoice.EffectiveTotalUSD,
+                ProcessorFeesPaid = processorFeesPaid,
+                ProcessorFeesPaidUSD = processorFeesPaidUSD,
                 AmountPaid = invoice.AmountPaid,
                 Balance = invoice.Balance,
                 BalanceUSD = invoice.EffectiveBalanceUSD,
@@ -723,7 +750,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                     ["Customer"] = i => i.CustomerName,
                     ["IssueDate"] = i => i.IssueDate,
                     ["DueDate"] = i => i.DueDate,
-                    ["Amount"] = i => i.Total,
+                    ["Amount"] = i => i.Total + i.ProcessorFeesPaid,
                     ["Status"] = i => i.StatusDisplay
                 },
                 i => i.IssueDate);
@@ -1013,6 +1040,19 @@ public partial class InvoiceDisplayItem : ObservableObject
     [ObservableProperty]
     private decimal _totalUSD;
 
+    /// <summary>
+    /// Sum of <see cref="Payment.ProcessingFee"/> the customer paid on top
+    /// of the invoice, in the invoice's currency. Zero unless they paid
+    /// online with <c>pass_processing_fee</c> enabled. Added to
+    /// <see cref="Total"/> when formatting the Amount column so the column
+    /// reflects the gross charge the customer absorbed.
+    /// </summary>
+    [ObservableProperty]
+    private decimal _processorFeesPaid;
+
+    [ObservableProperty]
+    private decimal _processorFeesPaidUSD;
+
     [ObservableProperty]
     private decimal _amountPaid;
 
@@ -1039,7 +1079,11 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     public string IssueDateFormatted => IssueDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
-    public string TotalFormatted => CurrencyService.FormatWithOriginal(Total, OriginalCurrency, TotalUSD, IssueDate);
+    public string TotalFormatted => CurrencyService.FormatWithOriginal(
+        Total + ProcessorFeesPaid,
+        OriginalCurrency,
+        TotalUSD + ProcessorFeesPaidUSD,
+        IssueDate);
     public string BalanceFormatted => CurrencyService.FormatWithOriginal(Balance, OriginalCurrency, BalanceUSD, IssueDate);
 
     /// <summary>
