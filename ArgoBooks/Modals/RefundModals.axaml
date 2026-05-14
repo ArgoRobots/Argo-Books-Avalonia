@@ -364,6 +364,9 @@
                                 <StackPanel IsVisible="{Binding IsEnterNewEmail}" Spacing="10">
                                     <TextBlock Text="Enter the new email address that should own this portal account." TextWrapping="Wrap" />
                                     <TextBox Text="{Binding NewEmail, Mode=TwoWay}" Classes="form-input" PlaceholderText="new@example.com" />
+                                    <TextBlock Text="{Binding NewEmailValidationMessage}"
+                                               FontSize="12" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
+                                               IsVisible="{Binding NewEmailValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                     <TextBlock Text="A verification code will be sent to BOTH the old and the new email so the change can be confirmed end-to-end."
                                                FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                                 </StackPanel>
@@ -395,7 +398,6 @@
 
                                 <StackPanel IsVisible="{Binding IsSuccess}" Spacing="10">
                                     <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
-                                    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" />
                                 </StackPanel>
 
                                 <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
