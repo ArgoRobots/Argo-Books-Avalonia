@@ -816,6 +816,17 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Opens the read-only invoice preview for the payment's linked invoice.
+    /// Mirrors the Revenue page's Invoice column hyperlink.
+    /// </summary>
+    [RelayCommand]
+    private void ViewInvoice(string? invoiceId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(invoiceId);
+    }
+
+    /// <summary>
     /// Opens the delete confirmation dialog.
     /// </summary>
     [RelayCommand]
@@ -845,10 +856,18 @@ public partial class PaymentDisplayItem : ObservableObject
     private string _id = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInvoiceId))]
     private string _invoiceId = string.Empty;
 
     [ObservableProperty]
     private string _invoiceDisplay = string.Empty;
+
+    /// <summary>
+    /// True when this payment has a linked invoice — drives the Invoice
+    /// column's hyperlink visibility. Manual payments without an invoice
+    /// fall back to a "-" placeholder.
+    /// </summary>
+    public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
 
     [ObservableProperty]
     private string _customerId = string.Empty;

@@ -306,10 +306,25 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowIdColumn}" />
 
-                                        <!-- Invoice - Simple text cell -->
-                                        <table:ArgoTableCell Text="{Binding InvoiceDisplay}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ColumnWidths.InvoiceColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowInvoiceColumn}" />
+                                        <!-- Invoice - Clickable link (falls back to "-" text when no linked invoice) -->
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ColumnWidths.InvoiceColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowInvoiceColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <Panel>
+                                                    <Button Classes="link-button"
+                                                            Content="{Binding InvoiceId}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ViewInvoiceCommand}"
+                                                            CommandParameter="{Binding InvoiceId}"
+                                                            IsVisible="{Binding HasInvoiceId}"
+                                                            VerticalAlignment="Center"
+                                                            Padding="0"
+                                                            Cursor="Hand" />
+                                                    <TextBlock Text="-"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding !HasInvoiceId}" />
+                                                </Panel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
                                         <!-- Customer - Simple text cell -->
                                         <table:ArgoTableCell Text="{Binding CustomerName}"
@@ -370,12 +385,10 @@
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
                                                     <Button Classes="icon-button" ToolTip.Tip="{loc:Loc Edit}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).OpenEditModalCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            IsVisible="{Binding !IsFromPortal}">
+                                                            CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc Delete}"
-                                                            IsVisible="{Binding !IsFromPortal}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
