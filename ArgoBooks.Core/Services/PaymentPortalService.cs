@@ -426,6 +426,18 @@ public class PaymentPortalService : IDisposable
                 // AmountPaid is also > 0 — see InvoiceTotalsService.
                 InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
+                // Mirror the linked-Revenue update the regular-payment path
+                // does, so a fully-refunded invoice doesn't keep showing as
+                // collected revenue in cash-basis aggregations.
+                var refundLinkedRevenues = companyData.Revenues
+                    .Where(r => r.InvoiceId == invoice.Id);
+                foreach (var revenue in refundLinkedRevenues)
+                {
+                    revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid
+                        ? RevenuePaymentStatus.Paid
+                        : RevenuePaymentStatus.Unpaid;
+                }
+
                 invoice.History.Add(new InvoiceHistoryEntry
                 {
                     Action = "Refund Issued",
