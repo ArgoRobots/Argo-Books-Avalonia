@@ -1007,8 +1007,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                     PortalSettings.ActivateApiKey(portalSettings);
                 }
 
-                // If the server says verification is required, kick the
-                // VerifyEmailModalView so the user can enter the 6-digit code
+                // If the server says verification is required, open the
+                // verify-email modal so the user can enter the 6-digit code
                 // emailed to them. Until they do, refund endpoints will return
                 // 412 (email_not_verified).
                 if (result.EmailVerificationRequired)
