@@ -281,13 +281,13 @@
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource SuccessBrush}"
                                                                VerticalAlignment="Center"
-                                                               IsVisible="{Binding Paid}" />
+                                                               IsVisible="{Binding ShowTotalAsPaid}" />
                                                     <TextBlock Text="{Binding TotalFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                VerticalAlignment="Center"
-                                                               IsVisible="{Binding !Paid}" />
+                                                               IsVisible="{Binding !ShowTotalAsPaid}" />
                                                 </Panel>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>

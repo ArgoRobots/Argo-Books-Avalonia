@@ -776,6 +776,7 @@ public partial class RevenueDisplayItem : ObservableObject
     private DateTime _date;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowTotalAsPaid))]
     private decimal _total;
 
     [ObservableProperty]
@@ -800,7 +801,16 @@ public partial class RevenueDisplayItem : ObservableObject
     private string _statusDisplay = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowTotalAsPaid))]
     private bool _paid;
+
+    /// <summary>
+    /// Whether the Total column should render in the success/paid color.
+    /// False when a fully-refunded revenue has netted to zero — at that
+    /// point the row is "paid" historically but there's nothing left to
+    /// celebrate, and the green styling reads as a balance still owed.
+    /// </summary>
+    public bool ShowTotalAsPaid => Paid && Total > 0;
 
     [ObservableProperty]
     private string _notes = string.Empty;
