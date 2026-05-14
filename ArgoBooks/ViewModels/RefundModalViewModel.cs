@@ -663,7 +663,7 @@ public partial class RefundModalViewModel : ObservableObject
                         await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                         {
                             TerminalMessage = status.StateReason ?? $"Refund {status.State}.";
-                            CurrentStep = status.State == "cancelled" ? Step.Failure : Step.Failure;
+                            CurrentStep = Step.Failure;
                         });
                         return;
                     }
