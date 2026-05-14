@@ -769,7 +769,7 @@ public class SpreadsheetImportService
                             TaxAmount = invoice.TaxAmount,
                             Total = invoice.Total,
                             PaymentMethod = PaymentMethod.Other,
-                            PaymentStatus = isPaid ? "Paid" : "Partial",
+                            PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
                             Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                             InvoiceId = invoice.Id,
                             ReferenceNumber = invoice.InvoiceNumber,
@@ -837,7 +837,8 @@ public class SpreadsheetImportService
                 var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
                 {
-                    revenue.PaymentStatus = NormalizePaymentStatus(revenue.PaymentStatus);
+                    // PaymentStatus is already normalized by the enum's JSON
+                    // converter (legacy typos → Paid fallback), no separate call.
                     revenue.OriginalCurrency = data.Settings.Localization.Currency;
                     revenue.TotalUSD = revenue.Total;
                     revenue.TaxAmountUSD = revenue.TaxAmount;
@@ -2177,48 +2178,49 @@ public class SpreadsheetImportService
     }
 
     /// <summary>
-    /// Normalizes free-form payment status strings into the canonical values
-    /// used by the application: "Paid", "Unpaid", "Partial", "Overdue", or "Pending".
-    /// Uses substring matching to handle typos and variations (e.g., "Piad", "Compelted").
+    /// Normalizes free-form payment status strings from spreadsheet imports
+    /// into the canonical <see cref="RevenuePaymentStatus"/> enum. Uses
+    /// substring matching to handle typos and variations (e.g., "Piad",
+    /// "Compelted"). Falls back to Paid on unrecognised input.
     /// </summary>
-    internal static string NormalizePaymentStatus(string? status)
+    internal static RevenuePaymentStatus NormalizePaymentStatus(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
-            return "Paid";
+            return RevenuePaymentStatus.Paid;
 
         var s = status.Trim().ToLowerInvariant();
 
         // Partial must be checked before "paid" substring match
         if (s.Contains("partial"))
-            return "Partial";
+            return RevenuePaymentStatus.Partial;
 
         // Paid and common synonyms/typos
         if (s.Contains("paid") || s.Contains("piad") ||
             s.Contains("complet") || s.Contains("settle") ||
             s.Contains("receive") || s.Contains("clear") ||
             s.Contains("collect"))
-            return "Paid";
+            return RevenuePaymentStatus.Paid;
 
         // Overdue
         if (s.Contains("overdue") || s.Contains("past due") ||
             s.Contains("pastdue") || s.Contains("late"))
-            return "Overdue";
+            return RevenuePaymentStatus.Overdue;
 
         // Pending
         if (s.Contains("pending") || s.Contains("pend") ||
             s.Contains("processing") || s.Contains("progress") ||
             s.Contains("awaiting") || s.Contains("waiting"))
-            return "Pending";
+            return RevenuePaymentStatus.Pending;
 
         // Unpaid and common synonyms
         if (s.Contains("unpaid") || s.Contains("not paid") ||
             s.Contains("outstanding") || s.Contains("open") ||
             s.Contains("due") || s.Contains("owe") ||
             s.Contains("unsettled"))
-            return "Unpaid";
+            return RevenuePaymentStatus.Unpaid;
 
         // Fallback: unrecognized → default to Paid
-        return "Paid";
+        return RevenuePaymentStatus.Paid;
     }
 
     private static decimal GetDecimal(List<object?> row, List<string> headers, string columnName)
@@ -2627,7 +2629,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     TaxAmount = invoice.TaxAmount,
                     Total = invoice.Total,
                     PaymentMethod = PaymentMethod.Other,
-                    PaymentStatus = isPaid ? "Paid" : "Partial",
+                    PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
                     Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                     InvoiceId = invoice.Id,
                     ReferenceNumber = invoice.InvoiceNumber,

@@ -7,6 +7,9 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using ArgoBooks.Views;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -119,7 +122,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Default fallback limit used when the server hasn't been reached yet.
     /// </summary>
-    internal const int DefaultFreeInvoiceLimit = 5;
+    // Must match the server's free-tier default (config/pricing.php
+    // FREE_INVOICE_MONTHLY_LIMIT). Used only as a fallback before the
+    // server check completes; the real value comes from CheckUsageAsync.
+    internal const int DefaultFreeInvoiceLimit = 25;
 
     [ObservableProperty]
     private bool _hasPremium;
@@ -395,12 +401,23 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (usageService == null || HasPremium) return;
 
         var result = await usageService.CheckUsageAsync();
-        if (result.Success)
+        if (!result.Success) return;
+
+        // Server returns monthly_limit = -1 as a sentinel for Premium /
+        // unlimited. If we update SendCount but not the limit, the UI ends
+        // up with SendCount > stale-default-limit and falsely flags
+        // "limit reached" — exactly what bit us before. Treat the sentinel
+        // as a Premium-equivalent: mark HasPremium so RemainingInvoices is
+        // ignored downstream.
+        if (result.MonthlyLimit < 0 || string.Equals(result.Tier, "premium", StringComparison.OrdinalIgnoreCase))
         {
-            if (result.MonthlyLimit > 0)
-                InvoiceMonthlyLimit = result.MonthlyLimit;
-            SentInvoicesThisMonthCount = result.SendCount;
+            HasPremium = true;
+            return;
         }
+
+        if (result.MonthlyLimit > 0)
+            InvoiceMonthlyLimit = result.MonthlyLimit;
+        SentInvoicesThisMonthCount = result.SendCount;
     }
 
     private void OnCurrencyChanged(object? sender, EventArgs e)
@@ -655,6 +672,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         }
 
         // Create display items
+        var allPayments = companyData?.Payments ?? new List<Payment>();
         var displayItems = filtered.Select(invoice =>
         {
             var customer = companyData?.GetCustomer(invoice.CustomerId);
@@ -664,6 +682,30 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             var statusDisplay = GetStatusDisplay(invoice);
 
             var avatarBitmap = AvatarBitmapLoader.LoadCustomer(customer);
+
+            // Sum of processor fees the customer actually paid on top of
+            // the invoice (pass_processing_fee portal payments). Lets the
+            // Amount column reflect the gross customer charge — what they
+            // were actually billed — rather than only the line-item total.
+            // Revenue page intentionally does NOT include this (fees are
+            // not revenue, just pass-through).
+            var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency)
+                ? "USD" : invoice.OriginalCurrency;
+            decimal processorFeesPaid = 0m;
+            decimal processorFeesPaidUSD = 0m;
+            foreach (var p in allPayments)
+            {
+                if (p.InvoiceId != invoice.Id || p.IsRefund || p.ProcessingFee <= 0)
+                    continue;
+                var paymentCurrency = string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency;
+                if (!string.Equals(paymentCurrency, invoiceCurrency, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                processorFeesPaid += p.ProcessingFee;
+                if (invoice.TotalUSD > 0 && invoice.Total > 0)
+                    processorFeesPaidUSD += Math.Round(p.ProcessingFee * (invoice.TotalUSD / invoice.Total), 2);
+                else
+                    processorFeesPaidUSD += p.ProcessingFee;
+            }
 
             return new InvoiceDisplayItem
             {
@@ -681,6 +723,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 TaxAmount = invoice.TaxAmount,
                 Total = invoice.Total,
                 TotalUSD = invoice.EffectiveTotalUSD,
+                ProcessorFeesPaid = processorFeesPaid,
+                ProcessorFeesPaidUSD = processorFeesPaidUSD,
                 AmountPaid = invoice.AmountPaid,
                 Balance = invoice.Balance,
                 BalanceUSD = invoice.EffectiveBalanceUSD,
@@ -689,7 +733,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 Notes = invoice.Notes,
                 OriginalCurrency = invoice.OriginalCurrency,
                 IsRecurring = !string.IsNullOrEmpty(invoice.RecurringInvoiceId),
-                IsHighlighted = invoice.Id == HighlightTransactionId
+                IsHighlighted = invoice.Id == HighlightTransactionId,
+                CanRefund = ComputeCanRefund(invoice, companyData)
             };
         }).ToList();
 
@@ -705,7 +750,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                     ["Customer"] = i => i.CustomerName,
                     ["IssueDate"] = i => i.IssueDate,
                     ["DueDate"] = i => i.DueDate,
-                    ["Amount"] = i => i.Total,
+                    ["Amount"] = i => i.Total + i.ProcessorFeesPaid,
                     ["Status"] = i => i.StatusDisplay
                 },
                 i => i.IssueDate);
@@ -736,6 +781,17 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (invoice.IsOverdue && invoice.Status != InvoiceStatus.Paid && invoice.Status != InvoiceStatus.Cancelled)
             return "Overdue";
 
+        // Self-heal: even if invoice.Status is stale (PartiallyRefunded
+        // persisted from before the comparison-against-Total fix), derive
+        // the correct refund status fresh at display time. Same comparison
+        // the sync recompute now uses.
+        if (invoice.AmountRefunded > 0 && invoice.Total > 0)
+        {
+            if (invoice.AmountRefunded + 0.01m >= invoice.Total)
+                return "Refunded";
+            return "Partially Refunded";
+        }
+
         return invoice.Status switch
         {
             InvoiceStatus.Draft => "Draft",
@@ -746,6 +802,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             InvoiceStatus.Paid => "Paid",
             InvoiceStatus.Overdue => "Overdue",
             InvoiceStatus.Cancelled => "Cancelled",
+            InvoiceStatus.PartiallyRefunded => "Partially Refunded",
+            InvoiceStatus.Refunded => "Refunded",
             _ => "Unknown"
         };
     }
@@ -761,6 +819,41 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (parts is [{ Length: >= 1 }])
             return parts[0][0].ToString().ToUpper();
         return "?";
+    }
+
+    /// <summary>
+    /// True when the row's Refund icon button should be visible.
+    /// Returns true when either money is still refundable OR a past refund
+    /// exists (so the user can open the modal to view refund history).
+    /// </summary>
+    private static bool ComputeCanRefund(Invoice invoice, ArgoBooks.Core.Data.CompanyData? companyData)
+    {
+        if (companyData == null) return false;
+        if (invoice.Status == InvoiceStatus.Draft || invoice.Status == InvoiceStatus.Cancelled)
+            return false;
+
+        var portalPayments = companyData.Payments
+            .Where(p => p.InvoiceId == invoice.Id
+                        && !p.IsRefund
+                        && p.Source == PaymentSource.Online
+                        && !string.IsNullOrEmpty(p.ProviderPaymentId))
+            .ToList();
+        if (portalPayments.Count == 0) return false;
+
+        // Any past refund on this invoice keeps the button visible so the
+        // modal can show details, even if nothing's left to refund.
+        var hasRefundHistory = companyData.Payments
+            .Any(r => r.InvoiceId == invoice.Id && r.IsRefund);
+        if (hasRefundHistory) return true;
+
+        foreach (var p in portalPayments)
+        {
+            var refunded = companyData.Payments
+                .Where(r => r.IsRefund && r.RefundedFromPaymentId == p.Id)
+                .Sum(r => Math.Abs(r.Amount));
+            if (p.Amount - refunded > 0.01m) return true;
+        }
+        return false;
     }
 
     protected override void UpdatePageNumbers()
@@ -850,6 +943,48 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     }
 
     [RelayCommand]
+    private async Task OpenRefundModal(InvoiceDisplayItem? item)
+    {
+        if (item == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var invoice = companyData?.GetInvoice(item.Id);
+        if (companyData == null || invoice == null) return;
+
+        // Refunds require an owner email so the verification code has somewhere
+        // to be delivered. Pre-flight this client-side so the user gets a
+        // clear actionable error (with a path to fix it) rather than getting
+        // halfway through the modal and hitting the server's 412 gate.
+        if (string.IsNullOrWhiteSpace(companyData.Settings.Company.Email))
+        {
+            await ShowRefundEmailRequiredAsync();
+            return;
+        }
+
+        var invoicePayments = companyData.Payments.Where(p => p.InvoiceId == invoice.Id).ToList();
+        var customer = companyData.GetCustomer(invoice.CustomerId);
+        var customerName = customer?.Name ?? item.CustomerName;
+
+        // Hand off to the AppShell-level RefundModals — the same pattern as
+        // every other modal in the app. The onClosed callback refreshes the
+        // invoice list so any newly-arrived refund Payment appears.
+        App.RefundModalsViewModel?.OpenRefundModal(invoice, invoicePayments, customerName, onClosed: LoadInvoices);
+    }
+
+    private static async Task ShowRefundEmailRequiredAsync()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop
+            || desktop.MainWindow is not MainWindow mainWindow
+            || mainWindow.MessageBoxService is not { } mbox)
+        {
+            return;
+        }
+        await mbox.ShowErrorAsync(
+            "Owner email required",
+            "You need to set your portal owner email before issuing a refund. The verification code is sent to that address.\n\nOpen Settings → Payment Portal and set your owner email, then try again.");
+    }
+
+    [RelayCommand]
     private void OpenTemplateDesigner()
     {
         App.InvoiceTemplateDesignerViewModel?.OpenTemplateList();
@@ -905,6 +1040,19 @@ public partial class InvoiceDisplayItem : ObservableObject
     [ObservableProperty]
     private decimal _totalUSD;
 
+    /// <summary>
+    /// Sum of <see cref="Payment.ProcessingFee"/> the customer paid on top
+    /// of the invoice, in the invoice's currency. Zero unless they paid
+    /// online with <c>pass_processing_fee</c> enabled. Added to
+    /// <see cref="Total"/> when formatting the Amount column so the column
+    /// reflects the gross charge the customer absorbed.
+    /// </summary>
+    [ObservableProperty]
+    private decimal _processorFeesPaid;
+
+    [ObservableProperty]
+    private decimal _processorFeesPaidUSD;
+
     [ObservableProperty]
     private decimal _amountPaid;
 
@@ -931,7 +1079,11 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     public string IssueDateFormatted => IssueDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
-    public string TotalFormatted => CurrencyService.FormatWithOriginal(Total, OriginalCurrency, TotalUSD, IssueDate);
+    public string TotalFormatted => CurrencyService.FormatWithOriginal(
+        Total + ProcessorFeesPaid,
+        OriginalCurrency,
+        TotalUSD + ProcessorFeesPaidUSD,
+        IssueDate);
     public string BalanceFormatted => CurrencyService.FormatWithOriginal(Balance, OriginalCurrency, BalanceUSD, IssueDate);
 
     /// <summary>
@@ -943,6 +1095,14 @@ public partial class InvoiceDisplayItem : ObservableObject
     /// Whether this invoice can be sent via email (not drafts or cancelled).
     /// </summary>
     public bool CanSend => Status != InvoiceStatus.Draft && Status != InvoiceStatus.Cancelled;
+
+    /// <summary>
+    /// True when this invoice has at least one refundable portal payment with
+    /// money still available to return. Set by the parent VM when constructing
+    /// the display item from the underlying Invoice + Payment list.
+    /// </summary>
+    [ObservableProperty]
+    private bool _canRefund;
 
     [ObservableProperty]
     private bool _isHighlighted;

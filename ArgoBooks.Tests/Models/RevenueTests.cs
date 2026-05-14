@@ -44,11 +44,11 @@ public class RevenueTests
     #region Payment Status Tests
 
     [Theory]
-    [InlineData("Paid")]
-    [InlineData("Pending")]
-    [InlineData("Partial")]
-    [InlineData("Overdue")]
-    public void Revenue_PaymentStatus_SupportsExpectedValues(string status)
+    [InlineData(RevenuePaymentStatus.Paid)]
+    [InlineData(RevenuePaymentStatus.Pending)]
+    [InlineData(RevenuePaymentStatus.Partial)]
+    [InlineData(RevenuePaymentStatus.Overdue)]
+    public void Revenue_PaymentStatus_SupportsExpectedValues(RevenuePaymentStatus status)
     {
         var revenue = new Revenue
         {

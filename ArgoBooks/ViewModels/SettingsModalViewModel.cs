@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using ArgoBooks.Core;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -708,6 +710,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _stripeEmail;
 
+    /// <summary>
+    /// The company's owner email — bound by the Portal Settings UI as a
+    /// read-only display next to a "Change…" button. Mutated only via the
+    /// 4-step EmailChangeModal flow (locked to in-place edits).
+    /// </summary>
+    [ObservableProperty]
+    private string? _companyEmail;
+
     [ObservableProperty]
     private bool _paypalConnected;
 
@@ -994,6 +1004,16 @@ public partial class SettingsModalViewModel : ViewModelBase
                 if (portalSettings != null)
                 {
                     portalSettings.PersistedApiKey = result.ApiKey;
+                    PortalSettings.ActivateApiKey(portalSettings);
+                }
+
+                // If the server says verification is required, open the
+                // verify-email modal so the user can enter the 6-digit code
+                // emailed to them. Until they do, refund endpoints will return
+                // 412 (email_not_verified).
+                if (result.EmailVerificationRequired)
+                {
+                    ShowEmailVerificationModal(ownerEmail);
                 }
                 return true;
             }
@@ -1129,6 +1149,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         PaypalEmail = settings.ConnectedAccounts.PaypalEmail;
         SquareConnected = settings.ConnectedAccounts.SquareConnected;
         SquareEmail = settings.ConnectedAccounts.SquareEmail;
+        CompanyEmail = App.CompanyManager?.CompanyData?.Settings.Company.Email;
 
         // Fetch fresh provider status from the server in the background
         _ = RefreshProviderStatusAsync();
@@ -1144,15 +1165,14 @@ public partial class SettingsModalViewModel : ViewModelBase
             var status = await portalService.CheckStatusAsync();
             if (status.Success && status.ConnectedProviders != null)
             {
-                // Stripe Express accounts may not have an email, so just check the connected flag.
-                // PayPal and Square require a valid email to confirm OAuth completed.
+                // Connection is real once the server has a merchant/account ID stored;
+                // emails are informational and may be blank (Stripe Express, Square
+                // locations without a business_email, etc.).
                 StripeConnected = status.ConnectedProviders.StripeConnected;
                 StripeEmail = status.ConnectedProviders.StripeEmail;
-                PaypalConnected = status.ConnectedProviders.PaypalConnected
-                    && !string.IsNullOrEmpty(status.ConnectedProviders.PaypalEmail);
+                PaypalConnected = status.ConnectedProviders.PaypalConnected;
                 PaypalEmail = status.ConnectedProviders.PaypalEmail;
-                SquareConnected = status.ConnectedProviders.SquareConnected
-                    && !string.IsNullOrEmpty(status.ConnectedProviders.SquareEmail);
+                SquareConnected = status.ConnectedProviders.SquareConnected;
                 SquareEmail = status.ConnectedProviders.SquareEmail;
                 SavePortalSettings();
 
@@ -1212,21 +1232,10 @@ public partial class SettingsModalViewModel : ViewModelBase
                         _ => false
                     };
 
-                    // Require both connected flag AND a valid email to confirm OAuth completed
-                    var email = provider switch
-                    {
-                        "stripe" => status.ConnectedProviders.StripeEmail,
-                        "paypal" => status.ConnectedProviders.PaypalEmail,
-                        "square" => status.ConnectedProviders.SquareEmail,
-                        _ => null
-                    };
-
-                    // Require connected flag. For Stripe, the account ID alone
-                    // is sufficient (Express accounts may not have an email).
-                    // For PayPal and Square, also require a valid email.
-                    var needsEmail = provider != "stripe";
-
-                    if (connected && (!needsEmail || !string.IsNullOrEmpty(email)))
+                    // A merchant/account ID in the DB is what makes the connection
+                    // real — emails are informational and may be blank (Stripe Express
+                    // accounts, Square locations without a business_email, etc.).
+                    if (connected)
                     {
                         // Dispatch property updates to the UI thread to ensure bindings refresh
                         Dispatcher.UIThread.Post(() =>
@@ -1977,6 +1986,199 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Refund-feature email verification + change
+
+    /// <summary>
+    /// Opens the registration email-verification modal. Called automatically
+    /// after a successful portal registration when the server says verification
+    /// is required.
+    /// </summary>
+    private void ShowEmailVerificationModal(string? maskedEmail)
+    {
+        App.RefundModalsViewModel?.OpenVerifyEmailModal(maskedEmail);
+    }
+
+    /// <summary>
+    /// Working text for the "set initial owner email" inline input shown when
+    /// the company has no owner email yet. The Set button is enabled once
+    /// this contains a syntactically valid address.
+    /// NotifyCanExecuteChangedFor wires the property change to the command's
+    /// CanExecute reevaluation so the button enables as the user types.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SetInitialOwnerEmailCommand))]
+    private string _pendingOwnerEmail = string.Empty;
+
+    /// <summary>
+    /// True while the SetInitialOwnerEmail request is in flight. Disables
+    /// the command's CanExecute so a rapid second click can't send a
+    /// concurrent request (which would race the verify-modal open and
+    /// produce confusing 409 recovery flows).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SetInitialOwnerEmailCommand))]
+    private bool _isSettingOwnerEmail;
+
+    public bool CanSetInitialOwnerEmail
+    {
+        get
+        {
+            return !IsSettingOwnerEmail && DataValidator.IsValidEmail(PendingOwnerEmail);
+        }
+    }
+
+    /// <summary>
+    /// First-time setup of the portal owner email. The server stores
+    /// owner_email but does NOT mark email_verified_at — instead it emails
+    /// a verification code to the new address. We immediately open the
+    /// VerifyEmailModal so the user finishes the loop. Until they confirm
+    /// the code, refund endpoints will return 412 EMAIL_NOT_VERIFIED.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSetInitialOwnerEmail))]
+    private async Task SetInitialOwnerEmailAsync()
+    {
+        var refundService = App.RefundService;
+        var companyData = App.CompanyManager?.CompanyData;
+        if (refundService == null || companyData == null) return;
+
+        var email = PendingOwnerEmail.Trim();
+
+        IsSettingOwnerEmail = true;
+        try
+        {
+            await SetInitialOwnerEmailCoreAsync(refundService, companyData, email);
+        }
+        finally
+        {
+            IsSettingOwnerEmail = false;
+        }
+    }
+
+    private async Task SetInitialOwnerEmailCoreAsync(
+        RefundService refundService, CompanyData companyData, string email)
+    {
+        var result = await refundService.SetInitialOwnerEmailAsync(email);
+
+        // Recovery path: server says email is already set on the company,
+        // but the local .argo doesn't have it (likely because an earlier
+        // Set succeeded server-side before the local-persist fix landed).
+        // The 409 response now includes the existing email — if it matches
+        // what the user just typed, silently reconcile local state. If it
+        // differs, surface the existing email so the user can act.
+        if (!result.Ok && result.ErrorCode == "OWNER_EMAIL_ALREADY_SET")
+        {
+            var existing = result.OwnerEmail?.Trim();
+            if (!string.IsNullOrEmpty(existing) &&
+                string.Equals(existing, email, StringComparison.OrdinalIgnoreCase))
+            {
+                // Reconcile silently: mirror server's value locally and persist.
+                await ReconcileOwnerEmailAsync(companyData, existing);
+                return;
+            }
+
+            await ShowErrorDialogAsync(
+                "Owner email already set".Translate(),
+                string.IsNullOrEmpty(existing)
+                    ? "An owner email is already on file. Use the Change flow to update it.".Translate()
+                    : $"This portal account already has the owner email {existing}. Use the Change flow to update it.".Translate());
+
+            // Even on the "different email" branch, the local .argo may still
+            // be out of sync — pull the server's value down so the UI reflects
+            // reality and the refund pre-flight stops false-blocking.
+            if (!string.IsNullOrEmpty(existing))
+            {
+                await ReconcileOwnerEmailAsync(companyData, existing);
+            }
+            return;
+        }
+
+        if (!result.Ok)
+        {
+            var detail = result.Message
+                ?? result.ErrorCode
+                ?? $"The server rejected the request (HTTP {result.HttpStatus}).";
+            await ShowErrorDialogAsync("Could not set owner email".Translate(), detail.Translate());
+            return;
+        }
+
+        // Mirror into local company data so the rest of the app sees it.
+        companyData.Settings.Company.Email = email;
+        CompanyEmail = email;
+        PendingOwnerEmail = string.Empty;
+        companyData.ChangesMade = true;
+
+        // Persist the change to the .argo file immediately. Scoped save so
+        // we ONLY write appSettings.json — any other in-memory edits the
+        // user has open elsewhere stay un-flushed (their asterisk stays).
+        // Without this, a restart leaves Settings.Company.Email empty even
+        // though the server has it; refund pre-flight wrongly errors with
+        // "owner email required".
+        if (App.CompanyManager != null)
+        {
+            try { await App.CompanyManager.SaveSettingsOnlyAsync(); }
+            catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to persist owner email: {ex.Message}", "OwnerEmail"); }
+        }
+
+        // Server sent a code to the new email; pop the verify modal so the
+        // user can confirm it. The masked email comes back in the response
+        // so we display the same masking server-side.
+        App.RefundModalsViewModel?.OpenVerifyEmailModal(result.MaskedEmail);
+    }
+
+    /// <summary>
+    /// Mirror the server-known owner email into local state and persist via
+    /// the scoped settings-only save. Used by the OWNER_EMAIL_ALREADY_SET
+    /// recovery path so a restart-with-broken-local-state can self-heal.
+    /// </summary>
+    private async Task ReconcileOwnerEmailAsync(ArgoBooks.Core.Data.CompanyData companyData, string serverEmail)
+    {
+        companyData.Settings.Company.Email = serverEmail;
+        CompanyEmail = serverEmail;
+        PendingOwnerEmail = string.Empty;
+        companyData.ChangesMade = true;
+        if (App.CompanyManager != null)
+        {
+            try { await App.CompanyManager.SaveSettingsOnlyAsync(); }
+            catch (Exception ex) { App.ErrorLogger?.LogWarning($"Failed to persist reconciled owner email: {ex.Message}", "OwnerEmail"); }
+        }
+    }
+
+    /// <summary>
+    /// Opens the 4-step "Change owner email" modal. Bound to a button in
+    /// PortalSettings.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenEmailChangeModalAsync()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        var companyManager = App.CompanyManager;
+        if (companyData == null || companyManager == null) return;
+
+        var currentEmail = companyData.Settings.Company.Email ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(currentEmail))
+        {
+            await ShowErrorDialogAsync("No email on file".Translate(),
+                "This company has no owner email yet. Set one in the company details first.".Translate());
+            return;
+        }
+
+        // Hand off to the AppShell-level RefundModals coordinator. On success
+        // it invokes the callback below, which mirrors the new email into the
+        // local Company settings and marks the file dirty.
+        App.RefundModalsViewModel?.OpenEmailChangeModal(
+            currentEmail,
+            companyManager.IsEncrypted,
+            password => companyManager.VerifyCurrentPassword(password),
+            onCompleted: newEmail =>
+            {
+                companyData.Settings.Company.Email = newEmail;
+                CompanyEmail = newEmail;
+                companyData.ChangesMade = true;
+            });
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -2033,6 +2235,7 @@ public class AutoLockSettingsEventArgs(string timeoutString) : EventArgs
 
         return 0;
     }
+
 }
 
 /// <summary>

@@ -450,7 +450,7 @@ public class SpreadsheetExportService
             s.Amount,
             s.TaxAmount,
             s.Total,
-            s.PaymentStatus
+            s.PaymentStatus.ToString()
         }).ToList();
         return (headers, rows);
     }

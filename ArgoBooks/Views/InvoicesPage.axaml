@@ -316,6 +316,15 @@
                                                         <PathIcon Data="{x:Static icons:Icons.History}"
                                                                   Width="16" Height="16" />
                                                     </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Refund'}"
+                                                            AutomationProperties.Name="Refund"
+                                                            IsVisible="{Binding CanRefund}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenRefundModalCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Returns}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
                                                 </StackPanel>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>

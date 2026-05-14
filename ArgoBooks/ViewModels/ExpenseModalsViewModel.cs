@@ -790,7 +790,14 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             Notes = expense.Notes,
             ReferenceNumber = expense.ReferenceNumber,
             ReceiptId = expense.ReceiptId,
-            IsPendingConversion = expense.IsPendingConversion
+            IsPendingConversion = expense.IsPendingConversion,
+            OriginalCurrency = expense.OriginalCurrency,
+            TotalUSD = expense.TotalUSD,
+            UnitPriceUSD = expense.UnitPriceUSD,
+            ShippingCostUSD = expense.ShippingCostUSD,
+            TaxAmountUSD = expense.TaxAmountUSD,
+            DiscountUSD = expense.DiscountUSD,
+            FeeUSD = expense.FeeUSD
         };
     }
 
@@ -814,6 +821,13 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.ReferenceNumber = state.ReferenceNumber;
         expense.ReceiptId = state.ReceiptId;
         expense.IsPendingConversion = state.IsPendingConversion;
+        expense.OriginalCurrency = state.OriginalCurrency;
+        expense.TotalUSD = state.TotalUSD;
+        expense.UnitPriceUSD = state.UnitPriceUSD;
+        expense.ShippingCostUSD = state.ShippingCostUSD;
+        expense.TaxAmountUSD = state.TaxAmountUSD;
+        expense.DiscountUSD = state.DiscountUSD;
+        expense.FeeUSD = state.FeeUSD;
     }
 
     #endregion
@@ -852,9 +866,20 @@ internal class TransactionState
     public decimal Fee { get; set; }
     public decimal Total { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
-    public string PaymentStatus { get; set; } = "Paid";
+    public RevenuePaymentStatus PaymentStatus { get; set; } = RevenuePaymentStatus.Paid;
     public string Notes { get; set; } = string.Empty;
     public string ReferenceNumber { get; set; } = string.Empty;
     public string? ReceiptId { get; set; }
     public bool IsPendingConversion { get; set; }
+    // USD-normalized + currency fields must also be captured. Dashboard
+    // aggregations read EffectiveTotalUSD which falls back to TotalUSD for
+    // non-USD companies — if undo restores only native fields, those
+    // companies see stale (post-edit) values even after the revert.
+    public string OriginalCurrency { get; set; } = "USD";
+    public decimal TotalUSD { get; set; }
+    public decimal UnitPriceUSD { get; set; }
+    public decimal ShippingCostUSD { get; set; }
+    public decimal TaxAmountUSD { get; set; }
+    public decimal DiscountUSD { get; set; }
+    public decimal FeeUSD { get; set; }
 }

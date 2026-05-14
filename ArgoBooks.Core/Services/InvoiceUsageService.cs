@@ -10,7 +10,10 @@ namespace ArgoBooks.Core.Services;
 public class InvoiceUsageService : IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/invoice/usage.php";
-    private const int DefaultFreeLimit = 5;
+    // Must match the server's free-tier default (config/pricing.php
+    // FREE_INVOICE_MONTHLY_LIMIT). Used only as a fallback when the
+    // server check fails or hasn't completed yet.
+    private const int DefaultFreeLimit = 25;
 
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;

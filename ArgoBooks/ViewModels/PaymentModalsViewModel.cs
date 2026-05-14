@@ -364,20 +364,27 @@ public partial class PaymentModalsViewModel : ViewModelBase
         };
 
         companyData.Payments.Add(newPayment);
+        // Recalc the affected invoice's totals + status. Without this the
+        // invoice's AmountPaid / Balance / Status drift out of sync with
+        // the Payment list. See docs/Calculations.md §5.
+        RecalcInvoiceTotals(companyData, newPayment.InvoiceId);
         companyData.MarkAsModified();
 
         var paymentToUndo = newPayment;
+        var invoiceIdForRecalc = newPayment.InvoiceId;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Record payment '{newPayment.Id}'",
             () =>
             {
                 companyData.Payments.Remove(paymentToUndo);
+                RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Payments.Add(paymentToUndo);
+                RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -409,7 +416,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
         ModalCustomerId = payment.CustomerId;
         ModalAmount = payment.Amount.ToString("F2");
         ModalDate = new DateTimeOffset(payment.Date);
-        IsPortalPayment = payment.Source == "Online";
+        IsPortalPayment = payment.Source == PaymentSource.Online;
         ModalPaymentMethod = payment.PaymentMethod.GetDisplayName();
         ModalReferenceNumber = payment.ReferenceNumber ?? string.Empty;
         ModalNotes = payment.Notes;
@@ -575,6 +582,11 @@ public partial class PaymentModalsViewModel : ViewModelBase
         paymentToEdit2.OriginalCurrency = editCurrentCurrency;
         paymentToEdit2.AmountUSD = newAmountUSD;
 
+        // Recalc both invoices when the payment moves between them; recalc
+        // just the one when only the amount/details changed. See §5.
+        RecalcInvoiceTotals(companyData, oldInvoiceId);
+        if (newInvoiceId != oldInvoiceId)
+            RecalcInvoiceTotals(companyData, newInvoiceId);
         companyData.MarkAsModified();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -590,6 +602,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 paymentToEdit2.Notes = oldNotesVal;
                 paymentToEdit2.OriginalCurrency = oldOriginalCurrency;
                 paymentToEdit2.AmountUSD = oldAmountUSD;
+                RecalcInvoiceTotals(companyData, newInvoiceId);
+                if (newInvoiceId != oldInvoiceId)
+                    RecalcInvoiceTotals(companyData, oldInvoiceId);
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -604,6 +619,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 paymentToEdit2.Notes = newNotesVal;
                 paymentToEdit2.OriginalCurrency = editCurrentCurrency;
                 paymentToEdit2.AmountUSD = newAmountUSD;
+                RecalcInvoiceTotals(companyData, oldInvoiceId);
+                if (newInvoiceId != oldInvoiceId)
+                    RecalcInvoiceTotals(companyData, newInvoiceId);
                 companyData.MarkAsModified();
                 PaymentSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -647,8 +665,10 @@ public partial class PaymentModalsViewModel : ViewModelBase
             if (payment != null)
             {
                 var deletedPayment = payment;
+                var invoiceIdForRecalc = deletedPayment.InvoiceId;
                 App.EventLogService?.CapturePreDeletionSnapshot("Payment", deletedPayment.Id);
                 companyData.Payments.Remove(payment);
+                RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                 companyData.MarkAsModified();
 
                 App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -656,12 +676,14 @@ public partial class PaymentModalsViewModel : ViewModelBase
                     () =>
                     {
                         companyData.Payments.Add(deletedPayment);
+                        RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                         companyData.MarkAsModified();
                         PaymentDeleted?.Invoke(this, EventArgs.Empty);
                     },
                     () =>
                     {
                         companyData.Payments.Remove(deletedPayment);
+                        RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                         companyData.MarkAsModified();
                         PaymentDeleted?.Invoke(this, EventArgs.Empty);
                     }));
@@ -673,6 +695,21 @@ public partial class PaymentModalsViewModel : ViewModelBase
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payment.OpenDeleteConfirm");
         }
+    }
+
+    /// <summary>
+    /// Re-derives invoice.AmountPaid / AmountRefunded / Balance / BalanceUSD
+    /// and the stored Status from the current Payments list. Called after
+    /// any add / edit / delete of a Payment row, including undo / redo.
+    /// No-op when invoiceId is null/empty or the invoice can't be found
+    /// (the payment isn't tied to an invoice).
+    /// </summary>
+    private static void RecalcInvoiceTotals(Core.Data.CompanyData companyData, string? invoiceId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        var invoice = companyData.GetInvoice(invoiceId);
+        if (invoice == null) return;
+        InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
     }
 
     #endregion

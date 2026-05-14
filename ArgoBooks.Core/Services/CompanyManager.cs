@@ -582,6 +582,26 @@ public class CompanyManager : IDisposable
             // Load company data
             CompanyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
 
+            // One-time recalc: heal any historic drift between Invoice
+            // totals and the Payment rows that drive them. Only runs for
+            // invoices that actually have Payment rows — spreadsheet
+            // imports without payments record AmountPaid directly on the
+            // invoice and would otherwise be wiped to zero here.
+            // Recalculate (not just RecalculateFromPayments) so stored
+            // Status is also healed — e.g. Paid → PartiallyRefunded for
+            // historic invoices saved before the refund-status rules.
+            var invoicesWithPayments = CompanyData.Payments
+                .Select(p => p.InvoiceId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .ToHashSet();
+            foreach (var invoice in CompanyData.Invoices)
+            {
+                if (invoicesWithPayments.Contains(invoice.Id))
+                {
+                    InvoiceTotalsService.Recalculate(invoice, CompanyData.Payments);
+                }
+            }
+
             CurrentFilePath = filePath;
             _currentPassword = password;
 
@@ -1225,6 +1245,42 @@ public class CompanyManager : IDisposable
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
 
             // Repackage the .argo file so changes persist across restarts
+            ReleaseFileLock();
+            try
+            {
+                await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, _currentPassword, cancellationToken);
+            }
+            finally
+            {
+                AcquireFileLock(CurrentFilePath);
+            }
+        }
+        finally
+        {
+            _saveLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Persists ONLY appSettings.json — used when a single setting (e.g. owner
+    /// email) changes and we don't want to flush other in-memory edits to disk.
+    /// Writes the latest <see cref="CompanyData.Settings"/> to the temp dir
+    /// and re-zips the .argo. The other 29 domain JSON files in the temp dir
+    /// are left untouched (they still hold whatever was last saved). Does NOT
+    /// call <c>MarkAsSaved</c> so an outstanding ChangesMade flag for OTHER
+    /// edits is preserved.
+    /// </summary>
+    public async Task SaveSettingsOnlyAsync(CancellationToken cancellationToken = default)
+    {
+        await _saveLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
+                return;
+
+            var companyDir = GetCompanyDirectory(_currentTempDirectory);
+            await _fileService.WriteJsonAsync(companyDir, "appSettings.json", CompanyData.Settings, cancellationToken);
+
             ReleaseFileLock();
             try
             {

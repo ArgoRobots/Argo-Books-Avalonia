@@ -7,12 +7,12 @@
 ## Features
 
 - **AI Receipt Scanning**: Take a photo of any receipt with your phone or upload from your computer. Our AI automatically extracts vendor, date, amount, and line items with 99% accuracy.
+- **Invoicing**: Create, send, and track invoices with ease. Customize templates, set payment terms, and get paid faster.
 - **Expense & Revenue Tracking**: An intuitive interface makes recording expenses and revenue simple. Smart input validation prevents errors before they happen.
+- **Customer Management**: Keep track of customer information, purchase history, and preferences.
 - **Predictive Analytics**: Analyzes your historical data to forecast sales trends, identify seasonal patterns, and help you make data-driven decisions.
 - **Inventory Management**: Track stock levels, set reorder points, and never run out of your best-selling items. Real-time visibility across all your products.
 - **Rental Management**: Manage equipment rentals, track availability, and handle bookings with ease.
-- **Customer Management**: Keep track of customer information, purchase history, and preferences.
-- **Invoicing**: Create, send, and track invoices with ease. Customize templates, set payment terms, and get paid faster.
 - **Security**: AES-256 encryption protects all your data. Your data stays on your computer, not in the cloud. Biometric authentication support.
 
 ## Technologies Used

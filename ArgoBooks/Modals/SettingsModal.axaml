@@ -7,7 +7,6 @@
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -179,7 +178,7 @@
                                                         Command="{Binding OpenTelemetryFolderCommand}"
                                                         Padding="12,6"
                                                         MinHeight="0" />
-                                                <Button Classes="danger-button"
+                                                <Button Classes="danger-outline-button"
                                                         Content="{loc:Loc 'Delete All Data'}"
                                                         Command="{Binding DeleteTelemetryDataCommand}"
                                                         IsEnabled="{Binding !IsDeletingTelemetry}"
@@ -777,10 +776,9 @@
                                 </Border>
                                 <!-- Portal Company Name -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Company Name'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
                                     <TextBlock Text="{loc:Loc 'The name displayed on your customer-facing payment portal.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -788,6 +786,47 @@
                                              PlaceholderText="{loc:Loc 'Enter company name'}"
                                              Classes="form-input"
                                              MaxLength="255" />
+                                </StackPanel>
+
+                                <!-- Portal Owner Email -->
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="{loc:Loc 'Owner Email'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{loc:Loc 'Required. Used for refund verification codes and account recovery.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                    <!-- Empty state: editable input + Set button (initial setup) -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                                IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                        <TextBox Text="{Binding PendingOwnerEmail, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 PlaceholderText="you@example.com"
+                                                 Width="280" />
+                                        <Button Content="{loc:Loc 'Set'}"
+                                                Classes="primary-button"
+                                                Command="{Binding SetInitialOwnerEmailCommand}"
+                                                Padding="12,6" />
+                                    </StackPanel>
+
+                                    <!-- Set state: read-only display + Change button (locked, change-via-flow) -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                                IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <Border Background="{DynamicResource AltSurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1" CornerRadius="4"
+                                                Padding="12,0" MinWidth="280"
+                                                MinHeight="{StaticResource FormControlHeight}">
+                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <Button Content="{loc:Loc 'Change'}"
+                                                Classes="secondary-button"
+                                                Command="{Binding OpenEmailChangeModalCommand}"
+                                                Padding="12,6" />
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- Portal Logo -->
@@ -828,7 +867,7 @@
                                                         IsEnabled="{Binding !IsUploadingPortalLogo}"
                                                         Padding="12,6"
                                                         MinHeight="0" />
-                                                <Button Classes="danger-button"
+                                                <Button Classes="danger-outline-button"
                                                         Content="{loc:Loc Remove}"
                                                         Command="{Binding RemovePortalLogoCommand}"
                                                         IsVisible="{Binding HasPortalLogo}"
@@ -857,7 +896,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding StripeEmail}"
+                                                <TextBlock Text="{loc:Loc 'Connected'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}"
                                                            IsVisible="{Binding StripeConnected}" />
@@ -876,7 +915,7 @@
                                                     Padding="12,6"
                                                     MinHeight="0" />
                                             <Button Grid.Column="1"
-                                                    Classes="danger-button"
+                                                    Classes="danger-outline-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectStripeCommand}"
                                                     IsVisible="{Binding StripeConnected}"
@@ -886,7 +925,15 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- PayPal -->
+                                    <!--
+                                        PayPal portal Connect is currently disabled. PayPal's "Log in with PayPal"
+                                        OAuth endpoint refuses to return identity for Business-account tokens, so
+                                        the Connect flow can't onboard real merchants. Re-enabling requires
+                                        migrating to PayPal Partner Referrals API after approval into PayPal
+                                        Platforms & Marketplaces. The view model still exposes PaypalConnected /
+                                        ConnectPaypalCommand / DisconnectPaypalCommand for parity with the server
+                                        response shape, but they're not bound to any UI.
+
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             Padding="16">
@@ -896,7 +943,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding PaypalEmail}"
+                                                <TextBlock Text="{loc:Loc 'Connected'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}"
                                                            IsVisible="{Binding PaypalConnected}" />
@@ -915,7 +962,7 @@
                                                     Padding="12,6"
                                                     MinHeight="0" />
                                             <Button Grid.Column="1"
-                                                    Classes="danger-button"
+                                                    Classes="danger-outline-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectPaypalCommand}"
                                                     IsVisible="{Binding PaypalConnected}"
@@ -924,6 +971,7 @@
                                                     MinHeight="0" />
                                         </Grid>
                                     </Border>
+                                    -->
 
                                     <!-- Square -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -935,7 +983,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding SquareEmail}"
+                                                <TextBlock Text="{loc:Loc 'Connected'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}"
                                                            IsVisible="{Binding SquareConnected}" />
@@ -954,7 +1002,7 @@
                                                     Padding="12,6"
                                                     MinHeight="0" />
                                             <Button Grid.Column="1"
-                                                    Classes="danger-button"
+                                                    Classes="danger-outline-button"
                                                     Content="{loc:Loc Disconnect}"
                                                     Command="{Binding DisconnectSquareCommand}"
                                                     IsVisible="{Binding SquareConnected}"

@@ -63,6 +63,7 @@
                         <TabItem Header="{loc:Loc Taxes}" />
                         <TabItem Header="{loc:Loc Returns}" />
                         <TabItem Header="{loc:Loc Losses}" />
+                        <TabItem Header="{loc:Loc Refunds}" />
                     </TabControl>
                 </Grid>
             </Grid>
@@ -1793,6 +1794,173 @@
                         </Border>
                     </Grid>
                 </StackPanel>
+
+                <!-- Refunds Tab Content -->
+                <StackPanel Margin="24" Spacing="20"
+                            IsVisible="{Binding IsRefundsTabSelected}">
+                    <TextBlock Text="{loc:Loc 'Refunds (last 90 days)'}"
+                               FontSize="18" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                    <!-- 3 stat cards -->
+                    <UniformGrid Columns="3" Margin="0,0,0,8">
+                        <Border Margin="0,0,8,0" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc 'Total Refunded'}" FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding RefundsTotal}" FontSize="22" FontWeight="SemiBold"
+                                           Margin="0,6,0,0" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="4,0,4,0" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc 'Refund Rate'}" FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding RefundsRate}" FontSize="22" FontWeight="SemiBold"
+                                           Margin="0,6,0,0" />
+                                <TextBlock Text="{loc:Loc 'of revenue'}" FontSize="11"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Margin="8,0,0,0" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc 'Avg Time to Refund'}" FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding RefundsAvgLatency}" FontSize="22" FontWeight="SemiBold"
+                                           Margin="0,6,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- No-data placeholder -->
+                    <Border IsVisible="{Binding !HasAnyRefunds}"
+                            Padding="40" CornerRadius="8"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            HorizontalAlignment="Stretch">
+                        <TextBlock Text="{loc:Loc 'No refunds in the past 90 days. When you issue a refund, the metrics here will populate.'}"
+                                   FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </Border>
+
+                    <!-- 4 panels in 2x2 grid -->
+                    <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto"
+                          IsVisible="{Binding HasAnyRefunds}">
+
+                        <!-- Top customers -->
+                        <Border Grid.Row="0" Grid.Column="0" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Top refunded customers'}"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <ItemsControl ItemsSource="{Binding RefundsTopCustomers}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:RefundsRow">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,3">
+                                                <TextBlock Grid.Column="0" Text="{Binding Label}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Detail}" Margin="8,0"
+                                                           FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Amount}" FontWeight="Medium" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Top products / line items -->
+                        <Border Grid.Row="0" Grid.Column="2" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Top refunded items'}"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <ItemsControl ItemsSource="{Binding RefundsTopProducts}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:RefundsRow">
+                                            <Grid ColumnDefinitions="*,Auto" Margin="0,3">
+                                                <TextBlock Grid.Column="0" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Amount}" FontWeight="Medium" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Reasons -->
+                        <Border Grid.Row="2" Grid.Column="0" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Top reasons'}"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <ItemsControl ItemsSource="{Binding RefundsTopReasons}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:RefundsRow">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,3">
+                                                <TextBlock Grid.Column="0" Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Detail}" Margin="8,0"
+                                                           FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Amount}" FontWeight="Medium" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Channel breakdown -->
+                        <Border Grid.Row="2" Grid.Column="2" Padding="16" CornerRadius="8"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc 'By channel'}"
+                                           FontWeight="SemiBold" FontSize="14" />
+                                <ItemsControl ItemsSource="{Binding RefundsChannelBreakdown}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:RefundsRow">
+                                            <Grid ColumnDefinitions="*,Auto" Margin="0,3">
+                                                <TextBlock Grid.Column="0" Text="{Binding Label}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Amount}" FontWeight="Medium" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Monthly trend (12 months) -->
+                    <Border IsVisible="{Binding HasAnyRefunds}" Padding="16" CornerRadius="8"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Refunds by month (last 12)'}"
+                                       FontWeight="SemiBold" FontSize="14" />
+                            <ItemsControl ItemsSource="{Binding RefundsMonthlyTotals}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RefundsMonthBucket">
+                                        <Grid ColumnDefinitions="100,*,Auto" Margin="0,3">
+                                            <TextBlock Grid.Column="0" Text="{Binding MonthLabel}" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat={}{0:C}}" FontWeight="Medium" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
             </Panel>
         </ScrollViewer>
     </Grid>

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Dashboard;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -67,13 +68,22 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
 
     private void LoadTopCustomers(CompanyData data)
     {
+        // Refund totals per customer (USD), so the leaderboard reflects what
+        // the customer actually retained (gross − refunds).
+        var refundsByCustomer = data.Payments
+            .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.CustomerId))
+            .GroupBy(p => p.CustomerId)
+            .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.EffectiveAmountUSD)));
+
         var grouped = data.Revenues
             .Where(r => !string.IsNullOrEmpty(r.CustomerId))
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(r => r.CustomerId!)
             .Select(g => new
             {
                 CustomerId = g.Key,
-                TotalRevenue = g.Sum(r => r.EffectiveSubtotalUSD),
+                TotalRevenue = g.Sum(r => r.EffectiveTotalUSD)
+                                - (refundsByCustomer.TryGetValue(g.Key, out var rf) ? rf : 0m),
                 Count = g.Count()
             });
 

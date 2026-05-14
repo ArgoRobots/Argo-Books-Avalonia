@@ -281,13 +281,13 @@
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource SuccessBrush}"
                                                                VerticalAlignment="Center"
-                                                               IsVisible="{Binding Paid}" />
+                                                               IsVisible="{Binding ShowTotalAsPaid}" />
                                                     <TextBlock Text="{Binding TotalFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                                VerticalAlignment="Center"
-                                                               IsVisible="{Binding !Paid}" />
+                                                               IsVisible="{Binding !ShowTotalAsPaid}" />
                                                 </Panel>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
@@ -301,10 +301,14 @@
                                                               Width="16" Height="16"
                                                               Foreground="{DynamicResource SuccessBrush}"
                                                               IsVisible="{Binding HasReceipt}" />
+                                                    <PathIcon Data="{x:Static icons:Icons.Minus}"
+                                                              Width="16" Height="16"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                                              IsVisible="{Binding ShowReceiptDash}" />
                                                     <PathIcon Data="{x:Static icons:Icons.Close}"
                                                               Width="16" Height="16"
                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                              IsVisible="{Binding !HasReceipt}" />
+                                                              IsVisible="{Binding ShowReceiptX}" />
                                                 </Panel>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
@@ -361,7 +365,8 @@
                                                     <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'Edit'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).OpenEditModalCommand}"
-                                                            CommandParameter="{Binding}">
+                                                            CommandParameter="{Binding}"
+                                                            IsVisible="{Binding !IsFromPortal}">
                                                         <PathIcon Data="{x:Static icons:Icons.Edit}"
                                                                   Width="16" Height="16" />
                                                     </Button>
@@ -422,7 +427,8 @@
                                                     <Button Classes="icon-button danger"
                                                             ToolTip.Tip="{loc:Loc 'Delete'}"
                                                             Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                            CommandParameter="{Binding}">
+                                                            CommandParameter="{Binding}"
+                                                            IsVisible="{Binding !HasInvoiceId}">
                                                         <PathIcon Data="{x:Static icons:Icons.Delete}"
                                                                   Width="16" Height="16" />
                                                     </Button>

@@ -361,12 +361,18 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     {
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
+        var companyData = App.CompanyManager?.CompanyData;
 
-        // Total monthly revenue (in USD, then convert to display currency)
-        var monthlyTotalUSD = _allRevenue
-            .Where(s => s.Date >= startOfMonth)
-            .Sum(s => s.EffectiveTotalUSD);
-        TotalMonthlyRevenue = CurrencyService.FormatFromUSD(monthlyTotalUSD, now);
+        // Total monthly revenue, net of refunds (cash-basis: refund counts on
+        // the day it was issued). Mirrors the dashboard's stat-card semantics
+        // exactly so the two never drift: paid-only, capped at end of month.
+        var monthlyGrossUSD = RevenueAggregator.SumCollectedRevenueUSD(
+            _allRevenue, startOfMonth, endOfMonth);
+        var monthlyRefundsUSD = companyData?.Payments != null
+            ? RefundAggregator.GetRefundedInDateRangeUSD(companyData.Payments, startOfMonth, endOfMonth)
+            : 0m;
+        TotalMonthlyRevenue = CurrencyService.FormatFromUSD(monthlyGrossUSD - monthlyRefundsUSD, now);
 
         // Sales count
         SalesCount = _allRevenue.Count;
@@ -379,7 +385,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             .Count();
 
         // Returns count
-        var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Returns.Count > 0)
         {
             var revenueIds = new HashSet<string>(_allRevenue.Select(s => s.Id));
@@ -431,7 +436,10 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Apply status filter
         if (FilterStatus != "All")
         {
-            filtered = filtered.Where(s => GetStatusDisplay(s, lostDamagedIds, returnedIds) == FilterStatus);
+            var paymentsForFilter = companyData?.Payments ?? new List<Payment>();
+            filtered = filtered.Where(s =>
+                GetStatusDisplay(s, lostDamagedIds, returnedIds,
+                    RefundAggregator.GetRefundedForRevenue(s, paymentsForFilter)) == FilterStatus);
         }
 
         // Apply customer filter
@@ -475,6 +483,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var filteredList = filtered.ToList();
 
         // Create display items
+        var allPayments = companyData?.Payments ?? new List<Payment>();
         var displayItems = filteredList.Select(revenue =>
         {
             var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");
@@ -483,7 +492,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
-            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds);
+            var refundedAmount = RefundAggregator.GetRefundedForRevenue(revenue, allPayments);
+            var netTotal = Math.Max(0, revenue.Total - refundedAmount);
+            var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds, refundedAmount);
+            var isFromPortal = !string.IsNullOrEmpty(revenue.InvoiceId) &&
+                allPayments.Any(p => p.InvoiceId == revenue.InvoiceId && p.Source == PaymentSource.Online);
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
@@ -500,7 +513,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 ProductMoreText = productMoreText,
                 CategoryName = category?.Name ?? "-",
                 Date = revenue.Date,
-                Total = revenue.Total,
+                Total = netTotal,
                 TotalUSD = revenue.EffectiveTotalUSD,
                 AmountUSD = revenue.Amount > 0 ? revenue.EffectiveTotalUSD * (revenue.Amount / revenue.Total) : 0,
                 TaxAmountUSD = revenue.TaxAmountUSD > 0 ? revenue.TaxAmountUSD : revenue.TaxAmount,
@@ -508,7 +521,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 DiscountUSD = revenue.DiscountUSD > 0 ? revenue.DiscountUSD : revenue.Discount,
                 UnitPriceUSD = revenue.EffectiveUnitPriceUSD,
                 StatusDisplay = statusDisplay,
-                Paid = revenue.PaymentStatus == "Paid",
+                Paid = RevenueAggregator.IsCollected(revenue),
                 Notes = revenue.Notes,
                 CustomerId = revenue.CustomerId,
                 CategoryId = categoryId,
@@ -527,7 +540,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 IsPendingConversion = revenue.IsPendingConversion,
                 OriginalCurrency = revenue.OriginalCurrency,
                 CustomerAvatarBitmap = customerAvatar,
-                HasCustomerAvatar = customerAvatar != null
+                HasCustomerAvatar = customerAvatar != null,
+                IsFromPortal = isFromPortal
             };
         }).ToList();
 
@@ -585,11 +599,17 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         return (firstName, $" +{remaining} more");
     }
 
-    private static string GetStatusDisplay(Revenue revenue, HashSet<string> lostDamagedIds, HashSet<string> returnedIds)
+    private static string GetStatusDisplay(Revenue revenue, HashSet<string> lostDamagedIds, HashSet<string> returnedIds, decimal refundedAmount)
     {
         if (lostDamagedIds.Contains(revenue.Id)) return "Lost / Damaged";
         if (returnedIds.Contains(revenue.Id)) return "Returned";
-        if (revenue.PaymentStatus != "Paid") return "Unpaid";
+        if (refundedAmount > 0)
+        {
+            // Treat the revenue as fully refunded once the refund covers Total
+            // (within a cent — float drift safety). Otherwise it's partial.
+            return refundedAmount + 0.01m >= revenue.Total ? "Refunded" : "Partially Refunded";
+        }
+        if (!RevenueAggregator.IsCollected(revenue)) return "Unpaid";
         return "Completed";
     }
 
@@ -756,6 +776,7 @@ public partial class RevenueDisplayItem : ObservableObject
     private DateTime _date;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowTotalAsPaid))]
     private decimal _total;
 
     [ObservableProperty]
@@ -780,7 +801,16 @@ public partial class RevenueDisplayItem : ObservableObject
     private string _statusDisplay = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowTotalAsPaid))]
     private bool _paid;
+
+    /// <summary>
+    /// Whether the Total column should render in the success/paid color.
+    /// False when a fully-refunded revenue has netted to zero — at that
+    /// point the row is "paid" historically but there's nothing left to
+    /// celebrate, and the green styling reads as a balance still owed.
+    /// </summary>
+    public bool ShowTotalAsPaid => Paid && Total > 0;
 
     [ObservableProperty]
     private string _notes = string.Empty;
@@ -868,8 +898,18 @@ public partial class RevenueDisplayItem : ObservableObject
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
     public bool IsLostDamaged => StatusDisplay == "Lost / Damaged";
-    public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
-    public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
+    public bool IsRefunded => StatusDisplay == "Refunded" || StatusDisplay == "Partially Refunded";
+
+    // Hide Lost/Returned controls for refunded rows — refund is its own
+    // terminal state and shouldn't be intermixed with returns/loss tracking.
+    public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged && !IsRefunded;
+    public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged && !IsRefunded;
+
+    // Revenue rows generated by a portal payment must not be hand-edited or
+    // they'll drift from the server-of-record. Edit button is hidden when
+    // this is true.
+    [ObservableProperty]
+    private bool _isFromPortal;
 
     [ObservableProperty]
     private bool _hasReceipt;
@@ -885,4 +925,10 @@ public partial class RevenueDisplayItem : ObservableObject
 
     public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
     public bool CanGenerateInvoice => !Paid && !HasInvoiceId;
+
+    // Receipt-column glyphs: invoice-backed revenues will never have a paper
+    // receipt (the invoice IS the receipt) — show a neutral dash instead of
+    // the "missing" X to avoid implying something is wrong.
+    public bool ShowReceiptDash => !HasReceipt && HasInvoiceId;
+    public bool ShowReceiptX => !HasReceipt && !HasInvoiceId;
 }

@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Enums;
+
 namespace ArgoBooks.Core.Models.Transactions;
 
 /// <summary>
@@ -18,10 +20,12 @@ public class Revenue : Transaction
     public decimal Subtotal { get; set; }
 
     /// <summary>
-    /// Payment status (e.g., Paid, Pending).
+    /// Collection state: Paid / Complete = fully collected; everything else
+    /// is excluded from cash-basis dashboard aggregations. See
+    /// docs/Calculations.md §7.
     /// </summary>
     [JsonPropertyName("paymentStatus")]
-    public string PaymentStatus { get; set; } = "Paid";
+    public RevenuePaymentStatus PaymentStatus { get; set; } = RevenuePaymentStatus.Paid;
 
     /// <summary>
     /// Associated invoice ID, if this revenue is linked to an invoice.

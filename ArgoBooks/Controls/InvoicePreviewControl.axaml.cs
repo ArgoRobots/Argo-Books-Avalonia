@@ -274,35 +274,69 @@ public partial class InvoicePreviewControl : UserControl
         document.body.style.overflow = 'auto';
     }
 
+    window.__isInFitMode = false;
+
+    // Horizontal centering: when the scaled wrapper is narrower than the
+    // viewport, shift it right by half the empty space. Without this,
+    // transform-origin: 0 0 leaves zoomed-out content pinned to the
+    // viewport's left edge — the bug the user hit with fit-to-window.
+    function centerOffsetX(scale) {
+        var wrapper = document.getElementById('__zoomWrapper');
+        if (!wrapper) return 0;
+        var contentWidth = wrapper.scrollWidth || wrapper.offsetWidth;
+        var viewportWidth = window.innerWidth;
+        var scaledWidth = contentWidth * scale;
+        return scaledWidth < viewportWidth ? (viewportWidth - scaledWidth) / 2 : 0;
+    }
+
+    // Single source of truth for the wrapper transform. Form is
+    // ""translate(tx, ty) scale(s)"" — translate is applied in screen
+    // pixels (CSS rule: outer transform applies last). tx already
+    // accounts for centering; panOffset adds the rubber-band overscroll.
+    function applyTransform(scale, panOffsetX, panOffsetY) {
+        var wrapper = document.getElementById('__zoomWrapper');
+        if (!wrapper) return;
+        var tx = centerOffsetX(scale) + (panOffsetX || 0);
+        var ty = panOffsetY || 0;
+        wrapper.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+    }
+
+    function notifyZoom(scale) {
+        try {
+            window.chrome.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: scale }));
+        } catch(e) {
+            try {
+                window.webkit.messageHandlers.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: scale }));
+            } catch(e2) {}
+        }
+    }
+
     function updateZoom(newScale, originX, originY) {
         var wrapper = document.getElementById('__zoomWrapper');
         var oldScale = parseFloat(wrapper.dataset.scale || '1');
         newScale = Math.max(0.25, Math.min(5.0, newScale));
         wrapper.dataset.scale = newScale;
+        window.__isInFitMode = false;
+        // User-initiated zoom — content may overflow either direction
+        // post-zoom, so restore scrollbars.
+        document.body.style.overflow = 'auto';
 
-        // Calculate scroll adjustment to keep the point under cursor
+        // Calculate scroll adjustment to keep the point under cursor.
+        // Assumes centering offset doesn't change much across the zoom
+        // step — true once content is wider than viewport, slightly
+        // approximate around the fit-to-window boundary.
         var scrollX = window.scrollX || 0;
         var scrollY = window.scrollY || 0;
-
-        // Document position under the origin point at old scale
         var docX = scrollX + (originX / oldScale);
         var docY = scrollY + (originY / oldScale);
 
-        wrapper.style.transform = 'scale(' + newScale + ')';
+        applyTransform(newScale);
 
-        // New scroll position to keep the same document point under cursor
         var newScrollX = docX - (originX / newScale);
         var newScrollY = docY - (originY / newScale);
         window.scrollTo(newScrollX, newScrollY);
 
-        // Notify C# of zoom level
-        try {
-            window.chrome.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: newScale }));
-        } catch(e) {
-            try {
-                window.webkit.messageHandlers.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: newScale }));
-            } catch(e2) {}
-        }
+        notifyZoom(newScale);
     }
 
     // Expose for C# InvokeScript calls
@@ -315,7 +349,7 @@ public partial class InvoicePreviewControl : UserControl
     window.__fitToWindow = function() {
         var wrapper = document.getElementById('__zoomWrapper');
         // Reset to 1 first to measure natural size
-        wrapper.style.transform = 'scale(1)';
+        wrapper.style.transform = '';
         wrapper.dataset.scale = '1';
         var contentWidth = wrapper.scrollWidth;
         var contentHeight = wrapper.scrollHeight;
@@ -324,13 +358,58 @@ public partial class InvoicePreviewControl : UserControl
         if (contentWidth <= 0 || contentHeight <= 0) return;
         var fitScale = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight);
         fitScale = Math.max(0.25, Math.min(5.0, fitScale));
-        updateZoom(fitScale, viewportWidth / 2, viewportHeight / 2);
+
+        wrapper.dataset.scale = fitScale;
+        applyTransform(fitScale);
+        window.scrollTo(0, 0);
+        window.__isInFitMode = true;
+        // transform: scale() doesn't shrink the wrapper's layout box, so
+        // the body would still report overflow and show scrollbars even
+        // though the scaled content fits the viewport. Hide them while in
+        // fit mode — there's nothing to scroll to anyway.
+        document.body.style.overflow = 'hidden';
+        notifyZoom(fitScale);
     };
 
     window.__getZoom = function() {
         var wrapper = document.getElementById('__zoomWrapper');
         return parseFloat(wrapper.dataset.scale || '1');
     };
+
+    // First load and DPI/window-resize handling. WebView2 fires
+    // ""resize"" when the parent moves to a monitor with different DPI
+    // (window.innerWidth changes inversely with devicePixelRatio).
+    // If the user hasn't manually zoomed, re-fit so the preview lays
+    // out cleanly on the new monitor instead of staying ""zoomed in"".
+    var resizeTimer = null;
+    window.addEventListener('resize', function() {
+        if (!window.__isInFitMode) return;
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() { window.__fitToWindow(); }, 50);
+    });
+
+    // Auto-fit on initial display when content overflows the viewport.
+    // The user's main monitor renders at 1:1 cleanly (content fits) — we
+    // leave that alone. On a higher-DPI second monitor, the same content
+    // overflows because WebView2's CSS-pixel viewport shrinks; in that
+    // case we proactively fit so the user isn't stuck looking at a
+    // ""zoomed in"" preview where the 1:1 button doesn't fix it.
+    function maybeInitialFit() {
+        var wrapper = document.getElementById('__zoomWrapper');
+        if (!wrapper) return;
+        var cw = wrapper.scrollWidth;
+        var ch = wrapper.scrollHeight;
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        if (cw > vw + 1 || ch > vh + 1) {
+            window.__fitToWindow();
+        }
+    }
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', function() { setTimeout(maybeInitialFit, 0); });
+    } else {
+        setTimeout(maybeInitialFit, 0);
+    }
 
     // Zoom handling (Ctrl+Scroll)
     document.addEventListener('wheel', function(e) {
@@ -389,11 +468,7 @@ public partial class InvoicePreviewControl : UserControl
         var zw = document.getElementById('__zoomWrapper');
         if (zw) {
             var scale = parseFloat(zw.dataset.scale || '1');
-            if (overscrollX !== 0 || overscrollY !== 0) {
-                zw.style.transform = 'scale(' + scale + ') translate(' + (overscrollX/scale) + 'px, ' + (overscrollY/scale) + 'px)';
-            } else {
-                zw.style.transform = 'scale(' + scale + ')';
-            }
+            applyTransform(scale, overscrollX, overscrollY);
         }
     });
 
@@ -407,7 +482,7 @@ public partial class InvoicePreviewControl : UserControl
                 var scale = parseFloat(zw.dataset.scale || '1');
                 if (overscrollX !== 0 || overscrollY !== 0) {
                     zw.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    zw.style.transform = 'scale(' + scale + ')';
+                    applyTransform(scale);
                 }
             }
             overscrollX = 0;

@@ -133,6 +133,14 @@ public class PortalPaymentRecord
     public string? ProviderTransactionId { get; set; }
 
     /// <summary>
+    /// The provider's payment intent / order / capture ID — the value the desktop
+    /// passes back to the server's /refunds/request endpoint as
+    /// <c>provider_payment_id</c> when issuing a refund. Populated by sync.
+    /// </summary>
+    [JsonPropertyName("providerPaymentId")]
+    public string? ProviderPaymentId { get; set; }
+
+    /// <summary>
     /// Human-readable confirmation/reference number.
     /// </summary>
     [JsonPropertyName("referenceNumber")]
@@ -143,6 +151,35 @@ public class PortalPaymentRecord
     /// </summary>
     [JsonPropertyName("createdAt")]
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// True when this row represents a refund rather than an incoming payment.
+    /// Refund rows have negative <see cref="Amount"/> and status "refunded".
+    /// </summary>
+    [JsonPropertyName("isRefund")]
+    public bool IsRefund { get; set; }
+
+    /// <summary>
+    /// For refund rows, the provider's payment ID (e.g. Stripe payment_intent)
+    /// that this refund offsets. The desktop uses this to link the refund
+    /// Payment row back to its source Payment via PortalPaymentId lookup.
+    /// </summary>
+    [JsonPropertyName("refundedProviderPaymentId")]
+    public string? RefundedProviderPaymentId { get; set; }
+
+    /// <summary>
+    /// Server's refund_requests.id when this refund was initiated through the
+    /// Argo Books refund flow. Null for refunds created via the provider's own
+    /// dashboard (which we received via webhook).
+    /// </summary>
+    [JsonPropertyName("refundRequestId")]
+    public int? RefundRequestId { get; set; }
+
+    /// <summary>
+    /// User-supplied reason recorded at refund-request time.
+    /// </summary>
+    [JsonPropertyName("refundReason")]
+    public string? RefundReason { get; set; }
 }
 
 /// <summary>
@@ -368,6 +405,14 @@ public class PortalRegisterResponse
 
     [JsonPropertyName("error")]
     public string? Error { get; set; }
+
+    /// <summary>
+    /// True when the server has issued an email verification code that the
+    /// owner must enter before refunds become available. The desktop should
+    /// surface a verification prompt and call /account/verify-email/confirm.php.
+    /// </summary>
+    [JsonPropertyName("email_verification_required")]
+    public bool EmailVerificationRequired { get; set; }
 }
 
 /// <summary>

@@ -1,0 +1,444 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.RefundModals"
+             x:DataType="vm:RefundModalsViewModel">
+
+    <Panel>
+
+        <!-- ============================================================ -->
+        <!-- Refund Modal                                                 -->
+        <!-- ============================================================ -->
+        <controls:ModalOverlay IsOpen="{Binding IsRefundModalOpen}"
+                               ClosingCommand="{Binding RequestCloseRefundModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="640" MaxHeight="700"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        DataContext="{Binding ActiveRefundVm}">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding InvoiceNumber, StringFormat='Refund Invoice {0}'}"
+                                               FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding CustomerDisplay}" FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Body -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="16">
+
+                                <!-- Step 1: line items -->
+                                <StackPanel IsVisible="{Binding IsLineItemsStep}" Spacing="16">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Refund against:" FontWeight="SemiBold" FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <ItemsControl ItemsSource="{Binding Payments}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="vm:RefundablePaymentRow">
+                                                    <!-- Match the line-items row layout below so the
+                                                         checkbox-to-label gap is identical between
+                                                         "Refund against" and "What to refund". -->
+                                                    <Grid ColumnDefinitions="Auto,*" Margin="0,2">
+                                                        <CheckBox Grid.Column="0"
+                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                  VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   Margin="8,0"
+                                                                   Text="{Binding DisplayLabel}"
+                                                                   VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="What to refund:" FontWeight="SemiBold" FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <ItemsControl ItemsSource="{Binding LineRows}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="vm:RefundableLineRow">
+                                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+                                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                  VerticalAlignment="Center" />
+                                                        <StackPanel Grid.Column="1" Margin="8,0" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Label}" />
+                                                            <TextBlock Text="{Binding Detail}" FontSize="11"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       IsVisible="{Binding Detail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat={}{0:C}}"
+                                                                   FontWeight="Medium" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <Border Background="{DynamicResource AltSurfaceBrush}" Padding="12" CornerRadius="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="Refund total" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding RefundTotal, StringFormat={}{0:C}}"
+                                                       FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+
+                                    <TextBlock Text="{Binding LineItemsValidationMessage}"
+                                               Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding LineItemsValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                    <!-- Server error from /refunds/request (e.g. 404, 401, 412 email_not_verified) -->
+                                    <Border Background="#3b1818" BorderBrush="#dc2626" BorderThickness="1" CornerRadius="4" Padding="10"
+                                            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#fca5a5" FontSize="12" TextWrapping="Wrap" />
+                                    </Border>
+
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Reason (optional — shown to the customer in their refund email)"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   TextWrapping="Wrap" />
+                                        <TextBox Text="{Binding Reason, Mode=TwoWay}" Classes="form-input"
+                                                 PlaceholderText="e.g. Wrong item shipped" MaxLength="250" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Step 2: enter code -->
+                                <StackPanel IsVisible="{Binding IsEnterCodeStep}" Spacing="16">
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding CodeSentMessage}" />
+                                    <TextBox Text="{Binding Code, Mode=TwoWay}" Classes="form-input"
+                                             PlaceholderText="123456" MaxLength="6"
+                                             FontSize="22" FontWeight="SemiBold"
+                                             HorizontalContentAlignment="Center" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="{Binding CountdownDisplay}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Content="Resend code"
+                                                Command="{Binding ResendCodeCommand}" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+
+                                <!-- Step 3: cooling-off / polling -->
+                                <StackPanel IsVisible="{Binding IsPollingStep}" Spacing="14">
+                                    <TextBlock Text="Refund pending review" FontSize="16" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding CoolingOffMessage}" TextWrapping="Wrap" />
+                                    <ProgressBar IsIndeterminate="True" />
+                                </StackPanel>
+
+                                <!-- Read-only: past refunds (invoice fully refunded) -->
+                                <StackPanel IsVisible="{Binding IsDetailsStep}" Spacing="14">
+                                    <TextBlock Text="Refund history" FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="This invoice has been fully refunded. Below is the history of refunds issued."
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" />
+                                    <ItemsControl ItemsSource="{Binding RefundHistory}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:RefundHistoryRow">
+                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                                                        Padding="0,10">
+                                                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                                   Text="{Binding DateDisplay}" FontWeight="Medium" />
+                                                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                                                   Text="{Binding Amount, StringFormat={}{0:C}}"
+                                                                   FontWeight="SemiBold" />
+                                                        <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                                   Text="{Binding ReasonDisplay}" FontSize="12"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   TextWrapping="Wrap" Margin="0,2,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <!-- Terminal: failure (success is rendered as a SuccessAnimation overlay below) -->
+                                <StackPanel IsVisible="{Binding IsFailureStep}" Spacing="14">
+                                    <TextBlock Text="Refund did not complete" FontSize="16" FontWeight="SemiBold" Foreground="#dc2626" />
+                                    <TextBlock Text="{Binding TerminalMessage}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer — hidden while the busy overlay or success
+                             animation is on screen. The overlays are placed
+                             AFTER the footer in XAML so they always draw on
+                             top — IsVisible is the primary mechanism but the
+                             draw order is the safety net against the footer's
+                             top-border separator leaking through. -->
+                        <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                IsVisible="{Binding ShowRefundFooter}">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <ProgressBar Grid.Column="0" Width="120" Height="4" IsIndeterminate="True"
+                                             IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding StatusMessage}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                           VerticalAlignment="Center" Margin="12,0" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <Button Content="Continue →"
+                                            IsVisible="{Binding IsLineItemsStep}"
+                                            IsEnabled="{Binding CanContinueFromLineItems}"
+                                            Command="{Binding ContinueCommand}"
+                                            Classes="primary-button" />
+                                    <Button Content="← Back"
+                                            IsVisible="{Binding IsEnterCodeStep}"
+                                            Classes="secondary-button"
+                                            Command="{Binding BackCommand}" />
+                                    <Button Content="Issue Refund"
+                                            IsVisible="{Binding IsEnterCodeStep}"
+                                            IsEnabled="{Binding CanSubmitCode}"
+                                            Classes="primary-button"
+                                            Command="{Binding SubmitCodeCommand}" />
+                                    <!-- Done shows on Failure / Details only — Success has the
+                                         SuccessAnimation overlay's own Continue button. -->
+                                    <Button Content="Done"
+                                            IsVisible="{Binding IsNonSuccessTerminalStep}"
+                                            Classes="primary-button"
+                                            Command="{Binding CloseCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Sending overlay — drawn AFTER the footer in XAML so
+                             it covers the footer's top-border separator if any
+                             visibility-toggle timing glitch occurs. Border (not
+                             Panel) so CornerRadius matches the parent modal shell. -->
+                        <Border Grid.Row="0" Grid.RowSpan="3"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="12"
+                                Cursor="Arrow"
+                                IsVisible="{Binding IsBusy}">
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="20">
+                                <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                                <TextBlock Text="{Binding BusyLabel}"
+                                           FontSize="16" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding BusySubLabel}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           MaxWidth="320"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Success overlay (refund completed) — also drawn
+                             AFTER the footer so its background covers the
+                             footer's top-border line. -->
+                        <Border Grid.Row="0" Grid.RowSpan="3"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="12"
+                                IsVisible="{Binding IsSuccessStep}">
+                            <controls:SuccessAnimation Title="Refund Issued!"
+                                                       Message="{Binding TerminalMessage}"
+                                                       ShowContinueButton="True"
+                                                       ContinueButtonText="Done"
+                                                       ContinueButtonDelayMs="300"
+                                                       ContinueCommand="{Binding CloseCommand}"
+                                                       IsPlaying="{Binding IsSuccessStep}" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- ============================================================ -->
+        <!-- Email Verification Modal (post-registration)                 -->
+        <!-- ============================================================ -->
+        <controls:ModalOverlay IsOpen="{Binding IsVerifyEmailModalOpen}"
+                               ClosingCommand="{Binding RequestCloseVerifyEmailModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="480" MaxHeight="500"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        DataContext="{Binding ActiveVerifyEmailVm}">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="Verify your email"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="14">
+                                <StackPanel IsVisible="{Binding !IsVerified}" Spacing="14">
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="{Binding MaskedEmail, StringFormat='We sent a 6-digit verification code to {0}. Enter it below to enable refunds for this account.'}" />
+                                    <TextBox Text="{Binding Code, Mode=TwoWay}" Classes="form-input"
+                                             PlaceholderText="123456" MaxLength="6"
+                                             FontSize="22" FontWeight="SemiBold"
+                                             HorizontalContentAlignment="Center" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Content="{Binding ResendButtonText}"
+                                                IsEnabled="{Binding CanResend}"
+                                                Command="{Binding ResendCommand}" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsVerified}" Spacing="10">
+                                    <TextBlock Text="✓ Email verified" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="Refunds are now enabled for this account. You can close this dialog." />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <ProgressBar Grid.Column="0" Width="120" Height="4" IsIndeterminate="True"
+                                             IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                                <Button Grid.Column="2" Content="Verify"
+                                        Classes="primary-button"
+                                        IsVisible="{Binding !IsVerified}"
+                                        IsEnabled="{Binding CanSubmit}"
+                                        Command="{Binding SubmitCommand}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- ============================================================ -->
+        <!-- Email Change Modal (4-step)                                  -->
+        <!-- ============================================================ -->
+        <controls:ModalOverlay IsOpen="{Binding IsEmailChangeModalOpen}"
+                               ClosingCommand="{Binding RequestCloseEmailChangeModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="540" MaxHeight="640"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        DataContext="{Binding ActiveEmailChangeVm}">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Change owner email" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding CurrentOwnerEmail, StringFormat='Currently: {0}'}"
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="14">
+                                <StackPanel IsVisible="{Binding IsEnterNewEmail}" Spacing="10">
+                                    <TextBlock Text="Enter the new email address that should own this portal account." TextWrapping="Wrap" />
+                                    <TextBox Text="{Binding NewEmail, Mode=TwoWay}" Classes="form-input" PlaceholderText="new@example.com" />
+                                    <TextBlock Text="{Binding NewEmailValidationMessage}"
+                                               FontSize="12" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap"
+                                               IsVisible="{Binding NewEmailValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    <TextBlock Text="A verification code will be sent to BOTH the old and the new email so the change can be confirmed end-to-end."
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsEnterPassword}" Spacing="10">
+                                    <TextBlock Text="Enter your .argo file password to confirm you control this company file." TextWrapping="Wrap" />
+                                    <TextBox Text="{Binding FilePassword, Mode=TwoWay}" Classes="form-input" PasswordChar="•" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsEnterOldCode}" Spacing="10">
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="{Binding MaskedOldEmail, StringFormat='Enter the 6-digit code sent to {0} (your current email).'}" />
+                                    <TextBox Text="{Binding OldCode, Mode=TwoWay}" Classes="form-input"
+                                             PlaceholderText="123456" MaxLength="6"
+                                             FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
+                                    <Button Content="Resend code" HorizontalAlignment="Right"
+                                            Command="{Binding ResendOldCodeCommand}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsEnterNewCode}" Spacing="10">
+                                    <TextBlock TextWrapping="Wrap"
+                                               Text="{Binding MaskedNewEmail, StringFormat='Enter the 6-digit code sent to {0} to confirm the new email is reachable.'}" />
+                                    <TextBox Text="{Binding NewCode, Mode=TwoWay}" Classes="form-input"
+                                             PlaceholderText="123456" MaxLength="6"
+                                             FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
+                                    <Button Content="Resend code" HorizontalAlignment="Right"
+                                            Command="{Binding ResendNewCodeCommand}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding IsSuccess}" Spacing="10">
+                                    <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                           IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <ProgressBar Grid.Column="0" Width="120" Height="4" IsIndeterminate="True"
+                                             IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <Button Content="Continue →"
+                                            IsVisible="{Binding IsEnterNewEmail}"
+                                            IsEnabled="{Binding CanContinueFromNewEmail}"
+                                            Classes="primary-button"
+                                            Command="{Binding ContinueFromNewEmailCommand}" />
+                                    <Button Content="Continue →"
+                                            IsVisible="{Binding IsEnterPassword}"
+                                            IsEnabled="{Binding CanContinueFromPassword}"
+                                            Classes="primary-button"
+                                            Command="{Binding ContinueFromPasswordCommand}" />
+                                    <Button Content="Verify code"
+                                            IsVisible="{Binding IsEnterOldCode}"
+                                            IsEnabled="{Binding CanSubmitOldCode}"
+                                            Classes="primary-button"
+                                            Command="{Binding SubmitOldCodeCommand}" />
+                                    <Button Content="Confirm email change"
+                                            IsVisible="{Binding IsEnterNewCode}"
+                                            IsEnabled="{Binding CanSubmitNewCode}"
+                                            Classes="primary-button"
+                                            Command="{Binding SubmitNewCodeCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+    </Panel>
+</UserControl>

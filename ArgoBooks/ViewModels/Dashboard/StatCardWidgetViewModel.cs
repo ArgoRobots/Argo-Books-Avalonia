@@ -2,6 +2,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Dashboard;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -155,17 +156,19 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
 
     private void LoadRevenue(CompanyData data, DateTime startDate, DateTime endDate)
     {
-        var currentUSD = data.Revenues
-            .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .Sum(s => s.EffectiveSubtotalUSD);
+        // Total Revenue display uses gross-of-tax USD per docs/Calculations.md
+        // §2 Rule 1, paid-only per Rule 2, full refund subtraction per §8.
+        var grossUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, startDate, endDate);
+        var refundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, startDate, endDate);
+        var currentUSD = grossUSD - refundsUSD;
         Value = CurrencyService.FormatFromUSD(currentUSD, DateTime.Now);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
         if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
         {
-            var prevUSD = data.Revenues
-                .Where(s => s.Date >= prevStart && s.Date <= prevEnd)
-                .Sum(s => s.EffectiveSubtotalUSD);
+            var prevGrossUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, prevStart, prevEnd);
+            var prevRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, prevStart, prevEnd);
+            var prevUSD = prevGrossUSD - prevRefundsUSD;
             ChangeValue = DashboardCalculations.CalculatePercentageChange(prevUSD, currentUSD);
             ChangeText = DashboardCalculations.FormatPercentageChange(ChangeValue);
         }
@@ -178,17 +181,13 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
 
     private void LoadExpenses(CompanyData data, DateTime startDate, DateTime endDate)
     {
-        var currentUSD = data.Expenses
-            .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .Sum(p => p.EffectiveSubtotalUSD);
+        var currentUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, startDate, endDate);
         Value = CurrencyService.FormatFromUSD(currentUSD, DateTime.Now);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
         if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
         {
-            var prevUSD = data.Expenses
-                .Where(p => p.Date >= prevStart && p.Date <= prevEnd)
-                .Sum(p => p.EffectiveSubtotalUSD);
+            var prevUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, prevStart, prevEnd);
             ChangeValue = DashboardCalculations.CalculatePercentageChange(prevUSD, currentUSD);
             ChangeText = DashboardCalculations.FormatPercentageChange(ChangeValue);
         }
@@ -222,25 +221,15 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
 
     private void LoadNetProfit(CompanyData data, DateTime startDate, DateTime endDate)
     {
-        var revenueUSD = data.Revenues
-            .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .Sum(s => s.EffectiveSubtotalUSD);
-        var expenseUSD = data.Expenses
-            .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .Sum(p => p.EffectiveSubtotalUSD);
-        var profitUSD = revenueUSD - expenseUSD;
+        // ProfitCalculator owns the formula (pre-tax revenue − expenses −
+        // pre-tax refunds); see docs/Calculations.md §2 and §8.
+        var profitUSD = ProfitCalculator.CalculateNetProfitUSD(data, startDate, endDate);
         Value = CurrencyService.FormatFromUSD(profitUSD, DateTime.Now);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
         if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
         {
-            var prevRevenue = data.Revenues
-                .Where(s => s.Date >= prevStart && s.Date <= prevEnd)
-                .Sum(s => s.EffectiveSubtotalUSD);
-            var prevExpense = data.Expenses
-                .Where(p => p.Date >= prevStart && p.Date <= prevEnd)
-                .Sum(p => p.EffectiveSubtotalUSD);
-            var prevProfit = prevRevenue - prevExpense;
+            var prevProfit = ProfitCalculator.CalculateNetProfitUSD(data, prevStart, prevEnd);
             ChangeValue = DashboardCalculations.CalculatePercentageChange(prevProfit, profitUSD);
             ChangeText = DashboardCalculations.FormatPercentageChange(ChangeValue);
         }

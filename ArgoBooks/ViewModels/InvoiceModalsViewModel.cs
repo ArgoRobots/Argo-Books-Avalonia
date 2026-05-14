@@ -101,14 +101,23 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private string _saveButtonText = "Create Invoice";
 
     /// <summary>
+    /// Set true while the Create &amp; Send pipeline is in flight (publish to
+    /// portal + send email). Hides the preview HTML and the footer so the
+    /// only thing visible inside the modal body is a centered spinner —
+    /// removes ambiguity about whether the click registered.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSending;
+
+    /// <summary>
     /// Gets whether to show the edit form content.
     /// </summary>
-    public bool ShowEditContent => !IsShowingPreview && !IsShowingSuccess;
+    public bool ShowEditContent => !IsShowingPreview && !IsShowingSuccess && !IsSending;
 
     /// <summary>
     /// Gets whether to show the preview content.
     /// </summary>
-    public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess;
+    public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess && !IsSending;
 
     /// <summary>
     /// Gets the modal width based on current state.
@@ -136,6 +145,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ModalHeight));
     }
 
+    partial void OnIsSendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEditContent));
+        OnPropertyChanged(nameof(ShowPreviewContent));
+    }
+
     #endregion
 
     #region Create/Edit Modal Fields
@@ -161,7 +176,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
     [ObservableProperty]
-    private DateTimeOffset? _modalDueDate = DateTimeOffset.Now.AddDays(30);
+    private DateTimeOffset? _modalDueDate = DateTimeOffset.Now.AddMonths(1);
 
     [ObservableProperty]
     private string _modalStatus = "Draft";
@@ -766,7 +781,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
 
         var renderer = new InvoiceHtmlRenderer();
-        var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+        // Customer-facing surfaces show the invoice in the currency it was
+        // issued in, not the user's display currency. See Calculations.md §2.
+        var currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
         PreviewHtml = renderer.RenderInvoice(invoice, template, companyData, currencySymbol);
 
         // Open modal in view-only preview mode
@@ -1080,7 +1097,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             InvoiceNumber = PeekNextInvoiceNumber(),
             CustomerId = SelectedCustomer?.Id ?? string.Empty,
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
             TaxRate = TaxRate,
             CustomFeeLabel = CustomFeeLabel,
             CustomFeeAmount = CustomFeeAmount,
@@ -1258,6 +1275,35 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
+        // From here down: the user is committed to sending. Flip IsSending so
+        // the modal swaps the preview + footer for a centered spinner — the
+        // 1-2 second silent gap was confusing because nothing visibly happened
+        // after the click.
+        IsSending = true;
+        try
+        {
+            await CreateAndSendInvoiceCore();
+        }
+        finally
+        {
+            IsSending = false;
+        }
+    }
+
+    private async Task CreateAndSendInvoiceCore()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var customer = companyData.GetCustomer(SelectedCustomer!.Id!);
+        if (customer == null) return;
+
+        // The outer CreateAndSendInvoice already guards on SelectedTemplate
+        // being non-null, but the compiler can't see across method boundaries —
+        // re-assert here so the SendInvoiceAsync call site doesn't warn.
+        var selectedTemplate = SelectedTemplate;
+        if (selectedTemplate == null) return;
+
         // Check if we're continuing a draft invoice or creating a new one
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
@@ -1277,7 +1323,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice = existingDraft;
             invoice.CustomerId = SelectedCustomer!.Id!;
             invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
-            invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30);
+            invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1);
             invoice.TaxRate = TaxRate;
             invoice.SecurityDeposit = SecurityDeposit;
             invoice.CustomFeeLabel = CustomFeeLabel;
@@ -1312,7 +1358,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 InvoiceNumber = invoiceNumber,
                 CustomerId = SelectedCustomer!.Id!,
                 IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-                DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+                DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
                 TaxRate = TaxRate,
                 SecurityDeposit = SecurityDeposit,
                 CustomFeeLabel = CustomFeeLabel,
@@ -1337,13 +1383,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
-        // Calculate invoice totals
+        // Calculate invoice totals (Subtotal / TaxAmount / Total — these are
+        // invoice-level math, not Payment-derived).
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
         var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
         var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
         invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit + feeCalc - discCalc;
-        invoice.Balance = invoice.Total - invoice.AmountPaid;
 
         // Set currency fields for multi-currency support
         var invoiceCurrency = CurrencyService.CurrentCurrencyCode;
@@ -1357,15 +1403,18 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (rate > 0)
                 {
                     invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
-                    invoice.BalanceUSD = Math.Round(invoice.Balance * rate, 2);
                 }
             }
         }
         else
         {
             invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
         }
+
+        // Payment-derived totals (AmountPaid / Balance / BalanceUSD) come
+        // from InvoiceTotalsService so the rule "stored totals always match
+        // the Payment list" is preserved. See docs/Calculations.md §5.
+        InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
         // Publish and send: portal handles both publishing and email delivery via sendEmail: true.
         // When portal is not configured, fall back to desktop email sending.
@@ -1376,7 +1425,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 var portalService = App.PaymentPortalService;
                 if (portalService != null)
                 {
-                    var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+                    // Portal publishes / customer-facing flow uses the
+                    // invoice's issued currency, not user display currency.
+                    var currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
                     var publishResponse = await portalService.PublishInvoiceAsync(
                         invoice, companyData, SelectedTemplate, currencySymbol);
                     if (publishResponse.Success)
@@ -1387,16 +1438,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                             Details = "Invoice published to online payment portal",
                             Timestamp = DateTime.UtcNow
                         });
-
-                        if (publishResponse.EmailSent)
-                        {
-                            invoice.History.Add(new InvoiceHistoryEntry
-                            {
-                                Action = "Email Sent",
-                                Details = $"Invoice notification emailed to {customer.Email} by portal",
-                                Timestamp = DateTime.UtcNow
-                            });
-                        }
 
                         // Update local provider state from the server's response so the
                         // desktop app stays in sync with which methods are available.
@@ -1430,11 +1471,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 var emailService = new InvoiceEmailService();
                 var emailSettings = companyData.Settings.InvoiceEmail;
-                var currencySymbol = CurrencyService.GetSymbol(companyData.Settings.Localization.Currency);
+                // Email goes to the customer in the invoice's issued currency.
+                var currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
 
                 var response = await emailService.SendInvoiceAsync(
                     invoice,
-                    SelectedTemplate,
+                    selectedTemplate,
                     companyData,
                     emailSettings,
                     currencySymbol);
@@ -1627,7 +1669,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             InvoiceNumber = invoiceNumber,
             CustomerId = SelectedCustomer!.Id!,
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
             TaxRate = TaxRate,
             SecurityDeposit = SecurityDeposit,
             CustomFeeLabel = CustomFeeLabel,
@@ -1651,11 +1693,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }).ToList()
         };
 
-        // Compute and store totals on the model before setting USD fields
+        // Compute and store invoice-level totals (Subtotal / TaxAmount /
+        // Total). Payment-derived fields are set by InvoiceTotalsService
+        // below — see docs/Calculations.md §5.
         invoice.Subtotal = Subtotal;
         invoice.TaxAmount = TaxAmount;
         invoice.Total = Total;
-        invoice.Balance = Total; // No payments yet for a new draft
 
         // Set currency fields for multi-currency support
         var draftCurrency = CurrencyService.CurrentCurrencyCode;
@@ -1669,15 +1712,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (rate > 0)
                 {
                     invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
-                    invoice.BalanceUSD = Math.Round(invoice.Balance * rate, 2);
                 }
             }
         }
         else
         {
             invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
         }
+
+        InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
         // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
@@ -1797,7 +1840,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Discount = discountAmount,
             Total = invoice.Total,
             PaymentMethod = PaymentMethod.Other,
-            PaymentStatus = "Unpaid",
+            PaymentStatus = RevenuePaymentStatus.Unpaid,
             Notes = $"Auto-created from invoice {invoice.InvoiceNumber}",
             InvoiceId = invoice.Id,
             ReferenceNumber = invoice.InvoiceNumber,
@@ -1862,7 +1905,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsViewOnly = false;
         SelectedCustomer = null;
         ModalIssueDate = DateTimeOffset.Now;
-        ModalDueDate = DateTimeOffset.Now.AddDays(30);
+        ModalDueDate = DateTimeOffset.Now.AddMonths(1);
         ModalStatus = "Draft";
         ModalNotes = string.Empty;
         TaxRate = 0;
