@@ -925,7 +925,15 @@
                                         </Grid>
                                     </Border>
 
-                                    <!-- PayPal -->
+                                    <!--
+                                        PayPal portal Connect is currently disabled. PayPal's "Log in with PayPal"
+                                        OAuth endpoint refuses to return identity for Business-account tokens, so
+                                        the Connect flow can't onboard real merchants. Re-enabling requires
+                                        migrating to PayPal Partner Referrals API after approval into PayPal
+                                        Platforms & Marketplaces. The view model still exposes PaypalConnected /
+                                        ConnectPaypalCommand / DisconnectPaypalCommand for parity with the server
+                                        response shape, but they're not bound to any UI.
+
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             Padding="16">
@@ -963,6 +971,7 @@
                                                     MinHeight="0" />
                                         </Grid>
                                     </Border>
+                                    -->
 
                                     <!-- Square -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
