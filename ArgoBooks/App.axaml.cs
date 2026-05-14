@@ -319,8 +319,9 @@ public class App : Application
             if (syncResponse.Payments.Count == 0)
                 return;
 
-            var newPayments = PaymentPortalService.ProcessSyncedPayments(
+            var syncResult = PaymentPortalService.ProcessSyncedPayments(
                 syncResponse.Payments, companyData);
+            var newPayments = syncResult.NewPayments;
 
             // Only confirm payments that were actually processed into local records.
             // Unprocessed payments (e.g. invoice not found locally) must NOT be
@@ -334,10 +335,12 @@ public class App : Application
                 await portalService.ConfirmSyncAsync(processedPortalIds);
             }
 
-            if (newPayments.Count > 0)
+            // Persist when there are new rows OR existing rows were backfilled
+            // with previously-missing fields (e.g. ProcessingFee on pre-fix
+            // payments). Without the backfill arm, the in-memory update gets
+            // lost on next app launch and the fee disappears again.
+            if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
             {
-                // Persist only the sync-related files (payments, invoices, id counters, settings)
-                // so synced payments survive restarts without triggering a full company save
                 try { await CompanyManager!.SavePaymentSyncAsync(); }
                 catch (Exception ex)
                 {
@@ -351,8 +354,10 @@ public class App : Application
                     _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
 
-                    // Send "Payment Received" notification if enabled
-                    if (companyData.Settings.PaymentPortal.NotifyOnPayment)
+                    // Send "Payment Received" notification if enabled. Skipped
+                    // for the backfill-only path (no new payments) — there's
+                    // nothing the user just received to be notified about.
+                    if (newPayments.Count > 0 && companyData.Settings.PaymentPortal.NotifyOnPayment)
                     {
                         var total = newPayments.Sum(p => p.Amount);
                         var message = newPayments.Count == 1

@@ -296,13 +296,24 @@ public class PaymentPortalService : IDisposable
     }
 
     /// <summary>
+    /// Result of <see cref="ProcessSyncedPayments"/>. <c>NewPayments</c> holds
+    /// rows that were freshly created (the historical return value).
+    /// <c>BackfilledRows</c> counts existing rows whose fields were updated
+    /// in-place because a newer release added a column the original sync
+    /// didn't populate (currently <c>ProviderPaymentId</c> and
+    /// <c>ProcessingFee</c>). Callers should persist when either is &gt; 0.
+    /// </summary>
+    public sealed record PortalPaymentSyncResult(List<Payment> NewPayments, int BackfilledRows);
+
+    /// <summary>
     /// Processes synced payment records into local Payment objects and updates invoice balances.
     /// </summary>
-    public static List<Payment> ProcessSyncedPayments(
+    public static PortalPaymentSyncResult ProcessSyncedPayments(
         List<PortalPaymentRecord> portalPayments,
         CompanyData companyData)
     {
         var newPayments = new List<Payment>();
+        var backfilledRows = 0;
 
         foreach (var portalPayment in portalPayments)
         {
@@ -314,11 +325,24 @@ public class PaymentPortalService : IDisposable
                 p.PortalPaymentId == portalPayment.Id.ToString());
             if (existing != null)
             {
+                var rowBackfilled = false;
                 if (string.IsNullOrEmpty(existing.ProviderPaymentId)
                     && !string.IsNullOrEmpty(portalPayment.ProviderPaymentId))
                 {
                     existing.ProviderPaymentId = portalPayment.ProviderPaymentId;
+                    rowBackfilled = true;
                 }
+                // ProcessingFee was added after some users had already synced.
+                // Only fill when the local row is missing the value — never
+                // override a non-zero local fee with a server-side zero (the
+                // server can legitimately report zero, but if we already have
+                // a non-zero local value something earlier captured it).
+                if (existing.ProcessingFee == 0m && portalPayment.ProcessingFee > 0m)
+                {
+                    existing.ProcessingFee = portalPayment.ProcessingFee;
+                    rowBackfilled = true;
+                }
+                if (rowBackfilled) backfilledRows++;
                 continue;
             }
 
@@ -484,7 +508,7 @@ public class PaymentPortalService : IDisposable
             invoice.UpdatedAt = DateTime.UtcNow;
         }
 
-        return newPayments;
+        return new PortalPaymentSyncResult(newPayments, backfilledRows);
     }
 
     #endregion

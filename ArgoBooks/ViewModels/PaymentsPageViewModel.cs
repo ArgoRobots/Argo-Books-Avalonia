@@ -140,8 +140,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             if (syncResponse.Payments.Count > 0)
             {
                 // Process new payments into local data
-                var newPayments = PaymentPortalService.ProcessSyncedPayments(
+                var syncResult = PaymentPortalService.ProcessSyncedPayments(
                     syncResponse.Payments, companyData);
+                var newPayments = syncResult.NewPayments;
 
                 // Only confirm payments that were actually processed locally.
                 // Skipped payments (e.g. invoice not found) stay unconfirmed so
@@ -155,10 +156,10 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                     await portalService.ConfirmSyncAsync(processedPortalIds);
                 }
 
-                if (newPayments.Count > 0)
+                // Also save when only existing rows were backfilled — without
+                // this the in-memory ProcessingFee update is lost on restart.
+                if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
                 {
-                    // Persist only the sync-related files (payments, invoices, id counters, settings)
-                    // so synced payments survive restarts without triggering a full company save
                     try { await App.CompanyManager!.SavePaymentSyncAsync(); }
                     catch { /* non-fatal */ }
                 }
