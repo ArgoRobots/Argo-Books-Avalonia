@@ -176,6 +176,26 @@
                                 <StackPanel IsVisible="{Binding IsFailureStep}" Spacing="14">
                                     <TextBlock Text="Refund did not complete" FontSize="16" FontWeight="SemiBold" Foreground="#dc2626" />
                                     <TextBlock Text="{Binding TerminalMessage}" TextWrapping="Wrap" />
+                                    <!-- Hard-block-only: collect a short reason from the user
+                                         before they click the email button. The reason gets
+                                         baked into the pre-filled mailto body so support has
+                                         the context they need to decide whether to unlock,
+                                         without a back-and-forth. -->
+                                    <StackPanel IsVisible="{Binding IsHardBlockFailure}" Spacing="8">
+                                        <TextBlock Text="What was this refund for? (optional, helps us review faster)"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBox Text="{Binding HardBlockContactReason}"
+                                                 PlaceholderText="e.g., Customer cancelled their order"
+                                                 AcceptsReturn="True"
+                                                 TextWrapping="Wrap"
+                                                 MinHeight="72"
+                                                 MaxLength="500" />
+                                        <Button Content="Email contact@argorobots.com"
+                                                Command="{Binding ContactSupportAboutHardBlockCommand}"
+                                                Classes="primary-button"
+                                                HorizontalAlignment="Left" />
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

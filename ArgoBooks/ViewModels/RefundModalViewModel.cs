@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using ArgoBooks.Core.Enums;
@@ -187,6 +188,21 @@ public partial class RefundModalViewModel : ObservableObject
     // ---------- terminal states ----------
     [ObservableProperty]
     private string? _terminalMessage;
+
+    // Set true on the failure screen only when the server returned the
+    // HARD_BLOCK errorCode. Drives the visibility of the "Email
+    // contact@argorobots.com" mailto button — we don't want that button on
+    // every generic failure (provider timeouts, wrong code, etc.) because
+    // those are usually self-recoverable.
+    [ObservableProperty]
+    private bool _isHardBlockFailure;
+
+    // Optional context the user can type on the failure screen, surfaced
+    // inside the pre-filled mailto body so support gets the "what this
+    // refund was for" detail without a back-and-forth. Empty is fine — the
+    // mailto body just omits the section when nothing was typed.
+    [ObservableProperty]
+    private string _hardBlockContactReason = string.Empty;
 
     public RefundModalViewModel(RefundService refundService, Invoice invoice, IEnumerable<Payment> invoicePayments, string customerName)
     {
@@ -521,6 +537,7 @@ public partial class RefundModalViewModel : ObservableObject
                     if (result.State == "failed")
                     {
                         TerminalMessage = result.Message;
+                        IsHardBlockFailure = result.ErrorCode == "HARD_BLOCK";
                         CurrentStep = Step.Failure;
                     }
                 }
@@ -557,6 +574,60 @@ public partial class RefundModalViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Open the user's default mail client with a pre-filled message to
+    /// contact@argorobots.com about a hard-blocked refund. Bound to the
+    /// "Email contact@argorobots.com" button on the failure screen when
+    /// IsHardBlockFailure is true.
+    /// </summary>
+    [RelayCommand]
+    private void ContactSupportAboutHardBlock()
+    {
+        try
+        {
+            var subject = Uri.EscapeDataString($"Refund safety check: invoice {InvoiceNumber}");
+
+            // Pull the reason from the in-modal TextBox bound to
+            // HardBlockContactReason. The user has typically already typed
+            // this on the failure screen before clicking the email button,
+            // so it lands pre-filled in their mail client. The header is
+            // included unconditionally — even when the field is empty —
+            // so if they skipped the box and clicked through, the email
+            // still prompts them to add the reason before sending.
+            var reason = (HardBlockContactReason ?? string.Empty).Trim();
+
+            var bodyLines = new List<string>
+            {
+                "Hi Argo Books,",
+                "",
+                $"My refund on invoice {InvoiceNumber} was flagged by the automated safety check. The refund is legitimate. Please review and process it.",
+                "",
+                "What this refund was for:",
+                reason,
+                "",
+                "Refund details:",
+                $"  Invoice: {InvoiceNumber}",
+                $"  Amount: {Total:N2} {Currency}",
+                "",
+                "Thanks!",
+            };
+
+            var body = Uri.EscapeDataString(string.Join("\n", bodyLines));
+            var mailto = $"mailto:contact@argorobots.com?subject={subject}&body={body}";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = mailto,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            // If the mail client can't be opened (no default handler, etc.),
+            // surface the address as the error message so the user can copy it.
+            ErrorMessage = $"Could not open your email app. Please email contact@argorobots.com manually. ({ex.Message})";
         }
     }
 
