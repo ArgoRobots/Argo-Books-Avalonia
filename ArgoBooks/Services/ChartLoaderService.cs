@@ -134,102 +134,6 @@ public class ChartLoaderService
         return LanguageService.Instance.Translate(text);
     }
 
-    // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
-    private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "United States", "usa" }, { "USA", "usa" }, { "US", "usa" }, { "America", "usa" },
-        { "United Kingdom", "gbr" }, { "UK", "gbr" }, { "Great Britain", "gbr" }, { "England", "gbr" },
-        { "Canada", "can" }, { "CA", "can" },
-        { "Germany", "deu" }, { "DE", "deu" },
-        { "France", "fra" }, { "FR", "fra" },
-        { "Italy", "ita" }, { "IT", "ita" },
-        { "Spain", "esp" }, { "ES", "esp" },
-        { "Australia", "aus" }, { "AU", "aus" },
-        { "Japan", "jpn" }, { "JP", "jpn" },
-        { "China", "chn" }, { "CN", "chn" },
-        { "India", "ind" }, { "IN", "ind" },
-        { "Brazil", "bra" }, { "BR", "bra" },
-        { "Mexico", "mex" }, { "MX", "mex" },
-        { "Russia", "rus" }, { "RU", "rus" },
-        { "South Korea", "kor" }, { "Korea", "kor" }, { "KR", "kor" },
-        { "Netherlands", "nld" }, { "NL", "nld" },
-        { "Switzerland", "che" }, { "CH", "che" },
-        { "Sweden", "swe" }, { "SE", "swe" },
-        { "Norway", "nor" }, { "NO", "nor" },
-        { "Denmark", "dnk" }, { "DK", "dnk" },
-        { "Finland", "fin" }, { "FI", "fin" },
-        { "Poland", "pol" }, { "PL", "pol" },
-        { "Belgium", "bel" }, { "BE", "bel" },
-        { "Austria", "aut" }, { "AT", "aut" },
-        { "Ireland", "irl" }, { "IE", "irl" },
-        { "Portugal", "prt" }, { "PT", "prt" },
-        { "Greece", "grc" }, { "GR", "grc" },
-        { "New Zealand", "nzl" }, { "NZ", "nzl" },
-        { "Singapore", "sgp" }, { "SG", "sgp" },
-        { "Hong Kong", "hkg" }, { "HK", "hkg" },
-        { "Taiwan", "twn" }, { "TW", "twn" },
-        { "South Africa", "zaf" }, { "ZA", "zaf" },
-        { "Argentina", "arg" }, { "AR", "arg" },
-        { "Chile", "chl" }, { "CL", "chl" },
-        { "Colombia", "col" }, { "CO", "col" },
-        { "Indonesia", "idn" }, { "ID", "idn" },
-        { "Malaysia", "mys" }, { "MY", "mys" },
-        { "Thailand", "tha" }, { "TH", "tha" },
-        { "Vietnam", "vnm" }, { "VN", "vnm" },
-        { "Philippines", "phl" }, { "PH", "phl" },
-        { "Turkey", "tur" }, { "TR", "tur" },
-        { "Saudi Arabia", "sau" }, { "SA", "sau" },
-        { "UAE", "are" }, { "United Arab Emirates", "are" }, { "AE", "are" },
-        { "Israel", "isr" }, { "IL", "isr" },
-        { "Egypt", "egy" }, { "EG", "egy" },
-        { "Nigeria", "nga" }, { "NG", "nga" },
-        { "Kenya", "ken" }, { "KE", "ken" },
-        { "Ukraine", "ukr" }, { "UA", "ukr" },
-        { "Czech Republic", "cze" }, { "Czechia", "cze" }, { "CZ", "cze" },
-        { "Romania", "rou" }, { "RO", "rou" },
-        { "Hungary", "hun" }, { "HU", "hun" }
-    };
-
-    /// <summary>
-    /// Reverse mapping from ISO 3166-1 alpha-3 codes to display names for Excel export.
-    /// </summary>
-    private static readonly Dictionary<string, string> IsoCodeToDisplayName = BuildIsoCodeToDisplayName();
-
-    private static Dictionary<string, string> BuildIsoCodeToDisplayName()
-    {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, code) in CountryNameToIsoCode)
-        {
-            // Prefer the longest name (most descriptive) for each code
-            if (!result.TryGetValue(code, out var existing) || name.Length > existing.Length)
-                result[code] = name;
-        }
-        return result;
-    }
-
-    /// <summary>
-    /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
-    /// </summary>
-    private static string GetCountryIsoCode(string? countryName)
-    {
-        if (string.IsNullOrEmpty(countryName))
-            return string.Empty;
-
-        return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
-    }
-
-    /// <summary>
-    /// Converts geomap data (ISO codes to values) into display names for Excel export.
-    /// </summary>
-    public static Dictionary<string, double> ConvertGeoMapDataForExport(Dictionary<string, double> isoCodeData)
-    {
-        return isoCodeData
-            .Where(kvp => kvp.Value > 0)
-            .ToDictionary(
-                kvp => IsoCodeToDisplayName.TryGetValue(kvp.Key, out var name) ? name : kvp.Key.ToUpperInvariant(),
-                kvp => kvp.Value);
-    }
-
     /// <summary>
     /// Gets or sets the current data for export functionality.
     /// This is used by Google Sheets and Excel exporters.
@@ -2772,7 +2676,7 @@ public class ChartLoaderService
 
         // Convert country names to ISO codes for GeoMap
         return countryData
-            .Select(kvp => (GetCountryIsoCode(kvp.Key), kvp.Value))
+            .Select(kvp => (CountryCodeMapping.GetIsoCode(kvp.Key), kvp.Value))
             .Where(x => !string.IsNullOrEmpty(x.Item1))
             .GroupBy(x => x.Item1)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Item2));
@@ -2794,7 +2698,7 @@ public class ChartLoaderService
 
         // Convert country names to ISO codes for GeoMap
         return countryData
-            .Select(kvp => (GetCountryIsoCode(kvp.Key), kvp.Value))
+            .Select(kvp => (CountryCodeMapping.GetIsoCode(kvp.Key), kvp.Value))
             .Where(x => !string.IsNullOrEmpty(x.Item1))
             .GroupBy(x => x.Item1)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Item2));

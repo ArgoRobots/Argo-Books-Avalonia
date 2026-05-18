@@ -43,63 +43,6 @@ public class ReportRenderer : IDisposable
     private static readonly SKColor ChartAxisColor = SKColor.Parse(AppColors.ChartAxis);
     private static readonly SKColor ChartGridColor = SKColor.Parse(AppColors.ChartGrid);
 
-    // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
-    // Keep in sync with ChartLoaderService.CountryCodeMapping — consider extracting to a shared location
-    private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "United States", "usa" }, { "USA", "usa" }, { "US", "usa" }, { "America", "usa" },
-        { "United Kingdom", "gbr" }, { "UK", "gbr" }, { "Great Britain", "gbr" }, { "England", "gbr" },
-        { "Canada", "can" }, { "CA", "can" },
-        { "Germany", "deu" }, { "DE", "deu" },
-        { "France", "fra" }, { "FR", "fra" },
-        { "Italy", "ita" }, { "IT", "ita" },
-        { "Spain", "esp" }, { "ES", "esp" },
-        { "Australia", "aus" }, { "AU", "aus" },
-        { "Japan", "jpn" }, { "JP", "jpn" },
-        { "China", "chn" }, { "CN", "chn" },
-        { "India", "ind" }, { "IN", "ind" },
-        { "Brazil", "bra" }, { "BR", "bra" },
-        { "Mexico", "mex" }, { "MX", "mex" },
-        { "Russia", "rus" }, { "RU", "rus" },
-        { "South Korea", "kor" }, { "Korea", "kor" }, { "KR", "kor" },
-        { "Netherlands", "nld" }, { "NL", "nld" },
-        { "Switzerland", "che" }, { "CH", "che" },
-        { "Sweden", "swe" }, { "SE", "swe" },
-        { "Norway", "nor" }, { "NO", "nor" },
-        { "Denmark", "dnk" }, { "DK", "dnk" },
-        { "Finland", "fin" }, { "FI", "fin" },
-        { "Poland", "pol" }, { "PL", "pol" },
-        { "Belgium", "bel" }, { "BE", "bel" },
-        { "Austria", "aut" }, { "AT", "aut" },
-        { "Ireland", "irl" }, { "IE", "irl" },
-        { "Portugal", "prt" }, { "PT", "prt" },
-        { "Greece", "grc" }, { "GR", "grc" },
-        { "New Zealand", "nzl" }, { "NZ", "nzl" },
-        { "Singapore", "sgp" }, { "SG", "sgp" },
-        { "Hong Kong", "hkg" }, { "HK", "hkg" },
-        { "Taiwan", "twn" }, { "TW", "twn" },
-        { "South Africa", "zaf" }, { "ZA", "zaf" },
-        { "Argentina", "arg" }, { "AR", "arg" },
-        { "Chile", "chl" }, { "CL", "chl" },
-        { "Colombia", "col" }, { "CO", "col" },
-        { "Indonesia", "idn" }, { "ID", "idn" },
-        { "Malaysia", "mys" }, { "MY", "mys" },
-        { "Thailand", "tha" }, { "TH", "tha" },
-        { "Vietnam", "vnm" }, { "VN", "vnm" },
-        { "Philippines", "phl" }, { "PH", "phl" },
-        { "Turkey", "tur" }, { "TR", "tur" },
-        { "Saudi Arabia", "sau" }, { "SA", "sau" },
-        { "UAE", "are" }, { "United Arab Emirates", "are" }, { "AE", "are" },
-        { "Israel", "isr" }, { "IL", "isr" },
-        { "Egypt", "egy" }, { "EG", "egy" },
-        { "Nigeria", "nga" }, { "NG", "nga" },
-        { "Kenya", "ken" }, { "KE", "ken" },
-        { "Ukraine", "ukr" }, { "UA", "ukr" },
-        { "Czech Republic", "cze" }, { "Czechia", "cze" }, { "CZ", "cze" },
-        { "Romania", "rou" }, { "RO", "rou" },
-        { "Hungary", "hun" }, { "HU", "hun" }
-    };
-
     /// <summary>
     /// Determines if a chart type should display currency formatting on the Y-axis.
     /// </summary>
@@ -2119,8 +2062,8 @@ public class ReportRenderer : IDisposable
         var lands = mapData
             .Select(kvp =>
             {
-                CountryNameToIsoCode.TryGetValue(kvp.Key, out var isoCode);
-                return isoCode != null ? new HeatLand { Name = isoCode, Value = kvp.Value } : null;
+                var isoCode = CountryCodeMapping.GetIsoCode(kvp.Key);
+                return !string.IsNullOrEmpty(isoCode) ? new HeatLand { Name = isoCode, Value = kvp.Value } : null;
             })
             .Where(l => l != null)
             .Cast<HeatLand>()

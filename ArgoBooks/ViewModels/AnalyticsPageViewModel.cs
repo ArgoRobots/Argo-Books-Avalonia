@@ -1469,7 +1469,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
             if (isoData.Count == 0) return;
 
-            var displayData = ChartLoaderService.ConvertGeoMapDataForExport(isoData);
+            var displayData = CountryCodeMapping.ConvertGeoMapDataForExport(isoData);
             var mapTitle = IsMapModeOrigin ? "Countries of Origin" : "Countries of Destination";
 
             ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
