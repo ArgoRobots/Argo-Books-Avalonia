@@ -37,9 +37,8 @@ public class ReportRenderer : IDisposable
     private readonly SKFont _defaultFont;
     private readonly SKFont _headerFont;
 
-    // Chart colors (matching ChartLoaderService)
-    private static readonly SKColor ChartBarColor = SKColor.Parse(AppColors.ChartBar);
-    private static readonly SKColor ChartProfitColor = SKColor.Parse(AppColors.Success);
+    // Axes/grid stay local; series colors come from ArgoBooks.Core.ChartColors
+    // so dashboard, Analytics page, and PDF reports share the same mapping.
     private static readonly SKColor ChartAxisColor = SKColor.Parse(AppColors.ChartAxis);
     private static readonly SKColor ChartGridColor = SKColor.Parse(AppColors.ChartGrid);
 
@@ -1331,17 +1330,9 @@ public class ReportRenderer : IDisposable
         var maxBarWidth = 50 * _renderScale;
         var barWidth = Math.Min(maxBarWidth, categoryWidth * 0.7f);
 
-        // Choose bar color based on chart type
-        var barColor = chart.ChartType switch
-        {
-            ChartDataType.TotalExpenses or ChartDataType.ExpensesDistribution => ChartBarColor, // Blue for expenses (matching WinForms)
-            ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution => ChartProfitColor, // Green for revenue
-            ChartDataType.TotalProfits => ChartProfitColor,
-            _ => ChartBarColor
-        };
-
+        // Per-bar color: profit/tax-liability charts pick green or red based on
+        // the bar's sign; flat-category charts use the same color throughout.
         using var barPaint = new SKPaint();
-        barPaint.Color = barColor;
         barPaint.Style = SKPaintStyle.Fill;
         barPaint.IsAntialias = true;
 
@@ -1360,6 +1351,7 @@ public class ReportRenderer : IDisposable
                 ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY)
                 : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
+            barPaint.Color = ChartColors.ForValue(chart.ChartType, point.Value);
             canvas.DrawRect(barRect, barPaint);
         }
 
@@ -1445,14 +1437,10 @@ public class ReportRenderer : IDisposable
         canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
         canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
 
-        // Choose line color based on chart type
-        var lineColor = chart.ChartType switch
-        {
-            ChartDataType.TotalExpenses or ChartDataType.ExpensesDistribution => ChartBarColor,
-            ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution => ChartProfitColor,
-            ChartDataType.TotalProfits => ChartProfitColor,
-            _ => ChartBarColor
-        };
+        // Line uses a single representative color per chart type.
+        // For profit/tax-liability, that's the color matching positive values
+        // (green for profits, red for owed tax).
+        var lineColor = ChartColors.ForValue(chart.ChartType, 0);
 
         // Calculate point positions
         var pointCount = dataPoints.Count;

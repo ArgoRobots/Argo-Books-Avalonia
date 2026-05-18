@@ -1,6 +1,7 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Dashboard;
@@ -127,10 +128,18 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             EndDate = chartSettings.EndDate
         };
 
+        ChartTitle = ChartDataType.GetDisplayName();
+
+        // Total Profits uses the analytics-page loader so the dashboard widget
+        // gets the same positive=green / negative=red bar split and computed title.
+        if (ChartDataType == ChartDataType.TotalProfits)
+        {
+            LoadTotalProfitsChart(data, chartSettings.StartDate, chartSettings.EndDate);
+            return;
+        }
+
         var service = new ReportChartDataService(data, filters);
         var result = service.GetChartData(ChartDataType);
-
-        ChartTitle = ChartDataType.GetDisplayName();
 
         if (IsDistribution)
             LoadDistributionChart(result);
@@ -138,6 +147,20 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             LoadMultiSeriesChart(result);
         else
             LoadSingleSeriesChart(result);
+    }
+
+    private void LoadTotalProfitsChart(CompanyData data, DateTime startDate, DateTime endDate)
+    {
+        var (series, _, dates, totalProfit) = ChartLoaderService.LoadProfitsOverviewChart(data, startDate, endDate);
+
+        var localizedName = ChartDataType.TotalProfits.GetDisplayName().Translate();
+        var formattedSum = CurrencyService.FormatFromUSD(totalProfit, DateTime.Now);
+        ChartTitle = $"{localizedName}: {formattedSum}";
+
+        XAxes = ChartLoaderService.CreateDateXAxes(dates);
+        YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        Series = series;
+        HasData = dates.Length > 0;
     }
 
     private void LoadDistributionChart(object result)
@@ -265,13 +288,6 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         var dates = dated.Select(p => p.Date!.Value).ToArray();
         var usdValues = dated.Select(p => p.Value).ToArray();
-
-        if (ChartDataType == ChartDataType.TotalProfits)
-        {
-            var localizedName = ChartDataType.TotalProfits.GetDisplayName().Translate();
-            var formattedSum = CurrencyService.FormatFromUSD((decimal)usdValues.Sum(), DateTime.Now);
-            ChartTitle = $"{localizedName}: {formattedSum}";
-        }
 
         // CreateDateTimeSeries converts USD → display currency internally.
         var series = new ObservableCollection<ISeries>();

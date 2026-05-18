@@ -28,11 +28,8 @@ public class ChartLoaderService
     private const float AxisTextSize = 14f;
 
 
-    // Chart colors (from AppColors)
-    private static readonly SKColor RevenueColor = SKColor.Parse(AppColors.Primary);
-    private static readonly SKColor ExpenseColor = SKColor.Parse(AppColors.ExpenseRed);
-    private static readonly SKColor ProfitColor = SKColor.Parse(AppColors.Success);
-    private static readonly SKColor CustomerColor = SKColor.Parse(AppColors.Primary);
+    // Series colors live in ArgoBooks.Core.ChartColors so the dashboard,
+    // Analytics page, and PDF report renderer all share the same mapping.
 
     // Theme colors (will be updated based on current theme)
     private SKColor _textColor = SKColor.Parse(AppColors.TextDark);
@@ -307,17 +304,33 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Creates series for profit data with negative values shown in red (for Column mode).
+    /// Creates a date-time series colored by chart semantics — column bars split
+    /// positive vs negative via <see cref="ChartColors.ForValue"/>; line/area/scatter
+    /// use a single representative color from the same mapping.
     /// </summary>
-    private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
+    private IEnumerable<ISeries> CreateSignedValueDateTimeSeries(
+        DateTime[] dates, double[] values, string name,
+        ChartDataType chartType, string negativeSuffix)
+        => CreateSignedValueDateTimeSeries(dates, values, name,
+            positiveColor: ChartColors.ForValue(chartType, 1),
+            negativeColor: ChartColors.ForValue(chartType, -1),
+            negativeSuffix: negativeSuffix,
+            lineColor: ChartColors.ForValue(chartType, 0));
+
+    /// <summary>
+    /// Creates a date-time series where positive and negative values get distinct colors
+    /// (column charts split into two series; line/area/scatter use a single line color).
+    /// </summary>
+    private IEnumerable<ISeries> CreateSignedValueDateTimeSeries(
+        DateTime[] dates, double[] values, string name,
+        SKColor positiveColor, SKColor negativeColor,
+        string negativeSuffix, SKColor lineColor)
     {
-        // Profit values are always USD-aggregated currency — convert to
-        // display currency at this boundary so bars / tooltips / axis
-        // agree with the stat cards and chart titles.
+        // Values are always USD-aggregated currency — convert to display
+        // currency at this boundary so bars / tooltips / axis agree with
+        // the stat cards and chart titles.
         values = ConvertUSDValuesToDisplay(values);
 
-        // For column charts, split into positive (green) and negative (red) series
-        // Column is the default when not Line, StepLine, Area, or Scatter
         var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
                            SelectedChartStyle != ChartStyle.StepLine &&
                            SelectedChartStyle != ChartStyle.Area &&
@@ -325,7 +338,6 @@ public class ChartLoaderService
 
         if (isColumnStyle)
         {
-            // Create separate lists for positive and negative values
             var positivePoints = new List<ObservablePoint>();
             var negativePoints = new List<ObservablePoint>();
 
@@ -346,7 +358,7 @@ public class ChartLoaderService
                 {
                     Values = positivePoints,
                     Name = name,
-                    Fill = new SolidColorPaint(ProfitColor),
+                    Fill = new SolidColorPaint(positiveColor),
                     Stroke = null,
                     MaxBarWidth = 100,
                     IgnoresBarPosition = true
@@ -358,8 +370,8 @@ public class ChartLoaderService
                 yield return new ColumnSeries<ObservablePoint>
                 {
                     Values = negativePoints,
-                    Name = $"{name} (Loss)",
-                    Fill = new SolidColorPaint(ExpenseColor),
+                    Name = $"{name} {negativeSuffix}",
+                    Fill = new SolidColorPaint(negativeColor),
                     Stroke = null,
                     MaxBarWidth = 100,
                     IgnoresBarPosition = true
@@ -369,10 +381,9 @@ public class ChartLoaderService
             yield break;
         }
 
-        // For line-based charts, use single series with green color.
         // Values were already converted to display currency above, so
         // skip the conversion inside CreateDateTimeSeries.
-        yield return CreateDateTimeSeries(dates, values, name, ProfitColor, convertFromUSD: false);
+        yield return CreateDateTimeSeries(dates, values, name, lineColor, convertFromUSD: false);
     }
 
     /// <summary>
@@ -1083,7 +1094,7 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ExpenseColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ChartColors.Expense));
 
         StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
@@ -1132,7 +1143,7 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ChartColors.Revenue));
 
         StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
         {
@@ -1186,8 +1197,8 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        // Use profit-specific series that shows negative values in red for column charts
-        foreach (var s in CreateProfitDateTimeSeries(dates, values, "Profit"))
+        foreach (var s in CreateSignedValueDateTimeSeries(dates, values, "Profit",
+                     ChartDataType.TotalProfits, "(Loss)"))
         {
             series.Add(s);
         }
@@ -1296,8 +1307,8 @@ public class ChartLoaderService
         // Add series (expenses first, then revenue for consistency)
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
         }
 
         // Store export data for multi-series chart
@@ -1415,7 +1426,7 @@ public class ChartLoaderService
         // Only add series if there's actual data
         if (values.Any(v => v != 0))
         {
-            series.Add(CreateTimeSeries(values, "New Customers", CustomerColor));
+            series.Add(CreateTimeSeries(values, "New Customers", ChartColors.Neutral));
         }
 
         // Store export data
@@ -1468,13 +1479,13 @@ public class ChartLoaderService
         {
             // Revenue series (green)
             var revenueValues = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray();
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
 
             // Expense series (red)
             if (expenseSeriesData?.DataPoints != null)
             {
                 var expenseValues = expenseSeriesData.DataPoints.Select(p => p.Value).ToArray();
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
             }
         }
 
@@ -1528,12 +1539,12 @@ public class ChartLoaderService
         if (dates.Length > 0)
         {
             var revenueValues = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray();
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
 
             if (expenseSeriesData?.DataPoints != null)
             {
                 var expenseValues = expenseSeriesData.DataPoints.Select(p => p.Value).ToArray();
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
             }
         }
 
@@ -1584,7 +1595,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, avgShipping, "Avg Shipping", RevenueColor));
+            series.Add(CreateDateTimeSeries(dates, avgShipping, "Avg Shipping", ChartColors.Expense));
         }
 
         // Store export data
@@ -1913,7 +1924,7 @@ public class ChartLoaderService
         var values = dataPoints.Select(p => p.Value).ToArray();
 
         // Returns count, not amount — skip USD→display conversion.
-        series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor, convertFromUSD: false));
+        series.Add(CreateDateTimeSeries(dates, values, "Returns", ChartColors.Expense, convertFromUSD: false));
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsOverTime] = new ChartExportData
@@ -2025,7 +2036,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, impactValues, "Refunds", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, impactValues, "Refunds", ChartColors.Expense));
         }
 
         // Store export data
@@ -2067,7 +2078,7 @@ public class ChartLoaderService
         var values = dataPoints.Select(p => p.Value).ToArray();
 
         // Losses count, not amount — skip USD→display conversion.
-        series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor, convertFromUSD: false));
+        series.Add(CreateDateTimeSeries(dates, values, "Losses", ChartColors.Expense, convertFromUSD: false));
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesOverTime] = new ChartExportData
@@ -2111,7 +2122,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, impactValues, "Value Lost", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, impactValues, "Value Lost", ChartColors.Expense));
         }
 
         // Store export data
@@ -2248,7 +2259,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ChartColors.Expense));
             if (expenseReturnValues.Length > 0)
             {
                 series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse(AppColors.PurpleDark)));
@@ -2323,7 +2334,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ChartColors.Expense));
             if (revenueLossValues.Length > 0)
             {
                 series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse(AppColors.PurpleDark)));
@@ -2396,10 +2407,10 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, collectedValues, "Tax Collected", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, collectedValues, "Tax Collected", ChartColors.Revenue));
             if (paidValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, paidValues, "Tax Paid", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, paidValues, "Tax Paid", ChartColors.Expense));
             }
         }
 
@@ -2439,7 +2450,11 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Net Tax Liability", RevenueColor));
+        foreach (var s in CreateSignedValueDateTimeSeries(dates, values, "Net Tax Liability",
+                     ChartDataType.TaxLiabilityTrend, "(Refund)"))
+        {
+            series.Add(s);
+        }
 
         _chartExportDataByType[ChartDataType.TaxLiabilityTrend] = new ChartExportData
         {
@@ -2518,7 +2533,7 @@ public class ChartLoaderService
         {
             Values = revenueValues,
             Name = "Revenue",
-            Fill = new SolidColorPaint(ProfitColor),
+            Fill = new SolidColorPaint(ChartColors.Revenue),
             Stroke = null,
             MaxBarWidth = 40
         });
@@ -2527,7 +2542,7 @@ public class ChartLoaderService
         {
             Values = expenseValues,
             Name = "Expense",
-            Fill = new SolidColorPaint(ExpenseColor),
+            Fill = new SolidColorPaint(ChartColors.Expense),
             Stroke = null,
             MaxBarWidth = 40
         });
@@ -2640,10 +2655,10 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue Tax", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue Tax", ChartColors.Revenue));
             if (expenseValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expense Tax", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expense Tax", ChartColors.Expense));
             }
         }
 
