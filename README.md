@@ -39,4 +39,4 @@ After building the solution, press F5 to run the application in Debug mode, or `
 
 ## Publishing
 
-See [docs/publishing.md](docs/publishing.md) for platform-specific build and packaging instructions.
+See [docs/Publishing.md](docs/publishing.md) for platform-specific build and packaging instructions.

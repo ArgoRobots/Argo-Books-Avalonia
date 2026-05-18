@@ -1,4 +1,4 @@
-# Document AI Import
+# AI Spreadsheet Import
 
 Argo Books uses AI-powered analysis to import data from spreadsheets. The system automatically detects entity types, maps columns to the Argo Books schema, and handles complex data transformations. Users can import any spreadsheet in any format, in just a few clicks.
 

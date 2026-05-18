@@ -86,7 +86,7 @@ The upgrade modal fetches current pricing from the pricing API (`/api/pricing/pl
 
 Users can:
 
-- **Purchase a subscription** via the web portal at `argorobots.com/upgrade/premium/`
+- **Purchase a subscription** via the web portal at `argorobots.com/pricing/premium/`
 - **Enter a license key** received after purchase to activate premium features
 - **Cancel a subscription** through the community portal at `argorobots.com/community/users/subscription.php`
 
