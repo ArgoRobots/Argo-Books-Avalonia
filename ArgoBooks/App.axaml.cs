@@ -1066,6 +1066,25 @@ public class App : Application
                 await TelemetryManager.InitializeAsync();
             }
 
+            // Report first-run install for referral funnel attribution. Fire-and-forget
+            // so app startup isn't blocked on network I/O. The reporter writes a marker
+            // after a successful POST so subsequent launches are no-ops.
+            try
+            {
+                var firstRunHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                var firstRunReporter = new FirstRunReporter(
+                    firstRunHttpClient,
+                    Services.AppInfo.VersionNumber,
+                    ErrorLogger);
+                _ = Task.Run(() => firstRunReporter.ReportIfFirstRunAsync());
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning(
+                    $"Failed to start FirstRunReporter: {ex.Message}",
+                    context: "App.OnFrameworkInitializationCompleted");
+            }
+
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
