@@ -1068,15 +1068,21 @@ public class App : Application
 
             // Report first-run install for referral funnel attribution. Fire-and-forget
             // so app startup isn't blocked on network I/O. The reporter writes a marker
-            // after a successful POST so subsequent launches are no-ops.
+            // after a successful POST so subsequent launches are no-ops. The HttpClient
+            // is disposed inside the task so it doesn't leak past the one-shot report.
             try
             {
-                var firstRunHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                var firstRunReporter = new FirstRunReporter(
-                    firstRunHttpClient,
-                    Services.AppInfo.VersionNumber,
-                    ErrorLogger);
-                _ = Task.Run(() => firstRunReporter.ReportIfFirstRunAsync());
+                var appVersion = Services.AppInfo.VersionNumber;
+                var capturedErrorLogger = ErrorLogger;
+                _ = Task.Run(async () =>
+                {
+                    using var firstRunHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                    var firstRunReporter = new FirstRunReporter(
+                        firstRunHttpClient,
+                        appVersion,
+                        capturedErrorLogger);
+                    await firstRunReporter.ReportIfFirstRunAsync();
+                });
             }
             catch (Exception ex)
             {

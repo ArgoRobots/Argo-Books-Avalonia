@@ -50,6 +50,10 @@ public sealed class FirstRunReporter
     /// </summary>
     public async Task ReportIfFirstRunAsync(CancellationToken cancellationToken = default)
     {
+        string? attemptsPath = null;
+        int attempts = 0;
+        bool postCompleted = false;
+
         try
         {
             Directory.CreateDirectory(_appDataDir);
@@ -61,13 +65,14 @@ public sealed class FirstRunReporter
                 return;
             }
 
-            var attemptsPath = markerPath + ".attempts";
-            var attempts = ReadAttemptCount(attemptsPath);
+            attemptsPath = markerPath + ".attempts";
+            attempts = ReadAttemptCount(attemptsPath);
             if (attempts >= MaxRetryAttempts)
             {
                 // Give up after MaxRetryAttempts so we don't pester the user's
                 // network on every launch.
                 await WriteMarker(markerPath, "gave_up_after_retries", cancellationToken);
+                TryDelete(attemptsPath);
                 return;
             }
 
@@ -86,6 +91,7 @@ public sealed class FirstRunReporter
 
             var url = $"{ApiConfig.BaseUrl}{EndpointPath}";
             using var response = await _httpClient.PostAsJsonAsync(url, payload, cancellationToken);
+            postCompleted = true;
 
             if (response.IsSuccessStatusCode)
             {
@@ -109,6 +115,13 @@ public sealed class FirstRunReporter
         }
         catch (Exception ex)
         {
+            // Network exceptions (offline, DNS, timeout, TLS) reach here. Count
+            // them toward MaxRetryAttempts so we eventually give up instead of
+            // retrying on every launch forever.
+            if (attemptsPath != null && !postCompleted)
+            {
+                IncrementAttemptCount(attemptsPath, attempts + 1);
+            }
             _errorLogger?.LogError(ex, ErrorCategory.Network,
                 context: "FirstRunReporter.ReportIfFirstRunAsync");
         }
