@@ -804,7 +804,6 @@ public class App : Application
                 telemetryStorageService,
                 telemetryUploadService,
                 geoLocationService,
-                SettingsService,
                 errorLogger,
                 appVersion);
 

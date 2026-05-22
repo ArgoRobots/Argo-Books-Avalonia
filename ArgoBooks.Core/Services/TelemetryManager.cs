@@ -11,7 +11,6 @@ public class TelemetryManager : ITelemetryManager
     private readonly ITelemetryStorageService _storageService;
     private readonly ITelemetryUploadService _uploadService;
     private readonly IGeoLocationService _geoLocationService;
-    private readonly IGlobalSettingsService _settingsService;
     private readonly IErrorLogger _errorLogger;
 
     private readonly string _appVersion;
@@ -30,14 +29,12 @@ public class TelemetryManager : ITelemetryManager
         ITelemetryStorageService storageService,
         ITelemetryUploadService uploadService,
         IGeoLocationService geoLocationService,
-        IGlobalSettingsService settingsService,
         IErrorLogger errorLogger,
         string? appVersion = null)
     {
         _storageService = storageService;
         _uploadService = uploadService;
         _geoLocationService = geoLocationService;
-        _settingsService = settingsService;
         _errorLogger = errorLogger;
 
         _appVersion = appVersion ?? AppInfo.VersionNumber;
