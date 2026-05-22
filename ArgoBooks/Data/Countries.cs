@@ -11,13 +11,14 @@ public static class Countries
     private static readonly string[] PriorityCodes =
     [
         "US", // United States
-        "CN", // China
         "DE", // Germany
-        "JP", // Japan
         "GB", // United Kingdom
         "FR", // France
         "IT", // Italy
-        "CA"  // Canada
+        "CA", // Canada
+        "AU", // Australia
+        "ES", // Spain
+        "NL"  // Netherlands
     ];
 
     /// <summary>

@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
 
@@ -203,6 +204,10 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         {
             _countrySearchBox.GotFocus += OnCountrySearchBoxGotFocus;
             _countrySearchBox.KeyDown += OnCountrySearchBoxKeyDown;
+            // Tunneling so we re-open the dropdown even when the textbox already has focus.
+            // Without this, clicking-elsewhere light-dismisses the popup but the textbox keeps
+            // focus, and the next click on the textbox doesn't fire GotFocus.
+            _countrySearchBox.AddHandler(PointerPressedEvent, OnCountrySearchBoxPointerPressed, RoutingStrategies.Tunnel);
         }
 
     }
@@ -215,6 +220,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         {
             _countrySearchBox.GotFocus -= OnCountrySearchBoxGotFocus;
             _countrySearchBox.KeyDown -= OnCountrySearchBoxKeyDown;
+            _countrySearchBox.RemoveHandler(PointerPressedEvent, OnCountrySearchBoxPointerPressed);
         }
 
     }
@@ -223,6 +229,14 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     {
         IsDropdownOpen = true;
         _countrySearchBox?.SelectAll();
+    }
+
+    private void OnCountrySearchBoxPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!IsDropdownOpen)
+        {
+            IsDropdownOpen = true;
+        }
     }
 
     private void OnCountrySearchBoxKeyDown(object? sender, KeyEventArgs e)
@@ -323,7 +337,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         // Get the last priority country code (Canada = "CA")
         var lastPriorityCode = Countries.Priority.LastOrDefault()?.Code;
 
-        foreach (var item in filtered.Take(50))
+        foreach (var item in filtered)
         {
             // Only show separator when displaying the full list, after the last priority country
             item.ShowSeparatorAfter = showingFullList && item.Code == lastPriorityCode;
