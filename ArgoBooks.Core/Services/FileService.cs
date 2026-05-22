@@ -259,6 +259,21 @@ public class FileService(
     }
 
     /// <summary>
+    /// Attaches a continuation to each task that reads its <see cref="Task.Exception"/> if it
+    /// faults, so the fault doesn't surface later as <c>UnobservedTaskException</c>. Used when
+    /// we're about to throw on the load path and want to discard the in-flight reads cleanly.
+    /// </summary>
+    private static void ObserveFaults(IEnumerable<Task> tasks)
+    {
+        foreach (var t in tasks)
+        {
+            _ = t.ContinueWith(
+                static x => { _ = x.Exception; },
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+        }
+    }
+
+    /// <summary>
     /// Throws <see cref="CompanyFileTooNewException"/> if the file's stamped version is greater
     /// than the running app's version. Legacy files (stamped "1.0.0" before the version-check
     /// feature shipped) and files with unparseable versions are allowed to load.
@@ -327,20 +342,32 @@ public class FileService(
         // Validate version BEFORE awaiting the rest. If the file was saved by a newer app
         // version, the other data files may contain enum values or fields this build can't
         // deserialize, and we'd surface that as an opaque JSON exception. Awaiting just the
-        // settings task here lets us throw a clear "update Argo Books" error instead. The
-        // other reads are already in flight; if we throw, their results go unobserved, which
-        // the runtime tolerates.
-        var settings = await settingsTask;
-        ValidateAppVersion(settings?.AppVersion);
-
-        await Task.WhenAll(
+        // settings task here lets us throw a clear "update Argo Books" error instead.
+        Task[] otherReads =
+        [
             idCountersTask, customersTask, productsTask, suppliersTask,
             employeesTask, departmentsTask, categoriesTask, accountantsTask, locationsTask,
             revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
             reportTemplatesTask, invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
-            forecastRecordsTask);
+            forecastRecordsTask
+        ];
+
+        var settings = await settingsTask;
+        try
+        {
+            ValidateAppVersion(settings?.AppVersion);
+        }
+        catch (CompanyFileTooNewException)
+        {
+            // Don't let the in-flight reads fault into UnobservedTaskException. Their results
+            // would likely be JsonExceptions from newer enum values; we discard them.
+            ObserveFaults(otherReads);
+            throw;
+        }
+
+        await Task.WhenAll(otherReads);
 
         return new CompanyData
         {

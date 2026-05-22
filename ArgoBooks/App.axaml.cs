@@ -3954,7 +3954,7 @@ public class App : Application
                 await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
                 {
                     Title = "Update Argo Books".Translate(),
-                    Message = ex.Message,
+                    Message = "This company file was created by Argo Books {0}. You are running Argo Books {1}. Please update to Argo Books {0} or later to open it.".TranslateFormat(ex.FileVersion, ex.AppVersion),
                     PrimaryButtonText = "OK".Translate(),
                     SecondaryButtonText = null,
                     CancelButtonText = null
