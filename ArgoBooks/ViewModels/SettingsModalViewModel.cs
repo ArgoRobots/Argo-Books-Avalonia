@@ -121,18 +121,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     [ObservableProperty]
-    private bool _anonymousDataCollection;
-
-    /// <summary>
-    /// Called when anonymous data collection setting changes.
-    /// </summary>
-    partial void OnAnonymousDataCollectionChanged(bool value)
-    {
-        // Update telemetry consent when toggle changes
-        App.TelemetryManager?.SetConsent(value);
-    }
-
-    [ObservableProperty]
     private int _telemetryEventCount;
 
     [ObservableProperty]
@@ -1380,9 +1368,6 @@ public partial class SettingsModalViewModel : ViewModelBase
                 MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
                 SelectedTimeZone = TimeZones.FindById(globalSettings.Ui.TimeZone);
                 SelectedTimeFormat = globalSettings.Ui.TimeFormat;
-
-                // Load privacy settings
-                AnonymousDataCollection = globalSettings.Privacy.AnonymousDataCollectionConsent;
             }
         }
 

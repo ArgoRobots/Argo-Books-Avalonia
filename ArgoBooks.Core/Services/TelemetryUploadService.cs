@@ -50,12 +50,10 @@ public class TelemetryUploadService : ITelemetryUploadService
 
         try
         {
-            var licenseKey = LicenseAuthHelper.GetLicenseKey();
-            if (string.IsNullOrEmpty(licenseKey))
+            if (!LicenseAuthHelper.IsConfigured)
             {
                 result.Success = false;
-                result.ErrorMessage = "License key not configured";
-                // Save backup when API key is missing
+                result.ErrorMessage = "No authentication available (no license key or device ID)";
                 result.BackupFilePath = await _storageService.SaveBackupFileAsync(cancellationToken);
                 return result;
             }
@@ -81,7 +79,8 @@ public class TelemetryUploadService : ITelemetryUploadService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var batchResult = await UploadBatchWithRetryAsync(batch, licenseKey, cancellationToken);
+                var batchResult = await UploadBatchWithRetryAsync(batch, cancellationToken);
+
                 if (batchResult.Success)
                 {
                     uploadedIds.AddRange(batch.Select(e => e.DataId));
@@ -131,7 +130,6 @@ public class TelemetryUploadService : ITelemetryUploadService
 
     private async Task<TelemetryUploadResult> UploadBatchWithRetryAsync(
         List<TelemetryEvent> batch,
-        string apiKey,
         CancellationToken cancellationToken)
     {
         var result = new TelemetryUploadResult();
@@ -147,7 +145,7 @@ public class TelemetryUploadService : ITelemetryUploadService
                     await Task.Delay(delay, cancellationToken);
                 }
 
-                var uploadResult = await UploadBatchAsync(batch, apiKey, cancellationToken);
+                var uploadResult = await UploadBatchAsync(batch, cancellationToken);
                 if (uploadResult.Success)
                 {
                     return uploadResult;
@@ -155,7 +153,7 @@ public class TelemetryUploadService : ITelemetryUploadService
 
                 result.ErrorMessage = uploadResult.ErrorMessage;
 
-                // Don't retry on client errors (4xx) — these won't succeed on retry
+                // Don't retry on client errors (4xx) since they won't succeed on retry
                 if (uploadResult.HttpStatusCode is >= 400 and < 500)
                 {
                     break;
@@ -173,50 +171,12 @@ public class TelemetryUploadService : ITelemetryUploadService
 
     private async Task<TelemetryUploadResult> UploadBatchAsync(
         List<TelemetryEvent> batch,
-        string apiKey,
         CancellationToken cancellationToken)
     {
         var result = new TelemetryUploadResult();
 
-        // Extract shared metadata from the first event for compact format
-        var firstEvent = batch[0];
-        var uploadData = new TelemetryUploadData
-        {
-            UploadTime = DateTime.UtcNow,
-            AppVersion = _appVersion,
-            Platform = firstEvent.Platform,
-            UserAgent = firstEvent.UserAgent,
-            GeoLocation = firstEvent.GeoLocation,
-            EventCount = batch.Count,
-            Events = batch
-        };
-
-        // Temporarily null metadata on events so WhenWritingNull excludes them
-        var savedMetadata = batch.Select(e => (e.AppVersion, e.Platform, e.UserAgent, e.GeoLocation)).ToList();
-        foreach (var e in batch)
-        {
-            e.AppVersion = null;
-            e.Platform = null;
-            e.UserAgent = null;
-            e.GeoLocation = null;
-        }
-
-        string json;
-        try
-        {
-            json = JsonSerializer.Serialize(uploadData, _jsonOptions);
-        }
-        finally
-        {
-            // Restore metadata on events for retry scenarios and local storage consistency
-            for (int i = 0; i < batch.Count; i++)
-            {
-                batch[i].AppVersion = savedMetadata[i].AppVersion;
-                batch[i].Platform = savedMetadata[i].Platform;
-                batch[i].UserAgent = savedMetadata[i].UserAgent;
-                batch[i].GeoLocation = savedMetadata[i].GeoLocation;
-            }
-        }
+        var payload = BuildPayload(batch);
+        var json = JsonSerializer.Serialize(payload, _jsonOptions);
         var jsonBytes = Encoding.UTF8.GetBytes(json);
 
         using var content = new MultipartFormDataContent();
@@ -226,8 +186,8 @@ public class TelemetryUploadService : ITelemetryUploadService
 
         using var request = new HttpRequestMessage(HttpMethod.Post, UploadUrl);
         request.Content = content;
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-        request.Headers.Add("X-License-Key", apiKey);
+        // AddAuthHeaders sets X-License-Key (Premium) and/or X-Device-Id (Free). Server picks tier based on which is valid.
+        LicenseAuthHelper.AddAuthHeaders(request);
         request.Headers.UserAgent.ParseAdd($"{UserAgentPrefix}/{_appVersion}");
 
         using var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -249,17 +209,90 @@ public class TelemetryUploadService : ITelemetryUploadService
         return result;
     }
 
-
-    private class TelemetryUploadData
+    /// <summary>
+    /// Build the upload payload using an explicit allowlist of safe fields.
+    /// Same shape for both free and premium tiers. Fields not present here cannot
+    /// leak to the wire by construction.
+    /// Forbidden fields: userAgent, geoLocation.city, geoLocation.hashedIp,
+    /// FeatureUsageEvent.context, ErrorEvent.message, ApiUsageEvent.model, ApiUsageEvent.tokensUsed.
+    /// </summary>
+    private object BuildPayload(List<TelemetryEvent> batch)
     {
-        public DateTime UploadTime { get; set; }
-        public string? AppVersion { get; set; }
-        public string? Platform { get; set; }
-        public string? UserAgent { get; set; }
-        public GeoLocationData? GeoLocation { get; set; }
-        public int EventCount { get; set; }
-        public List<TelemetryEvent> Events { get; set; } = [];
+        var first = batch[0];
+        var events = batch.Select(BuildEventDto).Where(e => e != null).ToList();
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["uploadTime"] = DateTime.UtcNow,
+            ["appVersion"] = _appVersion,
+            ["platform"] = first.Platform,
+            ["eventCount"] = events.Count,
+            ["events"] = events,
+        };
+
+        if (first.GeoLocation != null)
+        {
+            payload["geoLocation"] = new
+            {
+                country = first.GeoLocation.Country,
+                countryCode = first.GeoLocation.CountryCode,
+                region = first.GeoLocation.Region,
+                timezone = first.GeoLocation.Timezone,
+            };
+        }
+
+        return payload;
     }
+
+    private static object? BuildEventDto(TelemetryEvent e) => e switch
+    {
+        SessionEvent s => new
+        {
+            dataId = s.DataId,
+            timestamp = s.Timestamp,
+            dataType = "Session",
+            action = s.Action.ToString(),
+            durationSeconds = s.DurationSeconds,
+        },
+        FeatureUsageEvent f => new
+        {
+            dataId = f.DataId,
+            timestamp = f.Timestamp,
+            dataType = "FeatureUsage",
+            featureName = f.FeatureName.ToString(),
+            durationMs = f.DurationMs,
+        },
+        ErrorEvent err => new
+        {
+            dataId = err.DataId,
+            timestamp = err.Timestamp,
+            dataType = "Error",
+            errorCategory = err.ErrorCategory.ToString(),
+            errorCode = err.ErrorCode,
+            sourceFile = err.SourceFile,
+            lineNumber = err.LineNumber,
+            methodName = err.MethodName,
+        },
+        ExportEvent ex => new
+        {
+            dataId = ex.DataId,
+            timestamp = ex.Timestamp,
+            dataType = "Export",
+            exportType = ex.ExportType.ToString(),
+            durationMs = ex.DurationMs,
+            fileSize = ex.FileSize,
+        },
+        ApiUsageEvent api => new
+        {
+            dataId = api.DataId,
+            timestamp = api.Timestamp,
+            dataType = "ApiUsage",
+            apiName = api.ApiName.ToString(),
+            durationMs = api.DurationMs,
+            success = api.Success,
+        },
+        _ => null,
+    };
 }
 
 /// <summary>

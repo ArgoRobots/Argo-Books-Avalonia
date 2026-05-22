@@ -52,22 +52,6 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
-    public bool IsConsentGranted => _settingsService.GetSettings()?.Privacy.AnonymousDataCollectionConsent ?? false;
-
-    /// <inheritdoc />
-    public void SetConsent(bool granted)
-    {
-        var settings = _settingsService.GetSettings();
-        if (settings?.Privacy == null)
-            return;
-        settings.Privacy.AnonymousDataCollectionConsent = granted;
-        settings.Privacy.ConsentDate = granted ? DateTime.UtcNow : null;
-        _settingsService.SaveSettings(settings);
-
-        _errorLogger.LogInfo($"Telemetry consent {(granted ? "granted" : "revoked")}");
-    }
-
-    /// <inheritdoc />
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         if (_isInitialized)
@@ -81,9 +65,6 @@ public class TelemetryManager : ITelemetryManager
 
             _sessionStartTime = DateTime.UtcNow;
             _isInitialized = true;
-
-            if (!IsConsentGranted)
-                return;
 
             try
             {
@@ -119,7 +100,7 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task EndSessionAsync(CancellationToken cancellationToken = default)
     {
-        if (!_isInitialized || !IsConsentGranted)
+        if (!_isInitialized)
             return;
 
         try
@@ -143,9 +124,6 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default)
     {
-        if (!IsConsentGranted)
-            return;
-
         try
         {
             var featureEvent = await CreateEventAsync<FeatureUsageEvent>(cancellationToken);
@@ -163,9 +141,6 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default)
     {
-        if (!IsConsentGranted)
-            return;
-
         try
         {
             var exportEvent = await CreateEventAsync<ExportEvent>(cancellationToken);
@@ -183,9 +158,6 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackApiCallAsync(ApiName apiName, long durationMs, bool success, string? model = null, int? tokensUsed = null, CancellationToken cancellationToken = default)
     {
-        if (!IsConsentGranted)
-            return;
-
         try
         {
             var apiEvent = await CreateEventAsync<ApiUsageEvent>(cancellationToken);
@@ -205,9 +177,6 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackErrorAsync(ErrorLogEntry errorEntry, CancellationToken cancellationToken = default)
     {
-        if (!IsConsentGranted)
-            return;
-
         try
         {
             var errorEvent = await CreateEventAsync<ErrorEvent>(cancellationToken);
@@ -228,15 +197,6 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default)
     {
-        if (!IsConsentGranted)
-        {
-            return new TelemetryUploadResult
-            {
-                Success = false,
-                ErrorMessage = "User consent not granted"
-            };
-        }
-
         return await _uploadService.UploadPendingDataAsync(cancellationToken);
     }
 
@@ -267,7 +227,7 @@ public class TelemetryManager : ITelemetryManager
         {
             telemetryEvent.GeoLocation = _cachedGeoLocation;
         }
-        else if (IsConsentGranted)
+        else
         {
             try
             {

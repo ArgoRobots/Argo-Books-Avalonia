@@ -146,33 +146,25 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                    <!-- Anonymous Data Collection Toggle -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             Padding="16">
                                         <StackPanel Spacing="12">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <StackPanel Grid.Column="0" Spacing="2">
-                                                    <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data.'}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               TextWrapping="Wrap" />
-                                                    <TextBlock Text="{loc:Loc 'No financial or business information is ever sent.'}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               TextWrapping="Wrap" />
-                                                </StackPanel>
-                                                <ToggleSwitch Grid.Column="1"
-                                                              IsChecked="{Binding AnonymousDataCollection}"
-                                                              VerticalAlignment="Center" />
-                                            </Grid>
-                                            <!-- Collected Data buttons (only visible when data collection is enabled) -->
-                                            <StackPanel Orientation="Horizontal" Spacing="8"
-                                                        IsVisible="{Binding AnonymousDataCollection}">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{loc:Loc 'Anonymous Usage Data'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Argo Books collects anonymous usage data to help improve the app.'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="{loc:Loc 'No financial or business information is ever sent.'}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <Button Classes="secondary-button"
                                                         Content="{loc:Loc 'View Data'}"
                                                         Command="{Binding OpenTelemetryFolderCommand}"
