@@ -913,8 +913,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Populate line items — unsubscribe the ResetForm placeholder before clearing
         // so we don't leak its PropertyChanged subscription.
-        foreach (var item in LineItems)
-            item.PropertyChanged -= OnLineItemPropertyChanged;
+        foreach (var existing in LineItems)
+            existing.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
         foreach (var lineItem in invoice.LineItems)
         {

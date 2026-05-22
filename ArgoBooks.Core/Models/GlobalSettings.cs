@@ -13,7 +13,6 @@ public class GlobalSettings
     public UpdateSettings Updates { get; set; } = new();
     public UiSettings Ui { get; set; } = new();
     public LicenseSettings License { get; set; } = new();
-    public PrivacySettings Privacy { get; set; } = new();
     public WindowStateSettings? WindowState { get; set; }
     public ReportExportSettings ReportExport { get; set; } = new();
     public TutorialSettings Tutorial { get; set; } = new();
@@ -171,12 +170,6 @@ public class LicenseSettings
     /// Last license validation date.
     /// </summary>
     public DateTime? LastValidationDate { get; set; }
-}
-
-public class PrivacySettings
-{
-    public bool AnonymousDataCollectionConsent { get; set; } = true;
-    public DateTime? ConsentDate { get; set; }
 }
 
 public class ReportExportSettings
