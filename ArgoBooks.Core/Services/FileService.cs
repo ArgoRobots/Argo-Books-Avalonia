@@ -259,6 +259,30 @@ public class FileService(
     }
 
     /// <summary>
+    /// Throws <see cref="CompanyFileTooNewException"/> if the file's stamped version is greater
+    /// than the running app's version. Legacy files (stamped "1.0.0" before the version-check
+    /// feature shipped) and files with unparseable versions are allowed to load.
+    /// </summary>
+    private static void ValidateAppVersion(string? fileVersion)
+    {
+        if (string.IsNullOrEmpty(fileVersion) || !Version.TryParse(fileVersion, out var fileVer))
+        {
+            return;
+        }
+        if (!Version.TryParse(AppInfo.VersionNumber, out var appVer))
+        {
+            return;
+        }
+        // Compare on Major.Minor.Build only to keep things in lockstep with the public version string.
+        var normalizedFile = new Version(fileVer.Major, fileVer.Minor, Math.Max(0, fileVer.Build));
+        var normalizedApp = new Version(appVer.Major, appVer.Minor, Math.Max(0, appVer.Build));
+        if (normalizedFile > normalizedApp)
+        {
+            throw new CompanyFileTooNewException(fileVersion, AppInfo.VersionNumber);
+        }
+    }
+
+    /// <summary>
     /// Loads all company data from a temporary directory.
     /// </summary>
     /// <remarks>
@@ -300,8 +324,17 @@ public class FileService(
         var pendingConversionsTask = ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken);
         var forecastRecordsTask   = ReadJsonAsync<List<Models.Insights.ForecastAccuracyRecord>>(tempDirectory, "forecastRecords.json", cancellationToken);
 
+        // Validate version BEFORE awaiting the rest. If the file was saved by a newer app
+        // version, the other data files may contain enum values or fields this build can't
+        // deserialize, and we'd surface that as an opaque JSON exception. Awaiting just the
+        // settings task here lets us throw a clear "update Argo Books" error instead. The
+        // other reads are already in flight; if we throw, their results go unobserved, which
+        // the runtime tolerates.
+        var settings = await settingsTask;
+        ValidateAppVersion(settings?.AppVersion);
+
         await Task.WhenAll(
-            settingsTask, idCountersTask, customersTask, productsTask, suppliersTask,
+            idCountersTask, customersTask, productsTask, suppliersTask,
             employeesTask, departmentsTask, categoriesTask, accountantsTask, locationsTask,
             revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
@@ -311,7 +344,7 @@ public class FileService(
 
         return new CompanyData
         {
-            Settings = settingsTask.Result ?? new CompanySettings(),
+            Settings = settings ?? new CompanySettings(),
             IdCounters = idCountersTask.Result ?? new IdCounters(),
             Customers = customersTask.Result ?? [],
             Products = productsTask.Result ?? [],
@@ -354,6 +387,11 @@ public class FileService(
         CompanyData data,
         CancellationToken cancellationToken = default)
     {
+        // Stamp the running app's version into the file so a future older app can detect
+        // that the file is too new for it to safely open. This runs on every save path
+        // because all save flows route through here.
+        data.Settings.AppVersion = AppInfo.VersionNumber;
+
         // Write directly to the provided company directory - caller is responsible for providing the correct path
         await WriteJsonAsync(companyDirectory, "appSettings.json", data.Settings, cancellationToken);
         await WriteJsonAsync(companyDirectory, "idCounters.json", data.IdCounters, cancellationToken);

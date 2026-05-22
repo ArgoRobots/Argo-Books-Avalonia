@@ -473,7 +473,7 @@ public class CompanyManager : IDisposable
             // Create default company data
             CompanyData = new CompanyData();
             CompanyData.Settings.Company.Name = companyName;
-            CompanyData.Settings.AppVersion = "1.0.0";
+            CompanyData.Settings.AppVersion = AppInfo.VersionNumber;
 
             // Apply company info if provided
             if (companyInfo != null)
