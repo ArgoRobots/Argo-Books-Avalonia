@@ -134,6 +134,21 @@
                                 </StackPanel>
                             </Grid>
 
+                            <!-- Currency Row - hidden when from rental/revenue (parent transaction owns currency) -->
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Currency'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding AvailableCurrencies}"
+                                              SelectedItem="{Binding SelectedCurrency}"
+                                              Classes="form-combobox"
+                                              PlaceholderText="{loc:Loc 'Select currency'}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
                             <!-- Line Items Section - hidden when from rental, disabled when limited edit -->
                             <StackPanel Spacing="12" IsVisible="{Binding !IsFromExternalSource}">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -207,7 +222,7 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
                                                                    Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
@@ -217,19 +232,19 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding AmountFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
+                                                               VerticalAlignment="Top"
                                                                HorizontalAlignment="Right"
-                                                               Margin="0,0,12,0" />
+                                                               Margin="0,8,12,0" />
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
-                                                            VerticalAlignment="Center"
+                                                            VerticalAlignment="Top"
                                                             HorizontalAlignment="Center"
                                                             IsVisible="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
@@ -300,12 +315,12 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                             <ToggleButton IsChecked="{Binding CustomFeeIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding CustomFeeIsPercent, Converter={x:Static local:PercentDollarConverter.Instance}}"
+                                                          Content="{Binding CustomFeeSymbol}"
                                                           Width="32" Height="28" Padding="0"
                                                           FontSize="13" FontWeight="SemiBold"
                                                           HorizontalContentAlignment="Center"
                                                           VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between $ and %'}" />
+                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
                                             <NumericUpDown Value="{Binding CustomFeeAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                                            Minimum="0" Maximum="999999999" FormatString="N2"
                                                            Width="90" ShowButtonSpinner="False"
@@ -330,12 +345,12 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                             <ToggleButton IsChecked="{Binding DiscountIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding DiscountIsPercent, Converter={x:Static local:PercentDollarConverter.Instance}}"
+                                                          Content="{Binding DiscountSymbol}"
                                                           Width="32" Height="28" Padding="0"
                                                           FontSize="13" FontWeight="SemiBold"
                                                           HorizontalContentAlignment="Center"
                                                           VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between $ and %'}" />
+                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
                                             <NumericUpDown Value="{Binding DiscountAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                                            Minimum="0" Maximum="999999999" FormatString="N2"
                                                            Width="90" ShowButtonSpinner="False"

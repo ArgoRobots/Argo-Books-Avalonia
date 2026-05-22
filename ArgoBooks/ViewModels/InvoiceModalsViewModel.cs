@@ -1,3 +1,4 @@
+using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
@@ -120,14 +121,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess && !IsSending;
 
     /// <summary>
-    /// Gets the modal width based on current state.
+    /// Gets the modal width based on current state. Success and sending overlays use the
+    /// same compact size so the transition from "Sending invoice..." to "Invoice Sent!"
+    /// doesn't resize the modal.
     /// </summary>
-    public double ModalWidth => IsShowingSuccess ? 400 : (IsShowingPreview ? 850 : 750);
+    public double ModalWidth => (IsShowingSuccess || IsSending) ? 400 : (IsShowingPreview ? 850 : 750);
 
     /// <summary>
     /// Gets the modal height based on current state.
     /// </summary>
-    public double ModalHeight => IsShowingSuccess ? 380 : 700;
+    public double ModalHeight => (IsShowingSuccess || IsSending) ? 380 : 700;
 
     partial void OnIsShowingPreviewChanged(bool value)
     {
@@ -149,6 +152,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowEditContent));
         OnPropertyChanged(nameof(ShowPreviewContent));
+        OnPropertyChanged(nameof(ModalWidth));
+        OnPropertyChanged(nameof(ModalHeight));
     }
 
     #endregion
@@ -309,6 +314,23 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [ObservableProperty]
     private InvoiceTemplate? _selectedTemplate;
 
+    /// <summary>
+    /// Display string of the currency the invoice is being issued in (e.g., "USD - US Dollar ($)").
+    /// Defaults to the company-wide currency; user can override per invoice.
+    /// </summary>
+    [ObservableProperty]
+    private string _selectedCurrency = string.Empty;
+
+    /// <summary>
+    /// All currencies available in the picker (sourced from the shared list also used by company settings).
+    /// </summary>
+    public IReadOnlyList<string> AvailableCurrencies => Currencies.All;
+
+    /// <summary>
+    /// Resolved ISO code for the currently-selected currency display string.
+    /// </summary>
+    public string SelectedCurrencyCode => CurrencyService.ParseCurrencyCode(SelectedCurrency);
+
     // Computed totals
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
     public decimal TaxAmount => Subtotal * (TaxRate / 100m);
@@ -316,12 +338,17 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public decimal DiscountCalculated => DiscountIsPercent ? Subtotal * (DiscountAmount / 100m) : DiscountAmount;
     public decimal Total => Subtotal + TaxAmount + SecurityDeposit + CustomFeeCalculated - DiscountCalculated;
 
-    public string SubtotalFormatted => CurrencyService.Format(Subtotal);
-    public string TaxAmountFormatted => CurrencyService.Format(TaxAmount);
-    public string SecurityDepositFormatted => CurrencyService.Format(SecurityDeposit);
-    public string CustomFeeCalculatedFormatted => $"+{CurrencyService.Format(CustomFeeCalculated)}";
-    public string DiscountCalculatedFormatted => $"-{CurrencyService.Format(DiscountCalculated)}";
-    public string TotalFormatted => CurrencyService.Format(Total);
+    // Format using the invoice's selected currency so modal totals match the picker.
+    private CurrencyInfo InvoiceCurrencyInfo => CurrencyInfo.GetByCode(SelectedCurrencyCode);
+    public string InvoiceCurrencySymbol => InvoiceCurrencyInfo.Symbol;
+    public string CustomFeeSymbol => CustomFeeIsPercent ? "%" : InvoiceCurrencySymbol;
+    public string DiscountSymbol => DiscountIsPercent ? "%" : InvoiceCurrencySymbol;
+    public string SubtotalFormatted => InvoiceCurrencyInfo.Format(Subtotal);
+    public string TaxAmountFormatted => InvoiceCurrencyInfo.Format(TaxAmount);
+    public string SecurityDepositFormatted => InvoiceCurrencyInfo.Format(SecurityDeposit);
+    public string CustomFeeCalculatedFormatted => $"+{InvoiceCurrencyInfo.Format(CustomFeeCalculated)}";
+    public string DiscountCalculatedFormatted => $"-{InvoiceCurrencyInfo.Format(DiscountCalculated)}";
+    public string TotalFormatted => InvoiceCurrencyInfo.Format(Total);
 
     public bool HasSecurityDeposit => SecurityDeposit > 0;
     public bool HasCustomFee => CustomFeeAmount > 0;
@@ -353,6 +380,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     partial void OnCustomFeeIsPercentChanged(bool value)
     {
+        OnPropertyChanged(nameof(CustomFeeSymbol));
         UpdateTotals();
     }
 
@@ -363,10 +391,37 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     partial void OnDiscountIsPercentChanged(bool value)
     {
+        OnPropertyChanged(nameof(DiscountSymbol));
         UpdateTotals();
     }
 
-    private void OnLineItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => UpdateTotals();
+    partial void OnSelectedCurrencyChanged(string value)
+    {
+        OnPropertyChanged(nameof(SelectedCurrencyCode));
+        OnPropertyChanged(nameof(InvoiceCurrencySymbol));
+        OnPropertyChanged(nameof(CustomFeeSymbol));
+        OnPropertyChanged(nameof(DiscountSymbol));
+        var code = SelectedCurrencyCode;
+        foreach (var item in LineItems)
+        {
+            item.InvoiceCurrencyCode = code;
+        }
+        UpdateTotals();
+        if (IsShowingPreview)
+        {
+            GeneratePreviewHtml();
+        }
+    }
+
+    private void OnLineItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Recompute totals only when a field that affects Subtotal changes.
+        // Filters out churn from InvoiceCurrencyCode/AmountFormatted/HasProductError etc.
+        if (e.PropertyName == nameof(LineItemDisplayModel.Amount))
+        {
+            UpdateTotals();
+        }
+    }
 
     private void UpdateTotals()
     {
@@ -393,7 +448,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             Description = string.Empty,
             Quantity = 1,
-            UnitPrice = 0
+            UnitPrice = 0,
+            InvoiceCurrencyCode = SelectedCurrencyCode
         };
         item.PropertyChanged += OnLineItemPropertyChanged;
         LineItems.Add(item);
@@ -679,7 +735,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             _ => rental.RateAmount * days * rental.Quantity
         };
 
-        // Replace the default line item with rental charge
+        // Replace the default line item with rental charge — unsubscribe the
+        // ResetForm placeholder first so its PropertyChanged isn't leaked.
+        foreach (var item in LineItems)
+            item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
 
         // Try to match rental item to a product by name, or create a synthetic one
@@ -705,7 +764,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Description = $"Rental: {itemName} ({rental.RateType} @ {CurrencyService.Format(rental.RateAmount)} x {rental.Quantity})",
             Quantity = 1,
             UnitPrice = totalCost,
-            RentalRecordId = rental.Id
+            RentalRecordId = rental.Id,
+            InvoiceCurrencyCode = SelectedCurrencyCode
         };
         rentalLineItem.PropertyChanged += OnLineItemPropertyChanged;
         LineItems.Add(rentalLineItem);
@@ -736,7 +796,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Pre-select the customer
         SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == revenue.CustomerId);
 
-        // Replace the default line item with revenue line items
+        // Replace the default line item with revenue line items — unsubscribe the
+        // ResetForm placeholder first so its PropertyChanged isn't leaked.
+        foreach (var item in LineItems)
+            item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
         foreach (var li in revenue.LineItems)
         {
@@ -747,7 +810,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 Description = li.Description,
                 Quantity = li.Quantity,
                 UnitPrice = li.UnitPrice,
-                RevenueRecordId = revenue.Id
+                RevenueRecordId = revenue.Id,
+                InvoiceCurrencyCode = SelectedCurrencyCode
             };
             lineItem.PropertyChanged += OnLineItemPropertyChanged;
             LineItems.Add(lineItem);
@@ -819,6 +883,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
+        // Reset to a clean baseline: clears stale external-source flags
+        // (IsFromRental/IsFromRevenue/IsViewOnly), unsubscribes any line items
+        // left over from a previous modal session, and zeroes validation state.
+        // We then overwrite the relevant fields below from the loaded invoice.
+        ResetForm();
+
         _editingInvoiceId = invoice.Id;
         IsEditMode = true; // We're editing an existing invoice
         AllowPreview = true; // Show Preview button like create mode
@@ -838,8 +908,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         CustomFeeIsPercent = invoice.CustomFeeIsPercent;
         DiscountAmount = invoice.DiscountAmount;
         DiscountIsPercent = invoice.DiscountIsPercent;
+        SelectedCurrency = CurrencyService.GetDisplayString(
+            string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency);
 
-        // Populate line items
+        // Populate line items — unsubscribe the ResetForm placeholder before clearing
+        // so we don't leak its PropertyChanged subscription.
+        foreach (var item in LineItems)
+            item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
         foreach (var lineItem in invoice.LineItems)
         {
@@ -850,7 +925,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 RevenueRecordId = lineItem.RevenueRecordId,
                 Description = lineItem.Description,
                 Quantity = lineItem.Quantity,
-                UnitPrice = lineItem.UnitPrice
+                UnitPrice = lineItem.UnitPrice,
+                InvoiceCurrencyCode = SelectedCurrencyCode
             };
             displayItem.PropertyChanged += OnLineItemPropertyChanged;
             LineItems.Add(displayItem);
@@ -1126,7 +1202,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData != null)
         {
-            var currencySymbol = CurrencyService.GetSymbol(companySettings.Localization.Currency);
+            // Preview reflects the invoice's selected currency, not the user's display setting.
+            var currencySymbol = CurrencyService.GetSymbol(SelectedCurrencyCode);
             PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
         }
         else
@@ -1392,7 +1469,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit + feeCalc - discCalc;
 
         // Set currency fields for multi-currency support
-        var invoiceCurrency = CurrencyService.CurrentCurrencyCode;
+        var invoiceCurrency = SelectedCurrencyCode;
         invoice.OriginalCurrency = invoiceCurrency;
         if (!string.Equals(invoiceCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
@@ -1544,7 +1621,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Show success animation instead of closing immediately
         SuccessTitle = "Invoice Sent!".Translate();
-        SuccessMessage = "Your invoice has been sent to {0}".TranslateFormat(customer.Email);
+        SuccessMessage = "Your invoice has been sent to {0} at {1}".TranslateFormat(customer.Name, customer.Email);
         IsShowingPreview = false;
         IsShowingSuccess = true;
     }
@@ -1701,7 +1778,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.Total = Total;
 
         // Set currency fields for multi-currency support
-        var draftCurrency = CurrencyService.CurrentCurrencyCode;
+        var draftCurrency = SelectedCurrencyCode;
         invoice.OriginalCurrency = draftCurrency;
         if (!string.Equals(draftCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
@@ -1915,6 +1992,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         CustomFeeIsPercent = false;
         DiscountAmount = 0;
         DiscountIsPercent = false;
+        SelectedCurrency = CurrencyService.GetDisplayString(CurrencyService.CurrentCurrencyCode);
         foreach (var item in LineItems)
             item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
@@ -1958,8 +2036,16 @@ public partial class LineItemDisplayModel : ObservableObject
     [ObservableProperty]
     private string? _revenueRecordId;
 
+    /// <summary>
+    /// ISO code of the parent invoice's currency. Set by the parent ViewModel so AmountFormatted
+    /// reflects the invoice's selected currency instead of the global display setting.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AmountFormatted))]
+    private string _invoiceCurrencyCode = "USD";
+
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
-    public string AmountFormatted => CurrencyService.Format(Amount);
+    public string AmountFormatted => CurrencyInfo.GetByCode(InvoiceCurrencyCode).Format(Amount);
 
     partial void OnSelectedProductChanged(ProductOption? value)
     {
