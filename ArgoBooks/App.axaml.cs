@@ -3939,6 +3939,28 @@ public class App : Application
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
         }
+        catch (CompanyFileTooNewException ex)
+        {
+            // File was saved by a newer Argo Books build. Use ConfirmationDialog (same path as
+            // the FileNotFoundException case) rather than the message-box service, because the
+            // latter races with the loading overlay and the dialog ends up queued behind the
+            // next user action.
+            _isOpeningCompany = false;
+            _mainWindowViewModel.HideLoading();
+            passwordModal.Close();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Cannot open company file: newer than running app");
+            if (ConfirmationDialog != null)
+            {
+                await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Update Argo Books".Translate(),
+                    Message = "This company file was created by Argo Books {0}. You are running Argo Books {1}. Please update to Argo Books {0} or later to open it.".TranslateFormat(ex.FileVersion, ex.AppVersion),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
+        }
         catch (Exception ex)
         {
             _isOpeningCompany = false;
