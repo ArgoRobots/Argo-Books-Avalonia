@@ -7,6 +7,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.Drawing;
@@ -27,15 +28,31 @@ public class ChartLoaderService
     private const float AxisTextSize = 14f;
 
 
-    // Chart colors (from AppColors)
-    private static readonly SKColor RevenueColor = SKColor.Parse(AppColors.Primary);
-    private static readonly SKColor ExpenseColor = SKColor.Parse(AppColors.ExpenseRed);
-    private static readonly SKColor ProfitColor = SKColor.Parse(AppColors.Success);
-    private static readonly SKColor CustomerColor = SKColor.Parse(AppColors.Primary);
+    // Series colors live in ArgoBooks.Core.ChartColors so the dashboard,
+    // Analytics page, and PDF report renderer all share the same mapping.
 
     // Theme colors (will be updated based on current theme)
     private SKColor _textColor = SKColor.Parse(AppColors.TextDark);
     private SKColor _gridColor = SKColor.Parse(AppColors.ChartAxis);
+
+    /// <summary>
+    /// Convert an array of USD amounts to the user's display currency.
+    /// Chart aggregations are all USD-normalized (so multi-currency data
+    /// rolls up consistently), but charts must render in the display
+    /// currency or the bars / tooltips disagree with the stat cards.
+    /// Apply this at the boundary right before passing values to LiveCharts.
+    /// </summary>
+    public static double[] ConvertUSDValuesToDisplay(double[] usdValues)
+    {
+        if (usdValues.Length == 0) return usdValues;
+        var now = DateTime.Now;
+        var result = new double[usdValues.Length];
+        for (int i = 0; i < usdValues.Length; i++)
+        {
+            result[i] = (double)CurrencyService.GetDisplayAmount((decimal)usdValues[i], now);
+        }
+        return result;
+    }
 
     /// <summary>
     /// Gets the legend text paint based on the current theme.
@@ -112,102 +129,6 @@ public class ChartLoaderService
 
         // Standard translation for simple titles
         return LanguageService.Instance.Translate(text);
-    }
-
-    // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
-    private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "United States", "usa" }, { "USA", "usa" }, { "US", "usa" }, { "America", "usa" },
-        { "United Kingdom", "gbr" }, { "UK", "gbr" }, { "Great Britain", "gbr" }, { "England", "gbr" },
-        { "Canada", "can" }, { "CA", "can" },
-        { "Germany", "deu" }, { "DE", "deu" },
-        { "France", "fra" }, { "FR", "fra" },
-        { "Italy", "ita" }, { "IT", "ita" },
-        { "Spain", "esp" }, { "ES", "esp" },
-        { "Australia", "aus" }, { "AU", "aus" },
-        { "Japan", "jpn" }, { "JP", "jpn" },
-        { "China", "chn" }, { "CN", "chn" },
-        { "India", "ind" }, { "IN", "ind" },
-        { "Brazil", "bra" }, { "BR", "bra" },
-        { "Mexico", "mex" }, { "MX", "mex" },
-        { "Russia", "rus" }, { "RU", "rus" },
-        { "South Korea", "kor" }, { "Korea", "kor" }, { "KR", "kor" },
-        { "Netherlands", "nld" }, { "NL", "nld" },
-        { "Switzerland", "che" }, { "CH", "che" },
-        { "Sweden", "swe" }, { "SE", "swe" },
-        { "Norway", "nor" }, { "NO", "nor" },
-        { "Denmark", "dnk" }, { "DK", "dnk" },
-        { "Finland", "fin" }, { "FI", "fin" },
-        { "Poland", "pol" }, { "PL", "pol" },
-        { "Belgium", "bel" }, { "BE", "bel" },
-        { "Austria", "aut" }, { "AT", "aut" },
-        { "Ireland", "irl" }, { "IE", "irl" },
-        { "Portugal", "prt" }, { "PT", "prt" },
-        { "Greece", "grc" }, { "GR", "grc" },
-        { "New Zealand", "nzl" }, { "NZ", "nzl" },
-        { "Singapore", "sgp" }, { "SG", "sgp" },
-        { "Hong Kong", "hkg" }, { "HK", "hkg" },
-        { "Taiwan", "twn" }, { "TW", "twn" },
-        { "South Africa", "zaf" }, { "ZA", "zaf" },
-        { "Argentina", "arg" }, { "AR", "arg" },
-        { "Chile", "chl" }, { "CL", "chl" },
-        { "Colombia", "col" }, { "CO", "col" },
-        { "Indonesia", "idn" }, { "ID", "idn" },
-        { "Malaysia", "mys" }, { "MY", "mys" },
-        { "Thailand", "tha" }, { "TH", "tha" },
-        { "Vietnam", "vnm" }, { "VN", "vnm" },
-        { "Philippines", "phl" }, { "PH", "phl" },
-        { "Turkey", "tur" }, { "TR", "tur" },
-        { "Saudi Arabia", "sau" }, { "SA", "sau" },
-        { "UAE", "are" }, { "United Arab Emirates", "are" }, { "AE", "are" },
-        { "Israel", "isr" }, { "IL", "isr" },
-        { "Egypt", "egy" }, { "EG", "egy" },
-        { "Nigeria", "nga" }, { "NG", "nga" },
-        { "Kenya", "ken" }, { "KE", "ken" },
-        { "Ukraine", "ukr" }, { "UA", "ukr" },
-        { "Czech Republic", "cze" }, { "Czechia", "cze" }, { "CZ", "cze" },
-        { "Romania", "rou" }, { "RO", "rou" },
-        { "Hungary", "hun" }, { "HU", "hun" }
-    };
-
-    /// <summary>
-    /// Reverse mapping from ISO 3166-1 alpha-3 codes to display names for Excel export.
-    /// </summary>
-    private static readonly Dictionary<string, string> IsoCodeToDisplayName = BuildIsoCodeToDisplayName();
-
-    private static Dictionary<string, string> BuildIsoCodeToDisplayName()
-    {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, code) in CountryNameToIsoCode)
-        {
-            // Prefer the longest name (most descriptive) for each code
-            if (!result.TryGetValue(code, out var existing) || name.Length > existing.Length)
-                result[code] = name;
-        }
-        return result;
-    }
-
-    /// <summary>
-    /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
-    /// </summary>
-    private static string GetCountryIsoCode(string? countryName)
-    {
-        if (string.IsNullOrEmpty(countryName))
-            return string.Empty;
-
-        return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
-    }
-
-    /// <summary>
-    /// Converts geomap data (ISO codes to values) into display names for Excel export.
-    /// </summary>
-    public static Dictionary<string, double> ConvertGeoMapDataForExport(Dictionary<string, double> isoCodeData)
-    {
-        return isoCodeData
-            .Where(kvp => kvp.Value > 0)
-            .ToDictionary(
-                kvp => IsoCodeToDisplayName.TryGetValue(kvp.Key, out var name) ? name : kvp.Key.ToUpperInvariant(),
-                kvp => kvp.Value);
     }
 
     /// <summary>
@@ -318,10 +239,17 @@ public class ChartLoaderService
     /// Creates a series for date-based data with proportional spacing.
     /// Points are positioned based on actual date values (converted to OADate), not evenly spaced.
     /// </summary>
-    public ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
+    public ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color,
+        bool convertFromUSD = true)
     {
         // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
-        // Use ObservablePoint which directly stores X,Y coordinates
+        // Use ObservablePoint which directly stores X,Y coordinates.
+        // Most chart series carry currency aggregates that originate in USD
+        // — convert to display currency at this boundary so bars / tooltips
+        // / axis labels all agree with stat cards. Callers passing counts
+        // (returns, losses, transaction counts) pass convertFromUSD=false.
+        if (convertFromUSD)
+            values = ConvertUSDValuesToDisplay(values);
         var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
 
         return SelectedChartStyle switch
@@ -376,12 +304,33 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Creates series for profit data with negative values shown in red (for Column mode).
+    /// Creates a date-time series colored by chart semantics — column bars split
+    /// positive vs negative via <see cref="ChartColors.ForValue"/>; line/area/scatter
+    /// use a single representative color from the same mapping.
     /// </summary>
-    private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
+    private IEnumerable<ISeries> CreateSignedValueDateTimeSeries(
+        DateTime[] dates, double[] values, string name,
+        ChartDataType chartType, string negativeSuffix)
+        => CreateSignedValueDateTimeSeries(dates, values, name,
+            positiveColor: ChartColors.ForValue(chartType, 1),
+            negativeColor: ChartColors.ForValue(chartType, -1),
+            negativeSuffix: negativeSuffix,
+            lineColor: ChartColors.ForValue(chartType, 0));
+
+    /// <summary>
+    /// Creates a date-time series where positive and negative values get distinct colors
+    /// (column charts split into two series; line/area/scatter use a single line color).
+    /// </summary>
+    private IEnumerable<ISeries> CreateSignedValueDateTimeSeries(
+        DateTime[] dates, double[] values, string name,
+        SKColor positiveColor, SKColor negativeColor,
+        string negativeSuffix, SKColor lineColor)
     {
-        // For column charts, split into positive (green) and negative (red) series
-        // Column is the default when not Line, StepLine, Area, or Scatter
+        // Values are always USD-aggregated currency — convert to display
+        // currency at this boundary so bars / tooltips / axis agree with
+        // the stat cards and chart titles.
+        values = ConvertUSDValuesToDisplay(values);
+
         var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
                            SelectedChartStyle != ChartStyle.StepLine &&
                            SelectedChartStyle != ChartStyle.Area &&
@@ -389,7 +338,6 @@ public class ChartLoaderService
 
         if (isColumnStyle)
         {
-            // Create separate lists for positive and negative values
             var positivePoints = new List<ObservablePoint>();
             var negativePoints = new List<ObservablePoint>();
 
@@ -410,7 +358,7 @@ public class ChartLoaderService
                 {
                     Values = positivePoints,
                     Name = name,
-                    Fill = new SolidColorPaint(ProfitColor),
+                    Fill = new SolidColorPaint(positiveColor),
                     Stroke = null,
                     MaxBarWidth = 100,
                     IgnoresBarPosition = true
@@ -422,8 +370,8 @@ public class ChartLoaderService
                 yield return new ColumnSeries<ObservablePoint>
                 {
                     Values = negativePoints,
-                    Name = $"{name} (Loss)",
-                    Fill = new SolidColorPaint(ExpenseColor),
+                    Name = $"{name} {negativeSuffix}",
+                    Fill = new SolidColorPaint(negativeColor),
                     Stroke = null,
                     MaxBarWidth = 100,
                     IgnoresBarPosition = true
@@ -433,8 +381,9 @@ public class ChartLoaderService
             yield break;
         }
 
-        // For line-based charts, use single series with green color
-        yield return CreateDateTimeSeries(dates, values, name, ProfitColor);
+        // Values were already converted to display currency above, so
+        // skip the conversion inside CreateDateTimeSeries.
+        yield return CreateDateTimeSeries(dates, values, name, lineColor, convertFromUSD: false);
     }
 
     /// <summary>
@@ -1131,7 +1080,7 @@ public class ChartLoaderService
         {
             StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
             {
-                ChartTitle = "Expenses Overview",
+                ChartTitle = ChartDataType.TotalExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Expense,
                 Labels = [],
                 Values = [],
@@ -1145,11 +1094,11 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ExpenseColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ChartColors.Expense));
 
         StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
-            ChartTitle = "Expenses Overview",
+            ChartTitle = ChartDataType.TotalExpenses.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
@@ -1180,7 +1129,7 @@ public class ChartLoaderService
         {
             StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
             {
-                ChartTitle = "Revenue Overview",
+                ChartTitle = ChartDataType.TotalRevenue.GetDisplayName().Translate(),
                 ChartType = ChartType.Revenue,
                 Labels = [],
                 Values = [],
@@ -1194,11 +1143,11 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ChartColors.Revenue));
 
         StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
         {
-            ChartTitle = "Revenue Overview",
+            ChartTitle = ChartDataType.TotalRevenue.GetDisplayName().Translate(),
             ChartType = ChartType.Revenue,
             Labels = labels,
             Values = values,
@@ -1231,7 +1180,7 @@ public class ChartLoaderService
         {
             StoreExportData(ChartDataType.TotalProfits, new ChartExportData
             {
-                ChartTitle = "Profits Overview",
+                ChartTitle = ChartDataType.TotalProfits.GetDisplayName().Translate(),
                 ChartType = ChartType.Profit,
                 Labels = [],
                 Values = [],
@@ -1248,15 +1197,15 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        // Use profit-specific series that shows negative values in red for column charts
-        foreach (var s in CreateProfitDateTimeSeries(dates, values, "Profit"))
+        foreach (var s in CreateSignedValueDateTimeSeries(dates, values, "Profit",
+                     ChartDataType.TotalProfits, "(Loss)"))
         {
             series.Add(s);
         }
 
         StoreExportData(ChartDataType.TotalProfits, new ChartExportData
         {
-            ChartTitle = "Profits Overview",
+            ChartTitle = ChartDataType.TotalProfits.GetDisplayName().Translate(),
             ChartType = ChartType.Profit,
             Labels = labels,
             Values = values,
@@ -1287,7 +1236,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
-                ChartTitle = "Expenses vs Revenue",
+                ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -1304,7 +1253,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
-                ChartTitle = "Expenses vs Revenue",
+                ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -1325,7 +1274,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
             {
-                ChartTitle = "Expenses vs Revenue",
+                ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -1358,14 +1307,14 @@ public class ChartLoaderService
         // Add series (expenses first, then revenue for consistency)
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
         }
 
         // Store export data for multi-series chart
         _chartExportDataByType[ChartDataType.RevenueVsExpenses] = new ChartExportData
         {
-            ChartTitle = "Expenses vs Revenue",
+            ChartTitle = ChartDataType.RevenueVsExpenses.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = expenseValues,
@@ -1398,7 +1347,7 @@ public class ChartLoaderService
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
         {
-            ChartTitle = "Revenue Distribution",
+            ChartTitle = ChartDataType.RevenueDistribution.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1433,7 +1382,7 @@ public class ChartLoaderService
         // Store export data for Google Sheets/Excel export
         PieChartExportData = new ChartExportData
         {
-            ChartTitle = "Expense Distribution",
+            ChartTitle = ChartDataType.ExpensesDistribution.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1477,13 +1426,13 @@ public class ChartLoaderService
         // Only add series if there's actual data
         if (values.Any(v => v != 0))
         {
-            series.Add(CreateTimeSeries(values, "New Customers", CustomerColor));
+            series.Add(CreateTimeSeries(values, "New Customers", ChartColors.Neutral));
         }
 
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerGrowth] = new ChartExportData
         {
-            ChartTitle = "Customer Growth",
+            ChartTitle = ChartDataType.CustomerGrowth.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = values,
@@ -1530,13 +1479,13 @@ public class ChartLoaderService
         {
             // Revenue series (green)
             var revenueValues = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray();
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
 
             // Expense series (red)
             if (expenseSeriesData?.DataPoints != null)
             {
                 var expenseValues = expenseSeriesData.DataPoints.Select(p => p.Value).ToArray();
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
             }
         }
 
@@ -1544,7 +1493,7 @@ public class ChartLoaderService
         var labels = revenueSeriesData.DataPoints.Select(p => p.Label).ToArray();
         _chartExportDataByType[ChartDataType.AverageTransactionValue] = new ChartExportData
         {
-            ChartTitle = "Average Transaction Value",
+            ChartTitle = ChartDataType.AverageTransactionValue.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray(),
@@ -1590,12 +1539,12 @@ public class ChartLoaderService
         if (dates.Length > 0)
         {
             var revenueValues = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray();
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
 
             if (expenseSeriesData?.DataPoints != null)
             {
                 var expenseValues = expenseSeriesData.DataPoints.Select(p => p.Value).ToArray();
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
             }
         }
 
@@ -1607,7 +1556,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TotalTransactions] = new ChartExportData
         {
-            ChartTitle = "Total Transactions",
+            ChartTitle = ChartDataType.TotalTransactions.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = totalValues,
@@ -1646,13 +1595,13 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, avgShipping, "Avg Shipping", RevenueColor));
+            series.Add(CreateDateTimeSeries(dates, avgShipping, "Avg Shipping", ChartColors.Expense));
         }
 
         // Store export data
         _chartExportDataByType[ChartDataType.AverageShippingCosts] = new ChartExportData
         {
-            ChartTitle = "Average Shipping Costs",
+            ChartTitle = ChartDataType.AverageShippingCosts.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = avgShipping,
@@ -1683,7 +1632,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfOrigin] = new ChartExportData
         {
-            ChartTitle = "Countries of Origin",
+            ChartTitle = ChartDataType.CountriesOfOrigin.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1715,7 +1664,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfDestination] = new ChartExportData
         {
-            ChartTitle = "Countries of Destination",
+            ChartTitle = ChartDataType.CountriesOfDestination.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1746,7 +1695,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfOrigin] = new ChartExportData
         {
-            ChartTitle = "Companies of Origin",
+            ChartTitle = ChartDataType.CompaniesOfOrigin.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1777,7 +1726,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfDestination] = new ChartExportData
         {
-            ChartTitle = "Companies of Destination",
+            ChartTitle = ChartDataType.CompaniesOfDestination.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1808,7 +1757,7 @@ public class ChartLoaderService
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
         var exportData = new ChartExportData
         {
-            ChartTitle = "Transactions by Accountant",
+            ChartTitle = ChartDataType.AccountantsTransactions.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1835,12 +1784,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Values are counts of revenues per status, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerPaymentStatus] = new ChartExportData
         {
-            ChartTitle = "Customer Payment Status",
+            ChartTitle = ChartDataType.CustomerPaymentStatus.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1866,12 +1816,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Customer counts, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ActiveVsInactiveCustomers] = new ChartExportData
         {
-            ChartTitle = "Active vs Inactive Customers",
+            ChartTitle = ChartDataType.ActiveVsInactiveCustomers.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1898,12 +1849,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Loss counts grouped by reason, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossReasons] = new ChartExportData
         {
-            ChartTitle = "Loss Reasons",
+            ChartTitle = ChartDataType.LossReasons.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1930,12 +1882,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Loss counts per product, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByProduct] = new ChartExportData
         {
-            ChartTitle = "Losses by Product",
+            ChartTitle = ChartDataType.LossesByProduct.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -1970,12 +1923,13 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
+        // Returns count, not amount — skip USD→display conversion.
+        series.Add(CreateDateTimeSeries(dates, values, "Returns", ChartColors.Expense, convertFromUSD: false));
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsOverTime] = new ChartExportData
         {
-            ChartTitle = "Returns Over Time",
+            ChartTitle = ChartDataType.ReturnsOverTime.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
@@ -2002,12 +1956,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Return counts grouped by reason, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         var exportData = new ChartExportData
         {
-            ChartTitle = "Return Reasons",
+            ChartTitle = ChartDataType.ReturnReasons.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2035,12 +1990,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Return counts grouped by category, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByCategory] = new ChartExportData
         {
-            ChartTitle = "Returns by Category",
+            ChartTitle = ChartDataType.ReturnsByCategory.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2080,13 +2036,13 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, impactValues, "Refunds", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, impactValues, "Refunds", ChartColors.Expense));
         }
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnFinancialImpact] = new ChartExportData
         {
-            ChartTitle = "Financial Impact of Returns",
+            ChartTitle = ChartDataType.ReturnFinancialImpact.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = impactValues,
@@ -2121,12 +2077,13 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
+        // Losses count, not amount — skip USD→display conversion.
+        series.Add(CreateDateTimeSeries(dates, values, "Losses", ChartColors.Expense, convertFromUSD: false));
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesOverTime] = new ChartExportData
         {
-            ChartTitle = "Losses Over Time",
+            ChartTitle = ChartDataType.LossesOverTime.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
@@ -2165,13 +2122,13 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, impactValues, "Value Lost", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, impactValues, "Value Lost", ChartColors.Expense));
         }
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossFinancialImpact] = new ChartExportData
         {
-            ChartTitle = "Financial Impact of Losses",
+            ChartTitle = ChartDataType.LossFinancialImpact.GetDisplayName().Translate(),
             ChartType = ChartType.Expense,
             Labels = labels,
             Values = impactValues,
@@ -2198,12 +2155,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Return counts per product, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByProduct] = new ChartExportData
         {
-            ChartTitle = "Returns by Product",
+            ChartTitle = ChartDataType.ReturnsByProduct.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2231,12 +2189,13 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Loss counts per category, not amounts.
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByCategory] = new ChartExportData
         {
-            ChartTitle = "Losses by Category",
+            ChartTitle = ChartDataType.LossesByCategory.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2268,7 +2227,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Returns",
+                ChartTitle = ChartDataType.ExpenseVsRevenueReturns.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2284,7 +2243,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Returns",
+                ChartTitle = ChartDataType.ExpenseVsRevenueReturns.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2300,7 +2259,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ChartColors.Expense));
             if (expenseReturnValues.Length > 0)
             {
                 series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse(AppColors.PurpleDark)));
@@ -2310,7 +2269,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ExpenseVsRevenueReturns] = new ChartExportData
         {
-            ChartTitle = "Expense vs Revenue Returns",
+            ChartTitle = ChartDataType.ExpenseVsRevenueReturns.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueReturnValues,
@@ -2343,7 +2302,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Losses",
+                ChartTitle = ChartDataType.ExpenseVsRevenueLosses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2359,7 +2318,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Losses",
+                ChartTitle = ChartDataType.ExpenseVsRevenueLosses.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2375,7 +2334,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ExpenseColor));
+            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ChartColors.Expense));
             if (revenueLossValues.Length > 0)
             {
                 series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse(AppColors.PurpleDark)));
@@ -2385,7 +2344,7 @@ public class ChartLoaderService
         // Store export data
         _chartExportDataByType[ChartDataType.ExpenseVsRevenueLosses] = new ChartExportData
         {
-            ChartTitle = "Expense vs Revenue Losses",
+            ChartTitle = ChartDataType.ExpenseVsRevenueLosses.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = expenseLossValues,
@@ -2416,7 +2375,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
             {
-                ChartTitle = "Tax Collected vs Paid",
+                ChartTitle = ChartDataType.TaxCollectedVsPaid.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2432,7 +2391,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
             {
-                ChartTitle = "Tax Collected vs Paid",
+                ChartTitle = ChartDataType.TaxCollectedVsPaid.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2448,16 +2407,16 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, collectedValues, "Tax Collected", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, collectedValues, "Tax Collected", ChartColors.Revenue));
             if (paidValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, paidValues, "Tax Paid", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, paidValues, "Tax Paid", ChartColors.Expense));
             }
         }
 
         _chartExportDataByType[ChartDataType.TaxCollectedVsPaid] = new ChartExportData
         {
-            ChartTitle = "Tax Collected vs Paid",
+            ChartTitle = ChartDataType.TaxCollectedVsPaid.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = collectedValues,
@@ -2491,11 +2450,15 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Net Tax Liability", RevenueColor));
+        foreach (var s in CreateSignedValueDateTimeSeries(dates, values, "Net Tax Liability",
+                     ChartDataType.TaxLiabilityTrend, "(Refund)"))
+        {
+            series.Add(s);
+        }
 
         _chartExportDataByType[ChartDataType.TaxLiabilityTrend] = new ChartExportData
         {
-            ChartTitle = "Net Tax Liability",
+            ChartTitle = ChartDataType.TaxLiabilityTrend.GetDisplayName().Translate(),
             ChartType = ChartType.Revenue,
             Labels = labels,
             Values = values,
@@ -2525,7 +2488,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxByCategory] = new ChartExportData
         {
-            ChartTitle = "Tax by Category",
+            ChartTitle = ChartDataType.TaxByCategory.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2554,7 +2517,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.TaxRateDistribution] = new ChartExportData
             {
-                ChartTitle = "Tax Rate Distribution",
+                ChartTitle = ChartDataType.TaxRateDistribution.GetDisplayName().Translate(),
                 ChartType = ChartType.Distribution,
                 Labels = [],
                 Values = [],
@@ -2570,7 +2533,7 @@ public class ChartLoaderService
         {
             Values = revenueValues,
             Name = "Revenue",
-            Fill = new SolidColorPaint(ProfitColor),
+            Fill = new SolidColorPaint(ChartColors.Revenue),
             Stroke = null,
             MaxBarWidth = 40
         });
@@ -2579,7 +2542,7 @@ public class ChartLoaderService
         {
             Values = expenseValues,
             Name = "Expense",
-            Fill = new SolidColorPaint(ExpenseColor),
+            Fill = new SolidColorPaint(ChartColors.Expense),
             Stroke = null,
             MaxBarWidth = 40
         });
@@ -2599,7 +2562,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxRateDistribution] = new ChartExportData
         {
-            ChartTitle = "Tax Rate Distribution",
+            ChartTitle = ChartDataType.TaxRateDistribution.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueValues,
@@ -2630,7 +2593,7 @@ public class ChartLoaderService
 
         _chartExportDataByType[ChartDataType.TaxByProduct] = new ChartExportData
         {
-            ChartTitle = "Tax by Product",
+            ChartTitle = ChartDataType.TaxByProduct.GetDisplayName().Translate(),
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -2660,7 +2623,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Tax",
+                ChartTitle = ChartDataType.ExpenseVsRevenueTax.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2676,7 +2639,7 @@ public class ChartLoaderService
         {
             _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
             {
-                ChartTitle = "Expense vs Revenue Tax",
+                ChartTitle = ChartDataType.ExpenseVsRevenueTax.GetDisplayName().Translate(),
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
@@ -2692,16 +2655,16 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue Tax", ProfitColor));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue Tax", ChartColors.Revenue));
             if (expenseValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expense Tax", ExpenseColor));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expense Tax", ChartColors.Expense));
             }
         }
 
         _chartExportDataByType[ChartDataType.ExpenseVsRevenueTax] = new ChartExportData
         {
-            ChartTitle = "Expense vs Revenue Tax",
+            ChartTitle = ChartDataType.ExpenseVsRevenueTax.GetDisplayName().Translate(),
             ChartType = ChartType.Comparison,
             Labels = labels,
             Values = revenueValues,
@@ -2728,7 +2691,7 @@ public class ChartLoaderService
 
         // Convert country names to ISO codes for GeoMap
         return countryData
-            .Select(kvp => (GetCountryIsoCode(kvp.Key), kvp.Value))
+            .Select(kvp => (CountryCodeMapping.GetIsoCode(kvp.Key), kvp.Value))
             .Where(x => !string.IsNullOrEmpty(x.Item1))
             .GroupBy(x => x.Item1)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Item2));
@@ -2750,7 +2713,7 @@ public class ChartLoaderService
 
         // Convert country names to ISO codes for GeoMap
         return countryData
-            .Select(kvp => (GetCountryIsoCode(kvp.Key), kvp.Value))
+            .Select(kvp => (CountryCodeMapping.GetIsoCode(kvp.Key), kvp.Value))
             .Where(x => !string.IsNullOrEmpty(x.Item1))
             .GroupBy(x => x.Item1)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.Item2));
@@ -2874,10 +2837,11 @@ public class ChartLoaderService
     /// <param name="dataPoints">The source data points.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
-        List<ChartDataPoint> dataPoints)
+        List<ChartDataPoint> dataPoints,
+        bool convertFromUSD = true)
     {
         var maxSlices = ChartSettingsService.GetMaxPieSlices();
-        return CreatePieSeriesWithLegend(dataPoints, maxSlices);
+        return CreatePieSeriesWithLegend(dataPoints, maxSlices, convertFromUSD);
     }
 
     /// <summary>
@@ -2885,16 +2849,33 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
     /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
+    /// <param name="convertFromUSD">
+    /// True (default) when the values are USD aggregates that should be
+    /// displayed in the user's currency. False for count-based pies
+    /// (return reasons, customer counts, etc.).
+    /// </param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints,
-        int maxSlices)
+        int maxSlices,
+        bool convertFromUSD = true)
     {
         var series = new ObservableCollection<ISeries>();
         var legendItems = new ObservableCollection<PieLegendItem>();
 
         if (dataPoints.Count == 0)
             return (series, legendItems);
+
+        // Convert USD aggregates to display currency at this boundary so
+        // slice values / tooltips / legend numbers all agree with stat cards.
+        var now = DateTime.Now;
+        decimal Convert(double v) => convertFromUSD
+            ? CurrencyService.GetDisplayAmount((decimal)v, now)
+            : (decimal)v;
+
+        string FormatTooltip(double v) => convertFromUSD
+            ? CurrencyService.Format((decimal)v)
+            : ((decimal)v).ToString("N0");
 
         // Sort by value descending
         var sortedPoints = dataPoints.OrderByDescending(p => p.Value).ToList();
@@ -2917,21 +2898,21 @@ public class ChartLoaderService
             var item = topItems[i];
             var colorHex = GetColorHexForIndex(i);
             var percentage = total > 0 ? (item.Value / total) * 100 : 0;
-            var roundedValue = Math.Round(item.Value, 2);
+            var displayValue = Math.Round((double)Convert(item.Value), 2);
 
             series.Add(new PieSeries<double>
             {
-                Values = [roundedValue],
+                Values = [displayValue],
                 Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => CurrencyService.FormatFromUSD((decimal)point.Coordinate.PrimaryValue, DateTime.Now)
+                ToolTipLabelFormatter = point => FormatTooltip(point.Coordinate.PrimaryValue)
             });
 
             legendItems.Add(new PieLegendItem
             {
                 Label = item.Label,
-                Value = roundedValue,
+                Value = displayValue,
                 Percentage = percentage,
                 ColorHex = colorHex
             });
@@ -2940,8 +2921,9 @@ public class ChartLoaderService
         // Create "Other" category if needed
         if (otherItems.Count > 0)
         {
-            var otherValue = Math.Round(otherItems.Sum(p => p.Value), 2);
-            var otherPercentage = total > 0 ? (otherValue / total) * 100 : 0;
+            var otherTotalUSD = otherItems.Sum(p => p.Value);
+            var otherValue = Math.Round((double)Convert(otherTotalUSD), 2);
+            var otherPercentage = total > 0 ? (otherTotalUSD / total) * 100 : 0;
             var otherColorHex = AppColors.Gray;
 
             series.Add(new PieSeries<double>
@@ -2950,7 +2932,7 @@ public class ChartLoaderService
                 Name = LanguageService.Instance.Translate("Other"),
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
                 Pushout = 0,
-                ToolTipLabelFormatter = point => CurrencyService.FormatFromUSD((decimal)point.Coordinate.PrimaryValue, DateTime.Now)
+                ToolTipLabelFormatter = point => FormatTooltip(point.Coordinate.PrimaryValue)
             });
 
             var itemsText = LanguageService.Instance.Translate("items");

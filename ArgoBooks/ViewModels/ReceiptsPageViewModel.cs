@@ -1207,6 +1207,11 @@ public partial class ReceiptDisplayItem : ObservableObject
     [ObservableProperty]
     private string _imagePath = string.Empty;
 
+    partial void OnImagePathChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasImage));
+    }
+
     // Computed properties for display
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string AmountFormatted => CurrencyService.Format(Amount);

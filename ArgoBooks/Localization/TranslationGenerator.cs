@@ -23,6 +23,15 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"\{loc:Loc\s+([^}]+)\}")]
     private static partial Regex LocExtensionRegex();
 
+    // Strips whole-line C# comments (// ... and /// ...). Only matches when the //
+    // is at the start of a line (after optional whitespace), so URLs inside string
+    // literals like "https://example.com" aren't truncated and any .Translate() calls
+    // sharing the line aren't silently dropped. End-of-line comments after code are
+    // left intact — picking up a stray translatable string from one would produce a
+    // visible spurious entry, which is preferable to silently losing a real one.
+    [GeneratedRegex(@"(?m)^[\t ]*//.*$")]
+    private static partial Regex LineCommentRegex();
+
     [GeneratedRegex(@"Loc\.Tr\s*\(\s*""([^""]+)""")]
     private static partial Regex LocTrCallRegex();
 
@@ -64,7 +73,12 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"\[\s*""([^""]+)""")]
     private static partial Regex ArrayItemStartRegex();
 
-    [GeneratedRegex(@",\s*""([^""]+)""")]
+    // Continuation strings inside an array literal: matches `, "value"` only when the
+    // following token is another quoted string or a closing `]`. This filters out method
+    // call arguments like `Load("Page", "Column", true)` where the next token after a
+    // string is a non-string parameter, while still catching real array literals like
+    // `["A", "B", "C"]`.
+    [GeneratedRegex(@",\s*""([^""]+)""(?=\s*(?:,\s*""|\]))")]
     private static partial Regex ArrayItemContinueRegex();
 
     // Batch size for Azure API calls (max 100 texts per request, max 10000 chars)
@@ -100,6 +114,23 @@ public partial class TranslationGenerator
     /// Gets the total number of stale keys removed from translation files.
     /// </summary>
     public int StaleKeysRemoved { get; private set; }
+
+    /// <summary>
+    /// Per-language list of source strings legitimately unchanged in the target.
+    /// Loaded from translation-allowlist.json. Lookup uses ordinal comparison.
+    /// </summary>
+    public Dictionary<string, HashSet<string>> Allowlist { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Per-language counts of strings Azure returned unchanged from English (excluding allowlisted entries).
+    /// </summary>
+    public Dictionary<string, List<string>> SuspiciousNoOps { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Distinct English source strings that produce the same key after GetStringKey normalization
+    /// (50-char truncation can collide). The first one wins; others are silently dropped.
+    /// </summary>
+    public Dictionary<string, List<string>> KeyCollisions { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Gets the estimated cost based on Azure Translator S1 pricing ($10 per 1M characters).
@@ -158,9 +189,61 @@ public partial class TranslationGenerator
             }
         }
 
+        // Fetch plan feature strings from the pricing API so they get translated
+        FetchPlanStrings(strings);
+
         ReportProgress($"Found {strings.Count} translatable strings", strings.Count, strings.Count);
 
         return strings;
+    }
+
+    /// <summary>
+    /// Fetches plan feature labels and details from the pricing API
+    /// and adds them to the translation dictionary.
+    /// </summary>
+    private void FetchPlanStrings(Dictionary<string, string> strings)
+    {
+        try
+        {
+            ReportProgress("Fetching plan strings from pricing API...", 0, 0);
+
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            var apiUrl = $"{Core.Services.ApiConfig.BaseUrl}/api/pricing/plans.php";
+            var response = httpClient.GetStringAsync(apiUrl).GetAwaiter().GetResult();
+            var doc = JsonSerializer.Deserialize<JsonElement>(response);
+
+            if (!doc.TryGetProperty("plans", out var plans))
+                return;
+
+            var count = 0;
+            foreach (var planName in new[] { "free", "premium" })
+            {
+                if (!plans.TryGetProperty(planName, out var plan) ||
+                    !plan.TryGetProperty("features", out var features))
+                    continue;
+
+                foreach (var feature in features.EnumerateArray())
+                {
+                    if (feature.TryGetProperty("label", out var label) && label.GetString() is { } labelText)
+                    {
+                        AddString(strings, labelText);
+                        count++;
+                    }
+
+                    if (feature.TryGetProperty("detail", out var detail) && detail.GetString() is { } detailText)
+                    {
+                        AddString(strings, detailText);
+                        count++;
+                    }
+                }
+            }
+
+            ReportProgress($"Added {count} plan strings from API", 0, 0);
+        }
+        catch (Exception ex)
+        {
+            ReportProgress($"Warning: Could not fetch plan strings from API: {ex.Message}", 0, 0);
+        }
     }
 
     /// <summary>
@@ -185,6 +268,14 @@ public partial class TranslationGenerator
                     text = text[1..^1];
                 }
 
+                // Decode XML entities so AXAML "&amp;" matches C# "&" (otherwise both forms collide)
+                text = text
+                    .Replace("&amp;", "&")
+                    .Replace("&lt;", "<")
+                    .Replace("&gt;", ">")
+                    .Replace("&quot;", "\"")
+                    .Replace("&apos;", "'");
+
                 if (!string.IsNullOrWhiteSpace(text))
                 {
                     var key = LanguageService.GetStringKey(text);
@@ -206,6 +297,9 @@ public partial class TranslationGenerator
         try
         {
             var content = File.ReadAllText(filePath);
+            // Strip line comments (incl. /// doc comments) so example snippets in
+            // documentation aren't picked up as real translatable strings.
+            content = LineCommentRegex().Replace(content, "");
 
             // Find "text".Translate() patterns
             var translateMatches = StringTranslateRegex().Matches(content);
@@ -262,13 +356,14 @@ public partial class TranslationGenerator
             foreach (Match match in constStringMatches)
             {
                 var text = match.Groups[1].Value;
-                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code, not an SVG path)
+                // Only add if it looks like display text (not empty, not a path, not a URL, not a color code, not an SVG path, not a code identifier)
                 if (!string.IsNullOrEmpty(text) && text.Length > 1 &&
                     !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
                     !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
                     !text.StartsWith("{") &&
                     !text.StartsWith('#') &&
-                    !IsSvgPathData(text))
+                    !IsSvgPathData(text) &&
+                    !LooksLikeCodeIdentifier(text))
                 {
                     AddString(strings, text);
                 }
@@ -288,25 +383,30 @@ public partial class TranslationGenerator
             }
 
             // Find switch expression display strings: => "Display Text"
-            // Only in files that likely contain display names (enums, services, viewmodels, configurations)
+            // Applied to all .cs files; the shape filter below guards against false positives.
+            // NOTE: object-initializer assignments like `Title = "Foo"` are NOT detected — wrap
+            // user-facing literals with .Translate()/.TranslateFormat() so the regex below picks them up.
+            var switchMatches = SwitchDisplayStringRegex().Matches(content);
+            foreach (Match match in switchMatches)
+            {
+                var text = match.Groups[1].Value;
+                // Only include strings that look like display text (starts with uppercase, has space or common pattern,
+                // and isn't a PascalCase code identifier like "InStock" or "ShowCompanyAddress")
+                if (!string.IsNullOrEmpty(text) && char.IsUpper(text[0]) &&
+                    (text.Contains(' ') || text.Length > 3) &&
+                    !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
+                    !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                    !LooksLikeCodeIdentifier(text))
+                {
+                    AddString(strings, text);
+                }
+            }
+
+            // Find string array items: ["Item1", "Item2", "Item3"] — used for ComboBox options
+            // Restricted to ViewModel/Service/Enum/Configuration files because plain arrays
+            // appear in many non-UI contexts and would generate noise.
             if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel") || filePath.Contains("Configuration"))
             {
-                var switchMatches = SwitchDisplayStringRegex().Matches(content);
-                foreach (Match match in switchMatches)
-                {
-                    var text = match.Groups[1].Value;
-                    // Only include strings that look like display text (starts with uppercase, has space or common pattern)
-                    if (!string.IsNullOrEmpty(text) && char.IsUpper(text[0]) &&
-                        (text.Contains(' ') || text.Length > 3) &&
-                        !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
-                        !text.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
-                        AddString(strings, text);
-                    }
-                }
-
-                // Find string array items: ["Item1", "Item2", "Item3"]
-                // These are commonly used for ComboBox options
                 var arrayStartMatches = ArrayItemStartRegex().Matches(content);
                 foreach (Match match in arrayStartMatches)
                 {
@@ -329,7 +429,7 @@ public partial class TranslationGenerator
     /// <summary>
     /// Adds a display string if it looks like user-facing text.
     /// </summary>
-    private static void AddDisplayString(Dictionary<string, string> strings, string text)
+    private void AddDisplayString(Dictionary<string, string> strings, string text)
     {
         if (string.IsNullOrEmpty(text) || text.Length < 2)
             return;
@@ -340,11 +440,39 @@ public partial class TranslationGenerator
             text.StartsWith("{") || text.Contains("{{"))
             return;
 
-        // Only include strings that look like display text
-        if (char.IsUpper(text[0]) || text.Contains(' '))
+        // Skip PascalCase/camelCase code identifiers (e.g., "InStock", "ShowCompanyAddress")
+        if (LooksLikeCodeIdentifier(text))
+            return;
+
+        // Display strings start with an uppercase letter or a digit. Skip lowercase-leading
+        // strings — those are usually internal parsing tokens (e.g., the "this month" /
+        // "last 30 days" arms in ReportConfiguration's case-insensitive switch).
+        if (!char.IsUpper(text[0]) && !char.IsDigit(text[0]))
+            return;
+
+        AddString(strings, text);
+    }
+
+    /// <summary>
+    /// Returns true if the text looks like a PascalCase or camelCase code identifier
+    /// (e.g., "InStock", "ShowCompanyAddress", "fontFamily"). Used to filter out
+    /// strings captured by blanket regexes (const string, switch arms, array items)
+    /// that match property/enum-value names rather than user-facing labels.
+    /// </summary>
+    private static bool LooksLikeCodeIdentifier(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return false;
+        if (text.Contains(' ')) return false;
+        if (!text.All(char.IsLetterOrDigit)) return false;
+
+        // A real identifier has a lowercase letter immediately followed by an uppercase letter.
+        // Pure-uppercase abbreviations like "SKU" don't trigger and stay treated as display text.
+        for (int i = 1; i < text.Length; i++)
         {
-            AddString(strings, text);
+            if (char.IsUpper(text[i]) && char.IsLower(text[i - 1]))
+                return true;
         }
+        return false;
     }
 
     /// <summary>
@@ -374,10 +502,49 @@ public partial class TranslationGenerator
     }
 
     /// <summary>
+    /// Interprets C# string-literal escape sequences in raw text captured from source files.
+    /// Without this, a source string like "Line one.\n\nLine two" was captured by the regex
+    /// as the literal characters "Line one.\n\nLine two" and serialized to JSON as "\\n\\n",
+    /// which the JSON reader then decoded back to literal "\n" text — so the UI displayed
+    /// "\n\n" instead of two newlines.
+    /// </summary>
+    private static string InterpretCSharpEscapes(string source)
+    {
+        if (string.IsNullOrEmpty(source) || source.IndexOf('\\') < 0)
+            return source;
+
+        var sb = new StringBuilder(source.Length);
+        for (var i = 0; i < source.Length; i++)
+        {
+            if (source[i] == '\\' && i + 1 < source.Length)
+            {
+                switch (source[i + 1])
+                {
+                    case 'n': sb.Append('\n'); i++; continue;
+                    case 'r': sb.Append('\r'); i++; continue;
+                    case 't': sb.Append('\t'); i++; continue;
+                    case '\\': sb.Append('\\'); i++; continue;
+                    case '"': sb.Append('"'); i++; continue;
+                    case '\'': sb.Append('\''); i++; continue;
+                    case '0': sb.Append('\0'); i++; continue;
+                    // Other escapes (\\u####, \\x##, etc.) are uncommon in user-facing
+                    // strings; pass them through untouched rather than risk mis-interpreting.
+                }
+            }
+            sb.Append(source[i]);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>
     /// Adds a string to the collection if valid.
     /// </summary>
-    private static void AddString(Dictionary<string, string> strings, string text)
+    private void AddString(Dictionary<string, string> strings, string text)
     {
+        // Decode C# escape sequences captured as literal text by the regex extractors,
+        // so newlines, tabs, and quotes round-trip correctly through the JSON output.
+        text = InterpretCSharpEscapes(text);
+
         if (string.IsNullOrWhiteSpace(text))
             return;
 
@@ -391,6 +558,17 @@ public partial class TranslationGenerator
             return;
 
         var key = LanguageService.GetStringKey(text);
+        if (strings.TryGetValue(key, out var existing) && existing != text)
+        {
+            if (!KeyCollisions.TryGetValue(key, out var bucket))
+            {
+                bucket = new List<string> { existing };
+                KeyCollisions[key] = bucket;
+            }
+            if (!bucket.Contains(text))
+                bucket.Add(text);
+            return;
+        }
         strings.TryAdd(key, text);
     }
 
@@ -495,8 +673,13 @@ public partial class TranslationGenerator
                 StaleKeysRemoved += staleCount;
             }
 
+            // Sort by key for deterministic output (avoids spurious git diffs)
+            var sortedTranslation = fullTranslation
+                .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+
             // Save the file (with new translations added and stale keys pruned)
-            var json = JsonSerializer.Serialize(fullTranslation, jsonOptions);
+            var json = JsonSerializer.Serialize(sortedTranslation, jsonOptions);
             await File.WriteAllTextAsync(filePath, json);
             ReportProgress($"Saved {isoCode}.json ({stringsToTranslate.Count} new, {staleCount} removed, {fullTranslation.Count} total)", currentLanguage, totalLanguages);
         }
@@ -541,6 +724,9 @@ public partial class TranslationGenerator
         var batches = CreateBatches(textList);
         var processedCount = 0;
 
+        Allowlist.TryGetValue(targetIsoCode, out var allowlistForLang);
+        Allowlist.TryGetValue("*", out var globalAllowlist);
+
         foreach (var batch in batches)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -551,7 +737,28 @@ public partial class TranslationGenerator
             for (int i = 0; i < batch.Count && processedCount < keyList.Count; i++)
             {
                 var key = keyList[processedCount];
+                var sourceText = batch[i];
                 var translatedText = i < translatedBatch.Count ? translatedBatch[i] : englishStrings[key];
+
+                // Detect when Azure returned the source unchanged. Multi-word phrases that
+                // come back identical are usually mis-detection by Azure (e.g., "Select Premium").
+                // Allowlisted entries (legitimate loanwords like "Status" in Polish, or
+                // global brand names / font families) are skipped.
+                var isAllowlisted = (allowlistForLang?.Contains(sourceText) ?? false)
+                                    || (globalAllowlist?.Contains(sourceText) ?? false);
+                if (string.Equals(translatedText, sourceText, StringComparison.Ordinal) &&
+                    sourceText.Contains(' ') &&
+                    sourceText.Length > 2 &&
+                    !isAllowlisted)
+                {
+                    if (!SuspiciousNoOps.TryGetValue(targetIsoCode, out var noOpList))
+                    {
+                        noOpList = new List<string>();
+                        SuspiciousNoOps[targetIsoCode] = noOpList;
+                    }
+                    noOpList.Add(sourceText);
+                }
+
                 translations[key] = translatedText;
                 processedCount++;
             }
@@ -593,8 +800,15 @@ public partial class TranslationGenerator
         return batches;
     }
 
+    // Max attempts when Azure returns 429 (Too Many Requests). F0 (free tier) has
+    // tight per-minute throttles independent of the 2M-char monthly cap; S1 rarely
+    // 429s but we honor it there too for resilience.
+    private const int MaxRateLimitRetries = 6;
+
     /// <summary>
     /// Translates a batch of texts using Azure Translator API.
+    /// Retries on 429 (Too Many Requests) by honoring the Retry-After header, or
+    /// falling back to exponential backoff if the header is absent.
     /// </summary>
     private async Task<List<string>> TranslateBatchAsync(
         List<string> texts,
@@ -604,25 +818,47 @@ public partial class TranslationGenerator
         var route = $"/translate?api-version=3.0&from=en&to={targetIsoCode}";
         var uri = new Uri(AzureEndpoint + route);
 
-        // Build request body
         var requestBody = texts.Select(t => new { Text = t }).ToArray();
         var requestJson = JsonSerializer.Serialize(requestBody);
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, uri);
-        request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
-        request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
-        request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
+        HttpResponseMessage? response = null;
+        for (var attempt = 0; attempt < MaxRateLimitRetries; attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri);
+            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
+            request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
 
-        ApiCallCount++;
-        TotalCharactersTranslated += texts.Sum(t => (long)t.Length);
+            response = await _httpClient.SendAsync(request, cancellationToken);
 
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
+                break;
+
+            var delay = response.Headers.RetryAfter?.Delta
+                        ?? (response.Headers.RetryAfter?.Date is { } when_
+                            ? when_ - DateTimeOffset.UtcNow
+                            : TimeSpan.FromSeconds(Math.Pow(2, attempt) * 5));
+            // Clamp so a bogus header can't stall the tool for an hour or fire instantly.
+            if (delay < TimeSpan.FromSeconds(1)) delay = TimeSpan.FromSeconds(1);
+            if (delay > TimeSpan.FromMinutes(2)) delay = TimeSpan.FromMinutes(2);
+
+            ReportProgress($"Rate limited by Azure (429). Waiting {delay.TotalSeconds:F0}s before retry {attempt + 2}/{MaxRateLimitRetries}...", 0, 0);
+            response.Dispose();
+            response = null;
+            await Task.Delay(delay, cancellationToken);
+        }
+
+        if (response == null)
+            throw new HttpRequestException($"Azure Translator API: rate-limited {MaxRateLimitRetries} times in a row. Wait a few minutes and re-run, or temporarily upgrade the Translator resource to S1.");
 
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new HttpRequestException($"Azure Translator API error ({response.StatusCode}): {errorBody}");
         }
+
+        ApiCallCount++;
+        TotalCharactersTranslated += texts.Sum(t => (long)t.Length);
 
         var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
         var responseData = JsonSerializer.Deserialize<List<TranslationResponse>>(responseJson);

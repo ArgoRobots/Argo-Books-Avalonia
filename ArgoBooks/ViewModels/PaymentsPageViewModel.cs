@@ -140,8 +140,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             if (syncResponse.Payments.Count > 0)
             {
                 // Process new payments into local data
-                var newPayments = PaymentPortalService.ProcessSyncedPayments(
+                var syncResult = PaymentPortalService.ProcessSyncedPayments(
                     syncResponse.Payments, companyData);
+                var newPayments = syncResult.NewPayments;
 
                 // Only confirm payments that were actually processed locally.
                 // Skipped payments (e.g. invoice not found) stay unconfirmed so
@@ -155,10 +156,10 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                     await portalService.ConfirmSyncAsync(processedPortalIds);
                 }
 
-                if (newPayments.Count > 0)
+                // Also save when only existing rows were backfilled — without
+                // this the in-memory ProcessingFee update is lost on restart.
+                if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
                 {
-                    // Persist only the sync-related files (payments, invoices, id counters, settings)
-                    // so synced payments survive restarts without triggering a full company save
                     try { await App.CompanyManager!.SavePaymentSyncAsync(); }
                     catch { /* non-fatal */ }
                 }
@@ -200,7 +201,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
         var onlineReceivedUSD = _allPayments
-            .Where(p => p.Date >= startOfMonth && p.Source == "Online" && p.Amount > 0)
+            .Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0)
             .Sum(p => p.EffectiveAmountUSD);
 
         OnlineReceivedThisMonth = CurrencyService.FormatFromUSD(onlineReceivedUSD, now);
@@ -553,20 +554,28 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Received this month (completed payments only) - calculate in USD, convert for display
+        // Received this month, net of refunds in the same window — same
+        // cash-basis logic the dashboard uses.
         var monthlyReceivedUSD = _allPayments
             .Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed")
             .Sum(p => p.EffectiveAmountUSD);
-        ReceivedThisMonth = CurrencyService.FormatFromUSD(monthlyReceivedUSD, now);
+        var monthlyRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(_allPayments, startOfMonth, now);
+        ReceivedThisMonth = CurrencyService.FormatFromUSD(monthlyReceivedUSD - monthlyRefundsUSD, now);
 
-        // Total transactions
-        TotalTransactions = _allPayments.Count;
+        // Total transactions — counts only the user-facing rows (refund records
+        // are collapsed into their parent so they don't double-count here).
+        TotalTransactions = _allPayments.Count(p => !p.IsRefund);
 
         // Pending payments
-        PendingPayments = _allPayments.Count(p => GetPaymentStatus(p) == "Pending");
+        PendingPayments = _allPayments.Count(p => !p.IsRefund && GetPaymentStatus(p) == "Pending");
 
-        // Refunded payments
-        RefundedPayments = _allPayments.Count(p => GetPaymentStatus(p) == "Refunded");
+        // Refunded count = parent payments that have at least one refund
+        // tied to them, not the count of refund records themselves.
+        var refundedParentIds = _allPayments
+            .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.RefundedFromPaymentId))
+            .Select(p => p.RefundedFromPaymentId)
+            .Distinct();
+        RefundedPayments = refundedParentIds.Count();
     }
 
     /// <summary>
@@ -611,7 +620,14 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private void FilterPayments()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        IEnumerable<Payment> filtered = _allPayments;
+        // Hide refund Payment rows from the list — they're collapsed into the
+        // original payment's row (status badge + net amount). The refund record
+        // itself stays in CompanyData so audit trail is intact.
+        // Backstop on negative amount too: any negative-amount Payment is a
+        // refund regardless of whether the IsRefund flag was set when the row
+        // was first synced (older rows may have been written before the flag
+        // was honored end-to-end).
+        IEnumerable<Payment> filtered = _allPayments.Where(p => !p.IsRefund && p.Amount >= 0);
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
@@ -675,7 +691,27 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var displayItems = filtered.Select(payment =>
         {
             var customer = companyData?.GetCustomer(payment.CustomerId);
-            var status = GetPaymentStatus(payment);
+            var refunded = RefundAggregator.GetRefundedForPayment(payment, _allPayments);
+
+            string status;
+            if (refunded > 0)
+            {
+                // Compare against the invoice's nominal Total (not the gross
+                // payment amount, which now includes any processing fee the
+                // customer absorbed). A full invoice-base refund covers the
+                // invoice; the unrefunded fee shouldn't make this read as
+                // "partially refunded". Falls back to payment.Amount when
+                // there's no linked invoice (manual payments, edge cases).
+                var linkedInvoice = !string.IsNullOrEmpty(payment.InvoiceId)
+                    ? companyData?.Invoices.FirstOrDefault(i => i.Id == payment.InvoiceId)
+                    : null;
+                var refundCeiling = linkedInvoice?.Total ?? payment.Amount;
+                status = refunded + 0.01m >= refundCeiling ? "Refunded" : "Partially Refunded";
+            }
+            else
+            {
+                status = GetPaymentStatus(payment);
+            }
 
             return new PaymentDisplayItem
             {
@@ -686,7 +722,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
                 PaymentMethod = payment.PaymentMethod,
-                PaymentMethodDisplay = payment.Source == "Online"
+                PaymentMethodDisplay = payment.Source == PaymentSource.Online
                     ? $"Payment Portal - {payment.PaymentMethod.GetDisplayName()}"
                     : payment.PaymentMethod.GetDisplayName(),
                 Amount = payment.Amount,
@@ -695,7 +731,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes,
-                IsFromPortal = payment.Source == "Online",
+                IsFromPortal = payment.Source == PaymentSource.Online,
                 IsHighlighted = payment.Id == HighlightTransactionId
             };
         }).ToList();
@@ -781,6 +817,17 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Opens the read-only invoice preview for the payment's linked invoice.
+    /// Mirrors the Revenue page's Invoice column hyperlink.
+    /// </summary>
+    [RelayCommand]
+    private void ViewInvoice(string? invoiceId)
+    {
+        if (string.IsNullOrEmpty(invoiceId)) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(invoiceId);
+    }
+
+    /// <summary>
     /// Opens the delete confirmation dialog.
     /// </summary>
     [RelayCommand]
@@ -810,10 +857,18 @@ public partial class PaymentDisplayItem : ObservableObject
     private string _id = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInvoiceId))]
     private string _invoiceId = string.Empty;
 
     [ObservableProperty]
     private string _invoiceDisplay = string.Empty;
+
+    /// <summary>
+    /// True when this payment has a linked invoice — drives the Invoice
+    /// column's hyperlink visibility. Manual payments without an invoice
+    /// fall back to a "-" placeholder.
+    /// </summary>
+    public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
 
     [ObservableProperty]
     private string _customerId = string.Empty;

@@ -296,20 +296,55 @@ public class PaymentPortalService : IDisposable
     }
 
     /// <summary>
+    /// Result of <see cref="ProcessSyncedPayments"/>. <c>NewPayments</c> holds
+    /// rows that were freshly created (the historical return value).
+    /// <c>BackfilledRows</c> counts existing rows whose fields were updated
+    /// in-place because a newer release added a column the original sync
+    /// didn't populate (currently <c>ProviderPaymentId</c> and
+    /// <c>ProcessingFee</c>). Callers should persist when either is &gt; 0.
+    /// </summary>
+    public sealed record PortalPaymentSyncResult(List<Payment> NewPayments, int BackfilledRows);
+
+    /// <summary>
     /// Processes synced payment records into local Payment objects and updates invoice balances.
     /// </summary>
-    public static List<Payment> ProcessSyncedPayments(
+    public static PortalPaymentSyncResult ProcessSyncedPayments(
         List<PortalPaymentRecord> portalPayments,
         CompanyData companyData)
     {
         var newPayments = new List<Payment>();
+        var backfilledRows = 0;
 
         foreach (var portalPayment in portalPayments)
         {
-            // Skip if we already have this portal payment (duplicate prevention)
-            var alreadySynced = companyData.Payments.Any(p =>
+            // Skip if we already have this portal payment (duplicate prevention).
+            // BUT first backfill any new fields the local row is missing so the
+            // refund feature works for payments that were synced before this
+            // release — without re-creating duplicate rows.
+            var existing = companyData.Payments.FirstOrDefault(p =>
                 p.PortalPaymentId == portalPayment.Id.ToString());
-            if (alreadySynced) continue;
+            if (existing != null)
+            {
+                var rowBackfilled = false;
+                if (string.IsNullOrEmpty(existing.ProviderPaymentId)
+                    && !string.IsNullOrEmpty(portalPayment.ProviderPaymentId))
+                {
+                    existing.ProviderPaymentId = portalPayment.ProviderPaymentId;
+                    rowBackfilled = true;
+                }
+                // ProcessingFee was added after some users had already synced.
+                // Only fill when the local row is missing the value — never
+                // override a non-zero local fee with a server-side zero (the
+                // server can legitimately report zero, but if we already have
+                // a non-zero local value something earlier captured it).
+                if (existing.ProcessingFee == 0m && portalPayment.ProcessingFee > 0m)
+                {
+                    existing.ProcessingFee = portalPayment.ProcessingFee;
+                    rowBackfilled = true;
+                }
+                if (rowBackfilled) backfilledRows++;
+                continue;
+            }
 
             // Find the matching invoice
             var invoice = companyData.GetInvoice(portalPayment.InvoiceId);
@@ -338,8 +373,91 @@ public class PaymentPortalService : IDisposable
             companyData.IdCounters.Payment = nextId;
             var paymentId = $"PAY-{DateTime.UtcNow:yyyy}-{nextId:D5}";
 
-            // The invoice amount is the total charged minus any processing fee
-            var invoiceAmount = Math.Max(0m, portalPayment.Amount - portalPayment.ProcessingFee);
+            Payment payment;
+
+            if (portalPayment.IsRefund)
+            {
+                // ----- Refund row -----
+                // The server's amount is already negative for refund rows. Find the
+                // local Payment that this refund offsets via ProviderPaymentId,
+                // which the original payment carries from sync.
+                string? refundedFromLocalId = null;
+                if (!string.IsNullOrEmpty(portalPayment.RefundedProviderPaymentId))
+                {
+                    refundedFromLocalId = companyData.Payments
+                        .FirstOrDefault(p => !p.IsRefund
+                                          && !string.IsNullOrEmpty(p.ProviderPaymentId)
+                                          && p.ProviderPaymentId == portalPayment.RefundedProviderPaymentId)
+                        ?.Id;
+                }
+
+                payment = new Payment
+                {
+                    Id = paymentId,
+                    InvoiceId = portalPayment.InvoiceId,
+                    CustomerId = invoice.CustomerId,
+                    Date = portalPayment.CreatedAt,
+                    Amount = portalPayment.Amount, // already negative
+                    PaymentMethod = method,
+                    ReferenceNumber = portalPayment.ReferenceNumber,
+                    Notes = string.IsNullOrEmpty(portalPayment.RefundReason)
+                        ? $"Refund issued via {providerName}"
+                        : $"Refund issued via {providerName} — {portalPayment.RefundReason}",
+                    CreatedAt = DateTime.UtcNow,
+                    OriginalCurrency = portalPayment.Currency,
+                    AmountUSD = portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase)
+                        ? portalPayment.Amount
+                        : (invoice.TotalUSD > 0 && invoice.Total > 0
+                            ? Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2)
+                            : 0m),
+                    Source = PaymentSource.Online,
+                    PortalPaymentId = portalPayment.Id.ToString(),
+                    IsRefund = true,
+                    RefundedFromPaymentId = refundedFromLocalId,
+                    RefundRequestId = portalPayment.RefundRequestId?.ToString(),
+                    RefundReason = portalPayment.RefundReason,
+                };
+
+                companyData.Payments.Add(payment);
+                newPayments.Add(payment);
+
+                // Recalc invoice totals + status from the full Payments list.
+                // Status only flips to Refunded / PartiallyRefunded when
+                // AmountPaid is also > 0 — see InvoiceTotalsService.
+                InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
+
+                // Mirror the linked-Revenue update the regular-payment path
+                // does, so a fully-refunded invoice doesn't keep showing as
+                // collected revenue in cash-basis aggregations.
+                var refundLinkedRevenues = companyData.Revenues
+                    .Where(r => r.InvoiceId == invoice.Id);
+                foreach (var revenue in refundLinkedRevenues)
+                {
+                    revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid
+                        ? RevenuePaymentStatus.Paid
+                        : RevenuePaymentStatus.Unpaid;
+                }
+
+                invoice.History.Add(new InvoiceHistoryEntry
+                {
+                    Action = "Refund Issued",
+                    Details = string.IsNullOrEmpty(portalPayment.RefundReason)
+                        ? $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName}"
+                        : $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName} — \"{portalPayment.RefundReason}\"",
+                    Timestamp = DateTime.UtcNow
+                });
+
+                invoice.UpdatedAt = DateTime.UtcNow;
+                continue;
+            }
+
+            // ----- Regular payment row (existing logic) -----
+            // Use the gross amount the customer was actually charged on the
+            // portal (invoice balance + processing fee). This matches both
+            // the customer's email/portal display and what arrived on the
+            // Stripe/PayPal/Square charge — so the Payments page totals line
+            // up with what the merchant sees in their provider dashboard.
+            var invoiceAmount = Math.Max(0m, portalPayment.Amount);
 
             // Convert non-USD payment amount to USD using the invoice's conversion ratio
             decimal amountUSD;
@@ -363,7 +481,7 @@ public class PaymentPortalService : IDisposable
                 ? $"Online payment via {providerName} (processing fee: {portalPayment.Currency} {portalPayment.ProcessingFee:N2})"
                 : $"Online payment via {providerName}";
 
-            var payment = new Payment
+            payment = new Payment
             {
                 Id = paymentId,
                 InvoiceId = portalPayment.InvoiceId,
@@ -376,68 +494,33 @@ public class PaymentPortalService : IDisposable
                 CreatedAt = DateTime.UtcNow,
                 OriginalCurrency = portalPayment.Currency,
                 AmountUSD = amountUSD,
-                Source = "Online",
-                PortalPaymentId = portalPayment.Id.ToString()
+                Source = PaymentSource.Online,
+                PortalPaymentId = portalPayment.Id.ToString(),
+                ProviderPaymentId = portalPayment.ProviderPaymentId,
+                ProcessingFee = portalPayment.ProcessingFee,
             };
 
             // Add to company data
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
 
-            // Update invoice balance using USD-normalized amounts to avoid currency mixing
-            var totalPaidUSD = companyData.Payments
-                .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0)
-                .Sum(p => p.EffectiveAmountUSD);
-
-            // Also track original-currency paid for display
-            // Normalize currency comparison: treat null/empty as "USD" and compare case-insensitively
-            var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency;
-            var totalPaidOriginal = companyData.Payments
-                .Where(p => p.InvoiceId == invoice.Id && p.Amount > 0
-                    && string.Equals(
-                        string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
-                        invoiceCurrency,
-                        StringComparison.OrdinalIgnoreCase))
-                .Sum(p => p.Amount);
-
-            invoice.AmountPaid = totalPaidOriginal;
-            invoice.Balance = Math.Max(0, invoice.Total - totalPaidOriginal);
-
-            // Keep USD fields in sync
-            if (invoice.TotalUSD > 0)
-            {
-                invoice.BalanceUSD = Math.Max(0, invoice.TotalUSD - totalPaidUSD);
-            }
-
-            if (invoice.Balance <= 0)
-            {
-                invoice.Status = InvoiceStatus.Paid;
-            }
-            else if (totalPaidOriginal > 0)
-            {
-                invoice.Status = InvoiceStatus.Partial;
-            }
+            // Recalc invoice totals + status from the full Payments list.
+            InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
             // Update linked revenue records
             var linkedRevenues = companyData.Revenues
                 .Where(r => r.InvoiceId == invoice.Id);
             foreach (var revenue in linkedRevenues)
             {
-                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid ? "Paid" : "Unpaid";
+                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid
+                    ? RevenuePaymentStatus.Paid
+                    : RevenuePaymentStatus.Unpaid;
             }
-
-            // Add history entry
-            invoice.History.Add(new InvoiceHistoryEntry
-            {
-                Action = "Payment Received",
-                Details = $"Online payment of {portalPayment.Currency} {portalPayment.Amount:N2} received via {providerName}",
-                Timestamp = DateTime.UtcNow
-            });
 
             invoice.UpdatedAt = DateTime.UtcNow;
         }
 
-        return newPayments;
+        return new PortalPaymentSyncResult(newPayments, backfilledRows);
     }
 
     #endregion

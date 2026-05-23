@@ -97,8 +97,8 @@ public class ReportEnumsTests
     }
 
     [Theory]
-    [InlineData(ChartDataType.TotalRevenue, "Revenue Trends")]
-    [InlineData(ChartDataType.TotalExpenses, "Expense Trends")]
+    [InlineData(ChartDataType.TotalRevenue, "Total Revenue")]
+    [InlineData(ChartDataType.TotalExpenses, "Total Expenses")]
     [InlineData(ChartDataType.RevenueVsExpenses, "Expenses vs Revenue")]
     public void ChartDataType_GetDisplayName_ReturnsExpectedString(ChartDataType type, string expected)
     {

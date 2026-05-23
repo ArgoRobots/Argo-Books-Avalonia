@@ -1,6 +1,8 @@
 # Payment Portal
 
-Argo Books includes an online payment portal that allows customers to view and pay invoices through Stripe, PayPal, or Square.
+Argo Books includes an online payment portal that allows customers to view and pay invoices through Stripe or Square.
+
+> **PayPal is not currently supported in the payment portal.** PayPal's "Log in with PayPal" OAuth flow refuses to onboard Business merchants, and proper onboarding requires PayPal Partner Referrals API which is gated behind Platforms & Marketplaces partner enrollment. The PayPal Connect option is hidden in Settings until that's in place. SaaS subscription billing (the merchant paying Argo Books for Premium) is unaffected — that's a separate PayPal flow that still works.
 
 ## Overview
 
@@ -24,8 +26,8 @@ Register your company with the portal to enable online invoicing and payments.
 Connect payment providers via OAuth to accept online payments.
 
 - **Stripe** - Credit and debit card payments
-- **PayPal** - PayPal account payments
 - **Square** - Square account payments
+- **PayPal** - Not currently supported (see note at top of this document)
 
 ### Provider Connection Flow
 
@@ -66,5 +68,5 @@ Online payments are automatically synced back to the local company file.
 | **Auto-Sync Interval** | Frequency of payment sync (default: 5 minutes) |
 | **Payment Notifications** | Toggle notifications for received online payments |
 | **Portal URL** | Customer-facing portal URL |
-| **Connected Accounts** | Manage Stripe, PayPal, Square connections |
+| **Connected Accounts** | Manage Stripe and Square connections (PayPal currently unavailable) |
 | **Company Logo** | Upload or remove company logo displayed on portal |

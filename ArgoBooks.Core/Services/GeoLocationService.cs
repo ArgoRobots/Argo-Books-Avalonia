@@ -19,9 +19,11 @@ public class GeoLocationService : IGeoLocationService
 
     private readonly HttpClient _httpClient;
     private readonly IErrorLogger? _errorLogger;
+    private readonly object _inFlightLock = new();
 
     private GeoLocationData? _cachedData;
     private DateTime _cacheTime = DateTime.MinValue;
+    private Task<GeoLocationData>? _inFlightLookup;
 
     /// <summary>
     /// Initializes a new instance of the GeoLocationService.
@@ -33,33 +35,79 @@ public class GeoLocationService : IGeoLocationService
     }
 
     /// <inheritdoc />
-    public async Task<GeoLocationData> GetLocationAsync(CancellationToken cancellationToken = default)
+    public Task<GeoLocationData> GetLocationAsync(CancellationToken cancellationToken = default)
     {
         // Return cached data if still valid
         if (_cachedData != null && DateTime.UtcNow - _cacheTime < CacheDuration)
         {
-            return _cachedData;
+            return Task.FromResult(_cachedData);
         }
 
-        var locationData = new GeoLocationData();
-
-        // Try HTTPS APIs first, fall back to HTTP-only ip-api.com last
-        _ = await TryIpApiCoAsync(locationData, cancellationToken) ||
-            await TryIpInfoAsync(locationData, cancellationToken) ||
-            await TryIpApiAsync(locationData, cancellationToken);
-
-        // Get and hash IP address
-        var ip = await GetIpAddressAsync(cancellationToken);
-        if (!string.IsNullOrEmpty(ip))
+        // Single-flight: if a lookup is already running, return its task instead of
+        // hitting the upstream APIs again. ipapi.co rate-limits aggressively (429) and
+        // concurrent callers were each tripping the limit independently.
+        Task<GeoLocationData> lookupTask;
+        lock (_inFlightLock)
         {
-            locationData.HashedIp = HashIpAddress(ip);
+            if (_cachedData != null && DateTime.UtcNow - _cacheTime < CacheDuration)
+            {
+                return Task.FromResult(_cachedData);
+            }
+            if (_inFlightLookup != null)
+            {
+                lookupTask = _inFlightLookup;
+            }
+            else
+            {
+                // Run the shared lookup with CancellationToken.None so one caller
+                // cancelling their await cannot poison the result for every other
+                // caller waiting on the same in-flight task. Individual callers still
+                // honor their own token via WaitAsync below.
+                _inFlightLookup = LookupAsync();
+                lookupTask = _inFlightLookup;
+            }
         }
 
-        // Cache the result
-        _cachedData = locationData;
-        _cacheTime = DateTime.UtcNow;
+        return lookupTask.WaitAsync(cancellationToken);
+    }
 
-        return locationData;
+    private async Task<GeoLocationData> LookupAsync()
+    {
+        try
+        {
+            var locationData = new GeoLocationData();
+
+            // Try HTTPS APIs first, fall back to HTTP-only ip-api.com last
+            var gotLocation = await TryIpApiCoAsync(locationData, CancellationToken.None) ||
+                              await TryIpInfoAsync(locationData, CancellationToken.None) ||
+                              await TryIpApiAsync(locationData, CancellationToken.None);
+
+            // Get and hash IP address
+            var ip = await GetIpAddressAsync(CancellationToken.None);
+            if (!string.IsNullOrEmpty(ip))
+            {
+                locationData.HashedIp = HashIpAddress(ip);
+            }
+
+            // Only cache when we actually got location data. The Try*Async methods
+            // swallow all exceptions (including OperationCanceledException) and return
+            // false, so without this guard a transient failure would pin an all-Unknown
+            // result for the full cache duration.
+            if (gotLocation)
+            {
+                _cachedData = locationData;
+                _cacheTime = DateTime.UtcNow;
+            }
+
+            return locationData;
+        }
+        finally
+        {
+            lock (_inFlightLock)
+            {
+                _inFlightLookup = null;
+            }
+        }
     }
 
     /// <inheritdoc />

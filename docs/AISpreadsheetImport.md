@@ -1,4 +1,4 @@
-# Document AI Import
+# AI Spreadsheet Import
 
 Argo Books uses AI-powered analysis to import data from spreadsheets. The system automatically detects entity types, maps columns to the Argo Books schema, and handles complex data transformations. Users can import any spreadsheet in any format, in just a few clicks.
 
@@ -21,7 +21,7 @@ The import follows a five-step pipeline: analyze, review, validate, import, and 
 
 ![AI Analysis Flow](diagrams/ai-spreadsheet-import/analysis-flow.svg)
 
-The `SpreadsheetAnalysisService` reads the file and sends a summary to the OpenAI API for analysis.
+The `SpreadsheetAnalysisService` reads the file and sends a summary to the Gemini API (via the argorobots.com server proxy) for analysis.
 
 **Sampling strategy** — For large files, the service sends a representative sample to the LLM rather than all rows:
 - First 5 rows

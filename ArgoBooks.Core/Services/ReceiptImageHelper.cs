@@ -224,6 +224,85 @@ public static class ReceiptImageHelper
         return encoded.ToArray();
     }
 
+    /// <summary>
+    /// Loads an image from disk, downscales it to fit within <paramref name="maxDimension"/>
+    /// preserving aspect ratio, and writes it as PNG to <paramref name="destPath"/>.
+    /// PNG is used (lossless) so logos with text and small icons stay crisp at avatar sizes.
+    /// Returns false if the source could not be decoded.
+    /// </summary>
+    public static bool ResizeAndSaveAsPng(string sourcePath, string destPath, int maxDimension)
+    {
+        // Read the EXIF origin via SKCodec, then decode pixels separately from the path.
+        // Phone JPEGs encode rotation in EXIF rather than re-encoding the pixels, so
+        // portrait photos would otherwise end up sideways at the avatar size.
+        SKEncodedOrigin origin;
+        using (var orientationStream = File.OpenRead(sourcePath))
+        using (var codec = SKCodec.Create(orientationStream))
+        {
+            if (codec == null)
+                return false;
+            origin = codec.EncodedOrigin;
+        }
+
+        using var bitmap = SKBitmap.Decode(sourcePath);
+        return WriteResizedPng(bitmap, origin, destPath, maxDimension);
+    }
+
+    /// <summary>
+    /// Bytes-based variant of <see cref="ResizeAndSaveAsPng(string,string,int)"/> for callers
+    /// that already have the source image in memory (e.g. a downloaded favicon). Handles
+    /// .ico, .png, .jpg, and other Skia-supported formats.
+    /// </summary>
+    public static bool ResizeBytesAndSaveAsPng(byte[] sourceBytes, string destPath, int maxDimension)
+    {
+        if (sourceBytes == null || sourceBytes.Length == 0)
+            return false;
+
+        SKEncodedOrigin origin = SKEncodedOrigin.TopLeft;
+        using (var stream = new MemoryStream(sourceBytes, writable: false))
+        using (var codec = SKCodec.Create(stream))
+        {
+            if (codec != null)
+                origin = codec.EncodedOrigin;
+        }
+
+        using var bitmap = SKBitmap.Decode(sourceBytes);
+        return WriteResizedPng(bitmap, origin, destPath, maxDimension);
+    }
+
+    private static bool WriteResizedPng(SKBitmap? bitmap, SKEncodedOrigin origin, string destPath, int maxDimension)
+    {
+        if (bitmap == null)
+            return false;
+
+        var swapDims = origin is SKEncodedOrigin.LeftBottom or SKEncodedOrigin.RightTop
+            or SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightBottom;
+        var orientedWidth = swapDims ? bitmap.Height : bitmap.Width;
+        var orientedHeight = swapDims ? bitmap.Width : bitmap.Height;
+
+        var scale = Math.Min(
+            (float)maxDimension / orientedWidth,
+            (float)maxDimension / orientedHeight);
+        if (scale > 1f)
+            scale = 1f;
+
+        var targetWidth = Math.Max(1, (int)(orientedWidth * scale));
+        var targetHeight = Math.Max(1, (int)(orientedHeight * scale));
+
+        using var surface = SKSurface.Create(new SKImageInfo(targetWidth, targetHeight));
+        var canvas = surface.Canvas;
+        canvas.Scale(scale, scale);
+        ApplyExifTransform(canvas, origin, bitmap.Width, bitmap.Height, orientedWidth, orientedHeight);
+        canvas.DrawBitmap(bitmap, 0, 0);
+
+        using var image = surface.Snapshot();
+        using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+        using var stream = File.Create(destPath);
+        encoded.SaveTo(stream);
+
+        return true;
+    }
+
     internal static byte[] EncodeAsJpeg(SKBitmap bitmap, int quality)
     {
         using var image = SKImage.FromBitmap(bitmap);

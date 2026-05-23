@@ -79,7 +79,7 @@ public partial class TutorialCompletionOverlayViewModel : ObservableObject
         switch (type)
         {
             case CompletionGuidanceType.Analytics:
-                Title = LanguageService.Instance.Translate("You're all set!");
+                Title = LanguageService.Instance.Translate("You're All Set!");
                 Message = LanguageService.Instance.Translate("As you add expenses, revenue, and other data, these charts will automatically update to reflect your business performance. Head back to the Dashboard to complete the tutorial.");
                 break;
             case CompletionGuidanceType.Standard:

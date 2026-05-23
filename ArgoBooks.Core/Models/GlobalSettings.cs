@@ -13,7 +13,6 @@ public class GlobalSettings
     public UpdateSettings Updates { get; set; } = new();
     public UiSettings Ui { get; set; } = new();
     public LicenseSettings License { get; set; } = new();
-    public PrivacySettings Privacy { get; set; } = new();
     public WindowStateSettings? WindowState { get; set; }
     public ReportExportSettings ReportExport { get; set; } = new();
     public TutorialSettings Tutorial { get; set; } = new();
@@ -38,6 +37,13 @@ public class UiSettings
     public string Theme { get; set; } = "Dark";
     public string AccentColor { get; set; } = "Blue";
     public string Language { get; set; } = "English";
+
+    /// <summary>
+    /// App version that last refreshed cached translation files. When this differs from
+    /// the running version, cached translations are re-downloaded so users on the new
+    /// version get the latest translations.
+    /// </summary>
+    public string? LastLanguageVersion { get; set; }
     /// <summary>
     /// User's preferred timezone for displaying times. Defaults to UTC.
     /// Uses system timezone identifiers.
@@ -164,12 +170,6 @@ public class LicenseSettings
     /// Last license validation date.
     /// </summary>
     public DateTime? LastValidationDate { get; set; }
-}
-
-public class PrivacySettings
-{
-    public bool AnonymousDataCollectionConsent { get; set; } = true;
-    public DateTime? ConsentDate { get; set; }
 }
 
 public class ReportExportSettings

@@ -108,7 +108,6 @@ public static class AppColors
     public const string NearWhite = "#F8F9FA";
 
     // ── Chart-specific colors ───────────────────────────────────────
-    public const string ChartBar = "#6495ED";
     public const string ChartAxis = "#374151";
     public const string ChartGrid = "#E5E7EB";
     public const string ExpenseRed = "#EF4444";

@@ -124,8 +124,8 @@
         <!-- Notification Toast Popup -->
         <Border x:Name="NotificationToastBorder"
                 IsHitTestVisible="{Binding HeaderViewModel.ShowNotificationToast}"
-                Background="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBackgroundBrush}, FallbackValue=Transparent, TargetNullValue=Transparent}"
-                BorderBrush="{Binding HeaderViewModel.ToastNotification.Type, Converter={x:Static vm:NotificationTypeConverters.TypeToBrush}, FallbackValue=Transparent, TargetNullValue=Transparent}"
+                Background="{Binding HeaderViewModel.ToastBackgroundBrush}"
+                BorderBrush="{Binding HeaderViewModel.ToastBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Width="320"
@@ -148,12 +148,12 @@
                   DataContext="{Binding HeaderViewModel}">
                 <!-- Content -->
                 <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ToastNotification.Title, FallbackValue=''}"
+                    <TextBlock Text="{Binding ToastTitle}"
                                FontSize="13"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimaryBrush}"
                                TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding ToastNotification.Message, FallbackValue=''}"
+                    <TextBlock Text="{Binding ToastMessage}"
                                FontSize="12"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                TextWrapping="Wrap"
@@ -173,7 +173,7 @@
                         ToolTip.Tip="Dismiss">
                     <PathIcon Data="{x:Static icons:Icons.Close}"
                               Width="14" Height="14"
-                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                              Foreground="White" />
                 </Button>
             </Grid>
         </Border>
@@ -238,12 +238,14 @@
 
         <!-- Mid-level modals (may open entity creation modals on top) -->
         <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
+        <modals:RefundModals DataContext="{Binding RefundModalsViewModel}" />
         <modals:InvoiceTemplateDesignerModal DataContext="{Binding InvoiceTemplateDesignerViewModel}" />
         <modals:ExpenseModals DataContext="{Binding ExpenseModalsViewModel}" />
         <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />
         <modals:PurchaseOrdersModals DataContext="{Binding PurchaseOrdersModalsViewModel}" />
         <modals:StockLevelsModals DataContext="{Binding StockLevelsModalsViewModel}" />
         <modals:RentalInventoryModals DataContext="{Binding RentalInventoryModalsViewModel}" />
+        <modals:RentalAvailabilityModal DataContext="{Binding RentalAvailabilityModalViewModel}" />
 
         <!-- Entity creation modals (top layer, opened from other modals) -->
         <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />

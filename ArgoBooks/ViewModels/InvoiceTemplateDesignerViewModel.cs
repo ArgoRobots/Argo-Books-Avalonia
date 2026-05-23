@@ -4,6 +4,7 @@ using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -47,6 +48,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isDeleteConfirmOpen;
+
+    [ObservableProperty]
+    private bool _isProcessingFeeInfoOpen;
 
     [ObservableProperty]
     private string _modalTitle = "Create Invoice Template";
@@ -342,6 +346,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ModalTitle = "Invoice Templates".Translate();
         IsOpen = true;
         IsPreviewVisible = false;
+        _undoRedoManager.Clear();
     }
 
     private void LoadSavedTemplates()
@@ -387,6 +392,24 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         TemplateToDelete = string.Empty;
     }
 
+    private bool _previewWasVisibleBeforeInfo;
+
+    [RelayCommand]
+    private void OpenProcessingFeeInfo()
+    {
+        _previewWasVisibleBeforeInfo = IsPreviewVisible;
+        IsPreviewVisible = false;
+        IsProcessingFeeInfoOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseProcessingFeeInfo()
+    {
+        IsProcessingFeeInfoOpen = false;
+        if (_previewWasVisibleBeforeInfo)
+            IsPreviewVisible = true;
+    }
+
     [RelayCommand]
     private void ConfirmDeleteTemplate()
     {
@@ -406,12 +429,14 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 {
                     companyData.InvoiceTemplates.Add(deletedTemplate);
                     App.CompanyManager?.MarkAsChanged();
+                    LoadSavedTemplates();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
                     companyData.InvoiceTemplates.Remove(deletedTemplate);
                     App.CompanyManager?.MarkAsChanged();
+                    LoadSavedTemplates();
                     TemplateSaved?.Invoke(this, EventArgs.Empty);
                 }));
 
@@ -504,6 +529,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         IsPreviewVisible = false;
         IsTemplateListMode = false;
         IsDeleteConfirmOpen = false;
+        IsProcessingFeeInfoOpen = false;
         IsOpen = false;
         IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
@@ -1007,8 +1033,25 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
                 description, $"template:{callerName}", setter, oldValue, newValue));
     }
 
+    private DispatcherTimer? _previewDebounceTimer;
+    private static readonly TimeSpan PreviewDebounceInterval = TimeSpan.FromMilliseconds(300);
+
     private void UpdatePreview()
     {
+        // Debounce re-renders so rapid edits (e.g. fast typing) don't trigger
+        // a NavigateToString flash on every keystroke.
+        if (_previewDebounceTimer == null)
+        {
+            _previewDebounceTimer = new DispatcherTimer { Interval = PreviewDebounceInterval };
+            _previewDebounceTimer.Tick += OnPreviewDebounceTick;
+        }
+        _previewDebounceTimer.Stop();
+        _previewDebounceTimer.Start();
+    }
+
+    private void OnPreviewDebounceTick(object? sender, EventArgs e)
+    {
+        _previewDebounceTimer?.Stop();
         var template = BuildTemplateFromForm();
         var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
         PreviewHtml = _emailService.RenderTemplatePreview(template, companySettings, LockAspectRatio);

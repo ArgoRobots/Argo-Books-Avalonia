@@ -86,6 +86,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     public bool IsLossesTabSelected => SelectedTabIndex == 7;
 
+    /// <summary>
+    /// Gets whether the Refunds tab is selected.
+    /// </summary>
+    public bool IsRefundsTabSelected => SelectedTabIndex == 8;
+
     partial void OnSelectedTabIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsDashboardTabSelected));
@@ -96,6 +101,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         OnPropertyChanged(nameof(IsReturnsTabSelected));
         OnPropertyChanged(nameof(IsLossesTabSelected));
         OnPropertyChanged(nameof(IsTaxesTabSelected));
+        OnPropertyChanged(nameof(IsRefundsTabSelected));
+
+        if (IsRefundsTabSelected) RefreshRefundMetrics();
     }
 
     #endregion
@@ -270,8 +278,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         App.CustomDateRangeModal?.Open(modalStartDate, EndDate,
             onApply: (start, end) =>
             {
-                StartDate = start;
-                EndDate = end;
+                StartDate = start.Date;
+                // Inclusive end-of-day so transactions stored later in the
+                // user's day (or with a UTC timestamp ahead of local time)
+                // aren't filtered out of stat-card aggregations.
+                EndDate = end.Date.AddDays(1).AddTicks(-1);
                 HasAppliedCustomRange = true;
                 OnPropertyChanged(nameof(AppliedDateRangeText));
                 OnPropertyChanged(nameof(DateRangeDisplayText));
@@ -1458,7 +1469,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
             if (isoData.Count == 0) return;
 
-            var displayData = ChartLoaderService.ConvertGeoMapDataForExport(isoData);
+            var displayData = CountryCodeMapping.ConvertGeoMapDataForExport(isoData);
             var mapTitle = IsMapModeOrigin ? "Countries of Origin" : "Countries of Destination";
 
             ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
@@ -2082,15 +2093,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadDashboardStatistics(CompanyData data)
     {
-        // Filter transactions by date range
-        var purchases = data.Expenses.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList();
-        var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
-
-        // Calculate totals (pre-tax, USD-normalized to match dashboard)
-        var totalPurchasesUSD = purchases.Sum(p => p.EffectiveSubtotalUSD);
-        var totalRevenueUSD = sales.Sum(s => s.EffectiveSubtotalUSD);
-        var netProfitUSD = totalRevenueUSD - totalPurchasesUSD;
-        var margin = totalRevenueUSD > 0 ? (netProfitUSD / totalRevenueUSD) * 100 : 0;
+        // Revenue stat uses gross-of-tax (Total) per Calculations.md §2 Rule 1,
+        // refunds subtracted at full amount. Profit/margin use pre-tax revenue
+        // and refunds subtracted at pre-tax portion (handled in ProfitCalculator).
+        var totalPurchasesUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, StartDate, EndDate);
+        var grossRevenueUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, StartDate, EndDate);
+        var refundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, StartDate, EndDate);
+        var totalRevenueUSD = grossRevenueUSD - refundsUSD;
+        var totalRevenuePreTaxUSD = RevenueAggregator.SumCollectedRevenuePreTaxUSD(data.Revenues, StartDate, EndDate);
+        var netProfitUSD = ProfitCalculator.CalculateNetProfitUSD(data, StartDate, EndDate);
+        var margin = totalRevenuePreTaxUSD > 0 ? (netProfitUSD / totalRevenuePreTaxUSD) * 100 : 0;
 
         // Calculate previous period for comparison (guard against overflow for very large date ranges like "All Time")
         var periodLength = EndDate - StartDate;
@@ -2099,10 +2111,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             : DateTime.MinValue;
         var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
 
-        var prevPurchasesUSD = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).Sum(p => p.EffectiveSubtotalUSD);
-        var prevSalesUSD = data.Revenues.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).Sum(s => s.EffectiveSubtotalUSD);
-        var prevNetProfit = prevSalesUSD - prevPurchasesUSD;
-        var prevMargin = prevSalesUSD > 0 ? (prevNetProfit / prevSalesUSD) * 100 : 0;
+        var prevPurchasesUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, prevStartDate, prevEndDate);
+        var prevGrossRevenueUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, prevStartDate, prevEndDate);
+        var prevRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, prevStartDate, prevEndDate);
+        var prevSalesUSD = prevGrossRevenueUSD - prevRefundsUSD;
+        var prevSalesPreTaxUSD = RevenueAggregator.SumCollectedRevenuePreTaxUSD(data.Revenues, prevStartDate, prevEndDate);
+        var prevNetProfit = ProfitCalculator.CalculateNetProfitUSD(data, prevStartDate, prevEndDate);
+        var prevMargin = prevSalesPreTaxUSD > 0 ? (prevNetProfit / prevSalesPreTaxUSD) * 100 : 0;
 
         // Check if there's any previous period data to compare against
         var hasPrevPeriodData = prevPurchasesUSD > 0 || prevSalesUSD > 0;
@@ -2172,12 +2187,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadPerformanceStatistics(CompanyData data)
     {
-        // Filter transactions by date range
-        var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
+        // Filter transactions by date range; revenues are paid-only so
+        // unpaid invoices don't pad avg-transaction-value / growth stats.
+        var sales = data.Revenues
+            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
+            .Where(RevenueAggregator.IsCollected)
+            .ToList();
         var purchases = data.Expenses.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList();
 
         var totalTransactionsCount = sales.Count + purchases.Count;
-        var allTransactionValues = sales.Select(s => s.EffectiveSubtotalUSD).Concat(purchases.Select(p => p.EffectiveSubtotalUSD)).ToList();
+        var allTransactionValues = sales.Select(s => s.EffectiveTotalUSD).Concat(purchases.Select(p => p.EffectiveTotalUSD)).ToList();
         var avgTransactionValue = allTransactionValues.Count > 0 ? allTransactionValues.Average() : 0;
 
         // Shipping costs from purchases
@@ -2190,11 +2209,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             : DateTime.MinValue;
         var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
 
-        var prevSales = data.Revenues.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).ToList();
+        var prevSales = data.Revenues
+            .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
+            .Where(RevenueAggregator.IsCollected)
+            .ToList();
         var prevPurchases = data.Expenses.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).ToList();
 
         var prevTotalTransactionsCount = prevSales.Count + prevPurchases.Count;
-        var prevAllTransactionValues = prevSales.Select(s => s.EffectiveSubtotalUSD).Concat(prevPurchases.Select(p => p.EffectiveSubtotalUSD)).ToList();
+        var prevAllTransactionValues = prevSales.Select(s => s.EffectiveTotalUSD).Concat(prevPurchases.Select(p => p.EffectiveTotalUSD)).ToList();
         var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
         var prevAvgShipping = prevPurchases.Count > 0 ? prevPurchases.Average(p => p.ShippingCost) : 0;
 
@@ -2202,8 +2224,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var hasPrevPeriodData = prevTotalTransactionsCount > 0;
 
         // Revenue growth (period over period)
-        var currentRevenueTotal = sales.Sum(s => s.EffectiveSubtotalUSD);
-        var prevRevenueTotal = prevSales.Sum(s => s.EffectiveSubtotalUSD);
+        var currentRevenueTotal = sales.Sum(s => s.EffectiveTotalUSD);
+        var prevRevenueTotal = prevSales.Sum(s => s.EffectiveTotalUSD);
         var revenueGrowthValue = prevRevenueTotal > 0 ? ((currentRevenueTotal - prevRevenueTotal) / prevRevenueTotal) * 100 : 0;
 
         var transactionsChange = prevTotalTransactionsCount > 0 ? ((double)(totalTransactionsCount - prevTotalTransactionsCount) / prevTotalTransactionsCount) * 100 : 0;
@@ -2257,9 +2279,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Retention rate and avg customer value are complex calculations
         // For now, calculate avg customer value based on revenue per customer
-        var sales = data.Revenues.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList();
+        var sales = data.Revenues
+            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
+            .Where(RevenueAggregator.IsCollected)
+            .ToList();
         var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
-        var avgValueUSD = customerIds.Count > 0 ? sales.Sum(s => s.EffectiveSubtotalUSD) / customerIds.Count : 0;
+        var avgValueUSD = customerIds.Count > 0 ? sales.Sum(s => s.EffectiveTotalUSD) / customerIds.Count : 0;
 
         RetentionRate = "N/A";
         RetentionChangeValue = null;
@@ -2452,4 +2477,70 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     }
 
     #endregion
+
+    #region Refunds Tab
+
+    [ObservableProperty] private string _refundsTotal = "0.00";
+    [ObservableProperty] private string _refundsRate = "0.0%";
+    [ObservableProperty] private string _refundsAvgLatency = "—";
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopCustomers = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopProducts = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopReasons = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsChannelBreakdown = new();
+    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsMonthBucket> _refundsMonthlyTotals = new();
+    [ObservableProperty] private bool _hasAnyRefunds;
+
+    /// <summary>
+    /// Refresh the Refunds tab metrics from the company's Payment list.
+    /// Called automatically when the user switches to the Refunds tab.
+    /// </summary>
+    public void RefreshRefundMetrics()
+    {
+        var company = App.CompanyManager?.CompanyData;
+        if (company == null) return;
+
+        var since = DateTime.Today.AddDays(-90);
+        var now = DateTime.Now;
+
+        // RefundAnalyticsService returns USD-normalized amounts so multi-
+        // currency portals roll up consistently; display goes through
+        // CurrencyService.FormatFromUSD per Calculations.md §3.
+        var totalUSD = ArgoBooks.Core.Services.RefundAnalyticsService.TotalRefundedUSD(company, since);
+        var rateDecimal = ArgoBooks.Core.Services.RefundAnalyticsService.RefundRate(company, since);
+        var avgLatency = ArgoBooks.Core.Services.RefundAnalyticsService.AverageRefundLatencyDays(company, since);
+
+        RefundsTotal = CurrencyService.FormatFromUSD(totalUSD, now);
+        RefundsRate = (rateDecimal * 100).ToString("F1") + "%";
+        RefundsAvgLatency = avgLatency > 0 ? $"{avgLatency:F1} days" : "—";
+        HasAnyRefunds = totalUSD > 0;
+
+        RefundsTopCustomers.Clear();
+        foreach (var c in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedCustomers(company, since, 10))
+            RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, CurrencyService.FormatFromUSD(c.AmountUSD, now), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
+
+        RefundsTopProducts.Clear();
+        foreach (var p in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedProducts(company, since, 10))
+            RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, CurrencyService.FormatFromUSD(p.AmountUSD, now), null));
+
+        RefundsTopReasons.Clear();
+        foreach (var r in ArgoBooks.Core.Services.RefundAnalyticsService.TopReasons(company, since, 5))
+            RefundsTopReasons.Add(new RefundsRow(r.Reason, CurrencyService.FormatFromUSD(r.TotalAmountUSD, now), $"{r.Count}"));
+
+        RefundsChannelBreakdown.Clear();
+        foreach (var (channel, amount) in ArgoBooks.Core.Services.RefundAnalyticsService.ChannelBreakdown(company, since)
+                     .OrderByDescending(kv => kv.Value))
+            RefundsChannelBreakdown.Add(new RefundsRow(channel, CurrencyService.FormatFromUSD(amount, now), null));
+
+        RefundsMonthlyTotals.Clear();
+        foreach (var m in ArgoBooks.Core.Services.RefundAnalyticsService.MonthlyTotals(company, 12))
+            RefundsMonthlyTotals.Add(new RefundsMonthBucket(m.Month.ToString("MMM yyyy"), m.AmountUSD));
+    }
+
+    #endregion
 }
+
+/// <summary>Generic display row for the Refunds tab tables.</summary>
+public record RefundsRow(string Label, string Amount, string? Detail);
+
+/// <summary>Monthly bucket for the Refunds-over-time chart.</summary>
+public record RefundsMonthBucket(string MonthLabel, decimal Amount);

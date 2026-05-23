@@ -52,6 +52,21 @@
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                         <Panel>
+                            <!-- Loading Spinner -->
+                            <StackPanel IsVisible="{Binding IsLoadingPlans}"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Spacing="12"
+                                        Margin="48">
+                                <ProgressBar IsIndeterminate="True"
+                                             Width="200"
+                                             HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'Loading plans...'}"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
                             <!-- Offline Message -->
                             <StackPanel IsVisible="{Binding IsOffline}"
                                         VerticalAlignment="Center"
@@ -76,9 +91,33 @@
                                            MaxWidth="360" />
                             </StackPanel>
 
-                            <!-- Plan Cards (hidden when offline) -->
+                            <!-- Load Error Message -->
+                            <StackPanel IsVisible="{Binding HasLoadError}"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Spacing="12"
+                                        Margin="48">
+                                <PathIcon Data="{x:Static local:Icons.LostDamaged}"
+                                          Width="48" Height="48"
+                                          Foreground="{DynamicResource ErrorBrush}"
+                                          HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'Unable to Load Plans'}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'Could not load plan details from the server. Please try again later.'}"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="360" />
+                            </StackPanel>
+
+                            <!-- Plan Cards (only shown when loaded successfully) -->
                             <StackPanel Margin="24" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16"
-                                        IsVisible="{Binding !IsOffline}">
+                                        IsVisible="{Binding ShowPlans}">
                                 <!-- Free Plan -->
                                 <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">
                                     <Grid RowDefinitions="Auto,*,Auto">
@@ -226,7 +265,7 @@
                             Padding="24,20"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0"
-                            IsVisible="{Binding !IsOffline}">
+                            IsVisible="{Binding ShowPlans}">
                         <Button Classes="primary-button"
                                 HorizontalAlignment="Right"
                                 HorizontalContentAlignment="Center"

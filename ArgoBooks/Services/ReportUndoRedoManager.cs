@@ -538,7 +538,7 @@ public class AddPageAction(ReportConfiguration config) : IReportUndoableAction
 {
     private readonly int _newPageNumber = config.PageCount + 1;
 
-    public string Description => "Add page".Translate();
+    public string Description => "Add Page".Translate();
 
     public void Undo()
     {
@@ -578,7 +578,7 @@ public class DeletePageAction : IReportUndoableAction
         }
     }
 
-    public string Description => "Delete page".Translate();
+    public string Description => "Delete Page".Translate();
 
     public void Undo()
     {

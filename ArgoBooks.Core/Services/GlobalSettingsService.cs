@@ -72,6 +72,35 @@ public class GlobalSettingsService : IGlobalSettingsService
         }
     }
 
+    /// <summary>
+    /// Synchronously loads global settings from disk. Intended for use on the UI thread
+    /// during startup, where the sidebar/theme/language read settings before the first
+    /// window is shown. The settings file is small, so a sync read avoids the thread-pool
+    /// marshaling overhead of sync-over-async.
+    /// </summary>
+    public void LoadGlobalSettings()
+    {
+        var settingsPath = GetGlobalSettingsPath();
+
+        if (!File.Exists(settingsPath))
+        {
+            GlobalSettings = new GlobalSettings();
+            return;
+        }
+
+        try
+        {
+            var bytes = File.ReadAllBytes(settingsPath);
+            var settings = JsonSerializer.Deserialize<GlobalSettings>(bytes, _jsonOptions);
+            GlobalSettings = settings ?? new GlobalSettings();
+        }
+        catch (JsonException)
+        {
+            // Corrupted settings file, use defaults
+            GlobalSettings = new GlobalSettings();
+        }
+    }
+
     /// <inheritdoc />
     public async Task SaveGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {
@@ -86,13 +115,31 @@ public class GlobalSettingsService : IGlobalSettingsService
                 _platformService.EnsureDirectoryExists(directory);
             }
 
-            await using var fileStream = new FileStream(
-                settingsPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await JsonSerializer.SerializeAsync(
-                fileStream,
-                GlobalSettings,
-                _jsonOptions,
-                cancellationToken);
+            // Write atomically: write to temp, then move. A crash mid-write would
+            // otherwise leave a truncated settings.json and lose recent companies,
+            // theme, and language on next launch.
+            var tempPath = settingsPath + ".tmp";
+            try
+            {
+                await using (var fileStream = new FileStream(
+                    tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await JsonSerializer.SerializeAsync(
+                        fileStream,
+                        GlobalSettings,
+                        _jsonOptions,
+                        cancellationToken);
+                }
+                File.Move(tempPath, settingsPath, overwrite: true);
+            }
+            catch
+            {
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); } catch { /* best effort */ }
+                }
+                throw;
+            }
         }
         finally
         {

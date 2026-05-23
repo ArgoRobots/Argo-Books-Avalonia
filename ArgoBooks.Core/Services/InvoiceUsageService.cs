@@ -10,7 +10,10 @@ namespace ArgoBooks.Core.Services;
 public class InvoiceUsageService : IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/invoice/usage.php";
-    private const int DefaultFreeLimit = 5;
+    // Must match the server's free-tier default (config/pricing.php
+    // FREE_INVOICE_MONTHLY_LIMIT). Used only as a fallback when the
+    // server check fails or hasn't completed yet.
+    private const int DefaultFreeLimit = 25;
 
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
@@ -87,27 +90,31 @@ public class InvoiceUsageService : IDisposable
                 };
             }
 
+            // Fall back to cached data only if it's still within the expiry window —
+            // otherwise a stale cache from a prior month could permit sends past quota.
+            var hasFreshCache = _cachedUsage != null && DateTime.UtcNow < _cacheExpiry;
             return new InvoiceUsageResult
             {
                 Success = false,
                 ErrorMessage = response.Error ?? "Failed to check usage",
-                // Fall back to cached or fail-closed default
-                CanSend = _cachedUsage?.CanSend ?? false,
-                MonthlyLimit = _cachedUsage?.MonthlyLimit ?? DefaultFreeLimit
+                CanSend = hasFreshCache && _cachedUsage!.CanSend,
+                MonthlyLimit = hasFreshCache ? _cachedUsage!.MonthlyLimit : DefaultFreeLimit
             };
         }
         catch (Exception ex)
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Invoice usage check failed");
 
-            // On network errors, allow sending if cached data says ok; otherwise fail-closed
+            // Network error — allow sending if cache is fresh and shows capacity.
+            // Without the expiry check a stale cache could permit sends past the server-side quota.
+            var hasFreshCache = _cachedUsage != null && DateTime.UtcNow < _cacheExpiry;
             return new InvoiceUsageResult
             {
                 Success = false,
-                CanSend = _cachedUsage?.CanSend ?? false,
-                SendCount = _cachedUsage?.SendCount ?? 0,
-                MonthlyLimit = _cachedUsage?.MonthlyLimit ?? DefaultFreeLimit,
-                Remaining = _cachedUsage?.Remaining ?? DefaultFreeLimit,
+                CanSend = hasFreshCache && _cachedUsage!.CanSend,
+                SendCount = hasFreshCache ? _cachedUsage!.SendCount : 0,
+                MonthlyLimit = hasFreshCache ? _cachedUsage!.MonthlyLimit : DefaultFreeLimit,
+                Remaining = hasFreshCache ? _cachedUsage!.Remaining : DefaultFreeLimit,
                 ErrorMessage = "Unable to verify usage."
             };
         }

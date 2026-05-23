@@ -64,17 +64,34 @@ public class Payment
     #region Portal Support
 
     /// <summary>
-    /// The source of this payment: "Manual" (entered in Argo Books) or "Online" (received via payment portal).
-    /// Defaults to "Manual" for backward compatibility.
+    /// The source of this payment: Manual (entered in Argo Books) or
+    /// Online (received via payment portal). Defaults to Manual.
     /// </summary>
     [JsonPropertyName("source")]
-    public string Source { get; set; } = "Manual";
+    public PaymentSource Source { get; set; } = PaymentSource.Manual;
 
     /// <summary>
     /// The portal payment ID from the server, used to prevent duplicate syncs.
     /// </summary>
     [JsonPropertyName("portalPaymentId")]
     public string? PortalPaymentId { get; set; }
+
+    /// <summary>
+    /// The provider's payment intent / order / capture ID. Used by the refund
+    /// flow as the <c>provider_payment_id</c> parameter when calling the server.
+    /// </summary>
+    [JsonPropertyName("providerPaymentId")]
+    public string? ProviderPaymentId { get; set; }
+
+    /// <summary>
+    /// The processing fee the customer paid on top of the invoice (for
+    /// <c>pass_processing_fee</c> invoices). Zero when the fee was absorbed
+    /// by the merchant or for manual / non-portal payments. The refund modal
+    /// shows this as a checkable line so the merchant can return it to the
+    /// customer along with the invoice items.
+    /// </summary>
+    [JsonPropertyName("processingFee")]
+    public decimal ProcessingFee { get; set; }
 
     #endregion
 
@@ -100,6 +117,40 @@ public class Payment
     [JsonIgnore]
     public decimal EffectiveAmountUSD =>
         string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? Amount : AmountUSD;
+
+    #endregion
+
+    #region Refund Support
+
+    /// <summary>
+    /// True when this row represents a refund rather than a payment received.
+    /// Refund rows store <see cref="Amount"/> as a negative value so existing
+    /// aggregations (sum-of-payments) naturally yield net paid.
+    /// </summary>
+    [JsonPropertyName("isRefund")]
+    public bool IsRefund { get; set; }
+
+    /// <summary>
+    /// Local Payment.Id of the original payment this refund offsets, when known.
+    /// Null for refunds that arrived before the corresponding payment was synced
+    /// (rare, but possible if sync is out of order).
+    /// </summary>
+    [JsonPropertyName("refundedFromPaymentId")]
+    public string? RefundedFromPaymentId { get; set; }
+
+    /// <summary>
+    /// Server-side refund_requests.id when this refund was initiated through the
+    /// Argo Books refund flow. Null for refunds created via the provider's own
+    /// dashboard (e.g. Stripe Dashboard) that we received via webhook.
+    /// </summary>
+    [JsonPropertyName("refundRequestId")]
+    public string? RefundRequestId { get; set; }
+
+    /// <summary>
+    /// User-supplied reason for the refund, captured at request time.
+    /// </summary>
+    [JsonPropertyName("refundReason")]
+    public string? RefundReason { get; set; }
 
     #endregion
 }

@@ -2184,7 +2184,7 @@
                                         <!-- Approve button (shown when not yet approved) -->
                                         <Button Classes="primary-button"
                                                 Command="{Binding ApproveBulkItemCommand}"
-                                                IsVisible="{Binding CurrentBulkItem.IsApproved, Converter={x:Static BoolConverters.Not}, FallbackValue=True}">
+                                                IsVisible="{Binding ShowApproveBulkButton}">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <PathIcon Data="{x:Static icons:Icons.Check}"
                                                           Width="16" Height="16" />
@@ -2194,7 +2194,7 @@
                                         <!-- Un-approve button (shown when approved) -->
                                         <Button Classes="secondary-button"
                                                 Command="{Binding UnapproveBulkItemCommand}"
-                                                IsVisible="{Binding CurrentBulkItem.IsApproved, FallbackValue=False}">
+                                                IsVisible="{Binding ShowUnapproveBulkButton}">
                                             <TextBlock Text="Un-approve" />
                                         </Button>
                                         <!-- Skip button -->

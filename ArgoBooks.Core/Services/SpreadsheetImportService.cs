@@ -168,7 +168,7 @@ public class SpreadsheetImportService
                 foreach (var worksheet in workbook.Worksheets)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ImportWorksheet(worksheet, companyData);
+                    ImportWorksheet(worksheet, companyData, options);
                 }
 
                 // Update ID counters based on imported data
@@ -769,7 +769,7 @@ public class SpreadsheetImportService
                             TaxAmount = invoice.TaxAmount,
                             Total = invoice.Total,
                             PaymentMethod = PaymentMethod.Other,
-                            PaymentStatus = isPaid ? "Paid" : "Partial",
+                            PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
                             Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                             InvoiceId = invoice.Id,
                             ReferenceNumber = invoice.InvoiceNumber,
@@ -837,7 +837,8 @@ public class SpreadsheetImportService
                 var revenue = JsonSerializer.Deserialize<Revenue>(jsonStr, opts);
                 if (revenue != null && !string.IsNullOrEmpty(revenue.Id))
                 {
-                    revenue.PaymentStatus = NormalizePaymentStatus(revenue.PaymentStatus);
+                    // PaymentStatus is already normalized by the enum's JSON
+                    // converter (legacy typos → Paid fallback), no separate call.
                     revenue.OriginalCurrency = data.Settings.Localization.Currency;
                     revenue.TotalUSD = revenue.Total;
                     revenue.TaxAmountUSD = revenue.TaxAmount;
@@ -1969,7 +1970,7 @@ public class SpreadsheetImportService
 
     #region Worksheet Import
 
-    private void ImportWorksheet(IXLWorksheet worksheet, CompanyData data)
+    private void ImportWorksheet(IXLWorksheet worksheet, CompanyData data, ImportOptions? options = null)
     {
         var sheetName = worksheet.Name;
 
@@ -1985,64 +1986,64 @@ public class SpreadsheetImportService
         switch (SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName))
         {
             case SpreadsheetSheetType.Customers:
-                ImportCustomers(data, headers, rows);
+                ImportCustomers(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Invoices:
-                ImportInvoices(data, headers, rows);
+                ImportInvoices(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Expenses:
-                ImportPurchases(data, headers, rows);
+                ImportPurchases(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Products:
-                ImportProducts(data, headers, rows);
+                ImportProducts(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Inventory:
-                ImportInventory(data, headers, rows);
+                ImportInventory(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Payments:
-                ImportPayments(data, headers, rows);
+                ImportPayments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Suppliers:
-                ImportSuppliers(data, headers, rows);
+                ImportSuppliers(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Revenue:
-                ImportSales(data, headers, rows);
+                ImportSales(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.RentalInventory:
-                ImportRentalInventory(data, headers, rows);
+                ImportRentalInventory(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.RentalRecords:
-                ImportRentalRecords(data, headers, rows);
+                ImportRentalRecords(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Categories:
-                ImportCategories(data, headers, rows);
+                ImportCategories(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Departments:
-                ImportDepartments(data, headers, rows);
+                ImportDepartments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Employees:
-                ImportEmployees(data, headers, rows);
+                ImportEmployees(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Locations:
-                ImportLocations(data, headers, rows);
+                ImportLocations(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.RecurringInvoices:
-                ImportRecurringInvoices(data, headers, rows);
+                ImportRecurringInvoices(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.StockAdjustments:
-                ImportStockAdjustments(data, headers, rows);
+                ImportStockAdjustments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.PurchaseOrders:
-                ImportPurchaseOrders(data, headers, rows);
+                ImportPurchaseOrders(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
-                ImportPurchaseOrderLineItems(data, headers, rows);
+                ImportPurchaseOrderLineItems(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Returns:
-                ImportReturns(data, headers, rows);
+                ImportReturns(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.LostDamaged:
-                ImportLostDamaged(data, headers, rows);
+                ImportLostDamaged(data, headers, rows, options);
                 break;
         }
     }
@@ -2177,48 +2178,49 @@ public class SpreadsheetImportService
     }
 
     /// <summary>
-    /// Normalizes free-form payment status strings into the canonical values
-    /// used by the application: "Paid", "Unpaid", "Partial", "Overdue", or "Pending".
-    /// Uses substring matching to handle typos and variations (e.g., "Piad", "Compelted").
+    /// Normalizes free-form payment status strings from spreadsheet imports
+    /// into the canonical <see cref="RevenuePaymentStatus"/> enum. Uses
+    /// substring matching to handle typos and variations (e.g., "Piad",
+    /// "Compelted"). Falls back to Paid on unrecognised input.
     /// </summary>
-    internal static string NormalizePaymentStatus(string? status)
+    internal static RevenuePaymentStatus NormalizePaymentStatus(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))
-            return "Paid";
+            return RevenuePaymentStatus.Paid;
 
         var s = status.Trim().ToLowerInvariant();
 
         // Partial must be checked before "paid" substring match
         if (s.Contains("partial"))
-            return "Partial";
+            return RevenuePaymentStatus.Partial;
 
         // Paid and common synonyms/typos
         if (s.Contains("paid") || s.Contains("piad") ||
             s.Contains("complet") || s.Contains("settle") ||
             s.Contains("receive") || s.Contains("clear") ||
             s.Contains("collect"))
-            return "Paid";
+            return RevenuePaymentStatus.Paid;
 
         // Overdue
         if (s.Contains("overdue") || s.Contains("past due") ||
             s.Contains("pastdue") || s.Contains("late"))
-            return "Overdue";
+            return RevenuePaymentStatus.Overdue;
 
         // Pending
         if (s.Contains("pending") || s.Contains("pend") ||
             s.Contains("processing") || s.Contains("progress") ||
             s.Contains("awaiting") || s.Contains("waiting"))
-            return "Pending";
+            return RevenuePaymentStatus.Pending;
 
         // Unpaid and common synonyms
         if (s.Contains("unpaid") || s.Contains("not paid") ||
             s.Contains("outstanding") || s.Contains("open") ||
             s.Contains("due") || s.Contains("owe") ||
             s.Contains("unsettled"))
-            return "Unpaid";
+            return RevenuePaymentStatus.Unpaid;
 
         // Fallback: unrecognized → default to Paid
-        return "Paid";
+        return RevenuePaymentStatus.Paid;
     }
 
     private static decimal GetDecimal(List<object?> row, List<string> headers, string columnName)
@@ -2627,7 +2629,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     TaxAmount = invoice.TaxAmount,
                     Total = invoice.Total,
                     PaymentMethod = PaymentMethod.Other,
-                    PaymentStatus = isPaid ? "Paid" : "Partial",
+                    PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
                     Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
                     InvoiceId = invoice.Id,
                     ReferenceNumber = invoice.InvoiceNumber,
@@ -3029,8 +3031,38 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             var item = existing ?? new RentalItem();
             item.Id = id;
+
+            // Prefer explicit "Inventory Item ID"; otherwise resolve from "Product ID" so
+            // sheets that link rental items to products directly still chain through to a name.
             var inventoryItemId = GetString(row, headers, "Inventory Item ID");
-            item.InventoryItemId = string.IsNullOrEmpty(inventoryItemId) ? string.Empty : inventoryItemId;
+            if (string.IsNullOrEmpty(inventoryItemId))
+            {
+                var productId = GetString(row, headers, "Product ID");
+                if (!string.IsNullOrEmpty(productId))
+                {
+                    var existingInv = data.Inventory.FirstOrDefault(inv => inv.ProductId == productId);
+                    if (existingInv != null)
+                    {
+                        inventoryItemId = existingInv.Id;
+                    }
+                    else if (options?.AutoCreateMissingReferences == true)
+                    {
+                        // UpdateIdCounters runs after all sheets, so derive the next ID from
+                        // the current inventory state to avoid colliding with existing IDs.
+                        var nextNum = GetMaxIdNumber(data.Inventory.Select(i => i.Id), "INV-ITM-") + 1;
+                        var newInv = new InventoryItem
+                        {
+                            Id = $"INV-ITM-{nextNum:D3}",
+                            ProductId = productId,
+                            InStock = GetInt(row, headers, "Total Qty")
+                        };
+                        data.Inventory.Add(newInv);
+                        inventoryItemId = newInv.Id;
+                    }
+                }
+            }
+            item.InventoryItemId = inventoryItemId;
+
             item.DailyRate = GetDecimal(row, headers, "Daily Rate");
             item.WeeklyRate = GetDecimal(row, headers, "Weekly Rate");
             item.MonthlyRate = GetDecimal(row, headers, "Monthly Rate");

@@ -259,48 +259,148 @@ public class FileService(
     }
 
     /// <summary>
+    /// Attaches a continuation to each task that reads its <see cref="Task.Exception"/> if it
+    /// faults, so the fault doesn't surface later as <c>UnobservedTaskException</c>. Used when
+    /// we're about to throw on the load path and want to discard the in-flight reads cleanly.
+    /// </summary>
+    private static void ObserveFaults(IEnumerable<Task> tasks)
+    {
+        foreach (var t in tasks)
+        {
+            _ = t.ContinueWith(
+                static x => { _ = x.Exception; },
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+        }
+    }
+
+    /// <summary>
+    /// Throws <see cref="CompanyFileTooNewException"/> if the file's stamped version is greater
+    /// than the running app's version. Legacy files (stamped "1.0.0" before the version-check
+    /// feature shipped) and files with unparseable versions are allowed to load.
+    /// </summary>
+    private static void ValidateAppVersion(string? fileVersion)
+    {
+        if (string.IsNullOrEmpty(fileVersion) || !Version.TryParse(fileVersion, out var fileVer))
+        {
+            return;
+        }
+        if (!Version.TryParse(AppInfo.VersionNumber, out var appVer))
+        {
+            return;
+        }
+        // Compare on Major.Minor.Build only to keep things in lockstep with the public version string.
+        var normalizedFile = new Version(fileVer.Major, fileVer.Minor, Math.Max(0, fileVer.Build));
+        var normalizedApp = new Version(appVer.Major, appVer.Minor, Math.Max(0, appVer.Build));
+        if (normalizedFile > normalizedApp)
+        {
+            throw new CompanyFileTooNewException(fileVersion, AppInfo.VersionNumber);
+        }
+    }
+
+    /// <summary>
     /// Loads all company data from a temporary directory.
     /// </summary>
+    /// <remarks>
+    /// Reads are issued concurrently — the files are already extracted to disk by the caller,
+    /// the collections have no cross-deserialization dependencies, and ReadJsonAsync uses a
+    /// shared immutable <see cref="JsonOptions"/> instance, so concurrent deserialization is safe.
+    /// </remarks>
     public async Task<CompanyData> LoadCompanyDataAsync(
         string tempDirectory,
         CancellationToken cancellationToken = default)
     {
-        var data = new CompanyData
-        {
-            Settings = await ReadJsonAsync<CompanySettings>(tempDirectory, "appSettings.json", cancellationToken)
-                ?? new CompanySettings(),
-            IdCounters = await ReadJsonAsync<IdCounters>(tempDirectory, "idCounters.json", cancellationToken)
-                ?? new IdCounters(),
-            Customers = await ReadJsonAsync<List<Models.Entities.Customer>>(tempDirectory, "customers.json", cancellationToken) ?? [],
-            Products = await ReadJsonAsync<List<Models.Entities.Product>>(tempDirectory, "products.json", cancellationToken) ?? [],
-            Suppliers = await ReadJsonAsync<List<Models.Entities.Supplier>>(tempDirectory, "suppliers.json", cancellationToken) ?? [],
-            Employees = await ReadJsonAsync<List<Models.Entities.Employee>>(tempDirectory, "employees.json", cancellationToken) ?? [],
-            Departments = await ReadJsonAsync<List<Models.Entities.Department>>(tempDirectory, "departments.json", cancellationToken) ?? [],
-            Categories = await ReadJsonAsync<List<Models.Entities.Category>>(tempDirectory, "categories.json", cancellationToken) ?? [],
-            Accountants = await ReadJsonAsync<List<Models.Entities.Accountant>>(tempDirectory, "accountants.json", cancellationToken) ?? [],
-            Locations = await ReadJsonAsync<List<Models.Entities.Location>>(tempDirectory, "locations.json", cancellationToken) ?? [],
-            Revenues = await ReadJsonAsync<List<Models.Transactions.Revenue>>(tempDirectory, "revenues.json", cancellationToken) ?? [],
-            Expenses = await ReadJsonAsync<List<Models.Transactions.Expense>>(tempDirectory, "expenses.json", cancellationToken) ?? [],
-            Invoices = await ReadJsonAsync<List<Models.Transactions.Invoice>>(tempDirectory, "invoices.json", cancellationToken) ?? [],
-            Payments = await ReadJsonAsync<List<Models.Transactions.Payment>>(tempDirectory, "payments.json", cancellationToken) ?? [],
-            RecurringInvoices = await ReadJsonAsync<List<Models.Transactions.RecurringInvoice>>(tempDirectory, "recurringInvoices.json", cancellationToken) ?? [],
-            Inventory = await ReadJsonAsync<List<Models.Inventory.InventoryItem>>(tempDirectory, "inventory.json", cancellationToken) ?? [],
-            StockAdjustments = await ReadJsonAsync<List<Models.Inventory.StockAdjustment>>(tempDirectory, "stockAdjustments.json", cancellationToken) ?? [],
-            StockTransfers = await ReadJsonAsync<List<Models.Inventory.StockTransfer>>(tempDirectory, "stockTransfers.json", cancellationToken) ?? [],
-            PurchaseOrders = await ReadJsonAsync<List<Models.Inventory.PurchaseOrder>>(tempDirectory, "purchaseOrders.json", cancellationToken) ?? [],
-            RentalInventory = await ReadJsonAsync<List<Models.Rentals.RentalItem>>(tempDirectory, "rentalInventory.json", cancellationToken) ?? [],
-            Rentals = await ReadJsonAsync<List<Models.Rentals.RentalRecord>>(tempDirectory, "rentals.json", cancellationToken) ?? [],
-            Returns = await ReadJsonAsync<List<Models.Tracking.Return>>(tempDirectory, "returns.json", cancellationToken) ?? [],
-            LostDamaged = await ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken) ?? [],
-            Receipts = await ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken) ?? [],
-            ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? [],
-            InvoiceTemplates = await ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken) ?? [],
-            EventLog = await ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken) ?? [],
-            PendingConversions = await ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken) ?? [],
-            ForecastRecords = await ReadJsonAsync<List<Models.Insights.ForecastAccuracyRecord>>(tempDirectory, "forecastRecords.json", cancellationToken) ?? []
-        };
+        var settingsTask          = ReadJsonAsync<CompanySettings>(tempDirectory, "appSettings.json", cancellationToken);
+        var idCountersTask        = ReadJsonAsync<IdCounters>(tempDirectory, "idCounters.json", cancellationToken);
+        var customersTask         = ReadJsonAsync<List<Models.Entities.Customer>>(tempDirectory, "customers.json", cancellationToken);
+        var productsTask          = ReadJsonAsync<List<Models.Entities.Product>>(tempDirectory, "products.json", cancellationToken);
+        var suppliersTask         = ReadJsonAsync<List<Models.Entities.Supplier>>(tempDirectory, "suppliers.json", cancellationToken);
+        var employeesTask         = ReadJsonAsync<List<Models.Entities.Employee>>(tempDirectory, "employees.json", cancellationToken);
+        var departmentsTask       = ReadJsonAsync<List<Models.Entities.Department>>(tempDirectory, "departments.json", cancellationToken);
+        var categoriesTask        = ReadJsonAsync<List<Models.Entities.Category>>(tempDirectory, "categories.json", cancellationToken);
+        var accountantsTask       = ReadJsonAsync<List<Models.Entities.Accountant>>(tempDirectory, "accountants.json", cancellationToken);
+        var locationsTask         = ReadJsonAsync<List<Models.Entities.Location>>(tempDirectory, "locations.json", cancellationToken);
+        var revenuesTask          = ReadJsonAsync<List<Models.Transactions.Revenue>>(tempDirectory, "revenues.json", cancellationToken);
+        var expensesTask          = ReadJsonAsync<List<Models.Transactions.Expense>>(tempDirectory, "expenses.json", cancellationToken);
+        var invoicesTask          = ReadJsonAsync<List<Models.Transactions.Invoice>>(tempDirectory, "invoices.json", cancellationToken);
+        var paymentsTask          = ReadJsonAsync<List<Models.Transactions.Payment>>(tempDirectory, "payments.json", cancellationToken);
+        var recurringInvoicesTask = ReadJsonAsync<List<Models.Transactions.RecurringInvoice>>(tempDirectory, "recurringInvoices.json", cancellationToken);
+        var inventoryTask         = ReadJsonAsync<List<Models.Inventory.InventoryItem>>(tempDirectory, "inventory.json", cancellationToken);
+        var stockAdjustmentsTask  = ReadJsonAsync<List<Models.Inventory.StockAdjustment>>(tempDirectory, "stockAdjustments.json", cancellationToken);
+        var stockTransfersTask    = ReadJsonAsync<List<Models.Inventory.StockTransfer>>(tempDirectory, "stockTransfers.json", cancellationToken);
+        var purchaseOrdersTask    = ReadJsonAsync<List<Models.Inventory.PurchaseOrder>>(tempDirectory, "purchaseOrders.json", cancellationToken);
+        var rentalInventoryTask   = ReadJsonAsync<List<Models.Rentals.RentalItem>>(tempDirectory, "rentalInventory.json", cancellationToken);
+        var rentalsTask           = ReadJsonAsync<List<Models.Rentals.RentalRecord>>(tempDirectory, "rentals.json", cancellationToken);
+        var returnsTask           = ReadJsonAsync<List<Models.Tracking.Return>>(tempDirectory, "returns.json", cancellationToken);
+        var lostDamagedTask       = ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken);
+        var receiptsTask          = ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken);
+        var reportTemplatesTask   = ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken);
+        var invoiceTemplatesTask  = ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken);
+        var eventLogTask          = ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken);
+        var pendingConversionsTask = ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken);
+        var forecastRecordsTask   = ReadJsonAsync<List<Models.Insights.ForecastAccuracyRecord>>(tempDirectory, "forecastRecords.json", cancellationToken);
 
-        return data;
+        // Validate version BEFORE awaiting the rest. If the file was saved by a newer app
+        // version, the other data files may contain enum values or fields this build can't
+        // deserialize, and we'd surface that as an opaque JSON exception. Awaiting just the
+        // settings task here lets us throw a clear "update Argo Books" error instead.
+        Task[] otherReads =
+        [
+            idCountersTask, customersTask, productsTask, suppliersTask,
+            employeesTask, departmentsTask, categoriesTask, accountantsTask, locationsTask,
+            revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
+            inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
+            rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
+            reportTemplatesTask, invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
+            forecastRecordsTask
+        ];
+
+        var settings = await settingsTask;
+        try
+        {
+            ValidateAppVersion(settings?.AppVersion);
+        }
+        catch (CompanyFileTooNewException)
+        {
+            // Don't let the in-flight reads fault into UnobservedTaskException. Their results
+            // would likely be JsonExceptions from newer enum values; we discard them.
+            ObserveFaults(otherReads);
+            throw;
+        }
+
+        await Task.WhenAll(otherReads);
+
+        return new CompanyData
+        {
+            Settings = settings ?? new CompanySettings(),
+            IdCounters = idCountersTask.Result ?? new IdCounters(),
+            Customers = customersTask.Result ?? [],
+            Products = productsTask.Result ?? [],
+            Suppliers = suppliersTask.Result ?? [],
+            Employees = employeesTask.Result ?? [],
+            Departments = departmentsTask.Result ?? [],
+            Categories = categoriesTask.Result ?? [],
+            Accountants = accountantsTask.Result ?? [],
+            Locations = locationsTask.Result ?? [],
+            Revenues = revenuesTask.Result ?? [],
+            Expenses = expensesTask.Result ?? [],
+            Invoices = invoicesTask.Result ?? [],
+            Payments = paymentsTask.Result ?? [],
+            RecurringInvoices = recurringInvoicesTask.Result ?? [],
+            Inventory = inventoryTask.Result ?? [],
+            StockAdjustments = stockAdjustmentsTask.Result ?? [],
+            StockTransfers = stockTransfersTask.Result ?? [],
+            PurchaseOrders = purchaseOrdersTask.Result ?? [],
+            RentalInventory = rentalInventoryTask.Result ?? [],
+            Rentals = rentalsTask.Result ?? [],
+            Returns = returnsTask.Result ?? [],
+            LostDamaged = lostDamagedTask.Result ?? [],
+            Receipts = receiptsTask.Result ?? [],
+            ReportTemplates = reportTemplatesTask.Result ?? [],
+            InvoiceTemplates = invoiceTemplatesTask.Result ?? [],
+            EventLog = eventLogTask.Result ?? [],
+            PendingConversions = pendingConversionsTask.Result ?? [],
+            ForecastRecords = forecastRecordsTask.Result ?? []
+        };
     }
 
     /// <summary>
@@ -314,6 +414,11 @@ public class FileService(
         CompanyData data,
         CancellationToken cancellationToken = default)
     {
+        // Stamp the running app's version into the file so a future older app can detect
+        // that the file is too new for it to safely open. This runs on every save path
+        // because all save flows route through here.
+        data.Settings.AppVersion = AppInfo.VersionNumber;
+
         // Write directly to the provided company directory - caller is responsible for providing the correct path
         await WriteJsonAsync(companyDirectory, "appSettings.json", data.Settings, cancellationToken);
         await WriteJsonAsync(companyDirectory, "idCounters.json", data.IdCounters, cancellationToken);

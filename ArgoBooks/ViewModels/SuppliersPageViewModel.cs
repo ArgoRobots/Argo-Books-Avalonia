@@ -9,6 +9,7 @@ using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -513,6 +514,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 addressParts.Add(supplier.Address.State);
             var addressString = addressParts.Count > 0 ? string.Join(", ", addressParts) : "-";
 
+            var avatarBitmap = AvatarBitmapLoader.LoadSupplier(supplier);
+
             return new SupplierDisplayItem
             {
                 Id = supplier.Id,
@@ -525,6 +528,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 ProductCount = productCount,
                 IsActive = isActive,
                 Initials = GetInitials(supplier.Name),
+                AvatarBitmap = avatarBitmap,
+                HasAvatar = avatarBitmap != null,
                 IsHighlighted = supplier.Id == HighlightTransactionId
             };
         }).ToList();
@@ -978,7 +983,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         // Validate supplier name (required)
         if (string.IsNullOrWhiteSpace(ModalSupplierName))
         {
-            ModalSupplierNameError = "Supplier name is required.";
+            ModalSupplierNameError = "Supplier name is required.".Translate();
             isValid = false;
         }
         else
@@ -990,7 +995,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
             if (existingWithSameName)
             {
-                ModalSupplierNameError = "A supplier with this name already exists.";
+                ModalSupplierNameError = "A supplier with this name already exists.".Translate();
                 isValid = false;
             }
         }
@@ -1054,6 +1059,12 @@ public partial class SupplierDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _initials = string.Empty;
+
+    [ObservableProperty]
+    private Bitmap? _avatarBitmap;
+
+    [ObservableProperty]
+    private bool _hasAvatar;
 
     /// <summary>
     /// Status text for display.

@@ -49,6 +49,8 @@
                                 <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                     <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'PRD-xxx'}" MaxLength="20" />
+                                    <TextBlock Text="{Binding ModalIdError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap"
+                                               IsVisible="{Binding ModalIdError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
@@ -183,6 +185,8 @@
                                 <StackPanel Grid.Column="0" Spacing="6" Width="120">
                                     <TextBlock Text="{loc:Loc 'ID'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalId, Mode=TwoWay}" Classes="form-input" MaxLength="20" />
+                                    <TextBlock Text="{Binding ModalIdError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap"
+                                               IsVisible="{Binding ModalIdError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">

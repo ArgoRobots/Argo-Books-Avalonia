@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -76,10 +77,10 @@ public partial class CustomDateRangeModalViewModel : ViewModelBase
         {
             var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
             {
-                Title = "Invalid Date Range",
-                Message = "The start date is after the end date. Would you like to swap the dates?",
-                PrimaryButtonText = "Swap Dates",
-                CancelButtonText = "Cancel"
+                Title = "Invalid Date Range".Translate(),
+                Message = "The start date is after the end date. Would you like to swap the dates?".Translate(),
+                PrimaryButtonText = "Swap Dates".Translate(),
+                CancelButtonText = "Cancel".Translate()
             });
 
             if (result == ConfirmationResult.Primary)

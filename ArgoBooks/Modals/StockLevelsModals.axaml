@@ -83,7 +83,7 @@
                                              PlaceholderText="{loc:Loc 'Enter quantity'}"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                              MaxLength="7" />
-                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
+                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding HasAdjustmentQuantityError}" />
@@ -215,7 +215,7 @@
                                              PlaceholderText="0"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True"
                                              MaxLength="7" />
-                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity'}"
+                                    <TextBlock Text="{loc:Loc 'Please enter a valid quantity.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding HasAddItemQuantityError}" />

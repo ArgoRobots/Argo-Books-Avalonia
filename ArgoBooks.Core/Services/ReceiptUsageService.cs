@@ -7,15 +7,17 @@ namespace ArgoBooks.Core.Services;
 /// Service for tracking and enforcing receipt scan usage limits.
 /// Communicates with the server API to track usage per license key.
 /// </summary>
-public class ReceiptUsageService : IReceiptUsageService
+public class ReceiptUsageService : IReceiptUsageService, IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/receipt/usage.php";
     private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
+    private readonly bool _ownsHttpClient;
     private readonly LicenseService? _licenseService;
     private readonly IConnectivityService _connectivityService;
     private readonly IErrorLogger? _errorLogger;
+    private bool _disposed;
 
     // Cache the last known usage to reduce API calls
     private UsageStatus? _cachedUsage;
@@ -28,6 +30,7 @@ public class ReceiptUsageService : IReceiptUsageService
     public ReceiptUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null)
         : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService(), errorLogger)
     {
+        _ownsHttpClient = true;
     }
 
     /// <summary>
@@ -109,8 +112,9 @@ public class ReceiptUsageService : IReceiptUsageService
         }
         catch (HttpRequestException)
         {
-            // Network error - allow scan if we have cached data showing capacity
-            if (_cachedUsage != null && _cachedUsage.CanScan)
+            // Network error — allow scan if we have non-expired cached data showing capacity.
+            // Without the expiry check a stale cache could permit scans past the server-side quota.
+            if (_cachedUsage != null && _cachedUsage.CanScan && DateTime.UtcNow < _cacheExpiry)
             {
                 return new UsageCheckResult
                 {
@@ -240,6 +244,22 @@ public class ReceiptUsageService : IReceiptUsageService
     /// <inheritdoc />
     public UsageStatus? GetCachedUsage() => _cachedUsage;
 
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing && _ownsHttpClient)
+        {
+            _httpClient.Dispose();
+        }
+        _disposed = true;
+    }
+
     /// <summary>
     /// Determines whether the error is due to no internet or API being down.
     /// </summary>
@@ -326,7 +346,7 @@ public class ReceiptUsageService : IReceiptUsageService
 /// <summary>
 /// Interface for receipt usage tracking service.
 /// </summary>
-public interface IReceiptUsageService
+public interface IReceiptUsageService : IDisposable
 {
     /// <summary>
     /// Checks current usage and whether the user can scan more receipts.

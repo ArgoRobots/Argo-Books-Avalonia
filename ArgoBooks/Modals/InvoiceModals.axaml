@@ -103,7 +103,7 @@
                                                                 Placeholder="{loc:Loc 'Search for a customer...'}"
                                                                 IsRequired="True"
                                                                 HasError="{Binding HasCustomerError}"
-                                                                ErrorMessage="{loc:Loc 'Please select a customer'}"
+                                                                ErrorMessage="{loc:Loc 'Please select a customer.'}"
                                                                 ShowAddNew="False"
                                                                 EmptyMessage="{loc:Loc 'No customers found.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
@@ -131,6 +131,21 @@
                                     <DatePicker SelectedDate="{Binding ModalDueDate}"
                                                 Classes="form-datepicker"
                                                 HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Currency Row - hidden when from rental/revenue (parent transaction owns currency) -->
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Currency'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding AvailableCurrencies}"
+                                              SelectedItem="{Binding SelectedCurrency}"
+                                              Classes="form-combobox"
+                                              PlaceholderText="{loc:Loc 'Select currency'}"
+                                              HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Grid>
 
@@ -198,7 +213,7 @@
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                                  HasError="{Binding HasProductError}"
-                                                                 ErrorMessage="{loc:Loc 'Please select a product'}" />
+                                                                 ErrorMessage="{loc:Loc 'Please select a product.'}" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
                                                                    Minimum="1"
@@ -207,7 +222,7 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
                                                                    Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
@@ -217,19 +232,19 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding AmountFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
+                                                               VerticalAlignment="Top"
                                                                HorizontalAlignment="Right"
-                                                               Margin="0,0,12,0" />
+                                                               Margin="0,8,12,0" />
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
-                                                            VerticalAlignment="Center"
+                                                            VerticalAlignment="Top"
                                                             HorizontalAlignment="Center"
                                                             IsVisible="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
@@ -300,12 +315,12 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                             <ToggleButton IsChecked="{Binding CustomFeeIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding CustomFeeIsPercent, Converter={x:Static local:PercentDollarConverter.Instance}}"
+                                                          Content="{Binding CustomFeeSymbol}"
                                                           Width="32" Height="28" Padding="0"
                                                           FontSize="13" FontWeight="SemiBold"
                                                           HorizontalContentAlignment="Center"
                                                           VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between $ and %'}" />
+                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
                                             <NumericUpDown Value="{Binding CustomFeeAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                                            Minimum="0" Maximum="999999999" FormatString="N2"
                                                            Width="90" ShowButtonSpinner="False"
@@ -330,12 +345,12 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
                                             <ToggleButton IsChecked="{Binding DiscountIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding DiscountIsPercent, Converter={x:Static local:PercentDollarConverter.Instance}}"
+                                                          Content="{Binding DiscountSymbol}"
                                                           Width="32" Height="28" Padding="0"
                                                           FontSize="13" FontWeight="SemiBold"
                                                           HorizontalContentAlignment="Center"
                                                           VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between $ and %'}" />
+                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
                                             <NumericUpDown Value="{Binding DiscountAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                                            Minimum="0" Maximum="999999999" FormatString="N2"
                                                            Width="90" ShowButtonSpinner="False"
@@ -410,6 +425,39 @@
                                                ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
                                                IsPlaying="{Binding IsShowingSuccess}"
                                                IsVisible="{Binding IsShowingSuccess}" />
+
+                    <!-- Content - Sending Overlay (visible while the API call is in flight) -->
+                    <!-- Border (not Panel) so CornerRadius matches the parent
+                         modal shell — Panel doesn't honor a parent Border's
+                         rounded corners and renders a hard rectangle.
+                         Explicit Cursor="Arrow" guards against the embedded
+                         HTML preview occasionally suppressing the system
+                         cursor when it loses hit-testing to this overlay. -->
+                    <Border Grid.Row="0" Grid.RowSpan="4"
+                            Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            Cursor="Arrow"
+                            IsVisible="{Binding IsSending}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="20">
+                            <ProgressBar IsIndeterminate="True"
+                                         Width="220"
+                                         Height="4" />
+                            <TextBlock Text="{loc:Loc 'Sending invoice...'}"
+                                       FontSize="16"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       MaxWidth="320"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
 
                     <!-- Footer - Edit Mode -->
                     <Border Grid.Row="3"

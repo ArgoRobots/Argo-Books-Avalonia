@@ -498,11 +498,13 @@ public partial class DataValidator(CompanyData companyData)
     #region Helpers
 
     /// <summary>
-    /// Validates an email address format.
+    /// Validates an email address format. Canonical email check used across the app —
+    /// requires non-empty local part, '@', non-empty domain, '.', and non-empty TLD.
     /// </summary>
-    private static bool IsValidEmail(string email)
+    public static bool IsValidEmail(string email)
     {
-        return EmailRegex().IsMatch(email);
+        if (string.IsNullOrWhiteSpace(email)) return false;
+        return EmailRegex().IsMatch(email.Trim());
     }
 
     [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase)]

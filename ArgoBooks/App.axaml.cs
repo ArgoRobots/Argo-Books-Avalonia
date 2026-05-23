@@ -55,6 +55,18 @@ public class App : Application
     public static PaymentPortalService? PaymentPortalService { get; private set; }
 
     /// <summary>
+    /// Client for the portal refund + email-verification + email-change endpoints.
+    /// Created once at startup; reads the active per-company API key on each call.
+    /// </summary>
+    public static RefundService? RefundService { get; private set; }
+
+    /// <summary>
+    /// Coordinator for the refund / email-verify / email-change modals.
+    /// Hosted at AppShell level so the ModalOverlay can dim the whole window.
+    /// </summary>
+    public static RefundModalsViewModel? RefundModalsViewModel => _appShellViewModel?.RefundModalsViewModel;
+
+    /// <summary>
     /// Gets the invoice usage service for tracking free-tier send limits.
     /// </summary>
     public static InvoiceUsageService? InvoiceUsageService { get; private set; }
@@ -108,6 +120,11 @@ public class App : Application
     /// Gets the rental inventory modals view model for shared access.
     /// </summary>
     public static RentalInventoryModalsViewModel? RentalInventoryModalsViewModel => _appShellViewModel?.RentalInventoryModalsViewModel;
+
+    /// <summary>
+    /// Gets the rental availability modal view model for shared access (per-item calendar).
+    /// </summary>
+    public static RentalAvailabilityModalViewModel? RentalAvailabilityModalViewModel => _appShellViewModel?.RentalAvailabilityModalViewModel;
 
     /// <summary>
     /// Gets the rental records modals view model for shared access.
@@ -302,8 +319,9 @@ public class App : Application
             if (syncResponse.Payments.Count == 0)
                 return;
 
-            var newPayments = PaymentPortalService.ProcessSyncedPayments(
+            var syncResult = PaymentPortalService.ProcessSyncedPayments(
                 syncResponse.Payments, companyData);
+            var newPayments = syncResult.NewPayments;
 
             // Only confirm payments that were actually processed into local records.
             // Unprocessed payments (e.g. invoice not found locally) must NOT be
@@ -317,10 +335,12 @@ public class App : Application
                 await portalService.ConfirmSyncAsync(processedPortalIds);
             }
 
-            if (newPayments.Count > 0)
+            // Persist when there are new rows OR existing rows were backfilled
+            // with previously-missing fields (e.g. ProcessingFee on pre-fix
+            // payments). Without the backfill arm, the in-memory update gets
+            // lost on next app launch and the fee disappears again.
+            if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
             {
-                // Persist only the sync-related files (payments, invoices, id counters, settings)
-                // so synced payments survive restarts without triggering a full company save
                 try { await CompanyManager!.SavePaymentSyncAsync(); }
                 catch (Exception ex)
                 {
@@ -334,8 +354,10 @@ public class App : Application
                     _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
 
-                    // Send "Payment Received" notification if enabled
-                    if (companyData.Settings.PaymentPortal.NotifyOnPayment)
+                    // Send "Payment Received" notification if enabled. Skipped
+                    // for the backfill-only path (no new payments) — there's
+                    // nothing the user just received to be notified about.
+                    if (newPayments.Count > 0 && companyData.Settings.PaymentPortal.NotifyOnPayment)
                     {
                         var total = newPayments.Sum(p => p.Amount);
                         var message = newPayments.Count == 1
@@ -782,13 +804,15 @@ public class App : Application
                 telemetryStorageService,
                 telemetryUploadService,
                 geoLocationService,
-                SettingsService,
                 errorLogger,
                 appVersion);
 
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
             InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
+
+            // Initialize refund service (uses the same shared HttpClient)
+            RefundService = new RefundService(httpClient);
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -865,6 +889,13 @@ public class App : Application
                 _mainWindowViewModel.HasUnsavedChanges = hasChanges;
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = hasChanges;
             };
+
+            // After any undo/redo, fire CompanyDataChanged so pages
+            // subscribed to it (Dashboard, Analytics, Invoices, etc.) refresh
+            // their derived data. Individual undo callbacks only call
+            // companyData.MarkAsModified() which doesn't fire the event.
+            UndoRedoManager.ActionUndone += (_, _) => CompanyManager?.NotifyDataChanged();
+            UndoRedoManager.ActionRedone += (_, _) => CompanyManager?.NotifyDataChanged();
 
             // Wire up file menu events
             WireFileMenuEvents(desktop);
@@ -949,14 +980,12 @@ public class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             // Load settings synchronously — sidebar state, theme, and language depend on them.
-            // Recent companies are loaded asynchronously in InitializeAsync after the window is shown.
+            // Direct sync read avoids the thread-pool marshaling cost of sync-over-async;
+            // the settings file is small (<10KB). Recent companies are loaded asynchronously
+            // in InitializeAsync after the window is shown.
             try
             {
-                Task.Run(async () =>
-                {
-                    if (SettingsService != null)
-                        await SettingsService.LoadGlobalSettingsAsync();
-                }).GetAwaiter().GetResult();
+                SettingsService?.LoadGlobalSettings();
             }
             catch (Exception ex)
             {
@@ -966,7 +995,7 @@ public class App : Application
             // Apply saved sidebar collapsed state after settings are loaded from disk.
             // The SidebarViewModel was created before settings were loaded, so its constructor
             // read the default value. Re-apply the persisted state now.
-            var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
+            var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
             if (savedCollapsed)
             {
                 _appShellViewModel.SidebarViewModel.IsCollapsed = true;
@@ -1036,6 +1065,31 @@ public class App : Application
                 await TelemetryManager.InitializeAsync();
             }
 
+            // Report first-run install for referral funnel attribution. Fire-and-forget
+            // so app startup isn't blocked on network I/O. The reporter writes a marker
+            // after a successful POST so subsequent launches are no-ops. The HttpClient
+            // is disposed inside the task so it doesn't leak past the one-shot report.
+            try
+            {
+                var appVersion = Services.AppInfo.VersionNumber;
+                var capturedErrorLogger = ErrorLogger;
+                _ = Task.Run(async () =>
+                {
+                    using var firstRunHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                    var firstRunReporter = new FirstRunReporter(
+                        firstRunHttpClient,
+                        appVersion,
+                        capturedErrorLogger);
+                    await firstRunReporter.ReportIfFirstRunAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning(
+                    $"Failed to start FirstRunReporter: {ex.Message}",
+                    context: "App.OnFrameworkInitializationCompleted");
+            }
+
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
@@ -1046,6 +1100,30 @@ public class App : Application
                 if (!string.IsNullOrEmpty(language) && language != "English")
                 {
                     await LanguageService.Instance.SetLanguageAsync(language);
+                }
+
+                // Refresh cached translations once per app version. Without this, users
+                // never see translations added after their first language download because
+                // DownloadAndCacheLanguageAsync skips when a cached file exists.
+                var currentVersion = Services.AppInfo.VersionNumber;
+                if (SettingsService.GlobalSettings.Ui.LastLanguageVersion != currentVersion)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var refreshed = await LanguageService.Instance.UpdateAllCachedTranslationsAsync();
+                            if (refreshed)
+                            {
+                                SettingsService.GlobalSettings.Ui.LastLanguageVersion = currentVersion;
+                                await SettingsService.SaveGlobalSettingsAsync();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorLogger?.LogError(ex, ErrorCategory.Network, "Translation cache refresh failed");
+                        }
+                    });
                 }
             }
 
@@ -1483,9 +1561,6 @@ public class App : Application
             // Check for low stock and overdue invoice notifications
             CheckAndSendNotifications();
 
-            // Enable toast popups now that startup notifications are done
-            _appShellViewModel.HeaderViewModel.EnableToasts();
-
             // Load company-specific chart settings (date range, chart type, etc.)
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
@@ -1585,6 +1660,16 @@ public class App : Application
         {
             _mainWindowViewModel.HasUnsavedChanges = true;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
+        };
+
+        // When the open company's file is renamed during a save, the watcher's
+        // Renamed handler strips the old path from the recent-companies UI caches,
+        // but the new path was only added to settings.json — never to those caches.
+        // Refresh from disk so the welcome screen, file menu, and switcher all see
+        // the new entry.
+        CompanyManager.CompanyRenamed += async (_, _) =>
+        {
+            await LoadRecentCompaniesAsync();
         };
 
         // Use async callback for password requests (allows proper awaiting)
@@ -1720,6 +1805,63 @@ public class App : Application
                 _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
             }
         };
+
+        // Customer modals — let the user pick an avatar image. The bitmap is loaded for
+        // an immediate preview; the file is staged and copied/resized into the company
+        // temp directory only when the modal is saved.
+        _appShellViewModel.CustomerModalsViewModel.BrowseAvatarRequested += async (_, _) =>
+        {
+            await PickAvatarAsync(
+                "Select Customer Avatar".Translate(),
+                (path, bmp) => _appShellViewModel.CustomerModalsViewModel.SetPendingAvatar(path, bmp),
+                "CustomerAvatar");
+        };
+
+        // Supplier modals — same pattern as customer.
+        _appShellViewModel.SupplierModalsViewModel.BrowseAvatarRequested += async (_, _) =>
+        {
+            await PickAvatarAsync(
+                "Select Supplier Avatar".Translate(),
+                (path, bmp) => _appShellViewModel.SupplierModalsViewModel.SetPendingAvatar(path, bmp),
+                "SupplierAvatar");
+        };
+    }
+
+    /// <summary>
+    /// Shows the OS image-picker, decodes the result into a Bitmap, and hands the
+    /// pair off to the caller. Centralized so customer and supplier avatar pickers
+    /// share the file-type filter and error handling.
+    /// </summary>
+    private static async Task PickAvatarAsync(string title, Action<string, Bitmap> onPicked, string errorTag)
+    {
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return;
+
+        var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Images")
+                {
+                    Patterns = ["*.png", "*.jpg", "*.jpeg"]
+                }
+            ]
+        });
+
+        if (files.Count == 0) return;
+
+        var path = files[0].Path.LocalPath;
+        try
+        {
+            var bitmap = new Bitmap(path);
+            onPicked(path, bitmap);
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Failed to load avatar image: {ex.Message}", errorTag);
+        }
     }
 
     /// <summary>
@@ -3091,7 +3233,7 @@ public class App : Application
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
         // Check rate limit via server-side API
-        var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
+        using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
         var usageCheck = await usageService.CheckUsageAsync();
 
         if (!usageCheck.CanImport)
@@ -3110,7 +3252,7 @@ public class App : Application
             _mainWindowViewModel?.HideLoading();
             await ShowErrorMessageBoxAsync(
                 "AI Not Configured".Translate(),
-                "Portal is not configured. Please register your company first to use AI-powered import.".Translate());
+                "AI-powered import requires portal access. Please register your company first.".Translate());
             return;
         }
 
@@ -3787,7 +3929,7 @@ public class App : Application
             {
                 await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
                 {
-                    Title = "File Not Found".Translate(),
+                    Title = "Company File Not Found".Translate(),
                     Message = "The company file no longer exists.".Translate(),
                     PrimaryButtonText = "OK".Translate(),
                     SecondaryButtonText = null,
@@ -3796,6 +3938,28 @@ public class App : Application
             }
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
+        }
+        catch (CompanyFileTooNewException ex)
+        {
+            // File was saved by a newer Argo Books build. Use ConfirmationDialog (same path as
+            // the FileNotFoundException case) rather than the message-box service, because the
+            // latter races with the loading overlay and the dialog ends up queued behind the
+            // next user action.
+            _isOpeningCompany = false;
+            _mainWindowViewModel.HideLoading();
+            passwordModal.Close();
+            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Cannot open company file: newer than running app");
+            if (ConfirmationDialog != null)
+            {
+                await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Update Argo Books".Translate(),
+                    Message = "This company file was created by Argo Books {0}. You are running Argo Books {1}. Please update to Argo Books {0} or later to open it.".TranslateFormat(ex.FileVersion, ex.AppVersion),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
         }
         catch (Exception ex)
         {
@@ -4068,9 +4232,20 @@ public class App : Application
     /// </summary>
     private static void OnRecentCompanyFileDeleted(object sender, FileSystemEventArgs e)
     {
+        // FileService.SaveCompanyAsync writes to <path>.tmp then File.Move(tmp, path,
+        // overwrite: true). On Windows that overwrite-move emits a Deleted event for
+        // the destination even though the rename itself is atomic — by the time we
+        // observe it, the file is already back. Treating it as a real deletion would
+        // strip the entry from settings.json on every save. Skip if the file exists.
+        if (File.Exists(e.FullPath))
+            return;
+
         // Run on UI thread
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
+            // Re-check on the UI thread in case the file came back during the post hop.
+            if (File.Exists(e.FullPath))
+                return;
             RemoveRecentCompanyFromUi(e.FullPath);
         });
     }

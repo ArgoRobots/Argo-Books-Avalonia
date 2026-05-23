@@ -61,7 +61,7 @@
                     Margin="0,0,0,24">
                 <StackPanel Spacing="20">
                     <!-- Section Header -->
-                    <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,-20">
                         <Border Grid.Column="0"
                                 Width="32" Height="32"
                                 CornerRadius="8"
@@ -98,6 +98,25 @@
                         <!-- Date Range Selector -->
                         <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
                     </Grid>
+
+                    <!-- Scenario Mode Selector (Conservative / Baseline / Optimistic) -->
+                    <StackPanel IsVisible="{Binding !HasInsufficientData}" Spacing="6">
+                        <TabControl Classes="page-tabs"
+                                    Margin="0"
+                                    Padding="0"
+                                    HorizontalAlignment="Left"
+                                    SelectedIndex="{Binding SelectedScenarioModeIndex}"
+                                    IsEnabled="{Binding ScenarioToggleEnabled}">
+                            <TabItem Header="{loc:Loc 'Conservative'}" />
+                            <TabItem Header="{loc:Loc 'Baseline'}" />
+                            <TabItem Header="{loc:Loc 'Optimistic'}" />
+                        </TabControl>
+                        <TextBlock Text="{Binding ScenarioOutlookHint}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding ScenarioOutlookHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
 
                     <!-- Forecast Cards Row (visible when data is available) -->
                     <controls:StatCardsRow IsVisible="{Binding !HasInsufficientData}">

@@ -344,6 +344,10 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         {
             _countrySearchBox.GotFocus += OnCountrySearchBoxGotFocus;
             _countrySearchBox.KeyDown += OnCountrySearchBoxKeyDown;
+            // Tunneling so we re-open the dropdown even when the textbox already has focus.
+            // Without this, clicking-elsewhere light-dismisses the popup but the textbox keeps
+            // focus, and the next click on the textbox doesn't fire GotFocus.
+            _countrySearchBox.AddHandler(PointerPressedEvent, OnCountrySearchBoxPointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         }
 
         _countryListBox = this.FindControl<ListBox>("CountryListBox");
@@ -494,6 +498,14 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         _countrySearchBox?.SelectAll();
     }
 
+    private void OnCountrySearchBoxPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!IsCountryDropdownOpen)
+        {
+            IsCountryDropdownOpen = true;
+        }
+    }
+
     private void OnCountrySearchBoxKeyDown(object? sender, KeyEventArgs e)
     {
         switch (e.Key)
@@ -594,7 +606,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         // Get the last priority country code (Canada = "CA")
         var lastPriorityCode = Countries.Priority.LastOrDefault()?.Code;
 
-        foreach (var item in filtered.Take(50))
+        foreach (var item in filtered)
         {
             // Only show separator when displaying the full list, after the last priority country
             item.ShowSeparatorAfter = showingFullList && item.Code == lastPriorityCode;

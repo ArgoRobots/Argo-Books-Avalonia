@@ -141,12 +141,16 @@ public class InsightsService(
         // Map future date ranges to equivalent historical periods
         var (currentPeriod, previousPeriod) = GetHistoricalAnalysisPeriods(dateRange);
 
+        // Trend / anomaly analysis is cash-basis to match the dashboard:
+        // unpaid invoices aren't real "sales activity" yet.
         var currentSales = companyData.Revenues
             .Where(s => s.Date >= currentPeriod.StartDate && s.Date <= currentPeriod.EndDate)
+            .Where(RevenueAggregator.IsCollected)
             .ToList();
 
         var previousSales = companyData.Revenues
             .Where(s => s.Date >= previousPeriod.StartDate && s.Date <= previousPeriod.EndDate)
+            .Where(RevenueAggregator.IsCollected)
             .ToList();
 
         var currentPurchases = companyData.Expenses
@@ -157,9 +161,10 @@ public class InsightsService(
             .Where(p => p.Date >= previousPeriod.StartDate && p.Date <= previousPeriod.EndDate)
             .ToList();
 
-        // Revenue trend
-        var currentRevenue = currentSales.Sum(s => s.EffectiveSubtotalUSD);
-        var previousRevenue = previousSales.Sum(s => s.EffectiveSubtotalUSD);
+        // Revenue trend — display the gross figure the user recognises from
+        // the Revenue stat card (Total, not pre-tax).
+        var currentRevenue = currentSales.Sum(s => s.EffectiveTotalUSD);
+        var previousRevenue = previousSales.Sum(s => s.EffectiveTotalUSD);
 
         if (previousRevenue > 0)
         {
@@ -183,9 +188,9 @@ public class InsightsService(
             }
         }
 
-        // Expense trend
-        var currentExpenses = currentPurchases.Sum(p => p.EffectiveSubtotalUSD);
-        var previousExpenses = previousPurchases.Sum(p => p.EffectiveSubtotalUSD);
+        // Expense trend — display gross (Total), matching the Expenses stat card.
+        var currentExpenses = currentPurchases.Sum(p => p.EffectiveTotalUSD);
+        var previousExpenses = previousPurchases.Sum(p => p.EffectiveTotalUSD);
 
         if (previousExpenses > 0)
         {
@@ -238,8 +243,9 @@ public class InsightsService(
         if (sales.Count < 14) return null;
 
         var salesByDay = sales
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => s.Date.DayOfWeek)
-            .Select(g => new { Day = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD), Count = g.Count() })
+            .Select(g => new { Day = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD), Count = g.Count() })
             .OrderByDescending(x => x.Total)
             .ToList();
 
@@ -267,13 +273,15 @@ public class InsightsService(
 
     private InsightItem? AnalyzeSeasonalPattern(List<Revenue> allSales)
     {
-        // Get monthly revenue data for ML analysis
+        // Get monthly revenue data for ML analysis. Cash-basis + gross so it
+        // matches the Revenue stat card / Revenue chart the user sees.
         var monthlyData = allSales
             .Where(s => s.Date >= DateTime.UtcNow.AddMonths(-12))
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => new { s.Date.Year, s.Date.Month })
             .OrderBy(g => g.Key.Year)
             .ThenBy(g => g.Key.Month)
-            .Select(g => g.Sum(s => s.EffectiveSubtotalUSD))
+            .Select(g => g.Sum(s => s.EffectiveTotalUSD))
             .ToList();
 
         if (monthlyData.Count < 6) return null;
@@ -313,8 +321,9 @@ public class InsightsService(
         // Fallback to simple analysis if no strong ML pattern detected
         var monthlyByMonth = allSales
             .Where(s => s.Date >= DateTime.UtcNow.AddMonths(-12))
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => s.Date.Month)
-            .Select(g => new { Month = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD) })
+            .Select(g => new { Month = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
             .OrderByDescending(x => x.Total)
             .ToList();
 
@@ -408,19 +417,20 @@ public class InsightsService(
 
     private InsightItem? DetectExpenseAnomalies(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        // Get weekly expense data for the past 12 weeks
+        // Get weekly expense data for the past 12 weeks (gross, to match the
+        // Expenses stat card the user sees).
         var twelveWeeksAgo = dateRange.EndDate.AddDays(-84);
         var weeklyExpenses = companyData.Expenses
             .Where(p => p.Date >= twelveWeeksAgo && p.Date <= dateRange.EndDate)
             .GroupBy(p => GetWeekNumber(p.Date))
-            .Select(g => g.Sum(p => p.EffectiveSubtotalUSD))
+            .Select(g => g.Sum(p => p.EffectiveTotalUSD))
             .ToList();
 
         if (weeklyExpenses.Count < 4) return null;
 
         var currentWeekExpenses = companyData.Expenses
             .Where(p => p.Date >= dateRange.EndDate.AddDays(-7) && p.Date <= dateRange.EndDate)
-            .Sum(p => p.EffectiveSubtotalUSD);
+            .Sum(p => p.EffectiveTotalUSD);
 
         var stats = CalculateStatistics(weeklyExpenses.Select(x => (double)x).ToList());
 
@@ -517,10 +527,14 @@ public class InsightsService(
 
         var historicalStart = dateRange.StartDate.AddDays(-periodDays * 3); // 3x the period for baseline
 
+        // Include the year in the day bucket so a baseline that spans a year boundary
+        // doesn't collapse Jan 5 2024 and Jan 5 2025 into the same statistical bucket.
+        // Use gross + IsCollected so anomaly detection matches dashboard signal.
         var historicalData = companyData.Revenues
             .Where(s => s.Date >= historicalStart && s.Date < dateRange.StartDate)
-            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
-            .Select(g => g.Sum(s => s.EffectiveSubtotalUSD))
+            .Where(RevenueAggregator.IsCollected)
+            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.Year * 1000 + s.Date.DayOfYear)
+            .Select(g => g.Sum(s => s.EffectiveTotalUSD))
             .ToList();
 
         if (historicalData.Count < 5) return anomalies;
@@ -530,8 +544,9 @@ public class InsightsService(
         // Check current period data points
         var currentData = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
-            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.DayOfYear)
-            .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveSubtotalUSD) })
+            .Where(RevenueAggregator.IsCollected)
+            .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.Year * 1000 + s.Date.DayOfYear)
+            .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
             .ToList();
 
         foreach (var period in currentData)
@@ -563,19 +578,22 @@ public class InsightsService(
 
     private InsightItem? DetectLargeTransactionAnomaly(CompanyData companyData, AnalysisDateRange dateRange)
     {
+        // Cash-basis transaction-size analysis: only count collected rows,
+        // and use gross (Total) so the figure shown matches the Revenue page.
         var currentSales = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
+            .Where(RevenueAggregator.IsCollected)
             .ToList();
 
         if (currentSales.Count < 5) return null;
 
-        var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveSubtotalUSD).ToList());
+        var stats = CalculateStatistics(currentSales.Select(s => (double)s.EffectiveTotalUSD).ToList());
 
-        var largestRevenue = currentSales.MaxBy(s => s.EffectiveSubtotalUSD)!;
+        var largestRevenue = currentSales.MaxBy(s => s.EffectiveTotalUSD)!;
 
         if (stats.StandardDeviation > 0)
         {
-            var zScore = ((double)largestRevenue.EffectiveSubtotalUSD - stats.Mean) / stats.StandardDeviation;
+            var zScore = ((double)largestRevenue.EffectiveTotalUSD - stats.Mean) / stats.StandardDeviation;
 
             if (zScore > 3.0) // Very unusual
             {
@@ -585,11 +603,11 @@ public class InsightsService(
                 return new InsightItem
                 {
                     Title = "Unusually Large Transaction",
-                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveSubtotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
+                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveTotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
                     Recommendation = "Verify this transaction is correct and consider nurturing this high-value customer relationship.",
                     Severity = InsightSeverity.Info,
                     Category = InsightCategory.Anomaly,
-                    MetricValue = largestRevenue.EffectiveSubtotalUSD
+                    MetricValue = largestRevenue.EffectiveTotalUSD
                 };
             }
         }
@@ -609,9 +627,17 @@ public class InsightsService(
         var periodMonths = GetForecastPeriodMonths(dateRange);
         forecast.PeriodMonths = periodMonths;
 
-        // Get monthly data for forecasting
-        var monthlyRevenue = GetMonthlyTotals(companyData.Revenues, s => s.EffectiveSubtotalUSD);
-        var monthlyExpenses = GetMonthlyTotals(companyData.Expenses, p => p.EffectiveSubtotalUSD);
+        // Get monthly data for forecasting. Revenue uses gross (Total) +
+        // paid-only so the forecasted figure matches the Revenue stat card.
+        // Expenses use gross (Total) to match the Expenses stat card. Note:
+        // forecast.ForecastedProfit (computed as forecastedRevenue −
+        // forecastedExpenses below) is an approximation of net profit —
+        // strictly Net Profit uses pre-tax revenue per Calculations.md §2,
+        // but exposing two parallel revenue forecasts adds little signal.
+        var monthlyRevenue = GetMonthlyTotals(
+            companyData.Revenues.Where(RevenueAggregator.IsCollected).ToList(),
+            s => s.EffectiveTotalUSD);
+        var monthlyExpenses = GetMonthlyTotals(companyData.Expenses, p => p.EffectiveTotalUSD);
 
         forecast.DataMonthsUsed = Math.Max(monthlyRevenue.Count, monthlyExpenses.Count);
 
@@ -660,6 +686,8 @@ public class InsightsService(
             if (historicalRevenue > 0)
             {
                 forecast.RevenueGrowthPercent = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenue);
+                forecast.RevenueGrowthPercentLower = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenueLower);
+                forecast.RevenueGrowthPercentUpper = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenueUpper);
             }
         }
 
@@ -679,11 +707,15 @@ public class InsightsService(
             if (historicalExpenses > 0)
             {
                 forecast.ExpenseGrowthPercent = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpenses);
+                forecast.ExpenseGrowthPercentLower = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpensesLower);
+                forecast.ExpenseGrowthPercentUpper = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpensesUpper);
             }
         }
 
-        // Calculate profit forecast
+        // Calculate profit forecast (point and bounds — conservative profit pairs low revenue with high expenses)
         forecast.ForecastedProfit = forecast.ForecastedRevenue - forecast.ForecastedExpenses;
+        forecast.ForecastedProfitLower = forecast.ForecastedRevenueLower - forecast.ForecastedExpensesUpper;
+        forecast.ForecastedProfitUpper = forecast.ForecastedRevenueUpper - forecast.ForecastedExpensesLower;
 
         // Calculate profit growth
         var historicalProfit = GetScaledHistoricalValue(monthlyRevenue, periodMonths) -
@@ -691,6 +723,8 @@ public class InsightsService(
         if (historicalProfit != 0)
         {
             forecast.ProfitGrowthPercent = CalculatePercentChange(historicalProfit, forecast.ForecastedProfit);
+            forecast.ProfitGrowthPercentLower = CalculatePercentChange(historicalProfit, forecast.ForecastedProfitLower);
+            forecast.ProfitGrowthPercentUpper = CalculatePercentChange(historicalProfit, forecast.ForecastedProfitUpper);
         }
 
         // Customer growth forecast using ML
@@ -704,11 +738,15 @@ public class InsightsService(
 
             var scaleFactor = periodMonths / periodsToForecast;
             forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(customerForecast.ForecastedValues.Sum() * scaleFactor));
+            forecast.ExpectedNewCustomersLower = Math.Max(0, (int)Math.Round(customerForecast.LowerBounds.Sum() * scaleFactor));
+            forecast.ExpectedNewCustomersUpper = Math.Max(0, (int)Math.Round(customerForecast.UpperBounds.Sum() * scaleFactor));
 
             var historicalCustomers = GetScaledHistoricalValue(customerData, periodMonths);
             if (historicalCustomers > 0)
             {
                 forecast.CustomerGrowthPercent = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomers);
+                forecast.CustomerGrowthPercentLower = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomersLower);
+                forecast.CustomerGrowthPercentUpper = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomersUpper);
             }
         }
 
@@ -892,10 +930,15 @@ public class InsightsService(
         // Use USD-converted amounts by applying each transaction's conversion ratio to its line items
         var productSalesData = new Dictionary<string, (decimal Revenue, decimal Cost, decimal Quantity)>();
 
-        foreach (var s in companyData.Revenues.Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate))
+        // Cash-basis: only collected revenue contributes to top-product analysis.
+        foreach (var s in companyData.Revenues
+                     .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
+                     .Where(RevenueAggregator.IsCollected))
         {
             if (s.LineItems.Count == 0) continue;
             var lineItemsTotal = s.LineItems.Sum(li => li.Subtotal);
+            // Allocation uses Subtotal proportions (line items are pre-tax),
+            // which is correct for splitting revenue across products.
             var subtotalUSD = s.EffectiveSubtotalUSD;
 
             foreach (var li in s.LineItems)
@@ -1005,16 +1048,17 @@ public class InsightsService(
 
     private InsightItem? AnalyzeSupplierOptimization(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        // Analyze purchase patterns by supplier
+        // Analyze purchase patterns by supplier — gross (Total) to match the
+        // Expenses stat card and Expenses Over Time chart.
         var supplierPurchases = companyData.Expenses
             .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)
             .GroupBy(p => p.SupplierId)
             .Select(g => new
             {
                 SupplierId = g.Key,
-                TotalSpent = g.Sum(p => p.EffectiveSubtotalUSD),
+                TotalSpent = g.Sum(p => p.EffectiveTotalUSD),
                 Count = g.Count(),
-                AvgPerPurchase = g.Average(p => p.EffectiveSubtotalUSD)
+                AvgPerPurchase = g.Average(p => p.EffectiveTotalUSD)
             })
             .OrderByDescending(s => s.TotalSpent)
             .ToList();
@@ -1050,8 +1094,9 @@ public class InsightsService(
     {
         var customerRevenue = companyData.Revenues
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => s.CustomerId)
-            .Select(g => new { CustomerId = g.Key, Revenue = g.Sum(s => s.EffectiveSubtotalUSD) })
+            .Select(g => new { CustomerId = g.Key, Revenue = g.Sum(s => s.EffectiveTotalUSD) })
             .OrderByDescending(c => c.Revenue)
             .ToList();
 

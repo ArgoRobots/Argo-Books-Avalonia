@@ -261,7 +261,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
 
         if (newStock < 0)
         {
-            AddModalError = $"Cannot remove {quantity} items. Only {inventoryItem.InStock} in stock.".Translate();
+            AddModalError = "Cannot remove {0} items. Only {1} in stock.".TranslateFormat(quantity, inventoryItem.InStock);
             HasQuantityError = true;
             return;
         }

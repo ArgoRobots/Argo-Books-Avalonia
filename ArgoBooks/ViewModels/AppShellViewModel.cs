@@ -25,9 +25,11 @@ public partial class AppShellViewModel : ViewModelBase
     private DepartmentModalsViewModel? _departmentModalsViewModel;
     private SupplierModalsViewModel? _supplierModalsViewModel;
     private RentalInventoryModalsViewModel? _rentalInventoryModalsViewModel;
+    private RentalAvailabilityModalViewModel? _rentalAvailabilityModalViewModel;
     private RentalRecordsModalsViewModel? _rentalRecordsModalsViewModel;
     private PaymentModalsViewModel? _paymentModalsViewModel;
     private InvoiceModalsViewModel? _invoiceModalsViewModel;
+    private RefundModalsViewModel? _refundModalsViewModel;
     private InvoiceTemplateDesignerViewModel? _invoiceTemplateDesignerViewModel;
     private ExpenseModalsViewModel? _expenseModalsViewModel;
     private RevenueModalsViewModel? _revenueModalsViewModel;
@@ -281,6 +283,22 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Gets the rental availability modal view model (per-item calendar).
+    /// </summary>
+    public RentalAvailabilityModalViewModel RentalAvailabilityModalViewModel
+    {
+        get
+        {
+            if (_rentalAvailabilityModalViewModel == null)
+            {
+                _rentalAvailabilityModalViewModel = new RentalAvailabilityModalViewModel();
+                OnPropertyChanged();
+            }
+            return _rentalAvailabilityModalViewModel;
+        }
+    }
+
+    /// <summary>
     /// Gets the rental records modals view model.
     /// </summary>
     public RentalRecordsModalsViewModel RentalRecordsModalsViewModel
@@ -318,8 +336,22 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Gets the invoice modals view model.
+    /// Coordinates the three refund-feature modals (refund, email-verify, email-change).
+    /// Bound to the &lt;modals:RefundModals&gt; UserControl in AppShell.axaml.
     /// </summary>
+    public RefundModalsViewModel RefundModalsViewModel
+    {
+        get
+        {
+            if (_refundModalsViewModel == null)
+            {
+                _refundModalsViewModel = new RefundModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _refundModalsViewModel;
+        }
+    }
+
     public InvoiceModalsViewModel InvoiceModalsViewModel
     {
         get
@@ -837,7 +869,7 @@ public partial class AppShellViewModel : ViewModelBase
                     ImportModalViewModel.OpenCommand.Execute(null);
                     break;
                 case QuickActionName.OpenScanModal:
-                    App.ReceiptsModalsViewModel?.OpenBulkDropZone();
+                    OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
                     break;
                 case QuickActionName.OpenEditCompany:
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);
@@ -977,7 +1009,7 @@ public partial class AppShellViewModel : ViewModelBase
         // Show unsaved changes dialog
         var result2 = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
             "Unsaved Report Changes".Translate(),
-            "You have unsaved changes in the report designer. Would you like to save them before leaving?".Translate());
+            "You have unsaved changes in the report designer. Would you like to save them?".Translate());
 
         switch (result2)
         {

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -41,42 +42,42 @@ public partial class AppTourViewModel : ViewModelBase
     [
         new TourStep
         {
-            Title = "Welcome to Argo Books",
-            Description = "Let's take a quick tour to help you get started. This will only take a minute.",
+            Title = "Welcome to Argo Books".Translate(),
+            Description = "Let's take a quick tour to help you get started. This will only take a minute.".Translate(),
             TargetArea = "center",
             Icon = Icons.Dashboard
         },
         new TourStep
         {
-            Title = "Navigation Sidebar",
-            Description = "Use the sidebar to navigate between different sections of the app. You can collapse it by clicking the menu icon at the top.",
+            Title = "Navigation Sidebar".Translate(),
+            Description = "Use the sidebar to navigate between different sections of the app. You can collapse it by clicking the menu icon at the top.".Translate(),
             TargetArea = "sidebar",
             Icon = Icons.Menu
         },
         new TourStep
         {
-            Title = "Dashboard Overview",
-            Description = "The Dashboard shows your key business metrics at a glance. Revenue, expenses, and recent transactions are all here.",
+            Title = "Dashboard Overview".Translate(),
+            Description = "The Dashboard shows your key business metrics at a glance. Revenue, expenses, and recent transactions are all here.".Translate(),
             TargetArea = "content",
             Icon = Icons.Dashboard
         },
         new TourStep
         {
-            Title = "Quick Actions",
-            Description = $"Press {QuickActionsShortcut} anytime to open Quick Actions. It's the fastest way to create expenses, revenue, and more.",
+            Title = "Quick Actions".Translate(),
+            Description = "Press {0} anytime to open Quick Actions. It's the fastest way to create expenses, revenue, and more.".TranslateFormat(QuickActionsShortcut),
             TargetArea = "searchbar",
             Icon = Icons.Lightning
         },
         new TourStep
         {
-            Title = "You're All Set!",
-            Description = "Check the Setup Checklist on your Dashboard to complete your first tasks. You can restart this tour anytime from the Help menu.",
+            Title = "You're All Set!".Translate(),
+            Description = "Check the Setup Checklist on your Dashboard to complete your first tasks. You can restart this tour anytime from the Help menu.".Translate(),
             TargetArea = "center",
             Icon = Icons.Check
         }
     ];
 
-    private readonly List<TourStep> _tourSteps;
+    private List<TourStep> _tourSteps;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -154,6 +155,14 @@ public partial class AppTourViewModel : ViewModelBase
         {
             StepIndicators.Add(new StepIndicator { Index = i, IsActive = false });
         }
+
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        _tourSteps = GetTourSteps();
+        UpdateCurrentStep();
     }
 
     /// <summary>
@@ -232,7 +241,7 @@ public partial class AppTourViewModel : ViewModelBase
             CurrentIcon = step.Icon;
             IsFirstStep = CurrentStepIndex == 0;
             IsLastStep = CurrentStepIndex == _tourSteps.Count - 1;
-            ProgressText = $"{CurrentStepIndex + 1} of {TotalSteps}";
+            ProgressText = "{0} of {1}".TranslateFormat(CurrentStepIndex + 1, TotalSteps);
 
             // Update step indicators
             for (int i = 0; i < StepIndicators.Count; i++)

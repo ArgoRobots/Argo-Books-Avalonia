@@ -199,7 +199,10 @@ public static class DotEnv
             lines.Add($"{key}={value}");
         }
 
-        File.WriteAllLines(envPath, lines);
+        // Write atomically to avoid corrupting the file if the process is killed mid-write.
+        var tempPath = envPath + ".tmp";
+        File.WriteAllLines(tempPath, lines);
+        File.Move(tempPath, envPath, overwrite: true);
     }
 
     /// <summary>

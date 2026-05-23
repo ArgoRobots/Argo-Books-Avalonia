@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -103,17 +104,39 @@ public partial class HeaderViewModel : ViewModelBase
     private bool _showNotificationToast;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ToastTitle))]
+    [NotifyPropertyChangedFor(nameof(ToastMessage))]
+    [NotifyPropertyChangedFor(nameof(ToastBackgroundBrush))]
+    [NotifyPropertyChangedFor(nameof(ToastBorderBrush))]
     private NotificationItem? _toastNotification;
+
+    /// <summary>
+    /// Pre-resolved title for the toast popup. Returns empty when no toast is active,
+    /// so the binding never has to traverse a null ToastNotification.
+    /// </summary>
+    public string ToastTitle => ToastNotification?.Title ?? string.Empty;
+
+    /// <summary>
+    /// Pre-resolved message for the toast popup.
+    /// </summary>
+    public string ToastMessage => ToastNotification?.Message ?? string.Empty;
+
+    /// <summary>
+    /// Pre-resolved background brush for the toast popup. Returns Transparent when no toast is active.
+    /// </summary>
+    public IBrush ToastBackgroundBrush => ToastNotification != null
+        ? NotificationTypeConverters.BackgroundBrushFor(ToastNotification.Type)
+        : Brushes.Transparent;
+
+    /// <summary>
+    /// Pre-resolved border brush for the toast popup.
+    /// </summary>
+    public IBrush ToastBorderBrush => ToastNotification != null
+        ? NotificationTypeConverters.BrushFor(ToastNotification.Type)
+        : Brushes.Transparent;
 
     private CancellationTokenSource? _toastCancellationTokenSource;
     private CancellationTokenSource? _savedFeedbackCts;
-
-    private bool _toastsEnabled;
-
-    /// <summary>
-    /// Enables toast popups. Call after startup notifications have been sent.
-    /// </summary>
-    public void EnableToasts() => _toastsEnabled = true;
 
     #endregion
 
@@ -502,7 +525,7 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Adds a notification and shows a toast popup for 5 seconds.
+    /// Adds a notification and shows a toast popup for 10 seconds.
     /// </summary>
     /// <param name="notification">Notification to add.</param>
     public void AddNotification(NotificationItem notification)
@@ -518,15 +541,12 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Shows a toast popup for the given notification. Auto-dismisses after 5 seconds.
+    /// Shows a toast popup for the given notification. Auto-dismisses after 10 seconds.
     /// </summary>
     private async void ShowToast(NotificationItem notification)
     {
         try
         {
-            if (!_toastsEnabled)
-                return;
-
             // Cancel and dispose any existing toast timer
             _toastCancellationTokenSource?.Cancel();
             _toastCancellationTokenSource?.Dispose();

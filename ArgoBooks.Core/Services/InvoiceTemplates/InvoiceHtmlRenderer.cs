@@ -35,7 +35,7 @@ public partial class InvoiceHtmlRenderer
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
 
         // Build the data context for template rendering
-        var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true);
+        var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true, companyData.Payments);
 
         // Process the template
         html = ProcessTemplate(html, context);
@@ -103,7 +103,7 @@ public partial class InvoiceHtmlRenderer
         };
 
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
-        var context = BuildContext(sampleInvoice, template, sampleCustomer, previewCompanySettings, "$", lockAspectRatio);
+        var context = BuildContext(sampleInvoice, template, sampleCustomer, previewCompanySettings, "$", lockAspectRatio, payments: null);
         return ProcessTemplate(html, context);
     }
 
@@ -218,10 +218,42 @@ public partial class InvoiceHtmlRenderer
         Models.Entities.Customer? customer,
         CompanySettings companySettings,
         string currencySymbol,
-        bool lockAspectRatio)
+        bool lockAspectRatio,
+        IEnumerable<Payment>? payments)
     {
         var isOverdue = invoice.DueDate.Date < DateTime.UtcNow.Date &&
                         invoice.Balance > 0;
+
+        // Processing-fee row logic:
+        //  - If the customer has already paid online with a fee (sum of
+        //    Payment.ProcessingFee > 0), show the actual fee — even when
+        //    Balance == 0. This is the user-visible record of what they
+        //    were actually charged.
+        //  - Otherwise, if the invoice is unpaid and the portal is
+        //    configured, show the *estimated* fee they would pay if they
+        //    chose to pay through the portal.
+        // The "Amount to Pay" row (= Balance + estimated fee) only makes
+        // sense when there is still a balance the customer can pay
+        // online — for paid invoices we want the plain "Total" row.
+        var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency)
+            ? "USD" : invoice.OriginalCurrency;
+        var actualProcessingFee = payments?
+            .Where(p => p.InvoiceId == invoice.Id
+                        && !p.IsRefund
+                        && string.Equals(
+                            string.IsNullOrEmpty(p.OriginalCurrency) ? "USD" : p.OriginalCurrency,
+                            invoiceCurrency,
+                            StringComparison.OrdinalIgnoreCase))
+            .Sum(p => p.ProcessingFee) ?? 0m;
+
+        var portalConfigured = IsPortalConfigured(companySettings);
+        var hasUnpaidBalance = invoice.Balance > 0;
+        var estimatedProcessingFee = hasUnpaidBalance && portalConfigured
+            ? CalculateProcessingFee(invoice.Balance)
+            : 0m;
+        var displayProcessingFee = actualProcessingFee > 0 ? actualProcessingFee : estimatedProcessingFee;
+        var showProcessingFeeRow = displayProcessingFee > 0;
+        var showAmountToPay = hasUnpaidBalance && portalConfigured;
 
         var context = new Dictionary<string, object?>
         {
@@ -289,18 +321,29 @@ public partial class InvoiceHtmlRenderer
             ["CustomFeeAmount"] = $"{currencySymbol}{CalculateCustomFee(invoice):N2}",
             ["ShowDiscount"] = invoice.DiscountAmount > 0,
             ["DiscountAmount"] = $"-{currencySymbol}{CalculateDiscount(invoice):N2}",
-            ["Total"] = $"{currencySymbol}{invoice.Total:N2}",
+            // Total includes any actual processing fee the customer paid
+            // on top of the invoice, so the row reconciles cleanly with
+            // Amount Paid (Total − Amount Paid = Balance Due). The bare
+            // invoice subtotal/tax/etc. roll-up is already shown by the
+            // Subtotal/Tax rows above; this Total row is the gross.
+            ["Total"] = $"{currencySymbol}{(invoice.Total + actualProcessingFee):N2}",
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
 
-            // Processing fee (calculated at render time, shown on portal invoices)
-            ["ShowProcessingFee"] = template.PassProcessingFee && invoice.Balance > 0,
+            // Processing fee — see invoiceCurrency / actualProcessingFee
+            // block above for the row-visibility rules. ShowProcessingFee
+            // controls the fee row itself; ShowAmountToPay controls the
+            // separate "Amount to Pay" vs "Total" label switch so a paid
+            // invoice with an actual fee shows fee + Total (not fee +
+            // Amount to Pay).
+            ["ShowProcessingFee"] = showProcessingFeeRow,
             ["ProcessingFeeLabel"] = BuildProcessingFeeLabel(companySettings),
-            ["ProcessingFeeAmount"] = template.PassProcessingFee && invoice.Balance > 0
-                ? $"{currencySymbol}{CalculateProcessingFee(invoice.Balance):N2}"
+            ["ProcessingFeeAmount"] = showProcessingFeeRow
+                ? $"{currencySymbol}{displayProcessingFee:N2}"
                 : "",
-            ["AmountToPay"] = template.PassProcessingFee && invoice.Balance > 0
-                ? $"{currencySymbol}{invoice.Balance + CalculateProcessingFee(invoice.Balance):N2}"
+            ["ShowAmountToPay"] = showAmountToPay,
+            ["AmountToPay"] = showAmountToPay
+                ? $"{currencySymbol}{invoice.Balance + estimatedProcessingFee:N2}"
                 : "",
 
             // Notes
@@ -525,6 +568,18 @@ public partial class InvoiceHtmlRenderer
 
         var providerName = providers.Count > 0 ? string.Join(" / ", providers) : "Payment";
         return $"{providerName} processing fee";
+    }
+
+    /// <summary>
+    /// True when at least one online payment provider is connected — i.e.
+    /// the customer can actually pay through the portal, which is when a
+    /// processing fee would be charged on top of the invoice balance.
+    /// </summary>
+    private static bool IsPortalConfigured(CompanySettings companySettings)
+    {
+        var accounts = companySettings.PaymentPortal?.ConnectedAccounts;
+        if (accounts == null) return false;
+        return accounts.StripeConnected || accounts.PaypalConnected || accounts.SquareConnected;
     }
 
     /// <summary>

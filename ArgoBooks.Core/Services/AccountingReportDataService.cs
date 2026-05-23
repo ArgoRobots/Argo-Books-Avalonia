@@ -332,7 +332,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Cash = Revenue (Paid, no invoice) + Payments - Expenses, all filtered by date.
         // Uses post-tax (total) amounts because cash includes tax collected/paid.
         var cashFromRevenue = companyData.Revenues
-            .Where(r => r.PaymentStatus == "Paid"
+            .Where(r => RevenueAggregator.IsCollected(r)
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsOnOrBeforeEndDate(r.Date))
             .Sum(r => r.EffectiveTotalUSD);
@@ -554,7 +554,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Uses post-tax (total) amounts because cash includes tax collected/paid,
         // consistent with Balance Sheet cash calculation.
         var cashFromSales = companyData.Revenues
-            .Where(r => r.PaymentStatus == "Paid"
+            .Where(r => RevenueAggregator.IsCollected(r)
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
             .Sum(r => r.EffectiveTotalUSD);

@@ -1,0 +1,395 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="940" d:DesignHeight="640"
+             x:Class="ArgoBooks.Modals.RentalAvailabilityModal"
+             x:DataType="vm:RentalAvailabilityModalViewModel">
+
+    <Design.DataContext>
+        <vm:RentalAvailabilityModalViewModel />
+    </Design.DataContext>
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CloseCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="1140"
+                    MaxHeight="780"
+                    Margin="40"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,18"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Grid.Column="0"
+                                    Width="40" Height="40"
+                                    CornerRadius="6"
+                                    Background="{DynamicResource PrimaryLightBrush}"
+                                    Margin="0,0,14,0">
+                                <PathIcon Data="{x:Static icons:Icons.Calendar}"
+                                          Width="20" Height="20"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock FontSize="16">
+                                    <Run Text="{Binding ItemName}"
+                                         FontWeight="SemiBold"
+                                         Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <Run Text=" — "
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Run Text="{loc:Loc 'Availability'}"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding ItemSubtitle}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="2"
+                                    Classes="icon-button"
+                                    Width="32" Height="32"
+                                    VerticalAlignment="Center"
+                                    Command="{Binding CloseCommand}">
+                                <PathIcon Data="{x:Static icons:Icons.Close}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Body: side panel + calendar -->
+                    <Grid Grid.Row="1" ColumnDefinitions="280,*">
+
+                        <!-- Side Panel -->
+                        <Border Grid.Column="0"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,1,0">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="22" Spacing="22">
+
+                                    <!-- Quantity input -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="{loc:Loc 'How many do you need?'}"
+                                                   FontSize="10"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   />
+                                        <Grid ColumnDefinitions="36,*,36" Height="40" ColumnSpacing="8">
+                                            <Button Grid.Column="0"
+                                                    Classes="icon-button"
+                                                    Command="{Binding DecrementQuantityCommand}"
+                                                    Content="−"
+                                                    FontSize="18"
+                                                    HorizontalContentAlignment="Center" />
+                                            <TextBox Grid.Column="1"
+                                                     Text="{Binding QuantityNeededText, Mode=TwoWay}"
+                                                     behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                                     MaxLength="7"
+                                                     HorizontalContentAlignment="Center"
+                                                     VerticalContentAlignment="Center"
+                                                     FontSize="18"
+                                                     FontWeight="SemiBold"
+                                                     MinHeight="40"
+                                                     Padding="0"
+                                                     Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <Button Grid.Column="2"
+                                                    Classes="icon-button"
+                                                    Command="{Binding IncrementQuantityCommand}"
+                                                    Content="+"
+                                                    FontSize="18"
+                                                    HorizontalContentAlignment="Center" />
+                                        </Grid>
+                                        <TextBlock FontSize="10"
+                                                   Foreground="{Binding QuantityExceedsTotal, Converter={x:Static converters:BoolConverters.ToErrorOrTertiaryBrush}}"
+                                                   HorizontalAlignment="Center">
+                                            <Run Text="{loc:Loc 'Total fleet:'}" />
+                                            <Run Text=" " />
+                                            <Run Text="{Binding TotalQty}" />
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Next available answer -->
+                                    <Border Padding="16"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource SuccessLightBrush}"
+                                            BorderBrush="{DynamicResource SuccessBrush}"
+                                            BorderThickness="1"
+                                            IsVisible="{Binding HasNextAvailable}">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'NEXT AVAILABLE'}"
+                                                       FontSize="9"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource SuccessTextBrush}"
+                                                       />
+                                            <TextBlock Text="{Binding NextAvailableDate}"
+                                                       FontSize="22"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource SuccessTextBrush}"
+                                                       LineHeight="26" />
+                                            <TextBlock Text="{Binding NextAvailableDetail}"
+                                                       FontSize="12"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource SuccessTextBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Padding="16"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource ErrorLightBrush}"
+                                            BorderBrush="{DynamicResource ErrorBrush}"
+                                            BorderThickness="1"
+                                            IsVisible="{Binding !HasNextAvailable}">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'NOT AVAILABLE'}"
+                                                       FontSize="9"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       />
+                                            <TextBlock Text="{Binding NextAvailableDate}"
+                                                       FontSize="22"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       LineHeight="26" />
+                                            <TextBlock Text="{Binding NextAvailableDetail}"
+                                                       FontSize="12"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Right now -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="{loc:Loc 'RIGHT NOW'}"
+                                                   FontSize="10"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   />
+                                        <Border Padding="14,12"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
+                                            <Grid ColumnDefinitions="*,*">
+                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                    <TextBlock Text="{Binding FreeNow}"
+                                                               FontSize="20"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource SuccessBrush}" />
+                                                    <TextBlock Text="{loc:Loc 'free today'}"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding RentedNow}"
+                                                               FontSize="20"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource WarningBrush}"
+                                                               HorizontalAlignment="Right" />
+                                                    <TextBlock Text="{loc:Loc 'on rent'}"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               HorizontalAlignment="Right" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Active rentals list -->
+                                    <StackPanel Spacing="8" IsVisible="{Binding HasActiveRentals}">
+                                        <TextBlock Text="{loc:Loc 'ACTIVE RENTALS'}"
+                                                   FontSize="10"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   />
+                                        <ItemsControl ItemsSource="{Binding ActiveRentals}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="vm:ActiveRentalDisplay">
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="11"
+                                                               LineHeight="18"
+                                                               TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- Calendar -->
+                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" Margin="22">
+                            <!-- Month nav -->
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding MonthLabel}"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button Classes="icon-button"
+                                            Command="{Binding PreviousMonthCommand}"
+                                            Width="30" Height="30"
+                                            ToolTip.Tip="{loc:Loc 'Previous month'}">
+                                        <PathIcon Data="{x:Static icons:Icons.ChevronLeft}"
+                                                  Width="14" Height="14" />
+                                    </Button>
+                                    <Button Command="{Binding GoToTodayCommand}"
+                                            Width="64"
+                                            Height="30"
+                                            Padding="0"
+                                            Background="Transparent"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Cursor="Hand"
+                                            Content="{loc:Loc 'Today'}"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            FontSize="11" />
+                                    <Button Classes="icon-button"
+                                            Command="{Binding NextMonthCommand}"
+                                            Width="30" Height="30"
+                                            ToolTip.Tip="{loc:Loc 'Next month'}">
+                                        <PathIcon Data="{x:Static icons:Icons.ChevronRight}"
+                                                  Width="14" Height="14" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Day-of-week headers -->
+                            <UniformGrid Grid.Row="1" Columns="7" Margin="0,0,0,4">
+                                <TextBlock Text="{loc:Loc 'Sun'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                                <TextBlock Text="{loc:Loc 'Mon'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                                <TextBlock Text="{loc:Loc 'Tue'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                                <TextBlock Text="{loc:Loc 'Wed'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                                <TextBlock Text="{loc:Loc 'Thu'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                                <TextBlock Text="{loc:Loc 'Fri'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                                <TextBlock Text="{loc:Loc 'Sat'}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Padding="0,6" />
+                            </UniformGrid>
+
+                            <!-- Day grid -->
+                            <ItemsControl Grid.Row="2"
+                                          ItemsSource="{Binding Days}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="7" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:AvailabilityDayDisplay">
+                                        <Panel Margin="2">
+                                            <Border Padding="6"
+                                                    CornerRadius="5"
+                                                    MinHeight="74"
+                                                    Background="{Binding State, Converter={x:Static converters:StringConverters.ToAvailabilityDayBackground}}"
+                                                    BorderBrush="{Binding State, Converter={x:Static converters:StringConverters.ToAvailabilityDayBorder}}"
+                                                    BorderThickness="1"
+                                                    Opacity="{Binding IsOutsideMonth, Converter={x:Static converters:BoolConverters.OutsideMonthOpacity}}">
+                                                <Grid RowDefinitions="Auto,Auto,*">
+                                                    <TextBlock Grid.Row="0"
+                                                               Text="{Binding DayNumber}"
+                                                               FontSize="11"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{Binding State, Converter={x:Static converters:StringConverters.ToAvailabilityDayForeground}}" />
+                                                    <TextBlock Grid.Row="1"
+                                                               Text="{Binding FreeLabel}"
+                                                               FontSize="11"
+                                                               FontWeight="SemiBold"
+                                                               Margin="0,4,0,0"
+                                                               IsVisible="{Binding ShowFreeLabel}"
+                                                               Foreground="{Binding State, Converter={x:Static converters:StringConverters.ToAvailabilityDayForeground}}" />
+                                                    <Border Grid.Row="2"
+                                                            Margin="0,4,0,0"
+                                                            Padding="3,1"
+                                                            CornerRadius="2"
+                                                            VerticalAlignment="Top"
+                                                            Background="{DynamicResource PrimaryBrush}"
+                                                            IsVisible="{Binding HasEvent}">
+                                                        <TextBlock Text="{Binding EventLabel}"
+                                                                   FontSize="9"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Foreground="White" />
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <!-- Today outline overlay -->
+                                            <Border IsVisible="{Binding IsToday}"
+                                                    CornerRadius="5"
+                                                    BorderBrush="{DynamicResource PrimaryBrush}"
+                                                    BorderThickness="2"
+                                                    IsHitTestVisible="False" />
+                                        </Panel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Legend -->
+                    <Border Grid.Row="2" Padding="22,12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="20">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Width="14" Height="14" CornerRadius="3"
+                                        Background="{DynamicResource SuccessLightBrush}"
+                                        BorderBrush="{DynamicResource SuccessBrush}"
+                                        BorderThickness="1" />
+                                <TextBlock Text="{Binding MeetsNeedLegendText}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Width="14" Height="14" CornerRadius="3"
+                                        Background="{DynamicResource WarningLightBrush}"
+                                        BorderBrush="{DynamicResource WarningBrush}"
+                                        BorderThickness="1" />
+                                <TextBlock Text="{loc:Loc 'Partially booked'}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Width="14" Height="14" CornerRadius="3"
+                                        Background="{DynamicResource ErrorLightBrush}"
+                                        BorderBrush="{DynamicResource ErrorBrush}"
+                                        BorderThickness="1" />
+                                <TextBlock Text="{loc:Loc 'Fully booked'}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Width="14" Height="14" CornerRadius="3"
+                                        Background="Transparent"
+                                        BorderBrush="{DynamicResource PrimaryBrush}"
+                                        BorderThickness="2" />
+                                <TextBlock Text="{loc:Loc 'Today'}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+
+</UserControl>

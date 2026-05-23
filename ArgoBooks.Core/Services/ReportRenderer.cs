@@ -37,68 +37,10 @@ public class ReportRenderer : IDisposable
     private readonly SKFont _defaultFont;
     private readonly SKFont _headerFont;
 
-    // Chart colors (matching ChartLoaderService)
-    private static readonly SKColor ChartBarColor = SKColor.Parse(AppColors.ChartBar);
-    private static readonly SKColor ChartProfitColor = SKColor.Parse(AppColors.Success);
+    // Axes/grid stay local; series colors come from ArgoBooks.Core.ChartColors
+    // so dashboard, Analytics page, and PDF reports share the same mapping.
     private static readonly SKColor ChartAxisColor = SKColor.Parse(AppColors.ChartAxis);
     private static readonly SKColor ChartGridColor = SKColor.Parse(AppColors.ChartGrid);
-
-    // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
-    // Keep in sync with ChartLoaderService.CountryCodeMapping — consider extracting to a shared location
-    private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "United States", "usa" }, { "USA", "usa" }, { "US", "usa" }, { "America", "usa" },
-        { "United Kingdom", "gbr" }, { "UK", "gbr" }, { "Great Britain", "gbr" }, { "England", "gbr" },
-        { "Canada", "can" }, { "CA", "can" },
-        { "Germany", "deu" }, { "DE", "deu" },
-        { "France", "fra" }, { "FR", "fra" },
-        { "Italy", "ita" }, { "IT", "ita" },
-        { "Spain", "esp" }, { "ES", "esp" },
-        { "Australia", "aus" }, { "AU", "aus" },
-        { "Japan", "jpn" }, { "JP", "jpn" },
-        { "China", "chn" }, { "CN", "chn" },
-        { "India", "ind" }, { "IN", "ind" },
-        { "Brazil", "bra" }, { "BR", "bra" },
-        { "Mexico", "mex" }, { "MX", "mex" },
-        { "Russia", "rus" }, { "RU", "rus" },
-        { "South Korea", "kor" }, { "Korea", "kor" }, { "KR", "kor" },
-        { "Netherlands", "nld" }, { "NL", "nld" },
-        { "Switzerland", "che" }, { "CH", "che" },
-        { "Sweden", "swe" }, { "SE", "swe" },
-        { "Norway", "nor" }, { "NO", "nor" },
-        { "Denmark", "dnk" }, { "DK", "dnk" },
-        { "Finland", "fin" }, { "FI", "fin" },
-        { "Poland", "pol" }, { "PL", "pol" },
-        { "Belgium", "bel" }, { "BE", "bel" },
-        { "Austria", "aut" }, { "AT", "aut" },
-        { "Ireland", "irl" }, { "IE", "irl" },
-        { "Portugal", "prt" }, { "PT", "prt" },
-        { "Greece", "grc" }, { "GR", "grc" },
-        { "New Zealand", "nzl" }, { "NZ", "nzl" },
-        { "Singapore", "sgp" }, { "SG", "sgp" },
-        { "Hong Kong", "hkg" }, { "HK", "hkg" },
-        { "Taiwan", "twn" }, { "TW", "twn" },
-        { "South Africa", "zaf" }, { "ZA", "zaf" },
-        { "Argentina", "arg" }, { "AR", "arg" },
-        { "Chile", "chl" }, { "CL", "chl" },
-        { "Colombia", "col" }, { "CO", "col" },
-        { "Indonesia", "idn" }, { "ID", "idn" },
-        { "Malaysia", "mys" }, { "MY", "mys" },
-        { "Thailand", "tha" }, { "TH", "tha" },
-        { "Vietnam", "vnm" }, { "VN", "vnm" },
-        { "Philippines", "phl" }, { "PH", "phl" },
-        { "Turkey", "tur" }, { "TR", "tur" },
-        { "Saudi Arabia", "sau" }, { "SA", "sau" },
-        { "UAE", "are" }, { "United Arab Emirates", "are" }, { "AE", "are" },
-        { "Israel", "isr" }, { "IL", "isr" },
-        { "Egypt", "egy" }, { "EG", "egy" },
-        { "Nigeria", "nga" }, { "NG", "nga" },
-        { "Kenya", "ken" }, { "KE", "ken" },
-        { "Ukraine", "ukr" }, { "UA", "ukr" },
-        { "Czech Republic", "cze" }, { "Czechia", "cze" }, { "CZ", "cze" },
-        { "Romania", "rou" }, { "RO", "rou" },
-        { "Hungary", "hun" }, { "HU", "hun" }
-    };
 
     /// <summary>
     /// Determines if a chart type should display currency formatting on the Y-axis.
@@ -1388,17 +1330,9 @@ public class ReportRenderer : IDisposable
         var maxBarWidth = 50 * _renderScale;
         var barWidth = Math.Min(maxBarWidth, categoryWidth * 0.7f);
 
-        // Choose bar color based on chart type
-        var barColor = chart.ChartType switch
-        {
-            ChartDataType.TotalExpenses or ChartDataType.ExpensesDistribution => ChartBarColor, // Blue for expenses (matching WinForms)
-            ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution => ChartProfitColor, // Green for revenue
-            ChartDataType.TotalProfits => ChartProfitColor,
-            _ => ChartBarColor
-        };
-
+        // Per-bar color: profit/tax-liability charts pick green or red based on
+        // the bar's sign; flat-category charts use the same color throughout.
         using var barPaint = new SKPaint();
-        barPaint.Color = barColor;
         barPaint.Style = SKPaintStyle.Fill;
         barPaint.IsAntialias = true;
 
@@ -1417,6 +1351,7 @@ public class ReportRenderer : IDisposable
                 ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY)
                 : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
+            barPaint.Color = ChartColors.ForValue(chart.ChartType, point.Value);
             canvas.DrawRect(barRect, barPaint);
         }
 
@@ -1502,14 +1437,10 @@ public class ReportRenderer : IDisposable
         canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
         canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
 
-        // Choose line color based on chart type
-        var lineColor = chart.ChartType switch
-        {
-            ChartDataType.TotalExpenses or ChartDataType.ExpensesDistribution => ChartBarColor,
-            ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution => ChartProfitColor,
-            ChartDataType.TotalProfits => ChartProfitColor,
-            _ => ChartBarColor
-        };
+        // Line uses a single representative color per chart type.
+        // For profit/tax-liability, that's the color matching positive values
+        // (green for profits, red for owed tax).
+        var lineColor = ChartColors.ForValue(chart.ChartType, 0);
 
         // Calculate point positions
         var pointCount = dataPoints.Count;
@@ -2119,8 +2050,8 @@ public class ReportRenderer : IDisposable
         var lands = mapData
             .Select(kvp =>
             {
-                CountryNameToIsoCode.TryGetValue(kvp.Key, out var isoCode);
-                return isoCode != null ? new HeatLand { Name = isoCode, Value = kvp.Value } : null;
+                var isoCode = CountryCodeMapping.GetIsoCode(kvp.Key);
+                return !string.IsNullOrEmpty(isoCode) ? new HeatLand { Name = isoCode, Value = kvp.Value } : null;
             })
             .Where(l => l != null)
             .Cast<HeatLand>()
@@ -4066,7 +3997,7 @@ public class ReportRenderer : IDisposable
         return SKColors.Black;
     }
 
-    private static string GetChartTitle(ChartDataType chartType) => chartType.GetDisplayName();
+    private string GetChartTitle(ChartDataType chartType) => Tr(chartType.GetDisplayName());
 
     private static List<string> GetVisibleColumns(TableReportElement table)
     {

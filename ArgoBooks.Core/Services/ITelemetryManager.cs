@@ -8,17 +8,6 @@ namespace ArgoBooks.Core.Services;
 public interface ITelemetryManager
 {
     /// <summary>
-    /// Gets whether the user has consented to anonymous data collection.
-    /// </summary>
-    bool IsConsentGranted { get; }
-
-    /// <summary>
-    /// Sets the user's consent preference for data collection.
-    /// </summary>
-    /// <param name="granted">Whether consent is granted.</param>
-    void SetConsent(bool granted);
-
-    /// <summary>
     /// Initializes the telemetry manager and starts a new session.
     /// </summary>
     Task InitializeAsync(CancellationToken cancellationToken = default);
@@ -49,7 +38,7 @@ public interface ITelemetryManager
     Task TrackErrorAsync(ErrorLogEntry errorEntry, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Uploads all pending telemetry data to the server (requires consent).
+    /// Uploads all pending telemetry data to the server.
     /// </summary>
     Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default);
 

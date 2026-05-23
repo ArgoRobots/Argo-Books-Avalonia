@@ -160,7 +160,7 @@
                                                             Spacing="4">
                                                     <!-- Add Sub-category (only for parent categories) -->
                                                     <Button Classes="icon-button"
-                                                            ToolTip.Tip="{loc:Loc 'Add Sub-category'}"
+                                                            ToolTip.Tip="{loc:Loc 'Add Sub-Category'}"
                                                             IsVisible="{Binding !IsChild}"
                                                             Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenAddSubCategoryModalCommand}"
                                                             CommandParameter="{Binding}">

@@ -55,7 +55,7 @@
                                                             EmptyMessage="{loc:Loc 'No suppliers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateSupplierCommand}" />
-                                <TextBlock Text="{loc:Loc 'Please select a supplier'}"
+                                <TextBlock Text="{loc:Loc 'Please select a supplier.'}"
                                            FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding HasSupplierError}" />
                             </StackPanel>
@@ -144,7 +144,7 @@
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              HasError="{Binding HasProductError}"
-                                                             ErrorMessage="{loc:Loc 'Please select a product'}" />
+                                                             ErrorMessage="{loc:Loc 'Please select a product.'}" />
                                                     <TextBox Grid.Column="1"
                                                              Text="{Binding Quantity, Mode=TwoWay}"
                                                              Classes="form-input-compact"
