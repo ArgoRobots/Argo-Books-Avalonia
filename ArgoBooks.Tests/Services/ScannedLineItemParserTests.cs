@@ -47,7 +47,7 @@ public class ScannedLineItemParserTests
 
         Assert.True(ok);
         Assert.Equal("Milk", item.Description);
-        Assert.Equal(0m, item.Quantity);   // string "2" ignored
+        Assert.Equal(1m, item.Quantity);   // string "2" ignored, default quantity (1) kept
         Assert.Equal(0m, item.UnitPrice);  // string "abc" ignored
         Assert.Equal(3.00m, item.TotalPrice);
     }

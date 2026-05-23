@@ -24,7 +24,7 @@ public static partial class ReceiptDescriptionCleaner
     public static string Clean(string? description)
     {
         if (string.IsNullOrWhiteSpace(description))
-            return description ?? string.Empty;
+            return string.Empty;
 
         var trimmed = description.Trim();
         var cleaned = LeadingCodeRegex().Replace(trimmed, string.Empty).Trim();
