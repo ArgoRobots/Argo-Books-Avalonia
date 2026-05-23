@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -391,6 +392,11 @@ public partial class ReceiptViewerModal : UserControl
     {
         if (_imageScrollViewer == null) return;
 
+        // Don't start panning when the press lands on a scroll bar — let it scroll normally.
+        // This tunnel handler runs before the scroll bar sees the event, so without this guard
+        // dragging the scroll bar thumb would pan the receipt instead.
+        if (IsOnScrollBar(e.Source)) return;
+
         var point = e.GetCurrentPoint(_imageScrollViewer);
         if (point.Properties.IsLeftButtonPressed
             || point.Properties.IsRightButtonPressed
@@ -403,6 +409,20 @@ public partial class ReceiptViewerModal : UserControl
             _imageScrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// True if the event source is a scroll bar (or a part of one, e.g. the drag thumb).
+    /// </summary>
+    private static bool IsOnScrollBar(object? source)
+    {
+        var current = source as Visual;
+        while (current != null)
+        {
+            if (current is ScrollBar) return true;
+            current = current.GetVisualParent();
+        }
+        return false;
     }
 
     private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
