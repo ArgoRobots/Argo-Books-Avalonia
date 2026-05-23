@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -18,9 +19,6 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
-    private string _receiptPath = string.Empty;
-
-    [ObservableProperty]
     private string _receiptId = string.Empty;
 
     [ObservableProperty]
@@ -29,19 +27,67 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isFullscreen;
 
-    /// <summary>
-    /// Shows the receipt viewer modal with the specified receipt.
-    /// </summary>
-    /// <param name="receiptPath">Path to the receipt image.</param>
-    /// <param name="receiptId">ID of the receipt for display.</param>
-    /// <param name="title">Optional custom title.</param>
-    public void Show(string receiptPath, string receiptId, string? title = null)
+    [ObservableProperty]
+    private bool _isLoadingPages;
+
+    /// <summary>Resolved page image paths for the current receipt (one entry per PDF page).</summary>
+    public ObservableCollection<string> ReceiptPages { get; } = new();
+
+    /// <summary>True when there is nothing to show and no render in progress.</summary>
+    public bool HasNoPages => ReceiptPages.Count == 0 && !IsLoadingPages;
+
+    // Guards against a stale async render finishing after a newer Show / Close.
+    private int _renderToken;
+
+    public ReceiptViewerModalViewModel()
     {
-        ReceiptPath = receiptPath;
+        ReceiptPages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoPages));
+    }
+
+    partial void OnIsLoadingPagesChanged(bool value) => OnPropertyChanged(nameof(HasNoPages));
+
+    /// <summary>
+    /// Shows the receipt viewer modal for the given receipt, resolving and rendering all of its
+    /// pages asynchronously.
+    /// </summary>
+    /// <param name="receiptId">ID of the receipt to display.</param>
+    /// <param name="title">Optional custom title.</param>
+    public void Show(string receiptId, string? title = null)
+    {
         ReceiptId = receiptId;
         Title = title ?? $"Receipt for {receiptId}";
         IsFullscreen = false;
+        ReceiptPages.Clear();
         IsOpen = true;
+        _ = LoadPagesAsync(receiptId);
+    }
+
+    private async Task LoadPagesAsync(string receiptId)
+    {
+        var token = ++_renderToken;
+        var receipt = App.CompanyManager?.CompanyData?.Receipts.FirstOrDefault(r => r.Id == receiptId);
+        if (receipt == null || string.IsNullOrEmpty(receipt.FileData))
+            return;
+
+        IsLoadingPages = true;
+        try
+        {
+            var paths = await ReceiptPageRenderer.GetPagePathsAsync(receipt);
+            if (token != _renderToken)
+                return; // superseded by a newer Show / Close
+
+            foreach (var p in paths)
+            {
+                if (token != _renderToken)
+                    return;
+                ReceiptPages.Add(p);
+            }
+        }
+        finally
+        {
+            if (token == _renderToken)
+                IsLoadingPages = false;
+        }
     }
 
     [RelayCommand]
@@ -154,7 +200,9 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     {
         IsOpen = false;
         IsFullscreen = false;
-        ReceiptPath = string.Empty;
+        _renderToken++; // cancel any in-flight page render
+        IsLoadingPages = false;
+        ReceiptPages.Clear();
         ReceiptId = string.Empty;
         Title = string.Empty;
     }
@@ -168,31 +216,36 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task Download()
     {
-        if (string.IsNullOrEmpty(ReceiptPath)) return;
+        if (string.IsNullOrEmpty(ReceiptId)) return;
 
         try
         {
+            // Always download the original receipt file (e.g. the source PDF), not a rendered page.
+            var receipt = App.CompanyManager?.CompanyData?.Receipts
+                .FirstOrDefault(r => r.Id == ReceiptId);
+            if (receipt?.FileData == null) return;
+
             var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
                 ? desktop.MainWindow
                 : null;
 
             if (topLevel?.StorageProvider == null) return;
 
-            // Determine file extension from source
-            var sourceExtension = Path.GetExtension(ReceiptPath);
+            // Determine file extension from the original file name
+            var sourceExtension = Path.GetExtension(receipt.FileName);
             if (string.IsNullOrEmpty(sourceExtension))
                 sourceExtension = ".png";
 
             var filters = new[]
             {
-                new FilePickerFileType("Image files") { Patterns = [$"*{sourceExtension}"] }
+                new FilePickerFileType("Receipt file") { Patterns = [$"*{sourceExtension}"] }
             };
 
             var suggestedName = $"Receipt_{ReceiptId}{sourceExtension}";
 
             var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Save Receipt Image",
+                Title = "Save Receipt",
                 SuggestedFileName = suggestedName,
                 FileTypeChoices = filters,
                 DefaultExtension = sourceExtension.TrimStart('.')
@@ -201,25 +254,9 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
             if (result != null)
             {
                 var destinationPath = result.Path.LocalPath;
-
-                if (File.Exists(ReceiptPath))
-                {
-                    // Copy the file directly if it exists on disk
-                    File.Copy(ReceiptPath, destinationPath, overwrite: true);
-                    App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
-                }
-                else
-                {
-                    // Fall back to in-memory FileData (base64) when temp file no longer exists
-                    var receipt = App.CompanyManager?.CompanyData?.Receipts
-                        .FirstOrDefault(r => r.Id == ReceiptId);
-                    if (receipt?.FileData != null)
-                    {
-                        var bytes = Convert.FromBase64String(receipt.FileData);
-                        await File.WriteAllBytesAsync(destinationPath, bytes);
-                        App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
-                    }
-                }
+                var bytes = Convert.FromBase64String(receipt.FileData);
+                await File.WriteAllBytesAsync(destinationPath, bytes);
+                App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
             }
         }
         catch (Exception ex)

@@ -217,15 +217,11 @@ public partial class ReceiptsModals : UserControl
 
     private void ScanPreviewFitToWindow()
     {
-        if (ScanPreviewScrollViewer == null || ScanPreviewImage?.Source == null) return;
+        if (ScanPreviewScrollViewer == null || ScanPreviewItems == null) return;
 
-        double imageWidth = 0, imageHeight = 0;
-        if (ScanPreviewImage.Source is Bitmap bitmap)
-        {
-            // Use DIP bounds when available (correct on HiDPI); fall back to PixelSize
-            imageWidth = ScanPreviewImage.Bounds.Width > 0 ? ScanPreviewImage.Bounds.Width : bitmap.PixelSize.Width;
-            imageHeight = ScanPreviewImage.Bounds.Height > 0 ? ScanPreviewImage.Bounds.Height : bitmap.PixelSize.Height;
-        }
+        // Fit the whole stacked-pages container (correct on HiDPI via measured DIP bounds).
+        var imageWidth = ScanPreviewItems.Bounds.Width;
+        var imageHeight = ScanPreviewItems.Bounds.Height;
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
 
@@ -426,14 +422,11 @@ public partial class ReceiptsModals : UserControl
 
     private void BulkPreviewFitToWindow()
     {
-        if (BulkPreviewScrollViewer == null || BulkPreviewImage?.Source == null) return;
+        if (BulkPreviewScrollViewer == null || BulkPreviewItems == null) return;
 
-        double imageWidth = 0, imageHeight = 0;
-        if (BulkPreviewImage.Source is Bitmap bitmap)
-        {
-            imageWidth = bitmap.PixelSize.Width;
-            imageHeight = bitmap.PixelSize.Height;
-        }
+        // Fit the whole stacked-pages container.
+        var imageWidth = BulkPreviewItems.Bounds.Width;
+        var imageHeight = BulkPreviewItems.Bounds.Height;
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
 

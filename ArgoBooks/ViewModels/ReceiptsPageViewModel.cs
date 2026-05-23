@@ -226,7 +226,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(receipt.Supplier))
             title += $"\n{receipt.Supplier}";
 
-        App.ReceiptViewerModal?.Show(receipt.ImagePath, receipt.Id, title);
+        App.ReceiptViewerModal?.Show(receipt.Id, title);
     }
 
     #endregion
@@ -659,10 +659,10 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
     }
 
-    private static async Task<string> GenerateReceiptImagePathAsync(Receipt receipt)
+    private static async Task<(string Path, int PageCount)> GenerateReceiptImagePathAsync(Receipt receipt)
     {
         if (string.IsNullOrEmpty(receipt.FileData))
-            return string.Empty;
+            return (string.Empty, 1);
 
         try
         {
@@ -676,20 +676,20 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             if (isPdf)
             {
                 var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
-                if (rendered == null) return string.Empty;
+                if (rendered == null) return (string.Empty, 1);
                 var pdfPreviewPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
-                await File.WriteAllBytesAsync(pdfPreviewPath, rendered);
-                return pdfPreviewPath;
+                await File.WriteAllBytesAsync(pdfPreviewPath, rendered.Value.Image);
+                return (pdfPreviewPath, rendered.Value.PageCount);
             }
 
             var tempPath = Path.Combine(tempDir, receipt.FileName);
             var output = ReceiptImageHelper.FixOrientation(bytes);
             File.WriteAllBytes(tempPath, output);
-            return tempPath;
+            return (tempPath, 1);
         }
         catch
         {
-            return string.Empty;
+            return (string.Empty, 1);
         }
     }
 
@@ -721,8 +721,10 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                     try
                     {
                         cts.Token.ThrowIfCancellationRequested();
-                        var path = await GenerateReceiptImagePathAsync(item.Receipt);
-                        return !string.IsNullOrEmpty(path) ? (item.Display, path) : default;
+                        var rendered = await GenerateReceiptImagePathAsync(item.Receipt);
+                        return !string.IsNullOrEmpty(rendered.Path)
+                            ? (item.Display, rendered.Path, rendered.PageCount)
+                            : default;
                     }
                     finally
                     {
@@ -738,9 +740,10 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                foreach (var (display, path) in results)
+                foreach (var (display, path, pageCount) in results)
                 {
                     display.ImagePath = path;
+                    display.PageCount = pageCount;
                 }
             });
         }
@@ -1207,10 +1210,20 @@ public partial class ReceiptDisplayItem : ObservableObject
     [ObservableProperty]
     private string _imagePath = string.Empty;
 
+    [ObservableProperty]
+    private int _pageCount = 1;
+
     partial void OnImagePathChanged(string value)
     {
         OnPropertyChanged(nameof(HasImage));
     }
+
+    partial void OnPageCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsMultiPage));
+    }
+
+    public bool IsMultiPage => PageCount > 1;
 
     // Computed properties for display
     public string DateFormatted => Date.ToString("MMM d, yyyy");

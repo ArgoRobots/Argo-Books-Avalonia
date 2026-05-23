@@ -22,7 +22,7 @@ public partial class ReceiptViewerModal : UserControl
 
     private ScrollViewer? _imageScrollViewer;
     private LayoutTransformControl? _zoomTransformControl;
-    private Image? _receiptImage;
+    private Control? _pagesContainer;
     private OverscrollHelper? _overscrollHelper;
     private Slider? _zoomSlider;
     private TextBlock? _zoomPercentText;
@@ -102,6 +102,11 @@ public partial class ReceiptViewerModal : UserControl
             // Modal just opened — layout hasn't completed yet, need to defer
             _ = FitToWindowOnOpenAsync();
         }
+        else if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsLoadingPages) && !vm.IsLoadingPages && vm.IsOpen)
+        {
+            // Pages are rendered asynchronously after open — re-fit once they finish loading.
+            _ = FitToWindowOnOpenAsync();
+        }
     }
 
     private async Task FitToWindowOnOpenAsync()
@@ -122,7 +127,7 @@ public partial class ReceiptViewerModal : UserControl
     {
         _imageScrollViewer ??= this.FindControl<ScrollViewer>("ImageScrollViewer");
         _zoomTransformControl ??= this.FindControl<LayoutTransformControl>("ZoomTransformControl");
-        _receiptImage ??= this.FindControl<Image>("ReceiptImage");
+        _pagesContainer ??= this.FindControl<ItemsControl>("ReceiptPagesItems");
         _zoomSlider ??= this.FindControl<Slider>("ZoomSlider");
         _zoomPercentText ??= this.FindControl<TextBlock>("ZoomPercentText");
 
@@ -270,26 +275,16 @@ public partial class ReceiptViewerModal : UserControl
     /// </summary>
     private void ZoomToFit()
     {
-        if (_imageScrollViewer == null || _receiptImage?.Source == null || _zoomTransformControl == null) return;
+        if (_imageScrollViewer == null || _pagesContainer == null || _zoomTransformControl == null) return;
 
-        // Measure image at zoom 1.0 to get its natural DIP size
+        // Measure the stacked pages container at zoom 1.0 to get its natural DIP size
         // (using pixel size would be wrong on HiDPI displays)
         _zoomLevel = 1.0;
         ApplyZoom();
         _zoomTransformControl.UpdateLayout();
 
-        var imageWidth = _receiptImage.Bounds.Width;
-        var imageHeight = _receiptImage.Bounds.Height;
-
-        // Fallback to pixel size if bounds aren't available yet
-        if (imageWidth <= 0 || imageHeight <= 0)
-        {
-            if (_receiptImage.Source is Bitmap bitmap)
-            {
-                imageWidth = bitmap.PixelSize.Width;
-                imageHeight = bitmap.PixelSize.Height;
-            }
-        }
+        var imageWidth = _pagesContainer.Bounds.Width;
+        var imageHeight = _pagesContainer.Bounds.Height;
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
 

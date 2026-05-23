@@ -677,39 +677,13 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         if (item == null || !item.HasReceipt)
             return;
 
-        var receiptPath = GetReceiptImagePath(item.Id);
-        if (string.IsNullOrEmpty(receiptPath))
+        var companyData = App.CompanyManager?.CompanyData;
+        var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == item.Id);
+        if (expense == null || string.IsNullOrEmpty(expense.ReceiptId))
             return;
 
-        App.ReceiptViewerModal?.Show(receiptPath, item.Id);
-    }
-
-    private static string? GetReceiptImagePath(string expenseId)
-    {
-        var companyData = App.CompanyManager?.CompanyData;
-
-        var expense = companyData?.Expenses.FirstOrDefault(p => p.Id == expenseId);
-        if (expense == null || string.IsNullOrEmpty(expense.ReceiptId)) return null;
-
-        var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
-        if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
-
-        try
-        {
-            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
-            Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
-            if (File.Exists(tempPath))
-                return tempPath;
-            var bytes = Convert.FromBase64String(receipt.FileData);
-            var oriented = ReceiptImageHelper.FixOrientation(bytes);
-            File.WriteAllBytes(tempPath, oriented);
-            return tempPath;
-        }
-        catch
-        {
-            return null;
-        }
+        // The viewer renders all pages (PDFs) from the receipt's stored data.
+        App.ReceiptViewerModal?.Show(expense.ReceiptId, $"Receipt for {item.Id}");
     }
 
     #endregion

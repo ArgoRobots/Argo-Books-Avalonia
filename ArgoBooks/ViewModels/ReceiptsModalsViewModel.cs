@@ -317,8 +317,72 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ModalVerticalAlignment));
     }
 
-    [ObservableProperty]
-    private string? _receiptImagePath;
+    /// <summary>
+    /// Page images shown in the scan/bulk review preview (one entry per PDF page, single entry
+    /// for raster images). Replaces the old single ReceiptImagePath so multi-page PDFs render
+    /// all pages stacked.
+    /// </summary>
+    public System.Collections.ObjectModel.ObservableCollection<string> ScanPreviewPages { get; } = new();
+
+    // Guards against a stale async preview render finishing after navigation/reset.
+    private int _previewToken;
+
+    /// <summary>Sets the preview to the given page paths immediately (raster images / fallbacks).</summary>
+    private void SetScanPreview(params string?[] paths)
+    {
+        ++_previewToken;
+        ScanPreviewPages.Clear();
+        foreach (var p in paths)
+            if (!string.IsNullOrEmpty(p))
+                ScanPreviewPages.Add(p);
+    }
+
+    /// <summary>
+    /// Renders the preview pages off the UI thread (all pages for PDFs) and applies them, unless a
+    /// newer preview request has superseded this one.
+    /// </summary>
+    private async Task LoadPreviewPagesAsync(byte[] data, string fileName, bool isPdf, string tempSubdir)
+    {
+        var token = ++_previewToken;
+        var paths = await Task.Run(() => RenderPreviewPagesAsync(data, fileName, isPdf, tempSubdir));
+        if (token != _previewToken) return;
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (token != _previewToken) return;
+            ScanPreviewPages.Clear();
+            foreach (var p in paths)
+                if (!string.IsNullOrEmpty(p))
+                    ScanPreviewPages.Add(p);
+        });
+    }
+
+    private static async Task<List<string>> RenderPreviewPagesAsync(byte[] data, string fileName, bool isPdf, string tempSubdir)
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", tempSubdir);
+        Directory.CreateDirectory(tempDir);
+        var paths = new List<string>();
+
+        if (isPdf)
+        {
+            var pages = await Services.PdfThumbnailService.Instance.RenderPdfAllPagesAsync(data);
+            if (pages == null) return paths;
+            var nameNoExt = Path.GetFileNameWithoutExtension(fileName);
+            for (var i = 0; i < pages.Length; i++)
+            {
+                var p = Path.Combine(tempDir, $"{nameNoExt}_p{i + 1}.jpg");
+                await File.WriteAllBytesAsync(p, pages[i]);
+                paths.Add(p);
+            }
+        }
+        else
+        {
+            var p = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
+            await File.WriteAllBytesAsync(p, data);
+            paths.Add(p);
+        }
+
+        return paths;
+    }
 
     [ObservableProperty]
     private string _extractedSupplier = string.Empty;
@@ -697,7 +761,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 // Use lightweight thumbnail for queue cards — skip heavy OCR preprocessing
                 var thumbBytes = isPdf
-                    ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData)
+                    ? (await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData))?.Image
                     : ReceiptImageHelper.GenerateThumbnail(fileData);
 
                 if (thumbBytes != null)
@@ -830,7 +894,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
 
                     var previewBytes = isPdf
-                        ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData)
+                        ? (await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData))?.Image
                         : item.PreprocessedData;
 
                     if (previewBytes != null)
@@ -1016,7 +1080,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _currentImageData = item.PreprocessedData;
         _currentFileName = item.ScanFileName;
 
-        ReceiptImagePath = item.PreviewImagePath;
+        // Show all pages for PDFs (PreprocessedData holds the raw PDF bytes), else the preview image.
+        if (item.IsPdf && item.PreprocessedData != null)
+            _ = LoadPreviewPagesAsync(item.PreprocessedData, item.FileName, isPdf: true, "BulkScanPreview");
+        else
+            SetScanPreview(item.PreviewImagePath);
 
         // Only suppress AI suggestions if they've already run for this item.
         // On first visit, let them run so supplier matching/suggestion works.
@@ -1451,24 +1519,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _currentImageData = preprocessedData;
         _currentFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
 
-        // Write preview image to disk off the UI thread
-        _ = Task.Run(async () =>
-        {
-            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "ScanPreview");
-            Directory.CreateDirectory(tempDir);
-            var previewPath = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
-
-            // For PDFs, render the first page as JPEG for preview
-            var previewBytes = isPdf
-                ? await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(preprocessedData)
-                : preprocessedData;
-
-            if (previewBytes != null)
-            {
-                await File.WriteAllBytesAsync(previewPath, previewBytes);
-                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => ReceiptImagePath = previewPath);
-            }
-        });
+        // Render preview pages off the UI thread (all pages for PDFs, single image otherwise).
+        _ = LoadPreviewPagesAsync(preprocessedData, fileName, isPdf, "ScanPreview");
 
         // Start scanning (image is already preprocessed)
         await ScanReceiptAsync();
@@ -2608,7 +2660,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasScanResult = false;
         IsFullscreen = false;
         ScanErrorMessage = string.Empty;
-        ReceiptImagePath = null;
+        SetScanPreview();
         ExtractedSupplier = string.Empty;
         ExtractedDate = DateTimeOffset.Now;
         ExtractedSubtotal = string.Empty;

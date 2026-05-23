@@ -355,9 +355,21 @@
                                                 <LayoutTransformControl x:Name="ScanPreviewZoomTransform"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center">
-                                                    <Image x:Name="ScanPreviewImage"
-                                                           Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                           Stretch="None" />
+                                                    <ItemsControl x:Name="ScanPreviewItems"
+                                                                  ItemsSource="{Binding ScanPreviewPages}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Vertical" Spacing="12" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Image x:CompileBindings="False"
+                                                                       Source="{Binding Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                       Stretch="None" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </LayoutTransformControl>
                                             </ScrollViewer>
                                         </Border>
@@ -1588,9 +1600,21 @@
                                             <LayoutTransformControl x:Name="BulkPreviewZoomTransform"
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center">
-                                                <Image x:Name="BulkPreviewImage"
-                                                       Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                       Stretch="None" />
+                                                <ItemsControl x:Name="BulkPreviewItems"
+                                                              ItemsSource="{Binding ScanPreviewPages}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Vertical" Spacing="12" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Image x:CompileBindings="False"
+                                                                   Source="{Binding Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                   Stretch="None" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </LayoutTransformControl>
                                         </ScrollViewer>
                                     </Border>
