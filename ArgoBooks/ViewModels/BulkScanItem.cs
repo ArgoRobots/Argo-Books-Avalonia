@@ -162,6 +162,29 @@ public partial class BulkScanItem : ObservableObject
     /// </summary>
     public bool IsPdf => Path.GetExtension(FileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Number of pages in the source file (PDFs report their real count; 1 otherwise).
+    /// Populated when the preview/thumbnail is rendered.
+    /// </summary>
+    [ObservableProperty]
+    private int _pageCount = 1;
+
+    /// <summary>True for PDFs with more than one page (these take longer to scan).</summary>
+    public bool IsMultiPagePdf => IsPdf && PageCount > 1;
+
+    /// <summary>
+    /// Status label shown while scanning; warns that multi-page PDFs take longer.
+    /// </summary>
+    public string ScanningStatusText => IsMultiPagePdf
+        ? "Scanning... Multi-page receipts may take a few seconds longer."
+        : "Scanning...";
+
+    partial void OnPageCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsMultiPagePdf));
+        OnPropertyChanged(nameof(ScanningStatusText));
+    }
+
     // Computed status booleans for UI visibility bindings
     public bool IsQueued => Status == BulkScanStatus.Queued;
     public bool IsScanning => Status == BulkScanStatus.Scanning;

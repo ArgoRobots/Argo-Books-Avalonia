@@ -757,21 +757,33 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var thumbPath = Path.Combine(tempDir,
                 $"{Path.GetFileNameWithoutExtension(item.FileName)}_{Guid.NewGuid():N}_thumb.jpg");
 
+            byte[]? thumbBytes = null;
             await Task.Run(async () =>
             {
                 // Use lightweight thumbnail for queue cards — skip heavy OCR preprocessing
-                var thumbBytes = isPdf
-                    ? (await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData))?.Image
-                    : ReceiptImageHelper.GenerateThumbnail(fileData);
+                if (isPdf)
+                {
+                    // Capture the page count so the scanning label can warn about multi-page PDFs.
+                    var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
+                    thumbBytes = rendered?.Image;
+                    if (rendered != null)
+                    {
+                        var pageCount = rendered.Value.PageCount;
+                        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => item.PageCount = pageCount);
+                    }
+                }
+                else
+                {
+                    thumbBytes = ReceiptImageHelper.GenerateThumbnail(fileData);
+                }
 
                 if (thumbBytes != null)
                     await File.WriteAllBytesAsync(thumbPath, thumbBytes);
-                else
-                    return;
             });
 
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-                item.ThumbnailPath = thumbPath);
+            if (thumbBytes != null)
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    item.ThumbnailPath = thumbPath);
         }
         catch
         {
@@ -893,9 +905,21 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     Directory.CreateDirectory(tempDir);
                     var previewPath = Path.Combine(tempDir, $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}.jpg");
 
-                    var previewBytes = isPdf
-                        ? (await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData))?.Image
-                        : item.PreprocessedData;
+                    byte[]? previewBytes;
+                    if (isPdf)
+                    {
+                        var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
+                        previewBytes = rendered?.Image;
+                        if (rendered != null)
+                        {
+                            var pageCount = rendered.Value.PageCount;
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => item.PageCount = pageCount);
+                        }
+                    }
+                    else
+                    {
+                        previewBytes = item.PreprocessedData;
+                    }
 
                     if (previewBytes != null)
                     {

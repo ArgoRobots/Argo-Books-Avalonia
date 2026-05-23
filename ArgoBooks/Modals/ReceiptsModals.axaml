@@ -1283,10 +1283,11 @@
                                                                IsVisible="{Binding IsQueued}" />
 
                                                     <!-- Scanning status -->
-                                                    <TextBlock Text="Scanning..."
+                                                    <TextBlock Text="{Binding ScanningStatusText}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource PrimaryBrush}"
                                                                FontWeight="Medium"
+                                                               TextWrapping="Wrap"
                                                                IsVisible="{Binding IsScanning}" />
 
                                                     <!-- Succeeded status -->
