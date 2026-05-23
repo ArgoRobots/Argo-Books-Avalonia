@@ -279,9 +279,11 @@
                                            FontSize="16"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'This may take a few seconds...'}"
+                                <TextBlock Text="{Binding ScanSubMessage}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
 
@@ -1277,7 +1279,7 @@
                                                                TextTrimming="CharacterEllipsis" />
 
                                                     <!-- Queued status -->
-                                                    <TextBlock Text="Waiting..."
+                                                    <TextBlock Text="{loc:Loc 'Waiting...'}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                IsVisible="{Binding IsQueued}" />
@@ -1326,7 +1328,7 @@
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
                                                                   Width="12" Height="12" />
-                                                        <TextBlock Text="Retry" />
+                                                        <TextBlock Text="{loc:Loc 'Retry'}" />
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
@@ -1467,7 +1469,7 @@
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
                                                                   Width="12" Height="12" />
-                                                        <TextBlock Text="Retry" />
+                                                        <TextBlock Text="{loc:Loc 'Retry'}" />
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>

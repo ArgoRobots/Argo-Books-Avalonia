@@ -324,6 +324,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public System.Collections.ObjectModel.ObservableCollection<string> ScanPreviewPages { get; } = new();
 
+    /// <summary>
+    /// Secondary line shown under the scanning spinner. Warns when the receipt is a multi-page
+    /// PDF (which takes longer to scan), otherwise the generic "this may take a moment" message.
+    /// </summary>
+    public string ScanSubMessage => ScanPreviewPages.Count > 1
+        ? "Multi-page receipts may take a few seconds longer.".Translate()
+        : "This may take a few seconds...".Translate();
+
     // Guards against a stale async preview render finishing after navigation/reset.
     private int _previewToken;
 
@@ -335,6 +343,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         foreach (var p in paths)
             if (!string.IsNullOrEmpty(p))
                 ScanPreviewPages.Add(p);
+        OnPropertyChanged(nameof(ScanSubMessage));
     }
 
     /// <summary>
@@ -353,6 +362,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             foreach (var p in paths)
                 if (!string.IsNullOrEmpty(p))
                     ScanPreviewPages.Add(p);
+            OnPropertyChanged(nameof(ScanSubMessage));
         });
     }
 

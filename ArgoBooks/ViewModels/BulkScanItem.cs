@@ -1,5 +1,6 @@
 // ArgoBooks/ViewModels/BulkScanItem.cs
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ArgoBooks.ViewModels;
@@ -176,8 +177,8 @@ public partial class BulkScanItem : ObservableObject
     /// Status label shown while scanning; warns that multi-page PDFs take longer.
     /// </summary>
     public string ScanningStatusText => IsMultiPagePdf
-        ? "Scanning... Multi-page receipts may take a few seconds longer."
-        : "Scanning...";
+        ? "Scanning... Multi-page receipts may take a few seconds longer.".Translate()
+        : "Scanning...".Translate();
 
     partial void OnPageCountChanged(int value)
     {
