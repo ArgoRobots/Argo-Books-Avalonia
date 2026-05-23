@@ -103,7 +103,7 @@
                                                                 Placeholder="{loc:Loc 'Search suppliers...'}"
                                                                 ShowAddNew="False"
                                                                 EmptyMessage="{loc:Loc 'No suppliers available.'}"
-                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                EmptyCreateLinkText="{loc:Loc 'Create'}"
                                                                 EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsExpensesTab}">
@@ -239,7 +239,7 @@
                                                                 Placeholder="{loc:Loc 'Search suppliers...'}"
                                                                 ShowAddNew="False"
                                                                 EmptyMessage="{loc:Loc 'No suppliers available.'}"
-                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                EmptyCreateLinkText="{loc:Loc 'Create'}"
                                                                 EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsExpensesTab}">
