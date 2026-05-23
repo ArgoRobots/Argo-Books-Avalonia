@@ -1,0 +1,5 @@
+{
+  "Endpoint": "https://eus.codesigning.azure.net",
+  "CodeSigningAccountName": "ArgoBooks-Signing",
+  "CertificateProfileName": "ArgoBooks-prod"
+}
