@@ -1090,6 +1090,9 @@ public class App : Application
                     context: "App.OnFrameworkInitializationCompleted");
             }
 
+            // Remove stale cached receipt preview/render files from temp (fire-and-forget).
+            _ = Services.ReceiptTempCleanup.CleanOldFilesAsync();
+
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
