@@ -39,6 +39,9 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     // Guards against a stale async render finishing after a newer Show / Close.
     private int _renderToken;
 
+    // Parallels ReceiptPages, tracking each page's index so streamed pages stay in page order.
+    private readonly List<int> _pageOrder = new();
+
     public ReceiptViewerModalViewModel()
     {
         ReceiptPages.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoPages));
@@ -65,6 +68,8 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     private async Task LoadPagesAsync(string receiptId)
     {
         var token = ++_renderToken;
+        _pageOrder.Clear();
+
         var receipt = App.CompanyManager?.CompanyData?.Receipts.FirstOrDefault(r => r.Id == receiptId);
         if (receipt == null || string.IsNullOrEmpty(receipt.FileData))
             return;
@@ -72,22 +77,38 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         IsLoadingPages = true;
         try
         {
-            var paths = await ReceiptPageRenderer.GetPagePathsAsync(receipt);
-            if (token != _renderToken)
-                return; // superseded by a newer Show / Close
-
-            foreach (var p in paths)
+            // Stream pages into the view as each finishes rendering. Progress callbacks run on the
+            // UI thread (captured here); a stale render is ignored via the token check.
+            var progress = new Progress<(int Index, string Path)>(page =>
             {
                 if (token != _renderToken)
                     return;
-                ReceiptPages.Add(p);
-            }
+                InsertPageOrdered(page.Index, page.Path);
+            });
+
+            await ReceiptPageRenderer.GetPagePathsAsync(receipt, progress);
         }
         finally
         {
             if (token == _renderToken)
                 IsLoadingPages = false;
         }
+    }
+
+    // Inserts a streamed page so ReceiptPages stays sorted by page index regardless of arrival order.
+    private void InsertPageOrdered(int index, string path)
+    {
+        var pos = _pageOrder.Count;
+        for (var i = 0; i < _pageOrder.Count; i++)
+        {
+            if (_pageOrder[i] > index)
+            {
+                pos = i;
+                break;
+            }
+        }
+        _pageOrder.Insert(pos, index);
+        ReceiptPages.Insert(pos, path);
     }
 
     [RelayCommand]
@@ -203,6 +224,7 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         _renderToken++; // cancel any in-flight page render
         IsLoadingPages = false;
         ReceiptPages.Clear();
+        _pageOrder.Clear();
         ReceiptId = string.Empty;
         Title = string.Empty;
     }

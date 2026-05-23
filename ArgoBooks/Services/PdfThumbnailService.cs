@@ -19,7 +19,7 @@ public sealed class PdfThumbnailService
     private readonly SemaphoreSlim _renderLock = new(1, 1);
     private bool _pdfJsReady;
     private TaskCompletionSource<string>? _renderTcs;
-    private (Dictionary<int, byte[]> Pages, TaskCompletionSource<bool> Done)? _allPagesCollector;
+    private (Dictionary<int, byte[]> Pages, TaskCompletionSource<bool> Done, Action<int, byte[]>? OnPage)? _allPagesCollector;
 
     private PdfThumbnailService() { }
 
@@ -44,11 +44,23 @@ public sealed class PdfThumbnailService
     }
 
     /// <summary>
-    /// Renders every page of a PDF as JPEGs, in page order (one byte[] per page).
-    /// Used for full-size viewers that stack all pages. Returns the pages collected so far
-    /// on timeout, or null if no pages could be rendered.
+    /// Renders pages of a PDF as JPEGs, in page order. Returns the pages that were actually
+    /// rendered (excluding any in <paramref name="skipZeroBasedPages"/>), or null if none could be
+    /// rendered.
     /// </summary>
-    public async Task<byte[][]?> RenderPdfAllPagesAsync(byte[] pdfData)
+    /// <param name="pdfData">The PDF bytes.</param>
+    /// <param name="onPage">
+    /// Optional callback invoked once per rendered page as it completes, with the zero-based page
+    /// index and its JPEG bytes. Enables streaming pages into the UI as they finish.
+    /// </param>
+    /// <param name="skipZeroBasedPages">
+    /// Optional set of zero-based page indices to skip rendering (e.g. pages already cached on
+    /// disk). Skipped pages are not rendered and not reported, but still count toward the total.
+    /// </param>
+    public async Task<byte[][]?> RenderPdfAllPagesAsync(
+        byte[] pdfData,
+        Action<int, byte[]>? onPage = null,
+        IReadOnlyCollection<int>? skipZeroBasedPages = null)
     {
         if (!PlatformSupportsWebView)
             return null;
@@ -56,11 +68,11 @@ public sealed class PdfThumbnailService
         if (!Dispatcher.UIThread.CheckAccess())
         {
             return await Dispatcher.UIThread.InvokeAsync(
-                () => RenderPdfAllPagesCoreAsync(pdfData),
+                () => RenderPdfAllPagesCoreAsync(pdfData, onPage, skipZeroBasedPages),
                 DispatcherPriority.Background);
         }
 
-        return await RenderPdfAllPagesCoreAsync(pdfData);
+        return await RenderPdfAllPagesCoreAsync(pdfData, onPage, skipZeroBasedPages);
     }
 
     private static bool PlatformSupportsWebView =>
@@ -128,7 +140,10 @@ public sealed class PdfThumbnailService
         }
     }
 
-    private async Task<byte[][]?> RenderPdfAllPagesCoreAsync(byte[] pdfData)
+    private async Task<byte[][]?> RenderPdfAllPagesCoreAsync(
+        byte[] pdfData,
+        Action<int, byte[]>? onPage,
+        IReadOnlyCollection<int>? skipZeroBasedPages)
     {
         await _renderLock.WaitAsync();
         try
@@ -140,10 +155,15 @@ public sealed class PdfThumbnailService
 
             var pages = new Dictionary<int, byte[]>();
             var doneTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _allPagesCollector = (pages, doneTcs);
+            _allPagesCollector = (pages, doneTcs, onPage);
 
             var pdfBase64 = Convert.ToBase64String(pdfData);
-            await _webView.InvokeScript($"window.__renderAllAndPost('{pdfBase64}')");
+            // Pass skipped (0-based) page indices so the JS does not render them. The renderer
+            // still reports the total page count so cached+rendered pages can be recombined.
+            var skipCsv = skipZeroBasedPages is { Count: > 0 }
+                ? string.Join(",", skipZeroBasedPages)
+                : string.Empty;
+            await _webView.InvokeScript($"window.__renderAllAndPost('{pdfBase64}', '{skipCsv}')");
 
             // Scale timeout with size: base 20s + 4s per 100KB, capped at 120s.
             var timeoutMs = Math.Min(120_000, 20_000 + pdfData.Length / 1024 / 100 * 4_000);
@@ -244,6 +264,7 @@ public sealed class PdfThumbnailService
             if (PdfRenderMessageParser.TryParsePage(body, out var idx, out var bytes))
             {
                 collector.Pages[idx] = bytes;
+                collector.OnPage?.Invoke(idx, bytes);
                 return;
             }
             if (PdfRenderMessageParser.TryParseDone(body, out _))
@@ -336,10 +357,18 @@ public sealed class PdfThumbnailService
         }
     };
 
-    // Renders every page sequentially. Posts "render-page:<index>:<dataUrl>" per page,
+    // Renders pages sequentially. Posts "render-page:<index>:<dataUrl>" per rendered page,
     // then "render-done:<count>". Sequential to avoid spiking memory on large PDFs.
-    window.__renderAllAndPost = function(base64Data) {
+    // skipCsv is a comma-separated list of 0-based page indices to skip (e.g. already cached).
+    window.__renderAllAndPost = function(base64Data, skipCsv) {
         try {
+            var skip = {};
+            if (skipCsv) {
+                skipCsv.split(',').forEach(function(s) {
+                    var n = parseInt(s, 10);
+                    if (!isNaN(n)) skip[n] = true;
+                });
+            }
             var bytes = b64ToBytes(base64Data);
             pdfjsLib.getDocument({ data: bytes }).promise.then(function(pdf) {
                 var count = pdf.numPages;
@@ -347,6 +376,7 @@ public sealed class PdfThumbnailService
                 function next() {
                     if (i > count) { postMsg('render-done:' + count); return; }
                     var pageNum = i;
+                    if (skip[pageNum - 1]) { i++; next(); return; }
                     pdf.getPage(pageNum).then(function(page) {
                         return renderPageToJpeg(page);
                     }).then(function(url) {

@@ -566,7 +566,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             Source = receipt.Source,
             IsAiScanned = receipt.IsAiScanned,
             CreatedAt = receipt.CreatedAt,
-            ImagePath = GetCachedReceiptImagePath(receipt)
+            ImagePath = GetCachedReceiptImagePath(receipt),
+            PageCount = Services.ReceiptPageRenderer.CachedPageCount(receipt.FileName)
         }).ToList();
 
         // Unsubscribe from previous receipt items before replacing
@@ -642,14 +643,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         try
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
-
             var isPdf = receipt.FileType?.Contains("pdf", StringComparison.OrdinalIgnoreCase) == true
                         || receipt.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
 
+            // PDFs cache page 1 as <name>_p1.jpg (shared with the viewer); images cache as <name>.
             var path = isPdf
-                ? Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"))
-                : Path.Combine(tempDir, receipt.FileName);
+                ? Services.ReceiptPageRenderer.PagePath(receipt.FileName, 0)
+                : Services.ReceiptPageRenderer.ImagePath(receipt.FileName);
 
             return File.Exists(path) ? path : string.Empty;
         }
@@ -677,8 +677,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             {
                 var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
                 if (rendered == null) return (string.Empty, 1);
-                var pdfPreviewPath = Path.Combine(tempDir, Path.ChangeExtension(receipt.FileName, ".jpg"));
+                // Cache page 1 under the shared <name>_p1.jpg name and record the page count so the
+                // viewer can reuse this page and only render the rest.
+                var pdfPreviewPath = Services.ReceiptPageRenderer.PagePath(receipt.FileName, 0);
                 await File.WriteAllBytesAsync(pdfPreviewPath, rendered.Value.Image);
+                Services.ReceiptPageRenderer.WritePageCount(receipt.FileName, rendered.Value.PageCount);
                 return (pdfPreviewPath, rendered.Value.PageCount);
             }
 
