@@ -363,44 +363,17 @@ If nothing was missed, return: {{""missingItems"": []}}";
             {
                 foreach (var item in lineItems.EnumerateArray())
                 {
-                    var lineItem = new ScannedLineItem();
-                    var hasData = false;
+                    if (!ScannedLineItemParser.TryParse(item, out var lineItem))
+                        continue;
 
-                    if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
+                    // Negative line items are discounts — add to discount total, not line items
+                    if (lineItem.TotalPrice < 0)
                     {
-                        lineItem.Description = ReceiptDescriptionCleaner.Clean(desc.GetString());
-                        hasData = true;
+                        result.Discount = (result.Discount ?? 0) + Math.Abs(lineItem.TotalPrice);
                     }
-
-                    if (item.TryGetProperty("quantity", out var qty) && qty.ValueKind == JsonValueKind.Number)
-                        lineItem.Quantity = qty.GetDecimal();
-
-                    if (item.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind == JsonValueKind.Number)
+                    else
                     {
-                        lineItem.UnitPrice = unitPrice.GetDecimal();
-                        hasData = true;
-                    }
-
-                    if (item.TryGetProperty("totalPrice", out var totalPrice) && totalPrice.ValueKind == JsonValueKind.Number)
-                    {
-                        lineItem.TotalPrice = totalPrice.GetDecimal();
-                        hasData = true;
-                    }
-
-                    if (item.TryGetProperty("confidence", out var itemConf) && itemConf.ValueKind == JsonValueKind.Number)
-                        lineItem.Confidence = itemConf.GetDouble();
-
-                    if (hasData)
-                    {
-                        // Negative line items are discounts — add to discount total, not line items
-                        if (lineItem.TotalPrice < 0)
-                        {
-                            result.Discount = (result.Discount ?? 0) + Math.Abs(lineItem.TotalPrice);
-                        }
-                        else
-                        {
-                            result.LineItems.Add(lineItem);
-                        }
+                        result.LineItems.Add(lineItem);
                     }
                 }
             }
