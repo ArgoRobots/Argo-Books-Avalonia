@@ -1,9 +1,13 @@
 # Publishing Argo Books
 
-## Before You Publish
+## Before You Build
 
 1. Update the version number in `Directory.Build.props`
 2. Run all tests: `dotnet test ArgoBooks.Tests`
+
+## Before You Publish
+
+1. Run Argo Books on all operating systems and test a couple major features such as the AI receipt scanner to ensure things work.
 
 ## Windows
 
@@ -59,7 +63,8 @@ sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
 ```bash
 cd ~/Downloads
 chmod +x packaging/linux/build-appimage.sh
-./packaging/linux/build-appimage.sh 2.0.5
+sed -i 's/\r$//' packaging/linux/*.sh packaging/linux/*.desktop packaging/linux/*.xml
+/packaging/linux/build-appimage.sh 2.0.7
 ```
 
 Replace `2.0.5` with the version from `Directory.Build.props`. This produces `ArgoBooks-2.0.5-linux-x64.AppImage`.
