@@ -195,7 +195,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         LogoPath = null;
 
         // Load currency
-        var currencyDisplayString = CurrencyService.GetDisplayString(currencyCode ?? "USD");
+        var currencyDisplayString = CurrencyService.GetDisplayString(currencyCode ?? "CAD");
         _originalCurrency = currencyDisplayString;
         SelectedCurrency = currencyDisplayString;
         HasCurrencyError = false;
