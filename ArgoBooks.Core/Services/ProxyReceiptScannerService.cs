@@ -214,7 +214,7 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
 
                 if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
                 {
-                    lineItem.Description = desc.GetString() ?? "";
+                    lineItem.Description = ReceiptDescriptionCleaner.Clean(desc.GetString());
                     hasData = true;
                 }
 
