@@ -800,8 +800,15 @@ public partial class TranslationGenerator
         return batches;
     }
 
+    // Max attempts when Azure returns 429 (Too Many Requests). F0 (free tier) has
+    // tight per-minute throttles independent of the 2M-char monthly cap; S1 rarely
+    // 429s but we honor it there too for resilience.
+    private const int MaxRateLimitRetries = 6;
+
     /// <summary>
     /// Translates a batch of texts using Azure Translator API.
+    /// Retries on 429 (Too Many Requests) by honoring the Retry-After header, or
+    /// falling back to exponential backoff if the header is absent.
     /// </summary>
     private async Task<List<string>> TranslateBatchAsync(
         List<string> texts,
@@ -811,25 +818,47 @@ public partial class TranslationGenerator
         var route = $"/translate?api-version=3.0&from=en&to={targetIsoCode}";
         var uri = new Uri(AzureEndpoint + route);
 
-        // Build request body
         var requestBody = texts.Select(t => new { Text = t }).ToArray();
         var requestJson = JsonSerializer.Serialize(requestBody);
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, uri);
-        request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
-        request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
-        request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
+        HttpResponseMessage? response = null;
+        for (var attempt = 0; attempt < MaxRateLimitRetries; attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri);
+            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
+            request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
 
-        ApiCallCount++;
-        TotalCharactersTranslated += texts.Sum(t => (long)t.Length);
+            response = await _httpClient.SendAsync(request, cancellationToken);
 
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
+                break;
+
+            var delay = response.Headers.RetryAfter?.Delta
+                        ?? (response.Headers.RetryAfter?.Date is { } when_
+                            ? when_ - DateTimeOffset.UtcNow
+                            : TimeSpan.FromSeconds(Math.Pow(2, attempt) * 5));
+            // Clamp so a bogus header can't stall the tool for an hour or fire instantly.
+            if (delay < TimeSpan.FromSeconds(1)) delay = TimeSpan.FromSeconds(1);
+            if (delay > TimeSpan.FromMinutes(2)) delay = TimeSpan.FromMinutes(2);
+
+            ReportProgress($"Rate limited by Azure (429). Waiting {delay.TotalSeconds:F0}s before retry {attempt + 2}/{MaxRateLimitRetries}...", 0, 0);
+            response.Dispose();
+            response = null;
+            await Task.Delay(delay, cancellationToken);
+        }
+
+        if (response == null)
+            throw new HttpRequestException($"Azure Translator API: rate-limited {MaxRateLimitRetries} times in a row. Wait a few minutes and re-run, or temporarily upgrade the Translator resource to S1.");
 
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new HttpRequestException($"Azure Translator API error ({response.StatusCode}): {errorBody}");
         }
+
+        ApiCallCount++;
+        TotalCharactersTranslated += texts.Sum(t => (long)t.Length);
 
         var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
         var responseData = JsonSerializer.Deserialize<List<TranslationResponse>>(responseJson);

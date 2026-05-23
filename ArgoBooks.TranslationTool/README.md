@@ -25,10 +25,5 @@ dotnet run -- --translate
 dotnet run -- --languages fr,de,es,ja
 ```
 
-**Custom output directory:**
-```
-dotnet run -- --translate --output C:\MyTranslations
-```
-
 ## Output
 Files are saved to `./languages/` (e.g., `en.json`, `fr.json`, `de.json`).
