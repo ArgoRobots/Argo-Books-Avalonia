@@ -19,10 +19,14 @@ public static class ScannedLineItemParser
         lineItem = new ScannedLineItem();
         var hasData = false;
 
-        if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
+        if (item.TryGetProperty("description", out var desc) && desc.ValueKind == JsonValueKind.String)
         {
-            lineItem.Description = ReceiptDescriptionCleaner.Clean(desc.GetString());
-            hasData = true;
+            var cleaned = ReceiptDescriptionCleaner.Clean(desc.GetString());
+            if (!string.IsNullOrWhiteSpace(cleaned))
+            {
+                lineItem.Description = cleaned;
+                hasData = true;
+            }
         }
 
         if (item.TryGetProperty("quantity", out var qty) && qty.ValueKind == JsonValueKind.Number)
