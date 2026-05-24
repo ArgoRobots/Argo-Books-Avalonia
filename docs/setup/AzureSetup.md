@@ -186,7 +186,27 @@ So Advanced Installer can pick up your credentials.
 >
 > You can find your tenant domain in the Azure portal URL after `#@` (e.g. `https://portal.azure.com/#@evandiplacidooutlook.onmicrosoft.com/...`).
 
-### Step 13: Configure Advanced Installer
+### Step 13: Create the metadata JSON
+
+The signing command in the next step reads a JSON file with your Trusted Signing endpoint, account name, and certificate profile name. This is what tells `signtool` which Azure cert to use.
+
+Create the file at `packaging/windows/trusted-signing-metadata.json` in this repo with these contents:
+
+```json
+{
+  "Endpoint": "https://eus.codesigning.azure.net/",
+  "CodeSigningAccountName": "ArgoBooks-Signing",
+  "CertificateProfileName": "ArgoBooks-prod"
+}
+```
+
+- **Endpoint:** the regional endpoint for your Trusted Signing account. If you used `East US` in Step 8 (the default), keep `https://eus.codesigning.azure.net/`. For other regions, look up the endpoint at https://learn.microsoft.com/azure/trusted-signing/concept-trusted-signing-resources-roles.
+- **CodeSigningAccountName:** the account name from Step 8 (`ArgoBooks-Signing`).
+- **CertificateProfileName:** the profile name from Step 11 (`ArgoBooks-prod`).
+
+None of these values are secrets. The real authentication happens via your `az login` token at sign time.
+
+### Step 14: Configure Advanced Installer
 
 Advanced Installer Professional does not have a native Azure Trusted Signing dropdown. That feature is gated to the Architect and Enterprise editions. The workaround is to keep `Sign Tool: Custom` and call `signtool.exe` with the Trusted Signing dlib that Step 12 installed. This gives you exactly the same signed result.
 
@@ -212,12 +232,12 @@ Advanced Installer Professional does not have a native Azure Trusted Signing dro
 
 The metadata JSON lives at `packaging/windows/trusted-signing-metadata.json` in this repo and contains the endpoint URI, account name, and certificate profile name. None of those values are secret; the real authentication happens via your `az login` token at sign time. If you ever change the Azure account, region, or certificate profile name, edit that JSON instead of the Advanced Installer command line.
 
-### Step 14: Verify
+### Step 15: Verify
 
 Now actually build a signed installer to confirm everything works end to end.
 
 1. In JetBrains Rider, set the configuration to **Release** and the target to **Desktop (Windows)**, then build. This produces the binaries that Advanced Installer will package.
-2. In Advanced Installer, build the installer (this is where the signing happens via the command line you configured in Step 13).
+2. In Advanced Installer, build the installer (this is where the signing happens via the command line you configured in Step 14).
 3. Right-click the produced `.exe` > **Properties** > **Digital Signatures** tab
 4. You should see a signature with the legal name from your billing profile and a timestamp
 
