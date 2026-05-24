@@ -264,7 +264,12 @@ public sealed class PdfThumbnailService
             if (PdfRenderMessageParser.TryParsePage(body, out var idx, out var bytes))
             {
                 collector.Pages[idx] = bytes;
-                collector.OnPage?.Invoke(idx, bytes);
+                // OnPage callbacks can do synchronous disk I/O (writing JPEG pages),
+                // which would block the WebView message handler / UI thread while
+                // pages stream in. Dispatch to the thread pool so the UI stays
+                // responsive during multi-page renders.
+                if (collector.OnPage is { } onPage)
+                    _ = Task.Run(() => onPage(idx, bytes));
                 return;
             }
             if (PdfRenderMessageParser.TryParseDone(body, out _))
