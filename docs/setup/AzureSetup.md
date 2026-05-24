@@ -208,7 +208,7 @@ None of these values are secrets. The real authentication happens via your `az l
 
 ### Step 14: Configure Advanced Installer and verify the signed build
 
-See `argo-books-website/read-me/setup/Advanced Installer project setup.md` for the Advanced Installer signing config (the **Digital Signature** step) and the end-to-end verification (the **Verify a build** step).
+The Advanced Installer signing config and the end-to-end verification live in the website repo, since they're tied to that project's `.aip`. See [Advanced Installer project setup.md](https://github.com/ArgoRobots/Argo-Books-website/blob/main/read-me/setup/Advanced%20Installer%20project%20setup.md) in the [ArgoRobots/Argo-Books-website](https://github.com/ArgoRobots/Argo-Books-website) repo - specifically the **Digital Signature** step and the **Verify a build** step.
 
 For the full publishing workflow (Windows, macOS, and Linux), see [Publishing.md](../Publishing.md).
 
