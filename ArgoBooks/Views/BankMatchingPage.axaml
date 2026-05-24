@@ -118,16 +118,23 @@
                                                     <PathIcon Data="{x:Static icons:Icons.Check}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Choose match'}"
-                                                        IsVisible="{Binding !IsMatched}"
+                                                        IsVisible="{Binding IsActionable}"
                                                         Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).OpenCandidatePickerCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc 'Ignore line'}"
-                                                        IsVisible="{Binding !IsMatched}"
+                                                        IsVisible="{Binding IsActionable}"
                                                         Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).IgnoreLineCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
+                                                </Button>
+                                                <!-- Ignored: restore -->
+                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Restore line'}"
+                                                        IsVisible="{Binding IsIgnored}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).RestoreLineCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Undo}" Width="16" Height="16" />
                                                 </Button>
                                                 <!-- Matched: unlink -->
                                                 <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Unlink match'}"
@@ -171,70 +178,6 @@
                 </ItemsControl>
             </Expander>
         </Grid>
-
-        <!-- Candidate picker overlay -->
-        <controls:ModalOverlay IsOpen="{Binding IsCandidateModalOpen}"
-                               ClosingCommand="{Binding CloseCandidatePickerCommand}">
-            <controls:ModalOverlay.ModalContent>
-                <Border Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="12"
-                        Width="560" MaxHeight="600"
-                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                        BoxShadow="0 8 32 0 #40000000">
-                    <Grid RowDefinitions="Auto,*,Auto">
-                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Choose matching book entry'}"
-                                           FontSize="18" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCandidatePickerCommand}">
-                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
-                                </Button>
-                            </Grid>
-                        </Border>
-
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="24" Spacing="8">
-                                <TextBlock IsVisible="{Binding !HasCandidates}"
-                                           Text="{loc:Loc 'No candidate matches were found for this line.'}"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
-                                <ItemsControl ItemsSource="{Binding CandidateOptions}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="bm:BankMatchCandidate">
-                                            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                                                    Classes="secondary-button" Margin="0,0,0,4"
-                                                    Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).ChooseCandidateCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <StackPanel Grid.Column="0" Spacing="2">
-                                                        <TextBlock Text="{Binding RecordDescription}" FontWeight="SemiBold"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   Text="{Binding RecordType}" />
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding RecordAmount, StringFormat=C2}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{Binding Confidence, StringFormat='{}{0:P0} match'}"
-                                                                   FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </ScrollViewer>
-
-                        <Border Grid.Row="2" Padding="24" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                            <Button Classes="secondary-button" HorizontalAlignment="Right"
-                                    Command="{Binding CloseCandidatePickerCommand}"
-                                    Content="{loc:Loc Cancel}" />
-                        </Border>
-                    </Grid>
-                </Border>
-            </controls:ModalOverlay.ModalContent>
-        </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>

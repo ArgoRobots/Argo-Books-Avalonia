@@ -3,6 +3,8 @@ using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -28,6 +30,17 @@ public partial class BankMatchingPageViewModel : ViewModelBase
                 if (e.PageName == PageNames.BankMatching)
                     LoadLatestSession();
             };
+
+        // The candidate picker lives in the AppShell-hosted modal; apply the user's choice here.
+        if (App.BankMatchingModalsViewModel != null)
+            App.BankMatchingModalsViewModel.CandidateChosen += OnCandidateChosen;
+    }
+
+    private void OnCandidateChosen(object? sender, BankMatchChosenEventArgs e)
+    {
+        var row = Lines.FirstOrDefault(r => r.Line.Id == e.LineId);
+        if (row != null)
+            ConfirmCandidate(row, e.Candidate);
     }
 
     #region State
@@ -68,21 +81,6 @@ public partial class BankMatchingPageViewModel : ViewModelBase
     partial void OnUnmatchedLineCountChanged(int value) => OnPropertyChanged(nameof(CanRunAi));
     partial void OnIsAiBusyChanged(bool value) => OnPropertyChanged(nameof(CanRunAi));
     partial void OnUnmatchedBookCountChanged(int value) => OnPropertyChanged(nameof(HasUnmatchedBook));
-
-    #endregion
-
-    #region Candidate picker (inline modal)
-
-    [ObservableProperty]
-    private bool _isCandidateModalOpen;
-
-    [ObservableProperty]
-    private BankLineRow? _candidateLine;
-
-    [ObservableProperty]
-    private bool _hasCandidates;
-
-    public ObservableCollection<BankMatchCandidate> CandidateOptions { get; } = [];
 
     #endregion
 
@@ -181,16 +179,32 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         RecomputeCounts();
     }
 
-    /// <summary>Marks a line as ignored (e.g., internal transfer).</summary>
+    /// <summary>Marks a line as ignored (e.g., internal transfer). Tracked in undo/redo.</summary>
     [RelayCommand]
     private void IgnoreLine(BankLineRow? row)
     {
         if (row == null) return;
-        row.Line.MatchStatus = BankLineMatchStatus.Ignored;
-        _candidatesByLineId.Remove(row.Line.Id);
-        row.Refresh(null);
-        App.CompanyManager?.CompanyData?.MarkAsModified();
-        RecomputeCounts();
+        var line = row.Line;
+        SetLineIgnored(line);
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            "Ignore bank line".Translate(),
+            () => SetLineRestored(line),   // undo: bring the line back
+            () => SetLineIgnored(line)));  // redo: ignore again
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    /// <summary>Restores a previously ignored line, recomputing its candidate matches. Tracked in undo/redo.</summary>
+    [RelayCommand]
+    private void RestoreLine(BankLineRow? row)
+    {
+        if (row == null) return;
+        var line = row.Line;
+        SetLineRestored(line);
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            "Restore bank line".Translate(),
+            () => SetLineIgnored(line),    // undo: ignore again
+            () => SetLineRestored(line))); // redo: restore again
+        App.CompanyManager?.MarkAsChanged();
     }
 
     /// <summary>Unlinks a confirmed match, clearing the flag on the book record.</summary>
@@ -204,30 +218,48 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         RecomputeCounts();
     }
 
-    /// <summary>Opens the picker so the user can choose among candidates or pick manually.</summary>
+    /// <summary>Opens the AppShell-hosted picker so the user can choose among candidates.</summary>
     [RelayCommand]
     private void OpenCandidatePicker(BankLineRow? row)
     {
         if (row == null) return;
-        CandidateLine = row;
-        CandidateOptions.Clear();
-        if (_candidatesByLineId.TryGetValue(row.Line.Id, out var list))
-            foreach (var c in list)
-                CandidateOptions.Add(c);
-        HasCandidates = CandidateOptions.Count > 0;
-        IsCandidateModalOpen = true;
+        var candidates = _candidatesByLineId.TryGetValue(row.Line.Id, out var list) ? list : [];
+        App.BankMatchingModalsViewModel?.OpenCandidatePicker(row.Line.Id, row.Description, candidates);
     }
 
-    [RelayCommand]
-    private void CloseCandidatePicker() => IsCandidateModalOpen = false;
-
-    /// <summary>Confirms a specific candidate as the match for the picker's line.</summary>
-    [RelayCommand]
-    private void ChooseCandidate(BankMatchCandidate? candidate)
+    private void SetLineIgnored(BankStatementLine line)
     {
-        if (CandidateLine == null || candidate == null) return;
-        ConfirmCandidate(CandidateLine, candidate);
-        IsCandidateModalOpen = false;
+        line.MatchStatus = BankLineMatchStatus.Ignored;
+        _candidatesByLineId.Remove(line.Id);
+        RefreshRow(line, null);
+        App.CompanyManager?.CompanyData?.MarkAsModified();
+        RecomputeCounts();
+    }
+
+    private void SetLineRestored(BankStatementLine line)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var candidates = data != null ? _matcher.FindCandidates(line, data, _options) : [];
+        if (candidates.Count > 0)
+        {
+            _candidatesByLineId[line.Id] = candidates;
+            line.MatchStatus = BankLineMatchStatus.Suggested;
+            RefreshRow(line, null, candidates[0]);
+        }
+        else
+        {
+            _candidatesByLineId.Remove(line.Id);
+            line.MatchStatus = BankLineMatchStatus.Unmatched;
+            RefreshRow(line, null);
+        }
+        data?.MarkAsModified();
+        RecomputeCounts();
+    }
+
+    private void RefreshRow(BankStatementLine line, BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
+    {
+        var row = Lines.FirstOrDefault(r => r.Line.Id == line.Id);
+        row?.Refresh(confirmed, suggested);
     }
 
     private void ConfirmCandidate(BankLineRow row, BankMatchCandidate candidate)
@@ -325,6 +357,10 @@ public partial class BankLineRow : ObservableObject
     public bool IsMatched => Line.MatchStatus == BankLineMatchStatus.Matched;
     public bool IsSuggested => Line.MatchStatus == BankLineMatchStatus.Suggested;
     public bool IsUnmatched => Line.MatchStatus == BankLineMatchStatus.Unmatched;
+    public bool IsIgnored => Line.MatchStatus == BankLineMatchStatus.Ignored;
+
+    /// <summary>True when the line can still be matched or ignored (not matched, not ignored).</summary>
+    public bool IsActionable => IsUnmatched || IsSuggested;
 
     /// <summary>Recomputes display properties after the line's status changes.</summary>
     public void Refresh(BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
@@ -346,5 +382,7 @@ public partial class BankLineRow : ObservableObject
         OnPropertyChanged(nameof(IsMatched));
         OnPropertyChanged(nameof(IsSuggested));
         OnPropertyChanged(nameof(IsUnmatched));
+        OnPropertyChanged(nameof(IsIgnored));
+        OnPropertyChanged(nameof(IsActionable));
     }
 }

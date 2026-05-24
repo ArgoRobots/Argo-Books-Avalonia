@@ -171,6 +171,8 @@ public partial class App : Application
     /// </summary>
     public static StockAdjustmentsModalsViewModel? StockAdjustmentsModalsViewModel => _appShellViewModel?.StockAdjustmentsModalsViewModel;
 
+    public static BankMatchingModalsViewModel? BankMatchingModalsViewModel => _appShellViewModel?.BankMatchingModalsViewModel;
+
     /// <summary>
     /// Gets the purchase orders modals view model for shared access.
     /// </summary>

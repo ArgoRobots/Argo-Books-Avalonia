@@ -46,40 +46,7 @@ public class BankMatchingService(IGeminiService? geminiService = null, IErrorLog
             if (line.MatchStatus is BankLineMatchStatus.Matched or BankLineMatchStatus.Ignored)
                 continue;
 
-            var candidates = new List<BankMatchCandidate>();
-            foreach (var record in records)
-            {
-                // A record auto-matched to an earlier line is removed from the pool below,
-                // so anything still here is available.
-                var amountDiff = Math.Abs(line.Amount - record.Amount);
-                double amountScore;
-                if (amountDiff == 0m) amountScore = AmountExactScore;
-                else if (amountDiff <= options.AmountTolerance) amountScore = AmountToleranceScore;
-                else continue; // amount must match (exactly or within tolerance)
-
-                var daysApart = Math.Abs((line.Date.Date - record.Date.Date).TotalDays);
-                if (daysApart > options.DateWindowDays && amountScore < AmountExactScore)
-                    continue; // outside window and not an exact-amount hit
-                var dateScore = daysApart <= options.DateWindowDays
-                    ? DateMaxScore * (1 - daysApart / Math.Max(1, options.DateWindowDays))
-                    : 0;
-
-                var descScore = DescMaxScore * Similarity(NormalizeDescription(line.Description), NormalizeDescription(record.Description));
-
-                var confidence = amountScore + dateScore + descScore;
-
-                candidates.Add(new BankMatchCandidate
-                {
-                    LineId = line.Id,
-                    RecordType = record.Type,
-                    RecordId = record.Id,
-                    RecordDescription = record.Description,
-                    RecordDate = record.Date,
-                    RecordAmount = record.Amount,
-                    Confidence = Math.Round(confidence, 4),
-                    Reason = DetermineReason(amountScore, daysApart, descScore)
-                });
-            }
+            var candidates = ScoreCandidates(line, records, options);
 
             if (candidates.Count == 0)
             {
@@ -87,12 +54,6 @@ public class BankMatchingService(IGeminiService? geminiService = null, IErrorLog
                 result.UnmatchedLineCount++;
                 continue;
             }
-
-            // Rank best first; for money-in ties prefer Payment over Invoice to avoid double counting.
-            candidates = candidates
-                .OrderByDescending(c => c.Confidence)
-                .ThenBy(c => RecordTypeRank(c.RecordType, line.Amount))
-                .ToList();
 
             var best = candidates[0];
             var gap = candidates.Count > 1 ? best.Confidence - candidates[1].Confidence : 1.0;
@@ -123,6 +84,63 @@ public class BankMatchingService(IGeminiService? geminiService = null, IErrorLog
         result.UnmatchedBookRecords = stillUnmatched;
 
         return result;
+    }
+
+    /// <summary>
+    /// Returns ranked match candidates (≥ SuggestThreshold) for a single line against the
+    /// currently unmatched, in-scope book records. Pure: does not mutate anything.
+    /// </summary>
+    public List<BankMatchCandidate> FindCandidates(BankStatementLine line, CompanyData data, BankMatchingOptions options)
+    {
+        var records = BuildRecordRefs(data, options.Scope).Where(r => !IsRecordMatched(data, r));
+        return ScoreCandidates(line, records, options)
+            .Where(c => c.Confidence >= options.SuggestThreshold)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Scores every amount-compatible record against a line and returns candidates ranked best-first.
+    /// </summary>
+    private static List<BankMatchCandidate> ScoreCandidates(BankStatementLine line, IEnumerable<BookRecordRef> records, BankMatchingOptions options)
+    {
+        var candidates = new List<BankMatchCandidate>();
+        foreach (var record in records)
+        {
+            var amountDiff = Math.Abs(line.Amount - record.Amount);
+            double amountScore;
+            if (amountDiff == 0m) amountScore = AmountExactScore;
+            else if (amountDiff <= options.AmountTolerance) amountScore = AmountToleranceScore;
+            else continue; // amount must match (exactly or within tolerance)
+
+            var daysApart = Math.Abs((line.Date.Date - record.Date.Date).TotalDays);
+            if (daysApart > options.DateWindowDays && amountScore < AmountExactScore)
+                continue; // outside window and not an exact-amount hit
+            var dateScore = daysApart <= options.DateWindowDays
+                ? DateMaxScore * (1 - daysApart / Math.Max(1, options.DateWindowDays))
+                : 0;
+
+            var descScore = DescMaxScore * Similarity(NormalizeDescription(line.Description), NormalizeDescription(record.Description));
+
+            var confidence = amountScore + dateScore + descScore;
+
+            candidates.Add(new BankMatchCandidate
+            {
+                LineId = line.Id,
+                RecordType = record.Type,
+                RecordId = record.Id,
+                RecordDescription = record.Description,
+                RecordDate = record.Date,
+                RecordAmount = record.Amount,
+                Confidence = Math.Round(confidence, 4),
+                Reason = DetermineReason(amountScore, daysApart, descScore)
+            });
+        }
+
+        // Rank best first; for money-in ties prefer Payment over Invoice to avoid double counting.
+        return candidates
+            .OrderByDescending(c => c.Confidence)
+            .ThenBy(c => RecordTypeRank(c.RecordType, line.Amount))
+            .ToList();
     }
 
     private static int RecordTypeRank(BookRecordType type, decimal lineAmount)

@@ -167,7 +167,7 @@ public partial class SidebarViewModel : ViewModelBase
         _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
         _paymentsItem.IsVisible = true; // Available on free tier (online payments via portal)
         TransactionItems.Add(_paymentsItem);
-        TransactionItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Payments));
+        TransactionItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Bank));
 
         // Rentals Section (mockup: Rental Inventory, Rental Records)
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory", Icons.RentalInventory));
