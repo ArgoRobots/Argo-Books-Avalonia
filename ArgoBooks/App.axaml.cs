@@ -2278,11 +2278,21 @@ public partial class App : Application
             return;
         }
 
+        // AI suggestions consume the same monthly AI quota as imports.
+        using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
+        var usageCheck = await usageService.CheckUsageAsync();
+        if (!usageCheck.CanImport)
+        {
+            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(usageCheck.ImportCount, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
+            return;
+        }
+
         vm.IsAiBusy = true;
         try
         {
             var matcher = new BankMatchingService(geminiService, ErrorLogger);
             var suggestions = await matcher.SuggestWithAiAsync(unmatched, companyData, vm.Options);
+            await usageService.IncrementUsageAsync();
             vm.ApplyAiSuggestions(suggestions);
         }
         catch (Exception ex)

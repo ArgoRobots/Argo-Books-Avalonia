@@ -167,15 +167,19 @@ public class BankMatchingService(IGeminiService? geminiService = null, IErrorLog
 
     private static void FlagDuplicates(List<BookRecordRef> records, int dateWindowDays)
     {
-        for (int i = 0; i < records.Count; i++)
+        // Group by amount first so we only compare records that could possibly be duplicates,
+        // then compare within each (typically tiny) group by date proximity.
+        foreach (var group in records.GroupBy(r => r.Amount).Where(g => g.Count() > 1))
         {
-            for (int j = i + 1; j < records.Count; j++)
+            var byDate = group.OrderBy(r => r.Date).ToList();
+            for (int i = 0; i < byDate.Count; i++)
             {
-                if (records[i].Amount == records[j].Amount &&
-                    Math.Abs((records[i].Date.Date - records[j].Date.Date).TotalDays) <= dateWindowDays)
+                for (int j = i + 1; j < byDate.Count; j++)
                 {
-                    records[i].IsPossibleDuplicate = true;
-                    records[j].IsPossibleDuplicate = true;
+                    var daysApart = (byDate[j].Date.Date - byDate[i].Date.Date).TotalDays;
+                    if (daysApart > dateWindowDays) break; // sorted by date: no later record can be closer
+                    byDate[i].IsPossibleDuplicate = true;
+                    byDate[j].IsPossibleDuplicate = true;
                 }
             }
         }

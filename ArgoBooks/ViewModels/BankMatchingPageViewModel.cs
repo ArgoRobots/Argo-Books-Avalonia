@@ -25,15 +25,17 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         LoadLatestSession();
 
         if (App.NavigationService != null)
-            App.NavigationService.Navigated += (_, e) =>
-            {
-                if (e.PageName == PageNames.BankMatching)
-                    LoadLatestSession();
-            };
+            App.NavigationService.Navigated += OnNavigated;
 
         // The candidate picker lives in the AppShell-hosted modal; apply the user's choice here.
         if (App.BankMatchingModalsViewModel != null)
             App.BankMatchingModalsViewModel.CandidateChosen += OnCandidateChosen;
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        if (e.PageName == PageNames.BankMatching)
+            LoadLatestSession();
     }
 
     private void OnCandidateChosen(object? sender, BankMatchChosenEventArgs e)
@@ -122,7 +124,12 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
         Lines.Clear();
         foreach (var line in result.Lines)
-            Lines.Add(new BankLineRow(line, ResolveTopCandidate(line)));
+        {
+            // Auto-matched lines aren't in CandidatesByLineId, so resolve their record for display.
+            var top = ResolveTopCandidate(line)
+                      ?? (line.MatchStatus == BankLineMatchStatus.Matched ? BuildMatchedCandidate(line) : null);
+            Lines.Add(new BankLineRow(line, top));
+        }
 
         UnmatchedBookRecords.Clear();
         foreach (var r in result.UnmatchedBookRecords)
@@ -138,6 +145,39 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
     private BankMatchCandidate? ResolveTopCandidate(Core.Models.BankMatching.BankStatementLine line) =>
         _candidatesByLineId.TryGetValue(line.Id, out var list) ? list.FirstOrDefault() : null;
+
+    /// <summary>
+    /// Builds a display candidate for an already-matched line by looking up its record in the
+    /// company data (used for auto-matches, which aren't in the candidate map).
+    /// </summary>
+    private BankMatchCandidate? BuildMatchedCandidate(Core.Models.BankMatching.BankStatementLine line)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null || line.MatchedRecordType is not { } type || line.MatchedRecordId is not { } id)
+            return null;
+
+        var desc = type switch
+        {
+            BookRecordType.Expense => data.Expenses.FirstOrDefault(e => e.Id == id)?.Description,
+            BookRecordType.Revenue => data.Revenues.FirstOrDefault(r => r.Id == id)?.Description,
+            BookRecordType.Invoice => data.Invoices.FirstOrDefault(i => i.Id == id)?.InvoiceNumber,
+            BookRecordType.Payment => data.Payments.FirstOrDefault(p => p.Id == id) is { } pmt
+                ? (string.IsNullOrWhiteSpace(pmt.Notes) ? pmt.ReferenceNumber : pmt.Notes)
+                : null,
+            _ => null
+        };
+        if (desc == null) return null;
+
+        return new BankMatchCandidate
+        {
+            LineId = line.Id,
+            RecordType = type,
+            RecordId = id,
+            RecordDescription = string.IsNullOrWhiteSpace(desc) ? id : desc,
+            RecordAmount = line.Amount,
+            Confidence = line.MatchConfidence
+        };
+    }
 
     private void ResetCounts()
     {
@@ -166,17 +206,6 @@ public partial class BankMatchingPageViewModel : ViewModelBase
     {
         if (row?.TopCandidate == null) return;
         ConfirmCandidate(row, row.TopCandidate);
-    }
-
-    /// <summary>Rejects all suggestions for a line, leaving it unmatched.</summary>
-    [RelayCommand]
-    private void RejectSuggestion(BankLineRow? row)
-    {
-        if (row == null) return;
-        _matcher.RejectMatch(row.Line);
-        _candidatesByLineId.Remove(row.Line.Id);
-        row.Refresh(null);
-        RecomputeCounts();
     }
 
     /// <summary>Marks a line as ignored (e.g., internal transfer). Tracked in undo/redo.</summary>
