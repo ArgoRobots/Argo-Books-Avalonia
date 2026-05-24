@@ -18,11 +18,11 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 {
     private readonly BankMatchingService _matcher = new();
     private readonly BankMatchingOptions _options = new();
-    private BankImportSession? _session;
+    private BankMatchingResult? _result;
 
     public BankMatchingPageViewModel()
     {
-        LoadLatestSession();
+        Reload();
 
         if (App.NavigationService != null)
             App.NavigationService.Navigated += OnNavigated;
@@ -30,13 +30,18 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         // The candidate picker lives in the AppShell-hosted modal; apply the user's choice here.
         if (App.BankMatchingModalsViewModel != null)
             App.BankMatchingModalsViewModel.CandidateChosen += OnCandidateChosen;
+
+        // Filter the view by the shared date range used on the dashboard/analytics pages.
+        ChartSettingsService.Instance.DateRangeChanged += OnDateRangeChanged;
     }
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
         if (e.PageName == PageNames.BankMatching)
-            LoadLatestSession();
+            Reload();
     }
+
+    private void OnDateRangeChanged(object? sender, string e) => RefreshDisplay();
 
     private void OnCandidateChosen(object? sender, BankMatchChosenEventArgs e)
     {
@@ -55,9 +60,6 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasSession;
-
-    [ObservableProperty]
-    private string _sourceFileName = string.Empty;
 
     [ObservableProperty]
     private int _matchedCount;
@@ -86,30 +88,42 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Tabs
+
+    /// <summary>0 = Bank lines, 1 = Missing from statement.</summary>
+    [ObservableProperty]
+    private int _selectedTabIndex;
+
+    public bool IsLinesTab => SelectedTabIndex == 0;
+    public bool IsMissingTab => SelectedTabIndex == 1;
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsLinesTab));
+        OnPropertyChanged(nameof(IsMissingTab));
+    }
+
+    #endregion
+
     #region Loading and matching
 
-    /// <summary>Loads the most recently imported session (if any) and runs matching.</summary>
-    public void LoadLatestSession()
+    /// <summary>
+    /// Reloads from all imported sessions (lines accumulate across imports), runs matching,
+    /// and rebuilds the view.
+    /// </summary>
+    public void Reload()
     {
         var data = App.CompanyManager?.CompanyData;
-        var latest = data?.BankImportSessions.LastOrDefault();
-        if (latest != null)
-            LoadSession(latest);
-        else
+        if (data == null || data.BankImportSessions.Count == 0)
         {
-            _session = null;
+            _result = null;
             HasSession = false;
             Lines.Clear();
             UnmatchedBookRecords.Clear();
             ResetCounts();
+            return;
         }
-    }
 
-    /// <summary>Loads a specific session, runs deterministic matching, and rebuilds the view.</summary>
-    public void LoadSession(BankImportSession session)
-    {
-        _session = session;
-        SourceFileName = session.SourceFileName;
         HasSession = true;
         RunMatchingAndRebuild();
     }
@@ -117,13 +131,28 @@ public partial class BankMatchingPageViewModel : ViewModelBase
     private void RunMatchingAndRebuild()
     {
         var data = App.CompanyManager?.CompanyData;
-        if (_session == null || data == null) return;
+        if (data == null) return;
 
-        var result = _matcher.MatchDeterministic(_session.Lines, data, _options);
-        _candidatesByLineId = result.CandidatesByLineId;
+        // Match across every imported statement so previously imported lines are not lost.
+        var allLines = data.BankImportSessions.SelectMany(s => s.Lines).ToList();
+        _result = _matcher.MatchDeterministic(allLines, data, _options);
+        _candidatesByLineId = _result.CandidatesByLineId;
+
+        RefreshDisplay();
+    }
+
+    /// <summary>Rebuilds the visible rows from the last match result, filtered by the selected date range.</summary>
+    private void RefreshDisplay()
+    {
+        if (_result == null) return;
+
+        var settings = ChartSettingsService.Instance;
+        var start = settings.StartDate.Date;
+        var end = settings.EndDate.Date;
+        bool InRange(DateTime d) => d == DateTime.MinValue || (d.Date >= start && d.Date <= end);
 
         Lines.Clear();
-        foreach (var line in result.Lines)
+        foreach (var line in _result.Lines.Where(l => InRange(l.Date)))
         {
             // Auto-matched lines aren't in CandidatesByLineId, so resolve their record for display.
             var top = ResolveTopCandidate(line)
@@ -132,13 +161,11 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         }
 
         UnmatchedBookRecords.Clear();
-        foreach (var r in result.UnmatchedBookRecords)
+        foreach (var r in _result.UnmatchedBookRecords.Where(r => InRange(r.Date)))
             UnmatchedBookRecords.Add(r);
 
-        MatchedCount = result.Lines.Count(l => l.MatchStatus == BankLineMatchStatus.Matched);
-        SuggestedCount = result.SuggestedCount;
-        UnmatchedLineCount = result.UnmatchedLineCount;
-        UnmatchedBookCount = result.UnmatchedBookRecords.Count;
+        RecomputeCounts();
+        UnmatchedBookCount = UnmatchedBookRecords.Count;
     }
 
     private Dictionary<string, List<BankMatchCandidate>> _candidatesByLineId = [];
@@ -308,9 +335,13 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         UnmatchedLineCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Unmatched);
     }
 
-    /// <summary>Applies AI-produced suggestions to the matching lines (never auto-confirmed).</summary>
-    public void ApplyAiSuggestions(IReadOnlyDictionary<string, List<BankMatchCandidate>> suggestions)
+    /// <summary>
+    /// Applies suggestions to the matching lines (never auto-confirmed). Returns the number of
+    /// lines that gained a new suggestion.
+    /// </summary>
+    public int ApplyAiSuggestions(IReadOnlyDictionary<string, List<BankMatchCandidate>> suggestions)
     {
+        var applied = 0;
         foreach (var (lineId, candidates) in suggestions)
         {
             if (candidates.Count == 0) continue;
@@ -320,9 +351,11 @@ public partial class BankMatchingPageViewModel : ViewModelBase
             {
                 row.Line.MatchStatus = BankLineMatchStatus.Suggested;
                 row.Refresh(null, candidates.First());
+                applied++;
             }
         }
         RecomputeCounts();
+        return applied;
     }
 
     /// <summary>The lines still unmatched after deterministic matching (for the AI step).</summary>

@@ -20,7 +20,7 @@
         <StackPanel IsVisible="{Binding !HasSession}"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Spacing="16" MaxWidth="460">
-            <PathIcon Data="{x:Static icons:Icons.Payments}" Width="48" Height="48"
+            <PathIcon Data="{x:Static icons:Icons.Bank}" Width="48" Height="48"
                       Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
             <TextBlock Text="{loc:Loc 'Match your books against your bank'}"
                        FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center"
@@ -34,21 +34,20 @@
         </StackPanel>
 
         <!-- Loaded session -->
-        <Grid IsVisible="{Binding HasSession}" RowDefinitions="Auto,Auto,*,Auto" Margin="24">
+        <Grid IsVisible="{Binding HasSession}" RowDefinitions="Auto,Auto,Auto,*" Margin="24">
 
             <!-- Top bar -->
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="{loc:Loc 'Bank Matching'}" FontSize="20" FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="{Binding SourceFileName}" FontSize="12"
-                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                </StackPanel>
+                <TextBlock Grid.Column="0" Text="{loc:Loc 'Bank Matching'}" FontSize="20" FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <controls:DateRangeSelector VerticalAlignment="Center" />
                     <Button Classes="secondary-button"
                             IsEnabled="{Binding CanRunAi}"
                             Command="{Binding RunAiSuggestionsCommand}"
-                            Content="{loc:Loc 'Run AI suggestions'}" />
+                            ToolTip.Tip="{loc:Loc 'Look for likely matches for the remaining unmatched lines'}"
+                            Content="{loc:Loc 'Suggest more matches'}" />
                     <Button Classes="primary-button"
                             Command="{Binding ImportStatementCommand}"
                             Content="{loc:Loc 'Import statement'}" />
@@ -67,8 +66,16 @@
                                    Icon="{x:Static icons:Icons.Payments}" IconColor="Primary" />
             </controls:StatCardsRow>
 
+            <!-- Tabs -->
+            <TabControl Grid.Row="2" Classes="page-tabs" Margin="0,0,0,16"
+                        SelectedIndex="{Binding SelectedTabIndex}">
+                <TabItem Header="{loc:Loc 'Bank lines'}" />
+                <TabItem Header="{loc:Loc 'Missing from statement'}" />
+            </TabControl>
+
             <!-- Bank lines table -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
+                    IsVisible="{Binding IsLinesTab}"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12">
@@ -153,30 +160,59 @@
                 </Grid>
             </Border>
 
-            <!-- Unmatched book records (possibly missing from the statement) -->
-            <Expander Grid.Row="3" Margin="0,16,0,0"
-                      IsVisible="{Binding HasUnmatchedBook}"
-                      Header="{loc:Loc 'Book records not found on the statement'}">
-                <ItemsControl ItemsSource="{Binding UnmatchedBookRecords}" Margin="0,8,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="bm:BookRecordRef">
-                            <Grid ColumnDefinitions="120,*,140,Auto" Margin="0,2">
-                                <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='MMM dd, yyyy'}"
-                                           FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBlock Grid.Column="1" Text="{Binding Description}" FontSize="13"
-                                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat=C2}" FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <Border Grid.Column="3" IsVisible="{Binding IsPossibleDuplicate}"
-                                        CornerRadius="8" Padding="8,2" Margin="8,0,0,0">
-                                    <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
-                                               Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Expander>
+            <!-- Missing from statement: recorded book entries no bank line matched -->
+            <Border Grid.Row="3"
+                    IsVisible="{Binding IsMissingTab}"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="130,*,130,170">
+                            <TextBlock Grid.Column="0" Text="{loc:Loc Date}" Classes="th" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc Description}" Classes="th" />
+                            <TextBlock Grid.Column="2" Text="{loc:Loc Amount}" Classes="th" />
+                            <TextBlock Grid.Column="3" Text="{loc:Loc Note}" Classes="th" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Rows -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock IsVisible="{Binding !HasUnmatchedBook}" Margin="20,16"
+                                       Text="{loc:Loc 'Every recorded entry was found on the statement.'}"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding UnmatchedBookRecords}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="bm:BookRecordRef">
+                                        <Border Padding="20,0" MinHeight="44"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="130,*,130,170">
+                                                <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='MMM dd, yyyy'}"
+                                                           VerticalAlignment="Center" FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Description}" VerticalAlignment="Center"
+                                                           FontSize="13" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat=C2}"
+                                                           VerticalAlignment="Center" FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <Border Grid.Column="3" IsVisible="{Binding IsPossibleDuplicate}"
+                                                        VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                        CornerRadius="8" Padding="8,2">
+                                                    <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
+                                                               Foreground="{DynamicResource WarningBrush}" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
     </Panel>
 

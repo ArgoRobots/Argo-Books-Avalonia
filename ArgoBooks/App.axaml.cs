@@ -2164,7 +2164,7 @@ public partial class App : Application
         var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
 
         var analysisCts = new CancellationTokenSource();
-        _mainWindowViewModel?.ShowLoading("Reading bank statement...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
+        _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield();
 
         using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
@@ -2180,14 +2180,14 @@ public partial class App : Application
         if (!geminiService.IsConfigured)
         {
             _mainWindowViewModel?.HideLoading();
-            await ShowErrorMessageBoxAsync("AI Not Configured".Translate(),
-                "AI-powered import requires portal access. Please register your company first.".Translate());
+            await ShowErrorMessageBoxAsync("Not Available".Translate(),
+                "Importing a bank statement requires portal access. Please register your company first.".Translate());
             return;
         }
 
         var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
         var progress = new Progress<(string detail, double percent)>(p =>
-            _mainWindowViewModel?.ShowLoading("Reading bank statement...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync));
+            _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync));
 
         try
         {
@@ -2237,13 +2237,16 @@ public partial class App : Application
             var importedSnapshot = CreateCompanyDataSnapshot(companyData);
             UndoRedoManager.RecordAction(new DelegateAction(
                 "Import bank statement".Translate(),
-                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.LoadLatestSession(); },
-                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.LoadLatestSession(); }
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); }
             ));
 
             CompanyManager.MarkAsChanged();
 
-            _bankMatchingPageViewModel?.LoadSession(session);
+            // Show all dates so just-imported lines are visible regardless of their statement period.
+            ChartSettingsService.Instance.SelectedDateRange = "All Time";
+
+            _bankMatchingPageViewModel?.Reload();
             NavigationService?.NavigateTo(PageNames.BankMatching);
         }
         catch (OperationCanceledException)
@@ -2273,8 +2276,8 @@ public partial class App : Application
         var geminiService = new GeminiService(ErrorLogger, TelemetryManager);
         if (!geminiService.IsConfigured)
         {
-            await ShowErrorMessageBoxAsync("AI Not Configured".Translate(),
-                "AI-powered matching requires portal access. Please register your company first.".Translate());
+            await ShowErrorMessageBoxAsync("Not Available".Translate(),
+                "Match suggestions require portal access. Please register your company first.".Translate());
             return;
         }
 
@@ -2288,16 +2291,25 @@ public partial class App : Application
         }
 
         vm.IsAiBusy = true;
+        _mainWindowViewModel?.ShowLoading("Looking for matches...".Translate());
         try
         {
             var matcher = new BankMatchingService(geminiService, ErrorLogger);
             var suggestions = await matcher.SuggestWithAiAsync(unmatched, companyData, vm.Options);
             await usageService.IncrementUsageAsync();
-            vm.ApplyAiSuggestions(suggestions);
+            var applied = vm.ApplyAiSuggestions(suggestions);
+            _mainWindowViewModel?.HideLoading();
+
+            await ShowInfoMessageBoxAsync(
+                "Bank Matching".Translate(),
+                applied > 0
+                    ? "Found {0} more possible match(es). Review and accept the suggestions.".TranslateFormat(applied)
+                    : "No additional matches were found for the remaining lines.".Translate());
         }
         catch (Exception ex)
         {
-            ErrorLogger?.LogError(ex, ErrorCategory.Import, "AI bank match suggestions failed");
+            _mainWindowViewModel?.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Bank match suggestions failed");
         }
         finally
         {
