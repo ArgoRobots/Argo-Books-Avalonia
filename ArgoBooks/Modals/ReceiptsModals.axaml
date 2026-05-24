@@ -279,9 +279,11 @@
                                            FontSize="16"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'This may take a few seconds...'}"
+                                <TextBlock Text="{Binding ScanSubMessage}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
                                            HorizontalAlignment="Center" />
                             </StackPanel>
 
@@ -355,9 +357,21 @@
                                                 <LayoutTransformControl x:Name="ScanPreviewZoomTransform"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center">
-                                                    <Image x:Name="ScanPreviewImage"
-                                                           Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                           Stretch="None" />
+                                                    <ItemsControl x:Name="ScanPreviewItems"
+                                                                  ItemsSource="{Binding ScanPreviewPages}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Vertical" Spacing="12" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Image x:CompileBindings="False"
+                                                                       Source="{Binding Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                       Stretch="None" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                 </LayoutTransformControl>
                                             </ScrollViewer>
                                         </Border>
@@ -1265,16 +1279,17 @@
                                                                TextTrimming="CharacterEllipsis" />
 
                                                     <!-- Queued status -->
-                                                    <TextBlock Text="Waiting..."
+                                                    <TextBlock Text="{loc:Loc 'Waiting...'}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                IsVisible="{Binding IsQueued}" />
 
                                                     <!-- Scanning status -->
-                                                    <TextBlock Text="Scanning..."
+                                                    <TextBlock Text="{Binding ScanningStatusText}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource PrimaryBrush}"
                                                                FontWeight="Medium"
+                                                               TextWrapping="Wrap"
                                                                IsVisible="{Binding IsScanning}" />
 
                                                     <!-- Succeeded status -->
@@ -1313,7 +1328,7 @@
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
                                                                   Width="12" Height="12" />
-                                                        <TextBlock Text="Retry" />
+                                                        <TextBlock Text="{loc:Loc 'Retry'}" />
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
@@ -1454,7 +1469,7 @@
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <PathIcon Data="{x:Static icons:Icons.RefreshCircle}"
                                                                   Width="12" Height="12" />
-                                                        <TextBlock Text="Retry" />
+                                                        <TextBlock Text="{loc:Loc 'Retry'}" />
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
@@ -1588,9 +1603,21 @@
                                             <LayoutTransformControl x:Name="BulkPreviewZoomTransform"
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center">
-                                                <Image x:Name="BulkPreviewImage"
-                                                       Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                                       Stretch="None" />
+                                                <ItemsControl x:Name="BulkPreviewItems"
+                                                              ItemsSource="{Binding ScanPreviewPages}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Vertical" Spacing="12" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Image x:CompileBindings="False"
+                                                                   Source="{Binding Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                   Stretch="None" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </LayoutTransformControl>
                                         </ScrollViewer>
                                     </Border>

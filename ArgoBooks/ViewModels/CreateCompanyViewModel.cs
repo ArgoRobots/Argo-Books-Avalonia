@@ -68,7 +68,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
     ];
 
     [ObservableProperty]
-    private string _selectedCurrency = "USD - US Dollar ($)";
+    private string _selectedCurrency = "CAD - Canadian Dollar ($)";
 
     /// <summary>
     /// All available currencies.
@@ -152,7 +152,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         !string.IsNullOrEmpty(CompanyName) ||
         !string.IsNullOrEmpty(BusinessType) ||
         !string.IsNullOrEmpty(Industry) ||
-        SelectedCurrency != "USD - US Dollar ($)" ||
+        SelectedCurrency != "CAD - Canadian Dollar ($)" ||
         !string.IsNullOrEmpty(PhoneNumber) ||
         SelectedPhoneCountry != null ||
         !string.IsNullOrEmpty(Country) ||
@@ -348,7 +348,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         CompanyName = null;
         BusinessType = null;
         Industry = null;
-        SelectedCurrency = "USD - US Dollar ($)";
+        SelectedCurrency = "CAD - Canadian Dollar ($)";
         PhoneNumber = "";
         PhoneNumberError = null;
         SelectedPhoneCountry = null;

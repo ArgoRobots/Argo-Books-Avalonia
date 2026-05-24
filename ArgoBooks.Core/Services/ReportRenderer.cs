@@ -81,15 +81,9 @@ public class ReportRenderer : IDisposable
         if (string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
             return amountUSD;
 
-        var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService != null)
-        {
-            var rate = exchangeService.GetExchangeRate("USD", _currencyCode, date ?? DateTime.Today);
-            if (rate > 0)
-                return (double)Math.Round((decimal)amountUSD * rate, 2);
-        }
-
-        return amountUSD;
+        var converted = ExchangeRateService.Instance?.ConvertFromUSD(
+            (decimal)amountUSD, _currencyCode, date ?? DateTime.Today);
+        return converted.HasValue ? (double)converted.Value : amountUSD;
     }
 
     /// <summary>

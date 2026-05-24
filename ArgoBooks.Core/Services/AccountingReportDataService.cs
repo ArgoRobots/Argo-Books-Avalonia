@@ -26,22 +26,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// Returns the amount unchanged if the display currency is USD or no rate is available.
     /// </summary>
     private decimal ConvertFromUSD(decimal amountUSD)
-    {
-        var currencyCode = GetCurrencyCode();
-        if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            return amountUSD;
-
-        var rateDate = filters.EndDate ?? DateTime.Today;
-        var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService != null)
-        {
-            var rate = exchangeService.GetExchangeRate("USD", currencyCode, rateDate);
-            if (rate > 0)
-                return Math.Round(amountUSD * rate, 2);
-        }
-
-        return amountUSD;
-    }
+        => ExchangeRateService.Instance?.ConvertFromUSD(
+               amountUSD, GetCurrencyCode(), filters.EndDate ?? DateTime.Today)
+           ?? amountUSD;
 
     /// <summary>
     /// Gets a subtitle indicating the currency used in the report.

@@ -67,17 +67,43 @@
                             <LayoutTransformControl x:Name="ZoomTransformControl"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center">
-                                <Image x:Name="ReceiptImage"
-                                       Source="{Binding ReceiptPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                                       Stretch="Uniform" />
+                                <ItemsControl x:Name="ReceiptPagesItems"
+                                              ItemsSource="{Binding ReceiptPages}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" Spacing="12" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Image x:CompileBindings="False"
+                                                   Source="{Binding Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                   Stretch="Uniform" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </LayoutTransformControl>
                         </ScrollViewer>
+
+                        <!-- Loading indicator while pages render -->
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="16"
+                                    IsVisible="{Binding IsLoadingPages}">
+                            <PathIcon Data="{x:Static icons:Icons.Receipts}"
+                                      Width="48" Height="48"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Loading receipt...'}"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
 
                         <!-- Fallback for when image can't load -->
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Spacing="16"
-                                    IsVisible="{Binding ReceiptPath, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                    IsVisible="{Binding HasNoPages}">
                             <PathIcon Data="{x:Static icons:Icons.Receipts}"
                                       Width="48" Height="48"
                                       Foreground="{DynamicResource TextTertiaryBrush}" />

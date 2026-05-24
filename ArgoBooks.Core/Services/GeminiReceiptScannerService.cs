@@ -35,7 +35,7 @@ Return JSON only (no markdown code blocks), with this exact format:
 Rules:
 1. LINE ITEMS — Extract EVERY purchased item on the receipt. Scan the entire receipt top to bottom. Grocery receipts often have 20-40+ items — include ALL of them. Do not summarize or skip items. Each product line with a price is a line item. Return items in the same order they appear on the receipt.
 2. TAX — Return EACH tax line separately in the ""taxes"" array. Do NOT sum them — list every individual tax with its label and amount. Common tax labels: GST, G-GST, PST, P-PST, HST, QST, TVQ, TPS, VAT, state tax, county tax, city tax, sales tax, excise tax. If there is only one tax line, still return it as a single-element array.
-3. PRODUCT NAMES — Transcribe EXACTLY as printed on the receipt, character by character. Do NOT normalize, expand abbreviations, correct spelling, or rename items. Keep the original abbreviations and casing. If a character is hard to read, use your best guess but do not substitute a different word. Only remove SKU codes, barcodes, and internal item numbers that are clearly not part of the product name.
+3. PRODUCT NAMES — Transcribe EXACTLY as printed on the receipt, character by character. Do NOT normalize, expand abbreviations, correct spelling, or rename items. Keep the original abbreviations and casing. If a character is hard to read, use your best guess but do not substitute a different word. ALWAYS remove SKU codes, barcodes, and internal item numbers that are not part of the product name — especially a leading code printed before the name such as ""6010-0272-0259-0062 Co Palm Refill"" (extract just ""Co Palm Refill"") or a long leading digit string. The description must start with the product name, never with a code.
 4. MONETARY VALUES — All as numbers. Use 0.00 for missing values, null for unknown fields.
 5. CONFIDENCE — Both the overall ""confidence"" and each line item's ""confidence"" must be 0.0-1.0. Be STRICT and CONSERVATIVE with line item confidence: if the text is blurry, smudged, faded, partially obscured, wrinkled, or if ANY digit or character in the description or price required guessing, the confidence MUST be below 0.85. Use 0.5-0.7 for items where you are genuinely unsure about the price or name. Only use 0.9+ when the text is crisp and completely unambiguous. Do NOT default to high confidence — earn it.
 6. PRICES vs DISCOUNTS — When a product has two numbers near it (a price and a discount/savings below it), the product's line item should use the FULL PRICE (the larger, positive number), not the discounted price. The discount is a separate entry in the ""discounts"" array.
@@ -231,7 +231,7 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
                 if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
                 {
-                    lineItem.Description = desc.GetString() ?? "";
+                    lineItem.Description = ReceiptDescriptionCleaner.Clean(desc.GetString());
                     hasData = true;
                 }
 
@@ -363,44 +363,17 @@ If nothing was missed, return: {{""missingItems"": []}}";
             {
                 foreach (var item in lineItems.EnumerateArray())
                 {
-                    var lineItem = new ScannedLineItem();
-                    var hasData = false;
+                    if (!ScannedLineItemParser.TryParse(item, out var lineItem))
+                        continue;
 
-                    if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
+                    // Negative line items are discounts — add to discount total, not line items
+                    if (lineItem.TotalPrice < 0)
                     {
-                        lineItem.Description = desc.GetString() ?? "";
-                        hasData = true;
+                        result.Discount = (result.Discount ?? 0) + Math.Abs(lineItem.TotalPrice);
                     }
-
-                    if (item.TryGetProperty("quantity", out var qty) && qty.ValueKind == JsonValueKind.Number)
-                        lineItem.Quantity = qty.GetDecimal();
-
-                    if (item.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind == JsonValueKind.Number)
+                    else
                     {
-                        lineItem.UnitPrice = unitPrice.GetDecimal();
-                        hasData = true;
-                    }
-
-                    if (item.TryGetProperty("totalPrice", out var totalPrice) && totalPrice.ValueKind == JsonValueKind.Number)
-                    {
-                        lineItem.TotalPrice = totalPrice.GetDecimal();
-                        hasData = true;
-                    }
-
-                    if (item.TryGetProperty("confidence", out var itemConf) && itemConf.ValueKind == JsonValueKind.Number)
-                        lineItem.Confidence = itemConf.GetDouble();
-
-                    if (hasData)
-                    {
-                        // Negative line items are discounts — add to discount total, not line items
-                        if (lineItem.TotalPrice < 0)
-                        {
-                            result.Discount = (result.Discount ?? 0) + Math.Abs(lineItem.TotalPrice);
-                        }
-                        else
-                        {
-                            result.LineItems.Add(lineItem);
-                        }
+                        result.LineItems.Add(lineItem);
                     }
                 }
             }

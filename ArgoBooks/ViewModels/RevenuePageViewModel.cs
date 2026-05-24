@@ -708,42 +708,13 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         if (item == null || !item.HasReceipt)
             return;
 
-        // Try to get the receipt path - check if file exists, otherwise load from stored data
-        var receiptPath = GetReceiptImagePath(item.Id);
-        if (string.IsNullOrEmpty(receiptPath))
+        var companyData = App.CompanyManager?.CompanyData;
+        var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == item.Id);
+        if (revenue == null || string.IsNullOrEmpty(revenue.ReceiptId))
             return;
 
-        // Use the shared receipt viewer modal
-        App.ReceiptViewerModal?.Show(receiptPath, item.Id);
-    }
-
-    private static string? GetReceiptImagePath(string revenueId)
-    {
-        // Always load from company file to ensure consistency
-        var companyData = App.CompanyManager?.CompanyData;
-
-        var revenue = companyData?.Revenues.FirstOrDefault(s => s.Id == revenueId);
-        if (revenue == null || string.IsNullOrEmpty(revenue.ReceiptId)) return null;
-
-        var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId);
-        if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
-
-        try
-        {
-            // Create temp file from Base64 data stored in company file
-            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
-            Directory.CreateDirectory(tempDir);
-            var tempPath = Path.Combine(tempDir, receipt.FileName);
-            var bytes = Convert.FromBase64String(receipt.FileData);
-            var isImage = receipt.FileType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
-            var output = isImage ? ReceiptImageHelper.FixOrientation(bytes) : bytes;
-            File.WriteAllBytes(tempPath, output);
-            return tempPath;
-        }
-        catch
-        {
-            return null;
-        }
+        // The viewer renders all pages (PDFs) from the receipt's stored data.
+        App.ReceiptViewerModal?.Show(revenue.ReceiptId, $"Receipt for {item.Id}");
     }
 
     #endregion

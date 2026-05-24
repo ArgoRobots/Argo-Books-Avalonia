@@ -139,6 +139,24 @@ public class ExchangeRateService
     }
 
     /// <summary>
+    /// Synchronously converts a USD amount to the target currency using only cached rates.
+    /// Returns the amount unchanged if the target is USD or no cached rate is available.
+    /// Shared by the report renderer and accounting data service so the same-currency,
+    /// rate-availability, and rounding rules live in one place.
+    /// </summary>
+    public decimal ConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date)
+    {
+        if (string.Equals(toCurrency, BaseCurrency, StringComparison.OrdinalIgnoreCase))
+            return amountUSD;
+
+        var rate = GetExchangeRate(BaseCurrency, toCurrency, date);
+        if (rate <= 0)
+            return amountUSD;
+
+        return Math.Round(amountUSD * rate, 2);
+    }
+
+    /// <summary>
     /// Converts an amount from one currency to another.
     /// </summary>
     /// <param name="amount">The amount to convert.</param>

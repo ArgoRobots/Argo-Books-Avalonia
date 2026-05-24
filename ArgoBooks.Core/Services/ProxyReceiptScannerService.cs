@@ -209,34 +209,7 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
         {
             foreach (var item in lineItems.EnumerateArray())
             {
-                var lineItem = new ScannedLineItem();
-                var hasData = false;
-
-                if (item.TryGetProperty("description", out var desc) && desc.ValueKind != JsonValueKind.Null)
-                {
-                    lineItem.Description = desc.GetString() ?? "";
-                    hasData = true;
-                }
-
-                if (item.TryGetProperty("quantity", out var qty) && qty.ValueKind != JsonValueKind.Null)
-                    lineItem.Quantity = qty.GetDecimal();
-
-                if (item.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind != JsonValueKind.Null)
-                {
-                    lineItem.UnitPrice = unitPrice.GetDecimal();
-                    hasData = true;
-                }
-
-                if (item.TryGetProperty("totalPrice", out var totalPrice) && totalPrice.ValueKind != JsonValueKind.Null)
-                {
-                    lineItem.TotalPrice = totalPrice.GetDecimal();
-                    hasData = true;
-                }
-
-                if (item.TryGetProperty("confidence", out var itemConf) && itemConf.ValueKind != JsonValueKind.Null)
-                    lineItem.Confidence = itemConf.GetDouble();
-
-                if (hasData)
+                if (ScannedLineItemParser.TryParse(item, out var lineItem))
                     result.LineItems.Add(lineItem);
             }
         }

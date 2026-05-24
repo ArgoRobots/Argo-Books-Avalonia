@@ -267,6 +267,26 @@
                                                                    FontWeight="Bold"
                                                                    Foreground="{DynamicResource PurpleDarkBrush}" />
                                                     </Border>
+
+                                                    <!-- Multi-page badge (top-left) -->
+                                                    <Border Background="#CC000000"
+                                                            CornerRadius="4"
+                                                            Padding="6,3"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Top"
+                                                            Margin="12,12,0,0"
+                                                            IsVisible="{Binding IsMultiPage}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                                            <PathIcon Data="{x:Static icons:Icons.FilePdf}"
+                                                                      Width="11" Height="11"
+                                                                      Foreground="White" />
+                                                            <TextBlock Text="{Binding PageCount}"
+                                                                       FontSize="10"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="White"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Border>
                                                 </Panel>
                                             </Border>
 

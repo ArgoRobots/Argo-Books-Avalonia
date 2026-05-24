@@ -186,40 +186,29 @@ So Advanced Installer can pick up your credentials.
 >
 > You can find your tenant domain in the Azure portal URL after `#@` (e.g. `https://portal.azure.com/#@evandiplacidooutlook.onmicrosoft.com/...`).
 
-### Step 13: Configure Advanced Installer
+### Step 13: Create the metadata JSON
 
-Advanced Installer Professional does not have a native Azure Trusted Signing dropdown. That feature is gated to the Architect and Enterprise editions. The workaround is to keep `Sign Tool: Custom` and call `signtool.exe` with the Trusted Signing dlib that Step 12 installed. This gives you exactly the same signed result.
+The signing command in the next step reads a JSON file with your Trusted Signing endpoint, account name, and certificate profile name. This is what tells `signtool` which Azure cert to use.
 
-1. Open the Argo Books `.aip` project in Advanced Installer
-2. Navigate to the **Digital Signature** page > **Settings** tab
-3. Check **Enable signing**
-4. Set the fields:
-   - **Sign Tool:** `Custom`
-   - **Path:** `<AI_SIGNTOOL_FOLDER>signtool.exe`
-   - **Command line:**
-     ```
-     sign /fd SHA256 /tr "http://timestamp.acs.microsoft.com" /td SHA256 /dlib "C:\Users\<your-user>\AppData\Local\Microsoft\MicrosoftTrustedSigningClientTools\Azure.CodeSigning.Dlib.dll" /dmdf "<path-to-repo>\packaging\windows\trusted-signing-metadata.json" /d "[|ProductName]"
-     ```
-     Substitute the two placeholders with the actual paths on your machine:
-     - `<your-user>` is your Windows username. To find it, open PowerShell and run `echo $env:USERNAME`, or just look at the folder name under `C:\Users\`.
-     - `<path-to-repo>` is wherever you cloned this repo. For example, if the repo is at `C:\Users\evand\Desktop\Argo-Books-Avalonia`, the full `/dmdf` path becomes `C:\Users\evand\Desktop\Argo-Books-Avalonia\packaging\windows\trusted-signing-metadata.json`.
+Create the file at `packaging/windows/trusted-signing-metadata.json` in this repo with these contents:
 
-     A fully-resolved example for a user named `evand` with the repo on the Desktop:
-     ```
-     sign /fd SHA256 /tr "http://timestamp.acs.microsoft.com" /td SHA256 /dlib "C:\Users\evand\AppData\Local\Microsoft\MicrosoftTrustedSigningClientTools\Azure.CodeSigning.Dlib.dll" /dmdf "C:\Users\evand\Desktop\Argo-Books-Avalonia\packaging\windows\trusted-signing-metadata.json" /d "[|ProductName]"
-     ```
-5. Save the project
+```json
+{
+  "Endpoint": "https://eus.codesigning.azure.net/",
+  "CodeSigningAccountName": "ArgoBooks-Signing",
+  "CertificateProfileName": "ArgoBooks-prod"
+}
+```
 
-The metadata JSON lives at `packaging/windows/trusted-signing-metadata.json` in this repo and contains the endpoint URI, account name, and certificate profile name. None of those values are secret; the real authentication happens via your `az login` token at sign time. If you ever change the Azure account, region, or certificate profile name, edit that JSON instead of the Advanced Installer command line.
+- **Endpoint:** the regional endpoint for your Trusted Signing account. If you used `East US` in Step 8 (the default), keep `https://eus.codesigning.azure.net/`. For other regions, look up the endpoint at https://learn.microsoft.com/azure/trusted-signing/concept-trusted-signing-resources-roles.
+- **CodeSigningAccountName:** the account name from Step 8 (`ArgoBooks-Signing`).
+- **CertificateProfileName:** the profile name from Step 11 (`ArgoBooks-prod`).
 
-### Step 14: Verify
+None of these values are secrets. The real authentication happens via your `az login` token at sign time.
 
-Now actually build a signed installer to confirm everything works end to end.
+### Step 14: Configure Advanced Installer and verify the signed build
 
-1. In JetBrains Rider, set the configuration to **Release** and the target to **Desktop (Windows)**, then build. This produces the binaries that Advanced Installer will package.
-2. In Advanced Installer, build the installer (this is where the signing happens via the command line you configured in Step 13).
-3. Right-click the produced `.exe` > **Properties** > **Digital Signatures** tab
-4. You should see a signature with the legal name from your billing profile and a timestamp
+The Advanced Installer signing config and the end-to-end verification live in the website repo, since they're tied to that project's `.aip`. See [Advanced Installer project setup.md](https://github.com/ArgoRobots/Argo-Books-website/blob/main/read-me/setup/Advanced%20Installer%20project%20setup.md) in the [ArgoRobots/Argo-Books-website](https://github.com/ArgoRobots/Argo-Books-website) repo - specifically the **Digital Signature** step and the **Verify a build** step.
 
 For the full publishing workflow (Windows, macOS, and Linux), see [Publishing.md](../Publishing.md).
 
