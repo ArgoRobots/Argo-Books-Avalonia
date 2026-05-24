@@ -1,0 +1,350 @@
+using System.Collections.ObjectModel;
+using ArgoBooks.Core;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.BankMatching;
+using ArgoBooks.Core.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace ArgoBooks.ViewModels;
+
+/// <summary>
+/// ViewModel for the Bank Matching page. Imports a bank statement (via the smart importer) and
+/// matches each line against recorded expenses, revenue, invoices and payments.
+/// </summary>
+public partial class BankMatchingPageViewModel : ViewModelBase
+{
+    private readonly BankMatchingService _matcher = new();
+    private readonly BankMatchingOptions _options = new();
+    private BankImportSession? _session;
+
+    public BankMatchingPageViewModel()
+    {
+        LoadLatestSession();
+
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated += (_, e) =>
+            {
+                if (e.PageName == PageNames.BankMatching)
+                    LoadLatestSession();
+            };
+    }
+
+    #region State
+
+    /// <summary>Rows shown in the table.</summary>
+    public ObservableCollection<BankLineRow> Lines { get; } = [];
+
+    /// <summary>Book records that no bank line matched (possibly missing from the statement).</summary>
+    public ObservableCollection<BookRecordRef> UnmatchedBookRecords { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasSession;
+
+    [ObservableProperty]
+    private string _sourceFileName = string.Empty;
+
+    [ObservableProperty]
+    private int _matchedCount;
+
+    [ObservableProperty]
+    private int _suggestedCount;
+
+    [ObservableProperty]
+    private int _unmatchedLineCount;
+
+    [ObservableProperty]
+    private int _unmatchedBookCount;
+
+    [ObservableProperty]
+    private bool _isAiBusy;
+
+    /// <summary>True when there are unmatched lines the AI could be asked to suggest matches for.</summary>
+    public bool CanRunAi => UnmatchedLineCount > 0 && !IsAiBusy;
+
+    /// <summary>True when there are book records the statement did not account for.</summary>
+    public bool HasUnmatchedBook => UnmatchedBookCount > 0;
+
+    partial void OnUnmatchedLineCountChanged(int value) => OnPropertyChanged(nameof(CanRunAi));
+    partial void OnIsAiBusyChanged(bool value) => OnPropertyChanged(nameof(CanRunAi));
+    partial void OnUnmatchedBookCountChanged(int value) => OnPropertyChanged(nameof(HasUnmatchedBook));
+
+    #endregion
+
+    #region Candidate picker (inline modal)
+
+    [ObservableProperty]
+    private bool _isCandidateModalOpen;
+
+    [ObservableProperty]
+    private BankLineRow? _candidateLine;
+
+    [ObservableProperty]
+    private bool _hasCandidates;
+
+    public ObservableCollection<BankMatchCandidate> CandidateOptions { get; } = [];
+
+    #endregion
+
+    #region Loading and matching
+
+    /// <summary>Loads the most recently imported session (if any) and runs matching.</summary>
+    public void LoadLatestSession()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var latest = data?.BankImportSessions.LastOrDefault();
+        if (latest != null)
+            LoadSession(latest);
+        else
+        {
+            _session = null;
+            HasSession = false;
+            Lines.Clear();
+            UnmatchedBookRecords.Clear();
+            ResetCounts();
+        }
+    }
+
+    /// <summary>Loads a specific session, runs deterministic matching, and rebuilds the view.</summary>
+    public void LoadSession(BankImportSession session)
+    {
+        _session = session;
+        SourceFileName = session.SourceFileName;
+        HasSession = true;
+        RunMatchingAndRebuild();
+    }
+
+    private void RunMatchingAndRebuild()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (_session == null || data == null) return;
+
+        var result = _matcher.MatchDeterministic(_session.Lines, data, _options);
+        _candidatesByLineId = result.CandidatesByLineId;
+
+        Lines.Clear();
+        foreach (var line in result.Lines)
+            Lines.Add(new BankLineRow(line, ResolveTopCandidate(line)));
+
+        UnmatchedBookRecords.Clear();
+        foreach (var r in result.UnmatchedBookRecords)
+            UnmatchedBookRecords.Add(r);
+
+        MatchedCount = result.Lines.Count(l => l.MatchStatus == BankLineMatchStatus.Matched);
+        SuggestedCount = result.SuggestedCount;
+        UnmatchedLineCount = result.UnmatchedLineCount;
+        UnmatchedBookCount = result.UnmatchedBookRecords.Count;
+    }
+
+    private Dictionary<string, List<BankMatchCandidate>> _candidatesByLineId = [];
+
+    private BankMatchCandidate? ResolveTopCandidate(Core.Models.BankMatching.BankStatementLine line) =>
+        _candidatesByLineId.TryGetValue(line.Id, out var list) ? list.FirstOrDefault() : null;
+
+    private void ResetCounts()
+    {
+        MatchedCount = SuggestedCount = UnmatchedLineCount = UnmatchedBookCount = 0;
+    }
+
+    #endregion
+
+    #region Commands
+
+    /// <summary>Asks the host to open a file picker and import a bank statement.</summary>
+    [RelayCommand]
+    private void ImportStatement() => ImportRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>Asks the host to run AI suggestions over the remaining unmatched lines.</summary>
+    [RelayCommand]
+    private void RunAiSuggestions()
+    {
+        if (CanRunAi)
+            AiSuggestionsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Accepts the top suggestion for a line.</summary>
+    [RelayCommand]
+    private void AcceptSuggestion(BankLineRow? row)
+    {
+        if (row?.TopCandidate == null) return;
+        ConfirmCandidate(row, row.TopCandidate);
+    }
+
+    /// <summary>Rejects all suggestions for a line, leaving it unmatched.</summary>
+    [RelayCommand]
+    private void RejectSuggestion(BankLineRow? row)
+    {
+        if (row == null) return;
+        _matcher.RejectMatch(row.Line);
+        _candidatesByLineId.Remove(row.Line.Id);
+        row.Refresh(null);
+        RecomputeCounts();
+    }
+
+    /// <summary>Marks a line as ignored (e.g., internal transfer).</summary>
+    [RelayCommand]
+    private void IgnoreLine(BankLineRow? row)
+    {
+        if (row == null) return;
+        row.Line.MatchStatus = BankLineMatchStatus.Ignored;
+        _candidatesByLineId.Remove(row.Line.Id);
+        row.Refresh(null);
+        App.CompanyManager?.CompanyData?.MarkAsModified();
+        RecomputeCounts();
+    }
+
+    /// <summary>Unlinks a confirmed match, clearing the flag on the book record.</summary>
+    [RelayCommand]
+    private void UnlinkMatch(BankLineRow? row)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (row == null || data == null) return;
+        _matcher.UnlinkMatch(row.Line, data);
+        row.Refresh(null);
+        RecomputeCounts();
+    }
+
+    /// <summary>Opens the picker so the user can choose among candidates or pick manually.</summary>
+    [RelayCommand]
+    private void OpenCandidatePicker(BankLineRow? row)
+    {
+        if (row == null) return;
+        CandidateLine = row;
+        CandidateOptions.Clear();
+        if (_candidatesByLineId.TryGetValue(row.Line.Id, out var list))
+            foreach (var c in list)
+                CandidateOptions.Add(c);
+        HasCandidates = CandidateOptions.Count > 0;
+        IsCandidateModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseCandidatePicker() => IsCandidateModalOpen = false;
+
+    /// <summary>Confirms a specific candidate as the match for the picker's line.</summary>
+    [RelayCommand]
+    private void ChooseCandidate(BankMatchCandidate? candidate)
+    {
+        if (CandidateLine == null || candidate == null) return;
+        ConfirmCandidate(CandidateLine, candidate);
+        IsCandidateModalOpen = false;
+    }
+
+    private void ConfirmCandidate(BankLineRow row, BankMatchCandidate candidate)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+        _matcher.ConfirmMatch(row.Line, candidate, data);
+        _candidatesByLineId.Remove(row.Line.Id);
+        row.Refresh(candidate);
+        RecomputeCounts();
+    }
+
+    private void RecomputeCounts()
+    {
+        MatchedCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Matched);
+        SuggestedCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Suggested);
+        UnmatchedLineCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Unmatched);
+    }
+
+    /// <summary>Applies AI-produced suggestions to the matching lines (never auto-confirmed).</summary>
+    public void ApplyAiSuggestions(IReadOnlyDictionary<string, List<BankMatchCandidate>> suggestions)
+    {
+        foreach (var (lineId, candidates) in suggestions)
+        {
+            if (candidates.Count == 0) continue;
+            _candidatesByLineId[lineId] = candidates;
+            var row = Lines.FirstOrDefault(r => r.Line.Id == lineId);
+            if (row != null && row.Line.MatchStatus == BankLineMatchStatus.Unmatched)
+            {
+                row.Line.MatchStatus = BankLineMatchStatus.Suggested;
+                row.Refresh(null, candidates.First());
+            }
+        }
+        RecomputeCounts();
+    }
+
+    /// <summary>The lines still unmatched after deterministic matching (for the AI step).</summary>
+    public IReadOnlyList<Core.Models.BankMatching.BankStatementLine> GetUnmatchedLines() =>
+        Lines.Where(r => r.Line.MatchStatus == BankLineMatchStatus.Unmatched).Select(r => r.Line).ToList();
+
+    public BankMatchingOptions Options => _options;
+
+    #endregion
+
+    #region Events
+
+    /// <summary>Raised when the user clicks Import statement.</summary>
+    public event EventHandler? ImportRequested;
+
+    /// <summary>Raised when the user clicks Run AI suggestions.</summary>
+    public event EventHandler? AiSuggestionsRequested;
+
+    #endregion
+}
+
+/// <summary>Display wrapper for a bank statement line in the table.</summary>
+public partial class BankLineRow : ObservableObject
+{
+    public Core.Models.BankMatching.BankStatementLine Line { get; }
+
+    public BankLineRow(Core.Models.BankMatching.BankStatementLine line, BankMatchCandidate? topCandidate)
+    {
+        Line = line;
+        TopCandidate = topCandidate;
+        Refresh(topCandidate);
+    }
+
+    [ObservableProperty]
+    private BankMatchCandidate? _topCandidate;
+
+    [ObservableProperty]
+    private string _matchedDisplay = string.Empty;
+
+    public string DateDisplay => Line.Date == DateTime.MinValue ? "-" : Line.Date.ToString("MMM dd, yyyy");
+    public string Description => string.IsNullOrWhiteSpace(Line.Description) ? "-" : Line.Description;
+    public string AmountDisplay => Line.Amount.ToString("C2");
+    public string AmountColor => Line.Amount < 0 ? AppColors.ExpenseRed : AppColors.Success;
+
+    public string StatusDisplay => Line.MatchStatus switch
+    {
+        BankLineMatchStatus.Matched => "Matched",
+        BankLineMatchStatus.Suggested => "Suggested",
+        BankLineMatchStatus.Ignored => "Ignored",
+        _ => "Unmatched"
+    };
+
+    public string StatusColor => Line.MatchStatus switch
+    {
+        BankLineMatchStatus.Matched => AppColors.Success,
+        BankLineMatchStatus.Suggested => AppColors.Warning,
+        BankLineMatchStatus.Ignored => AppColors.GrayMedium,
+        _ => AppColors.ExpenseRed
+    };
+
+    public bool IsMatched => Line.MatchStatus == BankLineMatchStatus.Matched;
+    public bool IsSuggested => Line.MatchStatus == BankLineMatchStatus.Suggested;
+    public bool IsUnmatched => Line.MatchStatus == BankLineMatchStatus.Unmatched;
+
+    /// <summary>Recomputes display properties after the line's status changes.</summary>
+    public void Refresh(BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
+    {
+        if (confirmed != null) TopCandidate = confirmed;
+        else if (suggested != null) TopCandidate = suggested;
+
+        MatchedDisplay = Line.MatchStatus switch
+        {
+            BankLineMatchStatus.Matched => TopCandidate?.RecordDescription is { Length: > 0 } d ? d : "Matched record",
+            BankLineMatchStatus.Suggested => TopCandidate != null
+                ? $"{TopCandidate.RecordDescription} ({TopCandidate.Confidence:P0})"
+                : "-",
+            _ => "-"
+        };
+
+        OnPropertyChanged(nameof(StatusDisplay));
+        OnPropertyChanged(nameof(StatusColor));
+        OnPropertyChanged(nameof(IsMatched));
+        OnPropertyChanged(nameof(IsSuggested));
+        OnPropertyChanged(nameof(IsUnmatched));
+    }
+}

@@ -130,6 +130,29 @@ public abstract class Transaction
     [JsonPropertyName("updatedAt")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    #region Bank Matching
+
+    /// <summary>
+    /// Whether this transaction has been matched to a line on an imported bank statement.
+    /// Defaults to false for backward compatibility with existing files.
+    /// </summary>
+    [JsonPropertyName("bankMatched")]
+    public bool BankMatched { get; set; }
+
+    /// <summary>
+    /// When this transaction was matched to a bank statement line, if matched.
+    /// </summary>
+    [JsonPropertyName("bankMatchedDate")]
+    public DateTime? BankMatchedDate { get; set; }
+
+    /// <summary>
+    /// Id of the matched bank statement line, if matched.
+    /// </summary>
+    [JsonPropertyName("bankMatchedLineId")]
+    public string? BankMatchedLineId { get; set; }
+
+    #endregion
+
     #region Currency Support
 
     /// <summary>

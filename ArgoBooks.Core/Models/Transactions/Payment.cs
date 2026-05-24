@@ -153,4 +153,27 @@ public class Payment
     public string? RefundReason { get; set; }
 
     #endregion
+
+    #region Bank Matching
+
+    /// <summary>
+    /// Whether this payment has been matched to a line on an imported bank statement.
+    /// Defaults to false for backward compatibility with existing files.
+    /// </summary>
+    [JsonPropertyName("bankMatched")]
+    public bool BankMatched { get; set; }
+
+    /// <summary>
+    /// When this payment was matched to a bank statement line, if matched.
+    /// </summary>
+    [JsonPropertyName("bankMatchedDate")]
+    public DateTime? BankMatchedDate { get; set; }
+
+    /// <summary>
+    /// Id of the matched bank statement line, if matched.
+    /// </summary>
+    [JsonPropertyName("bankMatchedLineId")]
+    public string? BankMatchedLineId { get; set; }
+
+    #endregion
 }

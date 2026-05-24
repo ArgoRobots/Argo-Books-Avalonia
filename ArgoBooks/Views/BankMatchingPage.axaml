@@ -1,0 +1,249 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:bm="using:ArgoBooks.Core.Models.BankMatching"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.BankMatchingPage"
+             x:DataType="vm:BankMatchingPageViewModel">
+
+    <Design.DataContext>
+        <vm:BankMatchingPageViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- Empty state: no statement imported yet -->
+        <StackPanel IsVisible="{Binding !HasSession}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Spacing="16" MaxWidth="460">
+            <PathIcon Data="{x:Static icons:Icons.Payments}" Width="48" Height="48"
+                      Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
+            <TextBlock Text="{loc:Loc 'Match your books against your bank'}"
+                       FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
+            <TextBlock Text="{loc:Loc 'Import a bank statement (CSV or Excel) and we will match each line to your recorded expenses, revenue, invoices and payments, so you can catch anything missing or duplicated.'}"
+                       TextWrapping="Wrap" TextAlignment="Center"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <Button Classes="primary-button" HorizontalAlignment="Center"
+                    Command="{Binding ImportStatementCommand}"
+                    Content="{loc:Loc 'Import bank statement'}" />
+        </StackPanel>
+
+        <!-- Loaded session -->
+        <Grid IsVisible="{Binding HasSession}" RowDefinitions="Auto,Auto,*,Auto" Margin="24">
+
+            <!-- Top bar -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="{loc:Loc 'Bank Matching'}" FontSize="20" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding SourceFileName}" FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Button Classes="secondary-button"
+                            IsEnabled="{Binding CanRunAi}"
+                            Command="{Binding RunAiSuggestionsCommand}"
+                            Content="{loc:Loc 'Run AI suggestions'}" />
+                    <Button Classes="primary-button"
+                            Command="{Binding ImportStatementCommand}"
+                            Content="{loc:Loc 'Import statement'}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Summary cards -->
+            <controls:StatCardsRow Grid.Row="1" Margin="0,0,0,20">
+                <controls:StatCard Label="{loc:Loc 'Matched'}" Value="{Binding MatchedCount}"
+                                   Icon="{x:Static icons:Icons.Payments}" IconColor="Success" />
+                <controls:StatCard Label="{loc:Loc 'Suggested'}" Value="{Binding SuggestedCount}"
+                                   Icon="{x:Static icons:Icons.Payments}" IconColor="Warning" />
+                <controls:StatCard Label="{loc:Loc 'Unmatched bank lines'}" Value="{Binding UnmatchedLineCount}"
+                                   Icon="{x:Static icons:Icons.Payments}" IconColor="Danger" />
+                <controls:StatCard Label="{loc:Loc 'Unmatched book records'}" Value="{Binding UnmatchedBookCount}"
+                                   Icon="{x:Static icons:Icons.Payments}" IconColor="Primary" />
+            </controls:StatCardsRow>
+
+            <!-- Bank lines table -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="120,*,120,110,*,170">
+                            <TextBlock Grid.Column="0" Text="{loc:Loc Date}" Classes="th" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc Description}" Classes="th" />
+                            <TextBlock Grid.Column="2" Text="{loc:Loc Amount}" Classes="th" />
+                            <TextBlock Grid.Column="3" Text="{loc:Loc Status}" Classes="th" />
+                            <TextBlock Grid.Column="4" Text="{loc:Loc 'Matched book entry'}" Classes="th" />
+                            <TextBlock Grid.Column="5" Text="{loc:Loc Actions}" Classes="th" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Rows -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Lines}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:BankLineRow">
+                                    <Border Padding="20,0" MinHeight="52"
+                                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                        <Grid ColumnDefinitions="120,*,120,110,*,170">
+                                            <TextBlock Grid.Column="0" Text="{Binding DateDisplay}" VerticalAlignment="Center"
+                                                       FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Description}" VerticalAlignment="Center"
+                                                       FontSize="13" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" />
+                                            <TextBlock Grid.Column="2" Text="{Binding AmountDisplay}" VerticalAlignment="Center"
+                                                       FontSize="13" FontWeight="SemiBold" Foreground="{Binding AmountColor}" />
+                                            <Border Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                    CornerRadius="10" Padding="10,3">
+                                                <TextBlock Text="{Binding StatusDisplay}" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{Binding StatusColor}" />
+                                            </Border>
+                                            <TextBlock Grid.Column="4" Text="{Binding MatchedDisplay}" VerticalAlignment="Center"
+                                                       FontSize="13" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,12,0" />
+                                            <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4"
+                                                        VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                <!-- Suggested: accept / choose / ignore -->
+                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Accept match'}"
+                                                        IsVisible="{Binding IsSuggested}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).AcceptSuggestionCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Check}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Choose match'}"
+                                                        IsVisible="{Binding !IsMatched}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).OpenCandidatePickerCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc 'Ignore line'}"
+                                                        IsVisible="{Binding !IsMatched}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).IgnoreLineCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
+                                                </Button>
+                                                <!-- Matched: unlink -->
+                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Unlink match'}"
+                                                        IsVisible="{Binding IsMatched}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).UnlinkMatchCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Unmatched book records (possibly missing from the statement) -->
+            <Expander Grid.Row="3" Margin="0,16,0,0"
+                      IsVisible="{Binding HasUnmatchedBook}"
+                      Header="{loc:Loc 'Book records not found on the statement'}">
+                <ItemsControl ItemsSource="{Binding UnmatchedBookRecords}" Margin="0,8,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="bm:BookRecordRef">
+                            <Grid ColumnDefinitions="120,*,140,Auto" Margin="0,2">
+                                <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='MMM dd, yyyy'}"
+                                           FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Description}" FontSize="13"
+                                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat=C2}" FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Border Grid.Column="3" IsVisible="{Binding IsPossibleDuplicate}"
+                                        CornerRadius="8" Padding="8,2" Margin="8,0,0,0">
+                                    <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
+                                               Foreground="{DynamicResource WarningBrush}" />
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Expander>
+        </Grid>
+
+        <!-- Candidate picker overlay -->
+        <controls:ModalOverlay IsOpen="{Binding IsCandidateModalOpen}"
+                               ClosingCommand="{Binding CloseCandidatePickerCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12"
+                        Width="560" MaxHeight="600"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Choose matching book entry'}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCandidatePickerCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="24" Spacing="8">
+                                <TextBlock IsVisible="{Binding !HasCandidates}"
+                                           Text="{loc:Loc 'No candidate matches were found for this line.'}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                <ItemsControl ItemsSource="{Binding CandidateOptions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="bm:BankMatchCandidate">
+                                            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                    Classes="secondary-button" Margin="0,0,0,4"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).ChooseCandidateCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                        <TextBlock Text="{Binding RecordDescription}" FontWeight="SemiBold"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Text="{Binding RecordType}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                                                        <TextBlock Text="{Binding RecordAmount, StringFormat=C2}" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding Confidence, StringFormat='{}{0:P0} match'}"
+                                                                   FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="2" Padding="24" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Button Classes="secondary-button" HorizontalAlignment="Right"
+                                    Command="{Binding CloseCandidatePickerCommand}"
+                                    Content="{loc:Loc Cancel}" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.th">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+
+</UserControl>

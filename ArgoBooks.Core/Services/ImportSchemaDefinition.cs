@@ -375,6 +375,17 @@ public static class ImportSchemaDefinition
                 new("Notes", "string", "Additional notes", JsonName: "notes"),
                 new("Insurance Claim", "enum:Yes,No", "Whether an insurance claim was filed", JsonName: "insuranceClaim"),
             ],
+
+            [SpreadsheetSheetType.BankStatement] =
+            [
+                new("Date", "datetime", "Date the bank posted the transaction", Required: true, JsonName: "date"),
+                new("Description", "string", "Transaction description / memo from the bank", Required: true, JsonName: "description"),
+                new("Amount", "decimal", "Signed amount: negative for money out, positive for money in. Map a single signed amount column here when present", JsonName: "amount"),
+                new("Debit", "decimal", "Money out of the account (use when the statement has separate debit/credit columns)", JsonName: "debit"),
+                new("Credit", "decimal", "Money into the account (use when the statement has separate debit/credit columns)", JsonName: "credit"),
+                new("Balance", "decimal", "Running account balance after the transaction", JsonName: "balance"),
+                new("Reference", "string", "Bank reference, transaction id, or check number", JsonName: "rawReference"),
+            ],
         };
     }
 }

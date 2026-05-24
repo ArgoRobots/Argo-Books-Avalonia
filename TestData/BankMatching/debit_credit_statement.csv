@@ -1,0 +1,7 @@
+Date,Description,Debit,Credit,Balance,Reference
+2025-02-03,Office Depot supplies,142.10,,8500.00,POS-7781
+2025-02-06,Client deposit - Maple Cafe,,980.00,9480.00,ACH-22014
+2025-02-09,Utility payment - Hydro,210.45,,9269.55,CHK-2099
+2025-02-12,Client deposit - Riverside Inn,,1575.00,10844.55,ACH-22050
+2025-02-15,Card payment - fuel,75.20,,10769.35,CC-1190
+2025-02-20,Bank service charge,15.00,,10754.35,

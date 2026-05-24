@@ -1,0 +1,440 @@
+using System.Text;
+using System.Text.Json;
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.BankMatching;
+using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Models.Transactions;
+
+namespace ArgoBooks.Core.Services;
+
+/// <summary>
+/// Matches imported bank statement lines against recorded book entries (expenses, revenue,
+/// invoices, payments). Deterministic matching runs locally and for free; an optional hybrid
+/// AI step suggests matches for leftover unmatched lines.
+/// </summary>
+public class BankMatchingService(IGeminiService? geminiService = null, IErrorLogger? errorLogger = null)
+{
+    // Score weights. amount(0.6) + date(0.3) + description(0.1) = 1.0 maximum.
+    private const double AmountExactScore = 0.6;
+    private const double AmountToleranceScore = 0.4;
+    private const double DateMaxScore = 0.3;
+    private const double DescMaxScore = 0.1;
+
+    private static readonly HashSet<string> NoiseTokens =
+    [
+        "pos", "ach", "debit", "credit", "card", "purchase", "payment", "pmt", "ref",
+        "reference", "transaction", "txn", "visa", "mastercard", "amex", "eft", "online",
+        "pre", "auth", "authorized", "withdrawal", "deposit", "transfer", "the", "and", "inc", "llc", "ltd"
+    ];
+
+    #region Deterministic matching
+
+    /// <summary>
+    /// Runs deterministic matching over the lines, auto-confirming unambiguous high-confidence
+    /// matches and surfacing the rest as suggestions. Mutates the matched book records' flags.
+    /// </summary>
+    public BankMatchingResult MatchDeterministic(IReadOnlyList<BankStatementLine> lines, CompanyData data, BankMatchingOptions options)
+    {
+        var result = new BankMatchingResult { Lines = lines.ToList() };
+
+        // All in-scope book records, aligned to bank sign convention, that aren't already matched.
+        var records = BuildRecordRefs(data, options.Scope).Where(r => !IsRecordMatched(data, r)).ToList();
+
+        foreach (var line in result.Lines)
+        {
+            if (line.MatchStatus is BankLineMatchStatus.Matched or BankLineMatchStatus.Ignored)
+                continue;
+
+            var candidates = new List<BankMatchCandidate>();
+            foreach (var record in records)
+            {
+                // A record auto-matched to an earlier line is removed from the pool below,
+                // so anything still here is available.
+                var amountDiff = Math.Abs(line.Amount - record.Amount);
+                double amountScore;
+                if (amountDiff == 0m) amountScore = AmountExactScore;
+                else if (amountDiff <= options.AmountTolerance) amountScore = AmountToleranceScore;
+                else continue; // amount must match (exactly or within tolerance)
+
+                var daysApart = Math.Abs((line.Date.Date - record.Date.Date).TotalDays);
+                if (daysApart > options.DateWindowDays && amountScore < AmountExactScore)
+                    continue; // outside window and not an exact-amount hit
+                var dateScore = daysApart <= options.DateWindowDays
+                    ? DateMaxScore * (1 - daysApart / Math.Max(1, options.DateWindowDays))
+                    : 0;
+
+                var descScore = DescMaxScore * Similarity(NormalizeDescription(line.Description), NormalizeDescription(record.Description));
+
+                var confidence = amountScore + dateScore + descScore;
+
+                candidates.Add(new BankMatchCandidate
+                {
+                    LineId = line.Id,
+                    RecordType = record.Type,
+                    RecordId = record.Id,
+                    RecordDescription = record.Description,
+                    RecordDate = record.Date,
+                    RecordAmount = record.Amount,
+                    Confidence = Math.Round(confidence, 4),
+                    Reason = DetermineReason(amountScore, daysApart, descScore)
+                });
+            }
+
+            if (candidates.Count == 0)
+            {
+                line.MatchStatus = BankLineMatchStatus.Unmatched;
+                result.UnmatchedLineCount++;
+                continue;
+            }
+
+            // Rank best first; for money-in ties prefer Payment over Invoice to avoid double counting.
+            candidates = candidates
+                .OrderByDescending(c => c.Confidence)
+                .ThenBy(c => RecordTypeRank(c.RecordType, line.Amount))
+                .ToList();
+
+            var best = candidates[0];
+            var gap = candidates.Count > 1 ? best.Confidence - candidates[1].Confidence : 1.0;
+
+            if (best.Confidence >= options.AutoMatchThreshold && gap >= options.AutoMatchAmbiguityGap)
+            {
+                best.IsAutoMatch = true;
+                ConfirmMatch(line, best, data);
+                records.RemoveAll(r => r.Type == best.RecordType && r.Id == best.RecordId);
+                result.AutoMatchedCount++;
+            }
+            else if (best.Confidence >= options.SuggestThreshold)
+            {
+                line.MatchStatus = BankLineMatchStatus.Suggested;
+                result.CandidatesByLineId[line.Id] = candidates.Where(c => c.Confidence >= options.SuggestThreshold).ToList();
+                result.SuggestedCount++;
+            }
+            else
+            {
+                line.MatchStatus = BankLineMatchStatus.Unmatched;
+                result.UnmatchedLineCount++;
+            }
+        }
+
+        // Reverse view: in-scope book records still unmatched (possibly missing from the statement).
+        var stillUnmatched = BuildRecordRefs(data, options.Scope).Where(r => !IsRecordMatched(data, r)).ToList();
+        FlagDuplicates(stillUnmatched, options.DateWindowDays);
+        result.UnmatchedBookRecords = stillUnmatched;
+
+        return result;
+    }
+
+    private static int RecordTypeRank(BookRecordType type, decimal lineAmount)
+    {
+        // For money-in lines, rank Payment ahead of Invoice (payments are the actual cash event).
+        if (lineAmount > 0)
+            return type switch
+            {
+                BookRecordType.Payment => 0,
+                BookRecordType.Revenue => 1,
+                BookRecordType.Invoice => 2,
+                _ => 3
+            };
+        return 0;
+    }
+
+    private static MatchReason DetermineReason(double amountScore, double daysApart, double descScore)
+    {
+        var amountExact = amountScore >= AmountExactScore;
+        if (amountExact && daysApart <= 1) return MatchReason.ExactAmountAndDate;
+        if (amountExact && descScore > 0) return MatchReason.ExactAmountFuzzyDesc;
+        return MatchReason.AmountWithinWindow;
+    }
+
+    private static void FlagDuplicates(List<BookRecordRef> records, int dateWindowDays)
+    {
+        for (int i = 0; i < records.Count; i++)
+        {
+            for (int j = i + 1; j < records.Count; j++)
+            {
+                if (records[i].Amount == records[j].Amount &&
+                    Math.Abs((records[i].Date.Date - records[j].Date.Date).TotalDays) <= dateWindowDays)
+                {
+                    records[i].IsPossibleDuplicate = true;
+                    records[j].IsPossibleDuplicate = true;
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Confirm / reject / unlink
+
+    /// <summary>
+    /// Confirms a candidate as the match for a line, setting the persisted flag on the book record.
+    /// </summary>
+    public void ConfirmMatch(BankStatementLine line, BankMatchCandidate candidate, CompanyData data)
+    {
+        line.MatchStatus = BankLineMatchStatus.Matched;
+        line.MatchedRecordType = candidate.RecordType;
+        line.MatchedRecordId = candidate.RecordId;
+        line.MatchedDate = DateTime.UtcNow;
+        line.MatchConfidence = candidate.Confidence;
+
+        SetRecordMatchState(data, candidate.RecordType, candidate.RecordId, matched: true, line.Id);
+        data.MarkAsModified();
+    }
+
+    /// <summary>Marks a line as unmatched without touching any book record (rejects suggestions).</summary>
+    public void RejectMatch(BankStatementLine line)
+    {
+        line.MatchStatus = BankLineMatchStatus.Unmatched;
+        line.MatchedRecordType = null;
+        line.MatchedRecordId = null;
+        line.MatchedDate = null;
+        line.MatchConfidence = 0;
+    }
+
+    /// <summary>Unlinks a confirmed match, clearing the flag on the previously matched book record.</summary>
+    public void UnlinkMatch(BankStatementLine line, CompanyData data)
+    {
+        if (line.MatchedRecordType is { } type && line.MatchedRecordId is { } id)
+        {
+            SetRecordMatchState(data, type, id, matched: false, null);
+            data.MarkAsModified();
+        }
+        RejectMatch(line);
+    }
+
+    private static void SetRecordMatchState(CompanyData data, BookRecordType type, string id, bool matched, string? lineId)
+    {
+        var date = matched ? (DateTime?)DateTime.UtcNow : null;
+        switch (type)
+        {
+            case BookRecordType.Expense:
+                Apply(data.Expenses.FirstOrDefault(e => e.Id == id));
+                break;
+            case BookRecordType.Revenue:
+                Apply(data.Revenues.FirstOrDefault(r => r.Id == id));
+                break;
+            case BookRecordType.Invoice:
+                ApplyInvoice(data.Invoices.FirstOrDefault(i => i.Id == id));
+                break;
+            case BookRecordType.Payment:
+                ApplyPayment(data.Payments.FirstOrDefault(p => p.Id == id));
+                break;
+        }
+
+        void Apply(Transaction? t)
+        {
+            if (t == null) return;
+            t.BankMatched = matched;
+            t.BankMatchedDate = date;
+            t.BankMatchedLineId = lineId;
+        }
+        void ApplyInvoice(Invoice? inv)
+        {
+            if (inv == null) return;
+            inv.BankMatched = matched;
+            inv.BankMatchedDate = date;
+            inv.BankMatchedLineId = lineId;
+        }
+        void ApplyPayment(Payment? p)
+        {
+            if (p == null) return;
+            p.BankMatched = matched;
+            p.BankMatchedDate = date;
+            p.BankMatchedLineId = lineId;
+        }
+    }
+
+    private static bool IsRecordMatched(CompanyData data, BookRecordRef r) => r.Type switch
+    {
+        BookRecordType.Expense => data.Expenses.FirstOrDefault(e => e.Id == r.Id)?.BankMatched ?? false,
+        BookRecordType.Revenue => data.Revenues.FirstOrDefault(x => x.Id == r.Id)?.BankMatched ?? false,
+        BookRecordType.Invoice => data.Invoices.FirstOrDefault(i => i.Id == r.Id)?.BankMatched ?? false,
+        BookRecordType.Payment => data.Payments.FirstOrDefault(p => p.Id == r.Id)?.BankMatched ?? false,
+        _ => false
+    };
+
+    #endregion
+
+    #region Record extraction
+
+    private static List<BookRecordRef> BuildRecordRefs(CompanyData data, HashSet<BookRecordType> scope)
+    {
+        var refs = new List<BookRecordRef>();
+
+        if (scope.Contains(BookRecordType.Expense))
+            refs.AddRange(data.Expenses.Select(e => new BookRecordRef
+            {
+                Type = BookRecordType.Expense, Id = e.Id, Description = e.Description, Date = e.Date, Amount = -e.Total
+            }));
+
+        if (scope.Contains(BookRecordType.Revenue))
+            refs.AddRange(data.Revenues.Select(r => new BookRecordRef
+            {
+                Type = BookRecordType.Revenue, Id = r.Id, Description = r.Description, Date = r.Date, Amount = r.Total
+            }));
+
+        if (scope.Contains(BookRecordType.Payment))
+            refs.AddRange(data.Payments.Select(p => new BookRecordRef
+            {
+                Type = BookRecordType.Payment,
+                Id = p.Id,
+                Description = string.IsNullOrWhiteSpace(p.Notes) ? p.ReferenceNumber ?? string.Empty : p.Notes,
+                Date = p.Date,
+                Amount = p.Amount // refunds are stored negative => money out
+            }));
+
+        if (scope.Contains(BookRecordType.Invoice))
+            refs.AddRange(data.Invoices.Select(i => new BookRecordRef
+            {
+                Type = BookRecordType.Invoice, Id = i.Id, Description = i.InvoiceNumber, Date = i.IssueDate, Amount = i.Total
+            }));
+
+        return refs;
+    }
+
+    #endregion
+
+    #region Hybrid AI suggestions
+
+    /// <summary>
+    /// Asks the AI to suggest matches for lines that deterministic matching left unmatched.
+    /// Suggestions are never auto-applied. Consumes AI quota; call only on user request.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, List<BankMatchCandidate>>> SuggestWithAiAsync(
+        IReadOnlyList<BankStatementLine> unmatchedLines,
+        CompanyData data,
+        BankMatchingOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        var suggestions = new Dictionary<string, List<BankMatchCandidate>>();
+        if (geminiService is not { IsConfigured: true } || unmatchedLines.Count == 0)
+            return suggestions;
+
+        var records = BuildRecordRefs(data, options.Scope).Where(r => !IsRecordMatched(data, r)).ToList();
+        if (records.Count == 0) return suggestions;
+
+        try
+        {
+            var prompt = BuildAiPrompt(unmatchedLines, records);
+            const string system =
+                "You match bank statement lines to bookkeeping records. " +
+                "Respond ONLY with a JSON array of objects {\"lineId\":string,\"recordId\":string,\"confidence\":number 0..1}. " +
+                "Only include a pairing when the amounts agree and the dates are close. Omit lines you cannot match.";
+
+            var response = await geminiService.SendChatAsync(system, prompt, maxTokens: 2000, temperature: 0.1, cancellationToken);
+            if (string.IsNullOrWhiteSpace(response)) return suggestions;
+
+            var recordsById = records.ToDictionary(r => r.Id);
+            foreach (var pair in ParseAiResponse(response))
+            {
+                if (!recordsById.TryGetValue(pair.RecordId, out var record)) continue;
+                if (!suggestions.TryGetValue(pair.LineId, out var list))
+                    suggestions[pair.LineId] = list = [];
+                list.Add(new BankMatchCandidate
+                {
+                    LineId = pair.LineId,
+                    RecordType = record.Type,
+                    RecordId = record.Id,
+                    RecordDescription = record.Description,
+                    RecordDate = record.Date,
+                    RecordAmount = record.Amount,
+                    Confidence = Math.Clamp(pair.Confidence, 0, 1),
+                    Reason = MatchReason.AiSuggested
+                });
+            }
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            errorLogger?.LogError(ex, ErrorCategory.Import, "AI bank match suggestion failed");
+        }
+
+        return suggestions;
+    }
+
+    private static string BuildAiPrompt(IReadOnlyList<BankStatementLine> lines, List<BookRecordRef> records)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("BANK LINES (unmatched):");
+        foreach (var l in lines)
+            sb.AppendLine($"- id={l.Id} | date={l.Date:yyyy-MM-dd} | amount={l.Amount} | desc=\"{l.Description}\"");
+        sb.AppendLine();
+        sb.AppendLine("BOOK RECORDS (candidates; amount sign: negative=money out, positive=money in):");
+        foreach (var r in records)
+            sb.AppendLine($"- id={r.Id} | type={r.Type} | date={r.Date:yyyy-MM-dd} | amount={r.Amount} | desc=\"{r.Description}\"");
+        return sb.ToString();
+    }
+
+    private readonly record struct AiPair(string LineId, string RecordId, double Confidence);
+
+    private static IEnumerable<AiPair> ParseAiResponse(string response)
+    {
+        var json = ExtractJsonArray(response);
+        if (json == null) yield break;
+
+        JsonElement root;
+        try { root = JsonDocument.Parse(json).RootElement; }
+        catch { yield break; }
+
+        if (root.ValueKind != JsonValueKind.Array) yield break;
+
+        foreach (var el in root.EnumerateArray())
+        {
+            if (el.ValueKind != JsonValueKind.Object) continue;
+            var lineId = el.TryGetProperty("lineId", out var l) ? l.GetString() : null;
+            var recordId = el.TryGetProperty("recordId", out var r) ? r.GetString() : null;
+            double confidence = el.TryGetProperty("confidence", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetDouble() : 0.5;
+            if (!string.IsNullOrEmpty(lineId) && !string.IsNullOrEmpty(recordId))
+                yield return new AiPair(lineId, recordId, confidence);
+        }
+    }
+
+    private static string? ExtractJsonArray(string text)
+    {
+        var start = text.IndexOf('[');
+        var end = text.LastIndexOf(']');
+        return start >= 0 && end > start ? text[start..(end + 1)] : null;
+    }
+
+    #endregion
+
+    #region Text similarity
+
+    /// <summary>
+    /// Normalizes a description for fuzzy comparison: lowercase, strip punctuation and common
+    /// bank/noise tokens and bare numbers, collapse whitespace.
+    /// </summary>
+    internal static string NormalizeDescription(string? description)
+    {
+        if (string.IsNullOrWhiteSpace(description)) return string.Empty;
+
+        var sb = new StringBuilder(description.Length);
+        foreach (var ch in description.ToLowerInvariant())
+            sb.Append(char.IsLetterOrDigit(ch) ? ch : ' ');
+
+        var tokens = sb.ToString()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(t => !NoiseTokens.Contains(t))
+            .Where(t => !t.All(char.IsDigit)); // drop bare numbers (card trailers, refs)
+
+        return string.Join(' ', tokens);
+    }
+
+    /// <summary>
+    /// Token-set (Jaccard) similarity of two normalized strings, in the range 0..1.
+    /// </summary>
+    internal static double Similarity(string a, string b)
+    {
+        if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b)) return 0;
+        var setA = a.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+        var setB = b.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+        if (setA.Count == 0 || setB.Count == 0) return 0;
+
+        var intersection = setA.Count(setB.Contains);
+        var union = setA.Count + setB.Count - intersection;
+        return union == 0 ? 0 : (double)intersection / union;
+    }
+
+    #endregion
+}
