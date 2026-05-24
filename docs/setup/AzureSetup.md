@@ -206,40 +206,9 @@ Create the file at `packaging/windows/trusted-signing-metadata.json` in this rep
 
 None of these values are secrets. The real authentication happens via your `az login` token at sign time.
 
-### Step 14: Configure Advanced Installer
+### Step 14: Configure Advanced Installer and verify the signed build
 
-Advanced Installer Professional does not have a native Azure Trusted Signing dropdown. That feature is gated to the Architect and Enterprise editions. The workaround is to keep `Sign Tool: Custom` and call `signtool.exe` with the Trusted Signing dlib that Step 12 installed. This gives you exactly the same signed result.
-
-1. Open the Argo Books `.aip` project in Advanced Installer
-2. Navigate to the **Digital Signature** page > **Settings** tab
-3. Check **Enable signing**
-4. Set the fields:
-   - **Sign Tool:** `Custom`
-   - **Path:** `<AI_SIGNTOOL_FOLDER>signtool.exe`
-   - **Command line:**
-     ```
-     sign /fd SHA256 /tr "http://timestamp.acs.microsoft.com" /td SHA256 /dlib "C:\Users\<your-user>\AppData\Local\Microsoft\MicrosoftTrustedSigningClientTools\Azure.CodeSigning.Dlib.dll" /dmdf "<path-to-repo>\packaging\windows\trusted-signing-metadata.json" /d "[|ProductName]"
-     ```
-     Substitute the two placeholders with the actual paths on your machine:
-     - `<your-user>` is your Windows username. To find it, open PowerShell and run `echo $env:USERNAME`, or just look at the folder name under `C:\Users\`.
-     - `<path-to-repo>` is wherever you cloned this repo. For example, if the repo is at `C:\Users\evand\Desktop\Argo-Books-Avalonia`, the full `/dmdf` path becomes `C:\Users\evand\Desktop\Argo-Books-Avalonia\packaging\windows\trusted-signing-metadata.json`.
-
-     A fully-resolved example for a user named `evand` with the repo on the Desktop:
-     ```
-     sign /fd SHA256 /tr "http://timestamp.acs.microsoft.com" /td SHA256 /dlib "C:\Users\evand\AppData\Local\Microsoft\MicrosoftTrustedSigningClientTools\Azure.CodeSigning.Dlib.dll" /dmdf "C:\Users\evand\Desktop\Argo-Books-Avalonia\packaging\windows\trusted-signing-metadata.json" /d "[|ProductName]"
-     ```
-5. Save the project
-
-The metadata JSON lives at `packaging/windows/trusted-signing-metadata.json` in this repo and contains the endpoint URI, account name, and certificate profile name. None of those values are secret; the real authentication happens via your `az login` token at sign time. If you ever change the Azure account, region, or certificate profile name, edit that JSON instead of the Advanced Installer command line.
-
-### Step 15: Verify
-
-Now actually build a signed installer to confirm everything works end to end.
-
-1. In JetBrains Rider, set the configuration to **Release** and the target to **Desktop (Windows)**, then build. This produces the binaries that Advanced Installer will package.
-2. In Advanced Installer, build the installer (this is where the signing happens via the command line you configured in Step 14).
-3. Right-click the produced `.exe` > **Properties** > **Digital Signatures** tab
-4. You should see a signature with the legal name from your billing profile and a timestamp
+See `argo-books-website/read-me/setup/Advanced Installer project setup.md` for the Advanced Installer signing config (the **Digital Signature** step) and the end-to-end verification (the **Verify a build** step).
 
 For the full publishing workflow (Windows, macOS, and Linux), see [Publishing.md](../Publishing.md).
 
