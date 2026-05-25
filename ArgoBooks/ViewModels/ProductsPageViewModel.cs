@@ -128,7 +128,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     {
         OnPropertyChanged(nameof(IsExpensesTabSelected));
         OnPropertyChanged(nameof(IsRevenueTabSelected));
-        OnPropertyChanged(nameof(RemainingProductsText));
         OnPropertyChanged(nameof(CanAddProduct));
         ColumnWidths.SetTabMode(IsExpensesTabSelected);
         FilterProducts();
@@ -173,39 +172,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// Products are always unlimited — no free-tier limit.
     /// </summary>
     public bool CanAddProduct => true;
-
-    /// <summary>
-    /// No remaining-products text needed — products are unlimited.
-    /// </summary>
-    public string RemainingProductsText => string.Empty;
-
-    /// <summary>
-    /// Never show the upgrade button for products — they are unlimited.
-    /// </summary>
-    public bool ShowUpgradeButton => false;
-
-    /// <summary>
-    /// Event raised when the upgrade button is clicked.
-    /// </summary>
-    public event EventHandler? UpgradeRequested;
-
-    /// <summary>
-    /// No remaining products label needed — products are unlimited.
-    /// </summary>
-    public bool ShowRemainingProducts => false;
-
-    partial void OnHasPremiumChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanAddProduct));
-        OnPropertyChanged(nameof(ShowRemainingProducts));
-        OnPropertyChanged(nameof(ShowUpgradeButton));
-    }
-
-    [RelayCommand]
-    private void Upgrade()
-    {
-        UpgradeRequested?.Invoke(this, EventArgs.Empty);
-    }
 
     #endregion
 
