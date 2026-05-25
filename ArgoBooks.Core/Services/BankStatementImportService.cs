@@ -7,15 +7,14 @@ using ClosedXML.Excel;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Parses a bank statement spreadsheet/CSV into a list of <see cref="BankStatementLine"/> using
-/// the column mappings produced by <see cref="SpreadsheetAnalysisService"/>. This is the "smart
-/// importer" reused for bank matching: it never commits anything to CompanyData; it only produces
-/// reference data for the matching engine.
+/// Parses a bank statement spreadsheet/CSV into a list of <see cref="BankStatementLine"/>.
+/// Local header heuristics handle the common case; when they cannot find the essential columns,
+/// the caller falls back to the AI-mapped overloads (which apply the smart importer's column
+/// mappings first). Never commits anything to CompanyData; produces reference data only.
 /// </summary>
 public class BankStatementImportService(IErrorLogger? errorLogger = null)
 {
-    // Target column names, matching the BankStatement schema in ImportSchemaDefinition.
-    // ApplyColumnMapping renames the source headers to these before we read them.
+    // Canonical column names the row reader looks up after the headers are normalised.
     private const string ColDate = "Date";
     private const string ColDescription = "Description";
     private const string ColAmount = "Amount";
@@ -24,43 +23,74 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
     private const string ColBalance = "Balance";
     private const string ColReference = "Reference";
 
+    #region Local (header-heuristics) parsing
+
+    /// <summary>Parses an Excel bank statement using local header detection.</summary>
+    public Task<List<BankStatementLine>> ParseExcelAsync(string filePath, CancellationToken cancellationToken = default) =>
+        Task.Run(() => ParseExcelCore(filePath, MapBankHeaders, requireEssentials: true, cancellationToken), cancellationToken);
+
+    /// <summary>Parses a CSV bank statement using local header detection (tolerates preamble rows).</summary>
+    public async Task<List<BankStatementLine>> ParseCsvAsync(string filePath, CancellationToken cancellationToken = default) =>
+        await ParseCsvCore(filePath, detectHeaderRow: true, MapBankHeaders, requireEssentials: true, cancellationToken);
+
+    #endregion
+
+    #region AI-mapped parsing (backup)
+
     /// <summary>
-    /// Parses an Excel bank statement. The sheet to read is selected from <paramref name="analysis"/>.
+    /// Parses an Excel bank statement using the smart importer's AI column mappings, then normalises
+    /// to canonical bank columns. Used as a backup when local detection finds no usable columns.
     /// </summary>
-    public Task<List<BankStatementLine>> ParseExcelAsync(string filePath, SheetAnalysis analysis, CancellationToken cancellationToken = default)
-    {
-        return Task.Run(() =>
+    public Task<List<BankStatementLine>> ParseExcelWithAnalysisAsync(string filePath, SheetAnalysis analysis, CancellationToken cancellationToken = default) =>
+        Task.Run(() => ParseExcelCore(filePath, headers =>
         {
-            try
-            {
-                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                using var workbook = new XLWorkbook(fileStream);
+            SpreadsheetImportService.ApplyColumnMapping(headers, analysis);
+            MapBankHeaders(headers);
+        }, requireEssentials: false, cancellationToken), cancellationToken);
 
-                var worksheet = workbook.Worksheets.FirstOrDefault(w => w.Name == analysis.SourceSheetName)
-                                ?? workbook.Worksheets.FirstOrDefault();
-                if (worksheet == null) return new List<BankStatementLine>();
+    /// <summary>
+    /// Parses a CSV bank statement using the smart importer's AI column mappings, then normalises to
+    /// canonical bank columns. The analysis was produced against the first row, so the first row is
+    /// treated as the header here.
+    /// </summary>
+    public async Task<List<BankStatementLine>> ParseCsvWithAnalysisAsync(string filePath, SheetAnalysis analysis, CancellationToken cancellationToken = default) =>
+        await ParseCsvCore(filePath, detectHeaderRow: false, headers =>
+        {
+            SpreadsheetImportService.ApplyColumnMapping(headers, analysis);
+            MapBankHeaders(headers);
+        }, requireEssentials: false, cancellationToken);
 
-                var headers = SpreadsheetRowReader.GetHeaders(worksheet);
-                if (headers.Count == 0) return new List<BankStatementLine>();
+    #endregion
 
-                var rows = SpreadsheetRowReader.GetDataRows(worksheet, headers.Count);
-                SpreadsheetImportService.ApplyColumnMapping(headers, analysis);
+    private List<BankStatementLine> ParseExcelCore(string filePath, Action<List<string>> normalize, bool requireEssentials, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var workbook = new XLWorkbook(fileStream);
 
-                return BuildLines(headers, rows, cancellationToken);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception ex)
-            {
-                errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to parse bank statement: {Path.GetFileName(filePath)}");
-                return new List<BankStatementLine>();
-            }
-        }, cancellationToken);
+            var worksheet = workbook.Worksheets.FirstOrDefault(w => SpreadsheetRowReader.GetHeaders(w).Count > 0)
+                            ?? workbook.Worksheets.FirstOrDefault();
+            if (worksheet == null) return [];
+
+            var headers = SpreadsheetRowReader.GetHeaders(worksheet);
+            if (headers.Count == 0) return [];
+
+            var rows = SpreadsheetRowReader.GetDataRows(worksheet, headers.Count);
+            normalize(headers);
+            if (requireEssentials && !HasEssentialColumns(headers)) return [];
+
+            return BuildLines(headers, rows, cancellationToken);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to parse bank statement: {Path.GetFileName(filePath)}");
+            return [];
+        }
     }
 
-    /// <summary>
-    /// Parses a CSV bank statement.
-    /// </summary>
-    public async Task<List<BankStatementLine>> ParseCsvAsync(string filePath, SheetAnalysis analysis, CancellationToken cancellationToken = default)
+    private async Task<List<BankStatementLine>> ParseCsvCore(string filePath, bool detectHeaderRow, Action<List<string>> normalize, bool requireEssentials, CancellationToken cancellationToken)
     {
         try
         {
@@ -68,18 +98,18 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
             if (lines.Length < 2) return [];
 
             var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
-            var headers = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
-            if (headers.Count == 0) return [];
+            var parsed = lines
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Select(l => SpreadsheetAnalysisService.ParseCsvLine(l, delimiter))
+                .ToList();
+            if (parsed.Count < 2) return [];
 
-            var rows = new List<List<object?>>();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                var cells = SpreadsheetAnalysisService.ParseCsvLine(lines[i], delimiter);
-                rows.Add(cells.Cast<object?>().ToList());
-            }
+            var headerIndex = detectHeaderRow ? FindHeaderRowIndex(parsed) : 0;
+            var headers = parsed[headerIndex];
+            normalize(headers);
+            if (requireEssentials && !HasEssentialColumns(headers)) return [];
 
-            SpreadsheetImportService.ApplyColumnMapping(headers, analysis);
+            var rows = parsed.Skip(headerIndex + 1).Select(r => r.Cast<object?>().ToList()).ToList();
             return BuildLines(headers, rows, cancellationToken);
         }
         catch (OperationCanceledException) { throw; }
@@ -88,6 +118,61 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
             errorLogger?.LogError(ex, ErrorCategory.Import, $"Failed to parse bank statement CSV: {Path.GetFileName(filePath)}");
             return [];
         }
+    }
+
+    /// <summary>A statement is usable only if it has a date and at least one money column.</summary>
+    private static bool HasEssentialColumns(List<string> headers) =>
+        headers.Contains(ColDate) && (headers.Contains(ColAmount) || headers.Contains(ColDebit) || headers.Contains(ColCredit));
+
+    /// <summary>
+    /// Finds the row most likely to be the header by scanning the first rows for one that yields a
+    /// Date column plus at least one money column. Falls back to the first row.
+    /// </summary>
+    private static int FindHeaderRowIndex(List<List<string>> rows)
+    {
+        var limit = Math.Min(rows.Count, 10);
+        for (int i = 0; i < limit; i++)
+        {
+            var copy = new List<string>(rows[i]);
+            MapBankHeaders(copy);
+            if (HasEssentialColumns(copy))
+                return i;
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Renames recognised bank-statement headers to canonical names in place, using keyword
+    /// heuristics. More specific columns are claimed before generic ones (e.g. Balance and
+    /// Debit/Credit before Amount) so each source header is mapped at most once.
+    /// </summary>
+    internal static void MapBankHeaders(List<string> headers)
+    {
+        var used = new HashSet<int>();
+
+        int Pick(Func<string, bool> predicate)
+        {
+            for (int i = 0; i < headers.Count; i++)
+            {
+                if (used.Contains(i)) continue;
+                if (predicate(headers[i].Trim().ToLowerInvariant())) { used.Add(i); return i; }
+            }
+            return -1;
+        }
+
+        void Assign(string canonical, Func<string, bool> predicate)
+        {
+            var i = Pick(predicate);
+            if (i >= 0) headers[i] = canonical;
+        }
+
+        Assign(ColDate, h => h.Contains("date") || h.Contains("posted"));
+        Assign(ColDebit, h => h.Contains("debit") || h.Contains("withdraw") || h.Contains("paid out") || h.Contains("money out"));
+        Assign(ColCredit, h => h.Contains("credit") || h.Contains("deposit") || h.Contains("paid in") || h.Contains("money in"));
+        Assign(ColBalance, h => h.Contains("balance") || h.Contains("bal"));
+        Assign(ColAmount, h => h is "amount" or "value" or "amt" || (h.Contains("amount") && !h.Contains("tax")));
+        Assign(ColReference, h => h.Contains("reference") || h is "ref" || h.Contains("ref no") || h.Contains("cheque") || h.Contains("check") || h.Contains("trans id") || h.Contains("transaction id"));
+        Assign(ColDescription, h => h.Contains("desc") || h.Contains("memo") || h.Contains("narrative") || h.Contains("detail") || h.Contains("particular") || h.Contains("payee") || h.Contains("name") || h.Contains("transaction"));
     }
 
     private static List<BankStatementLine> BuildLines(List<string> headers, List<List<object?>> rows, CancellationToken cancellationToken)

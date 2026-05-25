@@ -2163,59 +2163,28 @@ public partial class App : Application
         var filePath = file[0].Path.LocalPath;
         var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
 
-        var analysisCts = new CancellationTokenSource();
-        _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
+        _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate());
         await Task.Yield();
-
-        using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
-        var usageCheck = await usageService.CheckUsageAsync();
-        if (!usageCheck.CanImport)
-        {
-            _mainWindowViewModel?.HideLoading();
-            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(usageCheck.ImportCount, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
-            return;
-        }
-
-        var geminiService = new GeminiService(ErrorLogger, TelemetryManager);
-        if (!geminiService.IsConfigured)
-        {
-            _mainWindowViewModel?.HideLoading();
-            await ShowErrorMessageBoxAsync("Not Available".Translate(),
-                "Importing a bank statement requires portal access. Please register your company first.".Translate());
-            return;
-        }
-
-        var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
-        var progress = new Progress<(string detail, double percent)>(p =>
-            _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync));
 
         try
         {
-            var analysis = isCsv
-                ? await analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, progress)
-                : await analysisService.AnalyzeAsync(filePath, analysisCts.Token, progress);
-
-            if (analysis == null || analysis.Sheets.Count == 0)
-            {
-                _mainWindowViewModel?.HideLoading();
-                await ShowErrorMessageBoxAsync("Analysis Failed".Translate(),
-                    "Could not read the bank statement. The file may be empty or in an unsupported format.".Translate());
-                return;
-            }
-
-            var sheet = analysis.Sheets.FirstOrDefault(s => s.DetectedType == ArgoBooks.Core.Enums.SpreadsheetSheetType.BankStatement)
-                        ?? analysis.Sheets[0];
-
             var parser = new BankStatementImportService(ErrorLogger);
+
+            // Try local column detection first (instant, no AI). Fall back to AI column mapping
+            // only when the headers aren't recognized locally.
             var lines = isCsv
-                ? await parser.ParseCsvAsync(filePath, sheet, analysisCts.Token)
-                : await parser.ParseExcelAsync(filePath, sheet, analysisCts.Token);
+                ? await parser.ParseCsvAsync(filePath)
+                : await parser.ParseExcelAsync(filePath);
+
+            if (lines.Count == 0)
+                lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
 
             _mainWindowViewModel?.HideLoading();
 
             if (lines.Count == 0)
             {
-                await ShowInfoMessageBoxAsync("Info".Translate(), "No bank transactions were found in the file.".Translate());
+                await ShowInfoMessageBoxAsync("Info".Translate(),
+                    "No transactions were found. Make sure the file has Date, Description and Amount (or Debit/Credit) columns.".Translate());
                 return;
             }
 
@@ -2231,8 +2200,6 @@ public partial class App : Application
             };
             companyData.BankImportSessions.Add(session);
             companyData.MarkAsModified();
-
-            await usageService.IncrementUsageAsync();
 
             var importedSnapshot = CreateCompanyDataSnapshot(companyData);
             UndoRedoManager.RecordAction(new DelegateAction(
@@ -2259,6 +2226,39 @@ public partial class App : Application
             ErrorLogger?.LogError(ex, ErrorCategory.Import, "Bank statement import failed");
             await ShowErrorMessageBoxAsync("Import Failed".Translate(), "Failed to import bank statement:\n\n{0}".TranslateFormat(ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Backup parser: uses the smart importer's AI column mapping when local header detection
+    /// couldn't recognize the statement's columns. Consumes one AI import credit on success.
+    /// Returns an empty list if AI isn't available or finds nothing.
+    /// </summary>
+    private static async Task<List<ArgoBooks.Core.Models.BankMatching.BankStatementLine>> TryAiParseBankStatementAsync(
+        string filePath, bool isCsv, BankStatementImportService parser)
+    {
+        var gemini = new GeminiService(ErrorLogger, TelemetryManager);
+        if (!gemini.IsConfigured) return [];
+
+        using var usage = new AiImportUsageService(LicenseService, ErrorLogger);
+        var usageCheck = await usage.CheckUsageAsync();
+        if (!usageCheck.CanImport) return [];
+
+        var analysisService = new SpreadsheetAnalysisService(gemini, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company.Country);
+        var analysis = isCsv
+            ? await analysisService.AnalyzeCsvAsync(filePath)
+            : await analysisService.AnalyzeAsync(filePath);
+
+        var sheet = analysis?.Sheets.FirstOrDefault();
+        if (sheet == null) return [];
+
+        var lines = isCsv
+            ? await parser.ParseCsvWithAnalysisAsync(filePath, sheet)
+            : await parser.ParseExcelWithAnalysisAsync(filePath, sheet);
+
+        if (lines.Count > 0)
+            await usage.IncrementUsageAsync();
+
+        return lines;
     }
 
     /// <summary>

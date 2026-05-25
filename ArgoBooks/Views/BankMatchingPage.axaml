@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:bm="using:ArgoBooks.Core.Models.BankMatching"
+             xmlns:services="using:ArgoBooks.Services"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.BankMatchingPage"
@@ -42,7 +43,8 @@
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextPrimaryBrush}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <controls:DateRangeSelector VerticalAlignment="Center" />
+                    <controls:DateRangeSelector VerticalAlignment="Center"
+                                                DataContext="{x:Static services:ChartSettingsService.Instance}" />
                     <Button Classes="secondary-button"
                             IsEnabled="{Binding CanRunAi}"
                             Command="{Binding RunAiSuggestionsCommand}"
@@ -73,12 +75,15 @@
                 <TabItem Header="{loc:Loc 'Missing from statement'}" />
             </TabControl>
 
-            <!-- Bank lines table -->
-            <Border Grid.Row="3"
-                    IsVisible="{Binding IsLinesTab}"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1" CornerRadius="12">
+            <!-- Bank lines tab -->
+            <Grid Grid.Row="3" IsVisible="{Binding IsLinesTab}" RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Text="{loc:Loc 'Lines from your imported bank statement(s). Match each one to a recorded transaction, or ignore lines you do not need to track.'}" />
+                <Border Grid.Row="1"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12">
                 <Grid RowDefinitions="Auto,*">
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -92,8 +97,21 @@
                         </Grid>
                     </Border>
 
+                    <!-- Empty state -->
+                    <StackPanel Grid.Row="1" IsVisible="{Binding !HasLines}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="8" Margin="24" MaxWidth="420">
+                        <PathIcon Data="{x:Static icons:Icons.Bank}" Width="32" Height="32"
+                                  Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'No bank lines to show'}" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'No imported lines fall in the selected date range. Try a wider date range, or import another statement.'}"
+                                   TextWrapping="Wrap" TextAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+
                     <!-- Rows -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" IsVisible="{Binding HasLines}" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Lines}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:BankLineRow">
@@ -158,14 +176,18 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>
-            </Border>
+                </Border>
+            </Grid>
 
-            <!-- Missing from statement: recorded book entries no bank line matched -->
-            <Border Grid.Row="3"
-                    IsVisible="{Binding IsMissingTab}"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1" CornerRadius="12">
+            <!-- Missing from statement tab -->
+            <Grid Grid.Row="3" IsVisible="{Binding IsMissingTab}" RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Text="{loc:Loc 'Your recorded revenue, expenses and payments that have not been matched to a bank statement line yet.'}" />
+                <Border Grid.Row="1"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12">
                 <Grid RowDefinitions="Auto,*">
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -177,12 +199,22 @@
                         </Grid>
                     </Border>
 
+                    <!-- Empty state -->
+                    <StackPanel Grid.Row="1" IsVisible="{Binding !HasUnmatchedBook}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="8" Margin="24" MaxWidth="420">
+                        <PathIcon Data="{x:Static icons:Icons.Check}" Width="32" Height="32"
+                                  Foreground="{DynamicResource SuccessBrush}" HorizontalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'Nothing missing'}" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Every recorded revenue, expense and payment in this date range is matched to a bank line.'}"
+                                   TextWrapping="Wrap" TextAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+
                     <!-- Rows -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" IsVisible="{Binding HasUnmatchedBook}" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <TextBlock IsVisible="{Binding !HasUnmatchedBook}" Margin="20,16"
-                                       Text="{loc:Loc 'Every recorded entry was found on the statement.'}"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                             <ItemsControl ItemsSource="{Binding UnmatchedBookRecords}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="bm:BookRecordRef">
@@ -212,7 +244,8 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
-            </Border>
+                </Border>
+            </Grid>
         </Grid>
     </Panel>
 

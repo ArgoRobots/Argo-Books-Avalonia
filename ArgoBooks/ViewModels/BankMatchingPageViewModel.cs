@@ -61,6 +61,10 @@ public partial class BankMatchingPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasSession;
 
+    /// <summary>True when at least one bank line is visible in the current date range.</summary>
+    [ObservableProperty]
+    private bool _hasLines;
+
     [ObservableProperty]
     private int _matchedCount;
 
@@ -118,6 +122,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         {
             _result = null;
             HasSession = false;
+            HasLines = false;
             Lines.Clear();
             UnmatchedBookRecords.Clear();
             ResetCounts();
@@ -166,6 +171,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
         RecomputeCounts();
         UnmatchedBookCount = UnmatchedBookRecords.Count;
+        HasLines = Lines.Count > 0;
     }
 
     private Dictionary<string, List<BankMatchCandidate>> _candidatesByLineId = [];
