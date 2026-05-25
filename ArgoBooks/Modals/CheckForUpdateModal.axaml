@@ -116,7 +116,7 @@
                                               Width="20" Height="20"
                                               Foreground="White" />
                                 </Border>
-                                <TextBlock Text="{loc:Loc 'You''re up to date!'}"
+                                <TextBlock Text="{loc:Loc 'You’re up to date!'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
