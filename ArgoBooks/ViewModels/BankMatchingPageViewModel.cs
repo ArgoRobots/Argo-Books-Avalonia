@@ -15,7 +15,7 @@ namespace ArgoBooks.ViewModels;
 
 /// <summary>
 /// ViewModel for the Bank Matching page. Imports a bank statement (via the smart importer) and
-/// matches each line against recorded expenses, revenue, invoices and payments.
+/// matches each line against recorded expenses and revenue.
 /// </summary>
 public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 {
@@ -532,16 +532,24 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         App.CompanyManager?.MarkAsChanged();
     }
 
-    /// <summary>Unlinks a confirmed match, clearing the flag on the book record.</summary>
+    /// <summary>Unlinks a confirmed match, clearing the flag on the book record. Tracked in undo/redo.</summary>
     [RelayCommand]
     private void UnlinkMatch(BankLineRow? row)
     {
         var data = App.CompanyManager?.CompanyData;
         if (row == null || data == null) return;
-        _matcher.UnlinkMatch(row.Line, data);
-        row.Refresh(null);
-        RecomputeCounts();
-        ApplyFiltersAndPaginate();
+        var line = row.Line;
+
+        var before = CaptureMatchState(line);
+        _matcher.UnlinkMatch(line, data);
+        var after = CaptureMatchState(line);
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            "Unlink bank match".Translate(),
+            () => { RestoreMatchState(line, before, data); RefreshAfterMatchChange(line); },
+            () => { RestoreMatchState(line, after, data); RefreshAfterMatchChange(line); }));
+
+        RefreshAfterMatchChange(line);
     }
 
     /// <summary>Opens the AppShell-hosted picker: suggestions plus a full manual list to pick from.</summary>
@@ -597,9 +605,71 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     {
         var data = App.CompanyManager?.CompanyData;
         if (data == null) return;
-        _matcher.ConfirmMatch(row.Line, candidate, data);
-        _candidatesByLineId.Remove(row.Line.Id);
-        row.Refresh(candidate);
+        var line = row.Line;
+
+        var before = CaptureMatchState(line);
+        _matcher.ConfirmMatch(line, candidate, data);
+        _candidatesByLineId.Remove(line.Id);
+        var after = CaptureMatchState(line);
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            "Match bank line".Translate(),
+            () => { RestoreMatchState(line, before, data); RefreshAfterMatchChange(line); },
+            () => { RestoreMatchState(line, after, data); RefreshAfterMatchChange(line); }));
+
+        RefreshAfterMatchChange(line);
+    }
+
+    /// <summary>Captures a line's match state (and any suggestions) so it can be restored by undo/redo.</summary>
+    private MatchStateSnapshot CaptureMatchState(Core.Models.BankMatching.BankStatementLine line) => new(
+        line.MatchStatus,
+        line.MatchedRecordType,
+        line.MatchedRecordId,
+        line.MatchedDate,
+        line.MatchConfidence,
+        _candidatesByLineId.TryGetValue(line.Id, out var c) ? new List<BankMatchCandidate>(c) : null);
+
+    /// <summary>
+    /// Restores a line to a captured match state. Reuses the matcher's confirm/unlink so the book
+    /// records' persisted flags are released and re-set correctly (including re-match cases).
+    /// </summary>
+    private void RestoreMatchState(Core.Models.BankMatching.BankStatementLine line, MatchStateSnapshot s, CompanyData data)
+    {
+        // Release whatever the line currently points to (clears the current record's flag, if any).
+        _matcher.UnlinkMatch(line, data);
+
+        // Re-establish the previously matched record's flag and the line's match fields.
+        if (s.MatchedType is { } type && s.MatchedId is { } id)
+        {
+            _matcher.ConfirmMatch(line, new BankMatchCandidate
+            {
+                LineId = line.Id,
+                RecordType = type,
+                RecordId = id,
+                Confidence = s.Confidence
+            }, data);
+            line.MatchedDate = s.MatchedDate; // keep the original timestamp, not "now"
+        }
+
+        line.MatchStatus = s.Status;
+        line.MatchConfidence = s.Confidence;
+        if (s.Candidates != null) _candidatesByLineId[line.Id] = s.Candidates;
+        else _candidatesByLineId.Remove(line.Id);
+    }
+
+    /// <summary>Refreshes the row display, counts and paging after a match is confirmed/unlinked or undone.</summary>
+    private void RefreshAfterMatchChange(Core.Models.BankMatching.BankStatementLine line)
+    {
+        var row = _allRows.FirstOrDefault(r => r.Line.Id == line.Id);
+        if (row != null)
+        {
+            BankMatchCandidate? top = line.MatchStatus == BankLineMatchStatus.Matched
+                ? BuildMatchedCandidate(line)
+                : (_candidatesByLineId.TryGetValue(line.Id, out var c) ? c.FirstOrDefault() : null);
+            row.Refresh(top);
+        }
+
+        App.CompanyManager?.MarkAsChanged();
         RecomputeCounts();
         ApplyFiltersAndPaginate();
     }
@@ -611,6 +681,15 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     public event EventHandler? ImportRequested;
 
     #endregion
+
+    /// <summary>Immutable capture of a bank line's match state, used to undo/redo confirm and unlink.</summary>
+    private sealed record MatchStateSnapshot(
+        BankLineMatchStatus Status,
+        BookRecordType? MatchedType,
+        string? MatchedId,
+        DateTime? MatchedDate,
+        double Confidence,
+        List<BankMatchCandidate>? Candidates);
 }
 
 /// <summary>Display wrapper for a bank statement line in the table.</summary>

@@ -26,7 +26,7 @@
             <TextBlock Text="{loc:Loc 'Match your books against your bank'}"
                        FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center"
                        Foreground="{DynamicResource TextPrimaryBrush}" />
-            <TextBlock Text="{loc:Loc 'Import a bank statement (CSV or Excel) and we will match each line to your recorded expenses, revenue, invoices and payments, so you can catch anything missing or duplicated.'}"
+            <TextBlock Text="{loc:Loc 'Import a bank statement (CSV or Excel) and we will match each line to your recorded expenses and revenue, so you can catch anything missing or duplicated.'}"
                        TextWrapping="Wrap" TextAlignment="Center"
                        Foreground="{DynamicResource TextSecondaryBrush}" />
             <Button Classes="primary-button" HorizontalAlignment="Center"
@@ -204,7 +204,7 @@
             <Grid Grid.Row="3" IsVisible="{Binding IsMissingTab}" RowDefinitions="Auto,*">
                 <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextSecondaryBrush}"
-                           Text="{loc:Loc 'Your recorded revenue, expenses and payments that have not been matched to a bank statement line yet.'}" />
+                           Text="{loc:Loc 'Your recorded revenue and expenses that have not been matched to a bank statement line yet.'}" />
                 <table:ArgoTable Grid.Row="1"
                                  Title="{loc:Loc 'Missing from statement'}"
                                  ItemsSource="{Binding UnmatchedBookRecords}"

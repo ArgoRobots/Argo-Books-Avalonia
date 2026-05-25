@@ -2134,9 +2134,6 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Creates a JSON snapshot of the company data collections for undo/redo.
-    /// </summary>
-    /// <summary>
     /// Imports a bank statement via the smart importer (parse only, no commit) and shows it on the
     /// Bank Matching page. Triggered by the page's Import button.
     /// </summary>
