@@ -16,5 +16,8 @@ public enum MatchReason
     AmountWithinWindow,
 
     /// <summary>Suggested by the AI assistant for an otherwise unmatched line.</summary>
-    AiSuggested
+    AiSuggested,
+
+    /// <summary>Chosen manually by the user from the full list of records.</summary>
+    Manual
 }

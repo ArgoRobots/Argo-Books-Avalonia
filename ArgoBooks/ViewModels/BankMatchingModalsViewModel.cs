@@ -23,20 +23,61 @@ public partial class BankMatchingModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _lineDescription = string.Empty;
 
+    /// <summary>True when there are records available to manually pick from.</summary>
+    [ObservableProperty]
+    private bool _hasManualOptions;
+
+    [ObservableProperty]
+    private string? _manualSearchQuery;
+
     private string? _lineId;
 
+    /// <summary>Suggested (auto-detected) candidates.</summary>
     public ObservableCollection<BankMatchCandidate> CandidateOptions { get; } = [];
 
-    /// <summary>Opens the candidate picker for a bank line.</summary>
-    public void OpenCandidatePicker(string lineId, string lineDescription, IEnumerable<BankMatchCandidate> candidates)
+    /// <summary>All records the user can manually pick from (direction-filtered), before search.</summary>
+    private readonly List<BankMatchCandidate> _allManualOptions = [];
+
+    /// <summary>Manual-pick records currently shown (filtered by the search box).</summary>
+    public ObservableCollection<BankMatchCandidate> ManualOptions { get; } = [];
+
+    partial void OnManualSearchQueryChanged(string? value) => FilterManualOptions();
+
+    /// <summary>Opens the candidate picker for a bank line, with suggestions and a full manual list.</summary>
+    public void OpenCandidatePicker(string lineId, string lineDescription,
+        IEnumerable<BankMatchCandidate> candidates, IEnumerable<BankMatchCandidate> manualOptions)
     {
         _lineId = lineId;
         LineDescription = lineDescription;
+
         CandidateOptions.Clear();
         foreach (var c in candidates)
             CandidateOptions.Add(c);
         HasCandidates = CandidateOptions.Count > 0;
+
+        _allManualOptions.Clear();
+        _allManualOptions.AddRange(manualOptions);
+        HasManualOptions = _allManualOptions.Count > 0;
+        ManualSearchQuery = null;
+        FilterManualOptions();
+
         IsCandidateModalOpen = true;
+    }
+
+    private void FilterManualOptions()
+    {
+        ManualOptions.Clear();
+        IEnumerable<BankMatchCandidate> query = _allManualOptions;
+        if (!string.IsNullOrWhiteSpace(ManualSearchQuery))
+        {
+            var q = ManualSearchQuery.Trim();
+            query = query.Where(c =>
+                c.RecordDescription.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                c.RecordAmount.ToString("C2").Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                c.RecordType.ToString().Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+        foreach (var c in query)
+            ManualOptions.Add(c);
     }
 
     [RelayCommand]

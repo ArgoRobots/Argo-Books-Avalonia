@@ -82,8 +82,9 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _matchedCount;
 
+    /// <summary>Total absolute difference between matched bank lines and the records they match.</summary>
     [ObservableProperty]
-    private int _suggestedCount;
+    private string _matchedDifferenceDisplay = 0m.ToString("C2");
 
     [ObservableProperty]
     private int _unmatchedLineCount;
@@ -379,15 +380,43 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 
     private void ResetCounts()
     {
-        MatchedCount = SuggestedCount = UnmatchedLineCount = UnmatchedBookCount = 0;
+        MatchedCount = UnmatchedLineCount = UnmatchedBookCount = 0;
+        MatchedDifferenceDisplay = 0m.ToString("C2");
         PaginationText = PaginationTextHelper.FormatPaginationText(0, 1, PageSize, 1, "line");
     }
 
     private void RecomputeCounts()
     {
         MatchedCount = _allRows.Count(r => r.Line.MatchStatus == BankLineMatchStatus.Matched);
-        SuggestedCount = _allRows.Count(r => r.Line.MatchStatus == BankLineMatchStatus.Suggested);
         UnmatchedLineCount = _allRows.Count(r => r.Line.MatchStatus == BankLineMatchStatus.Unmatched);
+
+        // Total absolute gap between matched bank lines and the records they're matched to.
+        // Exact (auto) matches contribute 0; manual matches to a different amount show up here.
+        decimal difference = 0m;
+        foreach (var row in _allRows.Where(r => r.Line.MatchStatus == BankLineMatchStatus.Matched))
+        {
+            var recordAmount = MatchedRecordAmount(row.Line);
+            if (recordAmount.HasValue)
+                difference += Math.Abs(row.Line.Amount - recordAmount.Value);
+        }
+        MatchedDifferenceDisplay = difference.ToString("C2");
+    }
+
+    /// <summary>Returns the matched record's amount aligned to bank sign convention, or null.</summary>
+    private decimal? MatchedRecordAmount(Core.Models.BankMatching.BankStatementLine line)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null || line.MatchedRecordType is not { } type || line.MatchedRecordId is not { } id)
+            return null;
+
+        return type switch
+        {
+            BookRecordType.Expense => data.Expenses.FirstOrDefault(e => e.Id == id) is { } e ? -e.Total : null,
+            BookRecordType.Revenue => data.Revenues.FirstOrDefault(r => r.Id == id) is { } r ? r.Total : null,
+            BookRecordType.Invoice => data.Invoices.FirstOrDefault(i => i.Id == id) is { } inv ? inv.Total : null,
+            BookRecordType.Payment => data.Payments.FirstOrDefault(p => p.Id == id) is { } p ? p.Amount : null,
+            _ => null
+        };
     }
 
     #endregion
@@ -515,13 +544,16 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         ApplyFiltersAndPaginate();
     }
 
-    /// <summary>Opens the AppShell-hosted picker so the user can choose among candidates.</summary>
+    /// <summary>Opens the AppShell-hosted picker: suggestions plus a full manual list to pick from.</summary>
     [RelayCommand]
     private void OpenCandidatePicker(BankLineRow? row)
     {
         if (row == null) return;
+        var data = App.CompanyManager?.CompanyData;
         var candidates = _candidatesByLineId.TryGetValue(row.Line.Id, out var list) ? list : [];
-        App.BankMatchingModalsViewModel?.OpenCandidatePicker(row.Line.Id, row.Description, candidates);
+        var manual = data != null ? _matcher.GetManualMatchOptions(row.Line, data, _options) : [];
+        var context = $"{row.Description}  ·  {row.AmountDisplay}  ·  {row.DateDisplay}";
+        App.BankMatchingModalsViewModel?.OpenCandidatePicker(row.Line.Id, context, candidates, manual);
     }
 
     private void SetLineIgnored(Core.Models.BankMatching.BankStatementLine line)

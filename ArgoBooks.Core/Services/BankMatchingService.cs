@@ -96,6 +96,31 @@ public class BankMatchingService
     }
 
     /// <summary>
+    /// Returns all unmatched, in-scope records the user can manually pick to match a line,
+    /// filtered to the line's direction (money out -> expenses, money in -> revenue). Not scored.
+    /// </summary>
+    public List<BankMatchCandidate> GetManualMatchOptions(BankStatementLine line, CompanyData data, BankMatchingOptions options)
+    {
+        return BuildRecordRefs(data, options.Scope)
+            .Where(r => !IsRecordMatched(data, r))
+            .Where(r => line.Amount == 0
+                        || (line.Amount < 0 && r.Type == BookRecordType.Expense)
+                        || (line.Amount > 0 && r.Type != BookRecordType.Expense))
+            .OrderByDescending(r => r.Date)
+            .Select(r => new BankMatchCandidate
+            {
+                LineId = line.Id,
+                RecordType = r.Type,
+                RecordId = r.Id,
+                RecordDescription = r.Description,
+                RecordDate = r.Date,
+                RecordAmount = r.Amount,
+                Reason = MatchReason.Manual
+            })
+            .ToList();
+    }
+
+    /// <summary>
     /// Scores every amount-compatible record against a line and returns candidates ranked best-first.
     /// </summary>
     private static List<BankMatchCandidate> ScoreCandidates(BankStatementLine line, IEnumerable<BookRecordRef> records, BankMatchingOptions options)
@@ -191,6 +216,14 @@ public class BankMatchingService
     /// </summary>
     public void ConfirmMatch(BankStatementLine line, BankMatchCandidate candidate, CompanyData data)
     {
+        // If the line was already matched to a different record, release that record first so it
+        // doesn't stay flagged as matched (which would orphan it in the unmatched view).
+        if (line.MatchedRecordType is { } prevType && line.MatchedRecordId is { } prevId &&
+            (prevType != candidate.RecordType || prevId != candidate.RecordId))
+        {
+            SetRecordMatchState(data, prevType, prevId, matched: false, null);
+        }
+
         line.MatchStatus = BankLineMatchStatus.Matched;
         line.MatchedRecordType = candidate.RecordType;
         line.MatchedRecordId = candidate.RecordId;

@@ -46,7 +46,8 @@
             <controls:StatCardsRow Grid.Row="1" Margin="0,0,0,20">
                 <controls:StatCard Label="{loc:Loc 'Matched'}" Value="{Binding MatchedCount}"
                                    Icon="{x:Static icons:Icons.Payments}" IconColor="Success" />
-                <controls:StatCard Label="{loc:Loc 'Suggested'}" Value="{Binding SuggestedCount}"
+                <controls:StatCard Label="{loc:Loc 'Difference'}" Value="{Binding MatchedDifferenceDisplay}"
+                                   InfoText="{loc:Loc 'The total difference between matched bank transactions and the records they’re matched to. Exact matches add nothing. If amounts differ, the difference is added. $0.00 means everything matches your bank.'}"
                                    Icon="{x:Static icons:Icons.Payments}" IconColor="Warning" />
                 <controls:StatCard Label="{loc:Loc 'Unmatched bank lines'}" Value="{Binding UnmatchedLineCount}"
                                    Icon="{x:Static icons:Icons.Payments}" IconColor="Danger" />
@@ -159,9 +160,9 @@
                                                                 CommandParameter="{Binding}">
                                                             <PathIcon Data="{x:Static icons:Icons.Check}" Width="16" Height="16" />
                                                         </Button>
-                                                        <!-- Unmatched/Suggested: choose -->
+                                                        <!-- Choose / change match (any line except ignored) -->
                                                         <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Choose match'}"
-                                                                IsVisible="{Binding IsActionable}"
+                                                                IsVisible="{Binding !IsIgnored}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).OpenCandidatePickerCommand}"
                                                                 CommandParameter="{Binding}">
                                                             <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />

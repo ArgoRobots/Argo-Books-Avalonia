@@ -40,10 +40,45 @@
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="24" Spacing="8">
-                                <TextBlock IsVisible="{Binding !HasCandidates}"
-                                           Text="{loc:Loc 'No candidate matches were found for this line.'}"
+                                <!-- Suggested matches (auto-detected) -->
+                                <StackPanel Spacing="8" IsVisible="{Binding HasCandidates}">
+                                    <TextBlock Text="{loc:Loc 'Suggested'}" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ItemsControl ItemsSource="{Binding CandidateOptions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="bm:BankMatchCandidate">
+                                                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                        Classes="secondary-button" Margin="0,0,0,4"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingModalsViewModel)DataContext).ChooseCandidateCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{Binding RecordDescription}" FontWeight="SemiBold"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Text="{Binding RecordType}" />
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                                                            <TextBlock Text="{Binding RecordAmount, StringFormat=C2}" FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding Confidence, StringFormat='{}{0:P0} match'}"
+                                                                       FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <!-- Manual pick from the full list -->
+                                <TextBlock Text="{loc:Loc 'Or match to another record'}" FontSize="13" FontWeight="SemiBold"
+                                           Margin="0,4,0,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ManualSearchQuery, Mode=TwoWay}" Classes="form-input"
+                                         PlaceholderText="{loc:Loc 'Search your records...'}" MaxLength="100" />
+                                <TextBlock IsVisible="{Binding !HasManualOptions}"
+                                           Text="{loc:Loc 'No revenue or expenses are available to match this line.'}"
                                            Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
-                                <ItemsControl ItemsSource="{Binding CandidateOptions}">
+                                <ItemsControl ItemsSource="{Binding ManualOptions}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="bm:BankMatchCandidate">
                                             <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
@@ -54,14 +89,15 @@
                                                     <StackPanel Grid.Column="0" Spacing="2">
                                                         <TextBlock Text="{Binding RecordDescription}" FontWeight="SemiBold"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   Text="{Binding RecordType}" />
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Text="{Binding RecordType}" />
+                                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Text="{Binding RecordDate, StringFormat='MMM dd, yyyy'}" />
+                                                        </StackPanel>
                                                     </StackPanel>
-                                                    <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
-                                                        <TextBlock Text="{Binding RecordAmount, StringFormat=C2}" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{Binding Confidence, StringFormat='{}{0:P0} match'}"
-                                                                   FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding RecordAmount, StringFormat=C2}"
+                                                               FontWeight="SemiBold" VerticalAlignment="Center" />
                                                 </Grid>
                                             </Button>
                                         </DataTemplate>
