@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -49,6 +50,9 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
     [ObservableProperty]
     private string _otherText = string.Empty;
 
+    [ObservableProperty]
+    private string? _submitError;
+
     public bool CanSubmit
     {
         get
@@ -60,7 +64,20 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
         }
     }
 
-    partial void OnSelectedAnswerChanged(string? value) => OnPropertyChanged(nameof(CanSubmit));
+    // Notify every derived Is*Selected property so radio buttons and the freeform
+    // textbox visibility binding refresh whenever SelectedAnswer changes (including
+    // null after Reset).
+    partial void OnSelectedAnswerChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanSubmit));
+        OnPropertyChanged(nameof(IsGoogleSelected));
+        OnPropertyChanged(nameof(IsBingSelected));
+        OnPropertyChanged(nameof(IsYouTubeSelected));
+        OnPropertyChanged(nameof(IsRedditSelected));
+        OnPropertyChanged(nameof(IsFriendSelected));
+        OnPropertyChanged(nameof(IsEmailSelected));
+        OnPropertyChanged(nameof(IsOtherSelected));
+    }
     partial void OnIsSubmittingChanged(bool value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnOtherTextChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
 
@@ -111,6 +128,7 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
         SelectedAnswer = null;
         OtherText = string.Empty;
         IsSubmitting = false;
+        SubmitError = null;
     }
 
     [RelayCommand]
@@ -123,14 +141,26 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
         if (answer == "other" && string.IsNullOrEmpty(otherText)) return;
 
         IsSubmitting = true;
+        SubmitError = null;
         try
         {
             var reporter = App.SourceSurveyReporter;
             var machineUuid = ReadMachineUuid();
-            if (reporter != null && machineUuid != null)
+            if (reporter == null || machineUuid == null)
             {
-                await reporter.ReportAsync(answer, machineUuid, otherText);
+                SubmitError = "Could not record your answer. Please try again later.".Translate();
+                return;
             }
+
+            var ok = await reporter.ReportAsync(answer, machineUuid, otherText);
+            if (!ok)
+            {
+                SubmitError = "Could not record your answer. Please check your connection and try again.".Translate();
+                return;
+            }
+
+            // Only mark answered after a successful POST so a failure doesn't
+            // permanently suppress the survey with no record on the server.
             TutorialService.Instance.MarkSourceSurveyAnswered(answer);
         }
         finally

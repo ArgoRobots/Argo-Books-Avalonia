@@ -70,6 +70,13 @@
                                  Margin="28,4,0,0" />
                     </StackPanel>
 
+                    <!-- Inline error message (POST failure / no reporter / no machine_uuid) -->
+                    <TextBlock Text="{Binding SubmitError}"
+                               IsVisible="{Binding SubmitError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                               Foreground="{DynamicResource ErrorBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+
                     <!-- Actions: Submit only — no dismiss path, the user must answer. -->
                     <Button Classes="primary"
                             Content="{loc:Loc 'Submit'}"
