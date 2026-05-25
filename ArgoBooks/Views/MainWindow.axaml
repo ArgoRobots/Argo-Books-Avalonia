@@ -42,9 +42,12 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- Window Caption Buttons — high ZIndex so they're always visible above all overlays -->
+        <!-- Window Caption Buttons — ZIndex above ALL modals/overlays so the user can
+             always minimize, maximize, or close the window. Closing while a critical
+             dialog (UnsavedChanges, Confirmation) is open still routes through the
+             window's Closing handler, so data-safety prompts re-trigger as normal. -->
         <StackPanel x:Name="WindowControls"
-                    ZIndex="200"
+                    ZIndex="300"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
@@ -193,6 +196,11 @@
                                HorizontalAlignment="Stretch"
                                VerticalAlignment="Stretch"
                                ZIndex="215" />
+
+        <!-- Source Survey Overlay (post-onboarding "where did you hear about us?") -->
+        <controls:SourceSurveyOverlay HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      ZIndex="218" />
 
         <!-- Categories Page Tutorial Overlay -->
         <modals:CategoriesTutorialOverlay DataContext="{Binding CategoriesTutorialViewModel}"

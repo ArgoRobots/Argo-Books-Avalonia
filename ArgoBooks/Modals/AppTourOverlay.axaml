@@ -136,7 +136,8 @@
                                 Command="{Binding NextStepCommand}"
                                 Width="90"
                                 HorizontalContentAlignment="Center">
-                            <TextBlock Text="{Binding IsLastStep, Converter={x:Static conv:Converters.BoolToFinishNext}}" />
+                            <!-- Always "Next" — the last slide tells the user the Setup Checklist is the actual final step. -->
+                            <TextBlock Text="Next" />
                         </Button>
                     </StackPanel>
                 </Grid>

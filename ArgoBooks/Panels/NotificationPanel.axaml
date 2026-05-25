@@ -81,7 +81,7 @@
                                        FontSize="14"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        HorizontalAlignment="Center" />
-                            <TextBlock Text="{loc:Loc 'You''re all caught up!'}"
+                            <TextBlock Text="{loc:Loc 'You’re all caught up!'}"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        HorizontalAlignment="Center"

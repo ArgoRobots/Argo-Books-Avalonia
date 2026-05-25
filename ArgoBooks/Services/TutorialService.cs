@@ -80,6 +80,11 @@ public class TutorialService
     public event EventHandler<bool>? CompletionGuidanceChanged;
 
     /// <summary>
+    /// Event raised when the post-onboarding source survey should be shown/hidden.
+    /// </summary>
+    public event EventHandler<bool>? SourceSurveyVisibilityChanged;
+
+    /// <summary>
     /// Gets or sets whether the completion guidance overlay should be shown.
     /// </summary>
     public bool ShowCompletionGuidance
@@ -153,6 +158,11 @@ public class TutorialService
     /// Gets whether the welcome tutorial has been completed.
     /// </summary>
     public bool HasCompletedWelcomeTutorial => Settings.HasCompletedWelcomeTutorial;
+
+    /// <summary>
+    /// Gets whether the user explicitly skipped the tutorial.
+    /// </summary>
+    public bool HasSkippedTutorial => Settings.HasSkippedTutorial;
 
     /// <summary>
     /// Gets whether the app tour has been completed.
@@ -523,6 +533,71 @@ public class TutorialService
             Pages.RentalRecords => "Record rental transactions and manage rental periods.",
             _ => null
         };
+    }
+
+    /// <summary>
+    /// The allowed survey answer wire values. Server validates against the same list.
+    /// </summary>
+    public static readonly IReadOnlyList<string> SourceSurveyOptions =
+        ["google", "bing", "youtube", "reddit", "friend", "email", "other"];
+
+    /// <summary>
+    /// Whether the source survey should be presented to this user. True only when
+    /// FirstRunReporter has run and recorded a no-token install, and the user
+    /// hasn't already answered or dismissed.
+    /// </summary>
+    public bool ShouldShowSourceSurvey()
+    {
+        if (Settings.SourceSurveyAnswer != null) return false;
+        if (Settings.IsSourceSurveyDismissed) return false;
+
+        var reason = InstallAttributionReason.ReadFirstRunMarkerReason();
+        return reason == "no_token";
+    }
+
+    /// <summary>
+    /// Requests the survey overlay to open if <see cref="ShouldShowSourceSurvey"/> is true.
+    /// Safe to call from any path that wants to surface the survey (checklist-completion
+    /// handler, dashboard banner button, etc).
+    /// </summary>
+    public void RequestShowSourceSurvey()
+    {
+        if (ShouldShowSourceSurvey())
+        {
+            SourceSurveyVisibilityChanged?.Invoke(this, true);
+        }
+    }
+
+    /// <summary>
+    /// Persists the user's survey answer and closes the overlay. Caller is responsible
+    /// for POSTing the answer to the server before invoking this.
+    /// </summary>
+    public void MarkSourceSurveyAnswered(string answer)
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null)
+        {
+            settings.Tutorial.SourceSurveyAnswer = answer;
+            settings.Tutorial.HasShownSourceSurvey = true;
+            SaveSettings();
+        }
+        SourceSurveyVisibilityChanged?.Invoke(this, false);
+    }
+
+    /// <summary>
+    /// Persists that the user dismissed the survey without answering. Closes the overlay
+    /// and prevents the dashboard banner from showing on future loads.
+    /// </summary>
+    public void MarkSourceSurveyDismissed()
+    {
+        var settings = _globalSettingsService?.GetSettings();
+        if (settings?.Tutorial != null)
+        {
+            settings.Tutorial.IsSourceSurveyDismissed = true;
+            settings.Tutorial.HasShownSourceSurvey = true;
+            SaveSettings();
+        }
+        SourceSurveyVisibilityChanged?.Invoke(this, false);
     }
 
     private void SaveSettings()

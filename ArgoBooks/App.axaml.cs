@@ -87,6 +87,11 @@ public partial class App : Application
     public static ITelemetryManager? TelemetryManager { get; private set; }
 
     /// <summary>
+    /// Gets the reporter used by the post-onboarding source survey overlay.
+    /// </summary>
+    public static SourceSurveyReporter? SourceSurveyReporter { get; private set; }
+
+    /// <summary>
     /// Gets the shared undo/redo manager instance.
     /// </summary>
     public static UndoRedoManager UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
@@ -818,6 +823,12 @@ public partial class App : Application
             // Initialize refund service (uses the same shared HttpClient)
             RefundService = new RefundService(httpClient);
 
+            // Source survey reporter shares the long-lived telemetry HttpClient. The
+            // survey may fire long after first run (after the user finishes the setup
+            // checklist), so we keep the reporter alive rather than scoping it to a
+            // one-shot task like FirstRunReporter.
+            SourceSurveyReporter = new SourceSurveyReporter(httpClient, appVersion, errorLogger);
+
             // Create navigation service
             NavigationService = new NavigationService();
 
@@ -885,6 +896,9 @@ public partial class App : Application
 
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
+
+            // Wire up the post-onboarding source survey trigger
+            WireSourceSurveyEvents();
 
             // Sync HasUnsavedChanges with undo/redo state (both MainWindow and Header)
             UndoRedoManager.StateChanged += (_, _) =>
@@ -2998,8 +3012,6 @@ public partial class App : Application
             if (_productsPageViewModel == null)
             {
                 _productsPageViewModel = new ProductsPageViewModel();
-                // Wire up upgrade request to open upgrade modal (only once)
-                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
             _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;

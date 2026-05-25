@@ -139,6 +139,15 @@ public partial class SetupChecklistViewModel : ViewModelBase
             return;
         }
 
+        // Hide the checklist until the app tour has been finished or skipped.
+        // The tour ends on a slide that explicitly tells the user the checklist
+        // is the next step, so showing it earlier would steal attention from the tour.
+        if (!tutorialService.HasCompletedAppTour && !tutorialService.HasSkippedTutorial)
+        {
+            IsVisible = false;
+            return;
+        }
+
         IsVisible = true;
     }
 
@@ -225,6 +234,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
     [RelayCommand]
     private void OpenUpgradeUrl()
     {
-        UrlHelper.SafeOpenUrl("https://www.argorobots.com/upgrade/");
+        UrlHelper.SafeOpenUrl("https://www.argorobots.com/pricing/");
     }
 }

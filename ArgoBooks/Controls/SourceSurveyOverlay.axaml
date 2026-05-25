@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="using:ArgoBooks"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+             x:Class="ArgoBooks.Controls.SourceSurveyOverlay"
+             x:DataType="controls:SourceSurveyOverlayViewModel">
+
+    <controls:ModalOverlay x:Name="Overlay"
+                           CloseOnBackdropClick="False"
+                           CloseOnEscape="False">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource PrimaryBrush}"
+                    BorderThickness="2"
+                    CornerRadius="16"
+                    Padding="32,28"
+                    MaxWidth="460"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 4 20 0 #26000000">
+                <StackPanel Spacing="20">
+
+                    <!-- Title + subtitle -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{loc:Loc 'Where did you hear about Argo Books?'}"
+                                   FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{loc:Loc 'A quick one-question survey to help us know how people are finding us.'}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Options -->
+                    <StackPanel Spacing="6">
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'Google'}"
+                                     IsChecked="{Binding IsGoogleSelected, Mode=TwoWay}" />
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'Bing'}"
+                                     IsChecked="{Binding IsBingSelected, Mode=TwoWay}" />
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'YouTube'}"
+                                     IsChecked="{Binding IsYouTubeSelected, Mode=TwoWay}" />
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'Reddit'}"
+                                     IsChecked="{Binding IsRedditSelected, Mode=TwoWay}" />
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'A friend'}"
+                                     IsChecked="{Binding IsFriendSelected, Mode=TwoWay}" />
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'Email'}"
+                                     IsChecked="{Binding IsEmailSelected, Mode=TwoWay}" />
+                        <RadioButton GroupName="SourceSurveyOption"
+                                     Content="{loc:Loc 'Other'}"
+                                     IsChecked="{Binding IsOtherSelected, Mode=TwoWay}" />
+
+                        <!-- Freeform input shown when "Other" is selected -->
+                        <TextBox IsVisible="{Binding IsOtherSelected}"
+                                 Text="{Binding OtherText, Mode=TwoWay}"
+                                 PlaceholderText="{loc:Loc 'Tell us where you heard about us'}"
+                                 MaxLength="200"
+                                 Margin="28,4,0,0" />
+                    </StackPanel>
+
+                    <!-- Inline error message (POST failure / no reporter / no machine_uuid) -->
+                    <TextBlock Text="{Binding SubmitError}"
+                               IsVisible="{Binding SubmitError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                               Foreground="{DynamicResource ErrorBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+
+                    <!-- Actions: Submit only — no dismiss path, the user must answer. -->
+                    <Button Classes="primary"
+                            Content="{loc:Loc 'Submit'}"
+                            Command="{Binding SubmitCommand}"
+                            IsEnabled="{Binding CanSubmit}"
+                            HorizontalAlignment="Right"
+                            Margin="0,4,0,0" />
+
+                </StackPanel>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

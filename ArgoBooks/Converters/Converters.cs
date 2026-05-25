@@ -16,7 +16,8 @@ public static class Converters
     public static readonly IMultiValueConverter ThemeBorderBrushMulti = new ThemeBorderBrushMultiConverter();
 
     /// <summary>
-    /// Converts a boolean to "Finish" or "Next" text.
+    /// Converts a boolean to "Finish" or "Next" text. Used by tutorial overlays
+    /// where the last step actually ends the flow (Products, Categories).
     /// </summary>
     public static readonly IValueConverter BoolToFinishNext = new BoolToFixedStringConverter("Finish", "Next");
 
