@@ -1612,4 +1612,39 @@ public partial class App
         }
     }
 
+    /// <summary>
+    /// When the user finishes the setup checklist, opens the "Where did you hear about
+    /// Argo Books?" survey. Deferred until any in-flight completion guidance card
+    /// (which fires simultaneously for the final VisitAnalytics step) has been dismissed.
+    /// </summary>
+    private static bool _surveyPendingAfterGuidance;
+
+    private static void WireSourceSurveyEvents()
+    {
+        TutorialService.Instance.AllChecklistItemsCompleted += (_, _) =>
+        {
+            if (!TutorialService.Instance.ShouldShowSourceSurvey())
+                return;
+
+            // If the Analytics completion guidance just opened in the same
+            // call-stack (VisitAnalytics is the last checklist item), wait for
+            // the user to dismiss it before showing the survey on top.
+            if (TutorialService.Instance.ShowCompletionGuidance)
+            {
+                _surveyPendingAfterGuidance = true;
+            }
+            else
+            {
+                TutorialService.Instance.RequestShowSourceSurvey();
+            }
+        };
+
+        TutorialService.Instance.CompletionGuidanceChanged += (_, show) =>
+        {
+            if (show || !_surveyPendingAfterGuidance) return;
+            _surveyPendingAfterGuidance = false;
+            TutorialService.Instance.RequestShowSourceSurvey();
+        };
+    }
+
 }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
@@ -110,6 +111,16 @@
                     <!-- Date Range Selector -->
                     <controls:DateRangeSelector Grid.Column="3" VerticalAlignment="Top" />
                 </Grid>
+
+                <!-- Source Survey Banner (shown to users who skipped the tutorial) -->
+                <controls:InfoBanner ShowBanner="{Binding ShowSourceSurveyBanner}"
+                                     Message="{loc:Loc 'Quick question: where did you hear about Argo Books?'}"
+                                     ActionText="{loc:Loc 'Answer'}"
+                                     ActionCommand="{Binding OpenSourceSurveyCommand}"
+                                     DismissCommand="{Binding DismissSourceSurveyBannerCommand}"
+                                     IconData="{x:Static icons:Icons.Info}"
+                                     BannerBackground="{DynamicResource InfoBrush}"
+                                     DismissBackground="{DynamicResource InfoDarkBrush}" />
 
                 <!-- Edit Mode Toolbar -->
                 <Border Classes="card"
