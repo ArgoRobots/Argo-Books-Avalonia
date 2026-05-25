@@ -257,8 +257,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             {
                 ["Date"] = r => r.Date,
                 ["Description"] = r => r.Description,
-                ["Amount"] = r => r.Amount,
-                ["Note"] = r => r.IsPossibleDuplicate
+                ["Amount"] = r => r.Amount
             },
             r => r.Date);
 

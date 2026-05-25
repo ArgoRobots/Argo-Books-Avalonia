@@ -67,6 +67,7 @@
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            Text="{loc:Loc 'Lines from your imported bank statement(s). Match each one to a recorded transaction, or ignore lines you do not need to track.'}" />
                 <table:ArgoTable Grid.Row="1"
+                                 Title="{loc:Loc 'Bank lines'}"
                                  ItemsSource="{Binding Lines}"
                                  ShowAddButton="True"
                                  AddCommand="{Binding ImportStatementCommand}"
@@ -77,6 +78,14 @@
                                  SearchPlaceholder="{loc:Loc 'Search bank lines...'}"
                                  ShowFilterButton="True"
                                  FilterCommand="{Binding OpenFilterModalCommand}"
+                                 SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                 SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                 SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                 HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                 HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                 IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                 IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                 ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
                                  ColumnWidthsManager="{Binding BankLineColumns}"
                                  CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
                                  TotalPages="{Binding TotalPages}"
@@ -85,6 +94,7 @@
                                  GoToPageCommand="{Binding GoToPageCommand}"
                                  GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
                                  GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                 BorderSizeChanged="OnHeaderSizeChanged"
                                  TableGridSizeChanged="OnBankLinesTableSizeChanged"
                                  EmptyIcon="{x:Static icons:Icons.Bank}"
                                  EmptyTitle="{loc:Loc 'No bank lines to show'}"
@@ -195,6 +205,7 @@
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            Text="{loc:Loc 'Your recorded revenue, expenses and payments that have not been matched to a bank statement line yet.'}" />
                 <table:ArgoTable Grid.Row="1"
+                                 Title="{loc:Loc 'Missing from statement'}"
                                  ItemsSource="{Binding UnmatchedBookRecords}"
                                  ShowAddButton="True"
                                  AddCommand="{Binding ImportStatementCommand}"
@@ -205,6 +216,14 @@
                                  SearchPlaceholder="{loc:Loc 'Search records...'}"
                                  ShowFilterButton="True"
                                  FilterCommand="{Binding OpenMissingFilterModalCommand}"
+                                 SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                                 SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                                 SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                                 HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                                 HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                 IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                                 IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                                 ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
                                  ColumnWidthsManager="{Binding MissingColumns}"
                                  CurrentPage="{Binding MissingCurrentPage, Mode=TwoWay}"
                                  TotalPages="{Binding MissingTotalPages}"
@@ -213,6 +232,7 @@
                                  GoToPageCommand="{Binding MissingGoToPageCommand}"
                                  GoToPreviousPageCommand="{Binding MissingGoToPreviousPageCommand}"
                                  GoToNextPageCommand="{Binding MissingGoToNextPageCommand}"
+                                 BorderSizeChanged="OnHeaderSizeChanged"
                                  TableGridSizeChanged="OnMissingTableSizeChanged"
                                  EmptyIcon="{x:Static icons:Icons.Check}"
                                  EmptyTitle="{loc:Loc 'No records to show'}"
@@ -225,11 +245,9 @@
                             <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" SortProperty="Description"
                                                    ColumnWidth="{Binding MissingColumns.DescriptionColumnWidth}" ColumnWidths="{Binding MissingColumns}"
                                                    SortColumn="{Binding MissingSortColumn}" SortDirection="{Binding MissingSortDirection}" SortCommand="{Binding MissingSortByCommand}" />
-                            <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" SortProperty="Amount"
+                            <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" SortProperty="Amount" ShowSeparator="False"
                                                    ColumnWidth="{Binding MissingColumns.AmountColumnWidth}" ColumnWidths="{Binding MissingColumns}"
                                                    SortColumn="{Binding MissingSortColumn}" SortDirection="{Binding MissingSortDirection}" SortCommand="{Binding MissingSortByCommand}" />
-                            <table:ArgoTableHeader Header="{loc:Loc Note}" ColumnName="Note" IsSortable="False" ShowSeparator="False"
-                                                   ColumnWidth="{Binding MissingColumns.NoteColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
                         </StackPanel>
                     </table:ArgoTable.HeaderContent>
                     <table:ArgoTable.RowsContent>
@@ -243,23 +261,20 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.DateColumnWidth}" />
                                             <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.DescriptionColumnWidth}">
                                                 <table:ArgoTableCell.CellContent>
-                                                    <TextBlock Text="{Binding Description}" VerticalAlignment="Center" FontSize="13"
-                                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Description}" VerticalAlignment="Center" FontSize="13"
+                                                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <Border IsVisible="{Binding IsPossibleDuplicate}" VerticalAlignment="Center"
+                                                                CornerRadius="8" Padding="8,2"
+                                                                Background="{DynamicResource WarningLightBrush}">
+                                                            <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
+                                                                       Foreground="{DynamicResource WarningBrush}" />
+                                                        </Border>
+                                                    </StackPanel>
                                                 </table:ArgoTableCell.CellContent>
                                             </table:ArgoTableCell>
-                                            <table:ArgoTableCell Text="{Binding Amount, StringFormat=C2}"
+                                            <table:ArgoTableCell Text="{Binding Amount, StringFormat=C2}" ShowSeparator="False"
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.AmountColumnWidth}" />
-                                            <table:ArgoTableCell ShowSeparator="False"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.NoteColumnWidth}">
-                                                <table:ArgoTableCell.CellContent>
-                                                    <Border IsVisible="{Binding IsPossibleDuplicate}"
-                                                            VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                            CornerRadius="8" Padding="8,2">
-                                                        <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
-                                                                   Foreground="{DynamicResource WarningBrush}" />
-                                                    </Border>
-                                                </table:ArgoTableCell.CellContent>
-                                            </table:ArgoTableCell>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
