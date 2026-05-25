@@ -72,6 +72,7 @@ public class FileService(
             await WriteJsonAsync(companyDir, "idCounters.json", companyData.IdCounters, cancellationToken);
             await WriteJsonAsync(companyDir, "eventLog.json", companyData.EventLog, cancellationToken);
             await WriteJsonAsync(companyDir, "pendingConversions.json", companyData.PendingConversions, cancellationToken);
+            await WriteJsonAsync(companyDir, "bankImportSessions.json", companyData.BankImportSessions, cancellationToken);
 
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
@@ -338,6 +339,7 @@ public class FileService(
         var eventLogTask          = ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken);
         var pendingConversionsTask = ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken);
         var forecastRecordsTask   = ReadJsonAsync<List<Models.Insights.ForecastAccuracyRecord>>(tempDirectory, "forecastRecords.json", cancellationToken);
+        var bankImportSessionsTask = ReadJsonAsync<List<Models.BankMatching.BankImportSession>>(tempDirectory, "bankImportSessions.json", cancellationToken);
 
         // Validate version BEFORE awaiting the rest. If the file was saved by a newer app
         // version, the other data files may contain enum values or fields this build can't
@@ -351,7 +353,7 @@ public class FileService(
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
             reportTemplatesTask, invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
-            forecastRecordsTask
+            forecastRecordsTask, bankImportSessionsTask
         ];
 
         var settings = await settingsTask;
@@ -399,7 +401,8 @@ public class FileService(
             InvoiceTemplates = invoiceTemplatesTask.Result ?? [],
             EventLog = eventLogTask.Result ?? [],
             PendingConversions = pendingConversionsTask.Result ?? [],
-            ForecastRecords = forecastRecordsTask.Result ?? []
+            ForecastRecords = forecastRecordsTask.Result ?? [],
+            BankImportSessions = bankImportSessionsTask.Result ?? []
         };
     }
 
@@ -449,6 +452,7 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
         await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
         await WriteJsonAsync(companyDirectory, "forecastRecords.json", data.ForecastRecords, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "bankImportSessions.json", data.BankImportSessions, cancellationToken);
 
         data.MarkAsSaved();
     }

@@ -122,6 +122,13 @@ public class CompanyData
     public List<Payment> Payments { get; init; } = [];
 
     /// <summary>
+    /// Imported bank statements kept for the Bank Matching feature, so match progress
+    /// survives reload. Reference data only; never aggregated into financials.
+    /// </summary>
+    [JsonPropertyName("bankImportSessions")]
+    public List<Models.BankMatching.BankImportSession> BankImportSessions { get; init; } = [];
+
+    /// <summary>
     /// All recurring invoice schedules.
     /// </summary>
     [JsonPropertyName("recurringInvoices")]

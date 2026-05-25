@@ -171,6 +171,8 @@ public partial class App : Application
     /// </summary>
     public static StockAdjustmentsModalsViewModel? StockAdjustmentsModalsViewModel => _appShellViewModel?.StockAdjustmentsModalsViewModel;
 
+    public static BankMatchingModalsViewModel? BankMatchingModalsViewModel => _appShellViewModel?.BankMatchingModalsViewModel;
+
     /// <summary>
     /// Gets the purchase orders modals view model for shared access.
     /// </summary>
@@ -673,6 +675,7 @@ public partial class App : Application
     private static ExpensesPageViewModel? _expensesPageViewModel;
     private static InvoicesPageViewModel? _invoicesPageViewModel;
     private static PaymentsPageViewModel? _paymentsPageViewModel;
+    private static BankMatchingPageViewModel? _bankMatchingPageViewModel;
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
     private static LocationsPageViewModel? _locationsPageViewModel;
@@ -701,6 +704,7 @@ public partial class App : Application
         _expensesPageViewModel = null;
         _invoicesPageViewModel = null;
         _paymentsPageViewModel = null;
+        _bankMatchingPageViewModel = null;
         _productsPageViewModel = null;
         _stockLevelsPageViewModel = null;
         _locationsPageViewModel = null;
@@ -2130,8 +2134,131 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Creates a JSON snapshot of the company data collections for undo/redo.
+    /// Imports a bank statement via the smart importer (parse only, no commit) and shows it on the
+    /// Bank Matching page. Triggered by the page's Import button.
     /// </summary>
+    private static async Task PerformBankImportAsync()
+    {
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+        if (CompanyManager?.CompanyData is not { } companyData)
+        {
+            await ShowErrorMessageBoxAsync("Error".Translate(), "No company is currently open.".Translate());
+            return;
+        }
+
+        var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Bank Statement".Translate(),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Spreadsheets") { Patterns = ["*.xlsx", "*.csv"] }
+            ]
+        });
+        if (file.Count == 0) return;
+
+        var filePath = file[0].Path.LocalPath;
+        var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+
+        _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate());
+        await Task.Yield();
+
+        try
+        {
+            var parser = new BankStatementImportService(ErrorLogger);
+
+            // Try local column detection first (instant, no AI). Fall back to AI column mapping
+            // only when the headers aren't recognized locally.
+            var lines = isCsv
+                ? await parser.ParseCsvAsync(filePath)
+                : await parser.ParseExcelAsync(filePath);
+
+            if (lines.Count == 0)
+                lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+
+            _mainWindowViewModel?.HideLoading();
+
+            if (lines.Count == 0)
+            {
+                await ShowInfoMessageBoxAsync("Info".Translate(),
+                    "No transactions were found. Make sure the file has Date, Description and Amount (or Debit/Credit) columns.".Translate());
+                return;
+            }
+
+            // Snapshot before mutation so the import can be undone in one step.
+            var snapshot = CreateCompanyDataSnapshot(companyData);
+
+            var session = new ArgoBooks.Core.Models.BankMatching.BankImportSession
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ImportedAt = DateTime.UtcNow,
+                SourceFileName = Path.GetFileName(filePath),
+                Lines = lines
+            };
+            companyData.BankImportSessions.Add(session);
+            companyData.MarkAsModified();
+
+            var importedSnapshot = CreateCompanyDataSnapshot(companyData);
+            UndoRedoManager.RecordAction(new DelegateAction(
+                "Import bank statement".Translate(),
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); }
+            ));
+
+            CompanyManager.MarkAsChanged();
+
+            _bankMatchingPageViewModel?.Reload();
+            NavigationService?.NavigateTo(PageNames.BankMatching);
+
+            await ShowInfoMessageBoxAsync(
+                "Bank Matching".Translate(),
+                "Imported {0} transactions from {1}.".TranslateFormat(lines.Count, Path.GetFileName(filePath)));
+        }
+        catch (OperationCanceledException)
+        {
+            _mainWindowViewModel?.HideLoading();
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel?.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Bank statement import failed");
+            await ShowErrorMessageBoxAsync("Import Failed".Translate(), "Failed to import bank statement:\n\n{0}".TranslateFormat(ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// Backup parser: uses the smart importer's AI column mapping when local header detection
+    /// couldn't recognize the statement's columns. Consumes one AI import credit on success.
+    /// Returns an empty list if AI isn't available or finds nothing.
+    /// </summary>
+    private static async Task<List<ArgoBooks.Core.Models.BankMatching.BankStatementLine>> TryAiParseBankStatementAsync(
+        string filePath, bool isCsv, BankStatementImportService parser)
+    {
+        var gemini = new GeminiService(ErrorLogger, TelemetryManager);
+        if (!gemini.IsConfigured) return [];
+
+        using var usage = new AiImportUsageService(LicenseService, ErrorLogger);
+        var usageCheck = await usage.CheckUsageAsync();
+        if (!usageCheck.CanImport) return [];
+
+        var analysisService = new SpreadsheetAnalysisService(gemini, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company.Country);
+        var analysis = isCsv
+            ? await analysisService.AnalyzeCsvAsync(filePath)
+            : await analysisService.AnalyzeAsync(filePath);
+
+        var sheet = analysis?.Sheets.FirstOrDefault();
+        if (sheet == null) return [];
+
+        var lines = isCsv
+            ? await parser.ParseCsvWithAnalysisAsync(filePath, sheet)
+            : await parser.ParseExcelWithAnalysisAsync(filePath, sheet);
+
+        if (lines.Count > 0)
+            await usage.IncrementUsageAsync();
+
+        return lines;
+    }
+
     private static string CreateCompanyDataSnapshot(CompanyData data)
     {
         var snapshot = new
@@ -2159,7 +2286,8 @@ public partial class App : Application
             data.LostDamaged,
             data.Receipts,
             data.ReportTemplates,
-            data.EventLog
+            data.EventLog,
+            data.BankImportSessions
         };
         return System.Text.Json.JsonSerializer.Serialize(snapshot);
     }
@@ -2239,6 +2367,7 @@ public partial class App : Application
         RestoreList(data.Receipts, "Receipts");
         RestoreList(data.ReportTemplates, "ReportTemplates");
         RestoreList(data.EventLog, "EventLog");
+        RestoreList(data.BankImportSessions, "BankImportSessions");
     }
 
     /// <summary>
@@ -2919,6 +3048,15 @@ public partial class App : Application
             return new LocationsPage { DataContext = _locationsPageViewModel };
         });
         navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = _stockAdjustmentsPageViewModel ??= new StockAdjustmentsPageViewModel() });
+        navigationService.RegisterPage("BankMatching", _ =>
+        {
+            if (_bankMatchingPageViewModel == null)
+            {
+                _bankMatchingPageViewModel = new BankMatchingPageViewModel();
+                _bankMatchingPageViewModel.ImportRequested += async (_, _) => await PerformBankImportAsync();
+            }
+            return new BankMatchingPage { DataContext = _bankMatchingPageViewModel };
+        });
         navigationService.RegisterPage("PurchaseOrders", param =>
         {
             _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel();

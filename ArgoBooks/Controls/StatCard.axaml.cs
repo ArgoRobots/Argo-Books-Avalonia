@@ -45,6 +45,9 @@ public partial class StatCard : UserControl
     public static readonly StyledProperty<string?> LabelProperty =
         AvaloniaProperty.Register<StatCard, string?>(nameof(Label));
 
+    public static readonly StyledProperty<string?> InfoTextProperty =
+        AvaloniaProperty.Register<StatCard, string?>(nameof(InfoText));
+
     public static readonly StyledProperty<string?> ValueProperty =
         AvaloniaProperty.Register<StatCard, string?>(nameof(Value));
 
@@ -182,6 +185,13 @@ public partial class StatCard : UserControl
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
+    }
+
+    /// <summary>Optional explanation shown via an info icon next to the label.</summary>
+    public string? InfoText
+    {
+        get => GetValue(InfoTextProperty);
+        set => SetValue(InfoTextProperty, value);
     }
 
     /// <summary>

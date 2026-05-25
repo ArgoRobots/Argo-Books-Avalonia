@@ -54,9 +54,9 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24" Spacing="16">
-                            <!-- Invoice (Optional) -->
+                            <!-- Invoice -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc 'Invoice (Optional)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Invoice}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
@@ -69,6 +69,21 @@
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalInvoiceError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- Revenue (alternative link to an invoice) -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Revenue (if not linked to an invoice)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:SearchableDropdown ItemsSource="{Binding RevenueOptions}"
+                                                            SelectedItem="{Binding SelectedRevenue}"
+                                                            DisplayMemberPath="Display"
+                                                            Placeholder="{loc:Loc 'Search for a revenue...'}"
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="{loc:Loc 'No revenue found.'}" />
+                                <TextBlock Text="{Binding ModalLinkError}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding ModalLinkError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Amount -->
@@ -184,9 +199,9 @@
                                            TextWrapping="Wrap" />
                             </Border>
 
-                            <!-- Invoice (Optional) — hidden for portal payments -->
+                            <!-- Invoice — hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
-                                <TextBlock Text="{loc:Loc 'Invoice (Optional)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Invoice}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
@@ -195,6 +210,21 @@
                                                             EmptyMessage="{loc:Loc 'No invoices found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateInvoiceCommand}" />
+                            </StackPanel>
+
+                            <!-- Revenue (alternative link) — hidden for portal payments -->
+                            <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
+                                <TextBlock Text="{loc:Loc 'Revenue (if not linked to an invoice)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:SearchableDropdown ItemsSource="{Binding RevenueOptions}"
+                                                            SelectedItem="{Binding SelectedRevenue}"
+                                                            DisplayMemberPath="Display"
+                                                            Placeholder="{loc:Loc 'Search for a revenue...'}"
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="{loc:Loc 'No revenue found.'}" />
+                                <TextBlock Text="{Binding ModalLinkError}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource ErrorBrush}"
+                                           IsVisible="{Binding ModalLinkError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Amount — hidden for portal payments -->
