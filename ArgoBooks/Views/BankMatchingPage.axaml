@@ -4,9 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:bm="using:ArgoBooks.Core.Models.BankMatching"
-             xmlns:services="using:ArgoBooks.Services"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.BankMatchingPage"
@@ -43,8 +43,6 @@
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextPrimaryBrush}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <controls:DateRangeSelector VerticalAlignment="Center"
-                                                DataContext="{x:Static services:ChartSettingsService.Instance}" />
                     <Button Classes="secondary-button"
                             IsEnabled="{Binding CanRunAi}"
                             Command="{Binding RunAiSuggestionsCommand}"
@@ -80,103 +78,124 @@
                 <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            Text="{loc:Loc 'Lines from your imported bank statement(s). Match each one to a recorded transaction, or ignore lines you do not need to track.'}" />
-                <Border Grid.Row="1"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="12">
-                <Grid RowDefinitions="Auto,*">
-                    <!-- Header -->
-                    <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="120,*,120,110,*,170">
-                            <TextBlock Grid.Column="0" Text="{loc:Loc Date}" Classes="th" />
-                            <TextBlock Grid.Column="1" Text="{loc:Loc Description}" Classes="th" />
-                            <TextBlock Grid.Column="2" Text="{loc:Loc Amount}" Classes="th" />
-                            <TextBlock Grid.Column="3" Text="{loc:Loc Status}" Classes="th" />
-                            <TextBlock Grid.Column="4" Text="{loc:Loc 'Matched book entry'}" Classes="th" />
-                            <TextBlock Grid.Column="5" Text="{loc:Loc Actions}" Classes="th" />
-                        </Grid>
-                    </Border>
-
-                    <!-- Empty state -->
-                    <StackPanel Grid.Row="1" IsVisible="{Binding !HasLines}"
-                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Spacing="8" Margin="24" MaxWidth="420">
-                        <PathIcon Data="{x:Static icons:Icons.Bank}" Width="32" Height="32"
-                                  Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="{loc:Loc 'No bank lines to show'}" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <TextBlock Text="{loc:Loc 'No imported lines fall in the selected date range. Try a wider date range, or import another statement.'}"
-                                   TextWrapping="Wrap" TextAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                    </StackPanel>
-
-                    <!-- Rows -->
-                    <ScrollViewer Grid.Row="1" IsVisible="{Binding HasLines}" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Lines}">
+                <table:ArgoTable Grid.Row="1"
+                                 ItemsSource="{Binding Lines}"
+                                 ShowAddButton="False"
+                                 ShowSearch="True"
+                                 SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                                 SearchPlaceholder="{loc:Loc 'Search bank lines...'}"
+                                 ShowFilterButton="True"
+                                 FilterCommand="{Binding OpenFilterModalCommand}"
+                                 ColumnWidthsManager="{Binding BankLineColumns}"
+                                 CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                                 TotalPages="{Binding TotalPages}"
+                                 PageSize="{Binding PageSize, Mode=TwoWay}"
+                                 PaginationText="{Binding PaginationText}"
+                                 GoToPageCommand="{Binding GoToPageCommand}"
+                                 GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                 GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                 TableGridSizeChanged="OnBankLinesTableSizeChanged"
+                                 EmptyIcon="{x:Static icons:Icons.Bank}"
+                                 EmptyTitle="{loc:Loc 'No bank lines to show'}"
+                                 EmptyMessage="{loc:Loc 'No lines match your search or filters. Clear them, or import another statement.'}">
+                    <table:ArgoTable.HeaderContent>
+                        <StackPanel Orientation="Horizontal">
+                            <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" SortProperty="Date"
+                                                   ColumnWidth="{Binding BankLineColumns.DateColumnWidth}" ColumnWidths="{Binding BankLineColumns}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}" SortCommand="{Binding SortByCommand}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" SortProperty="Description"
+                                                   ColumnWidth="{Binding BankLineColumns.DescriptionColumnWidth}" ColumnWidths="{Binding BankLineColumns}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}" SortCommand="{Binding SortByCommand}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" SortProperty="Amount"
+                                                   ColumnWidth="{Binding BankLineColumns.AmountColumnWidth}" ColumnWidths="{Binding BankLineColumns}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}" SortCommand="{Binding SortByCommand}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Status}" ColumnName="Status" SortProperty="Status"
+                                                   ColumnWidth="{Binding BankLineColumns.StatusColumnWidth}" ColumnWidths="{Binding BankLineColumns}"
+                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}" SortCommand="{Binding SortByCommand}" />
+                            <table:ArgoTableHeader Header="{loc:Loc 'Matched book entry'}" ColumnName="Matched" IsSortable="False"
+                                                   ColumnWidth="{Binding BankLineColumns.MatchedColumnWidth}" ColumnWidths="{Binding BankLineColumns}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions" IsSortable="False" IsResizable="False" ShowSeparator="False"
+                                                   ColumnWidth="{Binding BankLineColumns.ActionsColumnWidth}" />
+                        </StackPanel>
+                    </table:ArgoTable.HeaderContent>
+                    <table:ArgoTable.RowsContent>
+                        <ItemsControl Classes="table-rows" ItemsSource="{Binding Lines}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:BankLineRow">
-                                    <Border Padding="20,0" MinHeight="52"
+                                    <Border Padding="24,0" MinHeight="52"
                                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                                        <Grid ColumnDefinitions="120,*,120,110,*,170">
-                                            <TextBlock Grid.Column="0" Text="{Binding DateDisplay}" VerticalAlignment="Center"
-                                                       FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Grid.Column="1" Text="{Binding Description}" VerticalAlignment="Center"
-                                                       FontSize="13" TextTrimming="CharacterEllipsis"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" />
-                                            <TextBlock Grid.Column="2" Text="{Binding AmountDisplay}" VerticalAlignment="Center"
-                                                       FontSize="13" FontWeight="SemiBold" Foreground="{Binding AmountColor}" />
-                                            <Border Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                    CornerRadius="10" Padding="10,3">
-                                                <TextBlock Text="{Binding StatusDisplay}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{Binding StatusColor}" />
-                                            </Border>
-                                            <TextBlock Grid.Column="4" Text="{Binding MatchedDisplay}" VerticalAlignment="Center"
-                                                       FontSize="13" TextTrimming="CharacterEllipsis"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,12,0" />
-                                            <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4"
-                                                        VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <!-- Suggested: accept / choose / ignore -->
-                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Accept match'}"
-                                                        IsVisible="{Binding IsSuggested}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).AcceptSuggestionCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="{x:Static icons:Icons.Check}" Width="16" Height="16" />
-                                                </Button>
-                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Choose match'}"
-                                                        IsVisible="{Binding IsActionable}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).OpenCandidatePickerCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
-                                                </Button>
-                                                <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc 'Ignore line'}"
-                                                        IsVisible="{Binding IsActionable}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).IgnoreLineCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
-                                                </Button>
-                                                <!-- Ignored: restore -->
-                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Restore line'}"
-                                                        IsVisible="{Binding IsIgnored}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).RestoreLineCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="{x:Static icons:Icons.Undo}" Width="16" Height="16" />
-                                                </Button>
-                                                <!-- Matched: unlink -->
-                                                <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Unlink match'}"
-                                                        IsVisible="{Binding IsMatched}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).UnlinkMatchCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
+                                        <StackPanel Orientation="Horizontal">
+                                            <table:ArgoTableCell Text="{Binding DateDisplay}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.DateColumnWidth}" />
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.DescriptionColumnWidth}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <TextBlock Text="{Binding Description}" VerticalAlignment="Center" FontSize="13"
+                                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.AmountColumnWidth}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <TextBlock Text="{Binding AmountDisplay}" VerticalAlignment="Center" FontSize="13"
+                                                               FontWeight="SemiBold" Foreground="{Binding AmountColor}" />
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.StatusColumnWidth}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <TextBlock Text="{Binding StatusDisplay}" VerticalAlignment="Center" FontSize="12"
+                                                               FontWeight="SemiBold" Foreground="{Binding StatusColor}" />
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                            <table:ArgoTableCell Text="{Binding MatchedDisplay}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.MatchedColumnWidth}" />
+                                            <table:ArgoTableCell ShowSeparator="False"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.ActionsColumnWidth}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                        <!-- Suggested: accept -->
+                                                        <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Accept match'}"
+                                                                IsVisible="{Binding IsSuggested}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).AcceptSuggestionCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Check}" Width="16" Height="16" />
+                                                        </Button>
+                                                        <!-- Unmatched/Suggested: choose -->
+                                                        <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Choose match'}"
+                                                                IsVisible="{Binding IsActionable}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).OpenCandidatePickerCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                        </Button>
+                                                        <!-- Unmatched/Suggested: ignore -->
+                                                        <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc 'Ignore line'}"
+                                                                IsVisible="{Binding IsActionable}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).IgnoreLineCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
+                                                        </Button>
+                                                        <!-- Ignored: restore -->
+                                                        <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Restore line'}"
+                                                                IsVisible="{Binding IsIgnored}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).RestoreLineCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Undo}" Width="16" Height="16" />
+                                                        </Button>
+                                                        <!-- Matched: unlink -->
+                                                        <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Unlink match'}"
+                                                                IsVisible="{Binding IsMatched}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).UnlinkMatchCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                        </StackPanel>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
-                </Grid>
-                </Border>
+                    </table:ArgoTable.RowsContent>
+                </table:ArgoTable>
             </Grid>
 
             <!-- Missing from statement tab -->
@@ -184,78 +203,65 @@
                 <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            Text="{loc:Loc 'Your recorded revenue, expenses and payments that have not been matched to a bank statement line yet.'}" />
-                <Border Grid.Row="1"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="12">
-                <Grid RowDefinitions="Auto,*">
-                    <!-- Header -->
-                    <Border Grid.Row="0" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="130,*,130,170">
-                            <TextBlock Grid.Column="0" Text="{loc:Loc Date}" Classes="th" />
-                            <TextBlock Grid.Column="1" Text="{loc:Loc Description}" Classes="th" />
-                            <TextBlock Grid.Column="2" Text="{loc:Loc Amount}" Classes="th" />
-                            <TextBlock Grid.Column="3" Text="{loc:Loc Note}" Classes="th" />
-                        </Grid>
-                    </Border>
-
-                    <!-- Empty state -->
-                    <StackPanel Grid.Row="1" IsVisible="{Binding !HasUnmatchedBook}"
-                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Spacing="8" Margin="24" MaxWidth="420">
-                        <PathIcon Data="{x:Static icons:Icons.Check}" Width="32" Height="32"
-                                  Foreground="{DynamicResource SuccessBrush}" HorizontalAlignment="Center" />
-                        <TextBlock Text="{loc:Loc 'Nothing missing'}" FontWeight="SemiBold"
-                                   HorizontalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <TextBlock Text="{loc:Loc 'Every recorded revenue, expense and payment in this date range is matched to a bank line.'}"
-                                   TextWrapping="Wrap" TextAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                    </StackPanel>
-
-                    <!-- Rows -->
-                    <ScrollViewer Grid.Row="1" IsVisible="{Binding HasUnmatchedBook}" VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <ItemsControl ItemsSource="{Binding UnmatchedBookRecords}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="bm:BookRecordRef">
-                                        <Border Padding="20,0" MinHeight="44"
-                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="130,*,130,170">
-                                                <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='MMM dd, yyyy'}"
-                                                           VerticalAlignment="Center" FontSize="13"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Description}" VerticalAlignment="Center"
-                                                           FontSize="13" TextTrimming="CharacterEllipsis"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat=C2}"
-                                                           VerticalAlignment="Center" FontSize="13"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <Border Grid.Column="3" IsVisible="{Binding IsPossibleDuplicate}"
-                                                        VerticalAlignment="Center" HorizontalAlignment="Left"
-                                                        CornerRadius="8" Padding="8,2">
-                                                    <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
-                                                               Foreground="{DynamicResource WarningBrush}" />
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                <table:ArgoTable Grid.Row="1"
+                                 ItemsSource="{Binding UnmatchedBookRecords}"
+                                 ShowHeader="False"
+                                 ShowAddButton="False"
+                                 ShowPagination="False"
+                                 ColumnWidthsManager="{Binding MissingColumns}"
+                                 TableGridSizeChanged="OnMissingTableSizeChanged"
+                                 EmptyIcon="{x:Static icons:Icons.Check}"
+                                 EmptyTitle="{loc:Loc 'Nothing missing'}"
+                                 EmptyMessage="{loc:Loc 'Every recorded revenue, expense and payment in this date range is matched to a bank line.'}">
+                    <table:ArgoTable.HeaderContent>
+                        <StackPanel Orientation="Horizontal">
+                            <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" IsSortable="False"
+                                                   ColumnWidth="{Binding MissingColumns.DateColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" IsSortable="False"
+                                                   ColumnWidth="{Binding MissingColumns.DescriptionColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" IsSortable="False"
+                                                   ColumnWidth="{Binding MissingColumns.AmountColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Note}" ColumnName="Note" IsSortable="False" ShowSeparator="False"
+                                                   ColumnWidth="{Binding MissingColumns.NoteColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
                         </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-                </Border>
+                    </table:ArgoTable.HeaderContent>
+                    <table:ArgoTable.RowsContent>
+                        <ItemsControl Classes="table-rows" ItemsSource="{Binding UnmatchedBookRecords}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="bm:BookRecordRef">
+                                    <Border Padding="24,0" MinHeight="44"
+                                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <table:ArgoTableCell Text="{Binding Date, StringFormat='MMM dd, yyyy'}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.DateColumnWidth}" />
+                                            <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.DescriptionColumnWidth}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <TextBlock Text="{Binding Description}" VerticalAlignment="Center" FontSize="13"
+                                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                            <table:ArgoTableCell Text="{Binding Amount, StringFormat=C2}"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.AmountColumnWidth}" />
+                                            <table:ArgoTableCell ShowSeparator="False"
+                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).MissingColumns.NoteColumnWidth}">
+                                                <table:ArgoTableCell.CellContent>
+                                                    <Border IsVisible="{Binding IsPossibleDuplicate}"
+                                                            VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                            CornerRadius="8" Padding="8,2">
+                                                        <TextBlock Text="{loc:Loc 'Possible duplicate'}" FontSize="11"
+                                                                   Foreground="{DynamicResource WarningBrush}" />
+                                                    </Border>
+                                                </table:ArgoTableCell.CellContent>
+                                            </table:ArgoTableCell>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </table:ArgoTable.RowsContent>
+                </table:ArgoTable>
             </Grid>
         </Grid>
     </Panel>
-
-    <UserControl.Styles>
-        <Style Selector="TextBlock.th">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-    </UserControl.Styles>
 
 </UserControl>

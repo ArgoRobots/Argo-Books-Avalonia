@@ -2210,9 +2210,6 @@ public partial class App : Application
 
             CompanyManager.MarkAsChanged();
 
-            // Show all dates so just-imported lines are visible regardless of their statement period.
-            ChartSettingsService.Instance.SelectedDateRange = "All Time";
-
             _bankMatchingPageViewModel?.Reload();
             NavigationService?.NavigateTo(PageNames.BankMatching);
         }

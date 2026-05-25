@@ -1,10 +1,13 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -14,25 +17,30 @@ namespace ArgoBooks.ViewModels;
 /// ViewModel for the Bank Matching page. Imports a bank statement (via the smart importer) and
 /// matches each line against recorded expenses, revenue, invoices and payments.
 /// </summary>
-public partial class BankMatchingPageViewModel : ViewModelBase
+public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 {
     private readonly BankMatchingService _matcher = new();
     private readonly BankMatchingOptions _options = new();
     private BankMatchingResult? _result;
 
+    /// <summary>All bank line rows from the last match (unfiltered, unpaged).</summary>
+    private readonly List<BankLineRow> _allRows = [];
+
     public BankMatchingPageViewModel()
     {
+        SortColumn = "Date";
+        SortDirection = SortDirection.Descending;
+
         Reload();
 
         if (App.NavigationService != null)
             App.NavigationService.Navigated += OnNavigated;
 
-        // The candidate picker lives in the AppShell-hosted modal; apply the user's choice here.
         if (App.BankMatchingModalsViewModel != null)
+        {
             App.BankMatchingModalsViewModel.CandidateChosen += OnCandidateChosen;
-
-        // Filter the view by the shared date range used on the dashboard/analytics pages.
-        ChartSettingsService.Instance.DateRangeChanged += OnDateRangeChanged;
+            App.BankMatchingModalsViewModel.FiltersApplied += OnFiltersApplied;
+        }
     }
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
@@ -41,29 +49,31 @@ public partial class BankMatchingPageViewModel : ViewModelBase
             Reload();
     }
 
-    private void OnDateRangeChanged(object? sender, string e) => RefreshDisplay();
-
     private void OnCandidateChosen(object? sender, BankMatchChosenEventArgs e)
     {
-        var row = Lines.FirstOrDefault(r => r.Line.Id == e.LineId);
+        var row = _allRows.FirstOrDefault(r => r.Line.Id == e.LineId);
         if (row != null)
             ConfirmCandidate(row, e.Candidate);
     }
 
     #region State
 
-    /// <summary>Rows shown in the table.</summary>
+    /// <summary>Bank line rows for the current page.</summary>
     public ObservableCollection<BankLineRow> Lines { get; } = [];
 
     /// <summary>Book records that no bank line matched (possibly missing from the statement).</summary>
     public ObservableCollection<BookRecordRef> UnmatchedBookRecords { get; } = [];
 
+    /// <summary>Resizable column widths for the bank lines table.</summary>
+    public Controls.ColumnWidths.BankLinesTableColumnWidths BankLineColumns { get; } = new();
+
+    /// <summary>Resizable column widths for the missing-records table.</summary>
+    public Controls.ColumnWidths.MissingRecordsTableColumnWidths MissingColumns { get; } = new();
+
+    public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+
     [ObservableProperty]
     private bool _hasSession;
-
-    /// <summary>True when at least one bank line is visible in the current date range.</summary>
-    [ObservableProperty]
-    private bool _hasLines;
 
     [ObservableProperty]
     private int _matchedCount;
@@ -80,10 +90,12 @@ public partial class BankMatchingPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAiBusy;
 
-    /// <summary>True when there are unmatched lines the AI could be asked to suggest matches for.</summary>
+    [ObservableProperty]
+    private string _paginationText = "0 lines";
+
+    /// <summary>True when there are unmatched lines suggestions could be requested for.</summary>
     public bool CanRunAi => UnmatchedLineCount > 0 && !IsAiBusy;
 
-    /// <summary>True when there are book records the statement did not account for.</summary>
     public bool HasUnmatchedBook => UnmatchedBookCount > 0;
 
     partial void OnUnmatchedLineCountChanged(int value) => OnPropertyChanged(nameof(CanRunAi));
@@ -92,7 +104,26 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Tabs
+    #region Search, filter, tabs
+
+    [ObservableProperty]
+    private string? _searchQuery;
+
+    partial void OnSearchQueryChanged(string? value)
+    {
+        CurrentPage = 1;
+        ApplyFiltersAndPaginate();
+    }
+
+    // Filter state (set from the filter modal).
+    [ObservableProperty]
+    private DateTime? _filterStartDate;
+
+    [ObservableProperty]
+    private DateTime? _filterEndDate;
+
+    [ObservableProperty]
+    private string _filterStatus = "All";
 
     /// <summary>0 = Bank lines, 1 = Missing from statement.</summary>
     [ObservableProperty]
@@ -111,10 +142,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
     #region Loading and matching
 
-    /// <summary>
-    /// Reloads from all imported sessions (lines accumulate across imports), runs matching,
-    /// and rebuilds the view.
-    /// </summary>
+    /// <summary>Reloads from all imported sessions (lines accumulate across imports) and matches.</summary>
     public void Reload()
     {
         var data = App.CompanyManager?.CompanyData;
@@ -122,7 +150,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         {
             _result = null;
             HasSession = false;
-            HasLines = false;
+            _allRows.Clear();
             Lines.Clear();
             UnmatchedBookRecords.Clear();
             ResetCounts();
@@ -138,46 +166,99 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         var data = App.CompanyManager?.CompanyData;
         if (data == null) return;
 
-        // Match across every imported statement so previously imported lines are not lost.
         var allLines = data.BankImportSessions.SelectMany(s => s.Lines).ToList();
         _result = _matcher.MatchDeterministic(allLines, data, _options);
         _candidatesByLineId = _result.CandidatesByLineId;
 
-        RefreshDisplay();
-    }
-
-    /// <summary>Rebuilds the visible rows from the last match result, filtered by the selected date range.</summary>
-    private void RefreshDisplay()
-    {
-        if (_result == null) return;
-
-        var settings = ChartSettingsService.Instance;
-        var start = settings.StartDate.Date;
-        var end = settings.EndDate.Date;
-        bool InRange(DateTime d) => d == DateTime.MinValue || (d.Date >= start && d.Date <= end);
-
-        Lines.Clear();
-        foreach (var line in _result.Lines.Where(l => InRange(l.Date)))
+        _allRows.Clear();
+        foreach (var line in _result.Lines)
         {
-            // Auto-matched lines aren't in CandidatesByLineId, so resolve their record for display.
             var top = ResolveTopCandidate(line)
                       ?? (line.MatchStatus == BankLineMatchStatus.Matched ? BuildMatchedCandidate(line) : null);
-            Lines.Add(new BankLineRow(line, top));
+            _allRows.Add(new BankLineRow(line, top));
         }
 
         UnmatchedBookRecords.Clear();
-        foreach (var r in _result.UnmatchedBookRecords.Where(r => InRange(r.Date)))
+        foreach (var r in _result.UnmatchedBookRecords)
             UnmatchedBookRecords.Add(r);
+        UnmatchedBookCount = UnmatchedBookRecords.Count;
 
         RecomputeCounts();
-        UnmatchedBookCount = UnmatchedBookRecords.Count;
-        HasLines = Lines.Count > 0;
+        ApplyFiltersAndPaginate();
+    }
+
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => ApplyFiltersAndPaginate();
+
+    /// <summary>Applies search/filter, sorting and pagination to produce the visible page of rows.</summary>
+    private void ApplyFiltersAndPaginate()
+    {
+        IEnumerable<BankLineRow> query = _allRows;
+
+        if (FilterStatus != "All")
+            query = query.Where(r => StatusName(r.Line.MatchStatus) == FilterStatus);
+
+        if (FilterStartDate.HasValue)
+            query = query.Where(r => r.Line.Date == DateTime.MinValue || r.Line.Date.Date >= FilterStartDate.Value.Date);
+        if (FilterEndDate.HasValue)
+            query = query.Where(r => r.Line.Date == DateTime.MinValue || r.Line.Date.Date <= FilterEndDate.Value.Date);
+
+        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            var q = SearchQuery.Trim();
+            query = query.Where(r =>
+                r.Description.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.MatchedDisplay.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.AmountDisplay.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.Line.RawReference.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var filtered = query.ToList().ApplySort(
+            SortColumn,
+            SortDirection,
+            new Dictionary<string, Func<BankLineRow, object?>>
+            {
+                ["Date"] = r => r.Line.Date,
+                ["Description"] = r => r.Description,
+                ["Amount"] = r => r.Line.Amount,
+                ["Status"] = r => StatusName(r.Line.MatchStatus)
+            },
+            r => r.Line.Date);
+
+        var totalCount = filtered.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+        if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+
+        UpdatePageNumbers();
+        PaginationText = PaginationTextHelper.FormatPaginationText(totalCount, CurrentPage, PageSize, TotalPages, "line");
+
+        Lines.Clear();
+        foreach (var row in filtered.Skip((CurrentPage - 1) * PageSize).Take(PageSize))
+            Lines.Add(row);
+    }
+
+    protected override void UpdatePageNumbers()
+    {
+        PageNumbers.Clear();
+        var startPage = Math.Max(1, CurrentPage - 2);
+        var endPage = Math.Min(TotalPages, startPage + 4);
+        startPage = Math.Max(1, endPage - 4);
+        for (var i = startPage; i <= endPage; i++)
+            PageNumbers.Add(i);
     }
 
     private Dictionary<string, List<BankMatchCandidate>> _candidatesByLineId = [];
 
     private BankMatchCandidate? ResolveTopCandidate(Core.Models.BankMatching.BankStatementLine line) =>
         _candidatesByLineId.TryGetValue(line.Id, out var list) ? list.FirstOrDefault() : null;
+
+    private static string StatusName(BankLineMatchStatus status) => status switch
+    {
+        BankLineMatchStatus.Matched => "Matched",
+        BankLineMatchStatus.Suggested => "Suggested",
+        BankLineMatchStatus.Ignored => "Ignored",
+        _ => "Unmatched"
+    };
 
     /// <summary>
     /// Builds a display candidate for an already-matched line by looking up its record in the
@@ -215,17 +296,23 @@ public partial class BankMatchingPageViewModel : ViewModelBase
     private void ResetCounts()
     {
         MatchedCount = SuggestedCount = UnmatchedLineCount = UnmatchedBookCount = 0;
+        PaginationText = PaginationTextHelper.FormatPaginationText(0, 1, PageSize, 1, "line");
+    }
+
+    private void RecomputeCounts()
+    {
+        MatchedCount = _allRows.Count(r => r.Line.MatchStatus == BankLineMatchStatus.Matched);
+        SuggestedCount = _allRows.Count(r => r.Line.MatchStatus == BankLineMatchStatus.Suggested);
+        UnmatchedLineCount = _allRows.Count(r => r.Line.MatchStatus == BankLineMatchStatus.Unmatched);
     }
 
     #endregion
 
     #region Commands
 
-    /// <summary>Asks the host to open a file picker and import a bank statement.</summary>
     [RelayCommand]
     private void ImportStatement() => ImportRequested?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>Asks the host to run AI suggestions over the remaining unmatched lines.</summary>
     [RelayCommand]
     private void RunAiSuggestions()
     {
@@ -233,7 +320,19 @@ public partial class BankMatchingPageViewModel : ViewModelBase
             AiSuggestionsRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Accepts the top suggestion for a line.</summary>
+    [RelayCommand]
+    private void OpenFilterModal() =>
+        App.BankMatchingModalsViewModel?.OpenFilterModal(FilterStartDate, FilterEndDate, FilterStatus);
+
+    private void OnFiltersApplied(object? sender, BankFilterAppliedEventArgs e)
+    {
+        FilterStartDate = e.StartDate?.DateTime;
+        FilterEndDate = e.EndDate?.DateTime;
+        FilterStatus = e.Status;
+        CurrentPage = 1;
+        ApplyFiltersAndPaginate();
+    }
+
     [RelayCommand]
     private void AcceptSuggestion(BankLineRow? row)
     {
@@ -250,8 +349,8 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         SetLineIgnored(line);
         App.UndoRedoManager.RecordAction(new DelegateAction(
             "Ignore bank line".Translate(),
-            () => SetLineRestored(line),   // undo: bring the line back
-            () => SetLineIgnored(line)));  // redo: ignore again
+            () => SetLineRestored(line),
+            () => SetLineIgnored(line)));
         App.CompanyManager?.MarkAsChanged();
     }
 
@@ -264,8 +363,8 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         SetLineRestored(line);
         App.UndoRedoManager.RecordAction(new DelegateAction(
             "Restore bank line".Translate(),
-            () => SetLineIgnored(line),    // undo: ignore again
-            () => SetLineRestored(line))); // redo: restore again
+            () => SetLineIgnored(line),
+            () => SetLineRestored(line)));
         App.CompanyManager?.MarkAsChanged();
     }
 
@@ -278,6 +377,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         _matcher.UnlinkMatch(row.Line, data);
         row.Refresh(null);
         RecomputeCounts();
+        ApplyFiltersAndPaginate();
     }
 
     /// <summary>Opens the AppShell-hosted picker so the user can choose among candidates.</summary>
@@ -289,16 +389,17 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         App.BankMatchingModalsViewModel?.OpenCandidatePicker(row.Line.Id, row.Description, candidates);
     }
 
-    private void SetLineIgnored(BankStatementLine line)
+    private void SetLineIgnored(Core.Models.BankMatching.BankStatementLine line)
     {
         line.MatchStatus = BankLineMatchStatus.Ignored;
         _candidatesByLineId.Remove(line.Id);
         RefreshRow(line, null);
         App.CompanyManager?.CompanyData?.MarkAsModified();
         RecomputeCounts();
+        ApplyFiltersAndPaginate();
     }
 
-    private void SetLineRestored(BankStatementLine line)
+    private void SetLineRestored(Core.Models.BankMatching.BankStatementLine line)
     {
         var data = App.CompanyManager?.CompanyData;
         var candidates = data != null ? _matcher.FindCandidates(line, data, _options) : [];
@@ -316,11 +417,12 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         }
         data?.MarkAsModified();
         RecomputeCounts();
+        ApplyFiltersAndPaginate();
     }
 
-    private void RefreshRow(BankStatementLine line, BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
+    private void RefreshRow(Core.Models.BankMatching.BankStatementLine line, BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
     {
-        var row = Lines.FirstOrDefault(r => r.Line.Id == line.Id);
+        var row = _allRows.FirstOrDefault(r => r.Line.Id == line.Id);
         row?.Refresh(confirmed, suggested);
     }
 
@@ -332,13 +434,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         _candidatesByLineId.Remove(row.Line.Id);
         row.Refresh(candidate);
         RecomputeCounts();
-    }
-
-    private void RecomputeCounts()
-    {
-        MatchedCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Matched);
-        SuggestedCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Suggested);
-        UnmatchedLineCount = Lines.Count(l => l.Line.MatchStatus == BankLineMatchStatus.Unmatched);
+        ApplyFiltersAndPaginate();
     }
 
     /// <summary>
@@ -352,7 +448,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
         {
             if (candidates.Count == 0) continue;
             _candidatesByLineId[lineId] = candidates;
-            var row = Lines.FirstOrDefault(r => r.Line.Id == lineId);
+            var row = _allRows.FirstOrDefault(r => r.Line.Id == lineId);
             if (row != null && row.Line.MatchStatus == BankLineMatchStatus.Unmatched)
             {
                 row.Line.MatchStatus = BankLineMatchStatus.Suggested;
@@ -361,12 +457,13 @@ public partial class BankMatchingPageViewModel : ViewModelBase
             }
         }
         RecomputeCounts();
+        ApplyFiltersAndPaginate();
         return applied;
     }
 
     /// <summary>The lines still unmatched after deterministic matching (for the AI step).</summary>
     public IReadOnlyList<Core.Models.BankMatching.BankStatementLine> GetUnmatchedLines() =>
-        Lines.Where(r => r.Line.MatchStatus == BankLineMatchStatus.Unmatched).Select(r => r.Line).ToList();
+        _allRows.Where(r => r.Line.MatchStatus == BankLineMatchStatus.Unmatched).Select(r => r.Line).ToList();
 
     public BankMatchingOptions Options => _options;
 
@@ -374,10 +471,7 @@ public partial class BankMatchingPageViewModel : ViewModelBase
 
     #region Events
 
-    /// <summary>Raised when the user clicks Import statement.</summary>
     public event EventHandler? ImportRequested;
-
-    /// <summary>Raised when the user clicks Run AI suggestions.</summary>
     public event EventHandler? AiSuggestionsRequested;
 
     #endregion

@@ -49,6 +49,66 @@ public partial class BankMatchingModalsViewModel : ViewModelBase
         IsCandidateModalOpen = false;
         CandidateChosen?.Invoke(this, new BankMatchChosenEventArgs(_lineId, candidate));
     }
+
+    #region Filter modal
+
+    /// <summary>Raised when the user applies filters from the filter modal.</summary>
+    public event EventHandler<BankFilterAppliedEventArgs>? FiltersApplied;
+
+    [ObservableProperty]
+    private bool _isFilterModalOpen;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterStartDate;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterEndDate;
+
+    [ObservableProperty]
+    private string _filterStatus = "All";
+
+    /// <summary>Status filter options for the dropdown.</summary>
+    public ObservableCollection<string> StatusOptions { get; } =
+        ["All", "Matched", "Suggested", "Unmatched", "Ignored"];
+
+    /// <summary>Opens the filter modal seeded with the current filter values.</summary>
+    public void OpenFilterModal(DateTime? startDate, DateTime? endDate, string status)
+    {
+        FilterStartDate = startDate.HasValue ? new DateTimeOffset(startDate.Value) : null;
+        FilterEndDate = endDate.HasValue ? new DateTimeOffset(endDate.Value) : null;
+        FilterStatus = string.IsNullOrEmpty(status) ? "All" : status;
+        IsFilterModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseFilterModal() => IsFilterModalOpen = false;
+
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        IsFilterModalOpen = false;
+        FiltersApplied?.Invoke(this, new BankFilterAppliedEventArgs(FilterStartDate, FilterEndDate, FilterStatus));
+    }
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterStartDate = null;
+        FilterEndDate = null;
+        FilterStatus = "All";
+        IsFilterModalOpen = false;
+        FiltersApplied?.Invoke(this, new BankFilterAppliedEventArgs(null, null, "All"));
+    }
+
+    #endregion
+}
+
+/// <summary>Event args carrying the applied bank-line filters.</summary>
+public class BankFilterAppliedEventArgs(DateTimeOffset? startDate, DateTimeOffset? endDate, string status) : EventArgs
+{
+    public DateTimeOffset? StartDate { get; } = startDate;
+    public DateTimeOffset? EndDate { get; } = endDate;
+    public string Status { get; } = status;
 }
 
 /// <summary>Event args carrying the user's chosen candidate for a bank line.</summary>
