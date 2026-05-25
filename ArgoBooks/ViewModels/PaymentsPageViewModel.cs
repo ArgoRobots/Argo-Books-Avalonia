@@ -717,7 +717,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             {
                 Id = payment.Id,
                 InvoiceId = payment.InvoiceId,
-                InvoiceDisplay = string.IsNullOrEmpty(payment.InvoiceId) ? "-" : payment.InvoiceId,
+                InvoiceDisplay = !string.IsNullOrEmpty(payment.InvoiceId) ? payment.InvoiceId
+                    : !string.IsNullOrEmpty(payment.RevenueId) ? payment.RevenueId
+                    : "-",
                 CustomerId = payment.CustomerId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
@@ -935,6 +937,19 @@ public class InvoiceOption
     public string? Id { get; set; }
     public string Display { get; set; } = string.Empty;
     public decimal AmountDue { get; set; }
+
+    public override string ToString() => Display;
+}
+
+/// <summary>
+/// Revenue option for the payment modal dropdown (direct revenue not tied to an invoice).
+/// </summary>
+public class RevenueOption
+{
+    public string? Id { get; set; }
+    public string Display { get; set; } = string.Empty;
+    public string? CustomerId { get; set; }
+    public decimal Total { get; set; }
 
     public override string ToString() => Display;
 }

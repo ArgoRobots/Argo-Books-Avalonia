@@ -1,19 +1,16 @@
 using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
-using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Matches imported bank statement lines against recorded book entries (expenses, revenue,
-/// invoices, payments). Deterministic matching runs locally and for free; an optional hybrid
-/// AI step suggests matches for leftover unmatched lines.
+/// invoices, payments). Matching is deterministic and runs locally.
 /// </summary>
-public class BankMatchingService(IGeminiService? geminiService = null, IErrorLogger? errorLogger = null)
+public class BankMatchingService
 {
     // Score weights. amount(0.6) + date(0.3) + description(0.1) = 1.0 maximum.
     private const double AmountExactScore = 0.6;
@@ -313,110 +310,6 @@ public class BankMatchingService(IGeminiService? geminiService = null, IErrorLog
             }));
 
         return refs;
-    }
-
-    #endregion
-
-    #region Hybrid AI suggestions
-
-    /// <summary>
-    /// Asks the AI to suggest matches for lines that deterministic matching left unmatched.
-    /// Suggestions are never auto-applied. Consumes AI quota; call only on user request.
-    /// </summary>
-    public async Task<IReadOnlyDictionary<string, List<BankMatchCandidate>>> SuggestWithAiAsync(
-        IReadOnlyList<BankStatementLine> unmatchedLines,
-        CompanyData data,
-        BankMatchingOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        var suggestions = new Dictionary<string, List<BankMatchCandidate>>();
-        if (geminiService is not { IsConfigured: true } || unmatchedLines.Count == 0)
-            return suggestions;
-
-        var records = BuildRecordRefs(data, options.Scope).Where(r => !IsRecordMatched(data, r)).ToList();
-        if (records.Count == 0) return suggestions;
-
-        try
-        {
-            var prompt = BuildAiPrompt(unmatchedLines, records);
-            const string system =
-                "You match bank statement lines to bookkeeping records. " +
-                "Respond ONLY with a JSON array of objects {\"lineId\":string,\"recordId\":string,\"confidence\":number 0..1}. " +
-                "Only include a pairing when the amounts agree and the dates are close. Omit lines you cannot match.";
-
-            var response = await geminiService.SendChatAsync(system, prompt, maxTokens: 2000, temperature: 0.1, cancellationToken);
-            if (string.IsNullOrWhiteSpace(response)) return suggestions;
-
-            var recordsById = records.ToDictionary(r => r.Id);
-            foreach (var pair in ParseAiResponse(response))
-            {
-                if (!recordsById.TryGetValue(pair.RecordId, out var record)) continue;
-                if (!suggestions.TryGetValue(pair.LineId, out var list))
-                    suggestions[pair.LineId] = list = [];
-                list.Add(new BankMatchCandidate
-                {
-                    LineId = pair.LineId,
-                    RecordType = record.Type,
-                    RecordId = record.Id,
-                    RecordDescription = record.Description,
-                    RecordDate = record.Date,
-                    RecordAmount = record.Amount,
-                    Confidence = Math.Clamp(pair.Confidence, 0, 1),
-                    Reason = MatchReason.AiSuggested
-                });
-            }
-        }
-        catch (OperationCanceledException) { throw; }
-        catch (Exception ex)
-        {
-            errorLogger?.LogError(ex, ErrorCategory.Import, "AI bank match suggestion failed");
-        }
-
-        return suggestions;
-    }
-
-    private static string BuildAiPrompt(IReadOnlyList<BankStatementLine> lines, List<BookRecordRef> records)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("BANK LINES (unmatched):");
-        foreach (var l in lines)
-            sb.AppendLine($"- id={l.Id} | date={l.Date:yyyy-MM-dd} | amount={l.Amount} | desc=\"{l.Description}\"");
-        sb.AppendLine();
-        sb.AppendLine("BOOK RECORDS (candidates; amount sign: negative=money out, positive=money in):");
-        foreach (var r in records)
-            sb.AppendLine($"- id={r.Id} | type={r.Type} | date={r.Date:yyyy-MM-dd} | amount={r.Amount} | desc=\"{r.Description}\"");
-        return sb.ToString();
-    }
-
-    private readonly record struct AiPair(string LineId, string RecordId, double Confidence);
-
-    private static IEnumerable<AiPair> ParseAiResponse(string response)
-    {
-        var json = ExtractJsonArray(response);
-        if (json == null) yield break;
-
-        JsonElement root;
-        try { root = JsonDocument.Parse(json).RootElement; }
-        catch { yield break; }
-
-        if (root.ValueKind != JsonValueKind.Array) yield break;
-
-        foreach (var el in root.EnumerateArray())
-        {
-            if (el.ValueKind != JsonValueKind.Object) continue;
-            var lineId = el.TryGetProperty("lineId", out var l) ? l.GetString() : null;
-            var recordId = el.TryGetProperty("recordId", out var r) ? r.GetString() : null;
-            double confidence = el.TryGetProperty("confidence", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetDouble() : 0.5;
-            if (!string.IsNullOrEmpty(lineId) && !string.IsNullOrEmpty(recordId))
-                yield return new AiPair(lineId, recordId, confidence);
-        }
-    }
-
-    private static string? ExtractJsonArray(string text)
-    {
-        var start = text.IndexOf('[');
-        var end = text.LastIndexOf(']');
-        return start >= 0 && end > start ? text[start..(end + 1)] : null;
     }
 
     #endregion

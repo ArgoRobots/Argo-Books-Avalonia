@@ -138,6 +138,65 @@
                 </Border>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
+
+        <!-- Filter missing records -->
+        <controls:ModalOverlay IsOpen="{Binding IsMissingFilterModalOpen}"
+                               ClosingCommand="{Binding CloseMissingFilterModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="480"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel>
+                        <Border Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{loc:Loc 'Filter records'}" FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseMissingFilterModalCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Spacing="16" Margin="24">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc From}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding MissingFilterStartDate}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc To}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding MissingFilterEndDate}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Record Type'}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding TypeOptions}"
+                                          SelectedItem="{Binding MissingFilterType}"
+                                          Classes="form-combobox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Button Grid.Column="0" Content="{loc:Loc 'Clear Filters'}" Classes="secondary-button"
+                                        HorizontalAlignment="Left" Command="{Binding ClearMissingFiltersCommand}" />
+                                <Button Grid.Column="2" Content="{loc:Loc Cancel}" Classes="secondary-button"
+                                        Margin="0,0,12,0" Command="{Binding CloseMissingFilterModalCommand}" />
+                                <Button Grid.Column="3" Content="{loc:Loc 'Apply Filters'}" Classes="primary-button"
+                                        Command="{Binding ApplyMissingFiltersCommand}" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
     </Panel>
 
 </UserControl>

@@ -2212,6 +2212,10 @@ public partial class App : Application
 
             _bankMatchingPageViewModel?.Reload();
             NavigationService?.NavigateTo(PageNames.BankMatching);
+
+            await ShowInfoMessageBoxAsync(
+                "Bank Matching".Translate(),
+                "Imported {0} transactions from {1}.".TranslateFormat(lines.Count, Path.GetFileName(filePath)));
         }
         catch (OperationCanceledException)
         {
@@ -2256,62 +2260,6 @@ public partial class App : Application
             await usage.IncrementUsageAsync();
 
         return lines;
-    }
-
-    /// <summary>
-    /// Runs AI matching over the lines still unmatched on the Bank Matching page. Suggestions are
-    /// never auto-applied. Triggered by the page's "Run AI suggestions" button.
-    /// </summary>
-    private static async Task PerformBankAiSuggestionsAsync()
-    {
-        if (_bankMatchingPageViewModel is not { } vm) return;
-        if (CompanyManager?.CompanyData is not { } companyData) return;
-
-        var unmatched = vm.GetUnmatchedLines();
-        if (unmatched.Count == 0) return;
-
-        var geminiService = new GeminiService(ErrorLogger, TelemetryManager);
-        if (!geminiService.IsConfigured)
-        {
-            await ShowErrorMessageBoxAsync("Not Available".Translate(),
-                "Match suggestions require portal access. Please register your company first.".Translate());
-            return;
-        }
-
-        // AI suggestions consume the same monthly AI quota as imports.
-        using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
-        var usageCheck = await usageService.CheckUsageAsync();
-        if (!usageCheck.CanImport)
-        {
-            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(usageCheck.ImportCount, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
-            return;
-        }
-
-        vm.IsAiBusy = true;
-        _mainWindowViewModel?.ShowLoading("Looking for matches...".Translate());
-        try
-        {
-            var matcher = new BankMatchingService(geminiService, ErrorLogger);
-            var suggestions = await matcher.SuggestWithAiAsync(unmatched, companyData, vm.Options);
-            await usageService.IncrementUsageAsync();
-            var applied = vm.ApplyAiSuggestions(suggestions);
-            _mainWindowViewModel?.HideLoading();
-
-            await ShowInfoMessageBoxAsync(
-                "Bank Matching".Translate(),
-                applied > 0
-                    ? "Found {0} more possible match(es). Review and accept the suggestions.".TranslateFormat(applied)
-                    : "No additional matches were found for the remaining lines.".Translate());
-        }
-        catch (Exception ex)
-        {
-            _mainWindowViewModel?.HideLoading();
-            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Bank match suggestions failed");
-        }
-        finally
-        {
-            vm.IsAiBusy = false;
-        }
     }
 
     private static string CreateCompanyDataSnapshot(CompanyData data)
@@ -3109,7 +3057,6 @@ public partial class App : Application
             {
                 _bankMatchingPageViewModel = new BankMatchingPageViewModel();
                 _bankMatchingPageViewModel.ImportRequested += async (_, _) => await PerformBankImportAsync();
-                _bankMatchingPageViewModel.AiSuggestionsRequested += async (_, _) => await PerformBankAiSuggestionsAsync();
             }
             return new BankMatchingPage { DataContext = _bankMatchingPageViewModel };
         });

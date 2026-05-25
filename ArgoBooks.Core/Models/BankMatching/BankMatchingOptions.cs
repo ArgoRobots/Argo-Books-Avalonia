@@ -22,12 +22,15 @@ public class BankMatchingOptions
     /// <summary>Minimum confidence gap between the best and second-best candidate for an auto-match.</summary>
     public double AutoMatchAmbiguityGap { get; set; } = 0.15;
 
-    /// <summary>Which book record types to match against.</summary>
+    /// <summary>
+    /// Which book record types to match against. The Revenue table is the single source of truth
+    /// for income (invoices auto-create a linked revenue row), so matching only needs Revenue and
+    /// Expenses. Invoices and Payments are intentionally excluded to avoid matching the same bank
+    /// line to several records for one sale.
+    /// </summary>
     public HashSet<BookRecordType> Scope { get; set; } =
     [
         BookRecordType.Expense,
-        BookRecordType.Revenue,
-        BookRecordType.Invoice,
-        BookRecordType.Payment
+        BookRecordType.Revenue
     ];
 }

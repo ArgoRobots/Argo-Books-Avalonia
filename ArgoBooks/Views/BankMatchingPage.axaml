@@ -38,21 +38,9 @@
         <Grid IsVisible="{Binding HasSession}" RowDefinitions="Auto,Auto,Auto,*" Margin="24">
 
             <!-- Top bar -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                <TextBlock Grid.Column="0" Text="{loc:Loc 'Bank Matching'}" FontSize="20" FontWeight="SemiBold"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <Button Classes="secondary-button"
-                            IsEnabled="{Binding CanRunAi}"
-                            Command="{Binding RunAiSuggestionsCommand}"
-                            ToolTip.Tip="{loc:Loc 'Look for likely matches for the remaining unmatched lines'}"
-                            Content="{loc:Loc 'Suggest more matches'}" />
-                    <Button Classes="primary-button"
-                            Command="{Binding ImportStatementCommand}"
-                            Content="{loc:Loc 'Import statement'}" />
-                </StackPanel>
-            </Grid>
+            <TextBlock Grid.Row="0" Text="{loc:Loc 'Bank Matching'}" FontSize="20" FontWeight="SemiBold"
+                       Margin="0,0,0,16"
+                       Foreground="{DynamicResource TextPrimaryBrush}" />
 
             <!-- Summary cards -->
             <controls:StatCardsRow Grid.Row="1" Margin="0,0,0,20">
@@ -80,7 +68,10 @@
                            Text="{loc:Loc 'Lines from your imported bank statement(s). Match each one to a recorded transaction, or ignore lines you do not need to track.'}" />
                 <table:ArgoTable Grid.Row="1"
                                  ItemsSource="{Binding Lines}"
-                                 ShowAddButton="False"
+                                 ShowAddButton="True"
+                                 AddCommand="{Binding ImportStatementCommand}"
+                                 AddButtonText="{loc:Loc 'Import statement'}"
+                                 AddButtonTooltip="{loc:Loc 'Import statement'}"
                                  ShowSearch="True"
                                  SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
                                  SearchPlaceholder="{loc:Loc 'Search bank lines...'}"
@@ -205,22 +196,38 @@
                            Text="{loc:Loc 'Your recorded revenue, expenses and payments that have not been matched to a bank statement line yet.'}" />
                 <table:ArgoTable Grid.Row="1"
                                  ItemsSource="{Binding UnmatchedBookRecords}"
-                                 ShowHeader="False"
-                                 ShowAddButton="False"
-                                 ShowPagination="False"
+                                 ShowAddButton="True"
+                                 AddCommand="{Binding ImportStatementCommand}"
+                                 AddButtonText="{loc:Loc 'Import statement'}"
+                                 AddButtonTooltip="{loc:Loc 'Import statement'}"
+                                 ShowSearch="True"
+                                 SearchQuery="{Binding MissingSearchQuery, Mode=TwoWay}"
+                                 SearchPlaceholder="{loc:Loc 'Search records...'}"
+                                 ShowFilterButton="True"
+                                 FilterCommand="{Binding OpenMissingFilterModalCommand}"
                                  ColumnWidthsManager="{Binding MissingColumns}"
+                                 CurrentPage="{Binding MissingCurrentPage, Mode=TwoWay}"
+                                 TotalPages="{Binding MissingTotalPages}"
+                                 PageSize="{Binding MissingPageSize, Mode=TwoWay}"
+                                 PaginationText="{Binding MissingPaginationText}"
+                                 GoToPageCommand="{Binding MissingGoToPageCommand}"
+                                 GoToPreviousPageCommand="{Binding MissingGoToPreviousPageCommand}"
+                                 GoToNextPageCommand="{Binding MissingGoToNextPageCommand}"
                                  TableGridSizeChanged="OnMissingTableSizeChanged"
                                  EmptyIcon="{x:Static icons:Icons.Check}"
-                                 EmptyTitle="{loc:Loc 'Nothing missing'}"
-                                 EmptyMessage="{loc:Loc 'Every recorded revenue, expense and payment in this date range is matched to a bank line.'}">
+                                 EmptyTitle="{loc:Loc 'No records to show'}"
+                                 EmptyMessage="{loc:Loc 'Nothing here. Records appear when you have revenue, expenses or payments not matched to a bank line.'}">
                     <table:ArgoTable.HeaderContent>
                         <StackPanel Orientation="Horizontal">
-                            <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" IsSortable="False"
-                                                   ColumnWidth="{Binding MissingColumns.DateColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
-                            <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" IsSortable="False"
-                                                   ColumnWidth="{Binding MissingColumns.DescriptionColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
-                            <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" IsSortable="False"
-                                                   ColumnWidth="{Binding MissingColumns.AmountColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" SortProperty="Date"
+                                                   ColumnWidth="{Binding MissingColumns.DateColumnWidth}" ColumnWidths="{Binding MissingColumns}"
+                                                   SortColumn="{Binding MissingSortColumn}" SortDirection="{Binding MissingSortDirection}" SortCommand="{Binding MissingSortByCommand}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Description}" ColumnName="Description" SortProperty="Description"
+                                                   ColumnWidth="{Binding MissingColumns.DescriptionColumnWidth}" ColumnWidths="{Binding MissingColumns}"
+                                                   SortColumn="{Binding MissingSortColumn}" SortDirection="{Binding MissingSortDirection}" SortCommand="{Binding MissingSortByCommand}" />
+                            <table:ArgoTableHeader Header="{loc:Loc Amount}" ColumnName="Amount" SortProperty="Amount"
+                                                   ColumnWidth="{Binding MissingColumns.AmountColumnWidth}" ColumnWidths="{Binding MissingColumns}"
+                                                   SortColumn="{Binding MissingSortColumn}" SortDirection="{Binding MissingSortDirection}" SortCommand="{Binding MissingSortByCommand}" />
                             <table:ArgoTableHeader Header="{loc:Loc Note}" ColumnName="Note" IsSortable="False" ShowSeparator="False"
                                                    ColumnWidth="{Binding MissingColumns.NoteColumnWidth}" ColumnWidths="{Binding MissingColumns}" />
                         </StackPanel>

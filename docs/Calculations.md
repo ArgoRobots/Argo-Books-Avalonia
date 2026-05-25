@@ -13,7 +13,7 @@ If you find a calculation that disagrees with this document, the calculation is 
 | **Invoice** | A bill the business issued to a customer. Has a status (Draft, Sent, Paid, etc.) and a balance owed. |
 | **Revenue** | A row representing money the business earned. Linked to an invoice when one exists. Has a `PaymentStatus`. |
 | **Expense** | A row representing money the business spent. Linked to a supplier. |
-| **Payment** | A row representing a single money movement on an invoice. Positive = money in. Negative + `IsRefund=true` = money out. |
+| **Payment** | A row representing a single money movement, linked to either an invoice or a revenue. Positive = money in. Negative + `IsRefund=true` = money out. |
 | **Refund** | A `Payment` row with `IsRefund=true` and a negative amount, tied to the invoice (and usually the original payment) it offsets. |
 | **Subtotal** | Pre-tax amount. What stayed in the business if we set tax aside. |
 | **Tax amount** | The sales tax portion. Money collected on behalf of the government, not the business. |
@@ -113,6 +113,8 @@ Notes:
 ## 5. Payment math (per-invoice running totals)
 
 These four fields on `Invoice` are kept in sync from the `Payment` rows attached to that invoice. `InvoiceTotalsService` owns this calculation — anything that mutates an invoice's payment list must call `InvoiceTotalsService.Recalculate(invoice, allPayments)` after the change.
+
+A payment can instead be linked to a revenue (`Payment.RevenueId`) rather than an invoice — used for direct cash sales that have no invoice. Revenue-linked payments do not feed invoice totals (there is no invoice) and are not summed into revenue or profit (income is counted from the Revenue rows themselves, per §2). They are informational records of the money movement.
 
 | Field | Formula | Notes |
 |---|---|---|
@@ -254,6 +256,10 @@ The Insights tab — trends, anomalies, forecasts, recommendations — follows t
 ### Returns and Losses
 
 Returns (customer-returned items) and Losses (lost / damaged inventory) have their own charts but do **not** participate in the revenue / profit / expense pipeline directly. They surface in dedicated "Return Financial Impact" / "Loss Financial Impact" charts that sum `Return.RefundAmount` and `LostDamaged.ValueLost` respectively. The recorded *refund* (a Payment row) is what flows through the revenue / profit subtraction defined in §8.
+
+### Bank matching
+
+Bank Matching (`BankMatchingService`) is a non-financial reference layer: it imports bank statement lines and links them to existing Revenue and Expense rows to help the user verify their books. It only sets a "matched" flag (`BankMatched`) on records and never feeds revenue / expense / profit / tax aggregation, so none of the rules above are affected. It matches against Revenue and Expenses only — invoices and payments are excluded because invoiced sales are already represented by their Revenue row (§5). Matching compares the gross transacted amount (the actual cash movement), not a USD-normalized aggregate.
 
 ---
 

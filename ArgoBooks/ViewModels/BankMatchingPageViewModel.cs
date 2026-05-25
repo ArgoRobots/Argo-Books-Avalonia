@@ -26,6 +26,9 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     /// <summary>All bank line rows from the last match (unfiltered, unpaged).</summary>
     private readonly List<BankLineRow> _allRows = [];
 
+    /// <summary>All unmatched book records from the last match (unfiltered).</summary>
+    private List<BookRecordRef> _allMissing = [];
+
     public BankMatchingPageViewModel()
     {
         SortColumn = "Date";
@@ -40,6 +43,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         {
             App.BankMatchingModalsViewModel.CandidateChosen += OnCandidateChosen;
             App.BankMatchingModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.BankMatchingModalsViewModel.MissingFiltersApplied += OnMissingFiltersApplied;
         }
     }
 
@@ -88,18 +92,10 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     private int _unmatchedBookCount;
 
     [ObservableProperty]
-    private bool _isAiBusy;
-
-    [ObservableProperty]
     private string _paginationText = "0 lines";
-
-    /// <summary>True when there are unmatched lines suggestions could be requested for.</summary>
-    public bool CanRunAi => UnmatchedLineCount > 0 && !IsAiBusy;
 
     public bool HasUnmatchedBook => UnmatchedBookCount > 0;
 
-    partial void OnUnmatchedLineCountChanged(int value) => OnPropertyChanged(nameof(CanRunAi));
-    partial void OnIsAiBusyChanged(bool value) => OnPropertyChanged(nameof(CanRunAi));
     partial void OnUnmatchedBookCountChanged(int value) => OnPropertyChanged(nameof(HasUnmatchedBook));
 
     #endregion
@@ -115,7 +111,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         ApplyFiltersAndPaginate();
     }
 
-    // Filter state (set from the filter modal).
+    // Bank-lines filter state (set from the filter modal).
     [ObservableProperty]
     private DateTime? _filterStartDate;
 
@@ -124,6 +120,51 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private string _filterStatus = "All";
+
+    // Missing-records search/filter/sort/pagination state (independent of the bank lines table).
+    [ObservableProperty]
+    private string? _missingSearchQuery;
+
+    partial void OnMissingSearchQueryChanged(string? value)
+    {
+        MissingCurrentPage = 1;
+        RefreshMissing();
+    }
+
+    [ObservableProperty]
+    private DateTime? _missingFilterStartDate;
+
+    [ObservableProperty]
+    private DateTime? _missingFilterEndDate;
+
+    [ObservableProperty]
+    private string _missingFilterType = "All";
+
+    [ObservableProperty]
+    private string _missingSortColumn = "Date";
+
+    [ObservableProperty]
+    private SortDirection _missingSortDirection = SortDirection.Descending;
+
+    [ObservableProperty]
+    private int _missingCurrentPage = 1;
+
+    [ObservableProperty]
+    private int _missingTotalPages = 1;
+
+    [ObservableProperty]
+    private int _missingPageSize = 10;
+
+    [ObservableProperty]
+    private string _missingPaginationText = "0 records";
+
+    partial void OnMissingCurrentPageChanged(int value) => RefreshMissing();
+
+    partial void OnMissingPageSizeChanged(int value)
+    {
+        MissingCurrentPage = 1;
+        RefreshMissing();
+    }
 
     /// <summary>0 = Bank lines, 1 = Missing from statement.</summary>
     [ObservableProperty]
@@ -151,6 +192,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             _result = null;
             HasSession = false;
             _allRows.Clear();
+            _allMissing = [];
             Lines.Clear();
             UnmatchedBookRecords.Clear();
             ResetCounts();
@@ -178,13 +220,56 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             _allRows.Add(new BankLineRow(line, top));
         }
 
-        UnmatchedBookRecords.Clear();
-        foreach (var r in _result.UnmatchedBookRecords)
-            UnmatchedBookRecords.Add(r);
-        UnmatchedBookCount = UnmatchedBookRecords.Count;
+        _allMissing = _result.UnmatchedBookRecords;
+        UnmatchedBookCount = _allMissing.Count;
+        RefreshMissing();
 
         RecomputeCounts();
         ApplyFiltersAndPaginate();
+    }
+
+    /// <summary>Applies the missing-tab search/filter/sort and pagination to produce the visible records.</summary>
+    private void RefreshMissing()
+    {
+        IEnumerable<BookRecordRef> query = _allMissing;
+
+        if (MissingFilterType != "All")
+            query = query.Where(r => r.Type.ToString() == MissingFilterType);
+
+        if (MissingFilterStartDate.HasValue)
+            query = query.Where(r => r.Date == DateTime.MinValue || r.Date.Date >= MissingFilterStartDate.Value.Date);
+        if (MissingFilterEndDate.HasValue)
+            query = query.Where(r => r.Date == DateTime.MinValue || r.Date.Date <= MissingFilterEndDate.Value.Date);
+
+        if (!string.IsNullOrWhiteSpace(MissingSearchQuery))
+        {
+            var q = MissingSearchQuery.Trim();
+            query = query.Where(r =>
+                r.Description.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.Amount.ToString("C2").Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.Type.ToString().Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var filtered = query.ToList().ApplySort(
+            MissingSortColumn,
+            MissingSortDirection,
+            new Dictionary<string, Func<BookRecordRef, object?>>
+            {
+                ["Date"] = r => r.Date,
+                ["Description"] = r => r.Description,
+                ["Amount"] = r => r.Amount,
+                ["Note"] = r => r.IsPossibleDuplicate
+            },
+            r => r.Date);
+
+        var totalCount = filtered.Count;
+        MissingTotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / MissingPageSize));
+        if (MissingCurrentPage > MissingTotalPages) MissingCurrentPage = MissingTotalPages;
+        MissingPaginationText = PaginationTextHelper.FormatPaginationText(totalCount, MissingCurrentPage, MissingPageSize, MissingTotalPages, "record");
+
+        UnmatchedBookRecords.Clear();
+        foreach (var r in filtered.Skip((MissingCurrentPage - 1) * MissingPageSize).Take(MissingPageSize))
+            UnmatchedBookRecords.Add(r);
     }
 
     /// <inheritdoc />
@@ -314,13 +399,6 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     private void ImportStatement() => ImportRequested?.Invoke(this, EventArgs.Empty);
 
     [RelayCommand]
-    private void RunAiSuggestions()
-    {
-        if (CanRunAi)
-            AiSuggestionsRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    [RelayCommand]
     private void OpenFilterModal() =>
         App.BankMatchingModalsViewModel?.OpenFilterModal(FilterStartDate, FilterEndDate, FilterStatus);
 
@@ -331,6 +409,64 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         FilterStatus = e.Status;
         CurrentPage = 1;
         ApplyFiltersAndPaginate();
+    }
+
+    [RelayCommand]
+    private void OpenMissingFilterModal() =>
+        App.BankMatchingModalsViewModel?.OpenMissingFilterModal(MissingFilterStartDate, MissingFilterEndDate, MissingFilterType);
+
+    private void OnMissingFiltersApplied(object? sender, MissingFilterAppliedEventArgs e)
+    {
+        MissingFilterStartDate = e.StartDate?.DateTime;
+        MissingFilterEndDate = e.EndDate?.DateTime;
+        MissingFilterType = e.Type;
+        MissingCurrentPage = 1;
+        RefreshMissing();
+    }
+
+    /// <summary>Sorts the missing-records table by a column (toggles direction on repeat clicks).</summary>
+    [RelayCommand]
+    private void MissingSortBy(string? column)
+    {
+        if (string.IsNullOrEmpty(column)) return;
+
+        if (MissingSortColumn == column)
+        {
+            MissingSortDirection = MissingSortDirection switch
+            {
+                SortDirection.None => SortDirection.Ascending,
+                SortDirection.Ascending => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.None,
+                _ => SortDirection.Ascending
+            };
+        }
+        else
+        {
+            MissingSortColumn = column;
+            MissingSortDirection = SortDirection.Ascending;
+        }
+
+        MissingCurrentPage = 1;
+        RefreshMissing();
+    }
+
+    [RelayCommand]
+    private void MissingGoToPreviousPage()
+    {
+        if (MissingCurrentPage > 1) MissingCurrentPage--;
+    }
+
+    [RelayCommand]
+    private void MissingGoToNextPage()
+    {
+        if (MissingCurrentPage < MissingTotalPages) MissingCurrentPage++;
+    }
+
+    [RelayCommand]
+    private void MissingGoToPage(int page)
+    {
+        if (page >= 1 && page <= MissingTotalPages && page != MissingCurrentPage)
+            MissingCurrentPage = page;
     }
 
     [RelayCommand]
@@ -437,42 +573,11 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         ApplyFiltersAndPaginate();
     }
 
-    /// <summary>
-    /// Applies suggestions to the matching lines (never auto-confirmed). Returns the number of
-    /// lines that gained a new suggestion.
-    /// </summary>
-    public int ApplyAiSuggestions(IReadOnlyDictionary<string, List<BankMatchCandidate>> suggestions)
-    {
-        var applied = 0;
-        foreach (var (lineId, candidates) in suggestions)
-        {
-            if (candidates.Count == 0) continue;
-            _candidatesByLineId[lineId] = candidates;
-            var row = _allRows.FirstOrDefault(r => r.Line.Id == lineId);
-            if (row != null && row.Line.MatchStatus == BankLineMatchStatus.Unmatched)
-            {
-                row.Line.MatchStatus = BankLineMatchStatus.Suggested;
-                row.Refresh(null, candidates.First());
-                applied++;
-            }
-        }
-        RecomputeCounts();
-        ApplyFiltersAndPaginate();
-        return applied;
-    }
-
-    /// <summary>The lines still unmatched after deterministic matching (for the AI step).</summary>
-    public IReadOnlyList<Core.Models.BankMatching.BankStatementLine> GetUnmatchedLines() =>
-        _allRows.Where(r => r.Line.MatchStatus == BankLineMatchStatus.Unmatched).Select(r => r.Line).ToList();
-
-    public BankMatchingOptions Options => _options;
-
     #endregion
 
     #region Events
 
     public event EventHandler? ImportRequested;
-    public event EventHandler? AiSuggestionsRequested;
 
     #endregion
 }

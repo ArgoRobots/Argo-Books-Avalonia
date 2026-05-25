@@ -14,10 +14,17 @@ public class Payment
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Invoice ID this payment is for.
+    /// Invoice ID this payment is for. A payment is linked to either an invoice or a revenue.
     /// </summary>
     [JsonPropertyName("invoiceId")]
     public string InvoiceId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Revenue ID this payment is for, when it is recorded directly against a revenue rather than
+    /// an invoice (e.g. a direct cash sale). Empty when the payment is linked to an invoice.
+    /// </summary>
+    [JsonPropertyName("revenueId")]
+    public string RevenueId { get; set; } = string.Empty;
 
     /// <summary>
     /// Customer ID.

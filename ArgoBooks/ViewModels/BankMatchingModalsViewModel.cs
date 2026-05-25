@@ -101,6 +101,57 @@ public partial class BankMatchingModalsViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Missing-records filter modal
+
+    /// <summary>Raised when the user applies filters from the missing-records filter modal.</summary>
+    public event EventHandler<MissingFilterAppliedEventArgs>? MissingFiltersApplied;
+
+    [ObservableProperty]
+    private bool _isMissingFilterModalOpen;
+
+    [ObservableProperty]
+    private DateTimeOffset? _missingFilterStartDate;
+
+    [ObservableProperty]
+    private DateTimeOffset? _missingFilterEndDate;
+
+    [ObservableProperty]
+    private string _missingFilterType = "All";
+
+    /// <summary>Record-type filter options for the missing-records dropdown.</summary>
+    public ObservableCollection<string> TypeOptions { get; } =
+        ["All", "Expense", "Revenue"];
+
+    public void OpenMissingFilterModal(DateTime? startDate, DateTime? endDate, string type)
+    {
+        MissingFilterStartDate = startDate.HasValue ? new DateTimeOffset(startDate.Value) : null;
+        MissingFilterEndDate = endDate.HasValue ? new DateTimeOffset(endDate.Value) : null;
+        MissingFilterType = string.IsNullOrEmpty(type) ? "All" : type;
+        IsMissingFilterModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseMissingFilterModal() => IsMissingFilterModalOpen = false;
+
+    [RelayCommand]
+    private void ApplyMissingFilters()
+    {
+        IsMissingFilterModalOpen = false;
+        MissingFiltersApplied?.Invoke(this, new MissingFilterAppliedEventArgs(MissingFilterStartDate, MissingFilterEndDate, MissingFilterType));
+    }
+
+    [RelayCommand]
+    private void ClearMissingFilters()
+    {
+        MissingFilterStartDate = null;
+        MissingFilterEndDate = null;
+        MissingFilterType = "All";
+        IsMissingFilterModalOpen = false;
+        MissingFiltersApplied?.Invoke(this, new MissingFilterAppliedEventArgs(null, null, "All"));
+    }
+
+    #endregion
 }
 
 /// <summary>Event args carrying the applied bank-line filters.</summary>
@@ -109,6 +160,14 @@ public class BankFilterAppliedEventArgs(DateTimeOffset? startDate, DateTimeOffse
     public DateTimeOffset? StartDate { get; } = startDate;
     public DateTimeOffset? EndDate { get; } = endDate;
     public string Status { get; } = status;
+}
+
+/// <summary>Event args carrying the applied missing-records filters.</summary>
+public class MissingFilterAppliedEventArgs(DateTimeOffset? startDate, DateTimeOffset? endDate, string type) : EventArgs
+{
+    public DateTimeOffset? StartDate { get; } = startDate;
+    public DateTimeOffset? EndDate { get; } = endDate;
+    public string Type { get; } = type;
 }
 
 /// <summary>Event args carrying the user's chosen candidate for a bank line.</summary>
