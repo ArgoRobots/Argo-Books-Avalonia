@@ -581,7 +581,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available chart type options for the selector.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
+    public string[] ChartTypeOptions { get; } = ["Column", "Line", "Step Line", "Area", "Scatter"];
 
     /// <summary>
     /// Gets or sets the selected chart type (delegates to shared service).

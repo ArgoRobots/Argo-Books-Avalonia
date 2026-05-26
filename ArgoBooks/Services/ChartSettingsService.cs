@@ -40,7 +40,7 @@ public partial class ChartSettingsService : ObservableObject
     /// <summary>
     /// Available chart type options.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
+    public string[] ChartTypeOptions { get; } = ["Column", "Line", "Step Line", "Area", "Scatter"];
 
     /// <summary>
     /// Available date range options.
@@ -48,7 +48,7 @@ public partial class ChartSettingsService : ObservableObject
     public string[] DateRangeOptions { get; } = DatePresetNames.StandardDateRangeOptions;
 
     [ObservableProperty]
-    private string _selectedChartType = "Line";
+    private string _selectedChartType = "Column";
 
     [ObservableProperty]
     private string _selectedDateRange = DateRangePreset.ThisMonth.GetDisplayName();
@@ -114,7 +114,7 @@ public partial class ChartSettingsService : ObservableObject
         try
         {
             // Reset to defaults before loading company-specific settings
-            SelectedChartType = "Line";
+            SelectedChartType = "Column";
             SelectedDateRange = DateRangePreset.ThisMonth.GetDisplayName();
             HasAppliedCustomRange = false;
             UpdateDateRangeFromSelection();
