@@ -112,15 +112,17 @@
                     <controls:DateRangeSelector Grid.Column="3" VerticalAlignment="Top" />
                 </Grid>
 
-                <!-- Source Survey Banner (shown to users who skipped the tutorial) -->
+                <!-- Source Survey Banner (shown to users who skipped the tutorial).
+                     No dismiss button: the user must answer. IsVisible is bound so the
+                     banner only takes up layout space while shown, letting the content
+                     below return to its normal position once it goes away. -->
                 <controls:InfoBanner ShowBanner="{Binding ShowSourceSurveyBanner}"
+                                     IsVisible="{Binding ShowSourceSurveyBanner}"
                                      Message="{loc:Loc 'Quick question: where did you hear about Argo Books?'}"
                                      ActionText="{loc:Loc 'Answer'}"
                                      ActionCommand="{Binding OpenSourceSurveyCommand}"
-                                     DismissCommand="{Binding DismissSourceSurveyBannerCommand}"
                                      IconData="{x:Static icons:Icons.Info}"
-                                     BannerBackground="{DynamicResource InfoBrush}"
-                                     DismissBackground="{DynamicResource InfoDarkBrush}" />
+                                     BannerBackground="{DynamicResource InfoBrush}" />
 
                 <!-- Edit Mode Toolbar -->
                 <Border Classes="card"
