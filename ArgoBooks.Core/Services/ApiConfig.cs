@@ -5,7 +5,7 @@ namespace ArgoBooks.Core.Services;
 /// production (argorobots.com) or the sandbox/dev environment (dev.argorobots.com).
 ///
 /// Debug builds automatically use the sandbox environment.
-/// Release builds always use production — users can never access sandbox mode.
+/// Release builds always use production: users can never access sandbox mode.
 /// </summary>
 public static class ApiConfig
 {

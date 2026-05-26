@@ -14,7 +14,7 @@ public static class ReceiptImageHelper
     /// </summary>
     internal static (byte[] Data, string FileName) CompressImageForScanning(byte[] imageData, string fileName, int maxSizeBytes)
     {
-        // Already within limit — no work needed
+        // Already within limit, no work needed
         if (imageData.Length <= maxSizeBytes)
             return (imageData, fileName);
 
@@ -60,7 +60,7 @@ public static class ReceiptImageHelper
                 return (encoded, outputFileName);
         }
 
-        // Could not compress enough — return original and let the size check fail
+        // Could not compress enough, return original and let the size check fail
         return (imageData, fileName);
     }
 
@@ -134,14 +134,14 @@ public static class ReceiptImageHelper
         if (original == null)
             return imageData;
 
-        // Determine output dimensions — swap width/height for 90°/270° rotations.
+        // Determine output dimensions: swap width/height for 90°/270° rotations.
         var swapDims = origin is SKEncodedOrigin.LeftBottom or SKEncodedOrigin.RightTop
             or SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightBottom;
         var outWidth = swapDims ? original.Height : original.Width;
         var outHeight = swapDims ? original.Width : original.Height;
 
         // Mild contrast boost (1.2x) to help faded thermal receipts.
-        // Keeps color intact — vision models use color to parse receipts.
+        // Keeps color intact, vision models use color to parse receipts.
         const float contrast = 1.2f;
         const float bias = (1f - contrast) / 2f;
         float[] contrastMatrix =
@@ -180,14 +180,14 @@ public static class ReceiptImageHelper
         canvas.DrawBitmap(original, 0, 0, paint);
 
         using var snapshot = surface.Snapshot();
-        // Match original file size — use quality 95 to avoid inflating compressed JPEGs.
+        // Match original file size, use quality 95 to avoid inflating compressed JPEGs.
         using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 95);
         return encoded.ToArray();
     }
 
     /// <summary>
     /// Generates a small JPEG thumbnail suitable for preview cards.
-    /// Only applies EXIF rotation and downscale — no contrast/sharpen filters.
+    /// Only applies EXIF rotation and downscale, no contrast/sharpen filters.
     /// </summary>
     public static byte[]? GenerateThumbnail(byte[] imageData, int maxDimension = 200)
     {

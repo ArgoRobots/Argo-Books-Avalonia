@@ -77,7 +77,7 @@
                                FontSize="12"
                                TextWrapping="Wrap" />
 
-                    <!-- Actions: Submit only — no dismiss path, the user must answer. -->
+                    <!-- Actions: Submit only, no dismiss path, the user must answer. -->
                     <Button Classes="primary"
                             Content="{loc:Loc 'Submit'}"
                             Command="{Binding SubmitCommand}"

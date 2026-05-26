@@ -160,7 +160,7 @@ public class FileService(
             contentStream = await encryptionService.EncryptAsync(compressedStream, password, salt, iv);
         }
 
-        // Create footer — read settings once and share across footer fields
+        // Create footer, read settings once and share across footer fields
         var cachedSettings = ReadSettingsFromDirectory(tempDirectory);
         var footer = new FileFooter
         {
@@ -302,7 +302,7 @@ public class FileService(
     /// Loads all company data from a temporary directory.
     /// </summary>
     /// <remarks>
-    /// Reads are issued concurrently — the files are already extracted to disk by the caller,
+    /// Reads are issued concurrently. The files are already extracted to disk by the caller,
     /// the collections have no cross-deserialization dependencies, and ReadJsonAsync uses a
     /// shared immutable <see cref="JsonOptions"/> instance, so concurrent deserialization is safe.
     /// </remarks>

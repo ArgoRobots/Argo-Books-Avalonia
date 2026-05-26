@@ -133,7 +133,7 @@ public static class TimeZoneService
     {
         // History entries (and other server-derived timestamps) are stored
         // as DateTime.UtcNow with Kind=Utc. Without converting we'd show
-        // UTC time as if it were local — events would appear hours in the
+        // UTC time as if it were local, events would appear hours in the
         // future for users west of UTC. Local/Unspecified pass through
         // unchanged so manually-entered dates aren't shifted.
         if (dateTime.Kind == DateTimeKind.Utc)

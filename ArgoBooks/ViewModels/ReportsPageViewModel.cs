@@ -1057,7 +1057,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         Configuration.AddElement(element);
         UndoRedoManager.RecordAction(new AddElementAction(Configuration, element));
 
-        // Suppress recording while setting up selection — binding updates from the
+        // Suppress recording while setting up selection, binding updates from the
         // properties panel can write back rounded values (e.g. the NumericUpDown
         // integer display format) which would create a spurious "Move element" action.
         UndoRedoManager.SuppressRecording = true;
@@ -1112,7 +1112,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             newElements.Add(clone);
         }
 
-        // Select the duplicated elements — suppress recording to avoid spurious
+        // Select the duplicated elements, suppress recording to avoid spurious
         // undo entries from binding write-backs during selection setup.
         UndoRedoManager.SuppressRecording = true;
         try
@@ -2453,7 +2453,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         const string customerColor = AppColors.MdIndigo;        // Indigo
         const string customerLight = AppColors.MdIndigoLight;
 
-        // Chart type icons — reference centralized Icons class
+        // Chart type icons: reference centralized Icons class
         const string lineChartIcon = Icons.LineChart;
         const string barChartIcon = Icons.RevenueChart;
         const string pieChartIcon = "M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z";
@@ -2754,7 +2754,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         // When user is on the Custom (charts) tab, remove all non-chart elements
         // that may have been added by a previously selected template (summary cards,
-        // accounting tables, labels, images, etc.) — this mode is chart-only.
+        // accounting tables, labels, images, etc.). This mode is chart-only.
         if (IsChartsTabSelected)
         {
             foreach (var element in Configuration.Elements

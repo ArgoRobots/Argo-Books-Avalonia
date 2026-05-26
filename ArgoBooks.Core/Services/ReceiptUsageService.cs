@@ -112,7 +112,7 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
         }
         catch (HttpRequestException)
         {
-            // Network error — allow scan if we have non-expired cached data showing capacity.
+            // Network error, allow scan if we have non-expired cached data showing capacity.
             // Without the expiry check a stale cache could permit scans past the server-side quota.
             if (_cachedUsage != null && _cachedUsage.CanScan && DateTime.UtcNow < _cacheExpiry)
             {

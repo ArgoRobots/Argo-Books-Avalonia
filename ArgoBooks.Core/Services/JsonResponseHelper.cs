@@ -39,7 +39,7 @@ internal static partial class JsonResponseHelper
             var fenceEnd = cleaned.IndexOf('\n');
             if (fenceEnd == -1)
             {
-                // No newline — strip all backticks from start
+                // No newline, strip all backticks from start
                 cleaned = cleaned.TrimStart('`').Trim();
             }
             else
@@ -49,12 +49,12 @@ internal static partial class JsonResponseHelper
                 var afterTag = fenceLine.TrimStart('`').TrimStart();
                 if (afterTag.Length > 0 && afterTag.Length <= 10 && !afterTag.StartsWith('{') && !afterTag.StartsWith('['))
                 {
-                    // Language tag like "json" — skip the whole line
+                    // Language tag like "json", skip the whole line
                     cleaned = cleaned[(fenceEnd + 1)..];
                 }
                 else if (afterTag.StartsWith('{') || afterTag.StartsWith('['))
                 {
-                    // JSON starts on the fence line — just strip the backticks
+                    // JSON starts on the fence line, just strip the backticks
                     cleaned = cleaned[fenceLine.IndexOf(afterTag[0])..];
                 }
                 else

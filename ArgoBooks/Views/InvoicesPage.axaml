@@ -112,7 +112,7 @@
                                            Foreground="{DynamicResource WarningTextBrush}"
                                            VerticalAlignment="Center"
                                            IsVisible="{Binding !ShowInvoiceUpgradeButton}" />
-                                <TextBlock Text="{loc:Loc 'Invoice limit reached — upgrade for unlimited invoices'}"
+                                <TextBlock Text="{loc:Loc 'Invoice limit reached. Upgrade for unlimited invoices'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource WarningTextBrush}"
                                            VerticalAlignment="Center"

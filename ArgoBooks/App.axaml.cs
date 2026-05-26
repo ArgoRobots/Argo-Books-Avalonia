@@ -298,7 +298,7 @@ public partial class App : Application
 
     /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
-    /// Safe to call from multiple places — concurrent calls are deduplicated.
+    /// Safe to call from multiple places, concurrent calls are deduplicated.
     /// </summary>
     internal static async Task AutoSyncPortalPaymentsAsync()
     {
@@ -362,7 +362,7 @@ public partial class App : Application
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
 
                     // Send "Payment Received" notification if enabled. Skipped
-                    // for the backfill-only path (no new payments) — there's
+                    // for the backfill-only path (no new payments), there's
                     // nothing the user just received to be notified about.
                     if (newPayments.Count > 0 && companyData.Settings.PaymentPortal.NotifyOnPayment)
                     {
@@ -997,7 +997,7 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
-            // Load settings synchronously — sidebar state, theme, and language depend on them.
+            // Load settings synchronously: sidebar state, theme, and language depend on them.
             // Direct sync read avoids the thread-pool marshaling cost of sync-over-async;
             // the settings file is small (<10KB). Recent companies are loaded asynchronously
             // in InitializeAsync after the window is shown.
@@ -1201,11 +1201,11 @@ public partial class App : Application
             switch (result.Status)
             {
                 case LicenseValidationStatus.Valid:
-                    // License is valid — nothing to do
+                    // License is valid, nothing to do
                     return;
 
                 case LicenseValidationStatus.NetworkError:
-                    // No internet or server unreachable — allow offline use
+                    // No internet or server unreachable, allow offline use
                     return;
 
                 case LicenseValidationStatus.InvalidKey:
@@ -1822,7 +1822,7 @@ public partial class App : Application
                 return;
             }
 
-            // Start timing after user approval — excludes UI wait time
+            // Start timing after user approval, excludes UI wait time
             var importStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             // Create snapshot for undo
@@ -2612,7 +2612,7 @@ public partial class App : Application
 
         try
         {
-            // Suppress the default CompanySaved feedback — we show our own with forceSaved
+            // Suppress the default CompanySaved feedback, we show our own with forceSaved
             _suppressSavedFeedback = true;
             await CompanyManager!.SaveCompanyAsAsync(filePath);
 
@@ -2795,7 +2795,7 @@ public partial class App : Application
     {
         // FileService.SaveCompanyAsync writes to <path>.tmp then File.Move(tmp, path,
         // overwrite: true). On Windows that overwrite-move emits a Deleted event for
-        // the destination even though the rename itself is atomic — by the time we
+        // the destination even though the rename itself is atomic, by the time we
         // observe it, the file is already back. Treating it as a real deletion would
         // strip the entry from settings.json on every save. Skip if the file exists.
         if (File.Exists(e.FullPath))

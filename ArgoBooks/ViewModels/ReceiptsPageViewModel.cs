@@ -533,7 +533,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             filtered = filtered.Where(r => r.Date <= filterDateTo.Value.DateTime);
         }
 
-        // Sort by date descending (newest first) — materialize for .Count and pagination
+        // Sort by date descending (newest first), materialize for .Count and pagination
         var sortedFiltered = filtered.OrderByDescending(r => r.Date).ToList();
 
         // Calculate pagination on raw receipts (before creating display items)
@@ -545,7 +545,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         UpdatePageNumbers();
         UpdatePaginationText(totalCount);
 
-        // Paginate BEFORE creating display items — only process the visible page
+        // Paginate BEFORE creating display items, only process the visible page
         var pagedReceipts = sortedFiltered
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize)
@@ -772,7 +772,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     {
         if (App.ReceiptsModalsViewModel == null) return;
 
-        // Trigger file picker in the view — usage limit is checked after modal opens
+        // Trigger file picker in the view, usage limit is checked after modal opens
         ScanFileRequested?.Invoke(this, EventArgs.Empty);
     }
 

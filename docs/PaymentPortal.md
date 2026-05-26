@@ -2,7 +2,7 @@
 
 Argo Books includes an online payment portal that allows customers to view and pay invoices through Stripe or Square.
 
-> **PayPal is not currently supported in the payment portal.** PayPal's "Log in with PayPal" OAuth flow refuses to onboard Business merchants, and proper onboarding requires PayPal Partner Referrals API which is gated behind Platforms & Marketplaces partner enrollment. The PayPal Connect option is hidden in Settings until that's in place. SaaS subscription billing (the merchant paying Argo Books for Premium) is unaffected — that's a separate PayPal flow that still works.
+> **PayPal is not currently supported in the payment portal.** PayPal's "Log in with PayPal" OAuth flow refuses to onboard Business merchants, and proper onboarding requires PayPal Partner Referrals API which is gated behind Platforms & Marketplaces partner enrollment. The PayPal Connect option is hidden in Settings until that's in place. SaaS subscription billing (the merchant paying Argo Books for Premium) is unaffected. That's a separate PayPal flow that still works.
 
 ## Overview
 

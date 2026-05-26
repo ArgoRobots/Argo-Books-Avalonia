@@ -233,7 +233,7 @@ public partial class InvoicePreviewControl : UserControl
 
         // Capture current scroll position so NavigationCompleted can restore it
         // after NavigateToString resets the page. Skip re-capture while a prior
-        // navigation is still in flight — the live page is mid-reload and would
+        // navigation is still in flight, the live page is mid-reload and would
         // report scroll=0, clobbering the position we're trying to preserve.
         if (!_hasPendingScroll)
         {
@@ -279,7 +279,7 @@ public partial class InvoicePreviewControl : UserControl
     // Horizontal centering: when the scaled wrapper is narrower than the
     // viewport, shift it right by half the empty space. Without this,
     // transform-origin: 0 0 leaves zoomed-out content pinned to the
-    // viewport's left edge — the bug the user hit with fit-to-window.
+    // viewport's left edge, the bug the user hit with fit-to-window.
     function centerOffsetX(scale) {
         var wrapper = document.getElementById('__zoomWrapper');
         if (!wrapper) return 0;
@@ -290,7 +290,7 @@ public partial class InvoicePreviewControl : UserControl
     }
 
     // Single source of truth for the wrapper transform. Form is
-    // ""translate(tx, ty) scale(s)"" — translate is applied in screen
+    // ""translate(tx, ty) scale(s)"", translate is applied in screen
     // pixels (CSS rule: outer transform applies last). tx already
     // accounts for centering; panOffset adds the rubber-band overscroll.
     function applyTransform(scale, panOffsetX, panOffsetY) {
@@ -317,13 +317,13 @@ public partial class InvoicePreviewControl : UserControl
         newScale = Math.max(0.25, Math.min(5.0, newScale));
         wrapper.dataset.scale = newScale;
         window.__isInFitMode = false;
-        // User-initiated zoom — content may overflow either direction
+        // User-initiated zoom, content may overflow either direction
         // post-zoom, so restore scrollbars.
         document.body.style.overflow = 'auto';
 
         // Calculate scroll adjustment to keep the point under cursor.
         // Assumes centering offset doesn't change much across the zoom
-        // step — true once content is wider than viewport, slightly
+        // step, true once content is wider than viewport, slightly
         // approximate around the fit-to-window boundary.
         var scrollX = window.scrollX || 0;
         var scrollY = window.scrollY || 0;
@@ -366,7 +366,7 @@ public partial class InvoicePreviewControl : UserControl
         // transform: scale() doesn't shrink the wrapper's layout box, so
         // the body would still report overflow and show scrollbars even
         // though the scaled content fits the viewport. Hide them while in
-        // fit mode — there's nothing to scroll to anyway.
+        // fit mode, there's nothing to scroll to anyway.
         document.body.style.overflow = 'hidden';
         notifyZoom(fitScale);
     };
@@ -389,7 +389,7 @@ public partial class InvoicePreviewControl : UserControl
     });
 
     // Auto-fit on initial display when content overflows the viewport.
-    // The user's main monitor renders at 1:1 cleanly (content fits) — we
+    // The user's main monitor renders at 1:1 cleanly (content fits), we
     // leave that alone. On a higher-DPI second monitor, the same content
     // overflows because WebView2's CSS-pixel viewport shrinks; in that
     // case we proactively fit so the user isn't stuck looking at a

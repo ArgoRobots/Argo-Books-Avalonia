@@ -188,13 +188,13 @@ public partial class UpgradeModalViewModel : ViewModelBase
         if (_rawPremiumYearlyPriceDisplay is not null && _rawPremiumYearlySavingsDisplay is not null)
         {
             PremiumYearlyPrice = "or {0}/year".TranslateFormat(_rawPremiumYearlyPriceDisplay);
-            // Parens are added separately so Azure can translate the bare phrase reliably —
+            // Parens are added separately so Azure can translate the bare phrase reliably,
             // it leaves "(save {0})" unchanged for several languages (mt, nl, sk).
             PremiumYearlySavings = "(" + "save {0}".TranslateFormat(_rawPremiumYearlySavingsDisplay) + ")";
         }
         else
         {
-            // Clear stale text from a prior fetch — otherwise an API response that omits
+            // Clear stale text from a prior fetch, otherwise an API response that omits
             // the yearly fields would leave the previous yearly pricing visible.
             PremiumYearlyPrice = string.Empty;
             PremiumYearlySavings = string.Empty;

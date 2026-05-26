@@ -119,8 +119,8 @@ public class CompanyManager : IDisposable
     /// Resolves an avatar's relative path to an absolute path within the company temp
     /// directory, or null if the relative path escapes that directory. Defends against
     /// crafted .argo files that set <c>avatarFileName</c> to a traversal path
-    /// (e.g. <c>../../etc/passwd</c>) which would otherwise let a load read — or a
-    /// remove/rename operation delete or move — files outside the temp directory.
+    /// (e.g. <c>../../etc/passwd</c>) which would otherwise let a load read, or a
+    /// remove/rename operation delete or move, files outside the temp directory.
     /// </summary>
     private string? ResolveAvatarPathSafely(string? relativeAvatarPath)
     {
@@ -218,7 +218,7 @@ public class CompanyManager : IDisposable
         if (string.IsNullOrEmpty(existing))
             return;
 
-        // Only delete files that resolve safely under the temp directory — guard against
+        // Only delete files that resolve safely under the temp directory, guard against
         // a crafted AvatarFileName escaping into the rest of the filesystem.
         var fullPath = ResolveAvatarPathSafely(existing);
         if (fullPath != null && File.Exists(fullPath))
@@ -248,7 +248,7 @@ public class CompanyManager : IDisposable
     /// <summary>
     /// Restores an avatar to an exact prior state. Pass <paramref name="bytes"/> = null
     /// to restore "no avatar" (deletes the file and clears AvatarFileName); pass bytes
-    /// to write them back as the avatar (no resize — the bytes are already a resized
+    /// to write them back as the avatar (no resize, the bytes are already a resized
     /// PNG captured by an earlier <see cref="ReadEntityAvatarBytes"/>). Synchronous so
     /// it can be called directly from undo/redo callbacks.
     /// </summary>
@@ -311,7 +311,7 @@ public class CompanyManager : IDisposable
         => RestoreEntityAvatarSync(supplier, bytes, SupplierAvatarSubdirectory);
 
     /// <summary>
-    /// Move the avatar file to track a renamed entity Id. Failure is non-fatal — if the
+    /// Move the avatar file to track a renamed entity Id. Failure is non-fatal: if the
     /// file move can't complete, AvatarFileName is left at its previous value and the
     /// avatar simply won't load until the user re-uploads.
     /// </summary>
@@ -584,11 +584,11 @@ public class CompanyManager : IDisposable
 
             // One-time recalc: heal any historic drift between Invoice
             // totals and the Payment rows that drive them. Only runs for
-            // invoices that actually have Payment rows — spreadsheet
+            // invoices that actually have Payment rows. Spreadsheet
             // imports without payments record AmountPaid directly on the
             // invoice and would otherwise be wiped to zero here.
             // Recalculate (not just RecalculateFromPayments) so stored
-            // Status is also healed — e.g. Paid → PartiallyRefunded for
+            // Status is also healed, e.g. Paid → PartiallyRefunded for
             // historic invoices saved before the refund-status rules.
             var invoicesWithPayments = CompanyData.Payments
                 .Select(p => p.InvoiceId)
@@ -681,7 +681,7 @@ public class CompanyManager : IDisposable
                 ReleaseFileLock();
                 try
                 {
-                    // overwrite: false makes File.Move atomic — the OS rejects an existing
+                    // overwrite: false makes File.Move atomic: the OS rejects an existing
                     // destination, so there's no TOCTOU window between the check and the move.
                     File.Move(CurrentFilePath, PendingRenamePath, overwrite: false);
                     CurrentFilePath = PendingRenamePath;
@@ -901,7 +901,7 @@ public class CompanyManager : IDisposable
 
     /// <summary>
     /// Sets a supplier's avatar from a source image on disk. Same semantics as the
-    /// customer variant — image is resized to a PNG inside the company temp directory.
+    /// customer variant: image is resized to a PNG inside the company temp directory.
     /// </summary>
     public Task SetSupplierAvatarAsync(Supplier supplier, string sourceImagePath)
         => SetEntityAvatarFromPathAsync(supplier, sourceImagePath, SupplierAvatarSubdirectory);
@@ -1262,7 +1262,7 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
-    /// Persists ONLY appSettings.json — used when a single setting (e.g. owner
+    /// Persists ONLY appSettings.json, used when a single setting (e.g. owner
     /// email) changes and we don't want to flush other in-memory edits to disk.
     /// Writes the latest <see cref="CompanyData.Settings"/> to the temp dir
     /// and re-zips the .argo. The other 29 domain JSON files in the temp dir

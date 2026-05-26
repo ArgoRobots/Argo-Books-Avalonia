@@ -6,7 +6,7 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Best-effort favicon downloader. Used to give a supplier a default avatar derived
 /// from its website when the user has not picked one. Direct GET against
-/// <c>{scheme}://{host}/favicon.ico</c> on the supplier's own domain — no third-party
+/// <c>{scheme}://{host}/favicon.ico</c> on the supplier's own domain, no third-party
 /// service is involved, which keeps the supplier list private and matches what the
 /// user's browser already does for that site.
 /// </summary>
@@ -30,7 +30,7 @@ public static class FaviconService
     /// <summary>
     /// Tries to download <c>/favicon.ico</c> for the host implied by <paramref name="websiteUrl"/>.
     /// Returns the raw bytes (which may be ICO/PNG/etc) or null on any failure.
-    /// Always swallows exceptions — the caller treats null as "no favicon available".
+    /// Always swallows exceptions: the caller treats null as "no favicon available".
     /// </summary>
     public static async Task<byte[]?> TryFetchFaviconAsync(string? websiteUrl, CancellationToken cancellationToken = default)
     {
@@ -58,7 +58,7 @@ public static class FaviconService
         try
         {
             // ResponseHeadersRead returns as soon as the headers arrive. We can then
-            // inspect Content-Length / Content-Type before pulling the body — important
+            // inspect Content-Length / Content-Type before pulling the body, important
             // because a hostile server could otherwise force us to buffer a giant
             // response just to discover it's over the cap.
             using var response = await _client.Value.GetAsync(faviconUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);

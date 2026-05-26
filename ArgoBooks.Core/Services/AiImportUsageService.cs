@@ -103,7 +103,7 @@ public class AiImportUsageService : IDisposable
                 };
             }
 
-            // Server error (e.g. database outage) — don't block the user.
+            // Server error (e.g. database outage), don't block the user.
             // Only block if the server explicitly says the user has exceeded their quota.
             var isQuotaExceeded = response.CanImport == false && response.MonthlyLimit > 0;
             if (isQuotaExceeded)
@@ -119,7 +119,7 @@ public class AiImportUsageService : IDisposable
                 };
             }
 
-            // Server-side error — allow import to proceed gracefully
+            // Server-side error, allow import to proceed gracefully
             _errorLogger?.LogError(new Exception(response.Error ?? "Unknown API error"), ErrorCategory.Api, "AI import usage check returned server error, allowing import");
             return new AiImportCheckResult
             {
@@ -129,7 +129,7 @@ public class AiImportUsageService : IDisposable
         }
         catch (HttpRequestException)
         {
-            // Network error — allow import if we have non-expired cached data showing capacity.
+            // Network error, allow import if we have non-expired cached data showing capacity.
             // Without the expiry check a stale cache could permit imports past the server-side quota.
             if (_cachedUsage != null && _cachedUsage.CanImport && DateTime.UtcNow < _cacheExpiry)
             {

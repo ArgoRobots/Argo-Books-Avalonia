@@ -237,7 +237,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
             }
             else
             {
-                // No dial code prefix found — extract raw digits and default to US
+                // No dial code prefix found, extract raw digits and default to US
                 var digits = new string(phone.Where(char.IsDigit).ToArray());
                 _originalPhoneNumber = digits;
                 PhoneNumber = digits;
@@ -398,11 +398,11 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 
         if (!success)
         {
-            // Still failing — error state is already set by PreloadExchangeRatesForCurrencyAsync
+            // Still failing, error state is already set by PreloadExchangeRatesForCurrencyAsync
             return;
         }
 
-        // Rates loaded successfully — dismiss error and proceed with save
+        // Rates loaded successfully, dismiss error and proceed with save
         HasCurrencyError = false;
         CurrencyErrorMessage = string.Empty;
         _pendingCurrencyCode = null;
@@ -579,7 +579,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 CurrencyErrorMessage = "No internet connection. Exchange rates are required to convert existing transactions.".Translate();
                 return false;
             }
-            // No transactions — allow the change without rates
+            // No transactions, allow the change without rates
             return true;
         }
 
@@ -598,7 +598,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
                 CurrencyErrorMessage = "Unable to fetch exchange rates. Please check your connection and try again.".Translate();
                 return false;
             }
-            // No transactions — allow the change even if rate fetch failed
+            // No transactions, allow the change even if rate fetch failed
             return true;
         }
 

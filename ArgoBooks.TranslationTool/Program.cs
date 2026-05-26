@@ -114,7 +114,7 @@ Console.WriteLine($"\nFound {strings.Count} translatable strings.\n");
 // Warn about key collisions caused by 50-char truncation in GetStringKey.
 // Only the first source text wins; collided strings won't get translated separately.
 // Suppress "safe" collisions where all variants normalize to the same letters/digits
-// (e.g., "Tax ($)" vs "Tax", "Select Logo..." vs "Select Logo", "ID" vs "Id") — those
+// (e.g., "Tax ($)" vs "Tax", "Select Logo..." vs "Select Logo", "ID" vs "Id"), those
 // share a sensible single translation by design.
 if (generator.KeyCollisions.Count > 0)
 {

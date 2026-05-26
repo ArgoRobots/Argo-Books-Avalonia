@@ -114,7 +114,7 @@ public partial class Invoice : ObservableObject
 
     /// <summary>
     /// Gross amount paid by the customer (sum of positive Payment rows for this invoice).
-    /// Refunds do NOT reduce this — see <see cref="AmountRefunded"/> and <see cref="NetPaid"/>.
+    /// Refunds do NOT reduce this, see <see cref="AmountRefunded"/> and <see cref="NetPaid"/>.
     /// </summary>
     [ObservableProperty]
     [property: JsonPropertyName("amountPaid")]
@@ -132,7 +132,7 @@ public partial class Invoice : ObservableObject
 
     /// <summary>
     /// Remaining balance the customer still owes. Computed as Math.Max(0, Total - AmountPaid).
-    /// Refunds do NOT raise the balance — once a customer paid, they don't owe again just
+    /// Refunds do NOT raise the balance, once a customer paid, they don't owe again just
     /// because we returned money to them.
     /// </summary>
     [ObservableProperty]

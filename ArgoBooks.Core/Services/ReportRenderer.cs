@@ -880,7 +880,7 @@ public class ReportRenderer : IDisposable
                     && _continuationPlan?.FirstPageRowCounts.TryGetValue(accounting.Id, out var firstPageRowCount) == true
                     && _continuationPlan?.CachedTableData.TryGetValue(accounting.Id, out var tableData) == true)
                 {
-                    // This accounting table overflows — render only the first page's rows
+                    // This accounting table overflows, render only the first page's rows
                     RenderAccountingTableSlice(canvas, accounting, tableData,
                         startRowIndex: 0, rowCount: firstPageRowCount, dataRowStartIndex: 0,
                         showTitle: true, showSubtitle: true,
@@ -890,7 +890,7 @@ public class ReportRenderer : IDisposable
                 else if (element is AccountingTableReportElement accounting2
                     && _continuationPlan?.CachedTableData.TryGetValue(accounting2.Id, out var cachedData) == true)
                 {
-                    // This accounting table doesn't overflow but we have cached data — use it
+                    // This accounting table doesn't overflow but we have cached data, use it
                     RenderAccountingTableSlice(canvas, accounting2, cachedData,
                         startRowIndex: 0, rowCount: cachedData.Rows.Count, dataRowStartIndex: 0,
                         showTitle: true, showSubtitle: true,
@@ -902,7 +902,7 @@ public class ReportRenderer : IDisposable
                     && _continuationPlan?.CachedNormalTableData.TryGetValue(normalTable.Id, out var normalData) == true
                     && _continuationPlan?.CachedNormalTableColumns.TryGetValue(normalTable.Id, out var normalColumns) == true)
                 {
-                    // This normal table overflows — render only the first page's rows
+                    // This normal table overflows, render only the first page's rows
                     RenderTableSlice(canvas, normalTable, normalData, normalColumns,
                         startRowIndex: 0, rowCount: normalFirstPageRowCount, dataRowStartIndex: 0,
                         showTitle: normalTable.ShowTitle,
@@ -1189,7 +1189,7 @@ public class ReportRenderer : IDisposable
 
         if (data is List<ChartDataPoint> dataPoints)
         {
-            // Chart data is computed in USD — convert to display currency for monetary charts
+            // Chart data is computed in USD, convert to display currency for monetary charts
             if (ShouldShowCurrency(chartType))
             {
                 foreach (var point in dataPoints)
@@ -1213,7 +1213,7 @@ public class ReportRenderer : IDisposable
 
         if (data is List<ChartSeriesData> seriesData)
         {
-            // Chart data is computed in USD — convert to display currency for monetary charts
+            // Chart data is computed in USD, convert to display currency for monetary charts
             if (ShouldShowCurrency(chartType))
             {
                 foreach (var series in seriesData)
@@ -1238,7 +1238,7 @@ public class ReportRenderer : IDisposable
 
         if (data is Dictionary<string, double> mapData)
         {
-            // World map data is computed in USD — convert to display currency
+            // World map data is computed in USD, convert to display currency
             if (!string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
             {
                 var keys = mapData.Keys.ToList();
@@ -3516,7 +3516,7 @@ public class ReportRenderer : IDisposable
                     using var sectionPaint = new SKPaint { Color = ParseColor(element.SectionHeaderTextColor), IsAntialias = true };
                     canvas.DrawText(row.Label, contentLeft + cellPadding, currentY + headerRowHeight * 0.65f, SKTextAlign.Left, sectionFont, sectionPaint);
 
-                    // Draw value columns (right-aligned) — e.g., "Amount" on the first section header
+                    // Draw value columns (right-aligned), e.g., "Amount" on the first section header
                     var valX = contentLeft + columnWidths[0];
                     for (int i = 0; i < row.Values.Count && i + 1 < columnWidths.Length; i++)
                     {
@@ -3574,7 +3574,7 @@ public class ReportRenderer : IDisposable
                     var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + dataRowHeight);
                     canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.SubtotalBackgroundColor), Style = SKPaintStyle.Fill });
 
-                    // Top border line — drawn after fill
+                    // Top border line, drawn after fill
                     canvas.DrawLine(rect.Left + cellPadding, currentY, rect.Right - cellPadding, currentY,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
 
@@ -3601,7 +3601,7 @@ public class ReportRenderer : IDisposable
                     var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + dataRowHeight * 1.1f);
                     canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
 
-                    // Top border (thicker) — drawn after fill so it's visible on the background
+                    // Top border (thicker), drawn after fill so it's visible on the background
                     canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1.5f * _renderScale, Style = SKPaintStyle.Stroke });
 
@@ -3629,7 +3629,7 @@ public class ReportRenderer : IDisposable
                     var rowRect = new SKRect(rect.Left, fillTop, rect.Right, currentY + grandRowHeight);
                     canvas.DrawRect(rowRect, new SKPaint { Color = ParseColor(element.TotalBackgroundColor), Style = SKPaintStyle.Fill });
 
-                    // Double top border — drawn after fill so it's visible on the background
+                    // Double top border, drawn after fill so it's visible on the background
                     canvas.DrawLine(rect.Left, currentY, rect.Right, currentY,
                         new SKPaint { Color = ParseColor(element.DataRowTextColor), StrokeWidth = 1 * _renderScale, Style = SKPaintStyle.Stroke });
                     canvas.DrawLine(rect.Left, currentY + 3 * _renderScale, rect.Right, currentY + 3 * _renderScale,

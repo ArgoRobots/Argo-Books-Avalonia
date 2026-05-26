@@ -341,7 +341,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
             filtered = filtered.Where(r => r.ReturnDate <= filterDateTo.Value.DateTime);
         }
 
-        // Sort by date descending (newest first) — materialize here for display + pagination
+        // Sort by date descending (newest first), materialize here for display + pagination
         var displayItems = filtered.OrderByDescending(r => r.ReturnDate)
             .Select(CreateDisplayItem).ToList();
 

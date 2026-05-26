@@ -15,7 +15,7 @@ namespace ArgoBooks.Services;
 /// 2. Add filtering by accountant to GetEvents/GetGroupedEvents.
 /// 3. Enforce permissions before allowing undo of another accountant's actions
 ///    (e.g., only admins can undo other accountants' changes).
-/// 4. For sync, the event log becomes the unit of replication — merge event logs
+/// 4. For sync, the event log becomes the unit of replication, merge event logs
 ///    from multiple clients using timestamp ordering and conflict detection.
 /// </remarks>
 public class EventLogService
@@ -161,7 +161,7 @@ public class EventLogService
             ReconstructActions(companyData);
         }
 
-        // Free EntitySnapshot strings from memory — they've been consumed for action
+        // Free EntitySnapshot strings from memory, they've been consumed for action
         // reconstruction and are no longer needed. They remain on disk in the .argo file
         // and will be re-read on the next load.
         foreach (var evt in _events)
@@ -298,7 +298,7 @@ public class EventLogService
             {
                 if (auditAction == AuditAction.Added)
                 {
-                    // Entity just added — capture its current state
+                    // Entity just added, capture its current state
                     entitySnapshot = EntityCollectionHelper.FindAndSerializeEntity(
                         _companyData, entityType, entityId);
                 }
@@ -540,7 +540,7 @@ public class EventLogService
             if (_undoableActions.TryGetValue(evt.Id, out var action) && activeSet.Contains(action))
                 continue;
 
-            // Action was undone (not in undo stack) — if the event doesn't have a mapped action,
+            // Action was undone (not in undo stack), if the event doesn't have a mapped action,
             // it might have been created without one, so keep it
             if (!_undoableActions.ContainsKey(evt.Id))
                 continue;
@@ -587,7 +587,7 @@ public class EventLogService
     {
         foreach (var evt in _events)
         {
-            // Skip meta-events (Undone/Redone) — they don't have their own undo actions
+            // Skip meta-events (Undone/Redone), they don't have their own undo actions
             if (evt.Action is AuditAction.Undone or AuditAction.Redone)
                 continue;
 

@@ -84,7 +84,7 @@ public partial class RefundModalViewModel : ObservableObject
     /// Whether the footer Border should render. Hidden while the busy overlay
     /// is active OR the success animation is showing, since both of those
     /// fully cover the modal body and the footer would otherwise leak through
-    /// on top (XAML draw order — footer is declared after the overlays).
+    /// on top (XAML draw order, footer is declared after the overlays).
     /// </summary>
     public bool ShowRefundFooter => !IsBusy && CurrentStep != Step.Success;
 
@@ -191,7 +191,7 @@ public partial class RefundModalViewModel : ObservableObject
 
     // Set true on the failure screen only when the server returned the
     // HARD_BLOCK errorCode. Drives the visibility of the "Email
-    // contact@argorobots.com" mailto button — we don't want that button on
+    // contact@argorobots.com" mailto button, we don't want that button on
     // every generic failure (provider timeouts, wrong code, etc.) because
     // those are usually self-recoverable.
     [ObservableProperty]
@@ -199,7 +199,7 @@ public partial class RefundModalViewModel : ObservableObject
 
     // Optional context the user can type on the failure screen, surfaced
     // inside the pre-filled mailto body so support gets the "what this
-    // refund was for" detail without a back-and-forth. Empty is fine — the
+    // refund was for" detail without a back-and-forth. Empty is fine, the
     // mailto body just omits the section when nothing was typed.
     [ObservableProperty]
     private string _hardBlockContactReason = string.Empty;
@@ -356,7 +356,7 @@ public partial class RefundModalViewModel : ObservableObject
             LineRows.Add(row);
         }
 
-        // Discount — added as a negative-amount row so the refund total
+        // Discount: added as a negative-amount row so the refund total
         // reflects what the customer actually paid (gross minus discount).
         // Without this, refunding all line items + tax + fee inflates the
         // total by the discount amount and trips the "exceeds refundable"
@@ -390,7 +390,7 @@ public partial class RefundModalViewModel : ObservableObject
     /// Adds, updates, or removes the "Processing fee" line row based on the
     /// currently-selected payment's <see cref="RefundablePaymentRow.ProcessingFee"/>.
     /// Kept distinct from the invoice-derived rows in <see cref="BuildLineRows"/>
-    /// because the fee is per-payment, not per-invoice — multi-payment invoices
+    /// because the fee is per-payment, not per-invoice, multi-payment invoices
     /// can have a different fee per payment.
     /// </summary>
     private void UpdateProcessingFeeRow()
@@ -438,7 +438,7 @@ public partial class RefundModalViewModel : ObservableObject
         else if (selectedPaymentCount > 1)
         {
             // ContinueAsync only sends the FIRST selected payment to the
-            // refund API — multi-payment refunds aren't wired through to
+            // refund API, multi-payment refunds aren't wired through to
             // the server yet. Block selecting >1 here so the user gets a
             // clear error instead of a confusing AMOUNT_EXCEEDS_REFUNDABLE
             // from the server when the refund total exceeds the first
@@ -499,7 +499,7 @@ public partial class RefundModalViewModel : ObservableObject
                 if (!string.IsNullOrEmpty(result.ErrorCode)) bits.Add(result.ErrorCode);
                 if (!string.IsNullOrEmpty(result.Message)) bits.Add(result.Message);
                 ErrorMessage = bits.Count > 0
-                    ? string.Join(" — ", bits)
+                    ? string.Join(", ", bits)
                     : "Refund request failed (no response).";
                 return;
             }
@@ -552,7 +552,7 @@ public partial class RefundModalViewModel : ObservableObject
                     _ = App.AutoSyncPortalPaymentsAsync();
                     break;
                 case "cooling_off":
-                    // Null-coalesce because CoolingOffSeconds is int? — without
+                    // Null-coalesce because CoolingOffSeconds is int?, without
                     // it, a missing value prints as empty ("...for  minutes").
                     // Round-up so 899s reads as "15 minutes" instead of the
                     // truncated 14 that integer division would produce.
@@ -594,7 +594,7 @@ public partial class RefundModalViewModel : ObservableObject
             // HardBlockContactReason. The user has typically already typed
             // this on the failure screen before clicking the email button,
             // so it lands pre-filled in their mail client. The header is
-            // included unconditionally — even when the field is empty —
+            // included unconditionally (even when the field is empty)
             // so if they skipped the box and clicked through, the email
             // still prompts them to add the reason before sending.
             var reason = (HardBlockContactReason ?? string.Empty).Trim();
@@ -698,7 +698,7 @@ public partial class RefundModalViewModel : ObservableObject
     {
         var min = CodeExpiresInSeconds / 60;
         var sec = CodeExpiresInSeconds % 60;
-        CountdownDisplay = CodeExpiresInSeconds > 0 ? $"Code expires in {min}:{sec:D2}" : "Code expired — request a new one.";
+        CountdownDisplay = CodeExpiresInSeconds > 0 ? $"Code expires in {min}:{sec:D2}" : "Code expired. Request a new one.";
     }
 
     private void BeginPolling()

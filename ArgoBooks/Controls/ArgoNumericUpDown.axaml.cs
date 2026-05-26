@@ -140,7 +140,7 @@ public partial class ArgoNumericUpDown : UserControl
     {
         if (_inputTextBox == null) return;
 
-        // Skip if the text matches the formatted current value — the user didn't
+        // Skip if the text matches the formatted current value, the user didn't
         // actually edit anything.  Without this check, the integer display format
         // ("0") causes a lossy round-trip (e.g. 253.7 → "254" → 254) that writes
         // back a different value and creates spurious undo actions.

@@ -169,7 +169,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private int _revenueProductsCount;
 
     /// <summary>
-    /// Products are always unlimited — no free-tier limit.
+    /// Products are always unlimited, no free-tier limit.
     /// </summary>
     public bool CanAddProduct => true;
 

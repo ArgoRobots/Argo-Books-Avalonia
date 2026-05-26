@@ -151,7 +151,7 @@
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                VerticalAlignment="Center" />
-                                    <TextBlock Text="— Made before the period, then validated"
+                                    <TextBlock Text="(Made before the period, then validated)"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" />
@@ -162,7 +162,7 @@
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                VerticalAlignment="Center" />
-                                    <TextBlock Text="— Simulated using historical data"
+                                    <TextBlock Text="(Simulated using historical data)"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" />

@@ -123,7 +123,7 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             score += 10;
         }
 
-        // Historical accuracy score (0-30 points) — weighted heavily since actual backtested
+        // Historical accuracy score (0-30 points), weighted heavily since actual backtested
         // accuracy is the best predictor of future forecast quality
         if (historicalAccuracy.HasValue && historicalAccuracy.Value > 0)
         {

@@ -197,7 +197,7 @@ public class GeminiService : IGeminiService, IDisposable
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a clean supplier name
 
 2. CATEGORY: Find the best matching category based on:
-   - Line item descriptions (most important — use these to determine what was actually purchased)
+   - Line item descriptions (most important, use these to determine what was actually purchased)
    - What the supplier typically sells
    - Common business expense categories
    - If no good match exists (confidence < 0.6), set shouldCreateNew=true and suggest a SPECIFIC category name
@@ -356,7 +356,7 @@ Respond with JSON only.";
                         suggestedName = newName.GetString() ?? "General";
                     }
 
-                    // Reject vague category names — the AI sometimes suggests these
+                    // Reject vague category names, the AI sometimes suggests these
                     var vagueName = IsVagueCategoryName(suggestedName);
                     if (vagueName && category.TryGetProperty("newDescription", out var descFallback)
                         && descFallback.ValueKind != JsonValueKind.Null

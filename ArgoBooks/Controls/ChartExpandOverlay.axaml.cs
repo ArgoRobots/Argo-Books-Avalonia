@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete, DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
@@ -326,7 +326,7 @@ public partial class ChartExpandOverlay : UserControl
         // Set DataContexts so bindings keep working after reparenting.
         // ChartArea gets the page-level ViewModel (for context menu bindings).
         // ContentPanel gets the source panel's original DataContext (for chart
-        // bindings like Series, HasData, etc. — critical for dashboard widgets
+        // bindings like Series, HasData, etc., critical for dashboard widgets
         // where the chart is bound to a UnifiedChartWidgetViewModel, not the page VM).
         var chartArea = this.FindControl<Panel>("ChartArea");
         if (chartArea != null)
@@ -353,7 +353,7 @@ public partial class ChartExpandOverlay : UserControl
         // for dashboard widgets, or AnalyticsPageViewModel for the analytics page).
         var sourceDataContext = sourcePanel.DataContext;
 
-        // Suppress LiveCharts entrance animations during reparenting — without this
+        // Suppress LiveCharts entrance animations during reparenting. Without this
         // the chart slides in from the side every time the fullscreen modal opens.
         var savedAnimSpeeds = new List<(Control chart, TimeSpan speed)>();
         foreach (var chart in FindAllDescendants<CartesianChart>(sourcePanel))

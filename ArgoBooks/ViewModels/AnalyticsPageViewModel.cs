@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete. DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
@@ -1692,7 +1692,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadTaxRateDistributionChart(data);
         LoadExpenseVsRevenueTaxChart(data);
 
-        // Pie charts and geo map are style-independent — only reload on data/filter changes
+        // Pie charts and geo map are style-independent, only reload on data/filter changes
         if (!styleChangeOnly)
         {
             // Dashboard pie charts

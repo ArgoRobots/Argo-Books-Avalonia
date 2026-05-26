@@ -50,7 +50,7 @@
                                     <Run Text="{Binding ItemName}"
                                          FontWeight="SemiBold"
                                          Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <Run Text=" — "
+                                    <Run Text=": "
                                          Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Run Text="{loc:Loc 'Availability'}"
                                          Foreground="{DynamicResource TextSecondaryBrush}" />

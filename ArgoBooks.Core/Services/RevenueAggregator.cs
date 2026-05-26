@@ -31,7 +31,7 @@ public static class RevenueAggregator
     /// <summary>
     /// Sum gross-of-tax USD revenue (EffectiveTotalUSD) inside a date range,
     /// counting only collected rows. This is the figure the Revenue stat
-    /// card and revenue charts display — what the customer was actually
+    /// card and revenue charts display, what the customer was actually
     /// billed and has actually paid.
     /// </summary>
     public static decimal SumCollectedRevenueUSD(
@@ -46,7 +46,7 @@ public static class RevenueAggregator
     /// <summary>
     /// Sum pre-tax USD revenue (EffectiveSubtotalUSD) inside a date range,
     /// counting only collected rows. This is the figure profit calculations
-    /// use — sales tax collected is owed to the government, not kept.
+    /// use: sales tax collected is owed to the government, not kept.
     /// </summary>
     public static decimal SumCollectedRevenuePreTaxUSD(
         IEnumerable<Revenue> revenues, DateTime start, DateTime end)

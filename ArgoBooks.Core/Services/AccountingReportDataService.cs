@@ -161,7 +161,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else
             {
-                // No line items — use the USD-converted pre-tax amount
+                // No line items, use the USD-converted pre-tax amount
                 var categoryName = "Uncategorized";
                 result.TryAdd(categoryName, 0);
                 result[categoryName] += txn.EffectiveSubtotalUSD;
@@ -648,7 +648,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Build a list of all ledger entries grouped by category
         var entries = new Dictionary<string, List<LedgerEntry>>();
 
-        // Revenue transactions (credits) — all amounts in USD
+        // Revenue transactions (credits), all amounts in USD
         foreach (var rev in companyData.Revenues.Where(r => IsInDateRange(r.Date)))
         {
             if (rev.LineItems.Count > 0)
@@ -685,7 +685,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
         }
 
-        // Expense transactions (debits) — all amounts in USD
+        // Expense transactions (debits), all amounts in USD
         foreach (var exp in companyData.Expenses.Where(e => IsInDateRange(e.Date)))
         {
             if (exp.LineItems.Count > 0)

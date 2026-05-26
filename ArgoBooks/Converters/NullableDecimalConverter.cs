@@ -23,7 +23,7 @@ public class NullableDecimalConverter : IValueConverter
     {
         if (value is decimal d)
         {
-            // NumericUpDown.Value is decimal? — return the value directly
+            // NumericUpDown.Value is decimal?, return the value directly
             if (targetType == typeof(decimal?) || targetType == typeof(decimal))
                 return d;
 

@@ -308,7 +308,7 @@ public partial class ReceiptsModals : UserControl
     {
         if (sender is not ScrollViewer scrollViewer) return;
 
-        // Don't start panning when the press lands on a scroll bar — let it scroll normally.
+        // Don't start panning when the press lands on a scroll bar, let it scroll normally.
         // This tunnel handler runs before the scroll bar sees the event, so without this guard
         // dragging the scroll bar thumb would pan the receipt instead.
         if (IsOnScrollBar(e.Source)) return;

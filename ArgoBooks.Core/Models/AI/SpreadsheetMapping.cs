@@ -8,12 +8,12 @@ namespace ArgoBooks.Core.Models.AI;
 public enum ProcessingTier
 {
     /// <summary>
-    /// Simple column renaming — headers are mapped 1:1 and processed deterministically.
+    /// Simple column renaming: headers are mapped 1:1 and processed deterministically.
     /// </summary>
     Tier1_Mapping,
 
     /// <summary>
-    /// Complex transformation — rows are sent to the LLM in chunks for normalization.
+    /// Complex transformation: rows are sent to the LLM in chunks for normalization.
     /// </summary>
     Tier2_LlmProcessing
 }

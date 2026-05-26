@@ -27,7 +27,7 @@ public partial class TranslationGenerator
     // is at the start of a line (after optional whitespace), so URLs inside string
     // literals like "https://example.com" aren't truncated and any .Translate() calls
     // sharing the line aren't silently dropped. End-of-line comments after code are
-    // left intact — picking up a stray translatable string from one would produce a
+    // left intact, picking up a stray translatable string from one would produce a
     // visible spurious entry, which is preferable to silently losing a real one.
     [GeneratedRegex(@"(?m)^[\t ]*//.*$")]
     private static partial Regex LineCommentRegex();
@@ -384,7 +384,7 @@ public partial class TranslationGenerator
 
             // Find switch expression display strings: => "Display Text"
             // Applied to all .cs files; the shape filter below guards against false positives.
-            // NOTE: object-initializer assignments like `Title = "Foo"` are NOT detected — wrap
+            // NOTE: object-initializer assignments like `Title = "Foo"` are NOT detected, wrap
             // user-facing literals with .Translate()/.TranslateFormat() so the regex below picks them up.
             var switchMatches = SwitchDisplayStringRegex().Matches(content);
             foreach (Match match in switchMatches)
@@ -402,7 +402,7 @@ public partial class TranslationGenerator
                 }
             }
 
-            // Find string array items: ["Item1", "Item2", "Item3"] — used for ComboBox options
+            // Find string array items: ["Item1", "Item2", "Item3"], used for ComboBox options
             // Restricted to ViewModel/Service/Enum/Configuration files because plain arrays
             // appear in many non-UI contexts and would generate noise.
             if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel") || filePath.Contains("Configuration"))
@@ -445,7 +445,7 @@ public partial class TranslationGenerator
             return;
 
         // Display strings start with an uppercase letter or a digit. Skip lowercase-leading
-        // strings — those are usually internal parsing tokens (e.g., the "this month" /
+        // strings, those are usually internal parsing tokens (e.g., the "this month" /
         // "last 30 days" arms in ReportConfiguration's case-insensitive switch).
         if (!char.IsUpper(text[0]) && !char.IsDigit(text[0]))
             return;
@@ -505,7 +505,7 @@ public partial class TranslationGenerator
     /// Interprets C# string-literal escape sequences in raw text captured from source files.
     /// Without this, a source string like "Line one.\n\nLine two" was captured by the regex
     /// as the literal characters "Line one.\n\nLine two" and serialized to JSON as "\\n\\n",
-    /// which the JSON reader then decoded back to literal "\n" text — so the UI displayed
+    /// which the JSON reader then decoded back to literal "\n" text, so the UI displayed
     /// "\n\n" instead of two newlines.
     /// </summary>
     private static string InterpretCSharpEscapes(string source)

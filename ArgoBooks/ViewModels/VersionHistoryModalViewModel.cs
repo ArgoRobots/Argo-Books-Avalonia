@@ -319,7 +319,7 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
         if (_eventLogService == null)
             return;
 
-        // Parse filter — "Undone" means "show events that have been undone"
+        // Parse filter: "Undone" means "show events that have been undone"
         AuditAction? actionFilter = SelectedActionFilter switch
         {
             "Added" => AuditAction.Added,
@@ -333,7 +333,7 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
             ? null
             : SelectedEntityTypeFilter;
 
-        // Get all events (no action filter yet — we need meta-events for nesting)
+        // Get all events (no action filter yet, we need meta-events for nesting)
         var allEvents = _eventLogService.GetFilteredEvents(
             searchQuery: null,
             actionFilter: null,
@@ -356,7 +356,7 @@ public partial class VersionHistoryModalViewModel : ViewModelBase
         if (actionFilter.HasValue)
             primaryEvents = primaryEvents.Where(e => e.Action == actionFilter.Value).ToList();
 
-        // Apply "Undone" filter — show only events that have been undone
+        // Apply "Undone" filter: show only events that have been undone
         if (filterUndoneOnly)
             primaryEvents = primaryEvents.Where(e => e.IsUndone).ToList();
 

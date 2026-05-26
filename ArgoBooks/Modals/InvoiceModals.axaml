@@ -428,7 +428,7 @@
 
                     <!-- Content - Sending Overlay (visible while the API call is in flight) -->
                     <!-- Border (not Panel) so CornerRadius matches the parent
-                         modal shell — Panel doesn't honor a parent Border's
+                         modal shell. Panel doesn't honor a parent Border's
                          rounded corners and renders a hard rectangle.
                          Explicit Cursor="Arrow" guards against the embedded
                          HTML preview occasionally suppressing the system

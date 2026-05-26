@@ -424,7 +424,7 @@ public class SpreadsheetImportService
             EntityType = entityType
         };
 
-        // Deduplicate entities across chunks by ID — later chunks win on conflict.
+        // Deduplicate entities across chunks by ID, later chunks win on conflict.
         // The LLM processes chunks independently and may produce duplicate IDs,
         // especially at chunk boundaries.
         var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1442,7 +1442,7 @@ public class SpreadsheetImportService
                 !importedInvoices.Contains(invoiceId))
             {
                 result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
-                    $"Invoice '{invoiceId}' not found — reference will be cleared", isAutoFixable: true, rowId: id);
+                    $"Invoice '{invoiceId}' not found, reference will be cleared", isAutoFixable: true, rowId: id);
             }
 
             if (!string.IsNullOrEmpty(customerId) &&
@@ -2336,7 +2336,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                         }
                         else
                         {
-                            // AI didn't return a match for this product — use product name as fallback
+                            // AI didn't return a match for this product, use product name as fallback
                             var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
                             product.CategoryId = category.Id;
                         }
@@ -3387,7 +3387,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 }
 
 /// <summary>
-/// A JsonConverterFactory that handles enum values leniently — strips spaces,
+/// A JsonConverterFactory that handles enum values leniently: strips spaces,
 /// hyphens, and underscores before attempting case-insensitive enum parsing.
 /// Falls back to the first enum value if parsing fails entirely.
 /// </summary>

@@ -109,7 +109,7 @@
                                     </Border>
 
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Reason (optional — shown to the customer in their refund email)"
+                                        <TextBlock Text="Reason (optional, shown to the customer in their refund email)"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    TextWrapping="Wrap" />
@@ -200,10 +200,10 @@
                             </StackPanel>
                         </ScrollViewer>
 
-                        <!-- Footer — hidden while the busy overlay or success
+                        <!-- Footer, hidden while the busy overlay or success
                              animation is on screen. The overlays are placed
                              AFTER the footer in XAML so they always draw on
-                             top — IsVisible is the primary mechanism but the
+                             top. IsVisible is the primary mechanism but the
                              draw order is the safety net against the footer's
                              top-border separator leaking through. -->
                         <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
@@ -229,7 +229,7 @@
                                             IsEnabled="{Binding CanSubmitCode}"
                                             Classes="primary-button"
                                             Command="{Binding SubmitCodeCommand}" />
-                                    <!-- Done shows on Failure / Details only — Success has the
+                                    <!-- Done shows on Failure / Details only. Success has the
                                          SuccessAnimation overlay's own Continue button. -->
                                     <Button Content="Done"
                                             IsVisible="{Binding IsNonSuccessTerminalStep}"
@@ -239,7 +239,7 @@
                             </Grid>
                         </Border>
 
-                        <!-- Sending overlay — drawn AFTER the footer in XAML so
+                        <!-- Sending overlay, drawn AFTER the footer in XAML so
                              it covers the footer's top-border separator if any
                              visibility-toggle timing glitch occurs. Border (not
                              Panel) so CornerRadius matches the parent modal shell. -->
@@ -266,7 +266,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Success overlay (refund completed) — also drawn
+                        <!-- Success overlay (refund completed), also drawn
                              AFTER the footer so its background covers the
                              footer's top-border line. -->
                         <Border Grid.Row="0" Grid.RowSpan="3"

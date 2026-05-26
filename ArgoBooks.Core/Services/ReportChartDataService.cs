@@ -95,7 +95,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 }
                 else
                 {
-                    // Line items sum to 0 — allocate full transaction amount to "Other"
+                    // Line items sum to 0, allocate full transaction amount to "Other"
                     categoryTotals.TryAdd("Other", 0);
                     categoryTotals["Other"] += subtotalUSD;
                 }
@@ -187,7 +187,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 }
                 else
                 {
-                    // Line items sum to 0 — allocate full transaction amount to "Other"
+                    // Line items sum to 0, allocate full transaction amount to "Other"
                     categoryTotals.TryAdd("Other", 0);
                     categoryTotals["Other"] += subtotalUSD;
                 }
@@ -258,13 +258,13 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         // Switch to daily buckets when the filter window is narrow. Month
         // bucketing summed the WHOLE month even when the user filtered to
-        // a single day or week — making "today only" show all of May, etc.
+        // a single day or week, making "today only" show all of May, etc.
         // GetTimeBucket already handles the day/week/month switchover.
         var bucket = GetTimeBucket(startDate, endDate);
 
         if (bucket == TimeBucket.Day)
         {
-            // Daily granularity — sum revenue and expenses per day inside
+            // Daily granularity: sum revenue and expenses per day inside
             // the actual filter window. Aligns with what the user expects
             // when filtering to a short range.
             var revByDay = companyData.Revenues
@@ -468,7 +468,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
-            // Paid-only — average should reflect typical collected revenue,
+            // Paid-only: average should reflect typical collected revenue,
             // not paddled by unpaid invoices that may never come in.
             var transactions = companyData.Revenues
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
@@ -589,7 +589,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var revenueValuesByDate = new Dictionary<DateTime, List<decimal>>();
         var expenseValuesByDate = new Dictionary<DateTime, List<decimal>>();
 
-        // Only average collected revenue — unpaid invoices aren't actual
+        // Only average collected revenue, unpaid invoices aren't actual
         // transactions in cash-basis terms.
         foreach (var revenue in companyData.Revenues
                      .Where(s => s.Date >= startDate && s.Date <= endDate)
@@ -649,7 +649,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var revenueCountsByDate = new Dictionary<DateTime, int>();
         var expenseCountsByDate = new Dictionary<DateTime, int>();
 
-        // Match the paired daily Average chart — count only collected revenue.
+        // Match the paired daily Average chart, count only collected revenue.
         foreach (var revenue in companyData.Revenues
                      .Where(s => s.Date >= startDate && s.Date <= endDate)
                      .Where(RevenueAggregator.IsCollected))
@@ -894,8 +894,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         var allMonths = GetMonthsBetween(startDate, endDate).ToList();
 
         // Cash-basis: only count shipping on revenue rows that were actually
-        // collected. Unpaid invoices shouldn't influence the shipping average
-        // — see Calculations.md §2 Rule 2.
+        // collected. Unpaid invoices shouldn't influence the shipping average,
+        // see Calculations.md §2 Rule 2.
         var monthsWithData = allMonths.Where(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);

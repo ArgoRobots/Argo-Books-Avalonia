@@ -77,7 +77,7 @@ public static class RefundAggregator
     /// <summary>
     /// Pre-tax USD portion of refunds inside [start, end], for profit math.
     /// Each refund is scaled by its invoice's Subtotal/Total ratio so the
-    /// tax part of the refund — which was never profit on the revenue side —
+    /// tax part of the refund, which was never profit on the revenue side,
     /// isn't subtracted again. Falls back to the full refund amount when
     /// the invoice link is missing.
     /// See docs/Calculations.md §8 for the rationale.

@@ -40,7 +40,7 @@ public partial class App
 
         CompanyManager.CompanyOpened += async (_, args) =>
         {
-            // Don't hide the welcome screen yet — keep it visible behind the loading
+            // Don't hide the welcome screen yet, keep it visible behind the loading
             // overlay so the user doesn't see the half-initialized dashboard.
             _mainWindowViewModel.CurrentCompanyName = args.CompanyName;
             var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
@@ -112,7 +112,7 @@ public partial class App
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
             // Migrate: if a legacy .env API key exists but the company has no persisted key,
-            // adopt the .env key — but only if this company actually has portal activity
+            // adopt the .env key, but only if this company actually has portal activity
             // (connected providers or a portal URL), so we don't assign the key to the wrong company.
             // Best-effort: persists to .argo on next save; re-runs harmlessly if the save doesn't happen.
             var portalSettings = CompanyManager.CompanyData?.Settings.PaymentPortal;
@@ -211,7 +211,7 @@ public partial class App
 
         // When the open company's file is renamed during a save, the watcher's
         // Renamed handler strips the old path from the recent-companies UI caches,
-        // but the new path was only added to settings.json — never to those caches.
+        // but the new path was only added to settings.json, never to those caches.
         // Refresh from disk so the welcome screen, file menu, and switcher all see
         // the new entry.
         CompanyManager.CompanyRenamed += async (_, _) =>
@@ -315,7 +315,7 @@ public partial class App
         // Central handler for all modal save/delete events (wired lazily in each getter)
         _appShellViewModel.UnsavedChangesMade += MarkUnsavedChanges;
 
-        // Invoice template designer — BrowseLogoRequested needs desktop file picker access
+        // Invoice template designer: BrowseLogoRequested needs desktop file picker access
         // Note: TemplateSaved is already wired to RaiseUnsavedChanges in the lazy getter
         _appShellViewModel.InvoiceTemplateDesignerViewModel.BrowseLogoRequested += async (_, _) =>
         {
@@ -341,7 +341,7 @@ public partial class App
             }
         };
 
-        // Customer modals — let the user pick an avatar image. The bitmap is loaded for
+        // Customer modals: let the user pick an avatar image. The bitmap is loaded for
         // an immediate preview; the file is staged and copied/resized into the company
         // temp directory only when the modal is saved.
         _appShellViewModel.CustomerModalsViewModel.BrowseAvatarRequested += async (_, _) =>
@@ -352,7 +352,7 @@ public partial class App
                 "CustomerAvatar");
         };
 
-        // Supplier modals — same pattern as customer.
+        // Supplier modals: same pattern as customer.
         _appShellViewModel.SupplierModalsViewModel.BrowseAvatarRequested += async (_, _) =>
         {
             await PickAvatarAsync(
@@ -1160,7 +1160,7 @@ public partial class App
             }
         };
 
-        // Portal authentication — prompt for password/biometric before allowing portal changes
+        // Portal authentication: prompt for password/biometric before allowing portal changes
         settings.PortalAuthenticationRequested += async () =>
         {
             if (CompanyManager?.IsCompanyOpen != true || !CompanyManager.IsEncrypted)
@@ -1190,7 +1190,7 @@ public partial class App
 
             if (password == "__BIOMETRIC__")
             {
-                // biometric login succeeded — retrieve stored password and verify
+                // biometric login succeeded, retrieve stored password and verify
                 var fileId = GetBiometricFileId(filePath);
                 var storedPassword = platformService.GetPasswordForBiometric(fileId);
                 if (!string.IsNullOrEmpty(storedPassword) && CompanyManager.VerifyCurrentPassword(storedPassword))
@@ -1199,7 +1199,7 @@ public partial class App
                     return true;
                 }
 
-                // Stored password didn't match — fall back to manual entry
+                // Stored password didn't match, fall back to manual entry
                 passwordModal.ShowError("Stored password not found. Please enter the password manually.".Translate());
                 password = await passwordModal.WaitForPasswordAsync();
                 if (password == null)
@@ -1494,7 +1494,7 @@ public partial class App
                 return;
             }
 
-            // Show open file dialog — support both .xlsx and .csv
+            // Show open file dialog: support both .xlsx and .csv
             var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Import Spreadsheet".Translate(),

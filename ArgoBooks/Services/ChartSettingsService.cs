@@ -268,8 +268,8 @@ public partial class ChartSettingsService : ObservableObject
         var now = DateTime.Now;
         // End-of-today, used as the inclusive upper bound for any "current"
         // range. Without this, EndDate is the moment the dashboard refreshed
-        // (e.g., 11:43 AM) and transactions stored later in the day —
-        // including rows saved with DateTime.UtcNow on a behind-UTC clock —
+        // (e.g., 11:43 AM) and transactions stored later in the day,
+        // including rows saved with DateTime.UtcNow on a behind-UTC clock,
         // get filtered out of stat cards even though the chart's own
         // end-of-day normalization includes them.
         var endOfToday = now.Date.AddDays(1).AddTicks(-1);

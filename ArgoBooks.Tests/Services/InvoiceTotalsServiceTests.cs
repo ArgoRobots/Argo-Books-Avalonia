@@ -121,7 +121,7 @@ public class InvoiceTotalsServiceTests
     {
         // Customer paid $103 ($100 invoice + $3 processing fee they absorbed).
         // A full refund returns $100 (the invoice value, not the fee).
-        // Net paid afterward is $3 — fee residue, not a re-payment. Status
+        // Net paid afterward is $3, fee residue, not a re-payment. Status
         // should be Refunded.
         var invoice = new Invoice
         {
@@ -141,7 +141,7 @@ public class InvoiceTotalsServiceTests
     public void RecalculateStatus_PayRefundPay_StaysPartiallyRefunded()
     {
         // Customer paid $100, was refunded $100, then paid $100 again.
-        // AmountPaid=$200, AmountRefunded=$100. Net paid is $100 — a full
+        // AmountPaid=$200, AmountRefunded=$100. Net paid is $100, a full
         // invoice value of fresh money, not fee residue. Refund history
         // must remain visible, so status is PartiallyRefunded.
         var invoice = new Invoice

@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete, DrawnLabelVisual is not API-compatible
 using System.Collections.Specialized;
 using System.ComponentModel;
 using Avalonia;
@@ -136,7 +136,7 @@ public partial class DashboardPage : UserControl
             && e.OldStartingIndex >= 0 && e.NewStartingIndex >= 0
             && e.OldStartingIndex < RowsContainer.Children.Count)
         {
-            // Reorder visual children without rebuilding — avoids chart reload
+            // Reorder visual children without rebuilding, avoids chart reload
             var child = RowsContainer.Children[e.OldStartingIndex];
             RowsContainer.Children.RemoveAt(e.OldStartingIndex);
             RowsContainer.Children.Insert(e.NewStartingIndex, child);
@@ -148,7 +148,7 @@ public partial class DashboardPage : UserControl
             && e.OldStartingIndex >= 0
             && e.OldStartingIndex < RowsContainer.Children.Count)
         {
-            // Remove the visual child without rebuilding — avoids chart reload
+            // Remove the visual child without rebuilding, avoids chart reload
             RowsContainer.Children.RemoveAt(e.OldStartingIndex);
             SetupDragDrop(viewModel.LayoutViewModel);
             return;
@@ -228,7 +228,7 @@ public partial class DashboardPage : UserControl
                 if (args.Action == NotifyCollectionChangedAction.Move
                     && args.OldStartingIndex >= 0 && args.NewStartingIndex >= 0)
                 {
-                    // Reorder visual children without rebuilding — avoids chart reload
+                    // Reorder visual children without rebuilding, avoids chart reload
                     var moveChild = capturedRowHost.Panel.Children[args.OldStartingIndex];
                     capturedRowHost.Panel.Children.RemoveAt(args.OldStartingIndex);
                     capturedRowHost.Panel.Children.Insert(args.NewStartingIndex, moveChild);
@@ -237,7 +237,7 @@ public partial class DashboardPage : UserControl
                     && args.OldStartingIndex >= 0
                     && args.OldStartingIndex < capturedRowHost.Panel.Children.Count)
                 {
-                    // Remove the visual child without rebuilding — avoids chart reload
+                    // Remove the visual child without rebuilding, avoids chart reload
                     var panel = capturedRowHost.Panel;
                     var removeChild = panel.Children[args.OldStartingIndex];
                     if (removeChild is WidgetHost host && host.DataContext is WidgetHostViewModel oldVm)
@@ -248,7 +248,7 @@ public partial class DashboardPage : UserControl
                 else if (args.Action == NotifyCollectionChangedAction.Add
                     && args.NewStartingIndex >= 0 && args.NewItems?.Count == 1)
                 {
-                    // Add the visual child without rebuilding — avoids chart reload
+                    // Add the visual child without rebuilding, avoids chart reload
                     if (args.NewItems[0] is WidgetHostViewModel newVm)
                     {
                         var newHost = CreateWidgetHost(newVm, layoutVm);
@@ -371,7 +371,7 @@ public partial class DashboardPage : UserControl
                 }
             }
 
-            // Wire row drag handle — find index dynamically at press time
+            // Wire row drag handle, find index dynamically at press time
             var capturedRowHost = rowHost;
             rowHost.DragHandle.PointerPressed += (_, e) =>
             {
@@ -386,7 +386,7 @@ public partial class DashboardPage : UserControl
             };
         }
 
-        // Row drag pointer handlers — remove first to prevent stacking
+        // Row drag pointer handlers, remove first to prevent stacking
         MainScrollViewer.RemoveHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnRowPointerMoved);
         MainScrollViewer.RemoveHandler(Avalonia.Input.InputElement.PointerReleasedEvent, OnRowPointerReleased);
         MainScrollViewer.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnRowPointerMoved, handledEventsToo: true);

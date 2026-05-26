@@ -498,7 +498,7 @@ public partial class DataValidator(CompanyData companyData)
     #region Helpers
 
     /// <summary>
-    /// Validates an email address format. Canonical email check used across the app —
+    /// Validates an email address format. Canonical email check used across the app:
     /// requires non-empty local part, '@', non-empty domain, '.', and non-empty TLD.
     /// </summary>
     public static bool IsValidEmail(string email)

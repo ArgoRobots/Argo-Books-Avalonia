@@ -537,7 +537,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             return false;
         }
 
-        // No handler wired up — allow by default
+        // No handler wired up, allow by default
         return true;
     }
 
@@ -555,7 +555,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private CancellationTokenSource? _portalCompanyNameCts;
 
     /// <summary>
-    /// Called when PortalCompanyName changes — sends the updated name to the portal server.
+    /// Called when PortalCompanyName changes, sends the updated name to the portal server.
     /// </summary>
     partial void OnPortalCompanyNameChanged(string value)
     {
@@ -621,7 +621,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch
         {
-            // Silently fail — user can retry
+            // Silently fail, user can retry
         }
     }
 
@@ -631,7 +631,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     partial void OnHasPortalLogoChanged(bool value) => OnPropertyChanged(nameof(PortalLogoButtonText));
 
     /// <summary>
-    /// Called when PortalNotifyOnPayment changes — requires auth if password is enabled.
+    /// Called when PortalNotifyOnPayment changes, requires auth if password is enabled.
     /// </summary>
     partial void OnPortalNotifyOnPaymentChanged(bool value)
     {
@@ -662,7 +662,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _portalSyncInterval = "5";
 
     /// <summary>
-    /// Called when PortalSyncInterval changes — requires auth if password is enabled.
+    /// Called when PortalSyncInterval changes, requires auth if password is enabled.
     /// </summary>
     partial void OnPortalSyncIntervalChanged(string value)
     {
@@ -699,7 +699,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string? _stripeEmail;
 
     /// <summary>
-    /// The company's owner email — bound by the Portal Settings UI as a
+    /// The company's owner email, bound by the Portal Settings UI as a
     /// read-only display next to a "Change…" button. Mutated only via the
     /// 4-step EmailChangeModal flow (locked to in-place edits).
     /// </summary>
@@ -903,7 +903,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch
         {
-            // Download failed — don't show an empty gray box
+            // Download failed, don't show an empty gray box
             PortalLogoSource = null;
             HasPortalLogo = false;
         }
@@ -1190,7 +1190,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch
         {
-            // Silently fail — local cached values are still shown
+            // Silently fail, local cached values are still shown
         }
     }
 
@@ -1221,7 +1221,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     };
 
                     // A merchant/account ID in the DB is what makes the connection
-                    // real — emails are informational and may be blank (Stripe Express
+                    // real. Emails are informational and may be blank (Stripe Express
                     // accounts, Square locations without a business_email, etc.).
                     if (connected)
                     {
@@ -1328,7 +1328,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
     public void OpenWithTab(int tabIndex)
     {
-        // Reset portal authentication — require re-auth each time settings opens
+        // Reset portal authentication, require re-auth each time settings opens
         _isPortalAuthenticated = false;
 
         // Sync with current ThemeService values
@@ -2015,7 +2015,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     /// <summary>
     /// First-time setup of the portal owner email. The server stores
-    /// owner_email but does NOT mark email_verified_at — instead it emails
+    /// owner_email but does NOT mark email_verified_at, instead it emails
     /// a verification code to the new address. We immediately open the
     /// VerifyEmailModal so the user finishes the loop. Until they confirm
     /// the code, refund endpoints will return 412 EMAIL_NOT_VERIFIED.
@@ -2048,7 +2048,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Recovery path: server says email is already set on the company,
         // but the local .argo doesn't have it (likely because an earlier
         // Set succeeded server-side before the local-persist fix landed).
-        // The 409 response now includes the existing email — if it matches
+        // The 409 response now includes the existing email, if it matches
         // what the user just typed, silently reconcile local state. If it
         // differs, surface the existing email so the user can act.
         if (!result.Ok && result.ErrorCode == "OWNER_EMAIL_ALREADY_SET")
@@ -2069,7 +2069,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     : $"This portal account already has the owner email {existing}. Use the Change flow to update it.".Translate());
 
             // Even on the "different email" branch, the local .argo may still
-            // be out of sync — pull the server's value down so the UI reflects
+            // be out of sync, pull the server's value down so the UI reflects
             // reality and the refund pre-flight stops false-blocking.
             if (!string.IsNullOrEmpty(existing))
             {
@@ -2094,7 +2094,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         companyData.ChangesMade = true;
 
         // Persist the change to the .argo file immediately. Scoped save so
-        // we ONLY write appSettings.json — any other in-memory edits the
+        // we ONLY write appSettings.json, any other in-memory edits the
         // user has open elsewhere stay un-flushed (their asterisk stays).
         // Without this, a restart leaves Settings.Company.Email empty even
         // though the server has it; refund pre-flight wrongly errors with

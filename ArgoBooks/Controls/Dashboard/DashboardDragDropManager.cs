@@ -333,7 +333,7 @@ public class DashboardDragDropManager
         _crossRowTargetPanel = null;
         _sourceRowPanel = null;
 
-        // Now perform the actual move (may trigger RebuildRows — that's fine, state is clean)
+        // Now perform the actual move (may trigger RebuildRows, that's fine, state is clean)
         if (crossRowTarget != null && sourceRowPanel != null)
         {
             var sourceRowVm = FindRowVm(sourceRowPanel);

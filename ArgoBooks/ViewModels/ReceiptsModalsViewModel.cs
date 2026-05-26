@@ -237,7 +237,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     public void InvalidateScanServices()
     {
         _usageService?.InvalidateCache();
-        // Dispose before dropping the reference — IReceiptUsageService now owns
+        // Dispose before dropping the reference, IReceiptUsageService now owns
         // an HttpClient when constructed via the parameterless overload.
         _usageService?.Dispose();
         _usageService = null;
@@ -725,7 +725,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 UpdateUsageDisplay(usageCheck);
                 OnPropertyChanged(nameof(BulkUsageSummary));
             }
-            catch { /* Non-critical — summary will show 0/0 until scan starts */ }
+            catch { /* Non-critical, summary will show 0/0 until scan starts */ }
         }
     }
 
@@ -770,7 +770,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             byte[]? thumbBytes = null;
             await Task.Run(async () =>
             {
-                // Use lightweight thumbnail for queue cards — skip heavy OCR preprocessing
+                // Use lightweight thumbnail for queue cards, skip heavy OCR preprocessing
                 if (isPdf)
                 {
                     // Capture the page count so the scanning label can warn about multi-page PDFs.
@@ -797,7 +797,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch
         {
-            // Non-critical — card will show placeholder icon
+            // Non-critical, card will show placeholder icon
         }
     }
 
@@ -906,7 +906,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
             item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
 
-            // 3. Generate preview (fire-and-forget, non-blocking) — skip if already generated in queue
+            // 3. Generate preview (fire-and-forget, non-blocking), skip if already generated in queue
             if (string.IsNullOrEmpty(item.PreviewImagePath))
             {
                 _ = Task.Run(async () =>
@@ -940,7 +940,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }, token);
             }
 
-            // Free original file bytes — local `fileData` var keeps the reference for the preview task
+            // Free original file bytes, local `fileData` var keeps the reference for the preview task
             item.FileData = null;
 
             // 4. Check usage
@@ -1043,7 +1043,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CancelBulkScan()
     {
-        // Signal cancellation — Task.WhenAll in StartBulkScan will set IsBulkScanComplete
+        // Signal cancellation, Task.WhenAll in StartBulkScan will set IsBulkScanComplete
         // when all tasks finish. Don't set it here to avoid counter corruption from
         // tasks that complete after this point.
         _bulkCancellationSource?.Cancel();
@@ -1717,7 +1717,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             UpdateHasUnmatchedProducts();
             ValidateTotals();
 
-            // Fire AI suggestions in the background — don't block showing scan results
+            // Fire AI suggestions in the background, don't block showing scan results
             // Suppressed during bulk review carousel navigation to prevent cross-item suggestion corruption
             if (!_suppressAiSuggestions)
                 _ = GetAiSuggestionsAsync(result);
@@ -2148,7 +2148,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         if (category == null)
         {
-            // No expense category exists — create one from AI suggestion if available
+            // No expense category exists, create one from AI suggestion if available
             var aiCategory = _aiSuggestion?.NewCategory;
             var categoryName = aiCategory?.Name ?? "General Expenses";
 
@@ -2580,7 +2580,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         else
         {
-            // No match found — suggest creating a new supplier
+            // No match found, suggest creating a new supplier
             ShowCreateSupplierSuggestion = true;
             SuggestedSupplierName = ToTitleCase(supplierName);
         }

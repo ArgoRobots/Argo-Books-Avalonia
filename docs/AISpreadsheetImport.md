@@ -23,7 +23,7 @@ The import follows a five-step pipeline: analyze, review, validate, import, and 
 
 The `SpreadsheetAnalysisService` reads the file and sends a summary to the Gemini API (via the argorobots.com server proxy) for analysis.
 
-**Sampling strategy** — For large files, the service sends a representative sample to the LLM rather than all rows:
+**Sampling strategy:** For large files, the service sends a representative sample to the LLM rather than all rows:
 - First 5 rows
 - Last 3 rows
 - 5 random rows from the middle (deterministic seed for reproducibility)
@@ -34,7 +34,7 @@ The LLM receives the target schema (all entity types with their columns, types, 
 - **Processing tier** recommendation (Tier 1 or Tier 2)
 - **Unmapped columns** in both directions (source and target)
 
-**Country-aware schemas** — Address fields adapt to the user's country. For example, US users see "State" and "ZIP Code" while UK users see "County" and "Postcode".
+**Country-aware schemas:** Address fields adapt to the user's country. For example, US users see "State" and "ZIP Code" while UK users see "County" and "Postcode".
 
 ### Step 2: Mapping Review
 
@@ -49,9 +49,9 @@ The `ImportMappingDialog` presents the AI analysis for user review before import
 
 Before importing, the system validates the mapped data against the existing company data:
 
-- **Missing references** — Detects when imported data references entities that don't exist (e.g., an invoice referencing a customer ID that isn't in the system)
-- **Auto-fixable issues** — Missing suppliers, customers, categories, and other reference entities can be automatically created as placeholders
-- **Non-auto-fixable issues** — Invalid data that requires the user to fix the spreadsheet
+- **Missing references:** Detects when imported data references entities that don't exist (e.g., an invoice referencing a customer ID that isn't in the system)
+- **Auto-fixable issues:** Missing suppliers, customers, categories, and other reference entities can be automatically created as placeholders
+- **Non-auto-fixable issues:** Invalid data that requires the user to fix the spreadsheet
 
 The `ImportValidationDialog` presents issues grouped by sheet and lets the user choose to:
 - Cancel the import
@@ -65,7 +65,7 @@ The system uses two processing tiers depending on data complexity.
 
 ![Tier Processing](diagrams/ai-spreadsheet-import/tier-1-processing.svg)
 
-Used when the source data structure closely matches the target schema — columns just need renaming.
+Used when the source data structure closely matches the target schema: columns just need renaming.
 
 - Source column headers are renamed to match the Argo Books schema based on the AI's column mappings
 - Standard import logic then processes the renamed data deterministically

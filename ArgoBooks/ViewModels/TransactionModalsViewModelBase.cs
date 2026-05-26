@@ -930,7 +930,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     }
                     else
                     {
-                        // Rate unavailable — save with pending conversion for later
+                        // Rate unavailable, save with pending conversion for later
                         IsPendingConversion = true;
                         ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
                         ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);
@@ -941,7 +941,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 }
                 catch (Exception)
                 {
-                    // Network or other error — save with pending conversion
+                    // Network or other error, save with pending conversion
                     IsPendingConversion = true;
                     ConvertedTotal = new MonetaryValue(Total, currentCurrency, 0, transactionDate);
                     ConvertedTaxAmount = new MonetaryValue(TaxAmount, currentCurrency, 0, transactionDate);

@@ -96,7 +96,7 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
 
         if (HasUpdate)
         {
-            // Update already known from background check — start downloading
+            // Update already known from background check, start downloading
             await DownloadUpdate();
         }
         else
@@ -144,7 +144,7 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
         {
             if (_updateService == null)
             {
-                // No update service — always report up-to-date
+                // No update service, always report up-to-date
                 await Task.Delay(1000);
                 IsUpToDate = true;
                 LastChecked = TimeZoneService.FormatDateTime(DateTime.Now);

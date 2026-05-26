@@ -42,7 +42,7 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- Window Caption Buttons — ZIndex above ALL modals/overlays so the user can
+        <!-- Window Caption Buttons, ZIndex above ALL modals/overlays so the user can
              always minimize, maximize, or close the window. Closing while a critical
              dialog (UnsavedChanges, Confirmation) is open still routes through the
              window's Closing handler, so data-safety prompts re-trigger as normal. -->
@@ -78,7 +78,7 @@
                             BorderBrush="{DynamicResource TextPrimaryBrush}"
                             BorderThickness="1"
                             CornerRadius="1.5" />
-                    <!-- Restore icon (two overlapping rectangles — back one shows only top and right edges) -->
+                    <!-- Restore icon (two overlapping rectangles, back one shows only top and right edges) -->
                     <Canvas x:Name="RestoreIcon" IsVisible="False" Width="11" Height="11">
                         <!-- Back rectangle (rendered first, behind front) -->
                         <Border Width="9" Height="9"

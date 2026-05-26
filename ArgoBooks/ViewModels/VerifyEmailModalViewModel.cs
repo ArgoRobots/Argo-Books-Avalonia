@@ -70,7 +70,7 @@ public partial class VerifyEmailModalViewModel : ObservableObject
                 ErrorMessage = result.ErrorCode switch
                 {
                     "WRONG_CODE" => "Wrong code. Try again.",
-                    "EXPIRED" => "Code expired — request a new one.",
+                    "EXPIRED" => "Code expired. Request a new one.",
                     "NO_ACTIVE_CODE" => "No active verification code. Request one to start over.",
                     "TOO_MANY_ATTEMPTS" => "Too many wrong attempts. Request a new code.",
                     _ => result.Message ?? "Could not verify the code.",

@@ -1536,7 +1536,7 @@ public partial class SkiaReportDesignCanvas : UserControl
                     var nextPageTop = GetPageYOffset(p) + pageHeight + PageGap;
                     if (canvasPoint.Y >= pageBottom && canvasPoint.Y < nextPageTop)
                     {
-                        // In gap after page p — pick the page the cursor is closer to
+                        // In gap after page p, pick the page the cursor is closer to
                         var gapMid = pageBottom + PageGap / 2.0;
                         cursorPage = canvasPoint.Y < gapMid ? p : Math.Min(p + 1, pageCount);
                         break;
@@ -2258,7 +2258,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         var (pageNumber, localY) = GetPageAtCanvasY(canvasY);
         if (pageNumber == 0)
         {
-            // In a gap — snap to nearest page
+            // In a gap, snap to nearest page
             pageNumber = Math.Max(1, Math.Min(GetPageCount(), CurrentDesignerPage));
             var (_, pageHeight) = GetPageDimensions();
             localY = pageHeight / 2;

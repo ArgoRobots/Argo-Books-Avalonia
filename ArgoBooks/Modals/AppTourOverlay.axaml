@@ -136,7 +136,7 @@
                                 Command="{Binding NextStepCommand}"
                                 Width="90"
                                 HorizontalContentAlignment="Center">
-                            <!-- Always "Next" — the last slide tells the user the Setup Checklist is the actual final step. -->
+                            <!-- Always "Next", the last slide tells the user the Setup Checklist is the actual final step. -->
                             <TextBlock Text="Next" />
                         </Button>
                     </StackPanel>

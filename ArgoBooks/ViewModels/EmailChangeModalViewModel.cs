@@ -248,7 +248,7 @@ public partial class EmailChangeModalViewModel : ObservableObject
             }
 
             // Mirror the new email into local CompanyData and persist (scoped
-            // save — only appSettings.json — so other in-memory edits stay
+            // save (only appSettings.json) so other in-memory edits stay
             // un-flushed). Without this, a restart leaves the UI showing
             // the OLD email even though the server has the new one.
             var companyData = App.CompanyManager?.CompanyData;

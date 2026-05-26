@@ -122,7 +122,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private bool _shouldRemoveAvatarOnSave;
 
     /// <summary>
-    /// Snapshot of whether the customer had an avatar when the edit modal was opened —
+    /// Snapshot of whether the customer had an avatar when the edit modal was opened,
     /// used for change detection.
     /// </summary>
     private bool _originalHasAvatar;
@@ -568,7 +568,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         // Load existing avatar (if any) into the modal preview.
         // _originalHasAvatar tracks the persisted state (used for change detection so
         // a missing/corrupt file can still be cleared on save). HasModalAvatar drives
-        // the *visual* — only set it when the bitmap actually decoded, otherwise the
+        // the *visual*, only set it when the bitmap actually decoded, otherwise the
         // UI would show a blank Image control instead of falling back to initials.
         _pendingAvatarSourcePath = null;
         _shouldRemoveAvatarOnSave = false;
@@ -704,7 +704,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
         if (!hasFieldChanges)
         {
-            // Only the avatar changed — record a dedicated undo entry so the user
+            // Only the avatar changed, record a dedicated undo entry so the user
             // can revert just the image change.
             var customerForAvatarUndo = _editingCustomer;
             App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -876,7 +876,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
                 // Snapshot the avatar bytes BEFORE deleting so undo can restore the
                 // file alongside the customer record. The customer's AvatarFileName is
-                // also captured implicitly — the customer object stays alive in the
+                // also captured implicitly, the customer object stays alive in the
                 // closure and is mutated in place by RestoreCustomerAvatar.
                 var deletedAvatarBytes = App.CompanyManager?.ReadCustomerAvatarBytes(deletedCustomer);
                 var savedAvatarFileName = deletedCustomer.AvatarFileName;

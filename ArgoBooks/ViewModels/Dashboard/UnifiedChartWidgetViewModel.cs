@@ -225,7 +225,7 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             .Distinct().OrderBy(d => d).ToArray();
 
         // CreateDateTimeSeries converts USD aggregates to display currency
-        // internally — pass USD values straight through.
+        // internally, pass USD values straight through.
         var series = new ObservableCollection<ISeries>();
         var seriesUsdValues = new List<double[]>();
         for (int i = 0; i < seriesData.Count; i++)

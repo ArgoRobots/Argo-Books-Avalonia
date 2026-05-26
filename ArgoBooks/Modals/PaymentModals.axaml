@@ -199,7 +199,7 @@
                                            TextWrapping="Wrap" />
                             </Border>
 
-                            <!-- Invoice — hidden for portal payments -->
+                            <!-- Invoice, hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
                                 <TextBlock Text="{loc:Loc Invoice}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
@@ -212,7 +212,7 @@
                                                             EmptyCreateCommand="{Binding OpenCreateInvoiceCommand}" />
                             </StackPanel>
 
-                            <!-- Revenue (alternative link) — hidden for portal payments -->
+                            <!-- Revenue (alternative link), hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
                                 <TextBlock Text="{loc:Loc 'Revenue (if not linked to an invoice)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding RevenueOptions}"
@@ -227,7 +227,7 @@
                                            IsVisible="{Binding ModalLinkError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
-                            <!-- Amount — hidden for portal payments -->
+                            <!-- Amount, hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
@@ -243,7 +243,7 @@
                                            IsVisible="{Binding ModalAmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
-                            <!-- Date — hidden for portal payments -->
+                            <!-- Date, hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
@@ -251,7 +251,7 @@
                                 <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
 
-                            <!-- Payment Method — hidden for portal payments -->
+                            <!-- Payment Method, hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
@@ -267,7 +267,7 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Reference Number — hidden for portal payments -->
+                            <!-- Reference Number, hidden for portal payments -->
                             <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
                                 <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"

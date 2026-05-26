@@ -54,9 +54,9 @@ public partial class RefundModalsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Bound to ModalOverlay.ClosingCommand — fires on backdrop click and Esc.
+    /// Bound to ModalOverlay.ClosingCommand, fires on backdrop click and Esc.
     /// If the user is mid-flow on a refund (entered code, etc.) we still
-    /// just close — the server-side request is left in pending_code and the
+    /// just close, the server-side request is left in pending_code and the
     /// hourly cleanup cron will cancel it. No data loss.
     /// </summary>
     [RelayCommand]

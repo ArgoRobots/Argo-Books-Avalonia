@@ -26,7 +26,7 @@
                    </Border>
                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                        <StackPanel Margin="24" Spacing="16">
-                           <!-- Avatar — auto-fills from website favicon when the user has not picked an image -->
+                           <!-- Avatar, auto-fills from website favicon when the user has not picked an image -->
                            <Grid HorizontalAlignment="Center" Width="96" Height="96">
                                <Button Classes="link"
                                        Padding="0"
@@ -160,7 +160,7 @@
                    </Border>
                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                        <StackPanel Margin="24" Spacing="16">
-                           <!-- Avatar — auto-fills from website favicon when the user has not picked an image -->
+                           <!-- Avatar, auto-fills from website favicon when the user has not picked an image -->
                            <Grid HorizontalAlignment="Center" Width="96" Height="96">
                                <Button Classes="link"
                                        Padding="0"

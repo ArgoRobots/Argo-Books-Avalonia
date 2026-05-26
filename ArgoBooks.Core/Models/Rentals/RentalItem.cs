@@ -4,7 +4,7 @@ namespace ArgoBooks.Core.Models.Rentals;
 
 /// <summary>
 /// Represents an item available for rental, linked to an inventory item.
-/// Stock is tracked via the linked InventoryItem.InStock — no local quantity fields.
+/// Stock is tracked via the linked InventoryItem.InStock, no local quantity fields.
 /// </summary>
 public class RentalItem
 {

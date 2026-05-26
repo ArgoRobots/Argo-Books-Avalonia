@@ -181,7 +181,7 @@
                         ShowDateRangeMessage="True" />
                 </Border>
 
-                <!-- Empty dashboard message — normal mode -->
+                <!-- Empty dashboard message, normal mode -->
                 <Border x:Name="EmptyDashboardMessage"
                         IsVisible="False"
                         Background="{DynamicResource SurfaceBrush}"
@@ -220,7 +220,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Empty dashboard message — edit mode -->
+                <!-- Empty dashboard message, edit mode -->
                 <Border x:Name="EmptyDashboardEditMessage"
                         IsVisible="False"
                         Background="{DynamicResource SurfaceBrush}"

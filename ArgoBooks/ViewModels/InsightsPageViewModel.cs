@@ -96,12 +96,12 @@ public partial class InsightsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowTeaser));
         if (value)
         {
-            // Switched to premium — load real data
+            // Switched to premium, load real data
             _ = RefreshInsightsAsync();
         }
         else
         {
-            // Switched to free — populate sample data for teaser
+            // Switched to free, populate sample data for teaser
             PopulateSampleData();
         }
     }

@@ -227,7 +227,7 @@ public class ForecastAccuracyService : IForecastAccuracyService
     {
         return await Task.Run(() =>
         {
-            // Check if algorithm version changed — if so, clear old backtests and re-run
+            // Check if algorithm version changed, if so, clear old backtests and re-run
             if (settings.BacktestVersion != CurrentBacktestVersion)
             {
                 companyData.ForecastRecords.RemoveAll(r => r.IsValidated && r.ForecastDate.Date == r.PeriodStartDate.Date);
