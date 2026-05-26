@@ -233,13 +233,22 @@ public partial class CreateCompanyViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void NextStep()
+    private async Task NextStepAsync()
     {
-        if (CurrentStep < TotalSteps)
+        if (CurrentStep >= TotalSteps)
+            return;
+
+        // Leaving step 1 (which holds the country and currency): warn, but allow,
+        // when the chosen currency doesn't match the country.
+        if (CurrentStep == 1)
         {
-            CurrentStep++;
-            UpdateStepProperties();
+            var currencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
+            if (!await CurrencyCountryMatcher.ConfirmIfMismatchAsync(Country, currencyCode))
+                return;
         }
+
+        CurrentStep++;
+        UpdateStepProperties();
     }
 
     [RelayCommand]

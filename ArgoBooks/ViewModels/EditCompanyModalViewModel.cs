@@ -419,6 +419,17 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     {
         if (!CanSave) return;
 
+        // Warn (but allow) when the chosen currency doesn't match the country. Only
+        // when the user actually changed the country or currency this session, and not
+        // on the rate-retry path (skipCurrencyValidation), which was already confirmed.
+        if (!skipCurrencyValidation &&
+            (Country != _originalCountry || SelectedCurrency != _originalCurrency))
+        {
+            var selectedCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
+            if (!await CurrencyCountryMatcher.ConfirmIfMismatchAsync(Country, selectedCode))
+                return;
+        }
+
         var currencyChanged = SelectedCurrency != _originalCurrency;
 
         // If currency changed and we haven't already validated rates via retry
