@@ -116,8 +116,32 @@
                             </StackPanel>
 
                             <!-- Plan Cards (only shown when loaded successfully) -->
-                            <StackPanel Margin="24" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16"
-                                        IsVisible="{Binding ShowPlans}">
+                            <StackPanel Margin="24" Spacing="16" IsVisible="{Binding ShowPlans}">
+
+                                <!-- Billing cycle toggle (above both cards, centered) -->
+                                <Border Classes="cycle-toggle" HorizontalAlignment="Center">
+                                    <Grid ColumnDefinitions="*,*">
+                                        <Button Grid.Column="0"
+                                                Classes="cycle-option"
+                                                Classes.active="{Binding IsYearlyBilling}"
+                                                Command="{Binding SelectYearlyBillingCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc Yearly}" VerticalAlignment="Center" />
+                                                <Border Classes="save-pill">
+                                                    <TextBlock Text="{Binding YearlySavingsPercentDisplay}" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1"
+                                                Classes="cycle-option"
+                                                Classes.active="{Binding IsMonthlyBilling}"
+                                                Command="{Binding SelectMonthlyBillingCommand}"
+                                                Content="{loc:Loc Monthly}" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Cards row -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
                                 <!-- Free Plan -->
                                 <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">
                                     <Grid RowDefinitions="Auto,*,Auto">
@@ -127,20 +151,15 @@
                                                        FontSize="16"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="$0"
-                                                           FontSize="28"
-                                                           FontWeight="Bold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text=" forever"
-                                                           FontSize="13"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           VerticalAlignment="Bottom"
-                                                           Margin="0,0,0,5" />
-                                            </StackPanel>
+                                            <TextBlock Text="$0"
+                                                       FontSize="28"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       HorizontalAlignment="Center" />
                                             <TextBlock Text="{loc:Loc 'Current Plan'}"
                                                        FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       HorizontalAlignment="Center" />
                                         </StackPanel>
 
                                         <!-- Features (from API) -->
@@ -166,7 +185,7 @@
                                                    Text="{loc:Loc 'Current Plan'}"
                                                    FontSize="13"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    HorizontalAlignment="Center"
                                                    Margin="0,16,0,0" />
                                     </Grid>
@@ -176,42 +195,76 @@
                                 <Border Classes="plan-card" Width="340">
                                     <Grid RowDefinitions="Auto,*,Auto">
                                         <!-- Plan Header -->
-                                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="4">
+                                        <Panel Grid.Row="0">
+                                            <StackPanel Spacing="8">
                                                 <TextBlock Text="{loc:Loc Premium}"
                                                            FontSize="16"
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding PremiumMonthlyPrice}"
-                                                               FontSize="28"
-                                                               FontWeight="Bold"
-                                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                                    <TextBlock Text="{Binding PremiumBillingPeriod}"
-                                                               FontSize="13"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               VerticalAlignment="Bottom"
-                                                               Margin="0,0,0,5" />
-                                                </StackPanel>
-                                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                                    <TextBlock Text="{Binding PremiumYearlyPrice}"
+
+                                                <!-- Monthly price -->
+                                                <StackPanel HorizontalAlignment="Center"
+                                                            Spacing="2"
+                                                            IsVisible="{Binding IsMonthlyBilling}">
+                                                    <!-- Invisible placeholder to match the yearly view's strikethrough,
+                                                         so the card doesn't change height when toggling cycles. -->
+                                                    <TextBlock Text="{Binding PremiumMonthlyStrike}"
                                                                FontSize="13"
                                                                FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    <TextBlock Text="{Binding PremiumYearlySavings}"
-                                                               FontSize="13"
-                                                               FontWeight="Bold"
-                                                               Foreground="{DynamicResource SuccessBrush}" />
+                                                               TextDecorations="Strikethrough"
+                                                               HorizontalAlignment="Center"
+                                                               Opacity="0"
+                                                               IsHitTestVisible="False" />
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                                                        <TextBlock Text="{Binding PremiumMonthlyPrice}"
+                                                                   FontSize="28"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{DynamicResource PrimaryBrush}" />
+                                                        <TextBlock Text="{Binding PremiumBillingPeriod}"
+                                                                   FontSize="13"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Bottom"
+                                                                   Margin="0,0,0,5" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{loc:Loc 'Billed monthly'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               HorizontalAlignment="Center" />
                                                 </StackPanel>
-                                                <TextBlock Text="{loc:Loc 'Unlock the full power of Argo Books'}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                                <!-- Yearly price (default) -->
+                                                <StackPanel HorizontalAlignment="Center"
+                                                            Spacing="2"
+                                                            IsVisible="{Binding IsYearlyBilling}">
+                                                    <TextBlock Text="{Binding PremiumMonthlyStrike}"
+                                                               FontSize="13"
+                                                               FontWeight="SemiBold"
+                                                               TextDecorations="Strikethrough"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               HorizontalAlignment="Center" />
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                                                        <TextBlock Text="{Binding PremiumYearlyPerMonth}"
+                                                                   FontSize="28"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{DynamicResource PrimaryBrush}" />
+                                                        <TextBlock Text="{Binding PremiumBillingPeriod}"
+                                                                   FontSize="13"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Bottom"
+                                                                   Margin="0,0,0,5" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{loc:Loc 'Billed annually'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               HorizontalAlignment="Center" />
+                                                </StackPanel>
                                             </StackPanel>
+
                                             <!-- Active Badge (when has Premium) -->
-                                            <Border Grid.Column="1"
-                                                    Background="{DynamicResource SuccessBrush}"
+                                            <Border Background="{DynamicResource SuccessBrush}"
                                                     CornerRadius="4"
                                                     Padding="8,4"
+                                                    HorizontalAlignment="Right"
                                                     VerticalAlignment="Top"
                                                     IsVisible="{Binding ShowPremiumActive}">
                                                 <TextBlock Text="{loc:Loc Active}"
@@ -219,7 +272,7 @@
                                                            FontWeight="SemiBold"
                                                            Foreground="White" />
                                             </Border>
-                                        </Grid>
+                                        </Panel>
 
                                         <!-- Features (from API) -->
                                         <ItemsControl Grid.Row="1" ItemsSource="{Binding PremiumPlanFeatures}" Margin="0,16,0,16">
@@ -256,6 +309,7 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
+                                </StackPanel>
                             </StackPanel>
                         </Panel>
                     </ScrollViewer>
@@ -481,6 +535,58 @@
             <Setter Property="Padding" Value="20" />
         </Style>
 
+        <!-- Billing cycle toggle (yearly | monthly) -->
+        <Style Selector="Border.cycle-toggle">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="3" />
+        </Style>
+
+        <Style Selector="Button.cycle-option">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.cycle-option /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+
+        <Style Selector="Button.cycle-option:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        </Style>
+
+        <Style Selector="Button.cycle-option.active">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <Style Selector="Button.cycle-option.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BoxShadow" Value="0 1 4 0 #20000000" />
+        </Style>
+
+        <!-- "Save X%" pill on the yearly toggle button -->
+        <Style Selector="Border.save-pill">
+            <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Border.save-pill TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
         <!-- Feature Item -->
         <Style Selector="Border.feature-item">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -489,7 +595,7 @@
         </Style>
         <Style Selector="Border.feature-item TextBlock">
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
 
         <Style Selector="TextBox.license-key">

@@ -88,6 +88,29 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _premiumYearlySavings = "";
 
+    // New: yearly billed-per-month price (e.g., "$8.33 CAD") shown when yearly is selected
+    [ObservableProperty]
+    private string _premiumYearlyPerMonth = "";
+
+    // New: strikethrough monthly price (e.g., "$10/month") shown above the yearly-per-month
+    [ObservableProperty]
+    private string _premiumMonthlyStrike = "";
+
+    // New: "Save 17%" pill shown on the yearly toggle option
+    [ObservableProperty]
+    private string _yearlySavingsPercentDisplay = "";
+
+    // New: billing-cycle toggle state. Yearly is the default.
+    [ObservableProperty]
+    private bool _isYearlyBilling = true;
+
+    public bool IsMonthlyBilling => !IsYearlyBilling;
+
+    partial void OnIsYearlyBillingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsMonthlyBilling));
+    }
+
     [ObservableProperty]
     private bool _isLoadingPlans;
 
@@ -116,6 +139,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
     // Raw pricing strings from the API, kept so we can re-translate when the language changes
     private string? _rawPremiumYearlyPriceDisplay;
     private string? _rawPremiumYearlySavingsDisplay;
+
+    // Raw numeric pricing from the API, used to derive the strike/per-month/savings-percent
+    // strings for the yearly toggle state.
+    private double _rawMonthlyPrice;
+    private double _rawYearlyPrice;
+    private string _rawCurrency = "CAD";
 
     #endregion
 
@@ -184,7 +213,19 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     private void RefreshPricingDisplay()
     {
-        PremiumBillingPeriod = "/month".Translate();
+        // Period now also carries the currency code so it renders as e.g. "CAD/month"
+        // at the same size and color as the period text. We construct it manually so
+        // the slash is preserved and the word stays lowercase regardless of how the
+        // translation pipeline handles "/month" or "month".
+        var monthWord = "month".Translate();
+        if (!string.IsNullOrEmpty(monthWord) && char.IsUpper(monthWord[0]))
+        {
+            monthWord = char.ToLowerInvariant(monthWord[0]) + monthWord.Substring(1);
+        }
+        PremiumBillingPeriod = string.IsNullOrEmpty(_rawCurrency)
+            ? "/" + monthWord
+            : _rawCurrency + "/" + monthWord;
+
         if (_rawPremiumYearlyPriceDisplay is not null && _rawPremiumYearlySavingsDisplay is not null)
         {
             PremiumYearlyPrice = "or {0}/year".TranslateFormat(_rawPremiumYearlyPriceDisplay);
@@ -198,6 +239,40 @@ public partial class UpgradeModalViewModel : ViewModelBase
             // the yearly fields would leave the previous yearly pricing visible.
             PremiumYearlyPrice = string.Empty;
             PremiumYearlySavings = string.Empty;
+        }
+
+        // Rebuild the big-number strings from the raw numeric prices so the currency
+        // sits with the period text rather than next to the dollar amount.
+        if (_rawMonthlyPrice > 0 && _rawYearlyPrice > 0)
+        {
+            PremiumMonthlyPrice = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "${0:0}",
+                _rawMonthlyPrice);
+
+            var perMonth = _rawYearlyPrice / 12.0;
+            PremiumYearlyPerMonth = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "${0:0.00}",
+                perMonth);
+            PremiumMonthlyStrike = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "${0:0}/month",
+                _rawMonthlyPrice);
+
+            var savingsPct = (int)Math.Round((1 - _rawYearlyPrice / (_rawMonthlyPrice * 12)) * 100);
+            // Keep the % glued to the number rather than in the format string,
+            // some translation passes strip lone '%' characters.
+            var savingsPctText = savingsPct.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%";
+            YearlySavingsPercentDisplay = "Save {0}".TranslateFormat(savingsPctText);
+        }
+        else
+        {
+            // Leave PremiumMonthlyPrice as set by the caller (the API display string) so we
+            // don't blank out the price when only display strings are available.
+            PremiumYearlyPerMonth = string.Empty;
+            PremiumMonthlyStrike = string.Empty;
+            YearlySavingsPercentDisplay = string.Empty;
         }
     }
 
@@ -237,6 +312,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
         OpenUrl(PremiumUpgradeUrl);
         Close();
     }
+
+    [RelayCommand]
+    private void SelectMonthlyBilling() => IsYearlyBilling = false;
+
+    [RelayCommand]
+    private void SelectYearlyBilling() => IsYearlyBilling = true;
 
     [RelayCommand]
     private void CancelSubscription()
@@ -486,6 +567,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 PremiumMonthlyPrice = apiResponse.Pricing.PremiumPriceDisplay;
                 _rawPremiumYearlyPriceDisplay = apiResponse.Pricing.PremiumYearlyPriceDisplay;
                 _rawPremiumYearlySavingsDisplay = apiResponse.Pricing.PremiumYearlySavingsDisplay;
+                _rawMonthlyPrice = apiResponse.Pricing.PremiumMonthlyPriceNumeric;
+                _rawYearlyPrice = apiResponse.Pricing.PremiumYearlyPriceNumeric;
+                _rawCurrency = apiResponse.Pricing.Currency ?? "CAD";
                 RefreshPricingDisplay();
             }
 
@@ -573,6 +657,12 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         [JsonPropertyName("premium_yearly_savings_display")]
         public string? PremiumYearlySavingsDisplay { get; init; }
+
+        [JsonPropertyName("premium_monthly_price")]
+        public double PremiumMonthlyPriceNumeric { get; init; }
+
+        [JsonPropertyName("premium_yearly_price")]
+        public double PremiumYearlyPriceNumeric { get; init; }
     }
 
     #endregion
