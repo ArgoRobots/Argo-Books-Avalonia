@@ -135,20 +135,37 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
 
     private void SetOptions(IReadOnlyList<SurveyOption> options)
     {
+        // Preserve any current selection: the overlay opens with bundled defaults
+        // and then awaits the server refresh, so the user may have already picked
+        // an option (and typed freeform text) by the time this runs.
+        var previousKey = SelectedAnswer;
+
         foreach (var existing in Options)
             existing.SelectionRequested -= OnOptionSelectionRequested;
         Options.Clear();
 
+        SurveyOptionItem? toReselect = null;
         foreach (var o in options)
         {
             var item = new SurveyOptionItem(o.Key, o.Label, o.Freeform);
             item.SelectionRequested += OnOptionSelectionRequested;
             Options.Add(item);
+            if (o.Key == previousKey)
+                toReselect = item;
         }
 
-        // The option set changed, so clear any prior selection.
-        SelectedAnswer = null;
-        IsFreeformSelected = false;
+        if (toReselect != null)
+        {
+            // Re-apply the prior choice; OnOptionSelectionRequested restores
+            // SelectedAnswer/IsFreeformSelected. OtherText is intentionally kept.
+            toReselect.IsSelected = true;
+        }
+        else
+        {
+            // The previously selected key is gone (or nothing was selected).
+            SelectedAnswer = null;
+            IsFreeformSelected = false;
+        }
     }
 
     private void OnOptionSelectionRequested(SurveyOptionItem selected)

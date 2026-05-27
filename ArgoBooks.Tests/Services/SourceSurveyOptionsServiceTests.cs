@@ -68,6 +68,29 @@ public class SourceSurveyOptionsServiceTests
     }
 
     [Fact]
+    public async Task GetOptionsAsync_MissingOptionsKey_ReturnsDefaults()
+    {
+        // 2xx with valid JSON but no "options" property.
+        var service = BuildService(HttpStatusCode.OK, "{}");
+
+        var options = await service.GetOptionsAsync();
+
+        Assert.Equal(SourceSurveyOptionsService.DefaultOptions, options);
+    }
+
+    [Fact]
+    public async Task GetOptionsAsync_CallerCancellation_Throws()
+    {
+        var service = BuildService(HttpStatusCode.OK,
+            "{\"options\":[{\"key\":\"google\",\"label\":\"Google\"}]}");
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => service.GetOptionsAsync(cts.Token));
+    }
+
+    [Fact]
     public async Task GetOptionsAsync_SkipsEntriesMissingKeyOrLabel()
     {
         var service = BuildService(HttpStatusCode.OK,
@@ -128,10 +151,13 @@ public class SourceSurveyOptionsServiceTests
 
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(new HttpResponseMessage(_status)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new HttpResponseMessage(_status)
             {
                 Content = new StringContent(_body, Encoding.UTF8, "application/json"),
             });
+        }
     }
 
     private sealed class ThrowingHandler : HttpMessageHandler

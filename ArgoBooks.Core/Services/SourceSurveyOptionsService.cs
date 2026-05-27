@@ -52,7 +52,9 @@ public sealed class SourceSurveyOptionsService
     /// <summary>
     /// GETs the survey options from the website. Returns the parsed server list
     /// on success, or <see cref="DefaultOptions"/> on any failure (network error,
-    /// non-2xx, malformed JSON, or empty list). Never throws.
+    /// timeout, non-2xx, malformed JSON, or empty list). Only throws
+    /// <see cref="OperationCanceledException"/> when the caller cancels
+    /// <paramref name="cancellationToken"/>.
     /// </summary>
     public async Task<IReadOnlyList<SurveyOption>> GetOptionsAsync(
         CancellationToken cancellationToken = default)
@@ -84,8 +86,16 @@ public sealed class SourceSurveyOptionsService
 
             return parsed.Count > 0 ? parsed : DefaultOptions;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Genuine caller cancellation: propagate so callers can stop cleanly
+            // (matches the convention in other ArgoBooks.Core HTTP services).
+            throw;
+        }
         catch (OperationCanceledException)
         {
+            // HttpClient timeout (not a caller cancellation): fall back like any
+            // other transient failure so the survey still renders.
             return DefaultOptions;
         }
         catch (Exception ex)
