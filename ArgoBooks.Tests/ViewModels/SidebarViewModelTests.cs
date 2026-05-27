@@ -333,14 +333,14 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void HasPremium_WhenSetToFalse_ShowsProBadgeOnPremiumItems()
+    public void HasPremium_WhenSetToFalse_DoesNotShowProBadgeOnInsights()
     {
         _viewModel.HasPremium = true;
         _viewModel.HasPremium = false;
 
         var insightsItem = _viewModel.MainItems.FirstOrDefault(i => i.PageName == "Insights");
         Assert.NotNull(insightsItem);
-        Assert.Equal("PRO", insightsItem.BadgeText);
+        Assert.Null(insightsItem.BadgeText);
     }
 
     [Fact]

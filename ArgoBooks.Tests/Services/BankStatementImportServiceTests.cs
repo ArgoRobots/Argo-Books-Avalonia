@@ -31,7 +31,7 @@ public class BankStatementImportServiceTests
             "2025-01-06,Client deposit,250.00,350.00\n");
         try
         {
-            var lines = await new BankStatementImportService().ParseCsvAsync(path, EmptyMapping(Path.GetFileNameWithoutExtension(path)));
+            var lines = await new BankStatementImportService().ParseCsvWithAnalysisAsync(path, EmptyMapping(Path.GetFileNameWithoutExtension(path)));
 
             Assert.Equal(2, lines.Count);
             Assert.Equal(-12.50m, lines[0].Amount);
@@ -50,7 +50,7 @@ public class BankStatementImportServiceTests
             "2025-02-06,Deposit,,980.00,9480.00\n");
         try
         {
-            var lines = await new BankStatementImportService().ParseCsvAsync(path, EmptyMapping(Path.GetFileNameWithoutExtension(path)));
+            var lines = await new BankStatementImportService().ParseCsvWithAnalysisAsync(path, EmptyMapping(Path.GetFileNameWithoutExtension(path)));
 
             Assert.Equal(2, lines.Count);
             Assert.Equal(-142.10m, lines[0].Amount); // debit => money out (negative)
@@ -69,7 +69,7 @@ public class BankStatementImportServiceTests
             "2025-03-01,Refund,\"($45.00)\"\n");
         try
         {
-            var lines = await new BankStatementImportService().ParseCsvAsync(path, EmptyMapping(Path.GetFileNameWithoutExtension(path)));
+            var lines = await new BankStatementImportService().ParseCsvWithAnalysisAsync(path, EmptyMapping(Path.GetFileNameWithoutExtension(path)));
 
             Assert.Single(lines);
             Assert.Equal(-45.00m, lines[0].Amount);
