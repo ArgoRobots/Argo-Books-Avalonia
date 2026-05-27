@@ -38,32 +38,25 @@
                                    TextWrapping="Wrap" />
                     </StackPanel>
 
-                    <!-- Options -->
+                    <!-- Options (sourced from the server, falling back to bundled defaults) -->
                     <StackPanel Spacing="6">
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'Google'}"
-                                     IsChecked="{Binding IsGoogleSelected, Mode=TwoWay}" />
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'Bing'}"
-                                     IsChecked="{Binding IsBingSelected, Mode=TwoWay}" />
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'YouTube'}"
-                                     IsChecked="{Binding IsYouTubeSelected, Mode=TwoWay}" />
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'Reddit'}"
-                                     IsChecked="{Binding IsRedditSelected, Mode=TwoWay}" />
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'A friend'}"
-                                     IsChecked="{Binding IsFriendSelected, Mode=TwoWay}" />
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'Email'}"
-                                     IsChecked="{Binding IsEmailSelected, Mode=TwoWay}" />
-                        <RadioButton GroupName="SourceSurveyOption"
-                                     Content="{loc:Loc 'Other'}"
-                                     IsChecked="{Binding IsOtherSelected, Mode=TwoWay}" />
+                        <ItemsControl ItemsSource="{Binding Options}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="6" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="controls:SurveyOptionItem">
+                                    <RadioButton GroupName="SourceSurveyOption"
+                                                 Content="{Binding Label}"
+                                                 IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                        <!-- Freeform input shown when "Other" is selected -->
-                        <TextBox IsVisible="{Binding IsOtherSelected}"
+                        <!-- Freeform input shown when a freeform option is selected -->
+                        <TextBox IsVisible="{Binding IsFreeformSelected}"
                                  Text="{Binding OtherText, Mode=TwoWay}"
                                  PlaceholderText="{loc:Loc 'Tell us where you heard about us'}"
                                  MaxLength="200"

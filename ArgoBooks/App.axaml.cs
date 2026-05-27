@@ -92,6 +92,12 @@ public partial class App : Application
     public static SourceSurveyReporter? SourceSurveyReporter { get; private set; }
 
     /// <summary>
+    /// Gets the service that fetches the source survey's answer options from the
+    /// website, so new options appear without an app release.
+    /// </summary>
+    public static SourceSurveyOptionsService? SourceSurveyOptionsService { get; private set; }
+
+    /// <summary>
     /// Gets the shared undo/redo manager instance.
     /// </summary>
     public static UndoRedoManager UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
@@ -828,6 +834,10 @@ public partial class App : Application
             // checklist), so we keep the reporter alive rather than scoping it to a
             // one-shot task like FirstRunReporter.
             SourceSurveyReporter = new SourceSurveyReporter(httpClient, appVersion, errorLogger);
+
+            // Fetches the survey's answer options from the website (shares the same
+            // long-lived HttpClient). Falls back to a bundled default list offline.
+            SourceSurveyOptionsService = new SourceSurveyOptionsService(httpClient, errorLogger);
 
             // Create navigation service
             NavigationService = new NavigationService();

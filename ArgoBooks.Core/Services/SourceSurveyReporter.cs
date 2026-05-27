@@ -51,7 +51,10 @@ public sealed class SourceSurveyReporter
                 AppVersion = _appVersion,
                 MachineUuid = machineUuid,
                 Answer = answer,
-                OtherText = answer == "other" ? otherText : null,
+                // The caller supplies otherText only for a freeform option; the
+                // server stores it only for keys flagged freeform. Forwarding it
+                // as-given keeps freeform working regardless of the option's key.
+                OtherText = otherText,
             };
 
             var url = $"{ApiConfig.BaseUrl}{EndpointPath}";

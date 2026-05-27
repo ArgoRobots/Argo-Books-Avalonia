@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -24,18 +25,57 @@ public partial class SourceSurveyOverlay : UserControl
         TutorialService.Instance.SourceSurveyVisibilityChanged += OnVisibilityChanged;
     }
 
-    private void OnVisibilityChanged(object? sender, bool show)
+    private async void OnVisibilityChanged(object? sender, bool show)
     {
         if (_overlay != null)
             _overlay.IsOpen = show;
-        if (!show)
+
+        if (show)
+        {
+            // The collection already holds the bundled defaults (instant render);
+            // refresh from the server so newly added options appear without a release.
+            await _viewModel.LoadOptionsAsync();
+        }
+        else
+        {
             _viewModel.Reset();
+        }
     }
 
     protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
     {
         base.OnUnloaded(e);
         TutorialService.Instance.SourceSurveyVisibilityChanged -= OnVisibilityChanged;
+    }
+}
+
+/// <summary>
+/// A single selectable survey option in the overlay's options list. Raises
+/// <see cref="SelectionRequested"/> when the user picks it so the parent
+/// view model can enforce single selection and track the chosen key.
+/// </summary>
+public partial class SurveyOptionItem : ObservableObject
+{
+    public string Key { get; }
+    public string Label { get; }
+    public bool Freeform { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
+
+    public event Action<SurveyOptionItem>? SelectionRequested;
+
+    public SurveyOptionItem(string key, string label, bool freeform)
+    {
+        Key = key;
+        Label = label;
+        Freeform = freeform;
+    }
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        if (value)
+            SelectionRequested?.Invoke(this);
     }
 }
 
@@ -53,79 +93,100 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
     [ObservableProperty]
     private string? _submitError;
 
+    // True when the currently selected option is freeform (reveals the text box).
+    [ObservableProperty]
+    private bool _isFreeformSelected;
+
+    /// <summary>The options shown as radio choices. Seeded with bundled defaults.</summary>
+    public ObservableCollection<SurveyOptionItem> Options { get; } = new();
+
+    public SourceSurveyOverlayViewModel()
+    {
+        SetOptions(SourceSurveyOptionsService.DefaultOptions);
+    }
+
     public bool CanSubmit
     {
         get
         {
             if (string.IsNullOrEmpty(SelectedAnswer) || IsSubmitting) return false;
-            // When "Other" is selected, require a non-empty freeform answer.
-            if (SelectedAnswer == "other" && string.IsNullOrWhiteSpace(OtherText)) return false;
+            // A freeform option requires a non-empty freeform answer.
+            if (IsFreeformSelected && string.IsNullOrWhiteSpace(OtherText)) return false;
             return true;
         }
     }
 
-    // Notify every derived Is*Selected property so radio buttons and the freeform
-    // textbox visibility binding refresh whenever SelectedAnswer changes (including
-    // null after Reset).
-    partial void OnSelectedAnswerChanged(string? value)
-    {
-        OnPropertyChanged(nameof(CanSubmit));
-        OnPropertyChanged(nameof(IsGoogleSelected));
-        OnPropertyChanged(nameof(IsBingSelected));
-        OnPropertyChanged(nameof(IsYouTubeSelected));
-        OnPropertyChanged(nameof(IsRedditSelected));
-        OnPropertyChanged(nameof(IsFriendSelected));
-        OnPropertyChanged(nameof(IsEmailSelected));
-        OnPropertyChanged(nameof(IsOtherSelected));
-    }
+    partial void OnSelectedAnswerChanged(string? value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnIsSubmittingChanged(bool value) => OnPropertyChanged(nameof(CanSubmit));
     partial void OnOtherTextChanged(string value) => OnPropertyChanged(nameof(CanSubmit));
+    partial void OnIsFreeformSelectedChanged(bool value) => OnPropertyChanged(nameof(CanSubmit));
 
-    public bool IsGoogleSelected
+    /// <summary>
+    /// Fetches the latest options from the server and rebuilds the list.
+    /// The service returns bundled defaults on failure, so this never throws.
+    /// </summary>
+    public async Task LoadOptionsAsync()
     {
-        get => SelectedAnswer == "google";
-        set { if (value) SelectedAnswer = "google"; }
+        var service = App.SourceSurveyOptionsService;
+        if (service == null) return;
+        var options = await service.GetOptionsAsync();
+        SetOptions(options);
     }
 
-    public bool IsBingSelected
+    private void SetOptions(IReadOnlyList<SurveyOption> options)
     {
-        get => SelectedAnswer == "bing";
-        set { if (value) SelectedAnswer = "bing"; }
+        // Preserve any current selection: the overlay opens with bundled defaults
+        // and then awaits the server refresh, so the user may have already picked
+        // an option (and typed freeform text) by the time this runs.
+        var previousKey = SelectedAnswer;
+
+        foreach (var existing in Options)
+            existing.SelectionRequested -= OnOptionSelectionRequested;
+        Options.Clear();
+
+        SurveyOptionItem? toReselect = null;
+        foreach (var o in options)
+        {
+            var item = new SurveyOptionItem(o.Key, o.Label, o.Freeform);
+            item.SelectionRequested += OnOptionSelectionRequested;
+            Options.Add(item);
+            if (o.Key == previousKey)
+                toReselect = item;
+        }
+
+        if (toReselect != null)
+        {
+            // Re-apply the prior choice; OnOptionSelectionRequested restores
+            // SelectedAnswer/IsFreeformSelected. OtherText is intentionally kept.
+            toReselect.IsSelected = true;
+        }
+        else
+        {
+            // The previously selected key is gone (or nothing was selected).
+            SelectedAnswer = null;
+            IsFreeformSelected = false;
+        }
     }
 
-    public bool IsYouTubeSelected
+    private void OnOptionSelectionRequested(SurveyOptionItem selected)
     {
-        get => SelectedAnswer == "youtube";
-        set { if (value) SelectedAnswer = "youtube"; }
-    }
+        // Enforce single selection: deselect every other item.
+        foreach (var item in Options)
+        {
+            if (!ReferenceEquals(item, selected) && item.IsSelected)
+                item.IsSelected = false;
+        }
 
-    public bool IsRedditSelected
-    {
-        get => SelectedAnswer == "reddit";
-        set { if (value) SelectedAnswer = "reddit"; }
-    }
-
-    public bool IsFriendSelected
-    {
-        get => SelectedAnswer == "friend";
-        set { if (value) SelectedAnswer = "friend"; }
-    }
-
-    public bool IsEmailSelected
-    {
-        get => SelectedAnswer == "email";
-        set { if (value) SelectedAnswer = "email"; }
-    }
-
-    public bool IsOtherSelected
-    {
-        get => SelectedAnswer == "other";
-        set { if (value) SelectedAnswer = "other"; }
+        SelectedAnswer = selected.Key;
+        IsFreeformSelected = selected.Freeform;
     }
 
     public void Reset()
     {
+        foreach (var item in Options)
+            item.IsSelected = false;
         SelectedAnswer = null;
+        IsFreeformSelected = false;
         OtherText = string.Empty;
         IsSubmitting = false;
         SubmitError = null;
@@ -137,8 +198,9 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
         var answer = SelectedAnswer;
         if (string.IsNullOrEmpty(answer)) return;
 
-        var otherText = answer == "other" ? OtherText.Trim() : null;
-        if (answer == "other" && string.IsNullOrEmpty(otherText)) return;
+        var isFreeform = IsFreeformSelected;
+        var otherText = isFreeform ? OtherText.Trim() : null;
+        if (isFreeform && string.IsNullOrEmpty(otherText)) return;
 
         IsSubmitting = true;
         SubmitError = null;
