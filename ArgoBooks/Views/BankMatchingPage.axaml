@@ -64,21 +64,28 @@
 
             <!-- Bank lines tab -->
             <Grid Grid.Row="3" IsVisible="{Binding IsLinesTab}" RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextSecondaryBrush}"
-                           Text="{loc:Loc 'Lines from your imported bank statement(s). Match each one to a recorded transaction, or ignore lines you do not need to track.'}" />
-                <table:ArgoTable Grid.Row="1"
+                    <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
+                               IsVisible="{Binding !LinesShowCalendar}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Text="{loc:Loc 'Lines from your imported bank statement(s). Match each one to a recorded transaction, or ignore lines you do not need to track.'}" />
+                    <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
+                               IsVisible="{Binding LinesShowCalendar}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Text="{loc:Loc 'A month-by-month view of how matched your bank statement is. Green months are fully matched, amber partially matched, red not matched, and grey have no imported lines.'}" />
+                        <table:ArgoTable Grid.Row="1"
                                  Title="{loc:Loc 'Bank lines'}"
                                  ItemsSource="{Binding Lines}"
                                  ShowAddButton="True"
                                  AddCommand="{Binding ImportStatementCommand}"
                                  AddButtonText="{loc:Loc 'Import statement'}"
                                  AddButtonTooltip="{loc:Loc 'Import statement'}"
-                                 ShowSearch="True"
+                                 ShowSearch="{Binding !LinesShowCalendar}"
                                  SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
                                  SearchPlaceholder="{loc:Loc 'Search bank lines...'}"
-                                 ShowFilterButton="True"
+                                 ShowFilterButton="{Binding !LinesShowCalendar}"
                                  FilterCommand="{Binding OpenFilterModalCommand}"
+                                 ShowPagination="{Binding !LinesShowCalendar}"
+                                 ShowColumnHeaders="{Binding !LinesShowCalendar}"
                                  SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
                                  SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
                                  SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
@@ -100,8 +107,25 @@
                                  EmptyIcon="{x:Static icons:Icons.Bank}"
                                  EmptyTitle="{loc:Loc 'No bank lines to show'}"
                                  EmptyMessage="{loc:Loc 'No lines match your search or filters. Clear them, or import another statement.'}">
+                    <!-- List / Calendar view toggle -->
+                    <table:ArgoTable.ExtraButtonsContent>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Button Classes="view-toggle-button"
+                                    Classes.selected="{Binding !LinesShowCalendar}"
+                                    Command="{Binding ShowLinesListCommand}"
+                                    ToolTip.Tip="{loc:Loc 'List view'}">
+                                <PathIcon Data="{x:Static icons:Icons.ListBullet}" Width="16" Height="16" />
+                            </Button>
+                            <Button Classes="view-toggle-button"
+                                    Classes.selected="{Binding LinesShowCalendar}"
+                                    Command="{Binding ShowLinesCalendarCommand}"
+                                    ToolTip.Tip="{loc:Loc 'Calendar view'}">
+                                <PathIcon Data="{x:Static icons:Icons.Calendar}" Width="16" Height="16" />
+                            </Button>
+                        </StackPanel>
+                    </table:ArgoTable.ExtraButtonsContent>
                     <table:ArgoTable.HeaderContent>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" IsVisible="{Binding !LinesShowCalendar}">
                             <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" SortProperty="Date"
                                                    ColumnWidth="{Binding BankLineColumns.DateColumnWidth}" ColumnWidths="{Binding BankLineColumns}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}" SortCommand="{Binding SortByCommand}" />
@@ -121,7 +145,13 @@
                         </StackPanel>
                     </table:ArgoTable.HeaderContent>
                     <table:ArgoTable.RowsContent>
-                        <ItemsControl Classes="table-rows" ItemsSource="{Binding Lines}">
+                        <Panel>
+                        <!-- Calendar view -->
+                        <ContentControl IsVisible="{Binding LinesShowCalendar}">
+                            <controls:MonthCalendarView DataContext="{Binding LinesCalendar}" Margin="24,16" />
+                        </ContentControl>
+                        <!-- List view -->
+                        <ItemsControl Classes="table-rows" IsVisible="{Binding !LinesShowCalendar}" ItemsSource="{Binding Lines}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:BankLineRow">
                                     <Border Padding="24,0" MinHeight="52"
@@ -196,27 +226,35 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        </Panel>
                     </table:ArgoTable.RowsContent>
                 </table:ArgoTable>
             </Grid>
 
             <!-- Missing from statement tab -->
             <Grid Grid.Row="3" IsVisible="{Binding IsMissingTab}" RowDefinitions="Auto,*">
-                <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
-                           Foreground="{DynamicResource TextSecondaryBrush}"
-                           Text="{loc:Loc 'Your recorded revenue and expenses that have not been matched to a bank statement line yet.'}" />
-                <table:ArgoTable Grid.Row="1"
+                    <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
+                               IsVisible="{Binding !MissingShowCalendar}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Text="{loc:Loc 'Your recorded revenue and expenses that have not been matched to a bank statement line yet.'}" />
+                    <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
+                               IsVisible="{Binding MissingShowCalendar}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Text="{loc:Loc 'A month-by-month view of how much of your recorded books is backed by the bank statement. Green months are fully matched, amber partially matched, red not matched, and grey have no records.'}" />
+                        <table:ArgoTable Grid.Row="1"
                                  Title="{loc:Loc 'Missing from statement'}"
                                  ItemsSource="{Binding UnmatchedBookRecords}"
                                  ShowAddButton="True"
                                  AddCommand="{Binding ImportStatementCommand}"
                                  AddButtonText="{loc:Loc 'Import statement'}"
                                  AddButtonTooltip="{loc:Loc 'Import statement'}"
-                                 ShowSearch="True"
+                                 ShowSearch="{Binding !MissingShowCalendar}"
                                  SearchQuery="{Binding MissingSearchQuery, Mode=TwoWay}"
                                  SearchPlaceholder="{loc:Loc 'Search records...'}"
-                                 ShowFilterButton="True"
+                                 ShowFilterButton="{Binding !MissingShowCalendar}"
                                  FilterCommand="{Binding OpenMissingFilterModalCommand}"
+                                 ShowPagination="{Binding !MissingShowCalendar}"
+                                 ShowColumnHeaders="{Binding !MissingShowCalendar}"
                                  SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
                                  SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
                                  SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
@@ -238,8 +276,25 @@
                                  EmptyIcon="{x:Static icons:Icons.Check}"
                                  EmptyTitle="{loc:Loc 'No records to show'}"
                                  EmptyMessage="{loc:Loc 'Nothing here. Records appear when you have revenue, expenses or payments not matched to a bank line.'}">
+                    <!-- List / Calendar view toggle -->
+                    <table:ArgoTable.ExtraButtonsContent>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Button Classes="view-toggle-button"
+                                    Classes.selected="{Binding !MissingShowCalendar}"
+                                    Command="{Binding ShowMissingListCommand}"
+                                    ToolTip.Tip="{loc:Loc 'List view'}">
+                                <PathIcon Data="{x:Static icons:Icons.ListBullet}" Width="16" Height="16" />
+                            </Button>
+                            <Button Classes="view-toggle-button"
+                                    Classes.selected="{Binding MissingShowCalendar}"
+                                    Command="{Binding ShowMissingCalendarCommand}"
+                                    ToolTip.Tip="{loc:Loc 'Calendar view'}">
+                                <PathIcon Data="{x:Static icons:Icons.Calendar}" Width="16" Height="16" />
+                            </Button>
+                        </StackPanel>
+                    </table:ArgoTable.ExtraButtonsContent>
                     <table:ArgoTable.HeaderContent>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" IsVisible="{Binding !MissingShowCalendar}">
                             <table:ArgoTableHeader Header="{loc:Loc Date}" ColumnName="Date" SortProperty="Date"
                                                    ColumnWidth="{Binding MissingColumns.DateColumnWidth}" ColumnWidths="{Binding MissingColumns}"
                                                    SortColumn="{Binding MissingSortColumn}" SortDirection="{Binding MissingSortDirection}" SortCommand="{Binding MissingSortByCommand}" />
@@ -252,7 +307,13 @@
                         </StackPanel>
                     </table:ArgoTable.HeaderContent>
                     <table:ArgoTable.RowsContent>
-                        <ItemsControl Classes="table-rows" ItemsSource="{Binding UnmatchedBookRecords}">
+                        <Panel>
+                        <!-- Calendar view -->
+                        <ContentControl IsVisible="{Binding MissingShowCalendar}">
+                            <controls:MonthCalendarView DataContext="{Binding MissingCalendar}" Margin="24,16" />
+                        </ContentControl>
+                        <!-- List view -->
+                        <ItemsControl Classes="table-rows" IsVisible="{Binding !MissingShowCalendar}" ItemsSource="{Binding UnmatchedBookRecords}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="bm:BookRecordRef">
                                     <Border Padding="24,0" MinHeight="44"
@@ -281,6 +342,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        </Panel>
                     </table:ArgoTable.RowsContent>
                 </table:ArgoTable>
             </Grid>

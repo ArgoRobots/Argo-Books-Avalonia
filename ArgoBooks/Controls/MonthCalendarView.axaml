@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
+             x:Class="ArgoBooks.Controls.MonthCalendarView"
+             x:DataType="vm:MonthlyMatchCalendar">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Year selector -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="0,0,0,18" HorizontalAlignment="Left">
+            <Button Classes="icon-button" Command="{Binding PreviousYearCommand}" IsEnabled="{Binding CanGoPreviousYear}"
+                    ToolTip.Tip="{loc:Loc 'Previous year'}">
+                <PathIcon Data="{x:Static icons:Icons.ChevronLeft}" Width="16" Height="16" />
+            </Button>
+            <TextBlock Text="{Binding SelectedYear}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"
+                       MinWidth="72" TextAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+            <Button Classes="icon-button" Command="{Binding NextYearCommand}" IsEnabled="{Binding CanGoNextYear}"
+                    ToolTip.Tip="{loc:Loc 'Next year'}">
+                <PathIcon Data="{x:Static icons:Icons.ChevronRight}" Width="16" Height="16" />
+            </Button>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="20">
+                <!-- 12-month status grid -->
+                <ItemsControl ItemsSource="{Binding MonthCells}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:MonthStatusCell">
+                            <Border Margin="6" CornerRadius="12" Padding="16,14" MinHeight="96"
+                                    Background="{Binding FillColor}"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                <StackPanel Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{Binding AccentColor}" />
+                                        <TextBlock Text="{Binding MonthLabel}" FontSize="15" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding StatusLabel}" FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding CountDisplay}" FontSize="13" FontWeight="SemiBold"
+                                               IsVisible="{Binding HasData}" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Legend -->
+                <StackPanel Orientation="Horizontal" Spacing="24" Margin="6,0,0,8">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'Fully matched'}" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{DynamicResource WarningBrush}" />
+                        <TextBlock Text="{loc:Loc 'Partially matched'}" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="{DynamicResource DangerBrush}" />
+                        <TextBlock Text="{loc:Loc 'Not matched'}" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Width="10" Height="10" VerticalAlignment="Center" Fill="#6B7280" />
+                        <TextBlock Text="{Binding EmptyLabel}" FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+
+</UserControl>

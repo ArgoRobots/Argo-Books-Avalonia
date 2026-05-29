@@ -183,6 +183,54 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Calendar (by-month overview)
+
+    /// <summary>Month overview of the bank statement lines (matched/resolved vs total per month).</summary>
+    public MonthlyMatchCalendar LinesCalendar { get; } = new("No bank lines".Translate());
+
+    /// <summary>Month overview of the recorded books (matched to a bank line vs total per month).</summary>
+    public MonthlyMatchCalendar MissingCalendar { get; } = new("No records".Translate());
+
+    /// <summary>When true, the Bank lines tab shows the month calendar instead of the table.</summary>
+    [ObservableProperty]
+    private bool _linesShowCalendar;
+
+    /// <summary>When true, the Missing tab shows the month calendar instead of the table.</summary>
+    [ObservableProperty]
+    private bool _missingShowCalendar;
+
+    [RelayCommand]
+    private void ShowLinesList() => LinesShowCalendar = false;
+
+    [RelayCommand]
+    private void ShowLinesCalendar() => LinesShowCalendar = true;
+
+    [RelayCommand]
+    private void ShowMissingList() => MissingShowCalendar = false;
+
+    [RelayCommand]
+    private void ShowMissingCalendar() => MissingShowCalendar = true;
+
+    /// <summary>Rebuilds both month calendars from the current lines and live book-record match flags.</summary>
+    private void RefreshCalendars()
+    {
+        LinesCalendar.SetItems(_allRows
+            .Select(r => new MonthMatchItem(
+                r.Line.Date,
+                r.Line.MatchStatus is BankLineMatchStatus.Matched or BankLineMatchStatus.Ignored))
+            .ToList());
+
+        var data = App.CompanyManager?.CompanyData;
+        var bookItems = data == null
+            ? new List<MonthMatchItem>()
+            : _matcher.GetBookRecordsWithStatus(data, _options)
+                .Select(x => new MonthMatchItem(x.Record.Date, x.IsMatched))
+                .ToList();
+        MissingCalendar.SetItems(bookItems);
+    }
+
+    #endregion
+
     #region Loading and matching
 
     /// <summary>Reloads from all imported sessions (lines accumulate across imports) and matches.</summary>
@@ -197,6 +245,8 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             _allMissing = [];
             Lines.Clear();
             UnmatchedBookRecords.Clear();
+            LinesCalendar.SetItems([]);
+            MissingCalendar.SetItems([]);
             ResetCounts();
             return;
         }
@@ -227,6 +277,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         RefreshMissing();
 
         RecomputeCounts();
+        RefreshCalendars();
         ApplyFiltersAndPaginate();
     }
 
@@ -572,6 +623,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         RefreshRow(line, null);
         App.CompanyManager?.CompanyData?.MarkAsModified();
         RecomputeCounts();
+        RefreshCalendars();
         ApplyFiltersAndPaginate();
     }
 
@@ -593,6 +645,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         }
         data?.MarkAsModified();
         RecomputeCounts();
+        RefreshCalendars();
         ApplyFiltersAndPaginate();
     }
 
@@ -672,6 +725,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 
         App.CompanyManager?.MarkAsChanged();
         RecomputeCounts();
+        RefreshCalendars();
         ApplyFiltersAndPaginate();
     }
 

@@ -548,37 +548,6 @@
     </Panel>
 
     <UserControl.Styles>
-        <!-- View Toggle Button (page-specific) -->
-        <Style Selector="Button.view-toggle-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Width" Value="32" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.view-toggle-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="CornerRadius" Value="4" />
-        </Style>
-        <Style Selector="Button.view-toggle-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-        <Style Selector="Button.view-toggle-button PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        </Style>
-        <!-- Selected state for view toggle button -->
-        <Style Selector="Button.view-toggle-button.selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-        </Style>
-        <Style Selector="Button.view-toggle-button.selected PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="Button.view-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-        </Style>
-
         <!-- Receipt card selected state -->
         <Style Selector="Border.receipt-card.selected">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />

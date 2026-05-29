@@ -27,6 +27,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<object?> RowsContentProperty =
         AvaloniaProperty.Register<ArgoTable, object?>(nameof(RowsContent));
 
+    public static readonly StyledProperty<bool> ShowColumnHeadersProperty =
+        AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowColumnHeaders), true);
+
     public static readonly StyledProperty<object?> InfoBannerContentProperty =
         AvaloniaProperty.Register<ArgoTable, object?>(nameof(InfoBannerContent));
 
@@ -171,6 +174,16 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(RowsContentProperty);
         set => SetValue(RowsContentProperty, value);
+    }
+
+    /// <summary>
+    /// Whether the column-header row is shown. Set false when the body is a non-tabular view
+    /// (e.g. a calendar) so the empty gray header bar doesn't appear.
+    /// </summary>
+    public bool ShowColumnHeaders
+    {
+        get => GetValue(ShowColumnHeadersProperty);
+        set => SetValue(ShowColumnHeadersProperty, value);
     }
 
     /// <summary>

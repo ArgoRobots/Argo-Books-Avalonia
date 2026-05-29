@@ -96,6 +96,14 @@ public class BankMatchingService
     }
 
     /// <summary>
+    /// Returns every in-scope book record paired with whether it is currently matched to a bank line.
+    /// Reads the live BankMatched flags, so it reflects manual matches made during the session. Used to
+    /// build the books-side month overview (matched vs total per month).
+    /// </summary>
+    public List<(BookRecordRef Record, bool IsMatched)> GetBookRecordsWithStatus(CompanyData data, BankMatchingOptions options) =>
+        BuildRecordRefs(data, options.Scope).Select(r => (r, IsRecordMatched(data, r))).ToList();
+
+    /// <summary>
     /// Returns all unmatched, in-scope records the user can manually pick to match a line,
     /// filtered to the line's direction (money out -> expenses, money in -> revenue). Not scored.
     /// </summary>
