@@ -587,8 +587,8 @@
         <controls:ModalOverlay IsOpen="{Binding IsSendModalOpen}"
                                ClosingCommand="{Binding CloseSendModalCommand}">
             <controls:ModalOverlay.ModalContent>
-                <Border Width="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter='1080'}"
-                        Height="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter='840'}"
+                <Border Width="{Binding SendModalWidth}"
+                        Height="{Binding SendModalHeight}"
                         Margin="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
                         HorizontalAlignment="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
                         VerticalAlignment="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
@@ -863,7 +863,8 @@
                                 <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                                     <Button Grid.Column="0" Classes="icon-button"
                                             ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
-                                            Command="{Binding ToggleSendFullscreenCommand}">
+                                            Command="{Binding ToggleSendFullscreenCommand}"
+                                            IsVisible="{Binding !IsSendSuccess}">
                                         <PathIcon Data="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                                   Width="16" Height="16" />
                                     </Button>

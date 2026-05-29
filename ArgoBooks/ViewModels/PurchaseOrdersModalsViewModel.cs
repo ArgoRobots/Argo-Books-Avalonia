@@ -965,6 +965,38 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     [ObservableProperty]
     private PurchaseOrder? _sendingOrder;
 
+    /// <summary>
+    /// Modal width. The compact post-send / in-flight states drop to a small
+    /// "confirmation card" size so the success/spinner content isn't swimming
+    /// in a 1080x840 frame. Fullscreen wins (NaN = stretch).
+    /// </summary>
+    public double SendModalWidth => IsSendFullscreen
+        ? double.NaN
+        : ((IsSendSuccess || IsSending) ? 420 : 1080);
+
+    public double SendModalHeight => IsSendFullscreen
+        ? double.NaN
+        : ((IsSendSuccess || IsSending) ? 360 : 840);
+
+    partial void OnIsSendFullscreenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SendModalWidth));
+        OnPropertyChanged(nameof(SendModalHeight));
+    }
+
+    partial void OnIsSendSuccessChanged(bool value)
+    {
+        if (value) IsSendFullscreen = false;
+        OnPropertyChanged(nameof(SendModalWidth));
+        OnPropertyChanged(nameof(SendModalHeight));
+    }
+
+    partial void OnIsSendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SendModalWidth));
+        OnPropertyChanged(nameof(SendModalHeight));
+    }
+
     [ObservableProperty]
     private string _sendRecipientEmail = string.Empty;
 
@@ -1144,6 +1176,39 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             return;
         }
 
+        // If the recipient differs from the supplier's saved email, ask the user
+        // whether to update the saved address. Three-way choice so users can:
+        //   - Update & Send (this becomes the supplier's new email going forward)
+        //   - Send without saving (one-off override, leave the saved address alone)
+        //   - Cancel (something is wrong, let me re-check)
+        var supplier = companyData.GetSupplier(SendingOrder.SupplierId);
+        var shouldSaveSupplierEmail = false;
+        if (supplier != null)
+        {
+            var savedEmail = supplier.Email?.Trim() ?? string.Empty;
+            if (!string.Equals(savedEmail, recipient, StringComparison.OrdinalIgnoreCase))
+            {
+                var dialog = App.ConfirmationDialog;
+                if (dialog != null)
+                {
+                    var hasSavedEmail = !string.IsNullOrEmpty(savedEmail);
+                    var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                    {
+                        Title = (hasSavedEmail ? "Update supplier email?" : "Save supplier email?").Translate(),
+                        Message = hasSavedEmail
+                            ? "You're sending to a different address than {0}'s saved email ({1}). Save {2} as the new address?".TranslateFormat(supplier.Name, savedEmail, recipient)
+                            : "{0} doesn't have a saved email. Save {1} as their email address?".TranslateFormat(supplier.Name, recipient),
+                        PrimaryButtonText = (hasSavedEmail ? "Update & Send" : "Save & Send").Translate(),
+                        SecondaryButtonText = "Send without saving".Translate(),
+                        CancelButtonText = "Cancel".Translate()
+                    });
+
+                    if (result == ConfirmationResult.Cancel || result == ConfirmationResult.None) return;
+                    shouldSaveSupplierEmail = result == ConfirmationResult.Primary;
+                }
+            }
+        }
+
         if (_sendPdfBytes == null)
         {
             try
@@ -1199,6 +1264,29 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     companyData.MarkAsModified();
                     OrderSaved?.Invoke(this, EventArgs.Empty);
                 }));
+
+            if (shouldSaveSupplierEmail && supplier != null)
+            {
+                var supplierToUpdate = supplier;
+                var oldEmail = supplierToUpdate.Email;
+                supplierToUpdate.Email = recipient;
+                supplierToUpdate.UpdatedAt = DateTime.UtcNow;
+                companyData.MarkAsModified();
+
+                var newEmail = recipient;
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Update supplier '{supplierToUpdate.Name}' email",
+                    () =>
+                    {
+                        supplierToUpdate.Email = oldEmail;
+                        companyData.MarkAsModified();
+                    },
+                    () =>
+                    {
+                        supplierToUpdate.Email = newEmail;
+                        companyData.MarkAsModified();
+                    }));
+            }
 
             OrderSaved?.Invoke(this, EventArgs.Empty);
             IsSendSuccess = true;
