@@ -605,14 +605,11 @@
                         <!-- Header -->
                         <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                             <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="{loc:Loc 'Send Purchase Order'}"
-                                               FontSize="18" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Email this purchase order to the supplier with the PDF attached.'}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                </StackPanel>
+                                <TextBlock Grid.Column="0"
+                                           Text="{loc:Loc 'Send Purchase Order'}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseSendModalCommand}">
                                     <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
                                 </Button>
@@ -844,7 +841,7 @@
                                 <Button Grid.Column="0" Classes="icon-button"
                                         ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
                                         Command="{Binding ToggleSendFullscreenCommand}"
-                                        IsVisible="{Binding !IsSendSuccess}">
+                                        IsVisible="{Binding ShowSendControls}">
                                     <PathIcon Data="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                               Width="16" Height="16" />
                                 </Button>
@@ -852,7 +849,7 @@
                                         Margin="12,0,0,0"
                                         Content="{loc:Loc 'Download PDF'}"
                                         Command="{Binding DownloadSendPdfCommand}"
-                                        IsVisible="{Binding !IsSendSuccess}" />
+                                        IsVisible="{Binding ShowSendControls}" />
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding SendError}"
                                            Foreground="{DynamicResource ErrorBrush}"
@@ -865,12 +862,17 @@
                                            IsVisible="{Binding HasSendError}" />
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
                                     <Button Classes="secondary-button"
+                                            Content="{loc:Loc 'Cancel'}"
+                                            Command="{Binding CancelSendCommand}"
+                                            IsVisible="{Binding IsSending}" />
+                                    <Button Classes="secondary-button"
                                             Content="{loc:Loc 'Close'}"
-                                            Command="{Binding CloseSendModalCommand}" />
+                                            Command="{Binding CloseSendModalCommand}"
+                                            IsVisible="{Binding !IsSending}" />
                                     <Button Classes="primary-button"
                                             Content="{loc:Loc 'Send'}"
                                             Command="{Binding SendOrderCommand}"
-                                            IsVisible="{Binding !IsSendSuccess}" />
+                                            IsVisible="{Binding ShowSendControls}" />
                                 </StackPanel>
                             </Grid>
                         </Border>

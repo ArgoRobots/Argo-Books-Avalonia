@@ -989,12 +989,14 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         if (value) IsSendFullscreen = false;
         OnPropertyChanged(nameof(SendModalWidth));
         OnPropertyChanged(nameof(SendModalHeight));
+        OnPropertyChanged(nameof(ShowSendControls));
     }
 
     partial void OnIsSendingChanged(bool value)
     {
         OnPropertyChanged(nameof(SendModalWidth));
         OnPropertyChanged(nameof(SendModalHeight));
+        OnPropertyChanged(nameof(ShowSendControls));
     }
 
     [ObservableProperty]
@@ -1036,7 +1038,20 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// </summary>
     private byte[]? _sendPdfBytes;
 
+    /// <summary>
+    /// Cancellation source for an in-flight send. The Cancel button trips this so the
+    /// HTTP request aborts instead of hanging the user behind the sending overlay.
+    /// </summary>
+    private CancellationTokenSource? _sendCts;
+
     public bool HasSendError => !string.IsNullOrEmpty(SendError);
+
+    /// <summary>
+    /// Visibility helper for the footer controls that only make sense while the user is
+    /// composing the email (fullscreen toggle, Download PDF, Send). Hidden while the send
+    /// is in flight (replaced by Cancel) and after success (replaced by Close).
+    /// </summary>
+    public bool ShowSendControls => !IsSendSuccess && !IsSending;
 
     partial void OnSendErrorChanged(string? value) => OnPropertyChanged(nameof(HasSendError));
 
@@ -1092,6 +1107,12 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CloseSendModal()
     {
+        // If a send is in flight when the modal closes, abort it so we don't leak
+        // a hanging HTTP call that flips status to Sent after the user moved on.
+        _sendCts?.Cancel();
+        _sendCts?.Dispose();
+        _sendCts = null;
+
         IsSendModalOpen = false;
         IsSendFullscreen = false;
         SendingOrder = null;
@@ -1101,6 +1122,16 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         SendPdfPreview?.Dispose();
         SendPdfPreview = null;
         _sendPdfBytes = null;
+    }
+
+    /// <summary>
+    /// Aborts the in-flight send. The footer swaps to a single Cancel button while IsSending
+    /// is true, and this is what that button calls.
+    /// </summary>
+    [RelayCommand]
+    private void CancelSend()
+    {
+        _sendCts?.Cancel();
     }
 
     [RelayCommand]
@@ -1196,10 +1227,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     {
                         Title = (hasSavedEmail ? "Update supplier email?" : "Save supplier email?").Translate(),
                         Message = hasSavedEmail
-                            ? "You're sending to a different address than {0}'s saved email ({1}). Save {2} as the new address?".TranslateFormat(supplier.Name, savedEmail, recipient)
-                            : "{0} doesn't have a saved email. Save {1} as their email address?".TranslateFormat(supplier.Name, recipient),
-                        PrimaryButtonText = (hasSavedEmail ? "Update & Send" : "Save & Send").Translate(),
-                        SecondaryButtonText = "Send without saving".Translate(),
+                            ? "You're sending to a different address than {0}'s saved email ({1}). Update the saved address to {2}? The order will be sent either way.".TranslateFormat(supplier.Name, savedEmail, recipient)
+                            : "{0} doesn't have a saved email. Save {1} for next time? The order will be sent either way.".TranslateFormat(supplier.Name, recipient),
+                        PrimaryButtonText = (hasSavedEmail ? "Update" : "Save").Translate(),
+                        SecondaryButtonText = (hasSavedEmail ? "Don't update" : "Don't save").Translate(),
                         CancelButtonText = "Cancel".Translate()
                     });
 
@@ -1223,6 +1254,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             }
         }
 
+        _sendCts?.Dispose();
+        _sendCts = new CancellationTokenSource();
+        var ct = _sendCts.Token;
+
         IsSending = true;
         try
         {
@@ -1236,7 +1271,13 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 SendBody ?? string.Empty,
                 string.IsNullOrWhiteSpace(SendCcEmail) ? null : SendCcEmail.Trim(),
                 string.IsNullOrWhiteSpace(SendBccEmail) ? null : SendBccEmail.Trim(),
-                _sendPdfBytes);
+                _sendPdfBytes,
+                ct);
+
+            // User clicked Cancel while the request was in flight. If the server already
+            // accepted the email we still treat that as a successful send (cannot un-send);
+            // only swallow the failure path silently.
+            if (!response.Success && ct.IsCancellationRequested) return;
 
             if (!response.Success)
             {
