@@ -720,10 +720,13 @@
                                     <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                 Spacing="10"
                                                 IsVisible="{Binding SendPdfPreview, Converter={x:Static ObjectConverters.IsNull}}">
-                                        <ProgressBar IsIndeterminate="True" Width="160" Height="3" />
+                                        <ProgressBar IsIndeterminate="True" Width="160" Height="3"
+                                                     HorizontalAlignment="Center" />
                                         <TextBlock Text="{loc:Loc 'Generating PDF preview...'}"
                                                    FontSize="13"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   TextAlignment="Center" />
                                     </StackPanel>
                                     <!-- Zoomable / pannable PDF preview -->
                                     <Border Grid.Row="0"
@@ -837,53 +840,39 @@
                         <!-- Footer -->
                         <Border Grid.Row="2" Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                            <StackPanel Spacing="12">
-                                <!-- Error Banner -->
-                                <Border Background="{DynamicResource ErrorLightBrush}"
-                                        BorderBrush="{DynamicResource ErrorBrush}"
-                                        BorderThickness="1" CornerRadius="6" Padding="12,8"
-                                        IsVisible="{Binding HasSendError}">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <PathIcon Grid.Column="0" Data="{x:Static icons:Icons.WarningCircle}"
-                                                  Foreground="{DynamicResource ErrorBrush}"
-                                                  Width="18" Height="18" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SendError}"
-                                                   Foreground="{DynamicResource ErrorBrush}"
-                                                   FontSize="13" Margin="10,0"
-                                                   VerticalAlignment="Center" TextWrapping="Wrap" />
-                                        <Button Grid.Column="2" Content="✕"
-                                                Command="{Binding DismissSendErrorCommand}"
-                                                Background="Transparent"
-                                                Foreground="{DynamicResource ErrorBrush}"
-                                                BorderThickness="0" Padding="4"
-                                                VerticalAlignment="Center" Cursor="Hand" />
-                                    </Grid>
-                                </Border>
-                                <!-- Footer Buttons -->
-                                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                                    <Button Grid.Column="0" Classes="icon-button"
-                                            ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
-                                            Command="{Binding ToggleSendFullscreenCommand}"
-                                            IsVisible="{Binding !IsSendSuccess}">
-                                        <PathIcon Data="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
-                                                  Width="16" Height="16" />
-                                    </Button>
-                                    <Button Grid.Column="1" Classes="secondary-button"
-                                            Margin="12,0,0,0"
-                                            Content="{loc:Loc 'Download PDF'}"
-                                            Command="{Binding DownloadSendPdfCommand}"
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                <Button Grid.Column="0" Classes="icon-button"
+                                        ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
+                                        Command="{Binding ToggleSendFullscreenCommand}"
+                                        IsVisible="{Binding !IsSendSuccess}">
+                                    <PathIcon Data="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Grid.Column="1" Classes="secondary-button"
+                                        Margin="12,0,0,0"
+                                        Content="{loc:Loc 'Download PDF'}"
+                                        Command="{Binding DownloadSendPdfCommand}"
+                                        IsVisible="{Binding !IsSendSuccess}" />
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding SendError}"
+                                           Foreground="{DynamicResource ErrorBrush}"
+                                           FontSize="13"
+                                           Margin="12,0"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           IsVisible="{Binding HasSendError}" />
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="secondary-button"
+                                            Content="{loc:Loc 'Close'}"
+                                            Command="{Binding CloseSendModalCommand}" />
+                                    <Button Classes="primary-button"
+                                            Content="{loc:Loc 'Send'}"
+                                            Command="{Binding SendOrderCommand}"
                                             IsVisible="{Binding !IsSendSuccess}" />
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
-                                        <Button Classes="secondary-button"
-                                                Content="{loc:Loc 'Close'}"
-                                                Command="{Binding CloseSendModalCommand}" />
-                                        <Button Classes="primary-button"
-                                                Content="{loc:Loc 'Send'}"
-                                                Command="{Binding SendOrderCommand}"
-                                                IsVisible="{Binding !IsSendSuccess}" />
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Border>

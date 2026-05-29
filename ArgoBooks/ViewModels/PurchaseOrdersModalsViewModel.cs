@@ -1268,12 +1268,12 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             if (shouldSaveSupplierEmail && supplier != null)
             {
                 var supplierToUpdate = supplier;
-                var oldEmail = supplierToUpdate.Email;
-                supplierToUpdate.Email = recipient;
+                var oldEmail = supplierToUpdate.Email ?? string.Empty;
+                var newEmail = recipient;
+                supplierToUpdate.Email = newEmail;
                 supplierToUpdate.UpdatedAt = DateTime.UtcNow;
                 companyData.MarkAsModified();
 
-                var newEmail = recipient;
                 App.UndoRedoManager.RecordAction(new DelegateAction(
                     $"Update supplier '{supplierToUpdate.Name}' email",
                     () =>
