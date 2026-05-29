@@ -599,6 +599,16 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         App.PurchaseOrdersModalsViewModel?.OpenReceiveModal(item);
     }
 
+    /// <summary>
+    /// Opens the Send modal for the given order.
+    /// </summary>
+    [RelayCommand]
+    private void SendOrder(PurchaseOrderDisplayItem? item)
+    {
+        if (item == null) return;
+        App.PurchaseOrdersModalsViewModel?.OpenSendModal(item);
+    }
+
     #endregion
 
     #region Filter Modal
@@ -728,6 +738,13 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// Whether the order can be approved.
     /// </summary>
     public bool CanApprove => Status == PurchaseOrderStatus.Pending || Status == PurchaseOrderStatus.Draft;
+
+    /// <summary>
+    /// Whether the order can be sent to the supplier by email.
+    /// </summary>
+    public bool CanSend => Status == PurchaseOrderStatus.Draft
+        || Status == PurchaseOrderStatus.Pending
+        || Status == PurchaseOrderStatus.Approved;
 
     /// <summary>
     /// Whether the order can be received.

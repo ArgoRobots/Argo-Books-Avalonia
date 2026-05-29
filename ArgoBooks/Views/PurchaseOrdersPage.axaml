@@ -267,6 +267,15 @@
                                                             <PathIcon Data="{x:Static icons:Icons.Check}"
                                                                       Width="16" Height="16" />
                                                         </Button>
+                                                        <!-- Send -->
+                                                        <Button Classes="icon-button"
+                                                                ToolTip.Tip="{loc:Loc 'Send to Supplier'}"
+                                                                IsVisible="{Binding CanSend}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).SendOrderCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.Send}"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
                                                         <!-- Receive -->
                                                         <Button Classes="icon-button info"
                                                                 ToolTip.Tip="{loc:Loc 'Receive Order'}"

@@ -245,7 +245,8 @@
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
                             <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="{loc:Loc 'Save Order'}" Command="{Binding SaveOrderCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc 'Save Order'}" Command="{Binding SaveOrderCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save &amp; Preview'}" Command="{Binding SaveAndPreviewOrderCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -578,6 +579,312 @@
                         </Grid>
                     </Border>
                 </StackPanel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- Send Purchase Order Modal -->
+        <controls:ModalOverlay IsOpen="{Binding IsSendModalOpen}"
+                               ClosingCommand="{Binding CloseSendModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Width="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter='1080'}"
+                        Height="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}, ConverterParameter='840'}"
+                        Margin="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
+                        HorizontalAlignment="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
+                        VerticalAlignment="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Border.Transitions>
+                        <Transitions>
+                            <ThicknessTransition Property="Margin" Duration="0:0:0.2" Easing="CubicEaseInOut" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{loc:Loc 'Send Purchase Order'}"
+                                               FontSize="18" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Email this purchase order to the supplier with the PDF attached.'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseSendModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Body: two-column layout (email form | PDF preview) -->
+                        <Grid Grid.Row="1" ColumnDefinitions="2*,3*" IsVisible="{Binding !IsSendSuccess}">
+                            <!-- Email Form -->
+                            <ScrollViewer Grid.Column="0"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="24" Spacing="14">
+                                    <!-- To -->
+                                    <StackPanel Spacing="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" FontSize="13" FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                                <Run Text="{loc:Loc 'To'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                            </TextBlock>
+                                            <Button Grid.Column="1" Classes="link-button" Command="{Binding ToggleCcBccCommand}">
+                                                <TextBlock Text="{loc:Loc 'Cc/Bcc'}" FontSize="12" />
+                                            </Button>
+                                        </Grid>
+                                        <TextBox Text="{Binding SendRecipientEmail, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 PlaceholderText="supplier@example.com" />
+                                    </StackPanel>
+
+                                    <!-- Cc / Bcc -->
+                                    <StackPanel Spacing="10" IsVisible="{Binding IsSendCcBccExpanded}">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Cc'}" FontSize="13" FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding SendCcEmail, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     PlaceholderText="cc@example.com" />
+                                        </StackPanel>
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Bcc'}" FontSize="13" FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding SendBccEmail, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     PlaceholderText="bcc@example.com" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Subject -->
+                                    <StackPanel Spacing="6">
+                                        <TextBlock FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}">
+                                            <Run Text="{loc:Loc 'Subject'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                        </TextBlock>
+                                        <TextBox Text="{Binding SendSubject, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 MaxLength="200" />
+                                    </StackPanel>
+
+                                    <!-- Message -->
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Message'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBox Text="{Binding SendBody, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 AcceptsReturn="True"
+                                                 TextWrapping="Wrap"
+                                                 MinHeight="160"
+                                                 MaxHeight="240" />
+                                    </StackPanel>
+
+                                    <!-- Attachment chip -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="10,8">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <PathIcon Grid.Column="0" Data="{x:Static icons:Icons.Reports}"
+                                                      Width="16" Height="16"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
+                                                      VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Margin="8,0,0,0"
+                                                       Text="{Binding SendPdfFilename}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <Button Grid.Column="2" Classes="icon-button"
+                                                    Command="{Binding DownloadSendPdfCommand}"
+                                                    ToolTip.Tip="{loc:Loc 'Download PDF'}">
+                                                <PathIcon Data="{x:Static icons:Icons.Download}" Width="14" Height="14" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- PDF Preview Panel -->
+                            <Border Grid.Column="1"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1,0,0,0"
+                                    ClipToBounds="True">
+                                <Grid RowDefinitions="*,Auto">
+                                    <!-- Loading placeholder -->
+                                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Spacing="10"
+                                                IsVisible="{Binding SendPdfPreview, Converter={x:Static ObjectConverters.IsNull}}">
+                                        <ProgressBar IsIndeterminate="True" Width="160" Height="3" />
+                                        <TextBlock Text="{loc:Loc 'Generating PDF preview...'}"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                    <!-- Zoomable / pannable PDF preview -->
+                                    <Border Grid.Row="0"
+                                            Background="#1A000000"
+                                            Margin="8,8,8,4"
+                                            CornerRadius="4"
+                                            ClipToBounds="True"
+                                            IsVisible="{Binding SendPdfPreview, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <ScrollViewer x:Name="SendPdfPreviewScrollViewer"
+                                                      HorizontalScrollBarVisibility="Auto"
+                                                      VerticalScrollBarVisibility="Auto"
+                                                      Cursor="Hand">
+                                            <LayoutTransformControl x:Name="SendPdfPreviewZoomTransform"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center">
+                                                <Border x:Name="SendPdfPreviewCard"
+                                                        Background="White"
+                                                        BoxShadow="0 4 12 0 #20000000"
+                                                        CornerRadius="2">
+                                                    <Image x:Name="SendPdfPreviewImage"
+                                                           Source="{Binding SendPdfPreview}"
+                                                           Stretch="None" />
+                                                </Border>
+                                            </LayoutTransformControl>
+                                        </ScrollViewer>
+                                    </Border>
+                                    <!-- Zoom Controls -->
+                                    <StackPanel Grid.Row="1"
+                                                Orientation="Horizontal"
+                                                Spacing="2"
+                                                HorizontalAlignment="Center"
+                                                Margin="4,0,4,8"
+                                                IsVisible="{Binding SendPdfPreview, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                        <Button Classes="icon-button"
+                                                Click="SendPdfPreviewZoomOut_Click"
+                                                ToolTip.Tip="{loc:Loc 'Zoom Out'}">
+                                            <PathIcon Data="{x:Static icons:Icons.ZoomOut}"
+                                                      Width="14" Height="14" />
+                                        </Button>
+                                        <Slider x:Name="SendPdfPreviewZoomSlider"
+                                                Minimum="0.01"
+                                                Maximum="4.0"
+                                                Width="80"
+                                                VerticalAlignment="Center"
+                                                ValueChanged="SendPdfPreviewZoomSlider_ValueChanged" />
+                                        <Button Classes="icon-button"
+                                                Click="SendPdfPreviewZoomIn_Click"
+                                                ToolTip.Tip="{loc:Loc 'Zoom In'}">
+                                            <PathIcon Data="{x:Static icons:Icons.ZoomIn}"
+                                                      Width="14" Height="14" />
+                                        </Button>
+                                        <TextBlock x:Name="SendPdfPreviewZoomText"
+                                                   Text="100%"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="11"
+                                                   Width="38"
+                                                   TextAlignment="Center"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <Button Classes="icon-button"
+                                                Click="SendPdfPreviewFitToWindow_Click"
+                                                ToolTip.Tip="{loc:Loc 'Fit to Window'}">
+                                            <PathIcon Data="{x:Static icons:Icons.ScanFocus}"
+                                                      Width="14" Height="14" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Success state -->
+                        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Spacing="14"
+                                    IsVisible="{Binding IsSendSuccess}">
+                            <Border Width="64" Height="64" CornerRadius="32"
+                                    Background="{DynamicResource SuccessLightBrush}"
+                                    HorizontalAlignment="Center">
+                                <PathIcon Data="{x:Static icons:Icons.Check}"
+                                          Width="32" Height="32"
+                                          Foreground="{DynamicResource SuccessBrush}" />
+                            </Border>
+                            <TextBlock Text="{loc:Loc 'Purchase order sent.'}"
+                                       FontSize="16" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'The supplier will receive the PDF by email.'}"
+                                       FontSize="13"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+
+                        <!-- Sending overlay -->
+                        <Border Grid.Row="0" Grid.RowSpan="3"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="12"
+                                Cursor="Arrow"
+                                IsVisible="{Binding IsSending}">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20">
+                                <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                                <TextBlock Text="{loc:Loc 'Sending purchase order...'}"
+                                           FontSize="16" FontWeight="Medium"
+                                           HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Emailing the supplier with the PDF attached.'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <StackPanel Spacing="12">
+                                <!-- Error Banner -->
+                                <Border Background="{DynamicResource ErrorLightBrush}"
+                                        BorderBrush="{DynamicResource ErrorBrush}"
+                                        BorderThickness="1" CornerRadius="6" Padding="12,8"
+                                        IsVisible="{Binding HasSendError}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <PathIcon Grid.Column="0" Data="{x:Static icons:Icons.WarningCircle}"
+                                                  Foreground="{DynamicResource ErrorBrush}"
+                                                  Width="18" Height="18" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SendError}"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   FontSize="13" Margin="10,0"
+                                                   VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        <Button Grid.Column="2" Content="✕"
+                                                Command="{Binding DismissSendErrorCommand}"
+                                                Background="Transparent"
+                                                Foreground="{DynamicResource ErrorBrush}"
+                                                BorderThickness="0" Padding="4"
+                                                VerticalAlignment="Center" Cursor="Hand" />
+                                    </Grid>
+                                </Border>
+                                <!-- Footer Buttons -->
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                    <Button Grid.Column="0" Classes="icon-button"
+                                            ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
+                                            Command="{Binding ToggleSendFullscreenCommand}">
+                                        <PathIcon Data="{Binding IsSendFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
+                                                  Width="16" Height="16" />
+                                    </Button>
+                                    <Button Grid.Column="1" Classes="secondary-button"
+                                            Margin="12,0,0,0"
+                                            Content="{loc:Loc 'Download PDF'}"
+                                            Command="{Binding DownloadSendPdfCommand}"
+                                            IsVisible="{Binding !IsSendSuccess}" />
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12">
+                                        <Button Classes="secondary-button"
+                                                Content="{loc:Loc 'Close'}"
+                                                Command="{Binding CloseSendModalCommand}" />
+                                        <Button Classes="primary-button"
+                                                Content="{loc:Loc 'Send'}"
+                                                Command="{Binding SendOrderCommand}"
+                                                IsVisible="{Binding !IsSendSuccess}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Border>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
