@@ -24,7 +24,7 @@
                 <!-- Modal Content -->
                 <Border Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
-                Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
+                Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}, ConverterParameter='800,1100'}"
                 Height="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}}"
                 Margin="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
                 HorizontalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
