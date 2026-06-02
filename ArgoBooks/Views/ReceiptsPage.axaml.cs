@@ -155,7 +155,7 @@ public partial class ReceiptsPage : UserControl
                 if (!string.IsNullOrEmpty(path))
                 {
                     var extension = Path.GetExtension(path).ToLowerInvariant();
-                    if (extension is ".jpg" or ".jpeg" or ".png" or ".pdf")
+                    if (extension is ".jpg" or ".jpeg" or ".png" or ".webp" or ".pdf")
                     {
                         e.DragEffects = DragDropEffects.Copy;
                         viewModel.IsDragOver = true;

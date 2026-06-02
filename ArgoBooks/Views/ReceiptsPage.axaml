@@ -529,7 +529,7 @@
                         CornerRadius="40"
                         Background="White"
                         HorizontalAlignment="Center">
-                    <PathIcon Data="{x:Static icons:Icons.SmartInsights}"
+                    <PathIcon Data="{x:Static icons:Icons.CloudUpload}"
                               Width="40" Height="40"
                               Foreground="{DynamicResource PrimaryBrush}" />
                 </Border>

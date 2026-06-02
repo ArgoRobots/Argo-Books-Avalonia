@@ -71,6 +71,7 @@ public static class ReceiptImageHelper
         {
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
+            ".webp" => "image/webp",
             ".pdf" => "application/pdf",
             ".bmp" => "image/bmp",
             ".tiff" or ".tif" => "image/tiff",

@@ -349,7 +349,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             .Where(p =>
             {
                 var ext = Path.GetExtension(p).ToLowerInvariant();
-                return ext is ".jpg" or ".jpeg" or ".png" or ".pdf";
+                return ext is ".jpg" or ".jpeg" or ".png" or ".webp" or ".pdf";
             })
             .ToList();
 
@@ -357,7 +357,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop JPEG, PNG, or PDF files."));
+                Loc.Tr("Please drop JPEG, PNG, WebP, or PDF files."));
             return;
         }
 
@@ -1239,7 +1239,8 @@ public partial class ReceiptDisplayItem : ObservableObject
     public bool IsImage => FileType.Contains("image", StringComparison.OrdinalIgnoreCase) ||
                            FileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                            FileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
-                           FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase);
+                           FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                           FileName.EndsWith(".webp", StringComparison.OrdinalIgnoreCase);
 
     public bool IsPdf => FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase) ||
                          FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);

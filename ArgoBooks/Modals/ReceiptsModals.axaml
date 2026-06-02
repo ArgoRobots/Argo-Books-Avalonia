@@ -1065,7 +1065,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="JPEG, PNG, or PDF"
+                                        <TextBlock Text="JPEG, PNG, WebP, or PDF"
                                                    FontSize="13"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center" />
@@ -1074,6 +1074,16 @@
                                                 HorizontalAlignment="Center"
                                                 Margin="0,8,0,0"
                                                 Click="OnBrowseFilesClick" />
+                                        <!-- Feedback when some dropped files were skipped (unsupported / duplicate) -->
+                                        <TextBlock Text="{Binding BulkDropMessage}"
+                                                   IsVisible="{Binding BulkDropMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"
+                                                   MaxWidth="300"
+                                                   Margin="0,4,0,0"
+                                                   Foreground="{DynamicResource WarningBrush}"
+                                                   HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
 

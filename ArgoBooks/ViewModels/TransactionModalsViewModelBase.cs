@@ -1193,7 +1193,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Images") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.pdf"
+                new FilePickerFileType("Images") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.pdf"
                     ]
                 },
                 new FilePickerFileType("All Files") { Patterns = ["*.*"] }
@@ -1215,6 +1215,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             ".pdf" => "application/pdf",
             ".png" => "image/png",
             ".jpg" or ".jpeg" => "image/jpeg",
+            ".webp" => "image/webp",
             ".gif" => "image/gif",
             _ => "application/octet-stream"
         };

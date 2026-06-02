@@ -10,6 +10,7 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -596,6 +597,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public ObservableCollection<BulkScanItem> BulkItems { get; } = [];
 
+    /// <summary>
+    /// Feedback shown in the drop zone after a drop, e.g. when some files were
+    /// skipped for being an unsupported format or already queued. Empty when the
+    /// drop was clean (nothing to report).
+    /// </summary>
+    [ObservableProperty]
+    private string _bulkDropMessage = string.Empty;
+
     [ObservableProperty]
     private BulkScanItem? _currentBulkItem;
 
@@ -711,6 +720,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     public async void OpenBulkDropZone()
     {
         BulkItems.Clear();
+        BulkDropMessage = string.Empty;
         BulkScansCompleted = 0;
         BulkScansSucceeded = 0;
         BulkScansFailed = 0;
@@ -735,14 +745,23 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public void AddFilesToQueue(IEnumerable<string> filePaths)
     {
+        var added = 0;
+        var skippedUnsupported = 0;
+        var skippedDuplicate = 0;
+
         foreach (var path in filePaths)
         {
-            var extension = Path.GetExtension(path).ToLowerInvariant();
-            if (extension is not (".jpg" or ".jpeg" or ".png" or ".pdf"))
+            if (!FilePickerTypes.IsSupportedReceiptFile(path))
+            {
+                skippedUnsupported++;
                 continue;
+            }
 
             if (BulkItems.Any(i => i.FilePath.Equals(path, StringComparison.OrdinalIgnoreCase)))
+            {
+                skippedDuplicate++;
                 continue;
+            }
 
             var item = new BulkScanItem
             {
@@ -750,13 +769,39 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 FileName = Path.GetFileName(path)
             };
             BulkItems.Add(item);
+            added++;
 
             // Generate preview thumbnail in background for the drop zone cards
             _ = GenerateQueuePreviewAsync(item);
         }
 
+        BulkDropMessage = BuildDropMessage(added, skippedUnsupported, skippedDuplicate);
+
         OnPropertyChanged(nameof(BulkApprovedCount));
         OnPropertyChanged(nameof(BulkUsageSummary));
+    }
+
+    /// <summary>
+    /// Builds the drop-zone feedback line. Returns empty when every file was added
+    /// (a clean drop needs no message), otherwise explains what was skipped.
+    /// </summary>
+    private static string BuildDropMessage(int added, int skippedUnsupported, int skippedDuplicate)
+    {
+        if (skippedUnsupported == 0 && skippedDuplicate == 0)
+            return string.Empty;
+
+        var reasons = new List<string>();
+        if (skippedUnsupported > 0)
+            reasons.Add($"{skippedUnsupported} skipped (unsupported format)");
+        if (skippedDuplicate > 0)
+            reasons.Add($"{skippedDuplicate} skipped (already added)");
+        var skipped = string.Join(", ", reasons);
+
+        // When nothing was added, spell out which formats are accepted so the user
+        // knows what to try instead.
+        return added > 0
+            ? $"{added} added. {skipped}."
+            : $"{skipped}. Supported formats: JPEG, PNG, WebP, PDF.";
     }
 
     private static async Task GenerateQueuePreviewAsync(BulkScanItem item)
@@ -2915,6 +2960,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
+            ".webp" => "image/webp",
             ".pdf" => "application/pdf",
             ".bmp" => "image/bmp",
             ".gif" => "image/gif",

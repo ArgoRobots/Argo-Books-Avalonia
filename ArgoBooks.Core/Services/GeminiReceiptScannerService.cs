@@ -89,7 +89,7 @@ Rules:
             var mimeType = ReceiptImageHelper.GetContentType(fileName);
             if (mimeType == null)
             {
-                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, BMP, or PDF files.");
+                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, WebP, BMP, or PDF files.");
             }
 
             // Convert to base64 for vision API
