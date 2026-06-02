@@ -112,7 +112,7 @@ public partial class ArgoNumericUpDown : UserControl
         }
     }
 
-    private void OnTextBoxLostFocus(object? sender, Avalonia.Input.FocusChangedEventArgs e)
+    private void OnTextBoxLostFocus(object? sender, FocusChangedEventArgs e)
     {
         ParseAndSetValue();
     }

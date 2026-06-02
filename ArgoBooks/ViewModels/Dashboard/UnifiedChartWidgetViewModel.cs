@@ -320,13 +320,13 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
 internal static class ChartDataTypeExportExtensions
 {
-    internal static Services.ChartType GetChartExportType(this ChartDataType type) => type switch
+    internal static ChartType GetChartExportType(this ChartDataType type) => type switch
     {
-        ChartDataType.TotalExpenses => Services.ChartType.Expense,
-        ChartDataType.TotalRevenue => Services.ChartType.Revenue,
-        ChartDataType.TotalProfits => Services.ChartType.Profit,
-        _ when type.IsDistribution() => Services.ChartType.Distribution,
-        _ when type.IsMultiSeries() => Services.ChartType.Comparison,
-        _ => Services.ChartType.Revenue
+        ChartDataType.TotalExpenses => ChartType.Expense,
+        ChartDataType.TotalRevenue => ChartType.Revenue,
+        ChartDataType.TotalProfits => ChartType.Profit,
+        _ when type.IsDistribution() => ChartType.Distribution,
+        _ when type.IsMultiSeries() => ChartType.Comparison,
+        _ => ChartType.Revenue
     };
 }

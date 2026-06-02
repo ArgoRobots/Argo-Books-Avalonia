@@ -419,7 +419,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _companyManager = companyManager;
 
         // Initialize the widget layout system
-        LayoutViewModel.Initialize(companyManager!);
+        LayoutViewModel.Initialize(companyManager);
 
         // Load data through the full flow (includes CorrectRentalStatuses)
         LoadDashboardData();
@@ -694,7 +694,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 IsSuccess = false,
                 ErrorMessage = null // Cancelled by user, no error message needed
             });
-            return;
         }
         catch (InvalidOperationException ex)
         {
@@ -757,7 +756,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             foreach (var widget in row.Widgets)
             {
-                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                if (widget.WidgetViewModel is UnifiedChartWidgetViewModel chartVm
                     && chartVm.ChartDataType == chartType)
                 {
                     ChartLoaderService.ResetZoom(chartVm.XAxes, chartVm.YAxes);
@@ -784,7 +783,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             foreach (var widget in row.Widgets)
             {
-                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                if (widget.WidgetViewModel is UnifiedChartWidgetViewModel chartVm
                     && chartVm.ChartDataType == type)
                 {
                     return chartVm.ChartLoaderService;

@@ -2116,7 +2116,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// the scoped settings-only save. Used by the OWNER_EMAIL_ALREADY_SET
     /// recovery path so a restart-with-broken-local-state can self-heal.
     /// </summary>
-    private async Task ReconcileOwnerEmailAsync(ArgoBooks.Core.Data.CompanyData companyData, string serverEmail)
+    private async Task ReconcileOwnerEmailAsync(CompanyData companyData, string serverEmail)
     {
         companyData.Settings.Company.Email = serverEmail;
         CompanyEmail = serverEmail;

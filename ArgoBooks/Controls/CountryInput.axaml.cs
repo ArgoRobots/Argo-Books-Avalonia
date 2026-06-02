@@ -194,7 +194,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
+    protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
 
@@ -212,7 +212,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
     }
 
-    protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
+    protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
 

@@ -322,7 +322,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// for raster images). Replaces the old single ReceiptImagePath so multi-page PDFs render
     /// all pages stacked.
     /// </summary>
-    public System.Collections.ObjectModel.ObservableCollection<string> ScanPreviewPages { get; } = new();
+    public ObservableCollection<string> ScanPreviewPages { get; } = new();
 
     /// <summary>
     /// Secondary line shown under the scanning spinner. Warns when the receipt is a multi-page
@@ -374,7 +374,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         if (isPdf)
         {
-            var pages = await Services.PdfThumbnailService.Instance.RenderPdfAllPagesAsync(data);
+            var pages = await PdfThumbnailService.Instance.RenderPdfAllPagesAsync(data);
             if (pages == null) return paths;
             var nameNoExt = Path.GetFileNameWithoutExtension(fileName);
             for (var i = 0; i < pages.Length; i++)
@@ -774,7 +774,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 if (isPdf)
                 {
                     // Capture the page count so the scanning label can warn about multi-page PDFs.
-                    var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
+                    var rendered = await PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
                     thumbBytes = rendered?.Image;
                     if (rendered != null)
                     {
@@ -918,7 +918,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     byte[]? previewBytes;
                     if (isPdf)
                     {
-                        var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
+                        var rendered = await PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
                         previewBytes = rendered?.Image;
                         if (rendered != null)
                         {

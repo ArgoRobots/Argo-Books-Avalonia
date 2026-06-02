@@ -386,7 +386,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 
     private Dictionary<string, List<BankMatchCandidate>> _candidatesByLineId = [];
 
-    private BankMatchCandidate? ResolveTopCandidate(Core.Models.BankMatching.BankStatementLine line) =>
+    private BankMatchCandidate? ResolveTopCandidate(BankStatementLine line) =>
         _candidatesByLineId.TryGetValue(line.Id, out var list) ? list.FirstOrDefault() : null;
 
     private static string StatusName(BankLineMatchStatus status) => status switch
@@ -401,7 +401,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     /// Builds a display candidate for an already-matched line by looking up its record in the
     /// company data (used for auto-matches, which aren't in the candidate map).
     /// </summary>
-    private BankMatchCandidate? BuildMatchedCandidate(Core.Models.BankMatching.BankStatementLine line)
+    private BankMatchCandidate? BuildMatchedCandidate(BankStatementLine line)
     {
         var data = App.CompanyManager?.CompanyData;
         if (data == null || line.MatchedRecordType is not { } type || line.MatchedRecordId is not { } id)
@@ -455,7 +455,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>Returns the matched record's amount aligned to bank sign convention, or null.</summary>
-    private decimal? MatchedRecordAmount(Core.Models.BankMatching.BankStatementLine line)
+    private decimal? MatchedRecordAmount(BankStatementLine line)
     {
         var data = App.CompanyManager?.CompanyData;
         if (data == null || line.MatchedRecordType is not { } type || line.MatchedRecordId is not { } id)
@@ -616,7 +616,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         App.BankMatchingModalsViewModel?.OpenCandidatePicker(row.Line.Id, context, candidates, manual);
     }
 
-    private void SetLineIgnored(Core.Models.BankMatching.BankStatementLine line)
+    private void SetLineIgnored(BankStatementLine line)
     {
         line.MatchStatus = BankLineMatchStatus.Ignored;
         _candidatesByLineId.Remove(line.Id);
@@ -627,7 +627,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         ApplyFiltersAndPaginate();
     }
 
-    private void SetLineRestored(Core.Models.BankMatching.BankStatementLine line)
+    private void SetLineRestored(BankStatementLine line)
     {
         var data = App.CompanyManager?.CompanyData;
         var candidates = data != null ? _matcher.FindCandidates(line, data, _options) : [];
@@ -649,7 +649,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         ApplyFiltersAndPaginate();
     }
 
-    private void RefreshRow(Core.Models.BankMatching.BankStatementLine line, BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
+    private void RefreshRow(BankStatementLine line, BankMatchCandidate? confirmed, BankMatchCandidate? suggested = null)
     {
         var row = _allRows.FirstOrDefault(r => r.Line.Id == line.Id);
         row?.Refresh(confirmed, suggested);
@@ -675,7 +675,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>Captures a line's match state (and any suggestions) so it can be restored by undo/redo.</summary>
-    private MatchStateSnapshot CaptureMatchState(Core.Models.BankMatching.BankStatementLine line) => new(
+    private MatchStateSnapshot CaptureMatchState(BankStatementLine line) => new(
         line.MatchStatus,
         line.MatchedRecordType,
         line.MatchedRecordId,
@@ -687,7 +687,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     /// Restores a line to a captured match state. Reuses the matcher's confirm/unlink so the book
     /// records' persisted flags are released and re-set correctly (including re-match cases).
     /// </summary>
-    private void RestoreMatchState(Core.Models.BankMatching.BankStatementLine line, MatchStateSnapshot s, CompanyData data)
+    private void RestoreMatchState(BankStatementLine line, MatchStateSnapshot s, CompanyData data)
     {
         // Release whatever the line currently points to (clears the current record's flag, if any).
         _matcher.UnlinkMatch(line, data);
@@ -712,7 +712,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>Refreshes the row display, counts and paging after a match is confirmed/unlinked or undone.</summary>
-    private void RefreshAfterMatchChange(Core.Models.BankMatching.BankStatementLine line)
+    private void RefreshAfterMatchChange(BankStatementLine line)
     {
         var row = _allRows.FirstOrDefault(r => r.Line.Id == line.Id);
         if (row != null)
@@ -750,9 +750,9 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 /// <summary>Display wrapper for a bank statement line in the table.</summary>
 public partial class BankLineRow : ObservableObject
 {
-    public Core.Models.BankMatching.BankStatementLine Line { get; }
+    public BankStatementLine Line { get; }
 
-    public BankLineRow(Core.Models.BankMatching.BankStatementLine line, BankMatchCandidate? topCandidate)
+    public BankLineRow(BankStatementLine line, BankMatchCandidate? topCandidate)
     {
         Line = line;
         TopCandidate = topCandidate;

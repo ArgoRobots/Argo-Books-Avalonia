@@ -40,9 +40,9 @@ public partial class DashboardPage : UserControl
     private bool _isRowDragging;
     private int _rowDragSourceIndex = -1;
     private int _rowDragPreviewIndex = -1;
-    private Avalonia.Point _rowDragStartPoint;
-    private Avalonia.Point _rowDragOffset;
-    private Avalonia.Controls.Border? _rowDragGhost;
+    private Point _rowDragStartPoint;
+    private Point _rowDragOffset;
+    private Border? _rowDragGhost;
     private DashboardLayoutViewModel? _rowDragLayoutVm;
 
     /// <summary>
@@ -256,7 +256,7 @@ public partial class DashboardPage : UserControl
                         // Attach drag handle to existing manager
                         if (_dragDropManager != null)
                         {
-                            var dragHandle = newHost.FindControl<Avalonia.Controls.Border>("DragHandle");
+                            var dragHandle = newHost.FindControl<Border>("DragHandle");
                             if (dragHandle != null)
                                 _dragDropManager.AttachDragHandle(dragHandle);
                         }
@@ -278,7 +278,7 @@ public partial class DashboardPage : UserControl
 
     private WidgetHost CreateWidgetHost(WidgetHostViewModel hostVm, DashboardLayoutViewModel layoutVm)
     {
-        var widgetHost = new WidgetHost { DataContext = hostVm, Margin = new Avalonia.Thickness(6, 0) };
+        var widgetHost = new WidgetHost { DataContext = hostVm, Margin = new Thickness(6, 0) };
         widgetHost.SetWidgetContent(hostVm);
         DashboardRowPanel.SetWidgetFraction(widgetHost, hostVm.Size.ToFraction());
         if (hostVm.StartOffset > 0.001)
@@ -387,13 +387,13 @@ public partial class DashboardPage : UserControl
         }
 
         // Row drag pointer handlers, remove first to prevent stacking
-        MainScrollViewer.RemoveHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnRowPointerMoved);
-        MainScrollViewer.RemoveHandler(Avalonia.Input.InputElement.PointerReleasedEvent, OnRowPointerReleased);
-        MainScrollViewer.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnRowPointerMoved, handledEventsToo: true);
-        MainScrollViewer.AddHandler(Avalonia.Input.InputElement.PointerReleasedEvent, OnRowPointerReleased, handledEventsToo: true);
+        MainScrollViewer.RemoveHandler(PointerMovedEvent, OnRowPointerMoved);
+        MainScrollViewer.RemoveHandler(PointerReleasedEvent, OnRowPointerReleased);
+        MainScrollViewer.AddHandler(PointerMovedEvent, OnRowPointerMoved, handledEventsToo: true);
+        MainScrollViewer.AddHandler(PointerReleasedEvent, OnRowPointerReleased, handledEventsToo: true);
     }
 
-    private void OnRowPointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
+    private void OnRowPointerMoved(object? sender, PointerEventArgs e)
     {
         if (_rowDragSourceIndex < 0) return;
         if (_rowDragSourceIndex >= RowsContainer.Children.Count)
@@ -414,24 +414,24 @@ public partial class DashboardPage : UserControl
             sourceRow.Opacity = 0;
 
             // Calculate offset from pointer to row top-left
-            _rowDragOffset = new Avalonia.Point(0, _rowDragStartPoint.Y - sourceRow.Bounds.Top);
+            _rowDragOffset = new Point(0, _rowDragStartPoint.Y - sourceRow.Bounds.Top);
 
             // Create ghost
-            _rowDragGhost = new Avalonia.Controls.Border
+            _rowDragGhost = new Border
             {
                 Width = sourceRow.Bounds.Width,
                 Height = sourceRow.Bounds.Height,
                 Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromArgb(30, 59, 130, 246)),
                 BorderBrush = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.FromRgb(59, 130, 246)),
-                BorderThickness = new Avalonia.Thickness(2),
-                CornerRadius = new Avalonia.CornerRadius(12),
+                BorderThickness = new Thickness(2),
+                CornerRadius = new CornerRadius(12),
                 IsHitTestVisible = false,
                 Opacity = 0.7,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top
             };
 
-            if (RowsContainer.Parent is Avalonia.Controls.Panel parent)
+            if (RowsContainer.Parent is Panel parent)
                 parent.Children.Add(_rowDragGhost);
         }
 
@@ -439,7 +439,7 @@ public partial class DashboardPage : UserControl
         if (_rowDragGhost != null)
         {
             var ghostY = position.Y - _rowDragOffset.Y;
-            _rowDragGhost.Margin = new Avalonia.Thickness(0, ghostY, 0, 0);
+            _rowDragGhost.Margin = new Thickness(0, ghostY, 0, 0);
         }
 
         // Determine target row from ghost center crossing row midpoints
@@ -487,7 +487,7 @@ public partial class DashboardPage : UserControl
         e.Handled = true;
     }
 
-    private void OnRowPointerReleased(object? sender, Avalonia.Input.PointerReleasedEventArgs e)
+    private void OnRowPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (_rowDragSourceIndex < 0) return;
 
@@ -502,7 +502,7 @@ public partial class DashboardPage : UserControl
             RowsContainer.Children[sourceIndex].Opacity = 1.0;
 
         // Remove ghost
-        if (RowsContainer.Parent is Avalonia.Controls.Panel ghostParent && _rowDragGhost != null)
+        if (RowsContainer.Parent is Panel ghostParent && _rowDragGhost != null)
             ghostParent.Children.Remove(_rowDragGhost);
         _rowDragGhost = null;
 
@@ -553,7 +553,7 @@ public partial class DashboardPage : UserControl
         };
         headerText.SetValue(TextBlock.ForegroundProperty, Application.Current?.FindResource("TextPrimaryBrush") as Avalonia.Media.IBrush ?? Avalonia.Media.Brushes.White);
         SettingsContent.Children.Add(headerText);
-        SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Avalonia.Thickness(0, 0, 0, 4) });
+        SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Thickness(0, 0, 0, 4) });
 
         // Widget-specific config content
         var configView = WidgetSettingsFactory.CreateConfigView(hostVm.WidgetViewModel);
@@ -561,11 +561,11 @@ public partial class DashboardPage : UserControl
         {
             configView.DataContext = hostVm.WidgetViewModel;
             SettingsContent.Children.Add(configView);
-            SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Avalonia.Thickness(0, 4, 0, 0) });
+            SettingsContent.Children.Add(new Separator { Height = 1, Margin = new Thickness(0, 4, 0, 0) });
         }
 
         // Size section
-        var sizeLabel = new TextBlock { Text = "Size", FontSize = 12, FontWeight = Avalonia.Media.FontWeight.Medium, Margin = new Avalonia.Thickness(0, 0, 0, 4) };
+        var sizeLabel = new TextBlock { Text = "Size", FontSize = 12, FontWeight = Avalonia.Media.FontWeight.Medium, Margin = new Thickness(0, 0, 0, 4) };
         SettingsContent.Children.Add(sizeLabel);
 
         var sizePanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 4 };
@@ -614,7 +614,7 @@ public partial class DashboardPage : UserControl
         SettingsBackdrop.PointerPressed += OnSettingsBackdropPressed;
     }
 
-    private void OnSettingsBackdropPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    private void OnSettingsBackdropPressed(object? sender, PointerPressedEventArgs e)
     {
         CloseSettingsPopup();
         e.Handled = true;
@@ -666,11 +666,11 @@ public partial class DashboardPage : UserControl
                 Content = label,
                 MinWidth = 44,
                 MinHeight = 30,
-                Padding = new Avalonia.Thickness(8, 4),
-                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Thickness(8, 4),
+                CornerRadius = new CornerRadius(6),
                 HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                 VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                Cursor = new Cursor(StandardCursorType.Hand),
                 FontSize = 11,
                 FontWeight = Avalonia.Media.FontWeight.Medium,
                 Tag = size,

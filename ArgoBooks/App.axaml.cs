@@ -1119,7 +1119,7 @@ public partial class App : Application
             }
 
             // Remove stale cached receipt preview/render files from temp (fire-and-forget).
-            _ = Services.ReceiptTempCleanup.CleanOldFilesAsync();
+            _ = ReceiptTempCleanup.CleanOldFilesAsync();
 
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
@@ -2212,7 +2212,7 @@ public partial class App : Application
             // Snapshot before mutation so the import can be undone in one step.
             var snapshot = CreateCompanyDataSnapshot(companyData);
 
-            var session = new ArgoBooks.Core.Models.BankMatching.BankImportSession
+            var session = new Core.Models.BankMatching.BankImportSession
             {
                 Id = Guid.NewGuid().ToString("N"),
                 ImportedAt = DateTime.UtcNow,
@@ -2255,7 +2255,7 @@ public partial class App : Application
     /// couldn't recognize the statement's columns. Consumes one AI import credit on success.
     /// Returns an empty list if AI isn't available or finds nothing.
     /// </summary>
-    private static async Task<List<ArgoBooks.Core.Models.BankMatching.BankStatementLine>> TryAiParseBankStatementAsync(
+    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> TryAiParseBankStatementAsync(
         string filePath, bool isCsv, BankStatementImportService parser)
     {
         var gemini = new GeminiService(ErrorLogger, TelemetryManager);

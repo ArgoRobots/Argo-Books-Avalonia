@@ -1350,7 +1350,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             var bytes = await Task.Run(() => PurchaseOrderPdfRenderer.Render(order, companyData, symbol));
             _sendPdfBytes = bytes;
 
-            var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
+            var rendered = await PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
             if (rendered == null) return;
 
             await Dispatcher.UIThread.InvokeAsync(() =>
