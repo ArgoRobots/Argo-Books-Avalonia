@@ -114,9 +114,9 @@ Rules:
             var result = ParseResponse(response);
             if (result.IsSuccess && result.LineItems.Count > 0)
             {
-                // Only run the verification pass for long receipts or low-confidence scans
-                // where missed items are more likely. Skipping it saves ~15-30s.
-                if (result.LineItems.Count >= 15 || result.Confidence < 0.8)
+                // The verification pass is a second full-image round-trip (~15-30s),
+                // so only spend it when there is evidence the first pass missed an item.
+                if (ShouldRunVerification(result))
                 {
                     result = await VerifyAndFillMissingItemsAsync(result, base64Image, mimeType, cancellationToken);
                 }
@@ -185,6 +185,40 @@ Look at EVERY price on the right side of the receipt. If any product with a pric
 {{""missingItems"": [{{""insertAfter"": 3, ""description"": ""Product Name"", ""quantity"": 1, ""unitPrice"": 0.00, ""totalPrice"": 0.00, ""confidence"": 0.9}}]}}
 
 If nothing was missed, return: {{""missingItems"": []}}";
+
+    /// <summary>
+    /// Decides whether the second verification pass is worth its latency (~15-30s).
+    /// It runs only when there is evidence the first pass may have missed an item:
+    /// the scan confidence is low, or the extracted amounts don't reconcile to the
+    /// printed total. When the receipt has no usable total to check against, it falls
+    /// back to the old heuristic (long receipts are where misses are most likely).
+    /// Receipts whose math already balances skip the pass, which is the fast path.
+    /// </summary>
+    public static bool ShouldRunVerification(ReceiptScanResult result)
+    {
+        // Low-confidence scans always get a second look.
+        if (result.Confidence < 0.8)
+            return true;
+
+        var total = result.TotalAmount ?? 0m;
+
+        // No printed total to reconcile against: fall back to the size heuristic.
+        if (total <= 0m)
+            return result.LineItems.Count >= 15;
+
+        // Reconcile the extracted amounts against the printed total. Line items are
+        // stored as positive amounts (negatives are folded into Discount during
+        // parsing), so: total == sum(items) - discount + tax.
+        var itemsSum = result.LineItems.Sum(li => li.TotalPrice);
+        var computedTotal = itemsSum - (result.Discount ?? 0m) + (result.TaxAmount ?? 0m);
+
+        // Tolerance is kept tight and biased toward verifying: a genuinely missed item
+        // shifts the total by roughly its own price, which we want to catch. A few cents
+        // (or 0.5% on larger receipts) absorbs ordinary per-line rounding and fees we
+        // don't model. When the books don't balance, re-scan; otherwise trust the pass.
+        var tolerance = Math.Max(0.05m, total * 0.005m);
+        return Math.Abs(computedTotal - total) > tolerance;
+    }
 
     /// <summary>
     /// Sends the receipt image back with the extracted items and asks the model to find anything missed.
