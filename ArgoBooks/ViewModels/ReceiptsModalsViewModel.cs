@@ -252,6 +252,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private Category? _createdCategoryForUndo;
     private readonly List<Product> _createdProductsForUndo = new();
 
+    // Set once a transaction is created so the auto-created entities are handed off to the
+    // undo action instead of being rolled back when the modal closes.
+    private bool _createdEntitiesCommitted;
+
     [ObservableProperty]
     private bool _isScanReviewModalOpen;
 
@@ -1744,7 +1748,42 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         IsScanReviewModalOpen = false;
         IsFullscreen = false;
+
+        // Suggested products/supplier/category are created eagerly while the user reviews.
+        // If the modal is closed without adding the receipt, roll them back so they only
+        // persist when a transaction is actually created. When a transaction was created,
+        // ownership transfers to the undo action, so this is skipped.
+        if (!_createdEntitiesCommitted)
+            RollbackUncommittedCreatedEntities();
+
         ResetScanModal();
+    }
+
+    /// <summary>
+    /// Removes supplier/category/products that were auto-created from receipt suggestions
+    /// but never committed to a transaction.
+    /// </summary>
+    private void RollbackUncommittedCreatedEntities()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var removedAny = false;
+
+        foreach (var product in _createdProductsForUndo)
+        {
+            if (companyData.Products?.Remove(product) == true)
+                removedAny = true;
+        }
+
+        if (_createdCategoryForUndo != null && companyData.Categories.Remove(_createdCategoryForUndo))
+            removedAny = true;
+
+        if (_createdSupplierForUndo != null && companyData.Suppliers.Remove(_createdSupplierForUndo))
+            removedAny = true;
+
+        if (removedAny)
+            companyData.MarkAsModified();
     }
 
     [RelayCommand]
@@ -1926,6 +1965,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             // Create expense transaction
             CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
         }
+
+        // The receipt was added: ownership of the auto-created supplier/category/products
+        // transfers to the undo action, so don't roll them back when the modal closes.
+        _createdEntitiesCommitted = true;
 
         App.CompanyManager?.MarkAsChanged();
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
@@ -2742,6 +2785,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _createdSupplierForUndo = null;
         _createdCategoryForUndo = null;
         _createdProductsForUndo.Clear();
+        _createdEntitiesCommitted = false;
 
         // Reset usage state (keep cached values for display)
         IsNearLimit = false;
