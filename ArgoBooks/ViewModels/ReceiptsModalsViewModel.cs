@@ -837,6 +837,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         if (BulkItems.Count == 0) return;
 
+        // A single receipt doesn't need the bulk review carousel. Route it through the
+        // standard single-scan flow so the user just reviews the result and clicks Add.
+        if (BulkItems.Count == 1)
+        {
+            var single = BulkItems[0];
+            IsBulkDropZoneOpen = false;
+            BulkItems.Clear();
+            await OpenScanModalAsync(single.FilePath);
+            return;
+        }
+
         IsBulkDropZoneOpen = false;
         IsBulkScanning = true;
         IsBulkScanComplete = false;
