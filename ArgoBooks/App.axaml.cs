@@ -922,8 +922,22 @@ public partial class App : Application
             // subscribed to it (Dashboard, Analytics, Invoices, etc.) refresh
             // their derived data. Individual undo callbacks only call
             // companyData.MarkAsModified() which doesn't fire the event.
-            UndoRedoManager.ActionUndone += (_, _) => CompanyManager?.NotifyDataChanged();
-            UndoRedoManager.ActionRedone += (_, _) => CompanyManager?.NotifyDataChanged();
+            //
+            // NotifyDataChanged fires CompanyDataChanged, whose handler force-sets
+            // HasUnsavedChanges = true. That's wrong after an undo/redo: the undo manager
+            // is the authority on the saved state, so re-sync the flag from IsAtSavedState
+            // afterwards. Otherwise undoing back to the saved state leaves the asterisk on.
+            void RefreshDerivedDataAfterUndoRedo()
+            {
+                CompanyManager?.NotifyDataChanged();
+                var hasChanges = !UndoRedoManager.IsAtSavedState;
+                if (_mainWindowViewModel != null)
+                    _mainWindowViewModel.HasUnsavedChanges = hasChanges;
+                if (_appShellViewModel != null)
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = hasChanges;
+            }
+            UndoRedoManager.ActionUndone += (_, _) => RefreshDerivedDataAfterUndoRedo();
+            UndoRedoManager.ActionRedone += (_, _) => RefreshDerivedDataAfterUndoRedo();
 
             // Wire up file menu events
             WireFileMenuEvents(desktop);
