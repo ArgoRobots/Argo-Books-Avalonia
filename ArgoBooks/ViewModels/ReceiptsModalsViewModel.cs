@@ -902,7 +902,25 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private async Task ProcessAndScanItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
     {
-        await semaphore.WaitAsync(token);
+        try
+        {
+            await semaphore.WaitAsync(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled while waiting for a concurrency slot. The semaphore was never
+            // acquired, so it must not be released. Mark the item cancelled and finish
+            // cleanly so the task doesn't fault and crash Task.WhenAll in StartBulkScan.
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                item.Status = BulkScanStatus.Failed;
+                item.ErrorMessage = "Cancelled";
+                BulkScansCompleted++;
+                BulkScansFailed++;
+            });
+            return;
+        }
+
         try
         {
             if (token.IsCancellationRequested) return;
