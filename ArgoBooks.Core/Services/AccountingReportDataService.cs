@@ -307,7 +307,10 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [],
             ColumnWidthRatios = [0.65, 0.35],
-            Footnote = "Cash balance estimated from recorded transactions."
+            Footnote = "Cash balance estimated from recorded transactions. "
+                + "Inventory valued at each item's current unit cost (cost "
+                + "history is not tracked) applied to stock levels "
+                + "reconstructed as of the report date."
         };
 
         if (companyData == null)
@@ -341,7 +344,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         && i.Status != InvoiceStatus.Draft)
             .Sum(i => i.EffectiveBalanceUSD);
 
-        var totalCurrentAssets = cash + accountsReceivable;
+        // Inventory valued at current unit cost, using stock levels
+        // reconstructed as of the report end date. See docs/Calculations.md §10.
+        var inventoryValue = InventoryValuationService.TotalValueAsOf(
+            companyData, filters.EndDate ?? DateTime.Today);
+
+        var totalCurrentAssets = cash + accountsReceivable + inventoryValue;
         var totalAssets = totalCurrentAssets;
 
         // Accounts Payable = purchase orders not received and not cancelled (USD-converted)
@@ -397,6 +405,17 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             IndentLevel = 1,
             RowType = AccountingRowType.DataRow
         });
+
+        if (companyData.Inventory.Count > 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Inventory",
+                Values = [FormatCurrency(inventoryValue)],
+                IndentLevel = 1,
+                RowType = AccountingRowType.DataRow
+            });
+        }
 
         data.Rows.Add(new AccountingRow
         {

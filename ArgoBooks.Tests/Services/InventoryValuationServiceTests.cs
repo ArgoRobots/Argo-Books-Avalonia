@@ -1,0 +1,113 @@
+using System;
+using System.Collections.Generic;
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
+using Xunit;
+
+namespace ArgoBooks.Tests.Services;
+
+public class InventoryValuationServiceTests
+{
+    private static StockAdjustment Adj(
+        string itemId, AdjustmentType type, int qty, int prev, int @new,
+        DateTime timestamp, string? reference = null) => new()
+    {
+        InventoryItemId = itemId,
+        AdjustmentType = type,
+        Quantity = qty,
+        PreviousStock = prev,
+        NewStock = @new,
+        Timestamp = timestamp,
+        ReferenceNumber = reference
+    };
+
+    [Fact]
+    public void SignedDelta_Add_IsPositiveQuantity()
+    {
+        var a = Adj("I1", AdjustmentType.Add, 10, 0, 10, new DateTime(2024, 1, 1));
+        Assert.Equal(10, InventoryValuationService.SignedDelta(a));
+    }
+
+    [Fact]
+    public void SignedDelta_Remove_IsNegativeQuantity()
+    {
+        var a = Adj("I1", AdjustmentType.Remove, 4, 10, 6, new DateTime(2024, 1, 1));
+        Assert.Equal(-4, InventoryValuationService.SignedDelta(a));
+    }
+
+    [Fact]
+    public void SignedDelta_Set_IsNewMinusPrevious()
+    {
+        var a = Adj("I1", AdjustmentType.Set, 0, 10, 25, new DateTime(2024, 1, 1));
+        Assert.Equal(15, InventoryValuationService.SignedDelta(a));
+    }
+
+    [Fact]
+    public void StockOnHandAsOf_RollsBackOnlyAdjustmentsAfterAsOfDate()
+    {
+        // Baseline 0, +100 on Jan 1, -20 on Jan 10 => current InStock 80.
+        var item = new InventoryItem { Id = "I1", InStock = 80 };
+        var adjustments = new List<StockAdjustment>
+        {
+            Adj("I1", AdjustmentType.Add, 100, 0, 100, new DateTime(2024, 1, 1)),
+            Adj("I1", AdjustmentType.Remove, 20, 100, 80, new DateTime(2024, 1, 10))
+        };
+        DateTime Effective(StockAdjustment a) => a.Timestamp;
+
+        // After the purchase, before the sale.
+        Assert.Equal(100,
+            InventoryValuationService.StockOnHandAsOf(item, adjustments, Effective, new DateTime(2024, 1, 5)));
+        // After both movements.
+        Assert.Equal(80,
+            InventoryValuationService.StockOnHandAsOf(item, adjustments, Effective, new DateTime(2024, 1, 15)));
+        // Before any movement (pre-ledger baseline).
+        Assert.Equal(0,
+            InventoryValuationService.StockOnHandAsOf(item, adjustments, Effective, new DateTime(2023, 12, 31)));
+    }
+
+    [Fact]
+    public void StockOnHandAsOf_NoAdjustments_ReturnsCurrentInStock()
+    {
+        var item = new InventoryItem { Id = "I1", InStock = 42 };
+        Assert.Equal(42, InventoryValuationService.StockOnHandAsOf(
+            item, new List<StockAdjustment>(), a => a.Timestamp, new DateTime(2024, 6, 1)));
+    }
+
+    [Fact]
+    public void TotalValueAsOf_MultipliesReconstructedQuantityByUnitCost()
+    {
+        var data = new CompanyData();
+        data.Inventory.Add(new InventoryItem { Id = "I1", InStock = 100, UnitCost = 5m });
+        data.StockAdjustments.Add(
+            Adj("I1", AdjustmentType.Add, 100, 0, 100, new DateTime(2024, 6, 1)));
+
+        // As of after the add: 100 units * $5 = $500.
+        Assert.Equal(500m, InventoryValuationService.TotalValueAsOf(data, new DateTime(2024, 12, 31)));
+        // As of before the add: 0 units => $0.
+        Assert.Equal(0m, InventoryValuationService.TotalValueAsOf(data, new DateTime(2024, 1, 1)));
+    }
+
+    [Fact]
+    public void TotalValueAsOf_UsesLinkedTransactionDateNotTimestamp()
+    {
+        var data = new CompanyData();
+        data.Inventory.Add(new InventoryItem { Id = "I1", InStock = 50, UnitCost = 2m });
+        // Purchase dated Jan 1 but entered (timestamped) Jun 1 (back-dated entry).
+        data.Expenses.Add(new Expense { Id = "EXP-1", Date = new DateTime(2024, 1, 1) });
+        data.StockAdjustments.Add(
+            Adj("I1", AdjustmentType.Add, 50, 0, 50, new DateTime(2024, 6, 1), reference: "EXP-1"));
+
+        // As of Mar 1: by transaction date (Jan 1) the stock already exists => $100.
+        // If timestamp (Jun 1) were used, it would roll back to $0.
+        Assert.Equal(100m, InventoryValuationService.TotalValueAsOf(data, new DateTime(2024, 3, 1)));
+    }
+
+    [Fact]
+    public void TotalValueAsOf_NoInventory_ReturnsZero()
+    {
+        Assert.Equal(0m, InventoryValuationService.TotalValueAsOf(new CompanyData(), new DateTime(2024, 6, 1)));
+    }
+}
