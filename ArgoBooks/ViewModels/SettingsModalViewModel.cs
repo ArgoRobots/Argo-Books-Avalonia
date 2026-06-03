@@ -606,7 +606,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         try { await Task.Delay(600, cancellationToken); }
         catch (TaskCanceledException) { return; }
 
-        if (string.IsNullOrWhiteSpace(name)) return;
+        // A blank name is only allowed while no payment provider is connected
+        if (string.IsNullOrWhiteSpace(name) && IsPortalCompanyNameRequired) return;
 
         var portalService = App.PaymentPortalService;
         if (portalService == null || !PortalSettings.IsConfigured) return;
@@ -717,6 +718,17 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _squareEmail;
+
+    /// <summary>
+    /// The portal company name is required while a payment provider is connected.
+    /// </summary>
+    public bool IsPortalCompanyNameRequired => StripeConnected || PaypalConnected || SquareConnected;
+
+    partial void OnStripeConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+
+    partial void OnPaypalConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+
+    partial void OnSquareConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
 
     [ObservableProperty]
     private bool _isConnectingProvider;

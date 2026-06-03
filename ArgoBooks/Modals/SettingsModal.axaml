@@ -768,9 +768,10 @@
                                 </Border>
                                 <!-- Portal Company Name -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Company Name'}" />
+                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" IsVisible="{Binding IsPortalCompanyNameRequired}" />
+                                    </StackPanel>
                                     <TextBlock Text="{loc:Loc 'The name displayed on your customer-facing payment portal.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
