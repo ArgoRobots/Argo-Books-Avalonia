@@ -491,7 +491,7 @@ public static class InvoiceHtmlTemplates
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
         <tr>
             <td align="center" style="padding: 30px 20px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="border: 2px solid {{PrimaryColor}};">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: {{BackgroundColor}}; border: 2px solid {{PrimaryColor}};">
                     <!-- Header -->
                     <tr>
                         <td style="padding: 20px; border-bottom: 2px solid {{PrimaryColor}};">

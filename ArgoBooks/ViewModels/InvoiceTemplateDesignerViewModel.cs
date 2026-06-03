@@ -142,6 +142,9 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         _ => "Accent Color"
     };
 
+    // The Classic template doesn't use an accent color anywhere, so hide the option
+    public bool ShowAccentColorOption => SelectedBaseTemplate != InvoiceTemplateType.Classic;
+
     public string HeaderColorLabel => SelectedBaseTemplate switch
     {
         InvoiceTemplateType.Ribbon => "Title & Heading",
@@ -852,6 +855,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         OnPropertyChanged(nameof(SecondaryColorLabel));
         OnPropertyChanged(nameof(AccentColorLabel));
         OnPropertyChanged(nameof(HeaderColorLabel));
+        OnPropertyChanged(nameof(ShowAccentColorOption));
 
         UpdatePreview();
     }
