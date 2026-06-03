@@ -70,7 +70,7 @@ public partial class RefundModalsViewModel : ObservableObject
     [ObservableProperty]
     private VerifyEmailModalViewModel? _activeVerifyEmailVm;
 
-    public void OpenVerifyEmailModal(string? maskedEmail)
+    public void OpenVerifyEmailModal(string? maskedEmail, Action? onVerified = null)
     {
         var refundService = App.RefundService;
         if (refundService == null) return;
@@ -79,6 +79,7 @@ public partial class RefundModalsViewModel : ObservableObject
         ActiveVerifyEmailVm = new VerifyEmailModalViewModel(refundService, maskedEmail)
         {
             RequestClose = CloseVerifyEmailModal,
+            OnVerified = onVerified,
         };
         IsVerifyEmailModalOpen = true;
     }
