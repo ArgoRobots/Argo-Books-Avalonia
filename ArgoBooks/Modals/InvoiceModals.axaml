@@ -75,7 +75,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <!-- Template Selection (left) -->
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Email Template'}"
+                                    <TextBlock Text="{loc:Loc 'Template'}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
