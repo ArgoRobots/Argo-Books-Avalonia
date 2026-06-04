@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Utilities;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
@@ -152,15 +153,11 @@ public partial class ReceiptsPage : UserControl
             foreach (var file in files)
             {
                 var path = file.TryGetLocalPath();
-                if (!string.IsNullOrEmpty(path))
+                if (FilePickerTypes.IsSupportedReceiptFile(path))
                 {
-                    var extension = Path.GetExtension(path).ToLowerInvariant();
-                    if (extension is ".jpg" or ".jpeg" or ".png" or ".webp" or ".pdf")
-                    {
-                        e.DragEffects = DragDropEffects.Copy;
-                        viewModel.IsDragOver = true;
-                        return;
-                    }
+                    e.DragEffects = DragDropEffects.Copy;
+                    viewModel.IsDragOver = true;
+                    return;
                 }
             }
         }

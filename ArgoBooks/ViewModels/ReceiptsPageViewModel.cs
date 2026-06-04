@@ -345,12 +345,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     public async Task HandleFilesDroppedAsync(IEnumerable<string> filePaths)
     {
         var validPaths = filePaths
-            .Where(p => !string.IsNullOrEmpty(p))
-            .Where(p =>
-            {
-                var ext = Path.GetExtension(p).ToLowerInvariant();
-                return ext is ".jpg" or ".jpeg" or ".png" or ".webp" or ".pdf";
-            })
+            .Where(FilePickerTypes.IsSupportedReceiptFile)
             .ToList();
 
         if (validPaths.Count == 0)

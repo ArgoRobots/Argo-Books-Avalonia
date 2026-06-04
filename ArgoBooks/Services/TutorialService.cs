@@ -536,12 +536,6 @@ public class TutorialService
     }
 
     /// <summary>
-    /// The allowed survey answer wire values. Server validates against the same list.
-    /// </summary>
-    public static readonly IReadOnlyList<string> SourceSurveyOptions =
-        ["google", "bing", "youtube", "reddit", "friend", "email", "other"];
-
-    /// <summary>
     /// Whether the source survey should be presented to this user. True only when
     /// FirstRunReporter has run and recorded a no-token install, and the user
     /// hasn't already answered or dismissed.

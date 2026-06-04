@@ -69,8 +69,16 @@ public sealed class SourceSurveyReporter
             }
             return true;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Genuine caller cancellation: propagate so callers can stop cleanly
+            // (matches the convention in other ArgoBooks.Core HTTP services).
+            throw;
+        }
         catch (OperationCanceledException)
         {
+            // HttpClient timeout (not a caller cancellation): treat as a normal
+            // failed report so the caller can move on.
             return false;
         }
         catch (Exception ex)
