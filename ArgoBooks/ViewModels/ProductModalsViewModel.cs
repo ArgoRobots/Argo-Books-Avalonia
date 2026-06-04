@@ -792,7 +792,7 @@ public partial class ProductModalsViewModel : ViewModelBase
 
         foreach (var cat in categories)
         {
-            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
+            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name });
         }
 
         CategoryItems.Clear();

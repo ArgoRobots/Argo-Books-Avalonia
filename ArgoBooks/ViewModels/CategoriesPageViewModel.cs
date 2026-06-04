@@ -152,14 +152,10 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     private bool _showDescriptionColumn = ColumnVisibilityHelper.Load("Categories", "Description", true);
 
     [ObservableProperty]
-    private bool _showTypeColumn = ColumnVisibilityHelper.Load("Categories", "Type", true);
-
-    [ObservableProperty]
     private bool _showProductCountColumn = ColumnVisibilityHelper.Load("Categories", "ProductCount", true);
 
     partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Categories", "Name", value); }
     partial void OnShowDescriptionColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Description", value); ColumnVisibilityHelper.Save("Categories", "Description", value); }
-    partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Categories", "Type", value); }
     partial void OnShowProductCountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("ProductCount", value); ColumnVisibilityHelper.Save("Categories", "ProductCount", value); }
 
     [RelayCommand]
@@ -181,7 +177,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         ColumnVisibilityHelper.ResetPage("Categories");
         ShowNameColumn = true;
         ShowDescriptionColumn = true;
-        ShowTypeColumn = true;
         ShowProductCountColumn = true;
     }
 
@@ -194,9 +189,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private string _modalDescription = string.Empty;
-
-    [ObservableProperty]
-    private string _modalItemType = "Product";
 
     [ObservableProperty]
     private IconOption? _modalSelectedIconOption;
@@ -270,11 +262,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     #endregion
 
     #region Dropdown Options
-
-    /// <summary>
-    /// Item types (Product / Service).
-    /// </summary>
-    public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
 
     /// <summary>
     /// Available icons for dropdown.
@@ -462,7 +449,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
                     ["Name"] = x => x.Name,
                     ["Parent"] = x => x.ParentName,
                     ["Description"] = x => x.Description,
-                    ["Type"] = x => x.ItemType,
                     ["ProductCount"] = x => x.ProductCount
                 });
         }
@@ -498,7 +484,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             ParentId = category.ParentId,
             ParentName = parentName ?? string.Empty,
             Description = category.Description ?? string.Empty,
-            ItemType = category.ItemType,
             Color = category.Color,
             Icon = category.Icon,
             ProductCount = productCount,
@@ -573,7 +558,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             Type = IsExpensesTabSelected ? CategoryType.Expense : CategoryType.Revenue,
             ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
-            ItemType = ModalItemType,
             Color = AppColors.CategoryDefault,
             Icon = ModalSelectedIconOption?.Icon ?? "📦"
         };
@@ -642,13 +626,11 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         // Store old values for undo
         var oldName = _editingCategory.Name;
         var oldDescription = _editingCategory.Description;
-        var oldItemType = _editingCategory.ItemType;
         var oldIcon = _editingCategory.Icon;
 
         // Store new values (parent is changed via Move, not Edit)
         var newName = ModalCategoryName.Trim();
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
-        var newItemType = ModalItemType;
         var newIcon = ModalSelectedIconOption?.Icon ?? "📦";
 
         // Update the category (keep parent unchanged)
@@ -656,7 +638,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         App.EventLogService?.CapturePreModificationSnapshot("Category", categoryToEdit.Id);
         categoryToEdit.Name = newName;
         categoryToEdit.Description = newDescription;
-        categoryToEdit.ItemType = newItemType;
         categoryToEdit.Icon = newIcon;
 
         companyData.MarkAsModified();
@@ -668,7 +649,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             {
                 categoryToEdit.Name = oldName;
                 categoryToEdit.Description = oldDescription;
-                categoryToEdit.ItemType = oldItemType;
                 categoryToEdit.Icon = oldIcon;
                 companyData.MarkAsModified();
                 LoadCategories();
@@ -677,7 +657,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             {
                 categoryToEdit.Name = newName;
                 categoryToEdit.Description = newDescription;
-                categoryToEdit.ItemType = newItemType;
                 categoryToEdit.Icon = newIcon;
                 companyData.MarkAsModified();
                 LoadCategories();
@@ -920,7 +899,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     {
         ModalCategoryName = string.Empty;
         ModalDescription = string.Empty;
-        ModalItemType = "Product";
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault();
         ModalError = null;
         ModalCategoryNameError = null;
@@ -982,9 +960,6 @@ public partial class CategoryDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _description = string.Empty;
-
-    [ObservableProperty]
-    private string _itemType = "Product";
 
     [ObservableProperty]
     private string _color = AppColors.CategoryDefault;

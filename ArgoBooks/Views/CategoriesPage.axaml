@@ -82,12 +82,6 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc Type}" ColumnName="Type" SortProperty="Type"
-                                                   ColumnWidth="{Binding ColumnWidths.TypeColumnWidth}"
-                                                   IsColumnVisible="{Binding ShowTypeColumn}"
-                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
-                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
-
                         <table:ArgoTableHeader Header="{loc:Loc 'Products / Services'}" ColumnName="ProductCount" SortProperty="ProductCount"
                                                    ColumnWidth="{Binding ColumnWidths.ProductCountColumnWidth}"
                                                    IsColumnVisible="{Binding ShowProductCountColumn}"
@@ -139,11 +133,6 @@
                                         <table:ArgoTableCell Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowDescriptionColumn}" />
-
-                                        <!-- Type (Product / Service) -->
-                                        <table:ArgoTableCell Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowTypeColumn}" />
 
                                         <!-- Products/Services Count -->
                                         <table:ArgoTableCell Text="{Binding ProductCount}"
@@ -212,7 +201,6 @@
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Category Name'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="{loc:Loc 'Products / Services'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>

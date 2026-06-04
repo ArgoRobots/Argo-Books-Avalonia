@@ -1883,7 +1883,6 @@ public class SpreadsheetImportService
                         Id = id,
                         Name = id,
                         Type = CategoryType.Revenue,
-                        ItemType = "Product",
                         Icon = "📦"
                     });
                 }
@@ -2182,7 +2181,7 @@ public class SpreadsheetImportService
         return _categoryByNameCache;
     }
 
-    private Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type, string itemType)
+    private Category FindOrCreateCategory(CompanyData data, string categoryName, CategoryType type)
     {
         var cache = GetCategoryByNameCache(data);
 
@@ -2210,8 +2209,7 @@ public class SpreadsheetImportService
         {
             Id = idGen.NextCategoryId(type),
             Name = categoryName,
-            Type = type,
-            ItemType = itemType
+            Type = type
         };
         data.Categories.Add(category);
         cache[categoryName] = category;
@@ -2243,7 +2241,7 @@ public class SpreadsheetImportService
         // If we have a category name, find or create the category
         if (!string.IsNullOrEmpty(categoryName))
         {
-            var category = FindOrCreateCategory(data, categoryName, product.Type, product.ItemType);
+            var category = FindOrCreateCategory(data, categoryName, product.Type);
             product.CategoryId = category.Id;
             return;
         }
@@ -2251,7 +2249,7 @@ public class SpreadsheetImportService
         // If categoryId was set but doesn't exist and no name provided, use the categoryId as the name
         if (!string.IsNullOrEmpty(product.CategoryId))
         {
-            var category = FindOrCreateCategory(data, product.CategoryId, product.Type, product.ItemType);
+            var category = FindOrCreateCategory(data, product.CategoryId, product.Type);
             product.CategoryId = category.Id;
             return;
         }
@@ -2259,7 +2257,7 @@ public class SpreadsheetImportService
         // Last resort: use the product name as the category name so no product is left uncategorized
         if (!string.IsNullOrEmpty(product.Name))
         {
-            var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+            var category = FindOrCreateCategory(data, product.Name, product.Type);
             product.CategoryId = category.Id;
         }
         else
@@ -2290,7 +2288,7 @@ public class SpreadsheetImportService
             try
             {
                 var existingCategories = data.Categories
-                    .Select(c => $"- {c.Name} ({c.Type}, {c.ItemType})")
+                    .Select(c => $"- {c.Name} ({c.Type})")
                     .ToList();
 
                 var productList = uncategorized
@@ -2331,13 +2329,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
                         if (!string.IsNullOrEmpty(suggestion.CategoryName))
                         {
-                            var category = FindOrCreateCategory(data, suggestion.CategoryName, product.Type, product.ItemType);
+                            var category = FindOrCreateCategory(data, suggestion.CategoryName, product.Type);
                             product.CategoryId = category.Id;
                         }
                         else
                         {
                             // AI didn't return a match for this product, use product name as fallback
-                            var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+                            var category = FindOrCreateCategory(data, product.Name, product.Type);
                             product.CategoryId = category.Id;
                         }
                     }
@@ -2356,7 +2354,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             if (!string.IsNullOrEmpty(product.Name))
             {
-                var category = FindOrCreateCategory(data, product.Name, product.Type, product.ItemType);
+                var category = FindOrCreateCategory(data, product.Name, product.Type);
                 product.CategoryId = category.Id;
             }
         }
@@ -2614,7 +2612,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 categoriesById.TryGetValue(categoryId, out var existingCat);
                 if (existingCat == null)
                 {
-                    var category = FindOrCreateCategory(data, categoryId, productType, itemType);
+                    var category = FindOrCreateCategory(data, categoryId, productType);
                     categoryId = category.Id;
                 }
                 else
@@ -2623,7 +2621,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             }
             else if (!string.IsNullOrEmpty(categoryName))
             {
-                var category = FindOrCreateCategory(data, categoryName, productType, itemType);
+                var category = FindOrCreateCategory(data, categoryName, productType);
                 categoryId = category.Id;
             }
             else
@@ -2867,7 +2865,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         };
 
         // Always assign a category so no product is left uncategorized
-        var category = FindOrCreateCategory(data, name, type, "Product");
+        var category = FindOrCreateCategory(data, name, type);
         product.CategoryId = category.Id;
 
         data.Products.Add(product);
@@ -3012,13 +3010,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             category.Type = categoryType;
             category.ParentId = GetNullableString(row, headers, "Parent ID");
             category.Description = GetNullableString(row, headers, "Description");
-            // Normalize item type to proper casing (case-insensitive match, trim whitespace)
-            var itemTypeStr = GetString(row, headers, "Item Type");
-            category.ItemType = itemTypeStr.Trim().ToLowerInvariant() switch
-            {
-                "service" => "Service",
-                _ => "Product"
-            };
             category.Icon = GetString(row, headers, "Icon");
             if (string.IsNullOrEmpty(category.Icon))
                 category.Icon = "📦";

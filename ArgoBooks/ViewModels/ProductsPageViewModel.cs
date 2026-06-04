@@ -497,7 +497,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         foreach (var cat in categories)
         {
-            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
+            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name });
         }
 
         // Update CategoryItems for the searchable input (excludes "All Categories")
@@ -569,16 +569,10 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply item type filter
+        // Apply item type filter on the product's own type
         if (FilterItemType != "All")
         {
-            var itemTypeCategories = companyData.Categories
-                .Where(c => c.ItemType == FilterItemType)
-                .Select(c => c.Id)
-                .ToHashSet();
-
-            filtered = filtered
-                .Where(p => !string.IsNullOrEmpty(p.CategoryId) && itemTypeCategories.Contains(p.CategoryId));
+            filtered = filtered.Where(p => p.ItemType == FilterItemType);
         }
 
         // Apply category filter
@@ -1131,7 +1125,6 @@ public class CategoryOption
 {
     public string? Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string ItemType { get; set; } = "Product";
 
     public override string ToString() => Name;
 }

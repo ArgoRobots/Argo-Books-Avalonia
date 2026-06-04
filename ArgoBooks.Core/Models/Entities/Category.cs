@@ -38,12 +38,6 @@ public class Category
     public string? Description { get; set; }
 
     /// <summary>
-    /// Whether this category is for Products or Services.
-    /// </summary>
-    [JsonPropertyName("itemType")]
-    public string ItemType { get; set; } = "Product";
-
-    /// <summary>
     /// Color code for UI display (hex format).
     /// </summary>
     [JsonPropertyName("color")]

@@ -100,10 +100,4 @@ public class NewCategorySuggestion
     /// </summary>
     [JsonPropertyName("description")]
     public string? Description { get; set; }
-
-    /// <summary>
-    /// Item type (Product or Service).
-    /// </summary>
-    [JsonPropertyName("itemType")]
-    public string ItemType { get; set; } = "Product";
 }

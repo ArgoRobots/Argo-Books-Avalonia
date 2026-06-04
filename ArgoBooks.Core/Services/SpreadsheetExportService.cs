@@ -509,7 +509,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCategoriesData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Item Type", "Icon" };
+        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Icon" };
         var rows = data.Categories.Select(c => new object[]
         {
             c.Id,
@@ -522,7 +522,6 @@ public class SpreadsheetExportService
             },
             c.ParentId ?? "",
             c.Description ?? "",
-            c.ItemType,
             c.Icon
         }).ToList();
         return (headers, rows);

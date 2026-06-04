@@ -160,7 +160,6 @@ public static class ImportSchemaDefinition
                 new("Type", "enum:Revenue,Expenses,Rental", "Category type", JsonName: "type"),
                 new("Parent ID", "string", "Parent category ID for subcategories", JsonName: "parentId"),
                 new("Description", "string", "Category description", JsonName: "description"),
-                new("Item Type", "enum:Product,Service", "Default item type", JsonName: "itemType"),
                 new("Icon", "string", "Emoji icon for the category", JsonName: "icon"),
             ],
 

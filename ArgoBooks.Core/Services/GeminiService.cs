@@ -219,8 +219,7 @@ public class GeminiService : IGeminiService, IDisposable
     ""confidence"": <0.0-1.0>,
     ""shouldCreateNew"": <true/false>,
     ""newName"": ""<suggested name if shouldCreateNew>"",
-    ""newDescription"": ""<optional description>"",
-    ""newItemType"": ""Product""
+    ""newDescription"": ""<optional description>""
   }}
 }}
 
@@ -375,10 +374,6 @@ Respond with JSON only.";
                         result.NewCategory.Description = newDesc.GetString();
                     }
 
-                    if (category.TryGetProperty("newItemType", out var itemType) && itemType.ValueKind != JsonValueKind.Null)
-                    {
-                        result.NewCategory.ItemType = itemType.GetString() ?? "Product";
-                    }
                 }
             }
 

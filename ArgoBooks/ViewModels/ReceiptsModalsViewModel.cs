@@ -2275,7 +2275,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
                 Name = categoryName,
                 Type = CategoryType.Expense,
-                ItemType = aiCategory?.ItemType ?? "Product",
                 Description = aiCategory?.Description
             };
             companyData.Categories.Add(category);

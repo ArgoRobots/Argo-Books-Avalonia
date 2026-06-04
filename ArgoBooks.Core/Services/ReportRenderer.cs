@@ -2968,7 +2968,6 @@ public class ReportRenderer : IDisposable
                     {
                         "Name" => r.Name,
                         "Type" => r.Type,
-                        "Item Type" => r.ItemType,
                         _ => ""
                     }).ToList());
                 break;
@@ -4030,7 +4029,7 @@ public class ReportRenderer : IDisposable
             TransactionType.Products => ["Name", "SKU", "Category", "Price", "Cost", "Status"],
             TransactionType.Employees => ["Name", "Position", "Department", "Date", "Salary", "Status"],
             TransactionType.Departments => ["Name", "Head", "Employees", "Budget"],
-            TransactionType.Categories => ["Name", "Type", "Item Type"],
+            TransactionType.Categories => ["Name", "Type"],
             TransactionType.Locations => ["Name", "Contact", "Capacity", "In Use", "Utilization"],
             TransactionType.Accountants => ["Name", "Email", "Phone", "Transactions"],
             _ => ["Date", "Description", "Amount"]

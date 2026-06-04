@@ -50,29 +50,17 @@
                                 <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter description'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                             </StackPanel>
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <Button Classes="form-combobox" Command="{Binding OpenEmojiPickerCommand}"
-                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                            Padding="12,8" CornerRadius="6">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="{Binding ModalSelectedIcon}" FontSize="16" VerticalAlignment="Center" />
-                                            <TextBlock Text="{loc:Loc 'Choose...'}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Button Classes="form-combobox" Command="{Binding OpenEmojiPickerCommand}"
+                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                        Padding="12,8" CornerRadius="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding ModalSelectedIcon}" FontSize="16" VerticalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'Choose...'}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -118,29 +106,17 @@
                                 <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter description'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" MaxLength="500" />
                             </StackPanel>
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <Button Classes="form-combobox" Command="{Binding OpenEmojiPickerCommand}"
-                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                                            Padding="12,8" CornerRadius="6">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="{Binding ModalSelectedIcon}" FontSize="16" VerticalAlignment="Center" />
-                                            <TextBlock Text="{loc:Loc 'Choose...'}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Button Classes="form-combobox" Command="{Binding OpenEmojiPickerCommand}"
+                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                        Padding="12,8" CornerRadius="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding ModalSelectedIcon}" FontSize="16" VerticalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'Choose...'}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
