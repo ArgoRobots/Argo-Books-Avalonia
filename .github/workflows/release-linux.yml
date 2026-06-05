@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up .NET 10 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -40,7 +40,7 @@ jobs:
         run: echo "version=$(grep -oP '<Version>\K[^<]+' Directory.Build.props | head -1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ArgoBooks-${{ steps.version.outputs.version }}-linux-x64
           path: ArgoBooks-*-linux-x64.AppImage
