@@ -195,7 +195,7 @@ public class FileService(
                 await contentStream.CopyToAsync(fileStream, cancellationToken);
                 await footerService.WriteFooterAsync(fileStream, footer, cancellationToken);
             }
-            File.Move(tempPath, filePath, overwrite: true);
+            await AtomicFile.ReplaceAsync(tempPath, filePath, overwrite: true, cancellationToken);
         }
         catch
         {

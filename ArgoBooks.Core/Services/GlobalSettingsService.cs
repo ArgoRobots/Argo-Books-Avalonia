@@ -130,15 +130,25 @@ public class GlobalSettingsService : IGlobalSettingsService
                         _jsonOptions,
                         cancellationToken);
                 }
-                File.Move(tempPath, settingsPath, overwrite: true);
+                await AtomicFile.ReplaceAsync(tempPath, settingsPath, overwrite: true, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
                 if (File.Exists(tempPath))
                 {
                     try { File.Delete(tempPath); } catch { /* best effort */ }
                 }
-                throw;
+
+                // A cancelled save should still propagate; everything else must not.
+                if (ex is OperationCanceledException)
+                    throw;
+
+                // Settings persistence is best-effort and has many fire-and-forget callers
+                // (theme/sidebar/column toggles). A transient first-run file error, e.g.
+                // antivirus locking or removing the temp before it can be moved, must not
+                // surface as an unobserved task exception that crashes startup. Log and move on;
+                // the next save will reattempt with the latest in-memory settings.
+                System.Diagnostics.Trace.TraceWarning($"Failed to save global settings: {ex.Message}");
             }
         }
         finally
