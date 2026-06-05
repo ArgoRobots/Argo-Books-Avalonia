@@ -20,7 +20,7 @@ public static class CrashReporter
     private const string CrashFolderName = "crashes";
 
     private static IErrorLogger? _breadcrumbSource;
-    private static bool _handlersInstalled;
+    private static int _handlersInstalled;
     private static int _capturing; // re-entrancy guard
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -35,12 +35,12 @@ public static class CrashReporter
     /// </summary>
     public static void InstallHandlers()
     {
-        if (_handlersInstalled)
+        // Atomic check-and-set so concurrent or re-entrant calls can't both pass
+        // the guard and double-subscribe the handlers.
+        if (Interlocked.Exchange(ref _handlersInstalled, 1) == 1)
         {
             return;
         }
-
-        _handlersInstalled = true;
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -206,6 +206,8 @@ public static class CrashReporter
                 ? Truncate($"{exception.InnerException.GetType().FullName}: {exception.InnerException.Message}", 2000)
                 : null,
             OsVersion = GetOsVersion(),
+            AppVersion = GetAppVersion(),
+            Platform = GetPlatform(),
             Breadcrumbs = GetBreadcrumbs(),
         };
     }
@@ -312,6 +314,20 @@ public static class CrashReporter
         }
     }
 
+    // Captured at crash time so a report stays attributed to the version that
+    // actually crashed, even if the app updates before the next-launch upload.
+    private static string? GetAppVersion()
+    {
+        try
+        {
+            return AppInfo.VersionNumber;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static string? Truncate(string? value, int max)
     {
         if (value == null)
@@ -333,6 +349,8 @@ public static class CrashReporter
         public string? StackTrace { get; set; }
         public string? InnerException { get; set; }
         public string? OsVersion { get; set; }
+        public string? AppVersion { get; set; }
+        public string? Platform { get; set; }
         public List<string>? Breadcrumbs { get; set; }
     }
 }

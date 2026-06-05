@@ -1147,7 +1147,7 @@ public partial class App : Application
             {
                 ErrorLogger?.LogWarning(
                     $"Failed to start startup flush: {ex.Message}",
-                    context: "App.OnFrameworkInitializationCompleted");
+                    context: "App.InitializeAsync");
             }
 
             // Report first-run install for referral funnel attribution. Fire-and-forget
