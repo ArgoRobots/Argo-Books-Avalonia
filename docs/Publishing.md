@@ -129,17 +129,18 @@ The app verifies an Ed25519 signature on every update it downloads, and refuses 
 
 2. In the website repo, update `avalonia-update.xml`:
    - The version numbers
-   - On each `<enclosure>`, add/update `sparkle:edSignature="<that file's signature>"`
-   - Set `length` to the file's size in bytes
+   - On each `<enclosure>`, add/update `sparkle:edSignature="<that file's signature>"`. The signature is the long base64 string that step 1's `--generate-signature` command printed for that file: the `.exe`'s signature goes on the `sparkle:os="windows"` enclosure, the `.AppImage`'s on the `sparkle:os="linux"` one.
+
+   (The `length` attribute can stay `0`; the download server reports the real size automatically.)
 
 3. Push the website repo so the appcast deploys, and upload the matching `.exe`/`.AppImage` via FileZilla.
 
 **Important:** the signature covers the file's exact bytes. If a file is rebuilt for any reason, re-sign it and update the appcast. Signing the wrong build is equivalent to not signing at all: users' updates will be rejected.
 
-To double-check a signature before publishing:
+To double-check a file before publishing, run `--verify` with that same file's signature string (the long base64 text printed by `--generate-signature`, not the public key):
 
 ```powershell
-netsparkle-generate-appcast --verify "C:\path\to\file" --signature "<signature>"
+netsparkle-generate-appcast --verify "C:\path\to\ArgoBooks-2.0.8-linux-x64.AppImage" --signature "t4lRf5lP...8O9zCQ=="
 ```
 
 ## Before Going Live
