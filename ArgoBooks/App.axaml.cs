@@ -800,6 +800,10 @@ public partial class App : Application
             var errorLogger = new ErrorLogger();
             ErrorLogger = errorLogger;
 
+            // Let crash reports captured by the global handlers include recent log
+            // entries as breadcrumbs.
+            CrashReporter.SetBreadcrumbSource(errorLogger);
+
             // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
@@ -1105,6 +1109,45 @@ public partial class App : Application
             if (TelemetryManager != null)
             {
                 await TelemetryManager.InitializeAsync();
+            }
+
+            // Deliver anything a previous run left behind because it didn't close
+            // cleanly: crash reports written by the global handlers, and telemetry
+            // events whose on-close upload never ran (force-quit / crash). Both are
+            // best-effort and run off the UI thread so launch isn't blocked.
+            try
+            {
+                var flushVersion = Services.AppInfo.VersionNumber;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var crashHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+                        await CrashReporter.UploadPendingAsync(crashHttpClient, flushVersion);
+                    }
+                    catch
+                    {
+                        // Best-effort; never disrupt launch.
+                    }
+
+                    try
+                    {
+                        if (TelemetryManager != null)
+                        {
+                            await TelemetryManager.UploadPendingDataAsync();
+                        }
+                    }
+                    catch
+                    {
+                        // Best-effort; the next clean close will retry.
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning(
+                    $"Failed to start startup flush: {ex.Message}",
+                    context: "App.InitializeAsync");
             }
 
             // Report first-run install for referral funnel attribution. Fire-and-forget
