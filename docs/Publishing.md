@@ -31,7 +31,14 @@ The Linux distribution is packaged as an [AppImage](https://appimage.org/). The 
 2. Go to the repo's **Actions** tab on github.com and select **Build Linux AppImage** in the left sidebar.
 3. Click **Run workflow**, choose the branch to build from, and click the green **Run workflow** button.
 4. Wait for the run to finish (about 5 minutes), then open the run's **Summary** page (not the job log) and scroll to the **Artifacts** section at the bottom. The artifact is a `.zip`; extract it to get `ArgoBooks-X.X.X-linux-x64.AppImage`.
-5. Upload the AppImage to the website (e.g. via FileZilla) as usual.
+5. To test it on a Linux VM, first make it executable:
+
+   ```bash
+   chmod +x ArgoBooks-X.X.X-linux-x64.AppImage
+   ```
+
+   Without this, double-clicking does nothing (silently). This only affects local testing; end users always have to mark downloaded AppImages executable regardless of how we build them, since browser downloads never preserve the executable bit.
+6. Upload the AppImage to the website (e.g. via FileZilla) as usual.
 
 The workflow reads the version number from `Directory.Build.props` automatically.
 
