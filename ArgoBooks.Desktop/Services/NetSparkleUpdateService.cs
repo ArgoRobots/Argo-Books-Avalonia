@@ -15,7 +15,7 @@ namespace ArgoBooks.Desktop.Services;
 public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 {
     /// <summary>
-    /// AppCast URL — separate from the WinForms app since version tracks diverge.
+    /// AppCast URL, separate from the WinForms app since version tracks diverge.
     /// </summary>
     private static readonly string AppCastUrl = $"{ApiConfig.BaseUrl}/avalonia-update.xml";
 
@@ -209,7 +209,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
                 }
                 catch
                 {
-                    // Non-fatal — might not be an AppImage
+                    // Non-fatal, might not be an AppImage
                 }
             }
 
@@ -249,7 +249,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             throw;
         }
 
-        // Exit the application — the installer will handle the rest
+        // Exit the application, the installer will handle the rest
         Environment.Exit(0);
     }
 
@@ -267,7 +267,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 
     /// <summary>
     /// Deletes leftover update installer files from previous sessions.
-    /// Safe to call at any time — silently ignores errors since cleanup is non-critical.
+    /// Safe to call at any time, silently ignores errors since cleanup is non-critical.
     /// </summary>
     private void CleanupPreviousUpdateFiles()
     {
@@ -282,7 +282,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         }
         catch (Exception ex)
         {
-            // Non-critical — files may be locked or already deleted
+            // Non-critical, files may be locked or already deleted
             _errorLogger?.LogWarning($"Could not clean up previous update files: {ex.Message}", "AutoUpdate");
         }
     }
@@ -462,7 +462,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         }
         else if (installerPath.EndsWith(".pkg", StringComparison.OrdinalIgnoreCase))
         {
-            // .pkg installer — open with the system installer
+            // .pkg installer, open with the system installer
             Process.Start("open", [installerPath]);
         }
     }
@@ -505,7 +505,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         }
         else
         {
-            // Non-AppImage Linux (deb/rpm) — just launch the package file with xdg-open
+            // Non-AppImage Linux (deb/rpm), just launch the package file with xdg-open
             Process.Start("xdg-open", [installerPath]);
         }
     }
@@ -530,7 +530,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             dir = Path.GetDirectoryName(dir);
         }
 
-        // Fallback — assume standard location
+        // Fallback, assume standard location
         return Path.Combine("/Applications", "Argo Books.app");
     }
 

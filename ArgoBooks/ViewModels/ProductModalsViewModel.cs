@@ -339,6 +339,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             Name = ModalProductName.Trim(),
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? string.Empty : ModalDescription.Trim(),
             Sku = string.IsNullOrWhiteSpace(ModalSku) ? newId : ModalSku.Trim(),
+            ItemType = ModalItemType,
             CategoryId = ModalCategory?.Id,
             SupplierId = ModalSupplier?.Id,
             UnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0,
@@ -403,12 +404,15 @@ public partial class ProductModalsViewModel : ViewModelBase
         ModalUnitPrice = product.UnitPrice.ToString("0.00");
         ModalCostPrice = product.CostPrice.ToString("0.00");
 
+        // The product's own ItemType is the source of truth (it's what the
+        // list displays and what imports write), not the category's.
+        ModalItemType = product.ItemType;
+
         if (companyData != null)
         {
             var category = companyData.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
             if (category != null)
             {
-                ModalItemType = category.ItemType;
                 ModalCategory = AvailableCategories.FirstOrDefault(c => c.Id == category.Id);
                 ModalCategoryId = category.Id;
             }
@@ -480,6 +484,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         var oldName = _editingProduct.Name;
         var oldDescription = _editingProduct.Description;
         var oldSku = _editingProduct.Sku;
+        var oldItemType = _editingProduct.ItemType;
         var oldCategoryId = _editingProduct.CategoryId;
         var oldSupplierId = _editingProduct.SupplierId;
         var oldUnitPrice = _editingProduct.UnitPrice;
@@ -493,6 +498,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? string.Empty : ModalDescription.Trim();
         // SKU defaults to the product's *new* Id when blank, so the fallback follows a rename.
         var newSku = string.IsNullOrWhiteSpace(ModalSku) ? newId : ModalSku.Trim();
+        var newItemType = ModalItemType;
         var newCategoryId = ModalCategory?.Id;
         var newSupplierId = ModalSupplier?.Id;
         var newUnitPrice = decimal.TryParse(ModalUnitPrice, out var unitPrice) ? unitPrice : 0;
@@ -507,6 +513,7 @@ public partial class ProductModalsViewModel : ViewModelBase
                          oldName != newName ||
                          oldDescription != newDescription ||
                          oldSku != newSku ||
+                         oldItemType != newItemType ||
                          oldCategoryId != newCategoryId ||
                          oldSupplierId != newSupplierId ||
                          oldUnitPrice != newUnitPrice ||
@@ -529,6 +536,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription, NewValue = newDescription };
         if (oldSku != newSku) changes["SKU"] = new FieldChange { OldValue = oldSku, NewValue = newSku };
+        if (oldItemType != newItemType) changes["Item Type"] = new FieldChange { OldValue = oldItemType, NewValue = newItemType };
         if (oldUnitPrice != newUnitPrice) changes["Unit Price"] = new FieldChange { OldValue = oldUnitPrice.ToString("F2"), NewValue = newUnitPrice.ToString("F2") };
         if (oldCostPrice != newCostPrice) changes["Cost Price"] = new FieldChange { OldValue = oldCostPrice.ToString("F2"), NewValue = newCostPrice.ToString("F2") };
         if (oldTrackInventory != newTrackInventory) changes["Track Inventory"] = new FieldChange { OldValue = oldTrackInventory.ToString(), NewValue = newTrackInventory.ToString() };
@@ -556,6 +564,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         productToEdit.Name = newName;
         productToEdit.Description = newDescription;
         productToEdit.Sku = newSku;
+        productToEdit.ItemType = newItemType;
         productToEdit.CategoryId = newCategoryId;
         productToEdit.SupplierId = newSupplierId;
         productToEdit.UnitPrice = newUnitPrice;
@@ -575,6 +584,7 @@ public partial class ProductModalsViewModel : ViewModelBase
                 productToEdit.Name = oldName;
                 productToEdit.Description = oldDescription;
                 productToEdit.Sku = oldSku;
+                productToEdit.ItemType = oldItemType;
                 productToEdit.CategoryId = oldCategoryId;
                 productToEdit.SupplierId = oldSupplierId;
                 productToEdit.UnitPrice = oldUnitPrice;
@@ -591,6 +601,7 @@ public partial class ProductModalsViewModel : ViewModelBase
                 productToEdit.Name = newName;
                 productToEdit.Description = newDescription;
                 productToEdit.Sku = newSku;
+                productToEdit.ItemType = newItemType;
                 productToEdit.CategoryId = newCategoryId;
                 productToEdit.SupplierId = newSupplierId;
                 productToEdit.UnitPrice = newUnitPrice;
@@ -781,7 +792,7 @@ public partial class ProductModalsViewModel : ViewModelBase
 
         foreach (var cat in categories)
         {
-            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
+            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name });
         }
 
         CategoryItems.Clear();

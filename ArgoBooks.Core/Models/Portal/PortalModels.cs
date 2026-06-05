@@ -133,7 +133,7 @@ public class PortalPaymentRecord
     public string? ProviderTransactionId { get; set; }
 
     /// <summary>
-    /// The provider's payment intent / order / capture ID — the value the desktop
+    /// The provider's payment intent / order / capture ID: the value the desktop
     /// passes back to the server's /refunds/request endpoint as
     /// <c>provider_payment_id</c> when issuing a refund. Populated by sync.
     /// </summary>

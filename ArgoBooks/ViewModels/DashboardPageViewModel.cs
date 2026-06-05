@@ -8,6 +8,7 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels.Dashboard;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
 
@@ -228,7 +229,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available chart type options for the selector.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
+    public string[] ChartTypeOptions { get; } = ["Column", "Line", "Step Line", "Area", "Scatter"];
 
     /// <summary>
     /// Gets or sets the selected chart type (delegates to shared service).
@@ -321,7 +322,48 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to currency changes to refresh all monetary displays
         CurrencyService.CurrencyChanged += OnCurrencyChanged;
+
+        // Re-evaluate the source-survey banner whenever the user answers,
+        // dismisses, or the tutorial state changes.
+        TutorialService.Instance.SourceSurveyVisibilityChanged += OnSourceSurveyVisibilityChanged;
+        TutorialService.Instance.TutorialStateChanged += (_, _) => RefreshSourceSurveyBanner();
+        RefreshSourceSurveyBanner();
     }
+
+    #region Source Survey Banner
+
+    [ObservableProperty]
+    private bool _showSourceSurveyBanner;
+
+    public void RefreshSourceSurveyBanner()
+    {
+        var tutorial = TutorialService.Instance;
+        ShowSourceSurveyBanner =
+            tutorial.HasSkippedTutorial &&
+            tutorial.ShouldShowSourceSurvey();
+    }
+
+    private void OnSourceSurveyVisibilityChanged(object? sender, bool shown)
+    {
+        // After the overlay opens/closes, recompute banner visibility.
+        // Once the user answers or dismisses, ShouldShowSourceSurvey() returns false.
+        RefreshSourceSurveyBanner();
+    }
+
+    [RelayCommand]
+    private void OpenSourceSurvey()
+    {
+        TutorialService.Instance.RequestShowSourceSurvey();
+    }
+
+    [RelayCommand]
+    private void DismissSourceSurveyBanner()
+    {
+        TutorialService.Instance.MarkSourceSurveyDismissed();
+        ShowSourceSurveyBanner = false;
+    }
+
+    #endregion
 
     private void OnThemeChanged(object? sender, ThemeMode e)
     {
@@ -377,7 +419,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _companyManager = companyManager;
 
         // Initialize the widget layout system
-        LayoutViewModel.Initialize(companyManager!);
+        LayoutViewModel.Initialize(companyManager);
 
         // Load data through the full flow (includes CorrectRentalStatuses)
         LoadDashboardData();
@@ -652,7 +694,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 IsSuccess = false,
                 ErrorMessage = null // Cancelled by user, no error message needed
             });
-            return;
         }
         catch (InvalidOperationException ex)
         {
@@ -715,7 +756,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             foreach (var widget in row.Widgets)
             {
-                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                if (widget.WidgetViewModel is UnifiedChartWidgetViewModel chartVm
                     && chartVm.ChartDataType == chartType)
                 {
                     ChartLoaderService.ResetZoom(chartVm.XAxes, chartVm.YAxes);
@@ -742,7 +783,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             foreach (var widget in row.Widgets)
             {
-                if (widget.WidgetViewModel is Dashboard.UnifiedChartWidgetViewModel chartVm
+                if (widget.WidgetViewModel is UnifiedChartWidgetViewModel chartVm
                     && chartVm.ChartDataType == type)
                 {
                     return chartVm.ChartLoaderService;

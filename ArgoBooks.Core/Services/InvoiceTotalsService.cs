@@ -51,7 +51,7 @@ public static class InvoiceTotalsService
             .Where(p => p.IsRefund && MatchesInvoiceCurrency(p))
             .Sum(p => Math.Abs(p.Amount));
 
-        // Balance: remaining owed. Refunds don't raise the balance — once
+        // Balance: remaining owed. Refunds don't raise the balance, once
         // the customer paid, returning their money doesn't make them owe
         // again.
         invoice.Balance = Math.Max(0, invoice.Total - invoice.AmountPaid);
@@ -68,7 +68,7 @@ public static class InvoiceTotalsService
 
     /// <summary>
     /// Recompute the invoice's stored Status from AmountPaid / AmountRefunded.
-    /// Touches Paid / Partial / PartiallyRefunded / Refunded only — lifecycle
+    /// Touches Paid / Partial / PartiallyRefunded / Refunded only. Lifecycle
     /// states (Draft / Pending / Sent / Viewed / Cancelled / Overdue) are
     /// owned by the surfaces that drive them and are not overwritten here.
     ///
@@ -95,7 +95,7 @@ public static class InvoiceTotalsService
             || invoice.Status == InvoiceStatus.Cancelled
             || invoice.Status == InvoiceStatus.Overdue)
         {
-            // Lifecycle states are external — only re-evaluate once a
+            // Lifecycle states are external, only re-evaluate once a
             // payment or refund has actually happened.
             if (invoice.AmountPaid <= 0 && invoice.AmountRefunded <= 0)
                 return;

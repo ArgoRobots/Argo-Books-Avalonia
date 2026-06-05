@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete, DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core;
@@ -244,8 +244,8 @@ public class ChartLoaderService
     {
         // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
         // Use ObservablePoint which directly stores X,Y coordinates.
-        // Most chart series carry currency aggregates that originate in USD
-        // — convert to display currency at this boundary so bars / tooltips
+        // Most chart series carry currency aggregates that originate in USD.
+        // Convert to display currency at this boundary so bars / tooltips
         // / axis labels all agree with stat cards. Callers passing counts
         // (returns, losses, transaction counts) pass convertFromUSD=false.
         if (convertFromUSD)
@@ -304,7 +304,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Creates a date-time series colored by chart semantics — column bars split
+    /// Creates a date-time series colored by chart semantics: column bars split
     /// positive vs negative via <see cref="ChartColors.ForValue"/>; line/area/scatter
     /// use a single representative color from the same mapping.
     /// </summary>
@@ -326,7 +326,7 @@ public class ChartLoaderService
         SKColor positiveColor, SKColor negativeColor,
         string negativeSuffix, SKColor lineColor)
     {
-        // Values are always USD-aggregated currency — convert to display
+        // Values are always USD-aggregated currency, convert to display
         // currency at this boundary so bars / tooltips / axis agree with
         // the stat cards and chart titles.
         values = ConvertUSDValuesToDisplay(values);
@@ -1923,7 +1923,7 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        // Returns count, not amount — skip USD→display conversion.
+        // Returns count, not amount, skip USD→display conversion.
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ChartColors.Expense, convertFromUSD: false));
 
         // Store export data
@@ -2077,7 +2077,7 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        // Losses count, not amount — skip USD→display conversion.
+        // Losses count, not amount, skip USD→display conversion.
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ChartColors.Expense, convertFromUSD: false));
 
         // Store export data

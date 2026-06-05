@@ -14,10 +14,17 @@ public class Payment
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Invoice ID this payment is for.
+    /// Invoice ID this payment is for. A payment is linked to either an invoice or a revenue.
     /// </summary>
     [JsonPropertyName("invoiceId")]
     public string InvoiceId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Revenue ID this payment is for, when it is recorded directly against a revenue rather than
+    /// an invoice (e.g. a direct cash sale). Empty when the payment is linked to an invoice.
+    /// </summary>
+    [JsonPropertyName("revenueId")]
+    public string RevenueId { get; set; } = string.Empty;
 
     /// <summary>
     /// Customer ID.
@@ -151,6 +158,29 @@ public class Payment
     /// </summary>
     [JsonPropertyName("refundReason")]
     public string? RefundReason { get; set; }
+
+    #endregion
+
+    #region Bank Matching
+
+    /// <summary>
+    /// Whether this payment has been matched to a line on an imported bank statement.
+    /// Defaults to false for backward compatibility with existing files.
+    /// </summary>
+    [JsonPropertyName("bankMatched")]
+    public bool BankMatched { get; set; }
+
+    /// <summary>
+    /// When this payment was matched to a bank statement line, if matched.
+    /// </summary>
+    [JsonPropertyName("bankMatchedDate")]
+    public DateTime? BankMatchedDate { get; set; }
+
+    /// <summary>
+    /// Id of the matched bank statement line, if matched.
+    /// </summary>
+    [JsonPropertyName("bankMatchedLineId")]
+    public string? BankMatchedLineId { get; set; }
 
     #endregion
 }

@@ -226,7 +226,7 @@ public partial class InvoiceHtmlRenderer
 
         // Processing-fee row logic:
         //  - If the customer has already paid online with a fee (sum of
-        //    Payment.ProcessingFee > 0), show the actual fee — even when
+        //    Payment.ProcessingFee > 0), show the actual fee, even when
         //    Balance == 0. This is the user-visible record of what they
         //    were actually charged.
         //  - Otherwise, if the invoice is unpaid and the portal is
@@ -234,7 +234,7 @@ public partial class InvoiceHtmlRenderer
         //    chose to pay through the portal.
         // The "Amount to Pay" row (= Balance + estimated fee) only makes
         // sense when there is still a balance the customer can pay
-        // online — for paid invoices we want the plain "Total" row.
+        // online. For paid invoices we want the plain "Total" row.
         var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency)
             ? "USD" : invoice.OriginalCurrency;
         var actualProcessingFee = payments?
@@ -330,7 +330,7 @@ public partial class InvoiceHtmlRenderer
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
             ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
 
-            // Processing fee — see invoiceCurrency / actualProcessingFee
+            // Processing fee, see invoiceCurrency / actualProcessingFee
             // block above for the row-visibility rules. ShowProcessingFee
             // controls the fee row itself; ShowAmountToPay controls the
             // separate "Amount to Pay" vs "Total" label switch so a paid
@@ -571,7 +571,7 @@ public partial class InvoiceHtmlRenderer
     }
 
     /// <summary>
-    /// True when at least one online payment provider is connected — i.e.
+    /// True when at least one online payment provider is connected, i.e.
     /// the customer can actually pay through the portal, which is when a
     /// processing fee would be charged on top of the invoice balance.
     /// </summary>

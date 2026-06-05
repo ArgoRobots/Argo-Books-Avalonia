@@ -36,6 +36,7 @@ public partial class AppShellViewModel : ViewModelBase
     private StockLevelsModalsViewModel? _stockLevelsModalsViewModel;
     private LocationsModalsViewModel? _locationsModalsViewModel;
     private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
+    private BankMatchingModalsViewModel? _bankMatchingModalsViewModel;
     private PurchaseOrdersModalsViewModel? _purchaseOrdersModalsViewModel;
     private ReceiptsModalsViewModel? _receiptsModalsViewModel;
     private LostDamagedModalsViewModel? _lostDamagedModalsViewModel;
@@ -465,6 +466,22 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _stockAdjustmentsModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the bank matching modals view model.
+    /// </summary>
+    public BankMatchingModalsViewModel BankMatchingModalsViewModel
+    {
+        get
+        {
+            if (_bankMatchingModalsViewModel == null)
+            {
+                _bankMatchingModalsViewModel = new BankMatchingModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _bankMatchingModalsViewModel;
         }
     }
 

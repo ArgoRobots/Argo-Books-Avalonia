@@ -160,7 +160,6 @@ public static class ImportSchemaDefinition
                 new("Type", "enum:Revenue,Expenses,Rental", "Category type", JsonName: "type"),
                 new("Parent ID", "string", "Parent category ID for subcategories", JsonName: "parentId"),
                 new("Description", "string", "Category description", JsonName: "description"),
-                new("Item Type", "enum:Product,Service", "Default item type", JsonName: "itemType"),
                 new("Icon", "string", "Emoji icon for the category", JsonName: "icon"),
             ],
 
@@ -374,6 +373,17 @@ public static class ImportSchemaDefinition
                 new("Value Lost", "decimal", "Monetary value of the loss", JsonName: "valueLost"),
                 new("Notes", "string", "Additional notes", JsonName: "notes"),
                 new("Insurance Claim", "enum:Yes,No", "Whether an insurance claim was filed", JsonName: "insuranceClaim"),
+            ],
+
+            [SpreadsheetSheetType.BankStatement] =
+            [
+                new("Date", "datetime", "Date the bank posted the transaction", Required: true, JsonName: "date"),
+                new("Description", "string", "Transaction description / memo from the bank", Required: true, JsonName: "description"),
+                new("Amount", "decimal", "Signed amount: negative for money out, positive for money in. Map a single signed amount column here when present", JsonName: "amount"),
+                new("Debit", "decimal", "Money out of the account (use when the statement has separate debit/credit columns)", JsonName: "debit"),
+                new("Credit", "decimal", "Money into the account (use when the statement has separate debit/credit columns)", JsonName: "credit"),
+                new("Balance", "decimal", "Running account balance after the transaction", JsonName: "balance"),
+                new("Reference", "string", "Bank reference, transaction id, or check number", JsonName: "rawReference"),
             ],
         };
     }

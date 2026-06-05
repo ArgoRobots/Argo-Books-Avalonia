@@ -664,7 +664,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         }
         else if (original.IsPendingConversion)
         {
-            // Was pending, now converted — remove from queue
+            // Was pending, now converted, remove from queue
             companyData.PendingConversions.RemoveAll(p => p.TransactionId == expense.Id);
         }
 
@@ -873,7 +873,7 @@ internal class TransactionState
     public bool IsPendingConversion { get; set; }
     // USD-normalized + currency fields must also be captured. Dashboard
     // aggregations read EffectiveTotalUSD which falls back to TotalUSD for
-    // non-USD companies — if undo restores only native fields, those
+    // non-USD companies. If undo restores only native fields, those
     // companies see stale (post-edit) values even after the revert.
     public string OriginalCurrency { get; set; } = "USD";
     public decimal TotalUSD { get; set; }

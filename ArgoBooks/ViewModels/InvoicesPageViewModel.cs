@@ -406,7 +406,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         // Server returns monthly_limit = -1 as a sentinel for Premium /
         // unlimited. If we update SendCount but not the limit, the UI ends
         // up with SendCount > stale-default-limit and falsely flags
-        // "limit reached" — exactly what bit us before. Treat the sentinel
+        // "limit reached", exactly what bit us before. Treat the sentinel
         // as a Premium-equivalent: mark HasPremium so RemainingInvoices is
         // ignored downstream.
         if (result.MonthlyLimit < 0 || string.Equals(result.Tier, "premium", StringComparison.OrdinalIgnoreCase))
@@ -685,8 +685,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
             // Sum of processor fees the customer actually paid on top of
             // the invoice (pass_processing_fee portal payments). Lets the
-            // Amount column reflect the gross customer charge — what they
-            // were actually billed — rather than only the line-item total.
+            // Amount column reflect the gross customer charge (what they
+            // were actually billed) rather than only the line-item total.
             // Revenue page intentionally does NOT include this (fees are
             // not revenue, just pass-through).
             var invoiceCurrency = string.IsNullOrEmpty(invoice.OriginalCurrency)
@@ -965,7 +965,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var customer = companyData.GetCustomer(invoice.CustomerId);
         var customerName = customer?.Name ?? item.CustomerName;
 
-        // Hand off to the AppShell-level RefundModals — the same pattern as
+        // Hand off to the AppShell-level RefundModals, the same pattern as
         // every other modal in the app. The onClosed callback refreshes the
         // invoice list so any newly-arrived refund Payment appears.
         App.RefundModalsViewModel?.OpenRefundModal(invoice, invoicePayments, customerName, onClosed: LoadInvoices);

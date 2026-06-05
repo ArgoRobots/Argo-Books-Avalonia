@@ -1,0 +1,47 @@
+name: Build Linux AppImage
+
+# Manual trigger only: Actions tab -> "Build Linux AppImage" -> Run workflow.
+# Builds the self-contained linux-x64 publish output and packages it as an
+# AppImage using packaging/linux/build-appimage.sh, then uploads the result
+# as a downloadable artifact.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install appimagetool
+        run: |
+          wget -q -O /tmp/appimagetool-x86_64.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /tmp/appimagetool-x86_64.AppImage
+          # GitHub runners don't ship FUSE, so expose appimagetool through a
+          # wrapper that runs it in self-extracting mode instead.
+          printf '#!/bin/bash\nexec /tmp/appimagetool-x86_64.AppImage --appimage-extract-and-run "$@"\n' | sudo tee /usr/local/bin/appimagetool > /dev/null
+          sudo chmod +x /usr/local/bin/appimagetool
+
+      - name: Build and package AppImage
+        run: |
+          # Normalize line endings in case any packaging file was committed with CRLF
+          sed -i 's/\r$//' packaging/linux/*.sh packaging/linux/*.desktop packaging/linux/*.xml
+          chmod +x packaging/linux/build-appimage.sh
+          ./packaging/linux/build-appimage.sh
+
+      - name: Read version
+        id: version
+        run: echo "version=$(grep -oP '<Version>\K[^<]+' Directory.Build.props | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArgoBooks-${{ steps.version.outputs.version }}-linux-x64
+          path: ArgoBooks-*-linux-x64.AppImage
+          if-no-files-found: error

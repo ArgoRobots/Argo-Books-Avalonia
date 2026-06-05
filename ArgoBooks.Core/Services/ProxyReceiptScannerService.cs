@@ -67,7 +67,7 @@ public class ProxyReceiptScannerService : IReceiptScannerService, IDisposable
             var contentType = ReceiptImageHelper.GetContentType(fileName);
             if (contentType == null)
             {
-                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, or PDF files.");
+                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, WebP, or PDF files.");
             }
 
             // Send image to server proxy

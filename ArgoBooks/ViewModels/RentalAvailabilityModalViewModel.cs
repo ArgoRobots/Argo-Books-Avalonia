@@ -11,7 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for the rental availability modal — shows a month calendar of free/booked
+/// ViewModel for the rental availability modal, shows a month calendar of free/booked
 /// counts for a single rental item, plus a quantity-aware "next available" answer.
 /// </summary>
 public partial class RentalAvailabilityModalViewModel : ViewModelBase
@@ -136,7 +136,7 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
     [RelayCommand]
     private void IncrementQuantity()
     {
-        // Allow exceeding TotalQty — the answer card and calendar will surface "impossible".
+        // Allow exceeding TotalQty, the answer card and calendar will surface "impossible".
         QuantityNeeded++;
     }
 
@@ -170,7 +170,7 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(value))
         {
             // Treat empty/whitespace as 1 so the calendar doesn't lag behind a cleared
-            // textbox. We don't sync the text back here — that would interfere with the
+            // textbox. We don't sync the text back here, that would interfere with the
             // user mid-edit; the textbox visually stays blank until they type a digit.
             parsed = 1;
         }
@@ -178,7 +178,7 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
         {
             if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed)) return;
             if (parsed < 1) parsed = 1;
-            // Don't clamp to TotalQty — we want the calendar and answer card to clearly
+            // Don't clamp to TotalQty, we want the calendar and answer card to clearly
             // show that the user's request is impossible (all cells unmet, "Need exceeds fleet").
         }
 
@@ -251,7 +251,7 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
         Days.Clear();
         var firstOfMonth = CurrentMonth;
 
-        // Calendar grid starts on Sunday — pad with previous month's tail.
+        // Calendar grid starts on Sunday, pad with previous month's tail.
         var leadingPad = (int)firstOfMonth.DayOfWeek; // Sunday=0
         var firstCell = firstOfMonth.AddDays(-leadingPad);
 
@@ -384,7 +384,7 @@ public partial class RentalAvailabilityModalViewModel : ViewModelBase
             var endLabel = span.End.ToString("MMM d", CultureInfo.CurrentCulture);
             ActiveRentals.Add(new ActiveRentalDisplay
             {
-                Description = Loc.Tr("{0}× until {1} — {2}", span.Quantity, endLabel, customerName),
+                Description = Loc.Tr("{0}× until {1}, {2}", span.Quantity, endLabel, customerName),
                 IsOverdue = span.IsOverdue
             });
         }

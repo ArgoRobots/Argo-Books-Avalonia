@@ -10,6 +10,7 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -237,7 +238,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     public void InvalidateScanServices()
     {
         _usageService?.InvalidateCache();
-        // Dispose before dropping the reference — IReceiptUsageService now owns
+        // Dispose before dropping the reference, IReceiptUsageService now owns
         // an HttpClient when constructed via the parameterless overload.
         _usageService?.Dispose();
         _usageService = null;
@@ -251,6 +252,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private Supplier? _createdSupplierForUndo;
     private Category? _createdCategoryForUndo;
     private readonly List<Product> _createdProductsForUndo = new();
+
+    // Set once a transaction is created so the auto-created entities are handed off to the
+    // undo action instead of being rolled back when the modal closes.
+    private bool _createdEntitiesCommitted;
 
     [ObservableProperty]
     private bool _isScanReviewModalOpen;
@@ -322,7 +327,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// for raster images). Replaces the old single ReceiptImagePath so multi-page PDFs render
     /// all pages stacked.
     /// </summary>
-    public System.Collections.ObjectModel.ObservableCollection<string> ScanPreviewPages { get; } = new();
+    public ObservableCollection<string> ScanPreviewPages { get; } = new();
 
     /// <summary>
     /// Secondary line shown under the scanning spinner. Warns when the receipt is a multi-page
@@ -374,7 +379,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         if (isPdf)
         {
-            var pages = await Services.PdfThumbnailService.Instance.RenderPdfAllPagesAsync(data);
+            var pages = await PdfThumbnailService.Instance.RenderPdfAllPagesAsync(data);
             if (pages == null) return paths;
             var nameNoExt = Path.GetFileNameWithoutExtension(fileName);
             for (var i = 0; i < pages.Length; i++)
@@ -592,6 +597,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public ObservableCollection<BulkScanItem> BulkItems { get; } = [];
 
+    /// <summary>
+    /// Feedback shown in the drop zone after a drop, e.g. when some files were
+    /// skipped for being an unsupported format or already queued. Empty when the
+    /// drop was clean (nothing to report).
+    /// </summary>
+    [ObservableProperty]
+    private string _bulkDropMessage = string.Empty;
+
     [ObservableProperty]
     private BulkScanItem? _currentBulkItem;
 
@@ -707,6 +720,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     public async void OpenBulkDropZone()
     {
         BulkItems.Clear();
+        BulkDropMessage = string.Empty;
         BulkScansCompleted = 0;
         BulkScansSucceeded = 0;
         BulkScansFailed = 0;
@@ -725,20 +739,29 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 UpdateUsageDisplay(usageCheck);
                 OnPropertyChanged(nameof(BulkUsageSummary));
             }
-            catch { /* Non-critical — summary will show 0/0 until scan starts */ }
+            catch { /* Non-critical, summary will show 0/0 until scan starts */ }
         }
     }
 
     public void AddFilesToQueue(IEnumerable<string> filePaths)
     {
+        var added = 0;
+        var skippedUnsupported = 0;
+        var skippedDuplicate = 0;
+
         foreach (var path in filePaths)
         {
-            var extension = Path.GetExtension(path).ToLowerInvariant();
-            if (extension is not (".jpg" or ".jpeg" or ".png" or ".pdf"))
+            if (!FilePickerTypes.IsSupportedReceiptFile(path))
+            {
+                skippedUnsupported++;
                 continue;
+            }
 
             if (BulkItems.Any(i => i.FilePath.Equals(path, StringComparison.OrdinalIgnoreCase)))
+            {
+                skippedDuplicate++;
                 continue;
+            }
 
             var item = new BulkScanItem
             {
@@ -746,13 +769,39 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 FileName = Path.GetFileName(path)
             };
             BulkItems.Add(item);
+            added++;
 
             // Generate preview thumbnail in background for the drop zone cards
             _ = GenerateQueuePreviewAsync(item);
         }
 
+        BulkDropMessage = BuildDropMessage(added, skippedUnsupported, skippedDuplicate);
+
         OnPropertyChanged(nameof(BulkApprovedCount));
         OnPropertyChanged(nameof(BulkUsageSummary));
+    }
+
+    /// <summary>
+    /// Builds the drop-zone feedback line. Returns empty when every file was added
+    /// (a clean drop needs no message), otherwise explains what was skipped.
+    /// </summary>
+    private static string BuildDropMessage(int added, int skippedUnsupported, int skippedDuplicate)
+    {
+        if (skippedUnsupported == 0 && skippedDuplicate == 0)
+            return string.Empty;
+
+        var reasons = new List<string>();
+        if (skippedUnsupported > 0)
+            reasons.Add($"{skippedUnsupported} skipped (unsupported format)");
+        if (skippedDuplicate > 0)
+            reasons.Add($"{skippedDuplicate} skipped (already added)");
+        var skipped = string.Join(", ", reasons);
+
+        // When nothing was added, spell out which formats are accepted so the user
+        // knows what to try instead.
+        return added > 0
+            ? $"{added} added. {skipped}."
+            : $"{skipped}. Supported formats: JPEG, PNG, WebP, PDF.";
     }
 
     private static async Task GenerateQueuePreviewAsync(BulkScanItem item)
@@ -770,11 +819,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             byte[]? thumbBytes = null;
             await Task.Run(async () =>
             {
-                // Use lightweight thumbnail for queue cards — skip heavy OCR preprocessing
+                // Use lightweight thumbnail for queue cards, skip heavy OCR preprocessing
                 if (isPdf)
                 {
                     // Capture the page count so the scanning label can warn about multi-page PDFs.
-                    var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
+                    var rendered = await PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
                     thumbBytes = rendered?.Image;
                     if (rendered != null)
                     {
@@ -797,7 +846,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch
         {
-            // Non-critical — card will show placeholder icon
+            // Non-critical, card will show placeholder icon
         }
     }
 
@@ -836,6 +885,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private async Task StartBulkScan()
     {
         if (BulkItems.Count == 0) return;
+
+        // A single receipt doesn't need the bulk review carousel. Route it through the
+        // standard single-scan flow so the user just reviews the result and clicks Add.
+        if (BulkItems.Count == 1)
+        {
+            var single = BulkItems[0];
+            IsBulkDropZoneOpen = false;
+            BulkItems.Clear();
+            await OpenScanModalAsync(single.FilePath);
+            return;
+        }
 
         IsBulkDropZoneOpen = false;
         IsBulkScanning = true;
@@ -887,7 +947,25 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     private async Task ProcessAndScanItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
     {
-        await semaphore.WaitAsync(token);
+        try
+        {
+            await semaphore.WaitAsync(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelled while waiting for a concurrency slot. The semaphore was never
+            // acquired, so it must not be released. Mark the item cancelled and finish
+            // cleanly so the task doesn't fault and crash Task.WhenAll in StartBulkScan.
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                item.Status = BulkScanStatus.Failed;
+                item.ErrorMessage = "Cancelled";
+                BulkScansCompleted++;
+                BulkScansFailed++;
+            });
+            return;
+        }
+
         try
         {
             if (token.IsCancellationRequested) return;
@@ -906,7 +984,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
             item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
 
-            // 3. Generate preview (fire-and-forget, non-blocking) — skip if already generated in queue
+            // 3. Generate preview (fire-and-forget, non-blocking), skip if already generated in queue
             if (string.IsNullOrEmpty(item.PreviewImagePath))
             {
                 _ = Task.Run(async () =>
@@ -918,7 +996,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     byte[]? previewBytes;
                     if (isPdf)
                     {
-                        var rendered = await Services.PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
+                        var rendered = await PdfThumbnailService.Instance.RenderPdfFirstPageAsync(fileData);
                         previewBytes = rendered?.Image;
                         if (rendered != null)
                         {
@@ -940,7 +1018,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }, token);
             }
 
-            // Free original file bytes — local `fileData` var keeps the reference for the preview task
+            // Free original file bytes, local `fileData` var keeps the reference for the preview task
             item.FileData = null;
 
             // 4. Check usage
@@ -1043,7 +1121,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CancelBulkScan()
     {
-        // Signal cancellation — Task.WhenAll in StartBulkScan will set IsBulkScanComplete
+        // Signal cancellation, Task.WhenAll in StartBulkScan will set IsBulkScanComplete
         // when all tasks finish. Don't set it here to avoid counter corruption from
         // tasks that complete after this point.
         _bulkCancellationSource?.Cancel();
@@ -1717,7 +1795,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             UpdateHasUnmatchedProducts();
             ValidateTotals();
 
-            // Fire AI suggestions in the background — don't block showing scan results
+            // Fire AI suggestions in the background, don't block showing scan results
             // Suppressed during bulk review carousel navigation to prevent cross-item suggestion corruption
             if (!_suppressAiSuggestions)
                 _ = GetAiSuggestionsAsync(result);
@@ -1733,7 +1811,42 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         IsScanReviewModalOpen = false;
         IsFullscreen = false;
+
+        // Suggested products/supplier/category are created eagerly while the user reviews.
+        // If the modal is closed without adding the receipt, roll them back so they only
+        // persist when a transaction is actually created. When a transaction was created,
+        // ownership transfers to the undo action, so this is skipped.
+        if (!_createdEntitiesCommitted)
+            RollbackUncommittedCreatedEntities();
+
         ResetScanModal();
+    }
+
+    /// <summary>
+    /// Removes supplier/category/products that were auto-created from receipt suggestions
+    /// but never committed to a transaction.
+    /// </summary>
+    private void RollbackUncommittedCreatedEntities()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var removedAny = false;
+
+        foreach (var product in _createdProductsForUndo)
+        {
+            if (companyData.Products?.Remove(product) == true)
+                removedAny = true;
+        }
+
+        if (_createdCategoryForUndo != null && companyData.Categories.Remove(_createdCategoryForUndo))
+            removedAny = true;
+
+        if (_createdSupplierForUndo != null && companyData.Suppliers.Remove(_createdSupplierForUndo))
+            removedAny = true;
+
+        if (removedAny)
+            companyData.MarkAsModified();
     }
 
     [RelayCommand]
@@ -1915,6 +2028,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             // Create expense transaction
             CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
         }
+
+        // The receipt was added: ownership of the auto-created supplier/category/products
+        // transfers to the undo action, so don't roll them back when the modal closes.
+        _createdEntitiesCommitted = true;
 
         App.CompanyManager?.MarkAsChanged();
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
@@ -2148,7 +2265,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         if (category == null)
         {
-            // No expense category exists — create one from AI suggestion if available
+            // No expense category exists, create one from AI suggestion if available
             var aiCategory = _aiSuggestion?.NewCategory;
             var categoryName = aiCategory?.Name ?? "General Expenses";
 
@@ -2158,7 +2275,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
                 Name = categoryName,
                 Type = CategoryType.Expense,
-                ItemType = aiCategory?.ItemType ?? "Product",
                 Description = aiCategory?.Description
             };
             companyData.Categories.Add(category);
@@ -2580,7 +2696,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         else
         {
-            // No match found — suggest creating a new supplier
+            // No match found, suggest creating a new supplier
             ShowCreateSupplierSuggestion = true;
             SuggestedSupplierName = ToTitleCase(supplierName);
         }
@@ -2731,6 +2847,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _createdSupplierForUndo = null;
         _createdCategoryForUndo = null;
         _createdProductsForUndo.Clear();
+        _createdEntitiesCommitted = false;
 
         // Reset usage state (keep cached values for display)
         IsNearLimit = false;
@@ -2842,6 +2959,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
+            ".webp" => "image/webp",
             ".pdf" => "application/pdf",
             ".bmp" => "image/bmp",
             ".gif" => "image/gif",

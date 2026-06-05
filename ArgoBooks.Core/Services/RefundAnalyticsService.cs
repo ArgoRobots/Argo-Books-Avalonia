@@ -72,12 +72,12 @@ public static class RefundAnalyticsService
             x.Count)).ToList();
     }
 
-    /// <summary>Top product/line items by refund total (USD) — derived from refunded invoices' line items.</summary>
+    /// <summary>Top product/line items by refund total (USD), derived from refunded invoices' line items.</summary>
     public static IReadOnlyList<ProductRefundTotal> TopRefundedProducts(CompanyData company, DateTime since, int top)
     {
         // Sum refund amounts per invoice, then attribute proportionally across the
         // invoice's line items by their share of the original total. This is an
-        // approximation — the true refunded line items are stored in the server's
+        // approximation: the true refunded line items are stored in the server's
         // line_items_json snapshot but not surfaced to the desktop.
         var byProduct = new Dictionary<string, decimal>();
         var refundsByInvoice = company.Payments

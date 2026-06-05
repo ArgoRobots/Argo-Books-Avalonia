@@ -18,7 +18,7 @@ public enum PaymentSource
 /// <summary>
 /// Permissive converter so legacy .argo files (which stored "Manual" or
 /// "Online" as strings) continue to load. Unknown values fall back to
-/// Manual — the safe default that won't accidentally enable portal-only
+/// Manual: the safe default that won't accidentally enable portal-only
 /// flows on a row that isn't actually a portal payment.
 /// </summary>
 public sealed class PaymentSourceJsonConverter : JsonConverter<PaymentSource>

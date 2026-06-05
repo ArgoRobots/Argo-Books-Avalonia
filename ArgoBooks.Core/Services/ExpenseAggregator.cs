@@ -4,11 +4,11 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Helpers for aggregating Expense rows in USD. Expenses have no
-/// "paid vs unpaid" distinction — an Expense row means the money already
+/// "paid vs unpaid" distinction: an Expense row means the money already
 /// went out, so there is no cash-basis filter to apply.
 ///
 /// All expense aggregations use EffectiveTotalUSD (gross of any tax paid
-/// to suppliers) — that's the actual cash that left the business.
+/// to suppliers), that's the actual cash that left the business.
 ///
 /// See docs/Calculations.md §9 for the standard.
 /// </summary>

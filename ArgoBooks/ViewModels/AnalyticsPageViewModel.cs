@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete. DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
@@ -581,7 +581,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available chart type options for the selector.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
+    public string[] ChartTypeOptions { get; } = ["Column", "Line", "Step Line", "Area", "Scatter"];
 
     /// <summary>
     /// Gets or sets the selected chart type (delegates to shared service).
@@ -1692,7 +1692,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadTaxRateDistributionChart(data);
         LoadExpenseVsRevenueTaxChart(data);
 
-        // Pie charts and geo map are style-independent — only reload on data/filter changes
+        // Pie charts and geo map are style-independent, only reload on data/filter changes
         if (!styleChangeOnly)
         {
             // Dashboard pie charts
@@ -2483,11 +2483,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty] private string _refundsTotal = "0.00";
     [ObservableProperty] private string _refundsRate = "0.0%";
     [ObservableProperty] private string _refundsAvgLatency = "—";
-    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopCustomers = new();
-    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopProducts = new();
-    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsTopReasons = new();
-    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsRow> _refundsChannelBreakdown = new();
-    [ObservableProperty] private System.Collections.ObjectModel.ObservableCollection<RefundsMonthBucket> _refundsMonthlyTotals = new();
+    [ObservableProperty] private ObservableCollection<RefundsRow> _refundsTopCustomers = new();
+    [ObservableProperty] private ObservableCollection<RefundsRow> _refundsTopProducts = new();
+    [ObservableProperty] private ObservableCollection<RefundsRow> _refundsTopReasons = new();
+    [ObservableProperty] private ObservableCollection<RefundsRow> _refundsChannelBreakdown = new();
+    [ObservableProperty] private ObservableCollection<RefundsMonthBucket> _refundsMonthlyTotals = new();
     [ObservableProperty] private bool _hasAnyRefunds;
 
     /// <summary>
@@ -2505,9 +2505,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // RefundAnalyticsService returns USD-normalized amounts so multi-
         // currency portals roll up consistently; display goes through
         // CurrencyService.FormatFromUSD per Calculations.md §3.
-        var totalUSD = ArgoBooks.Core.Services.RefundAnalyticsService.TotalRefundedUSD(company, since);
-        var rateDecimal = ArgoBooks.Core.Services.RefundAnalyticsService.RefundRate(company, since);
-        var avgLatency = ArgoBooks.Core.Services.RefundAnalyticsService.AverageRefundLatencyDays(company, since);
+        var totalUSD = RefundAnalyticsService.TotalRefundedUSD(company, since);
+        var rateDecimal = RefundAnalyticsService.RefundRate(company, since);
+        var avgLatency = RefundAnalyticsService.AverageRefundLatencyDays(company, since);
 
         RefundsTotal = CurrencyService.FormatFromUSD(totalUSD, now);
         RefundsRate = (rateDecimal * 100).ToString("F1") + "%";
@@ -2515,24 +2515,24 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         HasAnyRefunds = totalUSD > 0;
 
         RefundsTopCustomers.Clear();
-        foreach (var c in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedCustomers(company, since, 10))
+        foreach (var c in RefundAnalyticsService.TopRefundedCustomers(company, since, 10))
             RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, CurrencyService.FormatFromUSD(c.AmountUSD, now), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
 
         RefundsTopProducts.Clear();
-        foreach (var p in ArgoBooks.Core.Services.RefundAnalyticsService.TopRefundedProducts(company, since, 10))
+        foreach (var p in RefundAnalyticsService.TopRefundedProducts(company, since, 10))
             RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, CurrencyService.FormatFromUSD(p.AmountUSD, now), null));
 
         RefundsTopReasons.Clear();
-        foreach (var r in ArgoBooks.Core.Services.RefundAnalyticsService.TopReasons(company, since, 5))
+        foreach (var r in RefundAnalyticsService.TopReasons(company, since, 5))
             RefundsTopReasons.Add(new RefundsRow(r.Reason, CurrencyService.FormatFromUSD(r.TotalAmountUSD, now), $"{r.Count}"));
 
         RefundsChannelBreakdown.Clear();
-        foreach (var (channel, amount) in ArgoBooks.Core.Services.RefundAnalyticsService.ChannelBreakdown(company, since)
+        foreach (var (channel, amount) in RefundAnalyticsService.ChannelBreakdown(company, since)
                      .OrderByDescending(kv => kv.Value))
             RefundsChannelBreakdown.Add(new RefundsRow(channel, CurrencyService.FormatFromUSD(amount, now), null));
 
         RefundsMonthlyTotals.Clear();
-        foreach (var m in ArgoBooks.Core.Services.RefundAnalyticsService.MonthlyTotals(company, 12))
+        foreach (var m in RefundAnalyticsService.MonthlyTotals(company, 12))
             RefundsMonthlyTotals.Add(new RefundsMonthBucket(m.Month.ToString("MMM yyyy"), m.AmountUSD));
     }
 

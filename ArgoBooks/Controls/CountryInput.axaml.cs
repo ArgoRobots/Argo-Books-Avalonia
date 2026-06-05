@@ -83,6 +83,23 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
                 if (!_isUpdatingText)
                 {
+                    // Keep the selection in sync with the typed text: an exact
+                    // name match selects that country; anything else (partial
+                    // text after backspacing, cleared box) drops the selection
+                    // so the flag disappears and the bound name is emptied,
+                    // letting validation (e.g. a wizard's Next button) react.
+                    var match = string.IsNullOrWhiteSpace(value)
+                        ? null
+                        : PhoneInput.AllDialCodes.FirstOrDefault(c =>
+                            c.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
+                    if (!ReferenceEquals(match, SelectedCountry))
+                    {
+                        _isUpdatingText = true;
+                        SelectedCountry = match;
+                        SelectedCountryName = match?.Name ?? string.Empty;
+                        _isUpdatingText = false;
+                    }
+
                     UpdateFilteredCountries();
                     if (!string.IsNullOrEmpty(value) && value != SelectedCountry?.Name)
                     {
@@ -194,7 +211,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
+    protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
 
@@ -212,7 +229,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
     }
 
-    protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
+    protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
 

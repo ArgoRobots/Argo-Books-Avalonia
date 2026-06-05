@@ -128,7 +128,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     {
         OnPropertyChanged(nameof(IsExpensesTabSelected));
         OnPropertyChanged(nameof(IsRevenueTabSelected));
-        OnPropertyChanged(nameof(RemainingProductsText));
         OnPropertyChanged(nameof(CanAddProduct));
         ColumnWidths.SetTabMode(IsExpensesTabSelected);
         FilterProducts();
@@ -170,42 +169,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private int _revenueProductsCount;
 
     /// <summary>
-    /// Products are always unlimited — no free-tier limit.
+    /// Products are always unlimited, no free-tier limit.
     /// </summary>
     public bool CanAddProduct => true;
-
-    /// <summary>
-    /// No remaining-products text needed — products are unlimited.
-    /// </summary>
-    public string RemainingProductsText => string.Empty;
-
-    /// <summary>
-    /// Never show the upgrade button for products — they are unlimited.
-    /// </summary>
-    public bool ShowUpgradeButton => false;
-
-    /// <summary>
-    /// Event raised when the upgrade button is clicked.
-    /// </summary>
-    public event EventHandler? UpgradeRequested;
-
-    /// <summary>
-    /// No remaining products label needed — products are unlimited.
-    /// </summary>
-    public bool ShowRemainingProducts => false;
-
-    partial void OnHasPremiumChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanAddProduct));
-        OnPropertyChanged(nameof(ShowRemainingProducts));
-        OnPropertyChanged(nameof(ShowUpgradeButton));
-    }
-
-    [RelayCommand]
-    private void Upgrade()
-    {
-        UpgradeRequested?.Invoke(this, EventArgs.Empty);
-    }
 
     #endregion
 
@@ -531,7 +497,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         foreach (var cat in categories)
         {
-            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
+            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name });
         }
 
         // Update CategoryItems for the searchable input (excludes "All Categories")
@@ -603,16 +569,10 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply item type filter
+        // Apply item type filter on the product's own type
         if (FilterItemType != "All")
         {
-            var itemTypeCategories = companyData.Categories
-                .Where(c => c.ItemType == FilterItemType)
-                .Select(c => c.Id)
-                .ToHashSet();
-
-            filtered = filtered
-                .Where(p => !string.IsNullOrEmpty(p.CategoryId) && itemTypeCategories.Contains(p.CategoryId));
+            filtered = filtered.Where(p => p.ItemType == FilterItemType);
         }
 
         // Apply category filter
@@ -1165,7 +1125,6 @@ public class CategoryOption
 {
     public string? Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string ItemType { get; set; } = "Product";
 
     public override string ToString() => Name;
 }

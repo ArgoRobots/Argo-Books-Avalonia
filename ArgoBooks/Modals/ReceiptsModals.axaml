@@ -1065,7 +1065,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="JPEG, PNG, or PDF"
+                                        <TextBlock Text="JPEG, PNG, WebP, or PDF"
                                                    FontSize="13"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center" />
@@ -1074,6 +1074,16 @@
                                                 HorizontalAlignment="Center"
                                                 Margin="0,8,0,0"
                                                 Click="OnBrowseFilesClick" />
+                                        <!-- Feedback when some dropped files were skipped (unsupported / duplicate) -->
+                                        <TextBlock Text="{Binding BulkDropMessage}"
+                                                   IsVisible="{Binding BulkDropMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"
+                                                   MaxWidth="300"
+                                                   Margin="0,4,0,0"
+                                                   Foreground="{DynamicResource WarningBrush}"
+                                                   HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
 
@@ -2273,14 +2283,14 @@
                                                                        MaxWidth="56" />
                                                         </StackPanel>
                                                     </Border>
-                                                    <!-- Approved indicator (green border overlay) — only when no validation errors -->
+                                                    <!-- Approved indicator (green border overlay), only when no validation errors -->
                                                     <Border Width="64" Height="64"
                                                             CornerRadius="6"
                                                             BorderThickness="2"
                                                             BorderBrush="#16A34A"
                                                             IsVisible="{Binding IsApprovedWithoutErrors}"
                                                             IsHitTestVisible="False" />
-                                                    <!-- Warning indicator (orange border overlay) — approved but incomplete -->
+                                                    <!-- Warning indicator (orange border overlay), approved but incomplete -->
                                                     <Border Width="64" Height="64"
                                                             CornerRadius="6"
                                                             BorderThickness="2"
@@ -2294,7 +2304,7 @@
                                                             BorderBrush="#DC2626"
                                                             IsVisible="{Binding IsSkipped}"
                                                             IsHitTestVisible="False" />
-                                                    <!-- Green checkmark overlay — only when no validation errors -->
+                                                    <!-- Green checkmark overlay, only when no validation errors -->
                                                     <Border IsVisible="{Binding IsApprovedWithoutErrors}"
                                                             Width="18" Height="18"
                                                             CornerRadius="9"
@@ -2310,7 +2320,7 @@
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
                                                     </Border>
-                                                    <!-- Orange warning overlay — approved but incomplete -->
+                                                    <!-- Orange warning overlay, approved but incomplete -->
                                                     <Border IsVisible="{Binding IsApprovedWithErrors}"
                                                             Width="18" Height="18"
                                                             CornerRadius="9"
@@ -2342,7 +2352,7 @@
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
                                                     </Border>
-                                                    <!-- Active indicator (blue border) — painted last so it's always visible on top of status borders -->
+                                                    <!-- Active indicator (blue border), painted last so it's always visible on top of status borders -->
                                                     <Border Width="64" Height="64"
                                                             CornerRadius="6"
                                                             BorderThickness="2"

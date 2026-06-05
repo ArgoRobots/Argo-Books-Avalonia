@@ -40,9 +40,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
     private string _modalDescription = string.Empty;
 
     [ObservableProperty]
-    private string _modalItemType = "Product";
-
-    [ObservableProperty]
     private string _modalSelectedIcon = "📦";
 
     [ObservableProperty]
@@ -62,7 +59,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
     // Original values for change detection in edit mode
     private string _originalCategoryName = string.Empty;
     private string _originalDescription = string.Empty;
-    private string _originalItemType = "Product";
     private string? _originalIconOption;
 
     /// <summary>
@@ -79,7 +75,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
     public bool HasEditModalChanges =>
         ModalCategoryName != _originalCategoryName ||
         ModalDescription != _originalDescription ||
-        ModalItemType != _originalItemType ||
         ModalSelectedIcon != _originalIconOption;
 
     #endregion
@@ -114,8 +109,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
 
 
     #region Dropdown Options
-
-    public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
 
     /// <summary>
     /// ViewModel for the emoji picker modal.
@@ -218,7 +211,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
             Type = _isExpensesTab ? CategoryType.Expense : CategoryType.Revenue,
             ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
-            ItemType = ModalItemType,
             Color = AppColors.CategoryDefault,
             Icon = ModalSelectedIcon
         };
@@ -256,13 +248,11 @@ public partial class CategoryModalsViewModel : ViewModelBase
         _editingCategory = category;
         ModalCategoryName = category.Name;
         ModalDescription = category.Description ?? string.Empty;
-        ModalItemType = category.ItemType;
         ModalSelectedIcon = category.Icon;
 
         // Store original values for change detection
         _originalCategoryName = ModalCategoryName;
         _originalDescription = ModalDescription;
-        _originalItemType = ModalItemType;
         _originalIconOption = ModalSelectedIcon;
 
         ModalError = null;
@@ -302,18 +292,15 @@ public partial class CategoryModalsViewModel : ViewModelBase
 
         var oldName = _editingCategory.Name;
         var oldDescription = _editingCategory.Description;
-        var oldItemType = _editingCategory.ItemType;
         var oldIcon = _editingCategory.Icon;
 
         var newName = ModalCategoryName.Trim();
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
-        var newItemType = ModalItemType;
         var newIcon = ModalSelectedIcon;
 
         // Check if anything actually changed
         var hasChanges = oldName != newName ||
                          oldDescription != newDescription ||
-                         oldItemType != newItemType ||
                          oldIcon != newIcon;
 
         // If nothing changed, just close the modal without recording an action
@@ -328,19 +315,17 @@ public partial class CategoryModalsViewModel : ViewModelBase
         var changes = new Dictionary<string, FieldChange>();
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
-        if (oldItemType != newItemType) changes["Item Type"] = new FieldChange { OldValue = oldItemType, NewValue = newItemType };
         if (oldIcon != newIcon) changes["Icon"] = new FieldChange { OldValue = oldIcon, NewValue = newIcon };
         if (changes.Count > 0) App.EventLogService?.SetPendingChanges(changes);
         categoryToEdit.Name = newName;
         categoryToEdit.Description = newDescription;
-        categoryToEdit.ItemType = newItemType;
         categoryToEdit.Icon = newIcon;
         companyData.MarkAsModified();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
-            () => { categoryToEdit.Name = oldName; categoryToEdit.Description = oldDescription; categoryToEdit.ItemType = oldItemType; categoryToEdit.Icon = oldIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
-            () => { categoryToEdit.Name = newName; categoryToEdit.Description = newDescription; categoryToEdit.ItemType = newItemType; categoryToEdit.Icon = newIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
+            () => { categoryToEdit.Name = oldName; categoryToEdit.Description = oldDescription; categoryToEdit.Icon = oldIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
+            () => { categoryToEdit.Name = newName; categoryToEdit.Description = newDescription; categoryToEdit.Icon = newIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 
         CategorySaved?.Invoke(this, EventArgs.Empty);
         CloseEditModal();
@@ -570,7 +555,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
     {
         ModalCategoryName = string.Empty;
         ModalDescription = string.Empty;
-        ModalItemType = "Product";
         ModalSelectedIcon = "📦";
         ModalError = null;
         ModalCategoryNameError = null;

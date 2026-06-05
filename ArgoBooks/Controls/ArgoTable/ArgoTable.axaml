@@ -138,6 +138,7 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             Padding="24,0"
                             MinHeight="40"
+                            IsVisible="{Binding #Root.ShowColumnHeaders}"
                             PointerPressed="OnTableHeaderPointerPressed">
                         <ContentPresenter Content="{Binding #Root.HeaderContent}" />
                     </Border>

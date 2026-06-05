@@ -1,0 +1,238 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:bm="using:ArgoBooks.Core.Models.BankMatching"
+             xmlns:local="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ArgoBooks.Modals.BankMatchingModals"
+             x:DataType="vm:BankMatchingModalsViewModel">
+
+    <Panel>
+        <!-- Choose matching book entry -->
+        <controls:ModalOverlay IsOpen="{Binding IsCandidateModalOpen}"
+                               ClosingCommand="{Binding CloseCandidateModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12"
+                        Width="560" MaxHeight="600"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Text="{loc:Loc 'Choose matching book entry'}"
+                                               FontSize="18" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding LineDescription}" FontSize="13"
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCandidateModalCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="24" Spacing="8">
+                                <!-- Suggested matches (auto-detected) -->
+                                <StackPanel Spacing="8" IsVisible="{Binding HasCandidates}">
+                                    <TextBlock Text="{loc:Loc 'Suggested'}" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ItemsControl ItemsSource="{Binding CandidateOptions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="bm:BankMatchCandidate">
+                                                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                        Classes="secondary-button" Margin="0,0,0,4"
+                                                        Command="{Binding $parent[ItemsControl].((vm:BankMatchingModalsViewModel)DataContext).ChooseCandidateCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{Binding RecordDescription}" FontWeight="SemiBold"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Text="{Binding RecordType}" />
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                                                            <TextBlock Text="{Binding RecordAmount, StringFormat=C2}" FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding Confidence, StringFormat='{}{0:P0} match'}"
+                                                                       FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <!-- Manual pick from the full list -->
+                                <TextBlock Text="{loc:Loc 'Or match to another record'}" FontSize="13" FontWeight="SemiBold"
+                                           Margin="0,4,0,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ManualSearchQuery, Mode=TwoWay}" Classes="form-input"
+                                         PlaceholderText="{loc:Loc 'Search your records...'}" MaxLength="100" />
+                                <TextBlock IsVisible="{Binding !HasManualOptions}"
+                                           Text="{loc:Loc 'No revenue or expenses are available to match this line.'}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                <ItemsControl ItemsSource="{Binding ManualOptions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="bm:BankMatchCandidate">
+                                            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                    Classes="secondary-button" Margin="0,0,0,4"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BankMatchingModalsViewModel)DataContext).ChooseCandidateCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                        <TextBlock Text="{Binding RecordDescription}" FontWeight="SemiBold"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Text="{Binding RecordType}" />
+                                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Text="{Binding RecordDate, StringFormat='MMM dd, yyyy'}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding RecordAmount, StringFormat=C2}"
+                                                               FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="2" Padding="24" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Button Classes="secondary-button" HorizontalAlignment="Right"
+                                    Command="{Binding CloseCandidateModalCommand}"
+                                    Content="{loc:Loc Cancel}" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- Filter bank lines -->
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding CloseFilterModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="480"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel>
+                        <Border Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{loc:Loc 'Filter bank lines'}" FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Spacing="16" Margin="24">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc From}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterStartDate}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc To}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterEndDate}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding StatusOptions}"
+                                          SelectedItem="{Binding FilterStatus}"
+                                          Classes="form-combobox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Button Grid.Column="0" Content="{loc:Loc 'Clear Filters'}" Classes="secondary-button"
+                                        HorizontalAlignment="Left" Command="{Binding ClearFiltersCommand}" />
+                                <Button Grid.Column="2" Content="{loc:Loc Cancel}" Classes="secondary-button"
+                                        Margin="0,0,12,0" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Grid.Column="3" Content="{loc:Loc 'Apply Filters'}" Classes="primary-button"
+                                        Command="{Binding ApplyFiltersCommand}" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- Filter missing records -->
+        <controls:ModalOverlay IsOpen="{Binding IsMissingFilterModalOpen}"
+                               ClosingCommand="{Binding CloseMissingFilterModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="480"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel>
+                        <Border Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{loc:Loc 'Filter records'}" FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseMissingFilterModalCommand}">
+                                    <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <StackPanel Spacing="16" Margin="24">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="{loc:Loc From}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding MissingFilterStartDate}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="{loc:Loc To}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding MissingFilterEndDate}" Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{loc:Loc 'Record Type'}" FontSize="13" FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding TypeOptions}"
+                                          SelectedItem="{Binding MissingFilterType}"
+                                          Classes="form-combobox" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Button Grid.Column="0" Content="{loc:Loc 'Clear Filters'}" Classes="secondary-button"
+                                        HorizontalAlignment="Left" Command="{Binding ClearMissingFiltersCommand}" />
+                                <Button Grid.Column="2" Content="{loc:Loc Cancel}" Classes="secondary-button"
+                                        Margin="0,0,12,0" Command="{Binding CloseMissingFilterModalCommand}" />
+                                <Button Grid.Column="3" Content="{loc:Loc 'Apply Filters'}" Classes="primary-button"
+                                        Command="{Binding ApplyMissingFiltersCommand}" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+
+</UserControl>

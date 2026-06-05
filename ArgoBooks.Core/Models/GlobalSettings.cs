@@ -229,4 +229,20 @@ public class TutorialSettings
     /// When the user first started using the app.
     /// </summary>
     public DateTime? FirstLaunchDate { get; set; }
+
+    /// <summary>
+    /// Whether the post-onboarding source survey has been shown to the user.
+    /// </summary>
+    public bool HasShownSourceSurvey { get; set; } = false;
+
+    /// <summary>
+    /// The user's answer to "Where did you hear about Argo Books?". One of:
+    /// google, bing, youtube, reddit, friend, email, other. Null if not answered.
+    /// </summary>
+    public string? SourceSurveyAnswer { get; set; }
+
+    /// <summary>
+    /// Whether the user explicitly dismissed the source survey without answering.
+    /// </summary>
+    public bool IsSourceSurveyDismissed { get; set; } = false;
 }

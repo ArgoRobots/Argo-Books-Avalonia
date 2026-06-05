@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="120"
              x:Class="ArgoBooks.Controls.StatCard"
              x:DataType="controls:StatCard"
@@ -176,10 +177,21 @@
                 <TextBlock x:Name="ValueText"
                            Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}" />
 
-                <!-- Label -->
-                <TextBlock x:Name="LabelText"
-                           Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                           IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <!-- Label (with optional info icon) -->
+                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                    <TextBlock x:Name="LabelText"
+                               VerticalAlignment="Center"
+                               Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <Button Classes="icon-button"
+                            Width="18" Height="18" Padding="0"
+                            VerticalAlignment="Center"
+                            ToolTip.Tip="{Binding InfoText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                            IsVisible="{Binding InfoText, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <PathIcon Data="{x:Static icons:Icons.InfoOutline}" Width="13" Height="13"
+                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                    </Button>
+                </StackPanel>
 
                 <!-- Trend Line: arrow + percentage + "from last month" -->
                 <StackPanel x:Name="TrendPanel" Orientation="Horizontal"

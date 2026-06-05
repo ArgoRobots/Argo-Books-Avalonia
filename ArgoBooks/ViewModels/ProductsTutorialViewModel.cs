@@ -22,14 +22,14 @@ public partial class ProductsTutorialViewModel : ViewModelBase
         },
         new TutorialStep
         {
-            Title = "Track Your Inventory",
+            Title = "Track Your Products",
             Description = "Add products to keep track of what you buy and sell. Each product can have a category, supplier, and inventory thresholds.",
             HighlightArea = "content"
         },
         new TutorialStep
         {
             Title = "Products & Services",
-            Description = "Products can be physical items or services. Physical products support inventory tracking with reorder points and overstock thresholds.\n\nServices are tracked by usage without inventory management.",
+            Description = "Products can be physical items or services. Pick whichever fits what you're tracking.",
             HighlightArea = "none"
         }
     ];

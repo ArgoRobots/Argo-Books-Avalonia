@@ -18,9 +18,9 @@ public class AppTourViewModelTests
     #region Default State Tests
 
     [Fact]
-    public void Constructor_DefaultState_TotalStepsIsFive()
+    public void Constructor_DefaultState_TotalStepsIsFour()
     {
-        Assert.Equal(5, _viewModel.TotalSteps);
+        Assert.Equal(4, _viewModel.TotalSteps);
     }
 
     [Fact]
@@ -227,11 +227,11 @@ public class AppTourViewModelTests
     }
 
     [Fact]
-    public void StartTour_FirstStepTitle_IsWelcome()
+    public void StartTour_FirstStepTitle_IsNavigationSidebar()
     {
         _viewModel.StartTour();
 
-        Assert.Equal("Welcome to Argo Books", _viewModel.CurrentTitle);
+        Assert.Equal("Navigation Sidebar", _viewModel.CurrentTitle);
     }
 
     #endregion

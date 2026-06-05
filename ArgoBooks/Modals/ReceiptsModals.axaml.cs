@@ -308,7 +308,7 @@ public partial class ReceiptsModals : UserControl
     {
         if (sender is not ScrollViewer scrollViewer) return;
 
-        // Don't start panning when the press lands on a scroll bar — let it scroll normally.
+        // Don't start panning when the press lands on a scroll bar, let it scroll normally.
         // This tunnel handler runs before the scroll bar sees the event, so without this guard
         // dragging the scroll bar thumb would pan the receipt instead.
         if (IsOnScrollBar(e.Source)) return;
@@ -509,8 +509,11 @@ public partial class ReceiptsModals : UserControl
 
     private void OnDropZoneDragOver(object? sender, DragEventArgs e)
     {
+        // Only show the "copy" cursor when at least one dragged file is a format the
+        // scanner accepts. Otherwise show "not allowed" so the user gets immediate
+        // feedback instead of a silently-ignored drop.
         var files = e.DataTransfer.TryGetFiles();
-        if (files != null && files.Any())
+        if (files != null && files.Any(f => FilePickerTypes.IsSupportedReceiptFile(f.TryGetLocalPath())))
         {
             e.DragEffects = DragDropEffects.Copy;
             return;

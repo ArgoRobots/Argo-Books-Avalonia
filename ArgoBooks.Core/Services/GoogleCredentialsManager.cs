@@ -6,7 +6,7 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Manages Google OAuth 2.0 credentials via the argorobots.com server proxy.
 /// The server handles OAuth token storage and refresh.
-/// Google Sheets is a free feature — authentication uses device ID.
+/// Google Sheets is a free feature: authentication uses device ID.
 /// </summary>
 public static class GoogleCredentialsManager
 {
@@ -14,7 +14,7 @@ public static class GoogleCredentialsManager
     private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     /// <summary>
-    /// Checks if Google API access is configured (always true — free feature).
+    /// Checks if Google API access is configured (always true, free feature).
     /// </summary>
     public static bool AreCredentialsConfigured() => true;
 

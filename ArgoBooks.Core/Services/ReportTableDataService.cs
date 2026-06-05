@@ -744,8 +744,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         {
             Id = c.Id,
             Name = c.Name,
-            Type = c.Type.ToString(),
-            ItemType = c.ItemType
+            Type = c.Type.ToString()
         }).ToList();
     }
 
@@ -1452,7 +1451,6 @@ public class CategoryTableRow
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
-    public string ItemType { get; set; } = string.Empty;
 }
 
 /// <summary>

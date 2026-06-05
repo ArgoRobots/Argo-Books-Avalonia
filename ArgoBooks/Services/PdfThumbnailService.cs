@@ -342,7 +342,7 @@ public sealed class PdfThumbnailService
         });
     }
 
-    // Called from C# via InvokeScript — renders first page + reports page count.
+    // Called from C# via InvokeScript, renders first page + reports page count.
     // Posts "render-result:<count>:<dataUrl>".
     window.__renderAndPost = function(base64Data) {
         try {

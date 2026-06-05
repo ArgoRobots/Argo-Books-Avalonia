@@ -258,7 +258,7 @@ public class LicenseServiceTests
     [Fact]
     public async Task ValidateLicenseOnlineAsync_NoLicenseKey_ReturnsInvalidKey()
     {
-        // No license saved — GetLicenseKey() returns null
+        // No license saved, GetLicenseKey() returns null
         var result = await _licenseService.ValidateLicenseOnlineAsync();
 
         Assert.Equal(LicenseValidationStatus.InvalidKey, result.Status);

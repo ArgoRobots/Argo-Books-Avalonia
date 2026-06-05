@@ -2,9 +2,7 @@ using ArgoBooks.Core;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Interactivity;
 using Avalonia.Media;
-using ColorPicker;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -14,7 +12,7 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ColorPickerInput : UserControl
 {
-    private StandardColorPicker? _colorPickerControl;
+    private ColorSpectrum? _colorPickerControl;
     private bool _isUpdatingFromPicker;
 
     #region Styled Properties
@@ -92,7 +90,7 @@ public partial class ColorPickerInput : UserControl
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
-        _colorPickerControl = this.FindControl<StandardColorPicker>("ColorPickerControl");
+        _colorPickerControl = this.FindControl<ColorSpectrum>("ColorPickerControl");
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -146,7 +144,7 @@ public partial class ColorPickerInput : UserControl
             if (!string.IsNullOrEmpty(ColorValue))
             {
                 var color = Color.Parse(ColorValue);
-                _colorPickerControl.SelectedColor = color;
+                _colorPickerControl.Color = color;
             }
         }
         catch
@@ -155,14 +153,12 @@ public partial class ColorPickerInput : UserControl
         }
     }
 
-    private void OnColorPickerColorChanged(object? sender, RoutedEventArgs e)
+    private void OnColorPickerColorChanged(object? sender, ColorChangedEventArgs e)
     {
-        if (sender is not StandardColorPicker picker) return;
-
         _isUpdatingFromPicker = true;
         try
         {
-            var color = picker.SelectedColor;
+            var color = e.NewColor;
             ColorValue = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
             UpdateColorBrush();
         }

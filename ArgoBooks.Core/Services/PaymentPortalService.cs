@@ -320,7 +320,7 @@ public class PaymentPortalService : IDisposable
             // Skip if we already have this portal payment (duplicate prevention).
             // BUT first backfill any new fields the local row is missing so the
             // refund feature works for payments that were synced before this
-            // release — without re-creating duplicate rows.
+            // release, without re-creating duplicate rows.
             var existing = companyData.Payments.FirstOrDefault(p =>
                 p.PortalPaymentId == portalPayment.Id.ToString());
             if (existing != null)
@@ -333,7 +333,7 @@ public class PaymentPortalService : IDisposable
                     rowBackfilled = true;
                 }
                 // ProcessingFee was added after some users had already synced.
-                // Only fill when the local row is missing the value — never
+                // Only fill when the local row is missing the value, never
                 // override a non-zero local fee with a server-side zero (the
                 // server can legitimately report zero, but if we already have
                 // a non-zero local value something earlier captured it).
@@ -402,7 +402,7 @@ public class PaymentPortalService : IDisposable
                     ReferenceNumber = portalPayment.ReferenceNumber,
                     Notes = string.IsNullOrEmpty(portalPayment.RefundReason)
                         ? $"Refund issued via {providerName}"
-                        : $"Refund issued via {providerName} — {portalPayment.RefundReason}",
+                        : $"Refund issued via {providerName}, {portalPayment.RefundReason}",
                     CreatedAt = DateTime.UtcNow,
                     OriginalCurrency = portalPayment.Currency,
                     AmountUSD = portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase)
@@ -423,7 +423,7 @@ public class PaymentPortalService : IDisposable
 
                 // Recalc invoice totals + status from the full Payments list.
                 // Status only flips to Refunded / PartiallyRefunded when
-                // AmountPaid is also > 0 — see InvoiceTotalsService.
+                // AmountPaid is also > 0, see InvoiceTotalsService.
                 InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
                 // Mirror the linked-Revenue update the regular-payment path
@@ -443,7 +443,7 @@ public class PaymentPortalService : IDisposable
                     Action = "Refund Issued",
                     Details = string.IsNullOrEmpty(portalPayment.RefundReason)
                         ? $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName}"
-                        : $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName} — \"{portalPayment.RefundReason}\"",
+                        : $"Refund of {portalPayment.Currency} {Math.Abs(portalPayment.Amount):N2} via {providerName}, \"{portalPayment.RefundReason}\"",
                     Timestamp = DateTime.UtcNow
                 });
 
@@ -455,7 +455,7 @@ public class PaymentPortalService : IDisposable
             // Use the gross amount the customer was actually charged on the
             // portal (invoice balance + processing fee). This matches both
             // the customer's email/portal display and what arrived on the
-            // Stripe/PayPal/Square charge — so the Payments page totals line
+            // Stripe/PayPal/Square charge, so the Payments page totals line
             // up with what the merchant sees in their provider dashboard.
             var invoiceAmount = Math.Max(0m, portalPayment.Amount);
 
@@ -472,7 +472,7 @@ public class PaymentPortalService : IDisposable
             }
             else
             {
-                // No conversion ratio available — defer by setting AmountUSD to 0
+                // No conversion ratio available, defer by setting AmountUSD to 0
                 amountUSD = 0m;
             }
 

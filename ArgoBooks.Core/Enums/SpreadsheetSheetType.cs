@@ -25,6 +25,7 @@ public enum SpreadsheetSheetType
     PurchaseOrderLineItems,
     Returns,
     LostDamaged,
+    BankStatement,
     Unknown
 }
 
@@ -61,6 +62,7 @@ public static class SpreadsheetSheetTypeExtensions
             "purchase order line items" => SpreadsheetSheetType.PurchaseOrderLineItems,
             "returns" => SpreadsheetSheetType.Returns,
             "lost damaged" or "lost / damaged" or "lost/damaged" => SpreadsheetSheetType.LostDamaged,
+            "bank statement" or "bank" or "bank transactions" => SpreadsheetSheetType.BankStatement,
             _ => SpreadsheetSheetType.Unknown
         };
     }

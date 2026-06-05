@@ -127,7 +127,7 @@ public class SpreadsheetAnalysisService(
         var systemPrompt = BuildAnalysisSystemPrompt();
         var userPrompt = BuildAnalysisUserPrompt(sheetsData);
 
-        // Scale max tokens based on number of sheets — each sheet needs ~300-500 tokens for mappings
+        // Scale max tokens based on number of sheets, each sheet needs ~300-500 tokens for mappings
         var maxTokens = Math.Max(4000, sheetsData.Count * 500);
 
         // Estimate LLM duration based on prompt size (more sheets → longer)
@@ -487,7 +487,7 @@ IMPORTANT:
         sb.AppendLine("- Skip rows that are clearly subtotals, headers, or empty");
         sb.AppendLine("- If multiple source rows represent one entity, group them");
         sb.AppendLine("- Respond with JSON array only, no markdown");
-        sb.AppendLine("- Cell values containing pipe characters appear as \\| in the table — use | (without backslash) in your JSON output");
+        sb.AppendLine("- Cell values containing pipe characters appear as \\| in the table, use | (without backslash) in your JSON output");
 
         // Product-specific instructions for category generation
         if (entityType == SpreadsheetSheetType.Products)
@@ -710,7 +710,7 @@ IMPORTANT:
             var cell = row.Cell(col);
             if (cell.IsEmpty())
             {
-                // Track consecutive trailing empties — add placeholder for gaps
+                // Track consecutive trailing empties, add placeholder for gaps
                 headers.Add($"Column{col}");
                 trailingEmpty++;
             }

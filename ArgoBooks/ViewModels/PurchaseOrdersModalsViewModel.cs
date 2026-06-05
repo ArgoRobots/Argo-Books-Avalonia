@@ -3,8 +3,14 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Services.PurchaseOrders;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -397,26 +403,59 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     [RelayCommand]
     private void SaveOrder()
     {
+        var savedOrderId = TrySaveOrder();
+        if (savedOrderId == null) return;
+
+        OrderSaved?.Invoke(this, EventArgs.Empty);
+        CloseAddModal();
+    }
+
+    /// <summary>
+    /// Saves the purchase order and immediately opens the Send modal so the user can preview
+    /// the PDF and review the email before actually sending.
+    /// </summary>
+    [RelayCommand]
+    private void SaveAndPreviewOrder()
+    {
+        var savedOrderId = TrySaveOrder();
+        if (savedOrderId == null) return;
+
+        OrderSaved?.Invoke(this, EventArgs.Empty);
+
+        var companyData = App.CompanyManager?.CompanyData;
+        var savedOrder = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == savedOrderId);
+        if (savedOrder == null)
+        {
+            CloseAddModal();
+            return;
+        }
+
+        CloseAddModal();
+        OpenSendModal(savedOrder);
+    }
+
+    /// <summary>
+    /// Validates the Add/Edit form and persists the order. Returns the saved order ID on success,
+    /// or null if validation failed (errors are already surfaced on the form).
+    /// </summary>
+    private string? TrySaveOrder()
+    {
         AddModalError = null;
         HasSupplierError = false;
 
-        // Clear all line item errors
         foreach (var li in LineItems)
         {
             li.HasProductError = false;
         }
 
-        // Validate all fields before returning
         var hasErrors = false;
 
-        // Validate supplier
         if (SelectedSupplier == null)
         {
             HasSupplierError = true;
             hasErrors = true;
         }
 
-        // Validate line items
         if (LineItems.Count == 0)
         {
             AddModalError = "Please add at least one line item.".Translate();
@@ -450,25 +489,17 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             hasErrors = true;
         }
 
-        if (hasErrors) return;
+        if (hasErrors) return null;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
+        if (companyData == null) return null;
 
-        if (IsEditMode && !string.IsNullOrEmpty(EditingOrderId))
-        {
-            SaveEditedOrder(companyData, shipping);
-        }
-        else
-        {
-            SaveNewOrder(companyData, shipping);
-        }
-
-        OrderSaved?.Invoke(this, EventArgs.Empty);
-        CloseAddModal();
+        return IsEditMode && !string.IsNullOrEmpty(EditingOrderId)
+            ? SaveEditedOrder(companyData, shipping)
+            : SaveNewOrder(companyData, shipping);
     }
 
-    private void SaveNewOrder(CompanyData companyData, decimal shipping)
+    private string SaveNewOrder(CompanyData companyData, decimal shipping)
     {
         // Generate ID
         companyData.IdCounters.PurchaseOrder++;
@@ -522,12 +553,14 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));
+
+        return order.Id;
     }
 
-    private void SaveEditedOrder(CompanyData companyData, decimal shipping)
+    private string? SaveEditedOrder(CompanyData companyData, decimal shipping)
     {
         var order = companyData.PurchaseOrders.FirstOrDefault(o => o.Id == EditingOrderId);
-        if (order == null) return;
+        if (order == null) return null;
 
         // Store old values for undo
         var oldSupplierId = order.SupplierId;
@@ -589,6 +622,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));
+
+        return order.Id;
     }
 
     private void LoadSuppliers()
@@ -730,6 +765,13 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 ReceiveModalError = $"Cannot receive more than remaining quantity ({li.Remaining}) for {li.ProductName}.";
                 return;
             }
+        }
+
+        // Nothing to do if no quantities were entered; skip work and undo record.
+        if (ReceiveLineItems.All(li => !int.TryParse(li.ReceivingQuantity, out var q) || q == 0))
+        {
+            CloseReceiveModal();
+            return;
         }
 
         var companyData = App.CompanyManager?.CompanyData;
@@ -908,6 +950,436 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.OpenDeleteConfirm");
         }
+    }
+
+    #endregion
+
+    #region Send Modal State
+
+    [ObservableProperty]
+    private bool _isSendModalOpen;
+
+    [ObservableProperty]
+    private bool _isSendFullscreen;
+
+    [ObservableProperty]
+    private PurchaseOrder? _sendingOrder;
+
+    /// <summary>
+    /// Modal width. The compact post-send / in-flight states drop to a small
+    /// "confirmation card" size so the success/spinner content isn't swimming
+    /// in a 1080x840 frame. Fullscreen wins (NaN = stretch).
+    /// </summary>
+    public double SendModalWidth => IsSendFullscreen
+        ? double.NaN
+        : ((IsSendSuccess || IsSending) ? 420 : 1080);
+
+    public double SendModalHeight => IsSendFullscreen
+        ? double.NaN
+        : ((IsSendSuccess || IsSending) ? 360 : 840);
+
+    partial void OnIsSendFullscreenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SendModalWidth));
+        OnPropertyChanged(nameof(SendModalHeight));
+    }
+
+    partial void OnIsSendSuccessChanged(bool value)
+    {
+        if (value) IsSendFullscreen = false;
+        OnPropertyChanged(nameof(SendModalWidth));
+        OnPropertyChanged(nameof(SendModalHeight));
+        OnPropertyChanged(nameof(ShowSendControls));
+    }
+
+    partial void OnIsSendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SendModalWidth));
+        OnPropertyChanged(nameof(SendModalHeight));
+        OnPropertyChanged(nameof(ShowSendControls));
+    }
+
+    [ObservableProperty]
+    private string _sendRecipientEmail = string.Empty;
+
+    [ObservableProperty]
+    private string _sendCcEmail = string.Empty;
+
+    [ObservableProperty]
+    private string _sendBccEmail = string.Empty;
+
+    [ObservableProperty]
+    private bool _isSendCcBccExpanded;
+
+    [ObservableProperty]
+    private string _sendSubject = string.Empty;
+
+    [ObservableProperty]
+    private string _sendBody = string.Empty;
+
+    [ObservableProperty]
+    private string _sendPdfFilename = string.Empty;
+
+    [ObservableProperty]
+    private Bitmap? _sendPdfPreview;
+
+    [ObservableProperty]
+    private bool _isSending;
+
+    [ObservableProperty]
+    private string? _sendError;
+
+    [ObservableProperty]
+    private bool _isSendSuccess;
+
+    /// <summary>
+    /// Raw PDF bytes for the order being sent. Held so the Download button and the
+    /// actual send call reuse the same render output rather than regenerating.
+    /// </summary>
+    private byte[]? _sendPdfBytes;
+
+    /// <summary>
+    /// Cancellation source for an in-flight send. The Cancel button trips this so the
+    /// HTTP request aborts instead of hanging the user behind the sending overlay.
+    /// </summary>
+    private CancellationTokenSource? _sendCts;
+
+    public bool HasSendError => !string.IsNullOrEmpty(SendError);
+
+    /// <summary>
+    /// Visibility helper for the footer controls that only make sense while the user is
+    /// composing the email (fullscreen toggle, Download PDF, Send). Hidden while the send
+    /// is in flight (replaced by Cancel) and after success (replaced by Close).
+    /// </summary>
+    public bool ShowSendControls => !IsSendSuccess && !IsSending;
+
+    partial void OnSendErrorChanged(string? value) => OnPropertyChanged(nameof(HasSendError));
+
+    #endregion
+
+    #region Send Modal Commands
+
+    /// <summary>
+    /// Opens the Send modal for the given display item.
+    /// </summary>
+    public void OpenSendModal(PurchaseOrderDisplayItem item)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
+        if (order == null) return;
+        OpenSendModal(order);
+    }
+
+    /// <summary>
+    /// Opens the Send modal with the given order pre-filled.
+    /// </summary>
+    public void OpenSendModal(PurchaseOrder order)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        SendingOrder = order;
+        SendError = null;
+        IsSendSuccess = false;
+        IsSending = false;
+        IsSendCcBccExpanded = false;
+
+        var settings = companyData.Settings.PurchaseOrderEmail;
+        var symbol = CurrencyService.CurrentSymbol;
+
+        var supplier = companyData.GetSupplier(order.SupplierId);
+        SendRecipientEmail = supplier?.Email ?? string.Empty;
+        SendCcEmail = string.Empty;
+        SendBccEmail = settings.BccEmail;
+        SendSubject = PurchaseOrderEmailService.FillTemplate(settings.SubjectTemplate, order, companyData, symbol);
+        SendBody = PurchaseOrderEmailService.FillTemplate(settings.BodyTemplate, order, companyData, symbol);
+        SendPdfFilename = $"{SanitizePoFilename(order.PoNumber)}.pdf";
+
+        SendPdfPreview?.Dispose();
+        SendPdfPreview = null;
+        _sendPdfBytes = null;
+
+        IsSendModalOpen = true;
+
+        _ = GenerateSendPreviewAsync(order, companyData, symbol);
+    }
+
+    [RelayCommand]
+    private void CloseSendModal()
+    {
+        // If a send is in flight when the modal closes, abort it so we don't leak
+        // a hanging HTTP call that flips status to Sent after the user moved on.
+        _sendCts?.Cancel();
+        _sendCts?.Dispose();
+        _sendCts = null;
+
+        IsSendModalOpen = false;
+        IsSendFullscreen = false;
+        SendingOrder = null;
+        SendError = null;
+        IsSendSuccess = false;
+        IsSending = false;
+        SendPdfPreview?.Dispose();
+        SendPdfPreview = null;
+        _sendPdfBytes = null;
+    }
+
+    /// <summary>
+    /// Aborts the in-flight send. The footer swaps to a single Cancel button while IsSending
+    /// is true, and this is what that button calls.
+    /// </summary>
+    [RelayCommand]
+    private void CancelSend()
+    {
+        _sendCts?.Cancel();
+    }
+
+    [RelayCommand]
+    private void ToggleSendFullscreen() => IsSendFullscreen = !IsSendFullscreen;
+
+    [RelayCommand]
+    private void ToggleCcBcc() => IsSendCcBccExpanded = !IsSendCcBccExpanded;
+
+    [RelayCommand]
+    private void DismissSendError() => SendError = null;
+
+    [RelayCommand]
+    private async Task DownloadSendPdfAsync()
+    {
+        try
+        {
+            if (SendingOrder == null) return;
+
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null) return;
+
+            _sendPdfBytes ??= PurchaseOrderPdfRenderer.Render(SendingOrder, companyData, CurrencyService.CurrentSymbol);
+
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            var saved = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Purchase Order PDF".Translate(),
+                SuggestedFileName = SendPdfFilename,
+                DefaultExtension = "pdf",
+                FileTypeChoices =
+                [
+                    new FilePickerFileType("PDF") { Patterns = ["*.pdf"] }
+                ]
+            });
+
+            if (saved == null) return;
+
+            await File.WriteAllBytesAsync(saved.Path.LocalPath, _sendPdfBytes);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.DownloadPdf");
+            SendError = "Could not save the PDF: {0}".TranslateFormat(ex.Message);
+        }
+    }
+
+    [RelayCommand]
+    private async Task SendOrderAsync()
+    {
+        SendError = null;
+
+        if (SendingOrder == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var recipient = SendRecipientEmail?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(recipient) || !recipient.Contains('@'))
+        {
+            SendError = "Please enter a valid recipient email address.".Translate();
+            return;
+        }
+
+        var subject = SendSubject?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(subject))
+        {
+            SendError = "Please enter an email subject.".Translate();
+            return;
+        }
+
+        // If the recipient differs from the supplier's saved email, ask the user
+        // whether to update the saved address. Three-way choice so users can:
+        //   - Update & Send (this becomes the supplier's new email going forward)
+        //   - Send without saving (one-off override, leave the saved address alone)
+        //   - Cancel (something is wrong, let me re-check)
+        var supplier = companyData.GetSupplier(SendingOrder.SupplierId);
+        var shouldSaveSupplierEmail = false;
+        if (supplier != null)
+        {
+            var savedEmail = supplier.Email?.Trim() ?? string.Empty;
+            if (!string.Equals(savedEmail, recipient, StringComparison.OrdinalIgnoreCase))
+            {
+                var dialog = App.ConfirmationDialog;
+                if (dialog != null)
+                {
+                    var hasSavedEmail = !string.IsNullOrEmpty(savedEmail);
+                    var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                    {
+                        Title = (hasSavedEmail ? "Update supplier email?" : "Save supplier email?").Translate(),
+                        Message = hasSavedEmail
+                            ? "You're sending to a different address than {0}'s saved email ({1}). Update the saved address to {2}? The order will be sent either way.".TranslateFormat(supplier.Name, savedEmail, recipient)
+                            : "{0} doesn't have a saved email. Save {1} for next time? The order will be sent either way.".TranslateFormat(supplier.Name, recipient),
+                        PrimaryButtonText = (hasSavedEmail ? "Update" : "Save").Translate(),
+                        SecondaryButtonText = (hasSavedEmail ? "Don't update" : "Don't save").Translate(),
+                        CancelButtonText = "Cancel".Translate()
+                    });
+
+                    if (result == ConfirmationResult.Cancel || result == ConfirmationResult.None) return;
+                    shouldSaveSupplierEmail = result == ConfirmationResult.Primary;
+                }
+            }
+        }
+
+        if (_sendPdfBytes == null)
+        {
+            try
+            {
+                _sendPdfBytes = PurchaseOrderPdfRenderer.Render(SendingOrder, companyData, CurrencyService.CurrentSymbol);
+            }
+            catch (Exception ex)
+            {
+                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.RenderPdf");
+                SendError = "Could not generate the PDF: {0}".TranslateFormat(ex.Message);
+                return;
+            }
+        }
+
+        _sendCts?.Dispose();
+        _sendCts = new CancellationTokenSource();
+        var ct = _sendCts.Token;
+
+        IsSending = true;
+        try
+        {
+            using var service = new PurchaseOrderEmailService();
+            var response = await service.SendAsync(
+                SendingOrder,
+                companyData,
+                companyData.Settings.PurchaseOrderEmail,
+                recipient,
+                subject,
+                SendBody ?? string.Empty,
+                string.IsNullOrWhiteSpace(SendCcEmail) ? null : SendCcEmail.Trim(),
+                string.IsNullOrWhiteSpace(SendBccEmail) ? null : SendBccEmail.Trim(),
+                _sendPdfBytes,
+                ct);
+
+            // User clicked Cancel while the request was in flight. If the server already
+            // accepted the email we still treat that as a successful send (cannot un-send);
+            // only swallow the failure path silently.
+            if (!response.Success && ct.IsCancellationRequested) return;
+
+            if (!response.Success)
+            {
+                SendError = response.Message;
+                return;
+            }
+
+            var oldStatus = SendingOrder.Status;
+            SendingOrder.Status = PurchaseOrderStatus.Sent;
+            SendingOrder.UpdatedAt = DateTime.UtcNow;
+            companyData.MarkAsModified();
+
+            var sentOrder = SendingOrder;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Send order '{sentOrder.PoNumber}'",
+                () =>
+                {
+                    sentOrder.Status = oldStatus;
+                    companyData.MarkAsModified();
+                    OrderSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    sentOrder.Status = PurchaseOrderStatus.Sent;
+                    companyData.MarkAsModified();
+                    OrderSaved?.Invoke(this, EventArgs.Empty);
+                }));
+
+            if (shouldSaveSupplierEmail && supplier != null)
+            {
+                var supplierToUpdate = supplier;
+                var oldEmail = supplierToUpdate.Email ?? string.Empty;
+                var newEmail = recipient;
+                supplierToUpdate.Email = newEmail;
+                supplierToUpdate.UpdatedAt = DateTime.UtcNow;
+                companyData.MarkAsModified();
+
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    $"Update supplier '{supplierToUpdate.Name}' email",
+                    () =>
+                    {
+                        supplierToUpdate.Email = oldEmail;
+                        companyData.MarkAsModified();
+                    },
+                    () =>
+                    {
+                        supplierToUpdate.Email = newEmail;
+                        companyData.MarkAsModified();
+                    }));
+            }
+
+            OrderSaved?.Invoke(this, EventArgs.Empty);
+            IsSendSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.Send");
+            SendError = "Failed to send: {0}".TranslateFormat(ex.Message);
+        }
+        finally
+        {
+            IsSending = false;
+        }
+    }
+
+    private async Task GenerateSendPreviewAsync(PurchaseOrder order, CompanyData companyData, string symbol)
+    {
+        try
+        {
+            var bytes = await Task.Run(() => PurchaseOrderPdfRenderer.Render(order, companyData, symbol));
+            _sendPdfBytes = bytes;
+
+            var rendered = await PdfThumbnailService.Instance.RenderPdfFirstPageAsync(bytes);
+            if (rendered == null) return;
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!IsSendModalOpen || SendingOrder?.Id != order.Id) return;
+                try
+                {
+                    using var ms = new MemoryStream(rendered.Value.Image);
+                    SendPdfPreview = new Bitmap(ms);
+                }
+                catch (Exception ex)
+                {
+                    App.ErrorLogger?.LogWarning($"Send PDF preview decode failed: {ex.Message}", "PurchaseOrder.SendPreview");
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.GenerateSendPreview");
+        }
+    }
+
+    private static string SanitizePoFilename(string poNumber)
+    {
+        if (string.IsNullOrWhiteSpace(poNumber)) return "PurchaseOrder";
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = poNumber.Select(c => invalid.Contains(c) || c == ' ' ? '-' : c).ToArray();
+        var result = new string(chars).Trim('-');
+        return string.IsNullOrEmpty(result) ? "PurchaseOrder" : result;
     }
 
     #endregion

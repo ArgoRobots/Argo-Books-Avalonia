@@ -36,7 +36,7 @@ public class RefundAnalyticsServiceTests
     public void TotalRefunded_SumsAbsoluteValues_OnlyRefunds_InWindow()
     {
         var c = BuildCompany(out _);
-        c.Payments.Add(Payment("p1", "C1", 100m));               // positive — excluded
+        c.Payments.Add(Payment("p1", "C1", 100m));               // positive, excluded
         c.Payments.Add(Payment("p2", "C1", -25m, isRefund: true));
         c.Payments.Add(Payment("p3", "C1", -75m, isRefund: true));
         c.Payments.Add(Payment("p4", "C1", -10m, isRefund: true, date: DateTime.Today.AddYears(-2)));

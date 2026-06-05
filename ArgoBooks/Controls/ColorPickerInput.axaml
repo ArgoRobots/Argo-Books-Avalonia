@@ -2,34 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
+             xmlns:colorPrimitives="clr-namespace:Avalonia.Controls.Primitives;assembly=Avalonia.Controls.ColorPicker"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
              x:Class="ArgoBooks.Controls.ColorPickerInput"
              x:Name="Root">
-
-    <UserControl.Styles>
-        <!-- Hide the H and S sliders in the color picker -->
-        <Style Selector="colorPicker|StandardColorPicker colorPicker|ColorSliders">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-        <!-- Hide the HSV/HSL/RGB color display section -->
-        <Style Selector="colorPicker|StandardColorPicker colorPicker|ColorDisplay">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-        <!-- Hide the Hex input row inside the picker -->
-        <Style Selector="colorPicker|StandardColorPicker colorPicker|HexColorTextBox">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-        <!-- Hide the HSV/HSL ComboBox inside the picker -->
-        <Style Selector="colorPicker|StandardColorPicker ComboBox">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-    </UserControl.Styles>
 
     <Grid ColumnDefinitions="Auto,*">
         <!-- Color Swatch Button -->
@@ -69,13 +46,18 @@
                     Padding="12"
                     BoxShadow="0 4 16 0 #22000000">
                 <StackPanel Spacing="12">
-                    <!-- PixiEditor Standard Color Picker - clip to hide the hex row at bottom -->
-                    <Border ClipToBounds="True" Height="150">
-                        <colorPicker:StandardColorPicker x:Name="ColorPickerControl"
-                                                         Width="220" Height="280"
-                                                         Margin="0,125,0,0"
-                                                         ColorChanged="OnColorPickerColorChanged" />
-                    </Border>
+                    <!-- Saturation/value spectrum with hue slider (Avalonia first-party color picker) -->
+                    <colorPrimitives:ColorSpectrum x:Name="ColorPickerControl"
+                                                   Width="220" Height="150"
+                                                   CornerRadius="4"
+                                                   Shape="Box"
+                                                   Components="SaturationValue"
+                                                   ColorChanged="OnColorPickerColorChanged" />
+                    <colorPrimitives:ColorSlider Width="220"
+                                                 ColorModel="Hsva"
+                                                 ColorComponent="Component1"
+                                                 IsRoundingEnabled="True"
+                                                 HsvColor="{Binding #ColorPickerControl.HsvColor, Mode=TwoWay}" />
 
                     <!-- Preview and Hex Input Row -->
                     <Grid ColumnDefinitions="Auto,*">

@@ -104,7 +104,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// <summary>
     /// Set true while the Create &amp; Send pipeline is in flight (publish to
     /// portal + send email). Hides the preview HTML and the footer so the
-    /// only thing visible inside the modal body is a centered spinner —
+    /// only thing visible inside the modal body is a centered spinner,
     /// removes ambiguity about whether the click registered.
     /// </summary>
     [ObservableProperty]
@@ -235,7 +235,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     /// <summary>
     /// Returns true if any data has been entered in the Create modal.
-    /// When opened from a rental, pre-filled data doesn't count — only user-editable fields do.
+    /// When opened from a rental, pre-filled data doesn't count, only user-editable fields do.
     /// </summary>
     public bool HasEnteredData =>
         IsFromExternalSource
@@ -735,7 +735,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             _ => rental.RateAmount * days * rental.Quantity
         };
 
-        // Replace the default line item with rental charge — unsubscribe the
+        // Replace the default line item with rental charge, unsubscribe the
         // ResetForm placeholder first so its PropertyChanged isn't leaked.
         foreach (var item in LineItems)
             item.PropertyChanged -= OnLineItemPropertyChanged;
@@ -796,7 +796,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Pre-select the customer
         SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == revenue.CustomerId);
 
-        // Replace the default line item with revenue line items — unsubscribe the
+        // Replace the default line item with revenue line items, unsubscribe the
         // ResetForm placeholder first so its PropertyChanged isn't leaked.
         foreach (var item in LineItems)
             item.PropertyChanged -= OnLineItemPropertyChanged;
@@ -911,7 +911,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         SelectedCurrency = CurrencyService.GetDisplayString(
             string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency);
 
-        // Populate line items — unsubscribe the ResetForm placeholder before clearing
+        // Populate line items, unsubscribe the ResetForm placeholder before clearing
         // so we don't leak its PropertyChanged subscription.
         foreach (var existing in LineItems)
             existing.PropertyChanged -= OnLineItemPropertyChanged;
@@ -1353,7 +1353,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
 
         // From here down: the user is committed to sending. Flip IsSending so
-        // the modal swaps the preview + footer for a centered spinner — the
+        // the modal swaps the preview + footer for a centered spinner. The
         // 1-2 second silent gap was confusing because nothing visibly happened
         // after the click.
         IsSending = true;
@@ -1376,7 +1376,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (customer == null) return;
 
         // The outer CreateAndSendInvoice already guards on SelectedTemplate
-        // being non-null, but the compiler can't see across method boundaries —
+        // being non-null, but the compiler can't see across method boundaries,
         // re-assert here so the SendInvoiceAsync call site doesn't warn.
         var selectedTemplate = SelectedTemplate;
         if (selectedTemplate == null) return;
@@ -1460,7 +1460,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
-        // Calculate invoice totals (Subtotal / TaxAmount / Total — these are
+        // Calculate invoice totals (Subtotal / TaxAmount / Total, these are
         // invoice-level math, not Payment-derived).
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
@@ -1772,7 +1772,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Compute and store invoice-level totals (Subtotal / TaxAmount /
         // Total). Payment-derived fields are set by InvoiceTotalsService
-        // below — see docs/Calculations.md §5.
+        // below, see docs/Calculations.md §5.
         invoice.Subtotal = Subtotal;
         invoice.TaxAmount = TaxAmount;
         invoice.Total = Total;
@@ -1923,7 +1923,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             ReferenceNumber = invoice.InvoiceNumber,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
-            // Currency fields — use EffectiveTotalUSD to avoid mixing currencies
+            // Currency fields: use EffectiveTotalUSD to avoid mixing currencies
             // (returns 0 for pending-conversion invoices, correct USD for others)
             OriginalCurrency = invoice.OriginalCurrency,
             TotalUSD = invoice.EffectiveTotalUSD,
@@ -1953,7 +1953,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             .Where(r => r.InvoiceId == invoice.Id)
             .ToList();
 
-        // Revenue IDs that came from the user (referenced by line items) — just unlink these
+        // Revenue IDs that came from the user (referenced by line items), just unlink these
         var userCreatedRevenueIds = invoice.LineItems
             .Where(li => !string.IsNullOrEmpty(li.RevenueRecordId))
             .Select(li => li.RevenueRecordId!)

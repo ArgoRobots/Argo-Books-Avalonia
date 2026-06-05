@@ -17,8 +17,7 @@
     <Panel Background="{DynamicResource OverlayBrush}">
         <!-- Centered welcome card -->
         <Border Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
+                BorderThickness="0"
                 CornerRadius="16"
                 Width="520"
                 HorizontalAlignment="Center"

@@ -42,13 +42,6 @@ public partial class AppTourViewModel : ViewModelBase
     [
         new TourStep
         {
-            Title = "Welcome to Argo Books".Translate(),
-            Description = "Let's take a quick tour to help you get started. This will only take a minute.".Translate(),
-            TargetArea = "center",
-            Icon = Icons.Dashboard
-        },
-        new TourStep
-        {
             Title = "Navigation Sidebar".Translate(),
             Description = "Use the sidebar to navigate between different sections of the app. You can collapse it by clicking the menu icon at the top.".Translate(),
             TargetArea = "sidebar",
@@ -70,8 +63,8 @@ public partial class AppTourViewModel : ViewModelBase
         },
         new TourStep
         {
-            Title = "You're All Set!".Translate(),
-            Description = "Check the Setup Checklist on your Dashboard to complete your first tasks. You can restart this tour anytime from the Help menu.".Translate(),
+            Title = "One last step".Translate(),
+            Description = "Head back to the Dashboard and follow the Setup Checklist to finish getting your books ready. You can restart this tour anytime from the Help menu.".Translate(),
             TargetArea = "center",
             Icon = Icons.Check
         }

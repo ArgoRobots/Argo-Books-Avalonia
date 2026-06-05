@@ -323,6 +323,9 @@
     <Style Selector="Button.icon-button PathIcon">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
+    <Style Selector="Button.icon-button:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
     <!-- Icon Button Danger Variant (red on hover) -->
     <Style Selector="Button.icon-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
@@ -532,6 +535,36 @@
     </Style>
     <Style Selector="Button.pagination-button:active">
         <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <!-- View Toggle Button (icon buttons that switch the table body between views, e.g. list/grid/calendar) -->
+    <Style Selector="Button.view-toggle-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.view-toggle-button /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="Button.view-toggle-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+    </Style>
+    <Style Selector="Button.view-toggle-button PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.view-toggle-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+    </Style>
+    <Style Selector="Button.view-toggle-button.selected PathIcon">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.view-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
     </Style>
 
 </Styles>

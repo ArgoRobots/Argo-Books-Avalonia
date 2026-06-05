@@ -193,13 +193,13 @@ public class PendingConversionService
                 }
 
                 if (rate <= 0)
-                    continue; // Still offline or rate unavailable — skip
+                    continue; // Still offline or rate unavailable, skip
 
                 // Find the transaction and apply the conversion
                 var transaction = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);
                 if (transaction == null)
                 {
-                    // Transaction was deleted — remove from queue
+                    // Transaction was deleted, remove from queue
                     processed.Add(entry);
                     continue;
                 }

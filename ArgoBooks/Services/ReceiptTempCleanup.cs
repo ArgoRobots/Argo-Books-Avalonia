@@ -41,13 +41,13 @@ public static class ReceiptTempCleanup
                     }
                     catch
                     {
-                        // File in use or already gone — skip it.
+                        // File in use or already gone, skip it.
                     }
                 }
             }
             catch
             {
-                // Directory enumeration failed — non-critical, skip this subdirectory.
+                // Directory enumeration failed, non-critical, skip this subdirectory.
             }
         }
     }

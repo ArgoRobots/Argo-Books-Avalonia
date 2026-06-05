@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Services;
 using ArgoBooks.Desktop.Services;
 using Avalonia;
 
@@ -11,6 +12,9 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Install crash handlers first so a failure anywhere in startup is captured.
+        CrashReporter.InstallHandlers();
+
         // Create the update service for desktop platforms
         App.UpdateService = new NetSparkleUpdateService();
 

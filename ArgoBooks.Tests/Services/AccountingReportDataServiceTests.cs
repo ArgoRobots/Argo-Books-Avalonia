@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -73,6 +74,46 @@ public class AccountingReportDataServiceTests
         var result = service.GetReportData(AccountingReportType.BalanceSheet);
 
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void GetReportData_BalanceSheet_WithInventory_AddsInventoryRow()
+    {
+        var data = new CompanyData();
+        // 100 units @ $5 via a single manual Add adjustment dated mid-period.
+        // No revenue/expense rows => Cash = 0 and AR = 0, so Total Current
+        // Assets equals the inventory value alone.
+        data.Inventory.Add(new InventoryItem { Id = "I1", InStock = 100, UnitCost = 5m });
+        data.StockAdjustments.Add(new StockAdjustment
+        {
+            InventoryItemId = "I1",
+            AdjustmentType = AdjustmentType.Add,
+            Quantity = 100,
+            PreviousStock = 0,
+            NewStock = 100,
+            Timestamp = new DateTime(2024, 6, 1)
+        });
+        var service = new AccountingReportDataService(data, CreateDefaultFilters());
+
+        var result = service.GetReportData(AccountingReportType.BalanceSheet);
+
+        var inventoryRow = result.Rows.Find(r => r.Label == "Inventory");
+        Assert.NotNull(inventoryRow);
+        var totalCurrentAssetsRow = result.Rows.Find(r => r.Label == "Total Current Assets");
+        Assert.NotNull(totalCurrentAssetsRow);
+        // Cash and AR are zero, so the subtotal must equal the inventory value.
+        Assert.Equal(inventoryRow!.Values[0], totalCurrentAssetsRow!.Values[0]);
+    }
+
+    [Fact]
+    public void GetReportData_BalanceSheet_NoInventory_OmitsInventoryRow()
+    {
+        var data = new CompanyData();
+        var service = new AccountingReportDataService(data, CreateDefaultFilters());
+
+        var result = service.GetReportData(AccountingReportType.BalanceSheet);
+
+        Assert.Null(result.Rows.Find(r => r.Label == "Inventory"));
     }
 
     #endregion

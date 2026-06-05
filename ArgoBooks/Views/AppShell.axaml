@@ -230,6 +230,7 @@
         <!-- Consumer modals (may open mid-level or entity modals on top) -->
         <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
         <modals:StockAdjustmentsModals DataContext="{Binding StockAdjustmentsModalsViewModel}" />
+        <modals:BankMatchingModals DataContext="{Binding BankMatchingModalsViewModel}" />
         <modals:ReceiptsModals DataContext="{Binding ReceiptsModalsViewModel}" />
         <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
         <modals:LostDamagedModals DataContext="{Binding LostDamagedModalsViewModel}" />

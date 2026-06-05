@@ -45,7 +45,7 @@
                 Padding="24,16"
                 HorizontalAlignment="Stretch"
                 Opacity="0.7">
-            <TextBlock Text="Empty row — add a widget or this row will be removed on save"
+            <TextBlock Text="Empty row, add a widget or this row will be removed on save"
                        FontSize="12"
                        Foreground="{DynamicResource TextSecondaryBrush}"
                        HorizontalAlignment="Center" />

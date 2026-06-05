@@ -108,14 +108,14 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         }
         else
         {
-            // No widget config saved yet — load from legacy GlobalSettings
+            // No widget config saved yet, load from legacy GlobalSettings
             LoadQuickActionsSettings();
         }
     }
 
     public override void LoadData()
     {
-        // Quick actions is a pure UI configuration widget — no data to load.
+        // Quick actions is a pure UI configuration widget, no data to load.
         // Config is applied via Initialize/ApplyConfig only.
     }
 

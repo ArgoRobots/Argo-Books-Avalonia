@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete, DrawnLabelVisual is not API-compatible
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;

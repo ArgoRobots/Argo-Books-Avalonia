@@ -66,7 +66,7 @@ internal static class LinuxSecretStorage
         }
         catch
         {
-            // Silently fail — user will need to enter password manually
+            // Silently fail, user will need to enter password manually
         }
     }
 

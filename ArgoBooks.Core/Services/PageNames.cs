@@ -14,6 +14,7 @@ public static class PageNames
     public const string Expenses = "Expenses";
     public const string Invoices = "Invoices";
     public const string Payments = "Payments";
+    public const string BankMatching = "BankMatching";
     public const string Products = "Products";
     public const string StockLevels = "StockLevels";
     public const string Locations = "Locations";

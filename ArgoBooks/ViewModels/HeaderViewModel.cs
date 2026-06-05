@@ -672,7 +672,7 @@ public partial class HeaderViewModel : ViewModelBase
         }
         catch (TaskCanceledException)
         {
-            // Superseded by a newer call — do nothing
+            // Superseded by a newer call, do nothing
         }
         catch (Exception ex)
         {

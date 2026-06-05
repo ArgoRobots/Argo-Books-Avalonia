@@ -412,8 +412,8 @@
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding SecondaryColor, Mode=TwoWay}" />
                                                 </Grid>
 
-                                                <!-- Accent Color -->
-                                                <Grid ColumnDefinitions="*,150">
+                                                <!-- Accent Color (hidden for templates that don't use an accent, e.g. Classic) -->
+                                                <Grid ColumnDefinitions="*,150" IsVisible="{Binding ShowAccentColorOption}">
                                                     <TextBlock Grid.Column="0" Text="{Binding AccentColorLabel}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                                                     <controls:ColorPickerInput Grid.Column="1" ColorValue="{Binding AccentColor, Mode=TwoWay}" />
                                                 </Grid>

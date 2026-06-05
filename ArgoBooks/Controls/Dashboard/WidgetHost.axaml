@@ -5,7 +5,7 @@
              x:DataType="vm:WidgetHostViewModel">
 
     <UserControl.Styles>
-        <!-- Edit mode indicator — adds accent border around the widget -->
+        <!-- Edit mode indicator, adds accent border around the widget -->
         <Style Selector="Border.editing">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="2" />
@@ -35,7 +35,7 @@
     </UserControl.Styles>
 
     <Panel IsVisible="{Binding WidgetViewModel.IsWidgetVisible}">
-        <!-- Widget content — each widget provides its own card styling -->
+        <!-- Widget content, each widget provides its own card styling -->
         <Border x:Name="WidgetContent"
                 Classes.editing="{Binding IsEditMode}" />
 

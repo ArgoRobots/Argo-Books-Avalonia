@@ -94,7 +94,7 @@ public static class PasswordValidator
 
         var score = 0;
 
-        // Length scoring (up to 55 points) — strong growth to 12 chars, then gradual
+        // Length scoring (up to 55 points): strong growth to 12 chars, then gradual
         var lengthPoints = password.Length <= 12
             ? password.Length * 3
             : 36 + (password.Length - 12) * 2;

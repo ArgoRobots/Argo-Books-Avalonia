@@ -357,7 +357,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         AvailableCategories.Add("All");
 
         var categories = companyData.Categories
-            .Where(c => c.ItemType == "Product")
             .Select(c => c.Name)
             .Distinct()
             .OrderBy(c => c);

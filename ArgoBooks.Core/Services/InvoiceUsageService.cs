@@ -90,7 +90,7 @@ public class InvoiceUsageService : IDisposable
                 };
             }
 
-            // Fall back to cached data only if it's still within the expiry window —
+            // Fall back to cached data only if it's still within the expiry window,
             // otherwise a stale cache from a prior month could permit sends past quota.
             var hasFreshCache = _cachedUsage != null && DateTime.UtcNow < _cacheExpiry;
             return new InvoiceUsageResult
@@ -105,7 +105,7 @@ public class InvoiceUsageService : IDisposable
         {
             _errorLogger?.LogError(ex, ErrorCategory.Api, "Invoice usage check failed");
 
-            // Network error — allow sending if cache is fresh and shows capacity.
+            // Network error, allow sending if cache is fresh and shows capacity.
             // Without the expiry check a stale cache could permit sends past the server-side quota.
             var hasFreshCache = _cachedUsage != null && DateTime.UtcNow < _cacheExpiry;
             return new InvoiceUsageResult

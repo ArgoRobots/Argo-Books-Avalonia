@@ -295,4 +295,109 @@ public class GeminiReceiptScannerServiceTests
     }
 
     #endregion
+
+    #region ShouldRunVerification Tests
+
+    private static ScannedLineItem Item(decimal totalPrice) => new() { TotalPrice = totalPrice };
+
+    private static ReceiptScanResult Result(
+        decimal? total,
+        double confidence,
+        decimal? tax = null,
+        decimal? discount = null,
+        params decimal[] itemTotals)
+        => new()
+        {
+            IsSuccess = true,
+            TotalAmount = total,
+            TaxAmount = tax,
+            Discount = discount,
+            Confidence = confidence,
+            LineItems = itemTotals.Select(Item).ToList()
+        };
+
+    [Fact]
+    public void ShouldRunVerification_BalancedLongReceipt_SkipsVerification()
+    {
+        // 20 items summing exactly to the total. The old heuristic verified any
+        // receipt with 15+ items; reconciliation lets this fast path skip it.
+        var items = Enumerable.Repeat(1.50m, 20).ToArray();
+        var result = Result(total: 30.00m, confidence: 0.95, itemTotals: items);
+
+        Assert.False(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_BalancedWithTaxAndDiscount_SkipsVerification()
+    {
+        // sum(items) 50 - discount 5 + tax 4 = 49 == total
+        var result = Result(total: 49.00m, confidence: 0.9, tax: 4.00m, discount: 5.00m,
+            itemTotals: [20.00m, 30.00m]);
+
+        Assert.False(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_MissingItemDiscrepancy_Verifies()
+    {
+        // Items sum to 27 but the receipt total is 30: a ~$3 item was missed.
+        var result = Result(total: 30.00m, confidence: 0.9, itemTotals: [12.00m, 15.00m]);
+
+        Assert.True(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_LowConfidence_VerifiesEvenWhenBalanced()
+    {
+        var result = Result(total: 30.00m, confidence: 0.7, itemTotals: [10.00m, 20.00m]);
+
+        Assert.True(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_NoTotal_LongReceipt_Verifies()
+    {
+        // No total to reconcile against: fall back to the size heuristic (15+ items).
+        var items = Enumerable.Repeat(1.00m, 15).ToArray();
+        var result = Result(total: null, confidence: 0.9, itemTotals: items);
+
+        Assert.True(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_NoTotal_ShortReceipt_SkipsVerification()
+    {
+        var result = Result(total: null, confidence: 0.9, itemTotals: [1.00m, 2.00m, 3.00m]);
+
+        Assert.False(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_WithinTolerance_SkipsVerification()
+    {
+        // total 100 -> tolerance = max(0.05, 0.50) = 0.50; off by 0.40, still balances.
+        var result = Result(total: 100.00m, confidence: 0.9, itemTotals: [100.40m]);
+
+        Assert.False(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_JustOutsideTolerance_Verifies()
+    {
+        // total 100 -> tolerance 0.50; off by 0.60, does not balance.
+        var result = Result(total: 100.00m, confidence: 0.9, itemTotals: [100.60m]);
+
+        Assert.True(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    [Fact]
+    public void ShouldRunVerification_SmallReceipt_UsesFiveCentFloor()
+    {
+        // total 8 -> 0.5% is 0.04, so the 0.05 floor applies. Off by 0.06 -> verify.
+        var result = Result(total: 8.00m, confidence: 0.9, itemTotals: [8.06m]);
+
+        Assert.True(GeminiReceiptScannerService.ShouldRunVerification(result));
+    }
+
+    #endregion
 }

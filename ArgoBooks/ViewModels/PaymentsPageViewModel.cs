@@ -156,7 +156,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                     await portalService.ConfirmSyncAsync(processedPortalIds);
                 }
 
-                // Also save when only existing rows were backfilled — without
+                // Also save when only existing rows were backfilled, without
                 // this the in-memory ProcessingFee update is lost on restart.
                 if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
                 {
@@ -554,7 +554,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Received this month, net of refunds in the same window — same
+        // Received this month, net of refunds in the same window, same
         // cash-basis logic the dashboard uses.
         var monthlyReceivedUSD = _allPayments
             .Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed")
@@ -562,7 +562,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var monthlyRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(_allPayments, startOfMonth, now);
         ReceivedThisMonth = CurrencyService.FormatFromUSD(monthlyReceivedUSD - monthlyRefundsUSD, now);
 
-        // Total transactions — counts only the user-facing rows (refund records
+        // Total transactions: counts only the user-facing rows (refund records
         // are collapsed into their parent so they don't double-count here).
         TotalTransactions = _allPayments.Count(p => !p.IsRefund);
 
@@ -620,7 +620,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private void FilterPayments()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        // Hide refund Payment rows from the list — they're collapsed into the
+        // Hide refund Payment rows from the list, they're collapsed into the
         // original payment's row (status badge + net amount). The refund record
         // itself stays in CompanyData so audit trail is intact.
         // Backstop on negative amount too: any negative-amount Payment is a
@@ -717,7 +717,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             {
                 Id = payment.Id,
                 InvoiceId = payment.InvoiceId,
-                InvoiceDisplay = string.IsNullOrEmpty(payment.InvoiceId) ? "-" : payment.InvoiceId,
+                InvoiceDisplay = !string.IsNullOrEmpty(payment.InvoiceId) ? payment.InvoiceId
+                    : !string.IsNullOrEmpty(payment.RevenueId) ? payment.RevenueId
+                    : "-",
                 CustomerId = payment.CustomerId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 Date = payment.Date,
@@ -864,7 +866,7 @@ public partial class PaymentDisplayItem : ObservableObject
     private string _invoiceDisplay = string.Empty;
 
     /// <summary>
-    /// True when this payment has a linked invoice — drives the Invoice
+    /// True when this payment has a linked invoice, drives the Invoice
     /// column's hyperlink visibility. Manual payments without an invoice
     /// fall back to a "-" placeholder.
     /// </summary>
@@ -935,6 +937,19 @@ public class InvoiceOption
     public string? Id { get; set; }
     public string Display { get; set; } = string.Empty;
     public decimal AmountDue { get; set; }
+
+    public override string ToString() => Display;
+}
+
+/// <summary>
+/// Revenue option for the payment modal dropdown (direct revenue not tied to an invoice).
+/// </summary>
+public class RevenueOption
+{
+    public string? Id { get; set; }
+    public string Display { get; set; } = string.Empty;
+    public string? CustomerId { get; set; }
+    public decimal Total { get; set; }
 
     public override string ToString() => Display;
 }

@@ -41,7 +41,7 @@
         <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" />
 
         <!-- Color Picker -->
-        <PackageReference Include="PixiEditor.ColorPicker.AvaloniaUI" />
+        <PackageReference Include="Avalonia.Controls.ColorPicker" />
 
         <!-- Pinned to patch vulnerability in transitive 10.0.0 -->
         <PackageReference Include="System.Security.Cryptography.Xml" />

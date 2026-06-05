@@ -23,7 +23,7 @@ public static class UpgradePromptHelper
         {
             Title = "Invoice Limit Reached".Translate(),
             Message = string.Format(
-                "You've sent all {0} invoices included in your free plan this month.\n\nUpgrade to Premium for unlimited invoices, online payment collection, and priority support — all for just $10 CAD/month.".Translate(),
+                "You've sent all {0} invoices included in your free plan this month.\n\nUpgrade to Premium for unlimited invoices, online payment collection, and priority support, all for just $10 CAD/month.".Translate(),
                 limit),
             PrimaryButtonText = "Upgrade Now".Translate(),
             CancelButtonText = "Maybe Later".Translate(),

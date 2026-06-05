@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
@@ -111,6 +112,18 @@
                     <controls:DateRangeSelector Grid.Column="3" VerticalAlignment="Top" />
                 </Grid>
 
+                <!-- Source Survey Banner (shown to users who skipped the tutorial).
+                     No dismiss button: the user must answer. IsVisible is bound so the
+                     banner only takes up layout space while shown, letting the content
+                     below return to its normal position once it goes away. -->
+                <controls:InfoBanner ShowBanner="{Binding ShowSourceSurveyBanner}"
+                                     IsVisible="{Binding ShowSourceSurveyBanner}"
+                                     Message="{loc:Loc 'Quick question: where did you hear about Argo Books?'}"
+                                     ActionText="{loc:Loc 'Answer'}"
+                                     ActionCommand="{Binding OpenSourceSurveyCommand}"
+                                     IconData="{x:Static icons:Icons.Info}"
+                                     BannerBackground="{DynamicResource InfoBrush}" />
+
                 <!-- Edit Mode Toolbar -->
                 <Border Classes="card"
                         Padding="12,8"
@@ -168,7 +181,7 @@
                         ShowDateRangeMessage="True" />
                 </Border>
 
-                <!-- Empty dashboard message — normal mode -->
+                <!-- Empty dashboard message, normal mode -->
                 <Border x:Name="EmptyDashboardMessage"
                         IsVisible="False"
                         Background="{DynamicResource SurfaceBrush}"
@@ -207,7 +220,7 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Empty dashboard message — edit mode -->
+                <!-- Empty dashboard message, edit mode -->
                 <Border x:Name="EmptyDashboardEditMessage"
                         IsVisible="False"
                         Background="{DynamicResource SurfaceBrush}"

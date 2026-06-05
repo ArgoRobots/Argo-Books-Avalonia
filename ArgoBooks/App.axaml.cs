@@ -87,6 +87,17 @@ public partial class App : Application
     public static ITelemetryManager? TelemetryManager { get; private set; }
 
     /// <summary>
+    /// Gets the reporter used by the post-onboarding source survey overlay.
+    /// </summary>
+    public static SourceSurveyReporter? SourceSurveyReporter { get; private set; }
+
+    /// <summary>
+    /// Gets the service that fetches the source survey's answer options from the
+    /// website, so new options appear without an app release.
+    /// </summary>
+    public static SourceSurveyOptionsService? SourceSurveyOptionsService { get; private set; }
+
+    /// <summary>
     /// Gets the shared undo/redo manager instance.
     /// </summary>
     public static UndoRedoManager UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
@@ -170,6 +181,8 @@ public partial class App : Application
     /// Gets the stock adjustments modals view model for shared access.
     /// </summary>
     public static StockAdjustmentsModalsViewModel? StockAdjustmentsModalsViewModel => _appShellViewModel?.StockAdjustmentsModalsViewModel;
+
+    public static BankMatchingModalsViewModel? BankMatchingModalsViewModel => _appShellViewModel?.BankMatchingModalsViewModel;
 
     /// <summary>
     /// Gets the purchase orders modals view model for shared access.
@@ -291,7 +304,7 @@ public partial class App : Application
 
     /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.
-    /// Safe to call from multiple places — concurrent calls are deduplicated.
+    /// Safe to call from multiple places, concurrent calls are deduplicated.
     /// </summary>
     internal static async Task AutoSyncPortalPaymentsAsync()
     {
@@ -355,7 +368,7 @@ public partial class App : Application
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
 
                     // Send "Payment Received" notification if enabled. Skipped
-                    // for the backfill-only path (no new payments) — there's
+                    // for the backfill-only path (no new payments), there's
                     // nothing the user just received to be notified about.
                     if (newPayments.Count > 0 && companyData.Settings.PaymentPortal.NotifyOnPayment)
                     {
@@ -673,6 +686,7 @@ public partial class App : Application
     private static ExpensesPageViewModel? _expensesPageViewModel;
     private static InvoicesPageViewModel? _invoicesPageViewModel;
     private static PaymentsPageViewModel? _paymentsPageViewModel;
+    private static BankMatchingPageViewModel? _bankMatchingPageViewModel;
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
     private static LocationsPageViewModel? _locationsPageViewModel;
@@ -701,6 +715,7 @@ public partial class App : Application
         _expensesPageViewModel = null;
         _invoicesPageViewModel = null;
         _paymentsPageViewModel = null;
+        _bankMatchingPageViewModel = null;
         _productsPageViewModel = null;
         _stockLevelsPageViewModel = null;
         _locationsPageViewModel = null;
@@ -785,6 +800,10 @@ public partial class App : Application
             var errorLogger = new ErrorLogger();
             ErrorLogger = errorLogger;
 
+            // Let crash reports captured by the global handlers include recent log
+            // entries as breadcrumbs.
+            CrashReporter.SetBreadcrumbSource(errorLogger);
+
             // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
@@ -813,6 +832,16 @@ public partial class App : Application
 
             // Initialize refund service (uses the same shared HttpClient)
             RefundService = new RefundService(httpClient);
+
+            // Source survey reporter shares the long-lived telemetry HttpClient. The
+            // survey may fire long after first run (after the user finishes the setup
+            // checklist), so we keep the reporter alive rather than scoping it to a
+            // one-shot task like FirstRunReporter.
+            SourceSurveyReporter = new SourceSurveyReporter(httpClient, appVersion, errorLogger);
+
+            // Fetches the survey's answer options from the website (shares the same
+            // long-lived HttpClient). Falls back to a bundled default list offline.
+            SourceSurveyOptionsService = new SourceSurveyOptionsService(httpClient, errorLogger);
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -882,6 +911,9 @@ public partial class App : Application
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
 
+            // Wire up the post-onboarding source survey trigger
+            WireSourceSurveyEvents();
+
             // Sync HasUnsavedChanges with undo/redo state (both MainWindow and Header)
             UndoRedoManager.StateChanged += (_, _) =>
             {
@@ -894,8 +926,22 @@ public partial class App : Application
             // subscribed to it (Dashboard, Analytics, Invoices, etc.) refresh
             // their derived data. Individual undo callbacks only call
             // companyData.MarkAsModified() which doesn't fire the event.
-            UndoRedoManager.ActionUndone += (_, _) => CompanyManager?.NotifyDataChanged();
-            UndoRedoManager.ActionRedone += (_, _) => CompanyManager?.NotifyDataChanged();
+            //
+            // NotifyDataChanged fires CompanyDataChanged, whose handler force-sets
+            // HasUnsavedChanges = true. That's wrong after an undo/redo: the undo manager
+            // is the authority on the saved state, so re-sync the flag from IsAtSavedState
+            // afterwards. Otherwise undoing back to the saved state leaves the asterisk on.
+            void RefreshDerivedDataAfterUndoRedo()
+            {
+                CompanyManager?.NotifyDataChanged();
+                var hasChanges = !UndoRedoManager.IsAtSavedState;
+                if (_mainWindowViewModel != null)
+                    _mainWindowViewModel.HasUnsavedChanges = hasChanges;
+                if (_appShellViewModel != null)
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = hasChanges;
+            }
+            UndoRedoManager.ActionUndone += (_, _) => RefreshDerivedDataAfterUndoRedo();
+            UndoRedoManager.ActionRedone += (_, _) => RefreshDerivedDataAfterUndoRedo();
 
             // Wire up file menu events
             WireFileMenuEvents(desktop);
@@ -979,7 +1025,7 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
-            // Load settings synchronously — sidebar state, theme, and language depend on them.
+            // Load settings synchronously: sidebar state, theme, and language depend on them.
             // Direct sync read avoids the thread-pool marshaling cost of sync-over-async;
             // the settings file is small (<10KB). Recent companies are loaded asynchronously
             // in InitializeAsync after the window is shown.
@@ -1065,6 +1111,45 @@ public partial class App : Application
                 await TelemetryManager.InitializeAsync();
             }
 
+            // Deliver anything a previous run left behind because it didn't close
+            // cleanly: crash reports written by the global handlers, and telemetry
+            // events whose on-close upload never ran (force-quit / crash). Both are
+            // best-effort and run off the UI thread so launch isn't blocked.
+            try
+            {
+                var flushVersion = Services.AppInfo.VersionNumber;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var crashHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+                        await CrashReporter.UploadPendingAsync(crashHttpClient, flushVersion);
+                    }
+                    catch
+                    {
+                        // Best-effort; never disrupt launch.
+                    }
+
+                    try
+                    {
+                        if (TelemetryManager != null)
+                        {
+                            await TelemetryManager.UploadPendingDataAsync();
+                        }
+                    }
+                    catch
+                    {
+                        // Best-effort; the next clean close will retry.
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning(
+                    $"Failed to start startup flush: {ex.Message}",
+                    context: "App.InitializeAsync");
+            }
+
             // Report first-run install for referral funnel attribution. Fire-and-forget
             // so app startup isn't blocked on network I/O. The reporter writes a marker
             // after a successful POST so subsequent launches are no-ops. The HttpClient
@@ -1091,7 +1176,7 @@ public partial class App : Application
             }
 
             // Remove stale cached receipt preview/render files from temp (fire-and-forget).
-            _ = Services.ReceiptTempCleanup.CleanOldFilesAsync();
+            _ = ReceiptTempCleanup.CleanOldFilesAsync();
 
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
@@ -1183,11 +1268,11 @@ public partial class App : Application
             switch (result.Status)
             {
                 case LicenseValidationStatus.Valid:
-                    // License is valid — nothing to do
+                    // License is valid, nothing to do
                     return;
 
                 case LicenseValidationStatus.NetworkError:
-                    // No internet or server unreachable — allow offline use
+                    // No internet or server unreachable, allow offline use
                     return;
 
                 case LicenseValidationStatus.InvalidKey:
@@ -1804,7 +1889,7 @@ public partial class App : Application
                 return;
             }
 
-            // Start timing after user approval — excludes UI wait time
+            // Start timing after user approval, excludes UI wait time
             var importStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             // Create snapshot for undo
@@ -2130,8 +2215,131 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Creates a JSON snapshot of the company data collections for undo/redo.
+    /// Imports a bank statement via the smart importer (parse only, no commit) and shows it on the
+    /// Bank Matching page. Triggered by the page's Import button.
     /// </summary>
+    private static async Task PerformBankImportAsync()
+    {
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+        if (CompanyManager?.CompanyData is not { } companyData)
+        {
+            await ShowErrorMessageBoxAsync("Error".Translate(), "No company is currently open.".Translate());
+            return;
+        }
+
+        var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Bank Statement".Translate(),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Spreadsheets") { Patterns = ["*.xlsx", "*.csv"] }
+            ]
+        });
+        if (file.Count == 0) return;
+
+        var filePath = file[0].Path.LocalPath;
+        var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+
+        _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate());
+        await Task.Yield();
+
+        try
+        {
+            var parser = new BankStatementImportService(ErrorLogger);
+
+            // Try local column detection first (instant, no AI). Fall back to AI column mapping
+            // only when the headers aren't recognized locally.
+            var lines = isCsv
+                ? await parser.ParseCsvAsync(filePath)
+                : await parser.ParseExcelAsync(filePath);
+
+            if (lines.Count == 0)
+                lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+
+            _mainWindowViewModel?.HideLoading();
+
+            if (lines.Count == 0)
+            {
+                await ShowInfoMessageBoxAsync("Info".Translate(),
+                    "No transactions were found. Make sure the file has Date, Description and Amount (or Debit/Credit) columns.".Translate());
+                return;
+            }
+
+            // Snapshot before mutation so the import can be undone in one step.
+            var snapshot = CreateCompanyDataSnapshot(companyData);
+
+            var session = new Core.Models.BankMatching.BankImportSession
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ImportedAt = DateTime.UtcNow,
+                SourceFileName = Path.GetFileName(filePath),
+                Lines = lines
+            };
+            companyData.BankImportSessions.Add(session);
+            companyData.MarkAsModified();
+
+            var importedSnapshot = CreateCompanyDataSnapshot(companyData);
+            UndoRedoManager.RecordAction(new DelegateAction(
+                "Import bank statement".Translate(),
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); }
+            ));
+
+            CompanyManager.MarkAsChanged();
+
+            _bankMatchingPageViewModel?.Reload();
+            NavigationService?.NavigateTo(PageNames.BankMatching);
+
+            await ShowInfoMessageBoxAsync(
+                "Bank Matching".Translate(),
+                "Imported {0} transactions from {1}.".TranslateFormat(lines.Count, Path.GetFileName(filePath)));
+        }
+        catch (OperationCanceledException)
+        {
+            _mainWindowViewModel?.HideLoading();
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel?.HideLoading();
+            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Bank statement import failed");
+            await ShowErrorMessageBoxAsync("Import Failed".Translate(), "Failed to import bank statement:\n\n{0}".TranslateFormat(ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// Backup parser: uses the smart importer's AI column mapping when local header detection
+    /// couldn't recognize the statement's columns. Consumes one AI import credit on success.
+    /// Returns an empty list if AI isn't available or finds nothing.
+    /// </summary>
+    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> TryAiParseBankStatementAsync(
+        string filePath, bool isCsv, BankStatementImportService parser)
+    {
+        var gemini = new GeminiService(ErrorLogger, TelemetryManager);
+        if (!gemini.IsConfigured) return [];
+
+        using var usage = new AiImportUsageService(LicenseService, ErrorLogger);
+        var usageCheck = await usage.CheckUsageAsync();
+        if (!usageCheck.CanImport) return [];
+
+        var analysisService = new SpreadsheetAnalysisService(gemini, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company.Country);
+        var analysis = isCsv
+            ? await analysisService.AnalyzeCsvAsync(filePath)
+            : await analysisService.AnalyzeAsync(filePath);
+
+        var sheet = analysis?.Sheets.FirstOrDefault();
+        if (sheet == null) return [];
+
+        var lines = isCsv
+            ? await parser.ParseCsvWithAnalysisAsync(filePath, sheet)
+            : await parser.ParseExcelWithAnalysisAsync(filePath, sheet);
+
+        if (lines.Count > 0)
+            await usage.IncrementUsageAsync();
+
+        return lines;
+    }
+
     private static string CreateCompanyDataSnapshot(CompanyData data)
     {
         var snapshot = new
@@ -2159,7 +2367,8 @@ public partial class App : Application
             data.LostDamaged,
             data.Receipts,
             data.ReportTemplates,
-            data.EventLog
+            data.EventLog,
+            data.BankImportSessions
         };
         return System.Text.Json.JsonSerializer.Serialize(snapshot);
     }
@@ -2239,6 +2448,7 @@ public partial class App : Application
         RestoreList(data.Receipts, "Receipts");
         RestoreList(data.ReportTemplates, "ReportTemplates");
         RestoreList(data.EventLog, "EventLog");
+        RestoreList(data.BankImportSessions, "BankImportSessions");
     }
 
     /// <summary>
@@ -2469,7 +2679,7 @@ public partial class App : Application
 
         try
         {
-            // Suppress the default CompanySaved feedback — we show our own with forceSaved
+            // Suppress the default CompanySaved feedback, we show our own with forceSaved
             _suppressSavedFeedback = true;
             await CompanyManager!.SaveCompanyAsAsync(filePath);
 
@@ -2652,7 +2862,7 @@ public partial class App : Application
     {
         // FileService.SaveCompanyAsync writes to <path>.tmp then File.Move(tmp, path,
         // overwrite: true). On Windows that overwrite-move emits a Deleted event for
-        // the destination even though the rename itself is atomic — by the time we
+        // the destination even though the rename itself is atomic, by the time we
         // observe it, the file is already back. Treating it as a real deletion would
         // strip the entry from settings.json on every save. Skip if the file exists.
         if (File.Exists(e.FullPath))
@@ -2869,8 +3079,6 @@ public partial class App : Application
             if (_productsPageViewModel == null)
             {
                 _productsPageViewModel = new ProductsPageViewModel();
-                // Wire up upgrade request to open upgrade modal (only once)
-                _productsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
             }
             // Update plan status each time (may have changed)
             _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
@@ -2919,6 +3127,15 @@ public partial class App : Application
             return new LocationsPage { DataContext = _locationsPageViewModel };
         });
         navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = _stockAdjustmentsPageViewModel ??= new StockAdjustmentsPageViewModel() });
+        navigationService.RegisterPage("BankMatching", _ =>
+        {
+            if (_bankMatchingPageViewModel == null)
+            {
+                _bankMatchingPageViewModel = new BankMatchingPageViewModel();
+                _bankMatchingPageViewModel.ImportRequested += async (_, _) => await PerformBankImportAsync();
+            }
+            return new BankMatchingPage { DataContext = _bankMatchingPageViewModel };
+        });
         navigationService.RegisterPage("PurchaseOrders", param =>
         {
             _purchaseOrdersPageViewModel ??= new PurchaseOrdersPageViewModel();

@@ -17,6 +17,13 @@ public partial class VerifyEmailModalViewModel : ObservableObject
     /// <summary>Set by the coordinator so the in-modal X button can close it.</summary>
     public Action? RequestClose { get; set; }
 
+    /// <summary>
+    /// Invoked once when the code is confirmed. The set-initial-email flow
+    /// uses this to mirror the now-verified email into local company data;
+    /// until then nothing is persisted, so closing the modal sets nothing.
+    /// </summary>
+    public Action? OnVerified { get; set; }
+
     [RelayCommand]
     private void Close() => RequestClose?.Invoke();
 
@@ -70,7 +77,7 @@ public partial class VerifyEmailModalViewModel : ObservableObject
                 ErrorMessage = result.ErrorCode switch
                 {
                     "WRONG_CODE" => "Wrong code. Try again.",
-                    "EXPIRED" => "Code expired — request a new one.",
+                    "EXPIRED" => "Code expired. Request a new one.",
                     "NO_ACTIVE_CODE" => "No active verification code. Request one to start over.",
                     "TOO_MANY_ATTEMPTS" => "Too many wrong attempts. Request a new code.",
                     _ => result.Message ?? "Could not verify the code.",
@@ -79,6 +86,7 @@ public partial class VerifyEmailModalViewModel : ObservableObject
             }
             IsVerified = true;
             StatusMessage = "Email verified.";
+            OnVerified?.Invoke();
         }
         finally { IsBusy = false; }
     }

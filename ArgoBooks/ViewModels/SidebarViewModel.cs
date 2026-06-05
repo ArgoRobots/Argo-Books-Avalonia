@@ -79,7 +79,6 @@ public partial class SidebarViewModel : ViewModelBase
 
     #region Premium Feature Items
 
-    private SidebarItemModel? _insightsItem;
     private SidebarItemModel? _invoicesItem;
     private SidebarItemModel? _paymentsItem;
 
@@ -153,9 +152,7 @@ public partial class SidebarViewModel : ViewModelBase
         // Main Section (mockup: Dashboard, Analytics, Insights, Reports)
         MainItems.Add(CreateItem("Dashboard", "Dashboard", Icons.Dashboard));
         MainItems.Add(CreateItem("Analytics", "Analytics", Icons.Analytics));
-        _insightsItem = CreateItem("Insights", "Insights", Icons.Insights);
-        _insightsItem.BadgeText = HasPremium ? null : "PRO";
-        MainItems.Add(_insightsItem);
+        MainItems.Add(CreateItem("Insights", "Insights", Icons.Insights));
         MainItems.Add(CreateItem("Reports", "Reports", Icons.Reports));
 
         // Transactions Section (mockup: Expenses, Revenue, Invoices, Payments)
@@ -167,6 +164,7 @@ public partial class SidebarViewModel : ViewModelBase
         _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
         _paymentsItem.IsVisible = true; // Available on free tier (online payments via portal)
         TransactionItems.Add(_paymentsItem);
+        TransactionItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Bank));
 
         // Rentals Section (mockup: Rental Inventory, Rental Records)
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory", Icons.RentalInventory));
@@ -242,16 +240,6 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnCompanyNameChanged(string? value)
     {
         CompanyInitial = string.IsNullOrEmpty(value) ? "A" : value[0].ToString().ToUpper();
-    }
-
-    /// <summary>
-    /// Updates premium feature visibility when premium status changes.
-    /// </summary>
-    partial void OnHasPremiumChanged(bool value)
-    {
-        if (_insightsItem != null)
-            _insightsItem.BadgeText = value ? null : "PRO";
-        // Payments page is always visible (free tier can receive online payments)
     }
 
     /// <summary>

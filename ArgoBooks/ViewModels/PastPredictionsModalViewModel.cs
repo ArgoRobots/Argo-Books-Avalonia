@@ -1,4 +1,4 @@
-#pragma warning disable CS0618 // LabelVisual is obsolete — DrawnLabelVisual is not API-compatible
+#pragma warning disable CS0618 // LabelVisual is obsolete. DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Insights;

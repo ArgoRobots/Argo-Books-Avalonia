@@ -39,7 +39,7 @@ public class ConnectivityService : IConnectivityService
                     return true;
                 }
 
-                // Some servers/proxies reject HEAD — try GET as fallback
+                // Some servers/proxies reject HEAD, try GET as fallback
                 if ((int)response.StatusCode >= 400)
                 {
                     using var getRequest = new HttpRequestMessage(HttpMethod.Get, url);
@@ -57,7 +57,7 @@ public class ConnectivityService : IConnectivityService
             }
             catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Caller cancelled — stop immediately
+                // Caller cancelled, stop immediately
                 return false;
             }
             catch (TaskCanceledException)

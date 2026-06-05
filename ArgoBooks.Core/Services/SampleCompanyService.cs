@@ -294,7 +294,7 @@ public class SampleCompanyService
 
     /// <summary>
     /// Links finalized invoices to existing revenue records by matching customer + closest date.
-    /// Does NOT create new revenue records — the Revenue sheet is the single source of truth.
+    /// Does NOT create new revenue records: the Revenue sheet is the single source of truth.
     /// </summary>
     private static void LinkInvoicesToRevenues(CompanyData data)
     {
@@ -325,7 +325,7 @@ public class SampleCompanyService
                 matchingRevenue.InvoiceId = invoice.Id;
                 matchedRevenueIds.Add(matchingRevenue.Id);
             }
-            // If no match found, skip — don't create duplicate revenues
+            // If no match found, skip, don't create duplicate revenues
         }
     }
 
@@ -446,7 +446,7 @@ public class SampleCompanyService
         {
             data.Rentals.Add(rental);
 
-            // Stock is now tracked via the linked InventoryItem — no local quantity fields on RentalItem
+            // Stock is now tracked via the linked InventoryItem, no local quantity fields on RentalItem
         }
 
         // Update the ID counter

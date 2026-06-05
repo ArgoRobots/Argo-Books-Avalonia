@@ -58,22 +58,20 @@
                         <!-- Company Name and Default Currency (side by side) -->
                         <Grid ColumnDefinitions="*,16,*">
                             <StackPanel Grid.Column="0" Spacing="6">
-                                <TextBlock FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Company Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Company Name'}" />
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" />
+                                </StackPanel>
                                 <TextBox Classes="form-input"
                                          Text="{Binding CompanyName, Mode=TwoWay}"
                                          PlaceholderText="{loc:Loc 'Enter company name'}"
                                          MaxLength="100" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="6">
-                                <TextBlock FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Default Currency'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Default Currency'}" />
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" />
+                                </StackPanel>
                                 <ComboBox ItemsSource="{Binding Currencies}"
                                          SelectedItem="{Binding SelectedCurrency}"
                                          Classes="form-combobox"
@@ -136,11 +134,10 @@
 
                             <!-- Country -->
                             <StackPanel Grid.Row="4" Grid.Column="0" Spacing="6">
-                                <TextBlock FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Country}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Country}" />
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" />
+                                </StackPanel>
                                 <controls:CountryInput x:Name="CountryInput" SelectedCountryName="{Binding Country, Mode=TwoWay}" />
                             </StackPanel>
 

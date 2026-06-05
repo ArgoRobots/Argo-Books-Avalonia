@@ -54,9 +54,10 @@
                            TextDecorations="Underline" />
             </Button>
 
-            <!-- Dismiss Button -->
+            <!-- Dismiss Button (only shown when a DismissCommand is provided) -->
             <Button Grid.Column="3"
                     Command="{Binding DismissCommand, RelativeSource={RelativeSource AncestorType=controls:InfoBanner}}"
+                    IsVisible="{Binding DismissCommand, RelativeSource={RelativeSource AncestorType=controls:InfoBanner}, Converter={x:Static ObjectConverters.IsNotNull}}"
                     ToolTip.Tip="{loc:Loc 'Dismiss'}"
                     Background="{Binding DismissBackground, RelativeSource={RelativeSource AncestorType=controls:InfoBanner}}"
                     BorderThickness="0"

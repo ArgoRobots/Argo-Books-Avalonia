@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Portal;
 
@@ -41,6 +42,8 @@ public class CompanySettings
     public SecuritySettings Security { get; set; } = new();
     [JsonPropertyName("invoiceEmail")]
     public InvoiceEmailSettings InvoiceEmail { get; set; } = new();
+    [JsonPropertyName("purchaseOrderEmail")]
+    public PurchaseOrderEmailSettings PurchaseOrderEmail { get; set; } = new();
     [JsonPropertyName("paymentPortal")]
     public PortalSettings PaymentPortal { get; set; } = new();
 }

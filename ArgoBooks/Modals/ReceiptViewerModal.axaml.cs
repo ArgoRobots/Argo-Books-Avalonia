@@ -95,17 +95,17 @@ public partial class ReceiptViewerModal : UserControl
 
         if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsFullscreen))
         {
-            // Modal is already visible — layout is valid, fit directly
+            // Modal is already visible, layout is valid, fit directly
             ZoomToFit();
         }
         else if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsOpen) && vm.IsOpen)
         {
-            // Modal just opened — layout hasn't completed yet, need to defer
+            // Modal just opened, layout hasn't completed yet, need to defer
             _ = FitToWindowOnOpenAsync();
         }
         else if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsLoadingPages) && !vm.IsLoadingPages && vm.IsOpen)
         {
-            // Pages are rendered asynchronously after open — re-fit once they finish loading.
+            // Pages are rendered asynchronously after open, re-fit once they finish loading.
             _ = FitToWindowOnOpenAsync();
         }
     }
@@ -392,7 +392,7 @@ public partial class ReceiptViewerModal : UserControl
     {
         if (_imageScrollViewer == null) return;
 
-        // Don't start panning when the press lands on a scroll bar — let it scroll normally.
+        // Don't start panning when the press lands on a scroll bar, let it scroll normally.
         // This tunnel handler runs before the scroll bar sees the event, so without this guard
         // dragging the scroll bar thumb would pan the receipt instead.
         if (IsOnScrollBar(e.Source)) return;

@@ -161,7 +161,7 @@ public class InsightsService(
             .Where(p => p.Date >= previousPeriod.StartDate && p.Date <= previousPeriod.EndDate)
             .ToList();
 
-        // Revenue trend — display the gross figure the user recognises from
+        // Revenue trend: display the gross figure the user recognises from
         // the Revenue stat card (Total, not pre-tax).
         var currentRevenue = currentSales.Sum(s => s.EffectiveTotalUSD);
         var previousRevenue = previousSales.Sum(s => s.EffectiveTotalUSD);
@@ -188,7 +188,7 @@ public class InsightsService(
             }
         }
 
-        // Expense trend — display gross (Total), matching the Expenses stat card.
+        // Expense trend: display gross (Total), matching the Expenses stat card.
         var currentExpenses = currentPurchases.Sum(p => p.EffectiveTotalUSD);
         var previousExpenses = previousPurchases.Sum(p => p.EffectiveTotalUSD);
 
@@ -631,7 +631,7 @@ public class InsightsService(
         // paid-only so the forecasted figure matches the Revenue stat card.
         // Expenses use gross (Total) to match the Expenses stat card. Note:
         // forecast.ForecastedProfit (computed as forecastedRevenue −
-        // forecastedExpenses below) is an approximation of net profit —
+        // forecastedExpenses below) is an approximation of net profit,
         // strictly Net Profit uses pre-tax revenue per Calculations.md §2,
         // but exposing two parallel revenue forecasts adds little signal.
         var monthlyRevenue = GetMonthlyTotals(
@@ -712,7 +712,7 @@ public class InsightsService(
             }
         }
 
-        // Calculate profit forecast (point and bounds — conservative profit pairs low revenue with high expenses)
+        // Calculate profit forecast (point and bounds, conservative profit pairs low revenue with high expenses)
         forecast.ForecastedProfit = forecast.ForecastedRevenue - forecast.ForecastedExpenses;
         forecast.ForecastedProfitLower = forecast.ForecastedRevenueLower - forecast.ForecastedExpensesUpper;
         forecast.ForecastedProfitUpper = forecast.ForecastedRevenueUpper - forecast.ForecastedExpensesLower;
@@ -1048,7 +1048,7 @@ public class InsightsService(
 
     private InsightItem? AnalyzeSupplierOptimization(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        // Analyze purchase patterns by supplier — gross (Total) to match the
+        // Analyze purchase patterns by supplier, gross (Total) to match the
         // Expenses stat card and Expenses Over Time chart.
         var supplierPurchases = companyData.Expenses
             .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)

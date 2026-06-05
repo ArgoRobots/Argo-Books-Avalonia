@@ -606,7 +606,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         if (refundedAmount > 0)
         {
             // Treat the revenue as fully refunded once the refund covers Total
-            // (within a cent — float drift safety). Otherwise it's partial.
+            // (within a cent, float drift safety). Otherwise it's partial.
             return refundedAmount + 0.01m >= revenue.Total ? "Refunded" : "Partially Refunded";
         }
         if (!RevenueAggregator.IsCollected(revenue)) return "Unpaid";
@@ -777,7 +777,7 @@ public partial class RevenueDisplayItem : ObservableObject
 
     /// <summary>
     /// Whether the Total column should render in the success/paid color.
-    /// False when a fully-refunded revenue has netted to zero — at that
+    /// False when a fully-refunded revenue has netted to zero, at that
     /// point the row is "paid" historically but there's nothing left to
     /// celebrate, and the green styling reads as a balance still owed.
     /// </summary>
@@ -871,7 +871,7 @@ public partial class RevenueDisplayItem : ObservableObject
     public bool IsLostDamaged => StatusDisplay == "Lost / Damaged";
     public bool IsRefunded => StatusDisplay == "Refunded" || StatusDisplay == "Partially Refunded";
 
-    // Hide Lost/Returned controls for refunded rows — refund is its own
+    // Hide Lost/Returned controls for refunded rows, refund is its own
     // terminal state and shouldn't be intermixed with returns/loss tracking.
     public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged && !IsRefunded;
     public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged && !IsRefunded;
@@ -898,7 +898,7 @@ public partial class RevenueDisplayItem : ObservableObject
     public bool CanGenerateInvoice => !Paid && !HasInvoiceId;
 
     // Receipt-column glyphs: invoice-backed revenues will never have a paper
-    // receipt (the invoice IS the receipt) — show a neutral dash instead of
+    // receipt (the invoice IS the receipt). Show a neutral dash instead of
     // the "missing" X to avoid implying something is wrong.
     public bool ShowReceiptDash => !HasReceipt && HasInvoiceId;
     public bool ShowReceiptX => !HasReceipt && !HasInvoiceId;

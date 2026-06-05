@@ -115,7 +115,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
     private bool _shouldRemoveAvatarOnSave;
 
     /// <summary>
-    /// Snapshot of whether the supplier had an avatar when the edit modal was opened —
+    /// Snapshot of whether the supplier had an avatar when the edit modal was opened,
     /// used for change detection.
     /// </summary>
     private bool _originalHasAvatar;
@@ -152,7 +152,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
     partial void OnModalWebsiteChanged(string value)
     {
-        // Auto-fetch the supplier's /favicon.ico — but only when the user has not
+        // Auto-fetch the supplier's /favicon.ico, but only when the user has not
         // already picked or kept their own image. The check on HasModalAvatar handles
         // every "image already there" case (existing avatar in edit mode, prior favicon
         // fetch in this session, manual file pick).
@@ -301,7 +301,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
     /// </summary>
     private void TriggerFaviconFetch(string? websiteUrl)
     {
-        // Cancel and dispose the previous CTS — keystroke-driven calls would otherwise
+        // Cancel and dispose the previous CTS, keystroke-driven calls would otherwise
         // leak a CancellationTokenSource (and its underlying timer) per keystroke.
         var previous = _faviconCts;
         if (previous != null)
@@ -322,7 +322,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         {
             try
             {
-                // Debounce — give the user time to keep typing before we hit the network.
+                // Debounce: give the user time to keep typing before we hit the network.
                 await Task.Delay(500, cts.Token).ConfigureAwait(false);
                 if (cts.IsCancellationRequested) return;
 
@@ -343,7 +343,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     if (cts.IsCancellationRequested) return;
-                    // Re-check the gating conditions on the UI thread — the user may
+                    // Re-check the gating conditions on the UI thread, the user may
                     // have picked a file or removed-with-empty-website while we were
                     // waiting on the network.
                     if (HasModalAvatar || _pendingAvatarSourcePath != null)
@@ -524,12 +524,12 @@ public partial class SupplierModalsViewModel : ViewModelBase
         ModalEmail = supplier.Email;
         ModalPhone = supplier.Phone;
 
-        // Load the existing avatar BEFORE setting ModalWebsite — that way the
+        // Load the existing avatar BEFORE setting ModalWebsite, that way the
         // OnModalWebsiteChanged hook sees HasModalAvatar=true and skips the favicon
         // fetch instead of racing to overwrite the existing avatar.
         // _originalHasAvatar tracks the persisted state for change detection;
         // HasModalAvatar drives the *visual* and is only set when the bitmap actually
-        // decoded — otherwise the UI would show a blank Image instead of falling back
+        // decoded, otherwise the UI would show a blank Image instead of falling back
         // to initials. (If decode fails and the supplier has a website, the favicon
         // hook will then auto-fetch a replacement, which is graceful recovery.)
         _pendingAvatarSourcePath = null;
@@ -673,7 +673,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
         if (!hasFieldChanges)
         {
-            // Only the avatar changed — record a dedicated undo entry so the user
+            // Only the avatar changed, record a dedicated undo entry so the user
             // can revert just the image change.
             var supplierForAvatarUndo = _editingSupplier;
             App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -816,7 +816,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
             // file alongside the supplier record.
             var deletedAvatarBytes = App.CompanyManager?.ReadSupplierAvatarBytes(deletedSupplier);
 
-            // Clean up the avatar file before removing the supplier — avoids bloat and
+            // Clean up the avatar file before removing the supplier, avoids bloat and
             // retention of deleted-supplier images in the .argo archive on next save.
             if (App.CompanyManager != null && !string.IsNullOrEmpty(deletedSupplier.AvatarFileName))
             {

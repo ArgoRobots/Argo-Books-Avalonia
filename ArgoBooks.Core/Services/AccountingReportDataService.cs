@@ -161,7 +161,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else
             {
-                // No line items — use the USD-converted pre-tax amount
+                // No line items, use the USD-converted pre-tax amount
                 var categoryName = "Uncategorized";
                 result.TryAdd(categoryName, 0);
                 result[categoryName] += txn.EffectiveSubtotalUSD;
@@ -307,7 +307,10 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             Subtitle = GetCurrencySubtitle(),
             ColumnHeaders = [],
             ColumnWidthRatios = [0.65, 0.35],
-            Footnote = "Cash balance estimated from recorded transactions."
+            Footnote = "Cash balance estimated from recorded transactions. "
+                + "Inventory valued at each item's current unit cost (cost "
+                + "history is not tracked) applied to stock levels "
+                + "reconstructed as of the report date."
         };
 
         if (companyData == null)
@@ -341,7 +344,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         && i.Status != InvoiceStatus.Draft)
             .Sum(i => i.EffectiveBalanceUSD);
 
-        var totalCurrentAssets = cash + accountsReceivable;
+        // Inventory valued at current unit cost, using stock levels
+        // reconstructed as of the report end date. See docs/Calculations.md §10.
+        var inventoryValue = InventoryValuationService.TotalValueAsOf(
+            companyData, filters.EndDate ?? DateTime.Today);
+
+        var totalCurrentAssets = cash + accountsReceivable + inventoryValue;
         var totalAssets = totalCurrentAssets;
 
         // Accounts Payable = purchase orders not received and not cancelled (USD-converted)
@@ -397,6 +405,17 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             IndentLevel = 1,
             RowType = AccountingRowType.DataRow
         });
+
+        if (companyData.Inventory.Count > 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Inventory",
+                Values = [FormatCurrency(inventoryValue)],
+                IndentLevel = 1,
+                RowType = AccountingRowType.DataRow
+            });
+        }
 
         data.Rows.Add(new AccountingRow
         {
@@ -648,7 +667,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Build a list of all ledger entries grouped by category
         var entries = new Dictionary<string, List<LedgerEntry>>();
 
-        // Revenue transactions (credits) — all amounts in USD
+        // Revenue transactions (credits), all amounts in USD
         foreach (var rev in companyData.Revenues.Where(r => IsInDateRange(r.Date)))
         {
             if (rev.LineItems.Count > 0)
@@ -685,7 +704,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
         }
 
-        // Expense transactions (debits) — all amounts in USD
+        // Expense transactions (debits), all amounts in USD
         foreach (var exp in companyData.Expenses.Where(e => IsInDateRange(e.Date)))
         {
             if (exp.LineItems.Count > 0)

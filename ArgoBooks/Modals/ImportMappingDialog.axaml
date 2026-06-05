@@ -70,7 +70,7 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            TextWrapping="Wrap">
                                     <TextBlock.Text>
-                                        <MultiBinding StringFormat="Analyzed {0} — detected {1} sheet(s) with {2:N0} total rows">
+                                        <MultiBinding StringFormat="Analyzed {0}, detected {1} sheet(s) with {2:N0} total rows">
                                             <Binding Path="FileName" />
                                             <Binding Path="TotalSheets" />
                                             <Binding Path="TotalRows" />
@@ -243,7 +243,7 @@
                                                             <TextBlock FontSize="12"
                                                                        Foreground="{DynamicResource TextTertiaryBrush}">
                                                                 <TextBlock.Text>
-                                                                    <MultiBinding StringFormat="{}{0} — {1} columns mapped">
+                                                                    <MultiBinding StringFormat="{}{0}: {1} columns mapped">
                                                                         <Binding Path="RowCountDisplay" />
                                                                         <Binding Path="MappedColumnCount" />
                                                                     </MultiBinding>
