@@ -163,24 +163,28 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             long receivedBytes = 0;
             int lastReportedProgress = -1;
 
-            await using var contentStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write,
-                FileShare.None, bufferSize: 81920, useAsync: true);
-
-            var buffer = new byte[81920];
-            int bytesRead;
-            while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
+            // Block-scoped so the file handle is fully closed before signature
+            // verification reopens the file for reading (FileShare.None would
+            // otherwise block it with a sharing violation).
+            await using (var contentStream = await response.Content.ReadAsStreamAsync())
+            await using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write,
+                             FileShare.None, bufferSize: 81920, useAsync: true))
             {
-                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
-                receivedBytes += bytesRead;
-
-                if (totalBytes > 0)
+                var buffer = new byte[81920];
+                int bytesRead;
+                while ((bytesRead = await contentStream.ReadAsync(buffer)) > 0)
                 {
-                    var progress = (int)(receivedBytes * 100 / totalBytes);
-                    if (progress != lastReportedProgress)
+                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead));
+                    receivedBytes += bytesRead;
+
+                    if (totalBytes > 0)
                     {
-                        lastReportedProgress = progress;
-                        DownloadProgressChanged?.Invoke(this, progress);
+                        var progress = (int)(receivedBytes * 100 / totalBytes);
+                        if (progress != lastReportedProgress)
+                        {
+                            lastReportedProgress = progress;
+                            DownloadProgressChanged?.Invoke(this, progress);
+                        }
                     }
                 }
             }
