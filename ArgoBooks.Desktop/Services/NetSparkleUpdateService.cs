@@ -20,6 +20,13 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     private static readonly string AppCastUrl = $"{ApiConfig.BaseUrl}/avalonia-update.xml";
 
     /// <summary>
+    /// Ed25519 public key used to verify the signature of downloaded updates.
+    /// The matching private key lives only on the release machine and is used to
+    /// sign each release file (see docs/Publishing.md, "Sign the release files").
+    /// </summary>
+    private const string UpdatePublicKey = "Of6Zmn6HdF02vdJCJB6nutS4ceAPmIpC7fOAXZrb4no=";
+
+    /// <summary>
     /// Download timeout for the update package.
     /// </summary>
     private static readonly TimeSpan DownloadTimeout = TimeSpan.FromMinutes(10);
@@ -57,10 +64,12 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     {
         _errorLogger = errorLogger;
 
-        // TODO: Switch to SecurityMode.Strict once Ed25519 signing is configured in the appcast.
-        // NetSparkle's own verifier is in Unsafe mode, but DownloadUpdateAsync enforces
-        // signature presence manually as a stopgap (see signature check below).
-        _sparkle = new SparkleUpdater(AppCastUrl, new Ed25519Checker(SecurityMode.Unsafe))
+        // OnlyVerifySoftwareDownloads verifies the Ed25519 signature of downloaded
+        // installers/AppImages against UpdatePublicKey, without also requiring a
+        // sidecar signature for the hand-edited appcast XML itself. DownloadUpdateAsync
+        // additionally rejects updates whose appcast entry carries no signature at all.
+        _sparkle = new SparkleUpdater(AppCastUrl,
+            new Ed25519Checker(SecurityMode.OnlyVerifySoftwareDownloads, UpdatePublicKey))
         {
             UIFactory = null, // We use our own UI
             RelaunchAfterUpdate = false
@@ -194,10 +203,11 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             }
             else
             {
-                // SecurityMode.Strict requires a signature - reject unsigned updates
+                // All published updates are signed, so a missing signature means a
+                // misconfigured appcast or a tampered feed. Reject the download.
                 try { File.Delete(filePath); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                 throw new CryptographicException(
-                    "Update has no signature. Unsigned updates are rejected in strict security mode.");
+                    "Update has no signature. Unsigned updates are rejected.");
             }
 
             // On Linux, make the downloaded file executable if it's an AppImage

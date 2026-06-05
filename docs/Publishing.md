@@ -106,6 +106,42 @@ For Intel Macs, use `-r osx-x64` instead.
 
 The macOS `.dmg` installer is created using [create-dmg](https://github.com/create-dmg/create-dmg).
 
+## Sign the Release Files
+
+The app verifies an Ed25519 signature on every update it downloads, and refuses to install files that are unsigned or don't match. Every file referenced by the appcast must therefore be signed with our private key.
+
+### One-time setup (already done)
+
+- The signing key pair lives at `C:\Users\evand\AppData\Local\netsparkle`. **Back this folder up** (e.g. in a password manager). If the private key is lost, shipped versions of the app can't verify future updates; if it leaks, someone who also compromised the website could forge updates. It must never be committed to a repo.
+- The matching public key is embedded in the app at `NetSparkleUpdateService.UpdatePublicKey`.
+- The signing tool (already installed): `dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator`
+
+### Each release
+
+1. After producing the **final** `.exe` and `.AppImage`, generate a signature for each file:
+
+   ```powershell
+   netsparkle-generate-appcast --generate-signature "C:\path\to\Argo Books Installer V.2.0.8.exe"
+   netsparkle-generate-appcast --generate-signature "C:\path\to\ArgoBooks-2.0.8-linux-x64.AppImage"
+   ```
+
+   Each command prints a base64 signature string.
+
+2. In the website repo, update `avalonia-update.xml`:
+   - The version numbers
+   - On each `<enclosure>`, add/update `sparkle:edSignature="<that file's signature>"`
+   - Set `length` to the file's size in bytes
+
+3. Push the website repo so the appcast deploys, and upload the matching `.exe`/`.AppImage` via FileZilla.
+
+**Important:** the signature covers the file's exact bytes. If a file is rebuilt for any reason, re-sign it and update the appcast. Signing the wrong build is equivalent to not signing at all: users' updates will be rejected.
+
+To double-check a signature before publishing:
+
+```powershell
+netsparkle-generate-appcast --verify "C:\path\to\file" --signature "<signature>"
+```
+
 ## Before Going Live
 
 After building the installers/AppImage (steps above) but before uploading them to the website to make the release live:
