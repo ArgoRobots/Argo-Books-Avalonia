@@ -14,7 +14,10 @@
         <vm:CheckForUpdateModalViewModel />
     </Design.DataContext>
 
-    <controls:ModalOverlay IsOpen="{Binding IsOpen}">
+    <!-- Backdrop clicks are ignored while downloading so an accidental click
+         doesn't hide the progress view mid-download. -->
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           CloseOnBackdropClick="{Binding !IsDownloading}">
         <controls:ModalOverlay.ModalContent>
             <!-- Modal Container -->
             <Border Background="{DynamicResource SurfaceBrush}"
