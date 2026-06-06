@@ -809,7 +809,7 @@ public partial class App : Application
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             _fileService = new FileService(compressionService, footerService, encryptionService);
-            SettingsService = new GlobalSettingsService();
+            SettingsService = new GlobalSettingsService(errorLogger);
             LicenseService = new LicenseService(encryptionService, SettingsService, errorLogger);
             CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
 

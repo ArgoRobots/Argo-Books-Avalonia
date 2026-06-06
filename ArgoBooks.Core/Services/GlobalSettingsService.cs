@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
@@ -12,13 +13,16 @@ public class GlobalSettingsService : IGlobalSettingsService
     private const string CompanySettingsFileName = "settings.json";
 
     private readonly IPlatformService _platformService;
+    private readonly IErrorLogger? _errorLogger;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the GlobalSettingsService.
     /// </summary>
-    public GlobalSettingsService() : this(PlatformServiceFactory.GetPlatformService())
+    /// <param name="errorLogger">Optional logger for best-effort save failures.</param>
+    public GlobalSettingsService(IErrorLogger? errorLogger = null)
+        : this(PlatformServiceFactory.GetPlatformService(), errorLogger)
     {
     }
 
@@ -26,9 +30,11 @@ public class GlobalSettingsService : IGlobalSettingsService
     /// Initializes a new instance of the GlobalSettingsService with a specific platform service.
     /// </summary>
     /// <param name="platformService">Platform service for file paths.</param>
-    public GlobalSettingsService(IPlatformService platformService)
+    /// <param name="errorLogger">Optional logger for best-effort save failures.</param>
+    public GlobalSettingsService(IPlatformService platformService, IErrorLogger? errorLogger = null)
     {
         _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
+        _errorLogger = errorLogger;
 
         _jsonOptions = new JsonSerializerOptions
         {
@@ -139,16 +145,16 @@ public class GlobalSettingsService : IGlobalSettingsService
                     try { File.Delete(tempPath); } catch { /* best effort */ }
                 }
 
-                // A cancelled save should still propagate; everything else must not.
-                if (ex is OperationCanceledException)
+                // Only transient filesystem interference is treated as best-effort. Settings
+                // persistence has many fire-and-forget callers (theme/sidebar/column toggles),
+                // so an AV/indexer lock or a quarantined temp on first run must not surface as
+                // an unobserved task exception that crashes startup. Anything else, including
+                // cancellation and serialization bugs, propagates so it can be seen and fixed.
+                if (ex is not IOException and not UnauthorizedAccessException)
                     throw;
 
-                // Settings persistence is best-effort and has many fire-and-forget callers
-                // (theme/sidebar/column toggles). A transient first-run file error, e.g.
-                // antivirus locking or removing the temp before it can be moved, must not
-                // surface as an unobserved task exception that crashes startup. Log and move on;
-                // the next save will reattempt with the latest in-memory settings.
-                System.Diagnostics.Trace.TraceWarning($"Failed to save global settings: {ex.Message}");
+                // The next save reattempts with the latest in-memory settings.
+                _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save global settings");
             }
         }
         finally
