@@ -252,6 +252,87 @@
         <Setter Property="Foreground" Value="White" />
     </Style>
 
+    <!-- Filled variant buttons used by ArgoButton's Variant property (Warning/Success/Danger).
+         These mirror Button.primary so a colored variant doesn't fall through to the default
+         gray button theme (which previously made message-box primary buttons render unstyled). -->
+    <Style Selector="Button.warning">
+        <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.warning:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource WarningDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning:pointerover">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.warning:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="Button.warning PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="Button.success">
+        <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.success:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SuccessDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success:pointerover">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="Button.success PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource DangerDarkBrush}" />
+        <Setter Property="TextBlock.Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.danger:pointerover">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.danger:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="Button.danger PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
     <!-- Text Button (no background, text only) -->
     <Style Selector="Button.text-button">
         <Setter Property="Background" Value="Transparent" />

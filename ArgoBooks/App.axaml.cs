@@ -2679,27 +2679,47 @@ public partial class App : Application
 
         var filePath = file.Path.LocalPath;
 
-        try
+        while (true)
         {
-            // Suppress the default CompanySaved feedback, we show our own with forceSaved
-            _suppressSavedFeedback = true;
-            await CompanyManager!.SaveCompanyAsAsync(filePath);
+            try
+            {
+                // Suppress the default CompanySaved feedback, we show our own with forceSaved
+                _suppressSavedFeedback = true;
+                await CompanyManager!.SaveCompanyAsAsync(filePath);
 
-            // Refresh UI with the (possibly updated) company name
-            var newName = CompanyManager.CurrentCompanyName ?? "Company";
-            RefreshCompanyUi(newName);
+                // Refresh UI with the (possibly updated) company name
+                var newName = CompanyManager.CurrentCompanyName ?? "Company";
+                RefreshCompanyUi(newName);
 
-            _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
+                _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
 
-            await LoadRecentCompaniesAsync();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _suppressSavedFeedback = false;
-            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
-            await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
-            return false;
+                await LoadRecentCompaniesAsync();
+                return true;
+            }
+            catch (Exception ex) when (FileAccessHelper.IsLikelySecurityBlock(ex))
+            {
+                _suppressSavedFeedback = false;
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Save As blocked by security software");
+                switch (await ShowSaveBlockedDialogAsync(filePath))
+                {
+                    case SaveBlockedChoice.Retry:
+                        continue;
+                    case SaveBlockedChoice.SaveElsewhere:
+                        var newFile = await ShowSaveFileDialogAsync(desktop, suggestedName);
+                        if (newFile == null) return false;
+                        filePath = newFile.Path.LocalPath;
+                        continue;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _suppressSavedFeedback = false;
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
+                return false;
+            }
         }
     }
 
