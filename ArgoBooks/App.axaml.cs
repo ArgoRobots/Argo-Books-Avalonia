@@ -809,7 +809,7 @@ public partial class App : Application
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             _fileService = new FileService(compressionService, footerService, encryptionService);
-            SettingsService = new GlobalSettingsService();
+            SettingsService = new GlobalSettingsService(errorLogger);
             LicenseService = new LicenseService(encryptionService, SettingsService, errorLogger);
             CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
 
@@ -980,7 +980,9 @@ public partial class App : Application
 
                     try
                     {
-                        await CompanyManager.SaveCompanyAsync();
+                        var saved = await SaveCompanyWithSecurityGuidanceAsync();
+                        if (!saved)
+                            _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                     }
                     catch (Exception ex)
                     {
@@ -2677,27 +2679,47 @@ public partial class App : Application
 
         var filePath = file.Path.LocalPath;
 
-        try
+        while (true)
         {
-            // Suppress the default CompanySaved feedback, we show our own with forceSaved
-            _suppressSavedFeedback = true;
-            await CompanyManager!.SaveCompanyAsAsync(filePath);
+            try
+            {
+                // Suppress the default CompanySaved feedback, we show our own with forceSaved
+                _suppressSavedFeedback = true;
+                await CompanyManager!.SaveCompanyAsAsync(filePath);
 
-            // Refresh UI with the (possibly updated) company name
-            var newName = CompanyManager.CurrentCompanyName ?? "Company";
-            RefreshCompanyUi(newName);
+                // Refresh UI with the (possibly updated) company name
+                var newName = CompanyManager.CurrentCompanyName ?? "Company";
+                RefreshCompanyUi(newName);
 
-            _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
+                _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
 
-            await LoadRecentCompaniesAsync();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _suppressSavedFeedback = false;
-            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
-            await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
-            return false;
+                await LoadRecentCompaniesAsync();
+                return true;
+            }
+            catch (Exception ex) when (FileAccessHelper.IsLikelySecurityBlock(ex))
+            {
+                _suppressSavedFeedback = false;
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Save As blocked by security software");
+                switch (await ShowSaveBlockedDialogAsync(filePath))
+                {
+                    case SaveBlockedChoice.Retry:
+                        continue;
+                    case SaveBlockedChoice.SaveElsewhere:
+                        var newFile = await ShowSaveFileDialogAsync(desktop, suggestedName);
+                        if (newFile == null) return false;
+                        filePath = newFile.Path.LocalPath;
+                        continue;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _suppressSavedFeedback = false;
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
+                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
+                return false;
+            }
         }
     }
 
@@ -2711,6 +2733,82 @@ public partial class App : Application
             return false;
 
         return await SaveCompanyAsDialogAsync(desktop);
+    }
+
+    private enum SaveBlockedChoice { Retry, SaveElsewhere, Cancel }
+
+    /// <summary>
+    /// Saves the open company, and if the save is blocked by antivirus / Windows
+    /// ransomware protection (or a file lock), shows a clear message offering Retry,
+    /// Save to a different folder, or Cancel, instead of a raw "access denied".
+    /// Non-security failures propagate to the caller's existing handling.
+    /// </summary>
+    /// <returns>True if the company was saved, false if the user cancelled.</returns>
+    public static async Task<bool> SaveCompanyWithSecurityGuidanceAsync()
+    {
+        if (CompanyManager == null)
+            return false;
+
+        while (true)
+        {
+            try
+            {
+                await CompanyManager.SaveCompanyAsync();
+                return true;
+            }
+            catch (Exception ex) when (FileAccessHelper.IsLikelySecurityBlock(ex))
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Company save blocked by security software");
+                switch (await ShowSaveBlockedDialogAsync(CompanyManager.CurrentFilePath))
+                {
+                    case SaveBlockedChoice.Retry:
+                        continue;
+                    case SaveBlockedChoice.SaveElsewhere:
+                        return await SaveCompanyAsFromWindowAsync();
+                    default:
+                        return false;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Shows the "save blocked by security software" dialog and maps the button choice.
+    /// </summary>
+    private static async Task<SaveBlockedChoice> ShowSaveBlockedDialogAsync(string? targetPath)
+    {
+        if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is MainWindow mainWindow
+            && mainWindow.MessageBoxService is { } messageBoxService)
+        {
+            var folder = string.IsNullOrEmpty(targetPath)
+                ? "the selected folder".Translate()
+                : (Path.GetDirectoryName(targetPath) ?? targetPath);
+
+            var message = ("Your antivirus or Windows ransomware protection may have blocked saving to:\n\n{0}\n\n" +
+                           "You can retry, save to a different folder, or allow Argo Books in your security software " +
+                           "(for example: Windows Security → Virus & threat protection → Ransomware protection → Allow an app).")
+                .TranslateFormat(folder);
+
+            var result = await messageBoxService.ShowAsync(new MessageBoxOptions
+            {
+                Title = "Couldn't save your company file".Translate(),
+                Message = message,
+                Type = MessageBoxType.Warning,
+                Buttons = MessageBoxButtons.YesNoCancel,
+                PrimaryButtonText = "Retry".Translate(),
+                SecondaryButtonText = "Save to a different folder…".Translate()
+            });
+
+            return result switch
+            {
+                MessageBoxResult.Yes => SaveBlockedChoice.Retry,
+                MessageBoxResult.No => SaveBlockedChoice.SaveElsewhere,
+                _ => SaveBlockedChoice.Cancel
+            };
+        }
+
+        return SaveBlockedChoice.Cancel;
     }
 
     /// <summary>

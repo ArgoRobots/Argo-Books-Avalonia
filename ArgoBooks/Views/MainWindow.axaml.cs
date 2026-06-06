@@ -219,7 +219,8 @@ public partial class MainWindow : Window
                                 }
                                 else
                                 {
-                                    await App.CompanyManager.SaveCompanyAsync();
+                                    var saved = await App.SaveCompanyWithSecurityGuidanceAsync();
+                                    if (!saved) return; // User cancelled the blocked-save dialog, don't close
                                 }
                             }
                             await EndTelemetryAndCloseAsync();

@@ -485,56 +485,80 @@ public partial class App
 
             var filePath = file.Path.LocalPath;
 
-            _mainWindowViewModel?.ShowLoading("Creating company...".Translate());
-            try
+            var companyInfo = new CompanyInfo
             {
-                var companyInfo = new CompanyInfo
-                {
-                    Name = args.CompanyName,
-                    BusinessType = args.BusinessType,
-                    Industry = args.Industry,
-                    Phone = args.PhoneNumber,
-                    Email = args.Email,
-                    Country = args.Country,
-                    City = args.City,
-                    ProvinceState = args.ProvinceState,
-                    Address = args.Address
-                };
+                Name = args.CompanyName,
+                BusinessType = args.BusinessType,
+                Industry = args.Industry,
+                Phone = args.PhoneNumber,
+                Email = args.Email,
+                Country = args.Country,
+                City = args.City,
+                ProvinceState = args.ProvinceState,
+                Address = args.Address
+            };
 
-                await CompanyManager!.CreateCompanyAsync(
-                    filePath,
-                    args.CompanyName,
-                    args.Password,
-                    companyInfo);
-
-                // Apply default currency if specified
-                if (!string.IsNullOrEmpty(args.DefaultCurrency))
-                {
-                    CompanyManager.CompanyData!.Settings.Localization.Currency = args.DefaultCurrency;
-                }
-
-                // Apply logo if one was selected
-                if (!string.IsNullOrEmpty(args.LogoPath))
-                {
-                    await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
-
-                    // Refresh sidebar/UI with the newly set logo
-                    var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
-                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
-                    _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
-                        args.CompanyName, filePath, logo);
-                }
-
-                _suppressSavedFeedback = true;
-                await CompanyManager.SaveCompanyAsync();
-
-                await LoadRecentCompaniesAsync();
-            }
-            catch (Exception ex)
+            // Retry loop so a save blocked by security software (antivirus / ransomware
+            // protection) can offer Retry / Save to a different folder instead of failing.
+            while (true)
             {
-                _mainWindowViewModel?.HideLoading();
-                ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
-                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message));
+                _mainWindowViewModel?.ShowLoading("Creating company...".Translate());
+                try
+                {
+                    await CompanyManager!.CreateCompanyAsync(
+                        filePath,
+                        args.CompanyName,
+                        args.Password,
+                        companyInfo);
+
+                    // Apply default currency if specified
+                    if (!string.IsNullOrEmpty(args.DefaultCurrency))
+                    {
+                        CompanyManager.CompanyData!.Settings.Localization.Currency = args.DefaultCurrency;
+                    }
+
+                    // Apply logo if one was selected
+                    if (!string.IsNullOrEmpty(args.LogoPath))
+                    {
+                        await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
+
+                        // Refresh sidebar/UI with the newly set logo
+                        var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
+                        _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+                        _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
+                            args.CompanyName, filePath, logo);
+                    }
+
+                    _suppressSavedFeedback = true;
+                    await CompanyManager.SaveCompanyAsync();
+
+                    await LoadRecentCompaniesAsync();
+                    return;
+                }
+                catch (Exception ex) when (FileAccessHelper.IsLikelySecurityBlock(ex))
+                {
+                    _mainWindowViewModel?.HideLoading();
+                    ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Company create blocked by security software");
+                    switch (await ShowSaveBlockedDialogAsync(filePath))
+                    {
+                        case SaveBlockedChoice.Retry:
+                            continue;
+                        case SaveBlockedChoice.SaveElsewhere:
+                            var newFile = await ShowSaveFileDialogAsync(desktop, args.CompanyName);
+                            if (newFile == null) return;
+                            filePath = newFile.Path.LocalPath;
+                            continue;
+                        default:
+                            return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _mainWindowViewModel?.HideLoading();
+                    ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
+                    await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message));
+                    return;
+                }
             }
         };
 

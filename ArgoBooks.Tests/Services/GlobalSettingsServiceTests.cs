@@ -137,6 +137,18 @@ public class GlobalSettingsServiceTests : IDisposable
         Assert.True(loaded.Welcome.EulaAccepted);
     }
 
+    [Fact]
+    public async Task SaveGlobalSettingsAsync_WhenCancelled_Propagates()
+    {
+        // The best-effort save handler swallows transient filesystem errors, but a
+        // cancellation must still surface rather than being silently swallowed.
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => _settingsService.SaveGlobalSettingsAsync(cts.Token));
+    }
+
     #endregion
 
     #region AddRecentCompany Tests

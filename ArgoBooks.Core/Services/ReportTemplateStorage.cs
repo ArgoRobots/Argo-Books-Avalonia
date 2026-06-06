@@ -230,7 +230,18 @@ public class ReportTemplateStorage
                 var newJson = JsonSerializer.Serialize(templateData, JsonOptions);
                 var tempPath = newPath + ".tmp";
                 await File.WriteAllTextAsync(tempPath, newJson);
-                File.Move(tempPath, newPath);
+                try
+                {
+                    await AtomicFile.ReplaceAsync(tempPath, newPath, overwrite: false);
+                }
+                catch
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        try { File.Delete(tempPath); } catch { /* best effort */ }
+                    }
+                    throw;
+                }
                 File.Delete(oldPath);
 
                 return true;
