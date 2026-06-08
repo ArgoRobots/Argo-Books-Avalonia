@@ -146,7 +146,7 @@
                                            Foreground="#1E293B" />
                                 <TextBlock Text="{loc:Loc 'Create a new company below to get started'}"
                                            FontSize="13"
-                                           Foreground="#64748B" />
+                                           Foreground="#1E293B" />
                             </StackPanel>
                         </StackPanel>
 
