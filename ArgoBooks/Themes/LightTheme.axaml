@@ -24,16 +24,18 @@
     <Color x:Key="BorderHoverColor">#868E96</Color>
 
     <!-- Text Colors (from mockup) -->
+    <!-- Secondary/Tertiary darkened to near-black for readability in light theme.
+         Disabled/placeholder stay gray since those are functional muted states. -->
     <Color x:Key="TextPrimaryColor">#212529</Color>
-    <Color x:Key="TextSecondaryColor">#6C757D</Color>
-    <Color x:Key="TextTertiaryColor">#ADB5BD</Color>
+    <Color x:Key="TextSecondaryColor">#212529</Color>
+    <Color x:Key="TextTertiaryColor">#212529</Color>
     <Color x:Key="TextDisabledColor">#CED4DA</Color>
     <Color x:Key="TextInverseColor">#FFFFFF</Color>
 
     <!-- Sidebar Colors (light theme: light background with dark text) -->
     <Color x:Key="SidebarBackgroundColor">#F8F9FA</Color>
     <Color x:Key="SidebarTextColor">#212529</Color>
-    <Color x:Key="SidebarTextMutedColor">#6C757D</Color>
+    <Color x:Key="SidebarTextMutedColor">#212529</Color>
     <Color x:Key="SidebarHoverColor">#E9ECEF</Color>
     <Color x:Key="SidebarActiveColor">#0075FF</Color>
     <Color x:Key="SidebarBorderColor">#E1E5EB</Color>
