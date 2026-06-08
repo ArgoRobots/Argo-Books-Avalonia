@@ -879,6 +879,22 @@ public partial class App : Application
                 TutorialService.Instance.DismissCompletionGuidance();
             };
 
+            // Chart text (axis labels, titles, legends) is drawn by LiveCharts with
+            // baked-in SkiaSharp paints. Page view models recolor their charts on
+            // ThemeChanged, but LiveCharts does not repaint an already-rendered chart
+            // when only the paint colors change, so the text keeps the old theme's
+            // color until the chart control is recreated. Rebuild the current page
+            // (the same thing navigating away and back does) so charts render fresh
+            // with the new colors. Only the Dashboard and Analytics pages host live
+            // charts, so leave every other page alone. Posted so it runs after the
+            // page view models' own ThemeChanged handlers have updated their colors.
+            ThemeService.Instance.ThemeChanged += (_, _) =>
+            {
+                var page = NavigationService.CurrentPageName;
+                if (page is PageNames.Dashboard or PageNames.Analytics)
+                    Avalonia.Threading.Dispatcher.UIThread.Post(NavigationService.RefreshCurrentPage);
+            };
+
             // Set initial view
             _mainWindowViewModel.NavigateTo(appShell);
 
