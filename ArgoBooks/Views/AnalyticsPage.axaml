@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:enums="using:ArgoBooks.Core.Enums"
@@ -56,6 +57,7 @@
                     <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                                 Classes="page-tabs">
                         <TabItem Header="{loc:Loc Dashboard}" />
+                        <TabItem Header="{loc:Loc Products}" />
                         <TabItem Header="{loc:Loc Geographic}" />
                         <TabItem Header="{loc:Loc Operational}" IsVisible="False" />
                         <TabItem Header="{loc:Loc Performance}" />
@@ -69,10 +71,11 @@
             </Grid>
         </Border>
 
-        <!-- Main Content Area -->
+        <!-- Main Content Area (all tabs except Products, which has its own bounded layout) -->
         <ScrollViewer Grid.Row="1"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
+                      IsVisible="{Binding !IsProductsTabSelected}"
                       Background="{DynamicResource BackgroundSecondaryBrush}">
             <Panel>
                 <!-- Dashboard Tab Content -->
@@ -1963,6 +1966,184 @@
 
             </Panel>
         </ScrollViewer>
+
+        <!-- Products Tab Content: own bounded layout (Auto/*/Auto) so the table fills width -->
+        <Panel Grid.Row="1"
+               Background="{DynamicResource BackgroundSecondaryBrush}"
+               IsVisible="{Binding IsProductsTabSelected}">
+            <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+                    <!-- Statistics Cards Row -->
+                    <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                        <controls:StatCard Label="{loc:Loc 'Product Revenue'}"
+                                           Value="{Binding TotalProductRevenue}"
+                                           Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                           IconColor="Success" />
+                        <controls:StatCard Label="{loc:Loc 'Units Sold'}"
+                                           Value="{Binding TotalProductUnits}"
+                                           Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
+                                           IconColor="Primary" />
+                        <controls:StatCard Label="{loc:Loc 'Avg Sale Price'}"
+                                           Value="{Binding AvgProductSalePrice}"
+                                           Icon="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
+                                           IconColor="Info" />
+                        <controls:StatCard Label="{loc:Loc 'Products Sold'}"
+                                           Value="{Binding ProductsSoldCount}"
+                                           Icon="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"
+                                           IconColor="Warning" />
+                    </controls:StatCardsRow>
+
+                    <!-- Sales by Product Table -->
+                    <table:ArgoTable Grid.Row="1"
+                                         Title="{loc:Loc 'Sales by Product'}"
+                                         ItemsSource="{Binding Products}"
+                                         ShowAddButton="False"
+                                         ShowFilterButton="False"
+                                         ShowPagination="True"
+                                         ShowSearch="True"
+                                         SearchQuery="{Binding ProductSearchQuery, Mode=TwoWay}"
+                                         SearchPlaceholder="{loc:Loc 'Search products...'}"
+                                         SearchBoxWidth="{Binding ProductsResponsiveHeader.SearchBoxWidth}"
+                                         SearchBoxMinHeight="{Binding ProductsResponsiveHeader.SearchBoxMinHeight}"
+                                         SearchIconMargin="{Binding ProductsResponsiveHeader.SearchIconMargin}"
+                                         HeaderPadding="{Binding ProductsResponsiveHeader.HeaderPadding}"
+                                         HeaderSpacing="{Binding ProductsResponsiveHeader.HeaderSpacing}"
+                                         IsCompactMode="{Binding ProductsResponsiveHeader.IsCompactMode}"
+                                         IsMediumMode="{Binding ProductsResponsiveHeader.IsMediumMode}"
+                                         ShowButtonText="{Binding ProductsResponsiveHeader.ShowButtonText}"
+                                         ColumnWidthsManager="{Binding ProductColumns}"
+                                         CurrentPage="{Binding ProductCurrentPage, Mode=TwoWay}"
+                                         TotalPages="{Binding ProductTotalPages}"
+                                         PageSize="{Binding ProductPageSize, Mode=TwoWay}"
+                                         PaginationText="{Binding ProductPaginationText}"
+                                         GoToPageCommand="{Binding GoToProductPageCommand}"
+                                         GoToPreviousPageCommand="{Binding ProductPreviousPageCommand}"
+                                         GoToNextPageCommand="{Binding ProductNextPageCommand}"
+                                         BorderSizeChanged="OnProductsHeaderSizeChanged"
+                                         TableGridSizeChanged="OnProductsTableSizeChanged"
+                                         EmptyIcon="{x:Static icons:Icons.Products}"
+                                         EmptyTitle="{loc:Loc 'No product sales to show'}"
+                                         EmptyMessage="{loc:Loc 'No products were sold in the selected period. Try a wider date range.'}">
+                            <table:ArgoTable.HeaderContent>
+                                <StackPanel Orientation="Horizontal">
+                                    <table:ArgoTableHeader Header="{loc:Loc Product}" ColumnName="Product" SortProperty="Product"
+                                                           ColumnWidth="{Binding ProductColumns.ProductColumnWidth}" ColumnWidths="{Binding ProductColumns}"
+                                                           SortColumn="{Binding ProductSortColumn}" SortDirection="{Binding ProductSortDirection}" SortCommand="{Binding ProductSortByCommand}" />
+                                    <table:ArgoTableHeader Header="{loc:Loc Units}" ColumnName="Units" SortProperty="Units"
+                                                           ColumnWidth="{Binding ProductColumns.UnitsColumnWidth}" ColumnWidths="{Binding ProductColumns}"
+                                                           SortColumn="{Binding ProductSortColumn}" SortDirection="{Binding ProductSortDirection}" SortCommand="{Binding ProductSortByCommand}" />
+                                    <table:ArgoTableHeader Header="{loc:Loc Revenue}" ColumnName="Revenue" SortProperty="Revenue"
+                                                           ColumnWidth="{Binding ProductColumns.RevenueColumnWidth}" ColumnWidths="{Binding ProductColumns}"
+                                                           SortColumn="{Binding ProductSortColumn}" SortDirection="{Binding ProductSortDirection}" SortCommand="{Binding ProductSortByCommand}" />
+                                    <table:ArgoTableHeader Header="{loc:Loc 'Avg price'}" ColumnName="AvgPrice" SortProperty="AvgPrice" ShowSeparator="False"
+                                                           ColumnWidth="{Binding ProductColumns.AvgPriceColumnWidth}" ColumnWidths="{Binding ProductColumns}"
+                                                           SortColumn="{Binding ProductSortColumn}" SortDirection="{Binding ProductSortDirection}" SortCommand="{Binding ProductSortByCommand}" />
+                                </StackPanel>
+                            </table:ArgoTable.HeaderContent>
+                            <table:ArgoTable.RowsContent>
+                                <ItemsControl Classes="table-rows" ItemsSource="{Binding Products}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:ProductSalesRow">
+                                            <Button Classes="product-row"
+                                                    HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    Padding="0"
+                                                    Command="{Binding $parent[ItemsControl].((vm:AnalyticsPageViewModel)DataContext).SelectProductCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <Border Padding="24,0" MinHeight="52"
+                                                        Classes.selected="{Binding IsSelected}"
+                                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:AnalyticsPageViewModel)DataContext).ProductColumns.ProductColumnWidth}">
+                                                            <table:ArgoTableCell.CellContent>
+                                                                <StackPanel VerticalAlignment="Center" Spacing="1">
+                                                                    <TextBlock Text="{Binding ProductName}" FontSize="13" FontWeight="Medium"
+                                                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                    <TextBlock Text="{Binding Sku}" FontSize="11" IsVisible="{Binding HasSku}"
+                                                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                                </StackPanel>
+                                                            </table:ArgoTableCell.CellContent>
+                                                        </table:ArgoTableCell>
+                                                        <table:ArgoTableCell Text="{Binding UnitsDisplay}"
+                                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:AnalyticsPageViewModel)DataContext).ProductColumns.UnitsColumnWidth}" />
+                                                        <table:ArgoTableCell Text="{Binding RevenueDisplay}"
+                                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:AnalyticsPageViewModel)DataContext).ProductColumns.RevenueColumnWidth}" />
+                                                        <table:ArgoTableCell Text="{Binding AvgSalePriceDisplay}"
+                                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:AnalyticsPageViewModel)DataContext).ProductColumns.AvgPriceColumnWidth}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </table:ArgoTable.RowsContent>
+                    </table:ArgoTable>
+
+                    <!-- Detail panel: selected product's revenue trend + metrics -->
+                    <Border Grid.Row="2" Margin="0,24,0,0"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="20"
+                            IsVisible="{Binding HasSelectedProduct}">
+                        <Grid RowDefinitions="Auto,Auto">
+                            <!-- Header -->
+                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                                <StackPanel Grid.Column="0" Spacing="2">
+                                    <TextBlock Text="{Binding SelectedProduct.ProductName}"
+                                               FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding SelectedProduct.Sku}"
+                                               IsVisible="{Binding SelectedProduct.HasSku, FallbackValue=False}"
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{loc:Loc 'Select a product in the table to change this view'}"
+                                           VerticalAlignment="Center"
+                                           FontSize="12" FontStyle="Italic"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Height="220">
+                                <!-- Trend chart -->
+                                <Panel Grid.Column="0">
+                                    <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ProductRevenueTrend}"
+                                                        Title="{Binding ProductRevenueTrendTitle}"
+                                                        PointerPressed="OnChartPointerPressed"
+                                                        PointerReleased="OnChartPointerReleased"
+                                                        Series="{Binding ProductRevenueTrendSeries}"
+                                                        XAxes="{Binding ProductRevenueTrendXAxes}"
+                                                        YAxes="{Binding ProductRevenueTrendYAxes}"
+                                                        ZoomMode="Both"
+                                                        IsVisible="{Binding HasProductTrendData}" />
+                                    <controls:ChartEmptyState
+                                        IsVisible="{Binding !HasProductTrendData}"
+                                        DefaultMessage="{loc:Loc 'No revenue data for this product in the selected period'}"
+                                        ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
+                                </Panel>
+
+                                <!-- Mini KPIs -->
+                                <StackPanel Grid.Column="1" Width="220" Margin="20,0,0,0" VerticalAlignment="Center" Spacing="0">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,7">
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc 'Units sold'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedProduct.UnitsDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,7">
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc Revenue}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedProduct.RevenueDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,7">
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc 'Avg sale price'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedProduct.AvgSalePriceDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+            </Grid>
+        </Panel>
     </Grid>
 
     <!-- Customer Activity Info Modal -->
@@ -2075,6 +2256,23 @@
     </Panel>
 
     <UserControl.Styles>
+        <!-- Sales by Product table rows -->
+        <Style Selector="Button.product-row">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.product-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}" />
+        </Style>
+        <!-- Selected row: theme-aware tint plus a primary left accent -->
+        <Style Selector="Button.product-row Border.selected">
+            <Setter Property="Background" Value="{DynamicResource TableRowSelectedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,1" />
+        </Style>
+
         <!-- TabControl - page tabs styling -->
         <Style Selector="TabControl.page-tabs">
             <Setter Property="Background" Value="Transparent" />

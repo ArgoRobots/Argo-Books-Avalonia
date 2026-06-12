@@ -96,6 +96,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             AccountingReportType.GeneralLedger => GetGeneralLedgerData(),
             AccountingReportType.AccountsReceivableAging => GetARAgingData(),
             AccountingReportType.TaxSummary => GetTaxSummaryData(),
+            AccountingReportType.ProductSales => GetProductSalesData(),
             _ => new AccountingTableData { Title = "Unknown Report" }
         };
     }
@@ -814,6 +815,82 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         public decimal Debit { get; init; }
         public decimal Credit { get; init; }
     }
+
+    #endregion
+
+    #region Sales by Product
+
+    /// <summary>
+    /// Generates Sales by Product data: units, gross revenue, and average sale
+    /// price per product, ranked by revenue. Uses accrual basis (all invoiced
+    /// revenue) to match the other formal reports. See docs/Calculations.md §13.
+    /// </summary>
+    private AccountingTableData GetProductSalesData()
+    {
+        var data = new AccountingTableData
+        {
+            Title = "Sales by Product",
+            Subtitle = GetCurrencySubtitle(),
+            ColumnHeaders = ["Product", "Units", "Revenue", "Avg price"],
+            ColumnWidthRatios = [0.42, 0.16, 0.22, 0.20]
+        };
+
+        if (companyData == null)
+            return data;
+
+        var products = ProductSalesService.GetProductSales(
+            companyData,
+            filters.StartDate ?? DateTime.MinValue,
+            filters.EndDate ?? DateTime.MaxValue,
+            cashBasis: false);
+
+        if (products.Count == 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "No product sales in this period",
+                RowType = AccountingRowType.DataRow,
+                Values = ["", "", ""]
+            });
+            return data;
+        }
+
+        foreach (var p in products)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = p.ProductName,
+                Values =
+                [
+                    FormatUnits(p.UnitsSold),
+                    FormatCurrency(p.RevenueUSD),
+                    FormatCurrency(p.AvgSalePriceUSD)
+                ],
+                RowType = AccountingRowType.DataRow
+            });
+        }
+
+        var totalUnits = products.Sum(p => p.UnitsSold);
+        var totalRevenue = products.Sum(p => p.RevenueUSD);
+        var overallAvg = totalUnits > 0 ? totalRevenue / totalUnits : 0;
+
+        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = ["", "", ""] });
+        data.Rows.Add(new AccountingRow
+        {
+            Label = "Total",
+            Values =
+            [
+                FormatUnits(totalUnits),
+                FormatCurrency(totalRevenue),
+                FormatCurrency(overallAvg)
+            ],
+            RowType = AccountingRowType.GrandTotalRow
+        });
+
+        return data;
+    }
+
+    private static string FormatUnits(decimal units) => units.ToString("0.##");
 
     #endregion
 

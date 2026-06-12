@@ -39,6 +39,7 @@ public static class ChartColors
 
             // Money-in (revenue family)
             ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution
+                or ChartDataType.ProductRevenueTrend
                 => Revenue,
 
             // Profit: positive = green (profit), negative = red (loss)

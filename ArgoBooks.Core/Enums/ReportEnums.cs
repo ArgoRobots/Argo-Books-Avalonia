@@ -202,7 +202,10 @@ public enum ChartDataType
     TaxByCategory,
     TaxRateDistribution,
     TaxByProduct,
-    ExpenseVsRevenueTax
+    ExpenseVsRevenueTax,
+
+    // Products charts
+    ProductRevenueTrend
 }
 
 /// <summary>
@@ -247,7 +250,8 @@ public enum AccountingReportType
     CashFlowStatement,
     GeneralLedger,
     AccountsReceivableAging,
-    TaxSummary
+    TaxSummary,
+    ProductSales
 }
 
 /// <summary>
@@ -390,6 +394,9 @@ public static class ReportEnumExtensions
             ChartDataType.TaxByProduct => "Tax by Product",
             ChartDataType.ExpenseVsRevenueTax => "Expense vs Revenue Tax",
 
+            // Products charts
+            ChartDataType.ProductRevenueTrend => "Revenue Over Time",
+
             _ => chartType.ToString()
         };
     }
@@ -407,6 +414,7 @@ public static class ReportEnumExtensions
             AccountingReportType.GeneralLedger => "General Ledger",
             AccountingReportType.AccountsReceivableAging => "Accounts Receivable Aging",
             AccountingReportType.TaxSummary => "Tax Summary",
+            AccountingReportType.ProductSales => "Sales by Product",
             _ => reportType.ToString()
         };
     }
@@ -479,6 +487,7 @@ public static class ReportEnumExtensions
         ChartDataType.TaxCollectedVsPaid or ChartDataType.TaxLiabilityTrend
             or ChartDataType.TaxByCategory or ChartDataType.TaxRateDistribution
             or ChartDataType.TaxByProduct or ChartDataType.ExpenseVsRevenueTax => "Taxes",
+        ChartDataType.ProductRevenueTrend => "Products",
         _ => "Charts"
     };
 

@@ -170,6 +170,8 @@ public static class AppColors
     public const string FlatTealLight = "#E8F6F3";
     public const string FlatOrange = "#D35400";
     public const string FlatOrangeLight = "#FBEEE6";
+    public const string FlatIndigo = "#4B5FAB";
+    public const string FlatIndigoLight = "#ECEEF6";
 
     /// <summary>
     /// Ordered color palette for indexed series (pie slices, multi-category charts, etc.).

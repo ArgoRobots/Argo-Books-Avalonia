@@ -62,7 +62,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Who owes you and for how long",
             Icons.DollarCircleAlt, AppColors.FlatTeal, AppColors.FlatTealLight),
         new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax you collected vs. tax you paid",
-            Icons.BarChart, AppColors.FlatOrange, AppColors.FlatOrangeLight)
+            Icons.BarChart, AppColors.FlatOrange, AppColors.FlatOrangeLight),
+        new(ReportTemplateFactory.TemplateNames.ProductSales, "Sales by Product", "Units and revenue per product",
+            Icons.Products, AppColors.FlatIndigo, AppColors.FlatIndigoLight)
     ];
 
     #endregion
