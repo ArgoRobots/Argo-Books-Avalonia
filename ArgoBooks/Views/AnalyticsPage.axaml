@@ -1967,11 +1967,11 @@
             </Panel>
         </ScrollViewer>
 
-        <!-- Products Tab Content: own bounded layout (Auto/*/Auto) so the table fills width -->
+        <!-- Products Tab Content: bounded; table fills the left half, chart sits on the right -->
         <Panel Grid.Row="1"
                Background="{DynamicResource BackgroundSecondaryBrush}"
                IsVisible="{Binding IsProductsTabSelected}">
-            <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+            <Grid Margin="24" RowDefinitions="Auto,*">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                         <controls:StatCard Label="{loc:Loc 'Product Revenue'}"
@@ -1992,8 +1992,11 @@
                                            IconColor="Warning" />
                     </controls:StatCardsRow>
 
+                    <!-- Table (left) + detail chart (right), side by side -->
+                    <Grid Grid.Row="1" ColumnDefinitions="*,24,*">
+
                     <!-- Sales by Product Table -->
-                    <table:ArgoTable Grid.Row="1"
+                    <table:ArgoTable Grid.Column="0"
                                          Title="{loc:Loc 'Sales by Product'}"
                                          ItemsSource="{Binding Products}"
                                          ShowAddButton="False"
@@ -2079,14 +2082,14 @@
                     </table:ArgoTable>
 
                     <!-- Detail panel: selected product's revenue trend + metrics -->
-                    <Border Grid.Row="2" Margin="0,24,0,0"
+                    <Border Grid.Column="2"
                             Background="{DynamicResource SurfaceBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="20"
                             IsVisible="{Binding HasSelectedProduct}">
-                        <Grid RowDefinitions="Auto,Auto">
+                        <Grid RowDefinitions="Auto,*,Auto">
                             <!-- Header -->
                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
                                 <StackPanel Grid.Column="0" Spacing="2">
@@ -2104,44 +2107,44 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
 
-                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Height="220">
-                                <!-- Trend chart -->
-                                <Panel Grid.Column="0">
-                                    <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ProductRevenueTrend}"
-                                                        Title="{Binding ProductRevenueTrendTitle}"
-                                                        PointerPressed="OnChartPointerPressed"
-                                                        PointerReleased="OnChartPointerReleased"
-                                                        Series="{Binding ProductRevenueTrendSeries}"
-                                                        XAxes="{Binding ProductRevenueTrendXAxes}"
-                                                        YAxes="{Binding ProductRevenueTrendYAxes}"
-                                                        ZoomMode="Both"
-                                                        IsVisible="{Binding HasProductTrendData}" />
-                                    <controls:ChartEmptyState
-                                        IsVisible="{Binding !HasProductTrendData}"
-                                        DefaultMessage="{loc:Loc 'No revenue data for this product in the selected period'}"
-                                        ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
-                                </Panel>
+                            <!-- Trend chart (fills the panel height) -->
+                            <Panel Grid.Row="1" MinHeight="220">
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ProductRevenueTrend}"
+                                                    Title="{Binding ProductRevenueTrendTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
+                                                    Series="{Binding ProductRevenueTrendSeries}"
+                                                    XAxes="{Binding ProductRevenueTrendXAxes}"
+                                                    YAxes="{Binding ProductRevenueTrendYAxes}"
+                                                    ZoomMode="Both"
+                                                    IsVisible="{Binding HasProductTrendData}" />
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasProductTrendData}"
+                                    DefaultMessage="{loc:Loc 'No revenue data for this product in the selected period'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
+                            </Panel>
 
-                                <!-- Mini KPIs -->
-                                <StackPanel Grid.Column="1" Width="220" Margin="20,0,0,0" VerticalAlignment="Center" Spacing="0">
-                                    <Grid ColumnDefinitions="*,Auto" Margin="0,7">
-                                        <TextBlock Grid.Column="0" Text="{loc:Loc 'Units sold'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SelectedProduct.UnitsDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-                                    <Border Height="1" Background="{DynamicResource BorderBrush}" />
-                                    <Grid ColumnDefinitions="*,Auto" Margin="0,7">
-                                        <TextBlock Grid.Column="0" Text="{loc:Loc Revenue}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SelectedProduct.RevenueDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-                                    <Border Height="1" Background="{DynamicResource BorderBrush}" />
-                                    <Grid ColumnDefinitions="*,Auto" Margin="0,7">
-                                        <TextBlock Grid.Column="0" Text="{loc:Loc 'Avg sale price'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SelectedProduct.AvgSalePriceDisplay}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-                                </StackPanel>
-                            </Grid>
+                            <!-- Mini KPIs row -->
+                            <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                                <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,16" />
+                                <Grid ColumnDefinitions="*,*,*">
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBlock Text="{loc:Loc 'Units sold'}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding SelectedProduct.UnitsDisplay}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:Loc Revenue}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding SelectedProduct.RevenueDisplay}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="2">
+                                        <TextBlock Text="{loc:Loc 'Avg sale price'}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding SelectedProduct.AvgSalePriceDisplay}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
                         </Grid>
                     </Border>
+                    </Grid>
             </Grid>
         </Panel>
     </Grid>
