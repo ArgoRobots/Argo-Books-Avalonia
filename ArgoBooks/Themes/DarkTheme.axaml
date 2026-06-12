@@ -128,4 +128,9 @@
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
+    <!-- AI Accent (used by AI import badges) - brighter violet so it reads on dark surfaces -->
+    <Color x:Key="AiAccentColor">#A78BFA</Color>
+    <SolidColorBrush x:Key="AiAccentBrush" Color="{StaticResource AiAccentColor}" />
+    <SolidColorBrush x:Key="AiAccentSoftBrush" Color="#33A78BFA" />
+
 </ResourceDictionary>

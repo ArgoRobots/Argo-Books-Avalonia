@@ -22,6 +22,11 @@ public class SpreadsheetAnalysisService(
     private const int Tier2ChunkSize = 100;
     private const int MaxConcurrentChunks = 10;
 
+    // Cap the columns analyzed per LLM call so its JSON response can never exceed the
+    // model's output token budget and get truncated (which fails to parse).
+    private const int MaxColumnsPerAnalysisBatch = 40;
+    private const int MaxConcurrentAnalysisBatches = 5;
+
     #region Analysis Phase
 
     /// <summary>
@@ -124,21 +129,20 @@ public class SpreadsheetAnalysisService(
         CancellationToken cancellationToken,
         IProgress<(string detail, double percent)>? progress = null)
     {
-        var systemPrompt = BuildAnalysisSystemPrompt();
-        var userPrompt = BuildAnalysisUserPrompt(sheetsData);
+        // Split sheets into batches so a single LLM call never has to map so many columns
+        // that its JSON response exceeds the model's output token budget and gets truncated.
+        // A truncated response fails to parse and would otherwise look like an unreadable file.
+        var batches = SplitIntoAnalysisBatches(sheetsData);
 
-        // Scale max tokens based on number of sheets, each sheet needs ~300-500 tokens for mappings
-        var maxTokens = Math.Max(4000, sheetsData.Count * 500);
-
-        // Estimate LLM duration based on prompt size (more sheets → longer)
-        var estimatedSeconds = Math.Max(6, sheetsData.Count * 3);
+        // Estimate LLM duration for the fake progress bar (more columns → longer)
+        var estimatedSeconds = Math.Max(6, sheetsData.Sum(s => s.Headers.Count) / 4);
         var intervalMs = (int)(estimatedSeconds * 1000.0 / 95);
 
         var currentProgress = 0.0;
         progress?.Report(("Analyzing with AI...", currentProgress));
 
         using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(intervalMs));
-        var timerTask = Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
             while (await progressTimer.WaitForNextTickAsync(cancellationToken))
             {
@@ -155,34 +159,136 @@ public class SpreadsheetAnalysisService(
             }
         }, cancellationToken);
 
-        string? response;
+        SpreadsheetAnalysisResult?[] batchResults;
         try
         {
-            response = await geminiService.SendChatAsync(
-                systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+            // Analyze batches concurrently; each batch is an independent LLM call.
+            var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);
+            var tasks = batches.Select(batch => Task.Run(async () =>
+            {
+                await semaphore.WaitAsync(cancellationToken);
+                try
+                {
+                    return await AnalyzeBatchAsync(batch, cancellationToken);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }, cancellationToken)).ToArray();
+
+            batchResults = await Task.WhenAll(tasks);
         }
         finally
         {
-            progressTimer.Dispose(); // stops the timer, timerTask will complete
+            progressTimer.Dispose(); // stops the timer, the progress loop will complete
         }
 
         progress?.Report(("Analyzing with AI...", 100));
 
-        if (string.IsNullOrEmpty(response))
+        // Merge successful batches. A batch is null only when its LLM call failed or its
+        // response could not be parsed (both already logged inside AnalyzeBatchAsync).
+        var succeeded = batchResults.Where(r => r != null).ToList();
+        if (succeeded.Count == 0)
             return null;
 
-        var result = ParseAnalysisResponse(response);
-        if (result != null)
+        var merged = new SpreadsheetAnalysisResult { FileName = fileName };
+        foreach (var batchResult in succeeded)
         {
-            result.FileName = fileName;
+            merged.Sheets.AddRange(batchResult!.Sheets);
+            merged.Warnings.AddRange(batchResult.Warnings);
+        }
 
-            // Populate row counts from our data
-            foreach (var sheet in result.Sheets)
+        // If some batches failed, surface it instead of silently importing only a subset.
+        var failedBatches = batchResults.Length - succeeded.Count;
+        if (failedBatches > 0)
+        {
+            merged.Warnings.Add(
+                $"{failedBatches} of {batchResults.Length} sheet group(s) could not be analyzed and were skipped.");
+        }
+
+        // Populate row counts from our data
+        foreach (var sheet in merged.Sheets)
+        {
+            var data = sheetsData.FirstOrDefault(s => s.Name == sheet.SourceSheetName);
+            if (data != default)
+                sheet.RowCount = data.TotalRows;
+        }
+
+        return merged;
+    }
+
+    /// <summary>
+    /// Splits sheets into batches whose combined column count stays within
+    /// <see cref="MaxColumnsPerAnalysisBatch"/>, so each analysis call produces a response
+    /// that fits comfortably inside the model's output token budget. A single sheet wider
+    /// than the limit gets its own batch.
+    /// </summary>
+    private static List<List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>>
+        SplitIntoAnalysisBatches(
+            List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> sheetsData)
+    {
+        var batches = new List<List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>>();
+        var current = new List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>();
+        var currentColumns = 0;
+
+        foreach (var sheet in sheetsData)
+        {
+            var columns = sheet.Headers.Count;
+            if (current.Count > 0 && currentColumns + columns > MaxColumnsPerAnalysisBatch)
             {
-                var data = sheetsData.FirstOrDefault(s => s.Name == sheet.SourceSheetName);
-                if (data != default)
-                    sheet.RowCount = data.TotalRows;
+                batches.Add(current);
+                current = [];
+                currentColumns = 0;
             }
+
+            current.Add(sheet);
+            currentColumns += columns;
+        }
+
+        if (current.Count > 0)
+            batches.Add(current);
+
+        return batches;
+    }
+
+    /// <summary>
+    /// Runs one batch of sheets through the LLM and parses the response.
+    /// Returns null if the call failed or the response could not be parsed.
+    /// </summary>
+    private async Task<SpreadsheetAnalysisResult?> AnalyzeBatchAsync(
+        List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> batch,
+        CancellationToken cancellationToken)
+    {
+        var systemPrompt = BuildAnalysisSystemPrompt();
+        var userPrompt = BuildAnalysisUserPrompt(batch);
+
+        // The response needs one mapping object per source column, so scale the token budget
+        // by total columns rather than sheet count. gemini-2.5-flash also spends part of this
+        // budget on thinking tokens, so keep generous headroom above the raw mapping size.
+        var totalColumns = batch.Sum(s => s.Headers.Count);
+        var maxTokens = Math.Max(4000, totalColumns * 200 + batch.Count * 400);
+
+        var response = await geminiService.SendChatAsync(
+            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+
+        if (string.IsNullOrEmpty(response))
+        {
+            errorLogger?.LogWarning(
+                $"AI analysis returned an empty response for a batch of {batch.Count} sheet(s).",
+                "Spreadsheet analysis");
+            return null;
+        }
+
+        var result = ParseAnalysisResponse(response);
+        if (result == null)
+        {
+            // A non-empty response that fails to parse is almost always truncated JSON:
+            // the response ran past the model's output token budget mid-object.
+            errorLogger?.LogError(
+                $"AI analysis response could not be parsed (length {response.Length}, " +
+                $"{batch.Count} sheet(s), {totalColumns} columns, maxTokens {maxTokens}); response likely truncated.",
+                ErrorCategory.Parsing, "Spreadsheet analysis");
         }
 
         return result;

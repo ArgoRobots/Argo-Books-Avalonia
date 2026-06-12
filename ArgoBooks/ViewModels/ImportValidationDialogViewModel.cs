@@ -135,12 +135,17 @@ public partial class ImportValidationDialogViewModel : ViewModelBase
             GeneralWarnings.Add(warning);
         }
 
-        // Group issues by sheet
+        // Group issues by sheet, but only show issues the user must act on. Auto-fixable
+        // missing references are created silently during import, so we never surface them.
         var issuesBySheet = validationResult.GetIssuesBySheet();
         foreach (var (sheetName, issues) in issuesBySheet.OrderBy(g => g.Key))
         {
+            var manualIssues = issues.Where(i => !i.IsAutoFixable).OrderBy(i => i.RowNumber).ToList();
+            if (manualIssues.Count == 0)
+                continue;
+
             var group = new SheetIssueGroup { SheetName = sheetName };
-            foreach (var issue in issues.OrderBy(i => i.RowNumber))
+            foreach (var issue in manualIssues)
             {
                 group.Issues.Add(new ValidationIssueViewModel(issue));
             }
@@ -158,7 +163,8 @@ public partial class ImportValidationDialogViewModel : ViewModelBase
         AutoFixableCount = validationResult.AutoFixableIssueCount;
         NonAutoFixableCount = validationResult.NonAutoFixableIssueCount;
 
-        // Build summary message
+        // Build summary message. Auto-fixable references are handled silently, so the
+        // dialog only ever speaks to errors and issues that need a manual spreadsheet fix.
         var summaryParts = new List<string>();
         if (HasErrors)
         {
@@ -168,10 +174,6 @@ public partial class ImportValidationDialogViewModel : ViewModelBase
         {
             summaryParts.Add($"{NonAutoFixableCount} issue(s) that require fixing the spreadsheet");
         }
-        if (AutoFixableCount > 0)
-        {
-            summaryParts.Add($"{AutoFixableCount} missing reference(s) that can be auto-created");
-        }
         Summary = summaryParts.Count > 0
             ? string.Join(", ", summaryParts) + "."
             : "No issues found.";
@@ -180,9 +182,7 @@ public partial class ImportValidationDialogViewModel : ViewModelBase
             ? "Import Cannot Continue"
             : HasNonAutoFixableIssues
                 ? "Spreadsheet Needs Fixing"
-                : TotalIssues > 0
-                    ? "Import Issues Found"
-                    : "Ready to Import";
+                : "Import Issues Found";
 
         IsOpen = true;
         _completionSource = new TaskCompletionSource<ImportValidationDialogResult>();

@@ -131,4 +131,9 @@
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
+    <!-- AI Accent (used by AI import badges) -->
+    <Color x:Key="AiAccentColor">#7C3AED</Color>
+    <SolidColorBrush x:Key="AiAccentBrush" Color="{StaticResource AiAccentColor}" />
+    <SolidColorBrush x:Key="AiAccentSoftBrush" Color="#1A7C3AED" />
+
 </ResourceDictionary>

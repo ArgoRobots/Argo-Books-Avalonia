@@ -1884,7 +1884,7 @@ public partial class App : Application
             {
                 await ShowErrorMessageBoxAsync(
                     "Analysis Failed".Translate(),
-                    "Could not analyze the file structure. The file may be empty or in an unsupported format.".Translate());
+                    "Could not analyze the file. The spreadsheet may be empty, or the AI response was incomplete. Please try importing again.".Translate());
                 return;
             }
 
@@ -1939,17 +1939,29 @@ public partial class App : Application
 
                 if (validationResult.HasIssues)
                 {
-                    var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
-                    var valResult = await validationDialog.ShowAsync(validationResult);
-
-                    if (valResult == ImportValidationDialogResult.Cancel)
-                        return;
-
-                    if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
+                    // Auto-create any missing references (suppliers, customers, categories,
+                    // etc.) silently. The user shouldn't have to approve creating placeholder
+                    // records, it should "just work".
+                    if (validationResult.HasMissingReferences)
                         importOptions.AutoCreateMissingReferences = true;
 
-                    if (validationResult.Errors.Count > 0)
-                        return;
+                    // Only interrupt with the issues dialog when there's something the user
+                    // must act on: critical errors or issues that can't be auto-fixed. When
+                    // everything is auto-fixable, proceed straight to import.
+                    if (validationResult.Errors.Count > 0 || validationResult.HasNonAutoFixableIssues)
+                    {
+                        var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
+                        var valResult = await validationDialog.ShowAsync(validationResult);
+
+                        if (valResult == ImportValidationDialogResult.Cancel)
+                            return;
+
+                        if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
+                            importOptions.AutoCreateMissingReferences = true;
+
+                        if (validationResult.Errors.Count > 0)
+                            return;
+                    }
                 }
 
                 // Import Tier 1 data
@@ -2144,6 +2156,14 @@ public partial class App : Application
                 allSheetResults,
                 totalImported, totalUpdated, totalSkipped,
                 allSkipReasons, allWarnings, totalProcessed > 0);
+
+            // Rebuild the current page so its charts/widgets show the freshly imported data.
+            // This mirrors navigating away and back, which is otherwise needed because chart
+            // widgets don't reliably repaint while hidden behind the import dialogs. Posted at
+            // Background priority so it runs after the result dialog has finished closing.
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => NavigationService?.RefreshCurrentPage(),
+                Avalonia.Threading.DispatcherPriority.Background);
         }
         catch (OperationCanceledException)
         {

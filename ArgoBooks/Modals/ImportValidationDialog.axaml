@@ -79,32 +79,13 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="16" Margin="24">
                         <!-- Summary Stats -->
-                        <Grid ColumnDefinitions="*,*,*" IsVisible="{Binding HasIssues}">
-                            <!-- Auto-fixable Issues -->
+                        <Grid ColumnDefinitions="*,*" IsVisible="{Binding HasIssues}">
+                            <!-- Manual Fix Required -->
                             <Border Grid.Column="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
                                     Padding="16"
                                     Margin="0,0,8,0">
-                                <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                    <TextBlock Text="Can Auto-fix"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding AutoFixableCount}"
-                                               FontSize="24"
-                                               FontWeight="Bold"
-                                               Foreground="#22C55E"
-                                               HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Manual Fix Required -->
-                            <Border Grid.Column="1"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8"
-                                    Padding="16"
-                                    Margin="4,0">
                                 <StackPanel HorizontalAlignment="Center" Spacing="4">
                                     <TextBlock Text="Needs Manual Fix"
                                                FontSize="12"
@@ -119,7 +100,7 @@
                             </Border>
 
                             <!-- Sheets Affected -->
-                            <Border Grid.Column="2"
+                            <Border Grid.Column="1"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
                                     Padding="16"
@@ -137,28 +118,6 @@
                                 </StackPanel>
                             </Border>
                         </Grid>
-
-                        <!-- Explanation about Auto-fix -->
-                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="8"
-                                Padding="16"
-                                IsVisible="{Binding HasIssues}">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
-                                              Width="16" Height="16"
-                                              Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="How Auto-fix Works"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </StackPanel>
-                                <TextBlock FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           TextWrapping="Wrap"
-                                           Text="Items marked 'Auto-fix' (Suppliers, Customers, Categories, etc.) will create placeholder entries using the ID as the name that you can edit later. For example, a missing supplier 'SUP-001' becomes a new supplier named 'SUP-001'. Items marked 'Manual fix' (invalid product names, transaction IDs) require you to correct your spreadsheet." />
-                            </StackPanel>
-                        </Border>
 
                         <!-- General Errors -->
                         <Border Background="#1AEF4444"

@@ -40,11 +40,11 @@
                                     Margin="0,0,16,0"
                                     VerticalAlignment="Center">
                                 <Border.Background>
-                                    <SolidColorBrush Color="#7C3AED" Opacity="0.15" />
+                                    <SolidColorBrush Color="{DynamicResource AiAccentColor}" Opacity="0.15" />
                                 </Border.Background>
                                 <PathIcon Data="{x:Static icons:Icons.Lightning}"
                                           Width="20" Height="20"
-                                          Foreground="#7C3AED" />
+                                          Foreground="{DynamicResource AiAccentBrush}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -58,12 +58,12 @@
                                             VerticalAlignment="Center"
                                             IsVisible="{Binding ShowRateLimit}">
                                         <Border.Background>
-                                            <SolidColorBrush Color="#7C3AED" Opacity="0.12" />
+                                            <SolidColorBrush Color="{DynamicResource AiAccentColor}" Opacity="0.12" />
                                         </Border.Background>
                                         <TextBlock Text="{Binding RateLimitDisplay}"
                                                    FontSize="11"
                                                    FontWeight="Medium"
-                                                   Foreground="#7C3AED" />
+                                                   Foreground="{DynamicResource AiAccentBrush}" />
                                     </Border>
                                 </StackPanel>
                                 <TextBlock FontSize="13"
@@ -168,7 +168,7 @@
                                         <TextBlock Text="{Binding Tier2SheetCount}"
                                                    FontSize="24"
                                                    FontWeight="Bold"
-                                                   Foreground="#7C3AED"
+                                                   Foreground="{DynamicResource AiAccentBrush}"
                                                    HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
@@ -238,7 +238,7 @@
                                                                 <TextBlock Text="{Binding DetectedType}"
                                                                            FontSize="14"
                                                                            FontWeight="Medium"
-                                                                           Foreground="#7C3AED" />
+                                                                           Foreground="{DynamicResource AiAccentBrush}" />
                                                             </StackPanel>
                                                             <TextBlock FontSize="12"
                                                                        Foreground="{DynamicResource TextTertiaryBrush}">
@@ -348,14 +348,14 @@
 
                                                                         <!-- Target column -->
                                                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                                                                            <Border Background="#1A7C3AED"
+                                                                            <Border Background="{DynamicResource AiAccentSoftBrush}"
                                                                                     CornerRadius="4"
                                                                                     Padding="8,4"
                                                                                     HorizontalAlignment="Left">
                                                                                 <TextBlock Text="{Binding TargetColumn}"
                                                                                            FontSize="12"
                                                                                            FontFamily="JetBrains Mono, Consolas, monospace"
-                                                                                           Foreground="#7C3AED" />
+                                                                                           Foreground="{DynamicResource AiAccentBrush}" />
                                                                             </Border>
                                                                         </StackPanel>
 
@@ -386,11 +386,11 @@
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
                                                                           Width="14" Height="14"
-                                                                          Foreground="#7C3AED" />
+                                                                          Foreground="{DynamicResource AiAccentBrush}" />
                                                                 <TextBlock Text="This sheet requires AI row processing"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
-                                                                           Foreground="#7C3AED" />
+                                                                           Foreground="{DynamicResource AiAccentBrush}" />
                                                             </StackPanel>
                                                             <TextBlock Text="{Binding TierReason}"
                                                                        FontSize="12"
