@@ -102,7 +102,7 @@
                                               Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="{loc:Loc 'Excel or CSV'}"
+                                    <TextBlock Text="{loc:Loc 'Spreadsheet'}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
