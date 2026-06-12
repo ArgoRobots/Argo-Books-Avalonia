@@ -1216,6 +1216,37 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Builds the per-product revenue-over-time series for the Analytics Products
+    /// detail panel. Cash-basis (paid-only) to match the rest of the analytics
+    /// surfaces. Values are USD and converted to display currency at the series
+    /// boundary. See docs/Calculations.md §13.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, DateTime[] Dates) LoadProductRevenueTrendChart(
+        CompanyData? companyData, string productId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        if (companyData == null || string.IsNullOrEmpty(productId))
+            return (series, Array.Empty<DateTime>());
+
+        var dailyPoints = ProductSalesService.GetProductRevenueByDayUSD(
+            companyData, productId,
+            startDate ?? DateTime.MinValue,
+            endDate ?? DateTime.MaxValue,
+            cashBasis: true);
+
+        if (dailyPoints.Count == 0)
+            return (series, Array.Empty<DateTime>());
+
+        var ordered = dailyPoints.OrderBy(p => p.Key).ToList();
+        var dates = ordered.Select(p => p.Key).ToArray();
+        var values = ordered.Select(p => (double)p.Value).ToArray();
+
+        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ChartColors.Revenue));
+
+        return (series, dates);
+    }
+
+    /// <summary>
     /// Loads expenses vs revenue comparison chart as a multi-series column chart.
     /// Uses ReportChartDataService for data fetching with daily granularity.
     /// </summary>

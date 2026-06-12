@@ -28,6 +28,7 @@ public static class ReportTemplateFactory
         public const string GeneralLedger = "General Ledger";
         public const string ARaging = "Accounts Receivable Aging";
         public const string TaxSummary = "Tax Summary";
+        public const string ProductSales = "Sales by Product";
     }
 
     /// <summary>
@@ -40,7 +41,8 @@ public static class ReportTemplateFactory
         TemplateNames.CashFlowStatement,
         TemplateNames.GeneralLedger,
         TemplateNames.ARaging,
-        TemplateNames.TaxSummary
+        TemplateNames.TaxSummary,
+        TemplateNames.ProductSales
     ];
 
     /// <summary>
@@ -85,7 +87,8 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.CashFlowStatement ||
                templateName == TemplateNames.GeneralLedger ||
                templateName == TemplateNames.ARaging ||
-               templateName == TemplateNames.TaxSummary;
+               templateName == TemplateNames.TaxSummary ||
+               templateName == TemplateNames.ProductSales;
     }
 
     /// <summary>
@@ -109,6 +112,7 @@ public static class ReportTemplateFactory
             TemplateNames.GeneralLedger => CreateAccountingTemplate(AccountingReportType.GeneralLedger, "General Ledger", DatePresetNames.ThisMonth),
             TemplateNames.ARaging => CreateAccountingTemplate(AccountingReportType.AccountsReceivableAging, "Accounts Receivable Aging", DatePresetNames.AllTime),
             TemplateNames.TaxSummary => CreateAccountingTemplate(AccountingReportType.TaxSummary, "Tax Summary", DatePresetNames.YearToDate),
+            TemplateNames.ProductSales => CreateAccountingTemplate(AccountingReportType.ProductSales, "Sales by Product", DatePresetNames.YearToDate),
             _ => new ReportConfiguration()
         };
     }

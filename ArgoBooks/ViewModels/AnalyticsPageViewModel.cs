@@ -1,6 +1,9 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete. DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using ArgoBooks.Controls;
+using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
@@ -8,6 +11,7 @@ using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
@@ -54,42 +58,47 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Gets whether the Geographic tab is selected.
     /// </summary>
-    public bool IsGeographicTabSelected => SelectedTabIndex == 1;
+    public bool IsGeographicTabSelected => SelectedTabIndex == 2;
 
     /// <summary>
     /// Gets whether the Operational tab is selected.
     /// </summary>
-    public bool IsOperationalTabSelected => SelectedTabIndex == 2;
+    public bool IsOperationalTabSelected => SelectedTabIndex == 3;
 
     /// <summary>
     /// Gets whether the Performance tab is selected.
     /// </summary>
-    public bool IsPerformanceTabSelected => SelectedTabIndex == 3;
+    public bool IsPerformanceTabSelected => SelectedTabIndex == 4;
 
     /// <summary>
     /// Gets whether the Customers tab is selected.
     /// </summary>
-    public bool IsCustomersTabSelected => SelectedTabIndex == 4;
+    public bool IsCustomersTabSelected => SelectedTabIndex == 5;
 
     /// <summary>
     /// Gets whether the Taxes tab is selected.
     /// </summary>
-    public bool IsTaxesTabSelected => SelectedTabIndex == 5;
+    public bool IsTaxesTabSelected => SelectedTabIndex == 6;
 
     /// <summary>
     /// Gets whether the Returns tab is selected.
     /// </summary>
-    public bool IsReturnsTabSelected => SelectedTabIndex == 6;
+    public bool IsReturnsTabSelected => SelectedTabIndex == 7;
 
     /// <summary>
     /// Gets whether the Losses tab is selected.
     /// </summary>
-    public bool IsLossesTabSelected => SelectedTabIndex == 7;
+    public bool IsLossesTabSelected => SelectedTabIndex == 8;
 
     /// <summary>
     /// Gets whether the Refunds tab is selected.
     /// </summary>
-    public bool IsRefundsTabSelected => SelectedTabIndex == 8;
+    public bool IsRefundsTabSelected => SelectedTabIndex == 9;
+
+    /// <summary>
+    /// Gets whether the Products tab is selected.
+    /// </summary>
+    public bool IsProductsTabSelected => SelectedTabIndex == 1;
 
     partial void OnSelectedTabIndexChanged(int value)
     {
@@ -102,9 +111,270 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         OnPropertyChanged(nameof(IsLossesTabSelected));
         OnPropertyChanged(nameof(IsTaxesTabSelected));
         OnPropertyChanged(nameof(IsRefundsTabSelected));
+        OnPropertyChanged(nameof(IsProductsTabSelected));
 
         if (IsRefundsTabSelected) RefreshRefundMetrics();
+
+        // Make sure a product is selected when arriving on the Products tab so
+        // the detail panel is populated even if the first load raced the tab.
+        if (IsProductsTabSelected && SelectedProduct == null)
+            SelectedProduct = _filteredSortedProducts.FirstOrDefault();
     }
+
+    #endregion
+
+    #region Products Tab
+
+    private readonly ProductSalesTableColumnWidths _productColumns = new();
+    private List<ProductSalesRow> _allProductRows = [];
+    private List<ProductSalesRow> _filteredSortedProducts = [];
+
+    /// <summary>Column width manager for the Sales by Product table.</summary>
+    public ProductSalesTableColumnWidths ProductColumns => _productColumns;
+
+    /// <summary>Responsive header sizing for the Sales by Product table.</summary>
+    public ResponsiveHeaderHelper ProductsResponsiveHeader { get; } = new();
+
+    /// <summary>The product rows currently shown (after search + sort).</summary>
+    public ObservableCollection<ProductSalesRow> Products { get; } = [];
+
+    [ObservableProperty]
+    private string _productSearchQuery = string.Empty;
+
+    [ObservableProperty]
+    private string _productSortColumn = "Revenue";
+
+    [ObservableProperty]
+    private SortDirection _productSortDirection = SortDirection.Descending;
+
+    [ObservableProperty]
+    private bool _hasProductData;
+
+    [ObservableProperty]
+    private string _totalProductRevenue = string.Empty;
+
+    [ObservableProperty]
+    private string _totalProductUnits = string.Empty;
+
+    [ObservableProperty]
+    private string _avgProductSalePrice = string.Empty;
+
+    [ObservableProperty]
+    private string _productsSoldCount = string.Empty;
+
+    // Pagination for the product table.
+    [ObservableProperty]
+    private int _productCurrentPage = 1;
+
+    [ObservableProperty]
+    private int _productTotalPages = 1;
+
+    [ObservableProperty]
+    private int _productPageSize = 10;
+
+    [ObservableProperty]
+    private string _productPaginationText = string.Empty;
+
+    [ObservableProperty]
+    private ProductSalesRow? _selectedProduct;
+
+    // Per-product detail trend chart.
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _productRevenueTrendSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _productRevenueTrendXAxes = [new Axis()];
+
+    [ObservableProperty]
+    private Axis[] _productRevenueTrendYAxes = [new Axis()];
+
+    [ObservableProperty]
+    private bool _hasProductTrendData;
+
+    /// <summary>True when a product row is selected (drives the detail panel).</summary>
+    public bool HasSelectedProduct => SelectedProduct != null;
+
+    public LabelVisual ProductRevenueTrendTitle =>
+        ChartLoaderService.CreateChartTitle(ChartDataType.ProductRevenueTrend.GetDisplayName());
+
+    private RelayCommand<string>? _productSortByCommand;
+
+    /// <summary>Sorts the product table by a column; toggles direction on repeat.</summary>
+    public ICommand ProductSortByCommand => _productSortByCommand ??= new RelayCommand<string>(ProductSortBy);
+
+    private void ProductSortBy(string? column)
+    {
+        if (string.IsNullOrEmpty(column))
+            return;
+
+        if (ProductSortColumn == column)
+        {
+            ProductSortDirection = ProductSortDirection switch
+            {
+                SortDirection.None => SortDirection.Ascending,
+                SortDirection.Ascending => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.None,
+                _ => SortDirection.Ascending
+            };
+        }
+        else
+        {
+            ProductSortColumn = column;
+            ProductSortDirection = SortDirection.Descending;
+        }
+
+        ProductCurrentPage = 1;
+        ApplyProductFilterAndSort();
+    }
+
+    partial void OnProductSearchQueryChanged(string value)
+    {
+        ProductCurrentPage = 1;
+        ApplyProductFilterAndSort();
+    }
+
+    partial void OnProductPageSizeChanged(int value)
+    {
+        ProductCurrentPage = 1;
+        ApplyProductFilterAndSort();
+    }
+
+    partial void OnProductCurrentPageChanged(int value) => PageProducts();
+
+    [RelayCommand]
+    private void GoToProductPage(int page)
+    {
+        if (page >= 1 && page <= ProductTotalPages && page != ProductCurrentPage)
+            ProductCurrentPage = page;
+    }
+
+    [RelayCommand]
+    private void ProductPreviousPage()
+    {
+        if (ProductCurrentPage > 1)
+            ProductCurrentPage--;
+    }
+
+    [RelayCommand]
+    private void ProductNextPage()
+    {
+        if (ProductCurrentPage < ProductTotalPages)
+            ProductCurrentPage++;
+    }
+
+    /// <summary>
+    /// Aggregates per-product sales for the current date range (cash-basis,
+    /// matching the other analytics tabs) and refreshes the table + KPI cards.
+    /// </summary>
+    private void LoadProductSales(CompanyData data)
+    {
+        var displayDate = EndDate;
+        var rows = ProductSalesService.GetProductSales(data, StartDate, EndDate, cashBasis: true)
+            .Select(d => new ProductSalesRow(d, displayDate))
+            .ToList();
+
+        _allProductRows = rows;
+        HasProductData = rows.Count > 0;
+
+        var totalRevenue = rows.Sum(r => r.RevenueUSD);
+        var totalUnits = rows.Sum(r => r.UnitsSold);
+        var avgPrice = totalUnits > 0 ? totalRevenue / totalUnits : 0;
+
+        TotalProductRevenue = CurrencyService.FormatFromUSD(totalRevenue, displayDate);
+        TotalProductUnits = totalUnits.ToString("0.##");
+        AvgProductSalePrice = CurrencyService.FormatFromUSD(avgPrice, displayDate);
+        ProductsSoldCount = rows.Count.ToString();
+
+        // Preserve the current selection if its product still exists; otherwise
+        // auto-select the top row so the detail panel is populated on arrival.
+        var previouslySelectedId = SelectedProduct?.ProductId;
+
+        ApplyProductFilterAndSort();
+
+        SelectedProduct =
+            (previouslySelectedId != null ? _filteredSortedProducts.FirstOrDefault(r => r.ProductId == previouslySelectedId) : null)
+            ?? _filteredSortedProducts.FirstOrDefault();
+    }
+
+    private void ApplyProductFilterAndSort()
+    {
+        IEnumerable<ProductSalesRow> query = _allProductRows;
+
+        if (!string.IsNullOrWhiteSpace(ProductSearchQuery))
+        {
+            var q = ProductSearchQuery.Trim();
+            query = query.Where(r =>
+                r.ProductName.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                r.Sku.Contains(q, StringComparison.OrdinalIgnoreCase));
+        }
+
+        _filteredSortedProducts = query.ApplySort(
+            ProductSortColumn,
+            ProductSortDirection,
+            new Dictionary<string, Func<ProductSalesRow, object?>>
+            {
+                ["Product"] = r => r.ProductName,
+                ["Units"] = r => r.UnitsSold,
+                ["Revenue"] = r => r.RevenueUSD,
+                ["AvgPrice"] = r => r.AvgSalePriceUSD
+            },
+            r => r.RevenueUSD);
+
+        ProductTotalPages = Math.Max(1, (int)Math.Ceiling((double)_filteredSortedProducts.Count / ProductPageSize));
+        if (ProductCurrentPage > ProductTotalPages)
+            ProductCurrentPage = ProductTotalPages;  // re-pages via OnProductCurrentPageChanged
+        else
+            PageProducts();
+    }
+
+    /// <summary>Fills the visible <see cref="Products"/> page from the filtered, sorted set.</summary>
+    private void PageProducts()
+    {
+        ProductPaginationText = PaginationTextHelper.FormatPaginationText(
+            _filteredSortedProducts.Count, ProductCurrentPage, ProductPageSize, ProductTotalPages, "product");
+
+        Products.Clear();
+        foreach (var row in _filteredSortedProducts.Skip((ProductCurrentPage - 1) * ProductPageSize).Take(ProductPageSize))
+            Products.Add(row);
+    }
+
+    partial void OnSelectedProductChanged(ProductSalesRow? value)
+    {
+        OnPropertyChanged(nameof(HasSelectedProduct));
+
+        foreach (var row in _allProductRows)
+            row.IsSelected = ReferenceEquals(row, value);
+
+        ReloadProductRevenueTrend();
+    }
+
+    /// <summary>
+    /// (Re)builds the selected product's revenue-trend series. Called when the
+    /// selection changes and whenever the chart style changes (via LoadAllCharts),
+    /// since the series geometry depends on the chosen chart type.
+    /// </summary>
+    private void ReloadProductRevenueTrend()
+    {
+        var value = SelectedProduct;
+        var data = _companyManager?.CompanyData;
+        if (value == null || data == null)
+        {
+            ProductRevenueTrendSeries = [];
+            HasProductTrendData = false;
+            return;
+        }
+
+        var (series, dates) = ChartLoaderService.LoadProductRevenueTrendChart(
+            data, value.ProductId, StartDate, EndDate);
+        ProductRevenueTrendSeries = series;
+        ProductRevenueTrendXAxes = ChartLoaderService.CreateDateXAxes(dates);
+        ProductRevenueTrendYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        HasProductTrendData = series.Count > 0;
+    }
+
+    /// <summary>Sets the table selection (invoked by row clicks in the view).</summary>
+    [RelayCommand]
+    private void SelectProduct(ProductSalesRow? row) => SelectedProduct = row;
 
     #endregion
 
@@ -1692,6 +1962,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadTaxRateDistributionChart(data);
         LoadExpenseVsRevenueTaxChart(data);
 
+        // Products detail chart (cartesian) reacts to chart-style changes too
+        ReloadProductRevenueTrend();
+
         // Pie charts and geo map are style-independent, only reload on data/filter changes
         if (!styleChangeOnly)
         {
@@ -1726,6 +1999,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             // Taxes pie charts
             LoadTaxByCategoryChart(data);
             LoadTaxByProductChart(data);
+
+            // Products tab
+            LoadProductSales(data);
         }
     }
 

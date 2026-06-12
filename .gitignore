@@ -464,3 +464,6 @@ $RECYCLE.BIN/
 # Draw.io
 *.bkp
 *.dtmp
+
+# Superpowers brainstorm scratch files
+.superpowers/

@@ -62,6 +62,21 @@ public partial class AnalyticsPage : UserControl
         }
     }
 
+    /// <summary>
+    /// Keeps the Product Profitability table's columns sized to the available width.
+    /// </summary>
+    private void OnProductsHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is AnalyticsPageViewModel vm && e.WidthChanged)
+            vm.ProductsResponsiveHeader.HeaderWidth = e.NewSize.Width;
+    }
+
+    private void OnProductsTableSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is AnalyticsPageViewModel vm && e.WidthChanged)
+            vm.ProductColumns.SetAvailableWidth(e.NewSize.Width);
+    }
+
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);

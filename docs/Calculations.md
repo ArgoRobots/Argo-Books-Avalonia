@@ -283,6 +283,8 @@ Bank Matching (`BankMatchingService`) is a non-financial reference layer: it imp
 | Overdue Invoices stat | `EffectiveBalanceUSD` | — | **No** (by design) | n/a |
 | Revenue page list | `EffectiveTotalUSD` | — | **No** (shows all) | n/a |
 | Income Statement / GL | `EffectiveSubtotalUSD` | `EffectiveSubtotalUSD` | Per-report setting | Per-report setting |
+| Sales by Product (Analytics tab) | `EffectiveTotalUSD` (allocated per line item) | — | Yes | Not applied (see §13) |
+| Sales by Product (Report) | `EffectiveTotalUSD` (allocated per line item) | — | No (accrual) | Not applied (see §13) |
 
 ---
 
@@ -312,3 +314,44 @@ When writing or reviewing aggregation code:
 - All aggregations stay in USD. Convert to display currency only at the presentation boundary (stat card binding, chart series construction).
 - For any new chart or stat card, look at the table in §11 to decide which column you fall under, and copy the pattern from a neighbor that is already correct.
 - If you can't find an answer here, the rule does not exist yet, propose one before writing the code.
+
+---
+
+## 13. Sales by product
+
+The Analytics "Products" tab and the Report Builder "Sales by Product" template both break **revenue and units** down per product. `ProductSalesService` is the single source of truth; both surfaces call it so their math never diverges, only the basis differs (see below).
+
+**Why revenue, not profit.** Per-product *profit* is deliberately **not** computed. Profit would need a trustworthy cost of goods sold per product, and Argo can't produce one: a product's cost is an optional, manually-entered default (`Product.CostPrice`), the system does no COGS matching (§10: stock is expensed when bought, never matched to the sale), and anything you assemble or make (a pizza built from flour and cheese) has no purchasable "cost of itself" at all. Rather than show a misleading margin, these surfaces report only what is always true: how much each product sold for and how many units moved.
+
+### Revenue per product (gross, USD)
+
+A transaction's `Effective*USD` properties live at the transaction level, not the line item. To attribute revenue to a product, allocate each line item's share of the transaction's **gross** USD total in proportion to its native pre-tax subtotal:
+
+```
+lineItemsTotal = Σ over LineItem of li.Subtotal          (native currency, pre-tax)
+revenueUSD(li) = lineItemsTotal != 0
+               ? round(li.Subtotal / lineItemsTotal × txn.EffectiveTotalUSD, 2)
+               : 0
+```
+
+Revenue is **gross** (`EffectiveTotalUSD`, tax-inclusive), matching every other revenue display in the app per Rule 1 (Total Revenue card, Top Customers, etc.). The allocation weight is the line's pre-tax subtotal, which is the only per-line figure available; tax is distributed in the same proportion. Line items with no `ProductId` group under "Unknown". A transaction with **no line items at all** has no product to attribute to and is excluded from these surfaces entirely.
+
+### Units and average price
+
+```
+unitsSold(product) = Σ over its line items of li.Quantity
+avgSalePriceUSD(product) = unitsSold != 0 ? revenueUSD / unitsSold : 0
+```
+
+`avgSalePrice` is gross revenue per unit (it carries the same tax-inclusive basis as the revenue column).
+
+### Basis: cash for analytics, accrual for the report
+
+Consistent with Rule 2 and §10, the two surfaces deliberately differ and `ProductSalesService` takes a single `cashBasis` flag to switch:
+
+- **Analytics Products tab** (`cashBasis: true`): filters revenues with `RevenueAggregator.IsCollected` first, like every other analytics tab. Its aggregate revenue is close to the Total Revenue stat card for the same range but does not reconcile exactly, and the two differences pull opposite ways: it does **not** subtract refunds (so it reads higher than the card by the refund amount, see below), and it excludes revenue on transactions with **no line items** (so it reads lower than the card by that amount).
+- **Report Builder template** (`cashBasis: false`): counts all invoiced revenue in range, like the Income Statement.
+
+### Refunds are not attributed per-product
+
+Refunds are recorded as invoice-level `Payment` rows (§8) with no line-item breakdown, so there is no reliable way to subtract a refund from the specific product it concerned. Per-product revenue therefore does **not** subtract refunds, and will read slightly high for products that were later refunded. Customer-returned items and lost/damaged stock already have their own per-product surfaces (Returns by Product, Losses by Product).
