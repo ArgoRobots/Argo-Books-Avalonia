@@ -11,9 +11,10 @@ namespace ArgoBooks.Core.Services;
 public static class ReferenceResolver
 {
     // A candidate must score at least this to be returned as a match.
-    // Set at 0.80 to accept clear single-character typos (e.g. "Globx" -> "Globex")
-    // while still rejecting unrelated names. Conservative: a wrong link is worse than no link.
-    private const double FuzzyAcceptThreshold = 0.80;
+    // Set at 0.92 to accept only very close matches (e.g. a long name one character off)
+    // while rejecting short-name typos, substrings, and partial-word matches.
+    // Conservative: a wrong link is worse than no link.
+    private const double FuzzyAcceptThreshold = 0.92;
 
     // The winning candidate must beat the runner-up by at least this margin.
     // If the gap is smaller, the result is ambiguous.
@@ -60,13 +61,13 @@ public static class ReferenceResolver
         if (index.Count == 0)
             return (null, false);
 
-        // 2. Composite scoring: score every key and find best + second-best.
+        // 2. Levenshtein-only scoring: score every key and find best + second-best.
         double best = 0, secondBest = 0;
         string? bestKey = null;
 
         foreach (var key in index.Keys)
         {
-            double score = CompositeScore(normalized, key);
+            double score = LevenshteinRatio(normalized, key);
             if (score > best)
             {
                 secondBest = best;
@@ -108,55 +109,20 @@ public static class ReferenceResolver
     }
 
     /// <summary>
-    /// Composite similarity score in [0, 1].
+    /// Levenshtein similarity ratio in [0, 1]: 1 - distance / max(lenA, lenB).
     ///
-    /// Two signals, take the maximum:
-    ///
-    /// (a) Levenshtein ratio using max(lenA, lenB) as denominator — conservative for typo
-    ///     correction where both strings are similar in length (e.g. "Globx" vs "Globex").
-    ///
-    /// (b) Word-coverage score: fraction of query words that fuzzy-match a word in the
-    ///     candidate (each word pair scores 1.0 if identical, or a word-level Levenshtein
-    ///     ratio otherwise). This correctly surfaces "smith" as fully covered by both
-    ///     "smith plumbing" and "smith electrical", triggering the ambiguity rule, while
-    ///     "totally different" gets no coverage against "acme ltd" or "globex".
-    ///
-    /// Using max() means a high-confidence typo match (signal a) OR a clear word-subset
-    /// match (signal b) is sufficient — but we never average them down.
+    /// Using max-length as the denominator is conservative for partial-substring queries:
+    /// a short query against a longer candidate is penalised by the length difference,
+    /// so "office" (6 chars) vs "office depot" (12 chars) scores 0.50, well below the
+    /// 0.92 threshold, and is correctly rejected.
     /// </summary>
-    private static double CompositeScore(string query, string candidate)
+    private static double LevenshteinRatio(string query, string candidate)
     {
         if (query == candidate) return 1.0;
         if (query.Length == 0 || candidate.Length == 0) return 0.0;
 
-        // (a) Levenshtein ratio: 1 - dist / max(len)
         int dist = LevenshteinDistance(query, candidate);
-        double levenRatio = 1.0 - (double)dist / Math.Max(query.Length, candidate.Length);
-
-        // (b) Word-coverage: what fraction of query words are found in the candidate words?
-        var queryWords = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var candidateWords = candidate.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        double wordCoverage = 0.0;
-        if (queryWords.Length > 0)
-        {
-            double totalScore = 0.0;
-            foreach (var qw in queryWords)
-            {
-                // Find the best-matching candidate word for this query word.
-                double bestWordScore = 0.0;
-                foreach (var cw in candidateWords)
-                {
-                    double ws = qw == cw ? 1.0
-                        : 1.0 - (double)LevenshteinDistance(qw, cw) / Math.Max(qw.Length, cw.Length);
-                    if (ws > bestWordScore) bestWordScore = ws;
-                }
-                totalScore += bestWordScore;
-            }
-            wordCoverage = totalScore / queryWords.Length;
-        }
-
-        return Math.Max(levenRatio, wordCoverage);
+        return 1.0 - (double)dist / Math.Max(query.Length, candidate.Length);
     }
 
     private static int LevenshteinDistance(string a, string b)
