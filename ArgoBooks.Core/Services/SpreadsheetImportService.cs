@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
@@ -495,10 +497,101 @@ public class SpreadsheetImportService
                 $"Removed {duplicatesRemoved} duplicate entities (by ID) across AI chunks for sheet '{sheetName}'");
         }
 
+        // ---------------------------------------------------------------------------------
+        // Task 2C: deterministic natural-key ids for id-less Tier 2 rows + re-import detection.
+        //
+        // For every entity that arrives WITHOUT an id we derive a deterministic id from a
+        // small set of identifying fields (the "natural key"). This makes such rows importable
+        // (today they are dropped) AND idempotent: re-importing the same file reproduces the
+        // same ids, so the existing merge-by-id logic UPDATES the prior row instead of
+        // duplicating it.
+        //
+        // Safety invariant ("no silent drops / never collapse distinct rows"): two genuinely
+        // identical rows in the SAME import share a natural key but MUST both survive. We keep
+        // them apart by appending an ordinal (-2, -3, ...) to the 2nd, 3rd ... occurrence in
+        // order of appearance. The natural key is NEVER used to merge two same-import rows; it
+        // only seeds the deterministic id. Cross-import updates are governed solely by the
+        // existing merge-by-id path.
+        // ---------------------------------------------------------------------------------
+        var entitiesToImport = new List<(SpreadsheetSheetType EntityType, JsonElement Entity, bool SkipImport)>();
+        var naturalKeyOrdinals = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        // Snapshot the ids that already exist for each entity type BEFORE we import, so we can
+        // count how many incoming rows land on a pre-existing record (a re-import).
+        var existingIdSnapshots = new Dictionary<SpreadsheetSheetType, HashSet<string>>();
+        HashSet<string> ExistingIdsFor(SpreadsheetSheetType type)
+        {
+            if (!existingIdSnapshots.TryGetValue(type, out var set))
+            {
+                set = new HashSet<string>(GetExistingEntityIds(companyData, type), StringComparer.OrdinalIgnoreCase);
+                existingIdSnapshots[type] = set;
+            }
+            return set;
+        }
+
+        int reimportMatches = 0;
+
         foreach (var (chunkEntityType, entityJson) in deduplicatedEntities)
+        {
+            var existingId = ExtractEntityId(entityJson);
+            if (!string.IsNullOrEmpty(existingId))
+            {
+                // Real id (the common case): flow through unchanged. Count a re-import match if
+                // it lands on a record that already existed before this import.
+                if (ExistingIdsFor(chunkEntityType).Contains(existingId))
+                    reimportMatches++;
+                entitiesToImport.Add((chunkEntityType, entityJson, false));
+                continue;
+            }
+
+            // Id-less row: try to derive a deterministic id from its natural key.
+            var naturalKey = NaturalKey(chunkEntityType, entityJson);
+            if (naturalKey == null)
+            {
+                // Not enough fields to form a meaningful key. Keep TODAY's behavior: do not
+                // invent an opaque id that could collide arbitrarily. The row is recorded as
+                // unimported below (never silently dropped) by passing it through with the
+                // SkipImport flag so the existing "missing/empty ID" reporting path fires.
+                entitiesToImport.Add((chunkEntityType, entityJson, true));
+                continue;
+            }
+
+            // Disambiguate same-import rows that share a natural key with an ordinal so all of
+            // them survive. The 1st occurrence keeps the base id; the Nth gets "-N".
+            var ordinal = naturalKeyOrdinals.TryGetValue(naturalKey, out var seen) ? seen + 1 : 1;
+            naturalKeyOrdinals[naturalKey] = ordinal;
+
+            var baseId = $"{TypePrefix(chunkEntityType)}-{StableHash(naturalKey)}";
+            var derivedId = ordinal == 1 ? baseId : $"{baseId}-{ordinal}";
+
+            if (ExistingIdsFor(chunkEntityType).Contains(derivedId))
+                reimportMatches++;
+
+            var withId = WithId(entityJson, derivedId);
+            entitiesToImport.Add((chunkEntityType, withId, false));
+        }
+
+        if (reimportMatches > 0)
+            sheetResult.Warnings.Add($"{reimportMatches} row(s) look like a re-import and were updated.");
+
+        foreach (var (chunkEntityType, entityJson, skipImport) in entitiesToImport)
         {
             try
             {
+                if (skipImport)
+                {
+                    var missingReason = $"Row had missing id and insufficient fields to form a key ({chunkEntityType})";
+                    sheetResult.Skipped++;
+                    sheetResult.SkipReasons.Add(missingReason);
+                    sheetResult.UnimportedRows.Add(new UnimportedRow
+                    {
+                        Sheet = sheetName,
+                        Reason = missingReason,
+                        RawValue = entityJson.GetRawText()
+                    });
+                    continue;
+                }
+
                 var singleResult = ImportSingleEntity(companyData, chunkEntityType, entityJson, options, refContext);
                 if (singleResult == ImportEntityResult.Inserted)
                     sheetResult.Inserted++;
@@ -755,6 +848,185 @@ public class SpreadsheetImportService
             return idProp.GetString();
         return null;
     }
+
+    #region Task 2C: natural-key identity for id-less rows
+
+    /// <summary>
+    /// Builds a stable, normalized natural key from a small set of identifying fields for the
+    /// given entity type. Used ONLY to derive a deterministic id for an id-less row so that
+    /// re-importing the same file is idempotent. Returns <c>null</c> when there are not enough
+    /// fields to form a meaningful key (caller then keeps today's behavior and records the row
+    /// as unimported rather than inventing an arbitrary id).
+    ///
+    /// This is deliberately NOT used to merge two rows arriving in the same import: identical
+    /// rows share a key but are kept distinct by the caller's ordinal scheme.
+    /// </summary>
+    internal static string? NaturalKey(SpreadsheetSheetType type, JsonElement json)
+    {
+        // Each entity type contributes a small, stable set of identifying fields. A field only
+        // "counts" toward the key when it carries a non-empty value; we require a minimum number
+        // of present fields so a near-empty row does not get a meaningless (and collision-prone)
+        // key.
+        List<(string Field, int MinPresent)> spec = type switch
+        {
+            SpreadsheetSheetType.Expenses or SpreadsheetSheetType.Revenue =>
+                [("date", 0), ("amount", 0), ("total", 0), ("description", 0)],
+            SpreadsheetSheetType.Invoices =>
+                [("invoiceNumber", 0), ("issueDate", 0), ("total", 0)],
+            SpreadsheetSheetType.Payments =>
+                [("date", 0), ("amount", 0), ("customerId", 0), ("invoiceId", 0)],
+            _ =>
+                [("date", 0), ("amount", 0), ("total", 0), ("description", 0), ("name", 0), ("customerId", 0), ("supplierId", 0)]
+        };
+
+        var parts = new List<string>();
+        int present = 0;
+        foreach (var (field, _) in spec)
+        {
+            var value = NormalizeKeyField(json, field);
+            if (!string.IsNullOrEmpty(value))
+                present++;
+            // Include the field (even if empty) positionally so the key stays stable and two
+            // rows that differ only in one field produce different keys.
+            parts.Add($"{field}={value}");
+        }
+
+        // Need at least two populated identifying fields for a meaningful key. A single value
+        // (e.g. just an amount, or just a date) is too weak to safely deduplicate on.
+        if (present < 2)
+            return null;
+
+        return string.Join("|", parts);
+    }
+
+    /// <summary>
+    /// Reads a field from the raw JSON and normalizes it for keying: numbers use the invariant
+    /// round-trip form (so "10" and "10.0" key the same), dates use the date component, strings
+    /// are trimmed and lowercased. Missing/null returns an empty string.
+    /// </summary>
+    private static string NormalizeKeyField(JsonElement json, string field)
+    {
+        // Property lookup is case-insensitive to mirror the deserializer (camelCase tolerance).
+        JsonElement prop = default;
+        bool found = false;
+        foreach (var p in json.EnumerateObject())
+        {
+            if (string.Equals(p.Name, field, StringComparison.OrdinalIgnoreCase))
+            {
+                prop = p.Value;
+                found = true;
+                break;
+            }
+        }
+        if (!found) return string.Empty;
+
+        switch (prop.ValueKind)
+        {
+            case JsonValueKind.Null or JsonValueKind.Undefined:
+                return string.Empty;
+            case JsonValueKind.Number:
+                return prop.TryGetDecimal(out var dec)
+                    ? dec.ToString(CultureInfo.InvariantCulture)
+                    : prop.GetRawText();
+            case JsonValueKind.True:
+                return "true";
+            case JsonValueKind.False:
+                return "false";
+            case JsonValueKind.String:
+                var s = prop.GetString() ?? string.Empty;
+                s = s.Trim();
+                // Normalize numeric strings so "10" and "10.00" collapse, and dates to date-only
+                // so a time component or format drift does not split the same logical row.
+                if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var sdec))
+                    return sdec.ToString(CultureInfo.InvariantCulture);
+                if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out var sdate))
+                    return sdate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                return s.ToLowerInvariant();
+            default:
+                return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Stable hash of a natural key: SHA-256, hex, truncated to 16 chars. Deliberately NOT
+    /// <see cref="object.GetHashCode"/> / <see cref="string.GetHashCode()"/>, which are not
+    /// stable across runs/platforms and would break idempotent re-import.
+    /// </summary>
+    private static string StableHash(string input)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(bytes, 0, 8); // 8 bytes -> 16 hex chars
+    }
+
+    /// <summary>Short id prefix per entity type for derived natural-key ids.</summary>
+    private static string TypePrefix(SpreadsheetSheetType type) => type switch
+    {
+        SpreadsheetSheetType.Expenses => "EXP",
+        SpreadsheetSheetType.Revenue => "REV",
+        SpreadsheetSheetType.Invoices => "INV",
+        SpreadsheetSheetType.Payments => "PAY",
+        SpreadsheetSheetType.Customers => "CUS",
+        SpreadsheetSheetType.Suppliers => "SUP",
+        SpreadsheetSheetType.Products => "PRD",
+        _ => type.ToString().ToUpperInvariant()
+    };
+
+    /// <summary>
+    /// Returns a new <see cref="JsonElement"/> equal to <paramref name="source"/> but with an
+    /// "id" property set to <paramref name="id"/> (added or overwritten). Used to stamp the
+    /// derived deterministic id onto an id-less row before it flows through the normal importer.
+    /// </summary>
+    private static JsonElement WithId(JsonElement source, string id)
+    {
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("id", id);
+            if (source.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in source.EnumerateObject())
+                {
+                    if (string.Equals(prop.Name, "id", StringComparison.OrdinalIgnoreCase))
+                        continue; // replaced above
+                    prop.WriteTo(writer);
+                }
+            }
+            writer.WriteEndObject();
+        }
+        using var doc = JsonDocument.Parse(buffer.ToArray());
+        return doc.RootElement.Clone();
+    }
+
+    /// <summary>
+    /// Snapshot of the ids currently present for a given entity type. Used to count how many
+    /// incoming rows land on a pre-existing record (re-import detection).
+    /// </summary>
+    private static IEnumerable<string> GetExistingEntityIds(CompanyData data, SpreadsheetSheetType type) => type switch
+    {
+        SpreadsheetSheetType.Customers => data.Customers.Select(c => c.Id),
+        SpreadsheetSheetType.Suppliers => data.Suppliers.Select(s => s.Id),
+        SpreadsheetSheetType.Products => data.Products.Select(p => p.Id),
+        SpreadsheetSheetType.Invoices => data.Invoices.Select(i => i.Id),
+        SpreadsheetSheetType.Expenses => data.Expenses.Select(e => e.Id),
+        SpreadsheetSheetType.Revenue => data.Revenues.Select(r => r.Id),
+        SpreadsheetSheetType.Payments => data.Payments.Select(p => p.Id),
+        SpreadsheetSheetType.Categories => data.Categories.Select(c => c.Id),
+        SpreadsheetSheetType.Employees => data.Employees.Select(e => e.Id),
+        SpreadsheetSheetType.Locations => data.Locations.Select(l => l.Id),
+        SpreadsheetSheetType.Departments => data.Departments.Select(d => d.Id),
+        SpreadsheetSheetType.Inventory => data.Inventory.Select(i => i.Id),
+        SpreadsheetSheetType.RentalInventory => data.RentalInventory.Select(r => r.Id),
+        SpreadsheetSheetType.RentalRecords => data.Rentals.Select(r => r.Id),
+        SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Select(r => r.Id),
+        SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Select(s => s.Id),
+        SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Select(p => p.Id),
+        SpreadsheetSheetType.Returns => data.Returns.Select(r => r.Id),
+        SpreadsheetSheetType.LostDamaged => data.LostDamaged.Select(l => l.Id),
+        _ => []
+    };
+
+    #endregion
 
     private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null, ReferenceResolutionContext? refContext = null)
     {
