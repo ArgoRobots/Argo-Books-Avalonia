@@ -94,6 +94,12 @@ public class SheetAnalysis
     /// Total number of data rows detected in this sheet.
     /// </summary>
     public int RowCount { get; set; }
+
+    /// <summary>
+    /// When non-null, this sheet could not be matched to a supported Argo Books entity type
+    /// and will be excluded from import. The value is a human-readable explanation.
+    /// </summary>
+    public string? UnsupportedReason { get; set; }
 }
 
 /// <summary>

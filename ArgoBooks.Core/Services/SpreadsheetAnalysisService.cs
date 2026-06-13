@@ -22,6 +22,12 @@ public class SpreadsheetAnalysisService(
     private const int Tier2ChunkSize = 100;
     private const int MaxConcurrentChunks = 10;
 
+    /// <summary>
+    /// Minimum confidence score for a sheet to be considered a supported entity type.
+    /// Sheets below this threshold are marked unsupported and excluded from import.
+    /// </summary>
+    private const double MinTypeConfidence = 0.5;
+
     // Cap the columns analyzed per LLM call so its JSON response can never exceed the
     // model's output token budget and get truncated (which fails to parse).
     private const int MaxColumnsPerAnalysisBatch = 40;
@@ -677,6 +683,13 @@ IMPORTANT:
                     {
                         foreach (var col in unmappedTgt.EnumerateArray())
                             sheet.UnmappedTargetColumns.Add(col.GetString() ?? "");
+                    }
+
+                    // Mark sheets that cannot be imported: Unknown type or below the confidence threshold.
+                    if (sheet.DetectedType == SpreadsheetSheetType.Unknown || sheet.Confidence < MinTypeConfidence)
+                    {
+                        sheet.UnsupportedReason = $"This sheet ('{sheet.SourceSheetName}') does not match a data type Argo Books can import.";
+                        sheet.IsIncluded = false;
                     }
 
                     result.Sheets.Add(sheet);

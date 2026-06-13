@@ -17,6 +17,24 @@ public enum ImportMappingDialogResult
 }
 
 /// <summary>
+/// Read-only ViewModel for a sheet that cannot be imported due to an unrecognised type.
+/// </summary>
+public sealed class UnsupportedSheetViewModel
+{
+    private readonly SheetAnalysis _analysis;
+
+    public UnsupportedSheetViewModel(SheetAnalysis analysis)
+    {
+        _analysis = analysis;
+    }
+
+    public string SourceSheetName => _analysis.SourceSheetName;
+    public string Reason => _analysis.UnsupportedReason ?? string.Empty;
+    public int RowCount => _analysis.RowCount;
+    public string RowCountDisplay => $"{RowCount:N0} rows";
+}
+
+/// <summary>
 /// ViewModel wrapper for a SheetAnalysis, making it observable for the UI.
 /// </summary>
 public partial class SheetAnalysisViewModel : ObservableObject
@@ -200,6 +218,14 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
     public bool HasWarnings => Warnings.Count > 0;
 
+    /// <summary>
+    /// Sheets that could not be matched to a supported Argo Books entity type.
+    /// Displayed in a read-only "Cannot import" section in the dialog.
+    /// </summary>
+    public ObservableCollection<UnsupportedSheetViewModel> UnsupportedSheets { get; } = [];
+
+    public bool HasUnsupportedSheets => UnsupportedSheets.Count > 0;
+
     private TaskCompletionSource<ImportMappingDialogResult>? _completionSource;
     private SpreadsheetAnalysisResult? _analysisResult;
 
@@ -217,14 +243,18 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
         // Clear previous state
         Sheets.Clear();
         Warnings.Clear();
+        UnsupportedSheets.Clear();
         SkipExistingRecords = true;
 
         FileName = analysis.FileName;
 
-        // Populate sheets
+        // Populate sheets: supported sheets go to the main list, unsupported to their own list
         foreach (var sheet in analysis.Sheets)
         {
-            Sheets.Add(new SheetAnalysisViewModel(sheet));
+            if (sheet.UnsupportedReason != null)
+                UnsupportedSheets.Add(new UnsupportedSheetViewModel(sheet));
+            else
+                Sheets.Add(new SheetAnalysisViewModel(sheet));
         }
 
         // Populate warnings
@@ -233,12 +263,13 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
             Warnings.Add(warning);
         }
 
-        // Calculate summary stats
-        TotalSheets = analysis.Sheets.Count;
-        TotalRows = analysis.Sheets.Sum(s => s.RowCount);
-        TotalMappedColumns = analysis.Sheets.Sum(s => s.ColumnMappings.Count);
-        Tier1SheetCount = analysis.Sheets.Count(s => s.Tier == ProcessingTier.Tier1_Mapping);
-        Tier2SheetCount = analysis.Sheets.Count(s => s.Tier == ProcessingTier.Tier2_LlmProcessing);
+        // Calculate summary stats (exclude unsupported sheets from the totals)
+        var supportedSheets = analysis.Sheets.Where(s => s.UnsupportedReason == null).ToList();
+        TotalSheets = supportedSheets.Count;
+        TotalRows = supportedSheets.Sum(s => s.RowCount);
+        TotalMappedColumns = supportedSheets.Sum(s => s.ColumnMappings.Count);
+        Tier1SheetCount = supportedSheets.Count(s => s.Tier == ProcessingTier.Tier1_Mapping);
+        Tier2SheetCount = supportedSheets.Count(s => s.Tier == ProcessingTier.Tier2_LlmProcessing);
 
         // Rate limit display
         if (remainingImports >= 0 && maxImports > 0)
@@ -252,6 +283,7 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(HasWarnings));
+        OnPropertyChanged(nameof(HasUnsupportedSheets));
 
         IsOpen = true;
         _completionSource = new TaskCompletionSource<ImportMappingDialogResult>();

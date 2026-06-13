@@ -50,6 +50,17 @@ public static class ImporterHarness
                 failures.Add($"sheet '{es.Name}' tier {got.Tier} != {es.Tier}");
         }
 
+        // 1b) unsupported sheets: every expected unsupported name must appear in analysis
+        //     with a non-null UnsupportedReason
+        foreach (var name in expected.UnsupportedSheets)
+        {
+            var got = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == name);
+            if (got == null)
+                failures.Add($"unsupported sheet '{name}' missing from analysis");
+            else if (got.UnsupportedReason == null)
+                failures.Add($"unsupported sheet '{name}' has null UnsupportedReason (expected non-null)");
+        }
+
         // 2) import Tier 1 sheets and assert counts/records
         var importSvc = new SpreadsheetImportService(null, null, fake);
         var options = new ImportOptions { AutoCreateMissingReferences = true };

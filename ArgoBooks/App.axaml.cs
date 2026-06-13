@@ -2142,6 +2142,11 @@ public partial class App : Application
             // Collect all warnings
             var allWarnings = (tier1Result?.Warnings ?? []).ToList();
 
+            // Report any sheets that were out of scope (detected type Unknown or confidence too low)
+            var unsupportedSheets = updatedAnalysis.Sheets.Where(s => s.UnsupportedReason != null).ToList();
+            foreach (var unsupported in unsupportedSheets)
+                allWarnings.Add($"Sheet \"{unsupported.SourceSheetName}\" was skipped: {unsupported.UnsupportedReason}");
+
             // Collect skip reasons from all sheets
             var allSkipReasons = allSheetResults
                 .SelectMany(sr => sr.SkipReasons)
