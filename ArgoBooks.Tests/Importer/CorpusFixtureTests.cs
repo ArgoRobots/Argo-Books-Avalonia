@@ -11,7 +11,13 @@ public class CorpusFixtureTests
     [MemberData(nameof(Fixtures))]
     public async Task Fixture_ImportsAsExpected(string fixtureDir)
     {
+        var (expectedKnownGap, _) = await ImporterHarness.ReadGapAsync(fixtureDir);
         var report = await ImporterHarness.RunTrackAAsync(fixtureDir);
-        Assert.True(report.Passed, report.FailureMessage);
+
+        if (expectedKnownGap)
+            Assert.False(report.Passed,
+                "Fixture marked knownGap but now passes; remove the knownGap flag.");
+        else
+            Assert.True(report.Passed, report.FailureMessage);
     }
 }

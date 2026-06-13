@@ -1,0 +1,3 @@
+{
+  "Sales": "{\"sheets\":[{\"sourceSheetName\":\"Sales\",\"detectedType\":\"Revenue\",\"confidence\":0.75,\"tier\":\"Tier1_Mapping\",\"tierReason\":\"Best-effort: cross-tab layout cannot be pivoted with current importer\",\"columnMappings\":[{\"sourceColumn\":\"Product\",\"targetColumn\":\"Product\",\"confidence\":0.85,\"transformHint\":null}],\"unmappedSourceColumns\":[\"Jan\",\"Feb\",\"Mar\"],\"unmappedTargetColumns\":[\"ID\",\"Date\",\"Unit Price\",\"Total\"]}],\"warnings\":[\"Cross-tab layout detected: month columns cannot be mapped to long-form Revenue rows without pivoting\"]}"
+}

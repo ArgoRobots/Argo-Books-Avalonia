@@ -7,6 +7,10 @@ namespace ArgoBooks.Tests.Importer;
 
 public sealed record HarnessReport(bool Passed, string FailureMessage);
 
+public sealed record AccuracyScore(
+    int Sheets, int CorrectType, int CorrectTier,
+    int MappingExpected, int MappingMatched);
+
 public static class ImporterHarness
 {
     public static string CorpusRoot =>
@@ -72,6 +76,32 @@ public static class ImporterHarness
         return failures.Count == 0
             ? new HarnessReport(true, "")
             : new HarnessReport(false, string.Join("; ", failures));
+    }
+
+    public static async Task<(bool KnownGap, string? Reason)> ReadGapAsync(string fixtureDir)
+    {
+        var expected = JsonSerializer.Deserialize<ExpectedResult>(
+            await File.ReadAllTextAsync(Path.Combine(fixtureDir, "expected.json")))!;
+        return (expected.KnownGap, expected.KnownGapReason);
+    }
+
+    public static async Task<AccuracyScore> ScoreAsync(
+        string fixtureDir, IGeminiService liveService)
+    {
+        var expected = JsonSerializer.Deserialize<ExpectedResult>(
+            await File.ReadAllTextAsync(Path.Combine(fixtureDir, "expected.json")))!;
+        var inputPath = Directory.EnumerateFiles(fixtureDir, "input.*").Single();
+        var analysis = await new SpreadsheetAnalysisService(liveService).AnalyzeAsync(inputPath);
+
+        int correctType = 0, correctTier = 0;
+        foreach (var es in expected.Sheets)
+        {
+            var got = analysis?.Sheets.FirstOrDefault(s => s.SourceSheetName == es.Name);
+            if (got == null) continue;
+            if (got.DetectedType.ToString() == es.DetectedType) correctType++;
+            if (got.Tier.ToString() == es.Tier) correctTier++;
+        }
+        return new AccuracyScore(expected.Sheets.Count, correctType, correctTier, 0, 0);
     }
 
     private static bool KeyRecordPresent(CompanyData data, ExpectedKeyRecord kr) => kr.Type switch

@@ -9,6 +9,8 @@ public sealed class ExpectedResult
     [JsonPropertyName("keyRecords")] public List<ExpectedKeyRecord> KeyRecords { get; set; } = [];
     [JsonPropertyName("expectedDropReasonSubstrings")] public List<string> ExpectedDropReasonSubstrings { get; set; } = [];
     [JsonPropertyName("unsupportedSheets")] public List<string> UnsupportedSheets { get; set; } = [];
+    [JsonPropertyName("knownGap")] public bool KnownGap { get; set; }
+    [JsonPropertyName("knownGapReason")] public string? KnownGapReason { get; set; }
 }
 
 public sealed class ExpectedSheet
