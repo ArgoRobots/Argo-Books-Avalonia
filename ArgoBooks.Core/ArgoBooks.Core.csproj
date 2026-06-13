@@ -32,6 +32,8 @@
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />
         <PackageReference Include="EPPlus" />
+        <!-- Pin EPPlus's transitive ImageSharp to a patched version (CVE-2025-54575 GIF DoS) -->
+        <PackageReference Include="SixLabors.ImageSharp" />
         <!-- Legacy .xls (BIFF) reading; converted to .xlsx at the import entry point -->
         <PackageReference Include="NPOI" />
 

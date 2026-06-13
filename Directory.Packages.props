@@ -38,6 +38,10 @@
     <!-- Excel -->
     <PackageVersion Include="ClosedXML" Version="0.105.0" />
     <PackageVersion Include="EPPlus" Version="8.5.4" />
+    <!-- Pin transitive dep of EPPlus (patches CVE-2025-54575 / GHSA-rxmq-m78w-7wmc:
+         infinite-loop DoS in the GIF decoder, fixed in 2.1.11). Stay on the MIT-licensed
+         2.1.x line that EPPlus targets; do NOT move to 3.x (different license). -->
+    <PackageVersion Include="SixLabors.ImageSharp" Version="2.1.13" />
     <!-- Legacy .xls (BIFF) reading, converted to .xlsx at the import entry point -->
     <PackageVersion Include="NPOI" Version="2.7.4" />
     <!-- Auto-Update (Desktop only) -->
