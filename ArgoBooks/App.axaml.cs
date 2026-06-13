@@ -1835,6 +1835,11 @@ public partial class App : Application
     {
         if (_appShellViewModel == null) return;
 
+        // The name the user actually picked. filePath may later be swapped for a temp file
+        // (legacy .xls conversion, or experimental layout normalization), so capture the
+        // display name up front and use it in all user-facing UI instead of the temp path.
+        var originalFileName = Path.GetFileName(filePath);
+
         var analysisCts = new CancellationTokenSource();
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
@@ -1933,6 +1938,9 @@ public partial class App : Application
                     "Could not analyze the file. The spreadsheet may be empty, or the AI response was incomplete. Please try importing again.".Translate());
                 return;
             }
+
+            // Show the file the user actually selected, not the temp file we may have analyzed.
+            analysis.FileName = originalFileName;
 
             // Step 2: Show mapping review dialog
             var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
@@ -2257,7 +2265,7 @@ public partial class App : Application
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
             await resultDialog.ShowAsync(
-                Path.GetFileName(filePath),
+                originalFileName,
                 allSheetResults,
                 totalImported, totalUpdated, totalSkipped,
                 allSkipReasons, allWarnings, totalProcessed > 0,
