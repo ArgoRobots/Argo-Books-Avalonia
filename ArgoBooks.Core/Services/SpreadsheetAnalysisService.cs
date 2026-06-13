@@ -509,6 +509,31 @@ Respond with valid JSON only, no markdown code blocks.";
                 sb.AppendLine(" |");
             }
             sb.AppendLine();
+
+            // Column profiles: inferred types + basic stats computed from the sample rows.
+            // These give the model stronger signal for classification and column mapping.
+            if (sampleRows.Count > 0)
+            {
+                var profiles = ColumnProfiler.Profile(headers, sampleRows);
+                sb.AppendLine("#### Column profiles");
+                foreach (var p in profiles)
+                {
+                    var examples = p.Examples.Count > 0
+                        ? $", examples: {string.Join(", ", p.Examples)}"
+                        : "";
+                    sb.AppendLine($"- {p.Header} ({p.InferredType}, distinct={p.DistinctCount}, empty={p.EmptyCount}{examples})");
+                }
+                sb.AppendLine();
+
+                var relationships = ColumnProfiler.DetectRelationships(headers, sampleRows);
+                if (relationships.Count > 0)
+                {
+                    sb.AppendLine("#### Detected relationships");
+                    foreach (var rel in relationships)
+                        sb.AppendLine($"- {rel.Description}");
+                    sb.AppendLine();
+                }
+            }
         }
 
         sb.AppendLine(@"## Response Format
