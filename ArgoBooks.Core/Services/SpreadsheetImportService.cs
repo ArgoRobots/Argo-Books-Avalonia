@@ -65,6 +65,13 @@ public class SheetImportResult
     public int Skipped { get; set; }
     public List<string> SkipReasons { get; } = [];
     public List<UnimportedRow> UnimportedRows { get; } = [];
+
+    /// <summary>
+    /// Non-fatal warnings surfaced during import (e.g. a referenced customer/supplier name
+    /// could not be confidently matched and a placeholder was created instead of a link).
+    /// The row IS still imported, so these are warnings rather than <see cref="UnimportedRows"/>.
+    /// </summary>
+    public List<string> Warnings { get; } = [];
 }
 
 /// <summary>
@@ -108,6 +115,27 @@ public class SpreadsheetImportService
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
         _geminiService = geminiService;
+    }
+
+    /// <summary>
+    /// Per-import context carrying the name-to-id indexes used to resolve references by NAME
+    /// before falling back to creating placeholder stubs, plus a sink for any warnings raised
+    /// when a reference could not be confidently matched.
+    ///
+    /// Built once per import and threaded through the call chain (never stored on the service)
+    /// so that concurrent imports on a shared service instance cannot interfere with each other.
+    /// </summary>
+    private sealed class ReferenceResolutionContext
+    {
+        public required Dictionary<string, string> CustomerIndex { get; init; }
+        public required Dictionary<string, string> SupplierIndex { get; init; }
+        public List<string> Warnings { get; } = [];
+
+        public static ReferenceResolutionContext Build(CompanyData data) => new()
+        {
+            CustomerIndex = ReferenceResolver.BuildIndex(data.Customers.Select(c => (c.Id, c.Name))),
+            SupplierIndex = ReferenceResolver.BuildIndex(data.Suppliers.Select(s => (s.Id, s.Name)))
+        };
     }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
@@ -433,6 +461,10 @@ public class SpreadsheetImportService
             EntityType = entityType
         };
 
+        // Build the name->id indexes once for this import so reference resolution can link a
+        // by-name reference to an existing customer/supplier instead of creating a placeholder.
+        var refContext = ReferenceResolutionContext.Build(companyData);
+
         // Deduplicate entities across chunks by ID, later chunks win on conflict.
         // The LLM processes chunks independently and may produce duplicate IDs,
         // especially at chunk boundaries.
@@ -467,7 +499,7 @@ public class SpreadsheetImportService
         {
             try
             {
-                var singleResult = ImportSingleEntity(companyData, chunkEntityType, entityJson, options);
+                var singleResult = ImportSingleEntity(companyData, chunkEntityType, entityJson, options, refContext);
                 if (singleResult == ImportEntityResult.Inserted)
                     sheetResult.Inserted++;
                 else if (singleResult == ImportEntityResult.Updated)
@@ -512,6 +544,9 @@ public class SpreadsheetImportService
                     $"Failed to import {chunkEntityType} entity from AI processing");
             }
         }
+
+        // Surface any reference-resolution warnings (unmatched/ambiguous names) for reporting.
+        sheetResult.Warnings.AddRange(refContext.Warnings);
 
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
@@ -721,7 +756,7 @@ public class SpreadsheetImportService
         return null;
     }
 
-    private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null)
+    private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null, ReferenceResolutionContext? refContext = null)
     {
         var jsonStr = entityJson.GetRawText();
         var opts = ImportJsonOptions;
@@ -778,8 +813,8 @@ public class SpreadsheetImportService
                     invoice.TotalUSD = invoice.Total;
                     invoice.BalanceUSD = invoice.Balance;
 
-                    // Auto-create missing customer reference
-                    EnsureCustomerExists(data, invoice.CustomerId);
+                    // Resolve customer reference by name, else create a placeholder
+                    invoice.CustomerId = EnsureCustomerExists(data, invoice.CustomerId, refContext) ?? invoice.CustomerId;
 
                     var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
@@ -830,9 +865,9 @@ public class SpreadsheetImportService
                     expense.TaxAmountUSD = expense.TaxAmount;
                     expense.ShippingCostUSD = expense.ShippingCost;
 
-                    // Auto-create missing supplier reference
+                    // Resolve supplier reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(expense.SupplierId))
-                        EnsureSupplierExists(data, expense.SupplierId);
+                        expense.SupplierId = EnsureSupplierExists(data, expense.SupplierId, refContext);
 
                     // Link product by name and auto-create if missing
                     var expProductName = expense.Description;
@@ -882,9 +917,9 @@ public class SpreadsheetImportService
                     revenue.TaxAmountUSD = revenue.TaxAmount;
                     revenue.ShippingCostUSD = revenue.ShippingCost;
 
-                    // Auto-create missing customer reference
+                    // Resolve customer reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(revenue.CustomerId))
-                        EnsureCustomerExists(data, revenue.CustomerId);
+                        revenue.CustomerId = EnsureCustomerExists(data, revenue.CustomerId, refContext) ?? revenue.CustomerId;
 
                     // Link product by name and auto-create if missing
                     var productName = revenue.Description;
@@ -931,8 +966,8 @@ public class SpreadsheetImportService
                     payment.OriginalCurrency = data.Settings.Localization.Currency;
                     payment.AmountUSD = payment.Amount;
 
-                    // Auto-create missing customer and invoice references
-                    EnsureCustomerExists(data, payment.CustomerId);
+                    // Resolve customer reference by name, else create a placeholder
+                    payment.CustomerId = EnsureCustomerExists(data, payment.CustomerId, refContext) ?? payment.CustomerId;
                     EnsureInvoiceExists(data, payment.InvoiceId, payment.CustomerId);
 
                     var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
@@ -1015,7 +1050,7 @@ public class SpreadsheetImportService
                 if (rental != null && !string.IsNullOrEmpty(rental.Id))
                 {
                     if (!string.IsNullOrEmpty(rental.CustomerId))
-                        EnsureCustomerExists(data, rental.CustomerId);
+                        rental.CustomerId = EnsureCustomerExists(data, rental.CustomerId, refContext) ?? rental.CustomerId;
                     var existing = data.Rentals.FirstOrDefault(r => r.Id == rental.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Rentals.Remove(existing);
@@ -1028,7 +1063,7 @@ public class SpreadsheetImportService
                 if (recurring != null && !string.IsNullOrEmpty(recurring.Id))
                 {
                     if (!string.IsNullOrEmpty(recurring.CustomerId))
-                        EnsureCustomerExists(data, recurring.CustomerId);
+                        recurring.CustomerId = EnsureCustomerExists(data, recurring.CustomerId, refContext) ?? recurring.CustomerId;
                     if (recurring.Status == default)
                         recurring.Status = RecurringInvoiceStatus.Active;
                     var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == recurring.Id);
@@ -1054,7 +1089,8 @@ public class SpreadsheetImportService
                 if (po != null && !string.IsNullOrEmpty(po.Id))
                 {
                     if (!string.IsNullOrEmpty(po.SupplierId))
-                        EnsureSupplierExists(data, po.SupplierId);
+                        po.SupplierId = EnsureSupplierExists(data, po.SupplierId, refContext) ?? po.SupplierId;
+
                     var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == po.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.PurchaseOrders.Remove(existing);
@@ -1085,9 +1121,9 @@ public class SpreadsheetImportService
                 if (returnRecord != null && !string.IsNullOrEmpty(returnRecord.Id))
                 {
                     if (!string.IsNullOrEmpty(returnRecord.CustomerId))
-                        EnsureCustomerExists(data, returnRecord.CustomerId);
+                        returnRecord.CustomerId = EnsureCustomerExists(data, returnRecord.CustomerId, refContext) ?? returnRecord.CustomerId;
                     if (!string.IsNullOrEmpty(returnRecord.SupplierId))
-                        EnsureSupplierExists(data, returnRecord.SupplierId);
+                        returnRecord.SupplierId = EnsureSupplierExists(data, returnRecord.SupplierId, refContext) ?? returnRecord.SupplierId;
                     var existing = data.Returns.FirstOrDefault(r => r.Id == returnRecord.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Returns.Remove(existing);
@@ -2830,18 +2866,60 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private static void EnsureCustomerExists(CompanyData data, string? customerId)
+    /// <summary>
+    /// Resolves a customer reference, returning the id the foreign key should point at.
+    ///
+    /// Behavior:
+    /// - Empty reference: returned unchanged.
+    /// - Reference is already an existing customer id: returned unchanged (the common re-import case).
+    /// - Reference is NOT an existing id: consult the name index. On a confident match the
+    ///   reference is REWRITTEN to the matched id (links to the existing record, no stub created).
+    ///   On ambiguous/no match a placeholder stub is created (as before) and a warning is recorded;
+    ///   an ambiguous match is NEVER auto-linked to a guess.
+    /// </summary>
+    private static string? EnsureCustomerExists(CompanyData data, string? customerId, ReferenceResolutionContext? ctx)
     {
-        if (string.IsNullOrEmpty(customerId)) return;
-        if (data.Customers.Any(c => c.Id == customerId)) return;
+        if (string.IsNullOrEmpty(customerId)) return customerId;
+        if (data.Customers.Any(c => c.Id == customerId)) return customerId;
+
+        if (ctx != null)
+        {
+            var (matchedId, isAmbiguous) = ReferenceResolver.Resolve(customerId, ctx.CustomerIndex);
+            if (matchedId != null)
+                return matchedId; // link to the existing record; no placeholder
+
+            if (isAmbiguous)
+                ctx.Warnings.Add($"Referenced customer '{customerId}' matched multiple existing customers; created a placeholder instead of guessing.");
+            else
+                ctx.Warnings.Add($"Referenced customer '{customerId}' could not be matched; created a placeholder.");
+        }
+
         data.Customers.Add(new Customer { Id = customerId, Name = $"Customer ({customerId})" });
+        return customerId;
     }
 
-    private static void EnsureSupplierExists(CompanyData data, string? supplierId)
+    /// <summary>
+    /// Resolves a supplier reference. See <see cref="EnsureCustomerExists"/> for the resolution rules.
+    /// </summary>
+    private static string? EnsureSupplierExists(CompanyData data, string? supplierId, ReferenceResolutionContext? ctx)
     {
-        if (string.IsNullOrEmpty(supplierId)) return;
-        if (data.Suppliers.Any(s => s.Id == supplierId)) return;
+        if (string.IsNullOrEmpty(supplierId)) return supplierId;
+        if (data.Suppliers.Any(s => s.Id == supplierId)) return supplierId;
+
+        if (ctx != null)
+        {
+            var (matchedId, isAmbiguous) = ReferenceResolver.Resolve(supplierId, ctx.SupplierIndex);
+            if (matchedId != null)
+                return matchedId; // link to the existing record; no placeholder
+
+            if (isAmbiguous)
+                ctx.Warnings.Add($"Referenced supplier '{supplierId}' matched multiple existing suppliers; created a placeholder instead of guessing.");
+            else
+                ctx.Warnings.Add($"Referenced supplier '{supplierId}' could not be matched; created a placeholder.");
+        }
+
         data.Suppliers.Add(new Supplier { Id = supplierId, Name = $"Supplier ({supplierId})" });
+        return supplierId;
     }
 
     private static void EnsureInvoiceExists(CompanyData data, string? invoiceId, string? customerId)
