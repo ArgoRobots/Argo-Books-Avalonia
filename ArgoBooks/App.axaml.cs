@@ -14,6 +14,7 @@ using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Layout;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -1883,6 +1884,28 @@ public partial class App : Application
                 "AI Not Configured".Translate(),
                 "AI-powered import requires portal access. Please register your company first.".Translate());
             return;
+        }
+
+        // Experimental (off by default): AI layout interpretation for messy spreadsheets.
+        // When the user preference is enabled and this is an Excel file (not CSV), rewrite
+        // messy sheets into clean single-header-row tables before analysis. The normalizer
+        // returns the SAME path when nothing needs interpreting, so the rest of the flow is
+        // unchanged for clean files. Any failure falls back to the ORIGINAL path: this
+        // feature must never break a normal import. When the flag is off, this block is a
+        // no-op and PerformAiImportAsync is byte-for-byte equivalent to before.
+        if (!isCsv && SettingsService?.GlobalSettings.Ui.ExperimentalLayoutInterpretation == true)
+        {
+            try
+            {
+                filePath = await new LayoutNormalizationService(geminiService, ErrorLogger)
+                    .NormalizeAsync(filePath, analysisCts.Token);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "AI layout interpretation failed; importing the original file unchanged");
+                // filePath is left as the original path: the import proceeds normally.
+            }
         }
 
         var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
