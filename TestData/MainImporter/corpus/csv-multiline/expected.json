@@ -1,0 +1,7 @@
+{
+  "sheets": [ { "name": "input", "detectedType": "Customers", "tier": "Tier1_Mapping" } ],
+  "import": { "totalImported": 2, "totalUpdated": 0 },
+  "keyRecords": [ { "type": "Customer", "id": "CUS-001", "name": "Acme Ltd" } ],
+  "expectedDropReasonSubstrings": [],
+  "unsupportedSheets": []
+}

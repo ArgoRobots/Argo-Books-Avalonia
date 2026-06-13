@@ -88,21 +88,13 @@ public class SpreadsheetAnalysisService(
             progress?.Report(("Reading file...", 0));
             await Task.Yield();
 
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            if (lines.Length < 2)
-                return null;
-
-            var delimiter = DetectCsvDelimiter(lines[0]);
-            var headers = ParseCsvLine(lines[0], delimiter);
+            var allDataRows = CsvReader.ReadAllRows(filePath, out var headers);
             if (headers.Count == 0)
                 return null;
 
-            var allDataRows = new List<List<string>>();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                allDataRows.Add(ParseCsvLine(lines[i], delimiter));
-            }
+            // Require at least one data row (equivalent to the old lines.Length < 2 guard)
+            if (allDataRows.Count == 0)
+                return null;
 
             var totalRows = allDataRows.Count;
             var sampleRows = GetSampleFromList(allDataRows, totalRows);
@@ -340,15 +332,7 @@ public class SpreadsheetAnalysisService(
 
         if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            var delimiter = DetectCsvDelimiter(lines[0]);
-            headers = ParseCsvLine(lines[0], delimiter);
-            allRows = [];
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(lines[i]))
-                    allRows.Add(ParseCsvLine(lines[i], delimiter));
-            }
+            allRows = CsvReader.ReadAllRows(filePath, out headers);
         }
         else
         {
@@ -378,16 +362,8 @@ public class SpreadsheetAnalysisService(
 
         if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            if (lines.Length < 2) return result;
-            var delimiter = DetectCsvDelimiter(lines[0]);
-            var headers = ParseCsvLine(lines[0], delimiter);
-            var rows = new List<List<string>>();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(lines[i]))
-                    rows.Add(ParseCsvLine(lines[i], delimiter));
-            }
+            var rows = CsvReader.ReadAllRows(filePath, out var headers);
+            if (headers.Count == 0) return result;
             foreach (var sheet in sheets)
                 result[sheet.SourceSheetName] = (headers, rows);
         }

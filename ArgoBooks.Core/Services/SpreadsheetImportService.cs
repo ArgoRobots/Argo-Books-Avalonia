@@ -203,6 +203,10 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(analysis);
 
+        // Route CSV files through the RFC-4180-compliant importer
+        if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            return await ImportCsvWithMappingsAsync(filePath, companyData, analysis, options, cancellationToken, progress);
+
         options ??= new ImportOptions();
         var result = new SpreadsheetImportResult();
 
@@ -265,29 +269,20 @@ public class SpreadsheetImportService
             await Task.Run(() =>
             {
                 progress?.Report(("Reading CSV file...", 0));
-                var lines = File.ReadAllLines(filePath);
-                if (lines.Length < 2)
-                {
-                    result.Warnings.Add("CSV file has no data rows.");
-                    return;
-                }
-
-                var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
-                var headers = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
+                var dataRows = CsvReader.ReadAllRows(filePath, out var headers);
                 if (headers.Count == 0)
                 {
                     result.Warnings.Add("CSV file has no headers.");
                     return;
                 }
-
-                progress?.Report(($"Processing {lines.Length - 1:N0} rows...", 20));
-                var rows = new List<List<object?>>();
-                for (int i = 1; i < lines.Length; i++)
+                if (dataRows.Count == 0)
                 {
-                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                    var fields = SpreadsheetAnalysisService.ParseCsvLine(lines[i], delimiter);
-                    rows.Add(fields.Cast<object?>().ToList());
+                    result.Warnings.Add("CSV file has no data rows.");
+                    return;
                 }
+
+                progress?.Report(($"Processing {dataRows.Count:N0} rows...", 20));
+                var rows = dataRows.Select(r => r.Cast<object?>().ToList()).ToList();
 
                 if (rows.Count == 0)
                 {
