@@ -525,11 +525,12 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="6">
-                                <TextBlock Text="Review the detected mappings above, then click Accept to proceed with import."
+                                <TextBlock Text="{Binding FooterHint}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            TextWrapping="Wrap" />
-                                <CheckBox IsChecked="{Binding SkipExistingRecords}">
+                                <CheckBox IsChecked="{Binding SkipExistingRecords}"
+                                          IsVisible="{Binding HasImportableContent}">
                                     <TextBlock Text="Don't overwrite existing records"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -541,9 +542,10 @@
                                         VerticalAlignment="Bottom">
                                 <Button Classes="secondary-button"
                                         Content="Cancel"
+                                        IsVisible="{Binding HasImportableContent}"
                                         Command="{Binding RequestCloseCommand}" />
                                 <Button Classes="primary-button"
-                                        Content="Accept &amp; Import"
+                                        Content="{Binding AcceptButtonText}"
                                         Command="{Binding AcceptCommand}" />
                             </StackPanel>
                         </Grid>

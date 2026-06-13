@@ -226,6 +226,25 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
     public bool HasUnsupportedSheets => UnsupportedSheets.Count > 0;
 
+    /// <summary>
+    /// True when at least one sheet can actually be imported. When false the file
+    /// produced nothing importable (every sheet was unsupported), so the dialog
+    /// becomes an informational "Close" rather than an "Accept &amp; Import".
+    /// </summary>
+    public bool HasImportableContent => Sheets.Count > 0;
+
+    /// <summary>
+    /// Primary button caption: an import action when there's content, otherwise a plain close.
+    /// </summary>
+    public string AcceptButtonText => HasImportableContent ? "Accept & Import" : "Close";
+
+    /// <summary>
+    /// Footer hint text, reflecting whether there's anything to import.
+    /// </summary>
+    public string FooterHint => HasImportableContent
+        ? "Review the detected mappings above, then click Accept to proceed with import."
+        : "There's nothing here that Argo Books can import. The sheets above don't match a supported data type and will be skipped.";
+
     private TaskCompletionSource<ImportMappingDialogResult>? _completionSource;
     private SpreadsheetAnalysisResult? _analysisResult;
 
@@ -284,6 +303,9 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(HasWarnings));
         OnPropertyChanged(nameof(HasUnsupportedSheets));
+        OnPropertyChanged(nameof(HasImportableContent));
+        OnPropertyChanged(nameof(AcceptButtonText));
+        OnPropertyChanged(nameof(FooterHint));
 
         IsOpen = true;
         _completionSource = new TaskCompletionSource<ImportMappingDialogResult>();
@@ -338,6 +360,14 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
     [RelayCommand]
     private void Accept()
     {
+        // Nothing importable: the primary button is just a "Close", so don't kick off an import.
+        if (!HasImportableContent)
+        {
+            IsOpen = false;
+            _completionSource?.TrySetResult(ImportMappingDialogResult.Cancel);
+            return;
+        }
+
         // Apply any user edits back to the analysis
         foreach (var sheetVm in Sheets)
         {
