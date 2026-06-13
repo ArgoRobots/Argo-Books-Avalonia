@@ -42,6 +42,18 @@ public class ImportOptions
 }
 
 /// <summary>
+/// Represents a single entity that could not be imported, with the reason and identifying
+/// information for later reporting or export.
+/// </summary>
+public sealed class UnimportedRow
+{
+    public required string Sheet { get; init; }
+    public required string Reason { get; init; }
+    public int RowNumber { get; init; }     // 0 when not known (Tier 1 aggregate)
+    public string? RawValue { get; init; }   // e.g. the entity id or json snippet
+}
+
+/// <summary>
 /// Per-sheet import result breakdown.
 /// </summary>
 public class SheetImportResult
@@ -52,6 +64,7 @@ public class SheetImportResult
     public int Updated { get; set; }
     public int Skipped { get; set; }
     public List<string> SkipReasons { get; } = [];
+    public List<UnimportedRow> UnimportedRows { get; } = [];
 }
 
 /// <summary>
@@ -64,6 +77,7 @@ public class SpreadsheetImportResult
     public int TotalSkipped { get; set; }
     public List<string> Warnings { get; } = [];
     public List<SheetImportResult> SheetResults { get; } = [];
+    public List<UnimportedRow> UnimportedRows { get; } = [];
 }
 
 /// <summary>
@@ -460,19 +474,40 @@ public class SpreadsheetImportService
                     sheetResult.Updated++;
                 else if (singleResult == ImportEntityResult.SkippedExisting)
                 {
+                    var skipReason = $"Existing {chunkEntityType} record skipped";
                     sheetResult.Skipped++;
-                    sheetResult.SkipReasons.Add($"Existing {chunkEntityType} record skipped");
+                    sheetResult.SkipReasons.Add(skipReason);
+                    sheetResult.UnimportedRows.Add(new UnimportedRow
+                    {
+                        Sheet = sheetName,
+                        Reason = skipReason,
+                        RawValue = ExtractEntityId(entityJson) ?? entityJson.GetRawText()
+                    });
                 }
                 else
                 {
+                    var failReason = $"Row had missing or empty ID ({chunkEntityType})";
                     sheetResult.Skipped++;
-                    sheetResult.SkipReasons.Add($"Row had missing or empty ID ({chunkEntityType})");
+                    sheetResult.SkipReasons.Add(failReason);
+                    sheetResult.UnimportedRows.Add(new UnimportedRow
+                    {
+                        Sheet = sheetName,
+                        Reason = failReason,
+                        RawValue = ExtractEntityId(entityJson) ?? entityJson.GetRawText()
+                    });
                 }
             }
             catch (Exception ex)
             {
+                var errorReason = $"Error importing {chunkEntityType}: {ex.Message}";
                 sheetResult.Skipped++;
-                sheetResult.SkipReasons.Add($"Error importing {chunkEntityType}: {ex.Message}");
+                sheetResult.SkipReasons.Add(errorReason);
+                sheetResult.UnimportedRows.Add(new UnimportedRow
+                {
+                    Sheet = sheetName,
+                    Reason = errorReason,
+                    RawValue = ExtractEntityId(entityJson) ?? entityJson.GetRawText()
+                });
                 _errorLogger?.LogError(ex, ErrorCategory.Import,
                     $"Failed to import {chunkEntityType} entity from AI processing");
             }
