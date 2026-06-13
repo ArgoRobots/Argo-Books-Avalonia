@@ -91,7 +91,9 @@ public static class ImporterHarness
         var expected = JsonSerializer.Deserialize<ExpectedResult>(
             await File.ReadAllTextAsync(Path.Combine(fixtureDir, "expected.json")))!;
         var inputPath = Directory.EnumerateFiles(fixtureDir, "input.*").Single();
-        var analysis = await new SpreadsheetAnalysisService(liveService).AnalyzeAsync(inputPath);
+        var analysis = inputPath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+            ? await new SpreadsheetAnalysisService(liveService).AnalyzeCsvAsync(inputPath)
+            : await new SpreadsheetAnalysisService(liveService).AnalyzeAsync(inputPath);
 
         int correctType = 0, correctTier = 0;
         foreach (var es in expected.Sheets)
