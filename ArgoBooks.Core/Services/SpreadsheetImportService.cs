@@ -108,16 +108,30 @@ public class SpreadsheetImportService
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
     private readonly IGeminiService? _geminiService;
+    private readonly ExchangeRateService? _exchangeRateService;
 
     /// <summary>
     /// Creates a new SpreadsheetImportService.
     /// </summary>
-    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IGeminiService? geminiService = null)
+    /// <param name="exchangeRateService">
+    /// Optional exchange-rate service used for per-row currency conversion when a Currency
+    /// column is mapped. Defaults to <see cref="ExchangeRateService.Instance"/> so production
+    /// reuses the same singleton (and cached rates) as manual entry; tests can inject a seeded
+    /// instance for determinism.
+    /// </param>
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IGeminiService? geminiService = null, ExchangeRateService? exchangeRateService = null)
     {
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
         _geminiService = geminiService;
+        _exchangeRateService = exchangeRateService;
     }
+
+    /// <summary>
+    /// The exchange-rate service to use for per-row currency conversion. Falls back to the
+    /// shared singleton when one was not explicitly injected.
+    /// </summary>
+    private ExchangeRateService? ExchangeRates => _exchangeRateService ?? ExchangeRateService.Instance;
 
     /// <summary>
     /// Per-import context carrying the name-to-id indexes used to resolve references by NAME
@@ -849,6 +863,44 @@ public class SpreadsheetImportService
         return null;
     }
 
+    /// <summary>
+    /// Reads a mapped per-row currency code from the entity JSON (the schema maps a source
+    /// "Currency" column to <c>originalCurrency</c>). Returns the trimmed, upper-cased code when
+    /// a non-empty currency value is present, otherwise <c>null</c> (meaning: no currency column
+    /// was mapped for this row, so the importer keeps its existing company-currency behavior).
+    /// </summary>
+    private static string? ExtractRowCurrency(JsonElement entityJson)
+    {
+        if (entityJson.ValueKind == JsonValueKind.Object
+            && entityJson.TryGetProperty("originalCurrency", out var curProp)
+            && curProp.ValueKind == JsonValueKind.String)
+        {
+            var code = curProp.GetString();
+            if (!string.IsNullOrWhiteSpace(code))
+                return code.Trim().ToUpperInvariant();
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Converts a row amount from its original currency to USD at the transaction date, reusing
+    /// the same cached-rate mechanism as manual entry (see <c>CurrencyService.CreateMonetaryValue</c>):
+    /// <c>amount * rate(originalCurrency -&gt; USD, date)</c>, rounded to 2 dp. If the currency is
+    /// already USD, or no rate is available, the amount is returned unchanged (so a missing rate
+    /// degrades to the legacy "assume USD-equivalent" behavior rather than zeroing the value).
+    /// </summary>
+    private decimal ConvertRowAmountToUSD(decimal amount, string originalCurrency, DateTime date)
+    {
+        if (amount == 0m || string.Equals(originalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+            return amount;
+
+        var rate = ExchangeRates?.GetExchangeRate(originalCurrency, "USD", date) ?? -1m;
+        if (rate > 0)
+            return Math.Round(amount * rate, 2);
+
+        return amount;
+    }
+
     #region Task 2C: natural-key identity for id-less rows
 
     /// <summary>
@@ -1132,10 +1184,24 @@ public class SpreadsheetImportService
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
                 {
-                    expense.OriginalCurrency = data.Settings.Localization.Currency;
-                    expense.TotalUSD = expense.Total;
-                    expense.TaxAmountUSD = expense.TaxAmount;
-                    expense.ShippingCostUSD = expense.ShippingCost;
+                    var expenseCurrency = ExtractRowCurrency(entityJson);
+                    if (!string.IsNullOrEmpty(expenseCurrency))
+                    {
+                        // A per-row currency column was mapped: convert each amount to USD at the
+                        // transaction date, mirroring manual entry. The company currency is untouched.
+                        expense.OriginalCurrency = expenseCurrency;
+                        expense.TotalUSD = ConvertRowAmountToUSD(expense.Total, expenseCurrency, expense.Date);
+                        expense.TaxAmountUSD = ConvertRowAmountToUSD(expense.TaxAmount, expenseCurrency, expense.Date);
+                        expense.ShippingCostUSD = ConvertRowAmountToUSD(expense.ShippingCost, expenseCurrency, expense.Date);
+                    }
+                    else
+                    {
+                        // No currency column: amounts are already in the company currency.
+                        expense.OriginalCurrency = data.Settings.Localization.Currency;
+                        expense.TotalUSD = expense.Total;
+                        expense.TaxAmountUSD = expense.TaxAmount;
+                        expense.ShippingCostUSD = expense.ShippingCost;
+                    }
 
                     // Resolve supplier reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(expense.SupplierId))
@@ -1184,10 +1250,24 @@ public class SpreadsheetImportService
                 {
                     // PaymentStatus is already normalized by the enum's JSON
                     // converter (legacy typos → Paid fallback), no separate call.
-                    revenue.OriginalCurrency = data.Settings.Localization.Currency;
-                    revenue.TotalUSD = revenue.Total;
-                    revenue.TaxAmountUSD = revenue.TaxAmount;
-                    revenue.ShippingCostUSD = revenue.ShippingCost;
+                    var revenueCurrency = ExtractRowCurrency(entityJson);
+                    if (!string.IsNullOrEmpty(revenueCurrency))
+                    {
+                        // A per-row currency column was mapped: convert each amount to USD at the
+                        // transaction date, mirroring manual entry. The company currency is untouched.
+                        revenue.OriginalCurrency = revenueCurrency;
+                        revenue.TotalUSD = ConvertRowAmountToUSD(revenue.Total, revenueCurrency, revenue.Date);
+                        revenue.TaxAmountUSD = ConvertRowAmountToUSD(revenue.TaxAmount, revenueCurrency, revenue.Date);
+                        revenue.ShippingCostUSD = ConvertRowAmountToUSD(revenue.ShippingCost, revenueCurrency, revenue.Date);
+                    }
+                    else
+                    {
+                        // No currency column: amounts are already in the company currency.
+                        revenue.OriginalCurrency = data.Settings.Localization.Currency;
+                        revenue.TotalUSD = revenue.Total;
+                        revenue.TaxAmountUSD = revenue.TaxAmount;
+                        revenue.ShippingCostUSD = revenue.ShippingCost;
+                    }
 
                     // Resolve customer reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(revenue.CustomerId))
@@ -1235,8 +1315,20 @@ public class SpreadsheetImportService
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
-                    payment.OriginalCurrency = data.Settings.Localization.Currency;
-                    payment.AmountUSD = payment.Amount;
+                    var paymentCurrency = ExtractRowCurrency(entityJson);
+                    if (!string.IsNullOrEmpty(paymentCurrency))
+                    {
+                        // A per-row currency column was mapped: convert the amount to USD at the
+                        // payment date, mirroring manual entry. The company currency is untouched.
+                        payment.OriginalCurrency = paymentCurrency;
+                        payment.AmountUSD = ConvertRowAmountToUSD(payment.Amount, paymentCurrency, payment.Date);
+                    }
+                    else
+                    {
+                        // No currency column: amount is already in the company currency.
+                        payment.OriginalCurrency = data.Settings.Localization.Currency;
+                        payment.AmountUSD = payment.Amount;
+                    }
 
                     // Resolve customer reference by name, else create a placeholder
                     payment.CustomerId = EnsureCustomerExists(data, payment.CustomerId, refContext) ?? payment.CustomerId;
