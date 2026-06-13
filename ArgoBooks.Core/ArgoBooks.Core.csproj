@@ -32,6 +32,8 @@
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />
         <PackageReference Include="EPPlus" />
+        <!-- Legacy .xls (BIFF) reading; converted to .xlsx at the import entry point -->
+        <PackageReference Include="NPOI" />
 
         <!-- Machine Learning (for local forecasting) -->
         <PackageReference Include="Microsoft.ML" />

@@ -1527,11 +1527,11 @@ public partial class App
                 [
                     new FilePickerFileType("Spreadsheets")
                     {
-                        Patterns = ["*.xlsx", "*.csv"]
+                        Patterns = ["*.xlsx", "*.xls", "*.csv"]
                     },
                     new FilePickerFileType("Excel Workbook")
                     {
-                        Patterns = ["*.xlsx"]
+                        Patterns = ["*.xlsx", "*.xls"]
                     },
                     new FilePickerFileType("CSV File")
                     {

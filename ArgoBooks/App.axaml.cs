@@ -1838,6 +1838,29 @@ public partial class App : Application
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
 
+        // Legacy .xls (BIFF) is not read by the pipeline directly. Convert it to a temp
+        // .xlsx up front so the rest of the flow only ever sees .xlsx/.csv (unchanged).
+        // Note: a true .xlsx ends in ".xls" only via the longer ".xlsx" suffix, so we
+        // explicitly exclude .xlsx here. isCsv is left untouched (stays false for .xls).
+        if (!isCsv
+            && filePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase)
+            && !filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                filePath = await Task.Run(() => LegacyXlsConverter.ConvertXlsToTempXlsx(filePath));
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to convert legacy .xls file for import");
+                await ShowErrorMessageBoxAsync(
+                    "Import Failed".Translate(),
+                    "This .xls file could not be read. Try re-saving it as .xlsx and importing that instead.".Translate());
+                return;
+            }
+        }
+
         // Check rate limit via server-side API
         using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
         var usageCheck = await usageService.CheckUsageAsync();
