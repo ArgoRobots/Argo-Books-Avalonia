@@ -2106,8 +2106,9 @@ public partial class App : Application
                     var committed = await previewVm.ShowAsync(previewSample, totalEntities);
                     if (!committed)
                     {
-                        // User cancelled: do not import the Tier 2 data, do not snapshot,
-                        // and do not mark data changed. Leave no loading overlay behind.
+                        // User cancelled: roll back everything imported in this run (including any
+                        // Tier 1 data already applied above) so cancel means "nothing imported".
+                        RestoreCompanyDataFromSnapshot(companyData, snapshot);
                         _mainWindowViewModel?.HideLoading();
                         return;
                     }
