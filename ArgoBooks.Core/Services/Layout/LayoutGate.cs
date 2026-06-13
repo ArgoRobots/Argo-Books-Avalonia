@@ -56,6 +56,31 @@ public static class LayoutGate
     /// </summary>
     private const int RaggedMinRows = 3;
 
+    /// <summary>
+    /// Minimum number of period-label cells (month/quarter/week names) a header row must
+    /// contain before it is treated as a cross-tab whose columns are time periods. A run of
+    /// two or more avoids false-firing on a single legitimately-named column.
+    /// </summary>
+    private const int PeriodHeaderMinCount = 2;
+
+    /// <summary>
+    /// Fraction of the header row's non-empty cells that must be period labels before the
+    /// row is treated as a period cross-tab. At 0.5 a header like
+    /// <c>Product | Jan | Feb | Mar</c> (3 of 4 are months) qualifies.
+    /// </summary>
+    private const double PeriodHeaderFraction = 0.5;
+
+    /// <summary>
+    /// Month names (full and common abbreviations), lower-cased. A header cell that reduces
+    /// to exactly one of these tokens (after stripping a trailing year) is a month label.
+    /// </summary>
+    private static readonly HashSet<string> MonthTokens = new(StringComparer.Ordinal)
+    {
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+        "january", "february", "march", "april", "june", "july", "august",
+        "september", "october", "november", "december"
+    };
+
     // ─── Public API ──────────────────────────────────────────────────────────
 
     /// <summary>
@@ -81,11 +106,18 @@ public static class LayoutGate
         if (firstDenseRow < 0 || firstDenseRow > MaxPreambleRows)
             return true;
 
-        // Rule 3: the first dense row is mostly numeric (cross-tab / numbers-as-headers).
+        // Rule 3: the first dense row is mostly numeric (cross-tab / numbers-as-headers,
+        // e.g. year columns 2021 | 2022 | 2023).
         if (grid.Shapes[firstDenseRow].NumericFraction >= NumericHeaderThreshold)
             return true;
 
-        // Rule 4: populated rows vary widely in width (ragged / stacked tables).
+        // Rule 4: the first dense row is mostly period labels (text cross-tab whose columns
+        // are time periods, e.g. Product | Jan | Feb | Mar). Structurally this looks like a
+        // clean table, so the other rules miss it; the messiness is semantic.
+        if (HasPeriodHeaderRow(grid, firstDenseRow))
+            return true;
+
+        // Rule 5: populated rows vary widely in width (ragged / stacked tables).
         if (HasRaggedRows(grid))
             return true;
 
@@ -121,6 +153,86 @@ public static class LayoutGate
                 return i;
         }
         return -1;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the given (0-based) header row contains a run of
+    /// at least <see cref="PeriodHeaderMinCount"/> period labels (month/quarter/week names)
+    /// that make up at least <see cref="PeriodHeaderFraction"/> of its non-empty cells.
+    /// This catches cross-tabs whose column headers are time periods but are text (so the
+    /// numeric-header rule does not fire).
+    /// </summary>
+    private static bool HasPeriodHeaderRow(SheetGrid grid, int headerRow)
+    {
+        var cells = grid.Cells[headerRow];
+        int nonEmpty = 0;
+        int periodCount = 0;
+
+        foreach (var cell in cells)
+        {
+            if (string.IsNullOrWhiteSpace(cell))
+                continue;
+            nonEmpty++;
+            if (IsPeriodLabel(cell))
+                periodCount++;
+        }
+
+        if (periodCount < PeriodHeaderMinCount || nonEmpty == 0)
+            return false;
+
+        return (double)periodCount / nonEmpty >= PeriodHeaderFraction;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when a header cell is a time-period label: a month name
+    /// (full or abbreviated), a quarter (<c>Q1</c>–<c>Q4</c>), or a week (<c>W1</c>–<c>W53</c>),
+    /// optionally followed by a 2- or 4-digit year (e.g. <c>Jan 2024</c>, <c>Q1-24</c>).
+    /// Matching is case-insensitive and tolerant of separators (space, hyphen, slash, dot, apostrophe).
+    /// </summary>
+    private static bool IsPeriodLabel(string raw)
+    {
+        // Normalise: lower-case and split on whitespace and common separators.
+        var normalized = raw.Trim().ToLowerInvariant()
+            .Replace('-', ' ').Replace('/', ' ').Replace('.', ' ').Replace('\'', ' ');
+
+        var tokens = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (tokens.Length == 0)
+            return false;
+
+        // Drop a single trailing year qualifier (2- or 4-digit run of digits), e.g. "jan 2024".
+        if (tokens.Length > 1 && IsYearToken(tokens[^1]))
+            tokens = tokens[..^1];
+
+        if (tokens.Length != 1)
+            return false;
+
+        var token = tokens[0];
+
+        if (MonthTokens.Contains(token))
+            return true;
+
+        // Quarter: q1..q4.
+        if (token.Length == 2 && token[0] == 'q' && token[1] is >= '1' and <= '4')
+            return true;
+
+        // Week: w1..w53.
+        if (token.Length >= 2 && token[0] == 'w' && int.TryParse(token.AsSpan(1), out int week))
+            return week is >= 1 and <= 53;
+
+        return false;
+    }
+
+    /// <summary>Returns true for a 2- or 4-digit all-numeric token (a year qualifier).</summary>
+    private static bool IsYearToken(string token)
+    {
+        if (token.Length is not (2 or 4))
+            return false;
+        foreach (var ch in token)
+        {
+            if (ch is < '0' or > '9')
+                return false;
+        }
+        return true;
     }
 
     /// <summary>

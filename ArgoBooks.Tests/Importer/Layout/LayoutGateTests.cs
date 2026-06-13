@@ -258,4 +258,116 @@ public class LayoutGateTests
         Assert.True(result,
             "A sheet with highly inconsistent row widths (stacked/ragged tables) needs AI interpretation.");
     }
+
+    // ─── Test 6: Period-header cross-tab (text month names) ───────────────────
+
+    /// <summary>
+    /// The deceptively-clean cross-tab: structurally a tidy rectangle, but its column
+    /// headers are month names (text, so the numeric-header rule never fires):
+    ///   Row 1: "Product", "Jan", "Feb", "Mar"   (3 of 4 cells are months)
+    ///   Row 2: "Widget",  100,   200,   150
+    ///   Row 3: "Gadget",  300,   400,   350
+    ///   Row 4: "Gizmo",    50,    75,    60
+    ///
+    /// Period labels dominating the header -> AI interpretation (so it can be pivoted).
+    /// This mirrors TestData/MainImporter/corpus/cross-tab-sales.
+    /// </summary>
+    private static SheetGrid BuildMonthCrossTabSheet()
+    {
+        var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Sheet1");
+
+        ws.Cell(1, 1).Value = "Product";
+        ws.Cell(1, 2).Value = "Jan";
+        ws.Cell(1, 3).Value = "Feb";
+        ws.Cell(1, 4).Value = "Mar";
+
+        ws.Cell(2, 1).Value = "Widget";
+        ws.Cell(2, 2).Value = 100;
+        ws.Cell(2, 3).Value = 200;
+        ws.Cell(2, 4).Value = 150;
+
+        ws.Cell(3, 1).Value = "Gadget";
+        ws.Cell(3, 2).Value = 300;
+        ws.Cell(3, 3).Value = 400;
+        ws.Cell(3, 4).Value = 350;
+
+        ws.Cell(4, 1).Value = "Gizmo";
+        ws.Cell(4, 2).Value = 50;
+        ws.Cell(4, 3).Value = 75;
+        ws.Cell(4, 4).Value = 60;
+
+        return SheetGrid.FromWorksheet(ws);
+    }
+
+    [Fact]
+    public void NeedsInterpretation_MonthNameCrossTab_ReturnsTrue()
+    {
+        var grid = BuildMonthCrossTabSheet();
+
+        var result = LayoutGate.NeedsInterpretation(grid);
+
+        Assert.True(result,
+            "A text cross-tab whose headers are month names should be sent for interpretation so it can be pivoted.");
+    }
+
+    [Theory]
+    [InlineData("January", "February", "March", "April")]   // full month names
+    [InlineData("Jan 2024", "Feb 2024", "Mar 2024", "Apr 2024")] // month + year
+    [InlineData("Q1", "Q2", "Q3", "Q4")]                    // quarters
+    [InlineData("W1", "W2", "W3", "W4")]                    // weeks
+    public void NeedsInterpretation_PeriodHeaderVariants_ReturnTrue(string h1, string h2, string h3, string h4)
+    {
+        var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Sheet1");
+
+        ws.Cell(1, 1).Value = "Category";
+        ws.Cell(1, 2).Value = h1;
+        ws.Cell(1, 3).Value = h2;
+        ws.Cell(1, 4).Value = h3;
+        ws.Cell(1, 5).Value = h4;
+
+        ws.Cell(2, 1).Value = "Revenue";
+        ws.Cell(2, 2).Value = 100;
+        ws.Cell(2, 3).Value = 150;
+        ws.Cell(2, 4).Value = 200;
+        ws.Cell(2, 5).Value = 250;
+
+        var grid = SheetGrid.FromWorksheet(ws);
+
+        Assert.True(LayoutGate.NeedsInterpretation(grid),
+            $"A header row of period labels ({h1}, {h2}, ...) should trip the period cross-tab rule.");
+    }
+
+    /// <summary>
+    /// Guard against false positives: a normal table with a single legitimately-named
+    /// "Month" column (and no other period labels) must NOT be treated as a cross-tab.
+    /// </summary>
+    [Fact]
+    public void NeedsInterpretation_SingleMonthColumn_ReturnsFalse()
+    {
+        var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Sheet1");
+
+        ws.Cell(1, 1).Value = "Month";
+        ws.Cell(1, 2).Value = "Revenue";
+        ws.Cell(1, 3).Value = "Expenses";
+
+        ws.Cell(2, 1).Value = "January";
+        ws.Cell(2, 2).Value = 1000;
+        ws.Cell(2, 3).Value = 800;
+
+        ws.Cell(3, 1).Value = "February";
+        ws.Cell(3, 2).Value = 1200;
+        ws.Cell(3, 3).Value = 900;
+
+        ws.Cell(4, 1).Value = "March";
+        ws.Cell(4, 2).Value = 1100;
+        ws.Cell(4, 3).Value = 850;
+
+        var grid = SheetGrid.FromWorksheet(ws);
+
+        Assert.False(LayoutGate.NeedsInterpretation(grid),
+            "A long-form table with month VALUES under a 'Month' column is already importable and must stay on the fast path.");
+    }
 }

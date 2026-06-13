@@ -151,14 +151,23 @@ public class LayoutNormalizationServiceTests : IDisposable
         var fake = new FakeGemini(PreambleDescriptorJson);
         var service = new LayoutNormalizationService(fake);
 
+        // Snapshot the argo-layout temp files that already exist (other test classes run in
+        // parallel and legitimately create them) so we can assert only that THIS call adds none.
+        var before = Directory.GetFiles(Path.GetTempPath(), "argo-layout-*.xlsx")
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         var result = await service.NormalizeAsync(path);
 
-        // No interpretation needed: original path returned, no LLM call, no temp file.
+        // No interpretation needed: original path returned, no LLM call. The service only
+        // creates a temp file when it returns a temp path, so a clean workbook (result ==
+        // original path) must not have produced any new temp file.
         Assert.Equal(path, result);
         Assert.Equal(0, fake.CallCount);
 
-        var temps = Directory.GetFiles(Path.GetTempPath(), "argo-layout-*.xlsx");
-        Assert.DoesNotContain(temps, t => !string.Equals(t, path, StringComparison.OrdinalIgnoreCase));
+        var newTemps = Directory.GetFiles(Path.GetTempPath(), "argo-layout-*.xlsx")
+            .Where(t => !before.Contains(t) && !string.Equals(t, path, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        Assert.Empty(newTemps);
     }
 
     // ─── Test 2: messy sheet normalized; clean sheet copied through intact ───
