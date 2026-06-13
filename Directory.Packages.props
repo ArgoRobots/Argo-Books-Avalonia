@@ -43,6 +43,8 @@
     <!-- Machine Learning (for local forecasting) -->
     <PackageVersion Include="Microsoft.ML" Version="5.0.0" />
     <PackageVersion Include="Microsoft.ML.TimeSeries" Version="5.0.0" />
+    <!-- CSV parsing (RFC 4180) -->
+    <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <!-- Testing -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />

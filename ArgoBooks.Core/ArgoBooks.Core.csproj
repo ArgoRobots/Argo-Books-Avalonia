@@ -37,6 +37,9 @@
         <PackageReference Include="Microsoft.ML" />
         <PackageReference Include="Microsoft.ML.TimeSeries" />
 
+        <!-- CSV parsing (RFC 4180) -->
+        <PackageReference Include="CsvHelper" />
+
         <!-- Pinned to patch vulnerability in transitive 10.0.0 (pulled in via ClosedXML/OpenXML) -->
         <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
