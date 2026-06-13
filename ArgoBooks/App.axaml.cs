@@ -2149,13 +2149,19 @@ public partial class App : Application
                 .Select(g => g.Count() > 1 ? $"{g.Key} (\u00d7{g.Count()})" : g.Key)
                 .ToList();
 
+            // Collect unimported rows from all tiers
+            var allUnimported = (tier1Result?.UnimportedRows ?? new List<UnimportedRow>())
+                .Concat(allSheetResults.SelectMany(r => r.UnimportedRows))
+                .ToList();
+
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
             await resultDialog.ShowAsync(
                 Path.GetFileName(filePath),
                 allSheetResults,
                 totalImported, totalUpdated, totalSkipped,
-                allSkipReasons, allWarnings, totalProcessed > 0);
+                allSkipReasons, allWarnings, totalProcessed > 0,
+                allUnimported);
 
             // Rebuild the current page so its charts/widgets show the freshly imported data.
             // This mirrors navigating away and back, which is otherwise needed because chart
