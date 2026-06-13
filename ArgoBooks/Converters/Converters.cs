@@ -26,9 +26,17 @@ public static class Converters
     /// <summary>
     /// Whether the app is currently using the dark theme. Badge colors that are tuned
     /// for light surfaces look muddy on dark backgrounds, so we brighten them in dark mode.
+    /// <para>
+    /// Use <see cref="ThemeService"/> as the source of truth: it is the same authority the
+    /// rest of the app trusts and correctly resolves Light/Dark/System. The raw
+    /// <c>Application.ActualThemeVariant</c> check is only a fallback, because it can report
+    /// a non-Dark variant even when the app is visually dark (the dark look is driven by
+    /// swapped resource dictionaries, not solely by the Avalonia theme variant).
+    /// </para>
     /// </summary>
     private static bool IsDarkTheme =>
-        Application.Current?.ActualThemeVariant == ThemeVariant.Dark;
+        ArgoBooks.Services.ThemeService.Instance?.IsDarkTheme
+            ?? (Application.Current?.ActualThemeVariant == ThemeVariant.Dark);
 
     /// <summary>
     /// Converts a ProcessingTier enum to a color for tier badge display.
