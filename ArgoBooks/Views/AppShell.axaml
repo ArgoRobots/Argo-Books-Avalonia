@@ -216,6 +216,9 @@
         <!-- Import Mapping Dialog -->
         <modals:ImportMappingDialog DataContext="{Binding ImportMappingDialogViewModel}" />
 
+        <!-- Tier 2 AI Preview Dialog -->
+        <modals:Tier2PreviewDialog DataContext="{Binding Tier2PreviewDialogViewModel}" />
+
         <!-- Export As Modal -->
         <modals:ExportAsModal DataContext="{Binding ExportAsModalViewModel}" />
 

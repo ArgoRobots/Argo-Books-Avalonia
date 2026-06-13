@@ -155,6 +155,11 @@ public partial class AppShellViewModel : ViewModelBase
     public ImportMappingDialogViewModel ImportMappingDialogViewModel { get; }
 
     /// <summary>
+    /// Gets the Tier 2 AI preview dialog view model.
+    /// </summary>
+    public Tier2PreviewDialogViewModel Tier2PreviewDialogViewModel { get; }
+
+    /// <summary>
     /// Gets the export as modal view model.
     /// </summary>
     public ExportAsModalViewModel ExportAsModalViewModel { get; }
@@ -717,6 +722,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create import mapping dialog
         ImportMappingDialogViewModel = new ImportMappingDialogViewModel();
+
+        // Create Tier 2 AI preview dialog
+        Tier2PreviewDialogViewModel = new Tier2PreviewDialogViewModel();
 
         // Create export as modal
         ExportAsModalViewModel = new ExportAsModalViewModel();

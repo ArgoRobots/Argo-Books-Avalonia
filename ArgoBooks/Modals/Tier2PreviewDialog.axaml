@@ -1,0 +1,136 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="640"
+             x:Class="ArgoBooks.Modals.Tier2PreviewDialog"
+             x:DataType="vm:Tier2PreviewDialogViewModel"
+             Focusable="True">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CancelCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="520"
+                MaxHeight="640"
+                Margin="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="20"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <SolidColorBrush Color="{DynamicResource PrimaryColor}" Opacity="0.15" />
+                            </Border.Background>
+                            <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Review AI-processed rows"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding Header}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Width="32" Height="32"
+                                VerticalAlignment="Top"
+                                Command="{Binding CancelCommand}">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <Grid Grid.Row="1" Margin="24,16">
+                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="4">
+                        <ListBox ItemsSource="{Binding Rows}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:Tier2PreviewRow">
+                                    <Grid ColumnDefinitions="Auto,*" Margin="0,3">
+                                        <Border Grid.Column="0"
+                                                Background="{DynamicResource SurfaceBrush}"
+                                                CornerRadius="4"
+                                                Padding="6,2"
+                                                Margin="0,0,8,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Sheet}"
+                                                       FontSize="11"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Summary}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Grid>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <Button Grid.Column="0"
+                                Classes="secondary-button"
+                                Content="Export sample..."
+                                FontSize="12"
+                                VerticalAlignment="Center"
+                                Command="{Binding ExportSampleCommand}" />
+                        <Button Grid.Column="2"
+                                Classes="secondary-button"
+                                Content="Cancel"
+                                MinWidth="80"
+                                Margin="0,0,8,0"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding CancelCommand}" />
+                        <Button Grid.Column="3"
+                                Classes="primary-button"
+                                Content="Import"
+                                MinWidth="80"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding CommitCommand}" />
+                    </Grid>
+                </Border>
+            </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>
