@@ -84,6 +84,12 @@ public partial class SheetAnalysisViewModel : ObservableObject
         _ => "Low"
     };
 
+    // Theme-aware badge styling keys off these booleans (see ImportMappingDialog.axaml styles),
+    // so the badge colors come from the theme dictionaries rather than a theme-guessing converter.
+    public bool IsHighConfidence => Confidence > 0.9;
+    public bool IsMediumConfidence => Confidence is > 0.7 and <= 0.9;
+    public bool IsLowConfidence => Confidence <= 0.7;
+
     [ObservableProperty]
     private SpreadsheetSheetType _detectedType;
 
@@ -144,6 +150,10 @@ public partial class ColumnMappingViewModel : ObservableObject
         > 0.7 => "Medium",
         _ => "Low"
     };
+
+    public bool IsHighConfidence => Confidence > 0.9;
+    public bool IsMediumConfidence => Confidence is > 0.7 and <= 0.9;
+    public bool IsLowConfidence => Confidence <= 0.7;
 
     public bool HasTransformHint => !string.IsNullOrEmpty(TransformHint);
 }

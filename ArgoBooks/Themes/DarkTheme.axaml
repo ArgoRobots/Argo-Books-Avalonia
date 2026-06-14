@@ -133,4 +133,17 @@
     <SolidColorBrush x:Key="AiAccentBrush" Color="{StaticResource AiAccentColor}" />
     <SolidColorBrush x:Key="AiAccentSoftBrush" Color="#33A78BFA" />
 
+    <!-- AI import confidence + tier badges - vivid on dark surfaces (text brush + soft fill).
+         Defined per-theme so the colors come from the theme dictionary, not a runtime check. -->
+    <SolidColorBrush x:Key="ConfidenceHighBrush" Color="#4ADE80" />
+    <SolidColorBrush x:Key="ConfidenceHighSoftBrush" Color="#264ADE80" />
+    <SolidColorBrush x:Key="ConfidenceMediumBrush" Color="#FBBF24" />
+    <SolidColorBrush x:Key="ConfidenceMediumSoftBrush" Color="#26FBBF24" />
+    <SolidColorBrush x:Key="ConfidenceLowBrush" Color="#F87171" />
+    <SolidColorBrush x:Key="ConfidenceLowSoftBrush" Color="#26F87171" />
+    <SolidColorBrush x:Key="TierMappingBrush" Color="#60A5FA" />
+    <SolidColorBrush x:Key="TierMappingSoftBrush" Color="#2660A5FA" />
+    <SolidColorBrush x:Key="TierLlmBrush" Color="#A78BFA" />
+    <SolidColorBrush x:Key="TierLlmSoftBrush" Color="#26A78BFA" />
+
 </ResourceDictionary>

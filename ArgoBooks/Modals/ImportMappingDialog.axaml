@@ -11,6 +11,42 @@
              x:Class="ArgoBooks.Modals.ImportMappingDialog"
              x:DataType="vm:ImportMappingDialogViewModel">
 
+    <UserControl.Styles>
+        <!-- Badge colors come from the theme dictionaries (DynamicResource) so they are correct
+             in dark and light without any runtime theme detection. Class is set by the VM. -->
+        <Style Selector="Border.tierBadge">
+            <Setter Property="Background" Value="{DynamicResource TierMappingSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tierBadge TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TierMappingBrush}" />
+        </Style>
+        <Style Selector="Border.tierBadge.llm">
+            <Setter Property="Background" Value="{DynamicResource TierLlmSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tierBadge.llm TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TierLlmBrush}" />
+        </Style>
+
+        <Style Selector="Border.confBadge.high">
+            <Setter Property="Background" Value="{DynamicResource ConfidenceHighSoftBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.high TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ConfidenceHighBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.medium">
+            <Setter Property="Background" Value="{DynamicResource ConfidenceMediumSoftBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.medium TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ConfidenceMediumBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.low">
+            <Setter Property="Background" Value="{DynamicResource ConfidenceLowSoftBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.low TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ConfidenceLowBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                            ClosingCommand="{Binding RequestCloseCommand}">
         <controls:ModalOverlay.ModalContent>
@@ -296,32 +332,30 @@
 
                                                         <!-- Tier badge -->
                                                         <Border Grid.Column="2"
+                                                                Classes="tierBadge"
+                                                                Classes.llm="{Binding IsTier2}"
                                                                 CornerRadius="10"
                                                                 Padding="8,3"
                                                                 Margin="8,0"
                                                                 VerticalAlignment="Center">
-                                                            <Border.Background>
-                                                                <SolidColorBrush Color="{Binding Tier, Converter={x:Static converters:Converters.TierToColor}}" Opacity="0.12" />
-                                                            </Border.Background>
                                                             <TextBlock Text="{Binding TierDisplay}"
                                                                        FontSize="11"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{Binding Tier, Converter={x:Static converters:Converters.TierToColor}}" />
+                                                                       FontWeight="SemiBold" />
                                                         </Border>
 
                                                         <!-- Confidence badge -->
                                                         <Border Grid.Column="3"
+                                                                Classes="confBadge"
+                                                                Classes.high="{Binding IsHighConfidence}"
+                                                                Classes.medium="{Binding IsMediumConfidence}"
+                                                                Classes.low="{Binding IsLowConfidence}"
                                                                 CornerRadius="10"
                                                                 Padding="8,3"
                                                                 Margin="0,0,8,0"
                                                                 VerticalAlignment="Center">
-                                                            <Border.Background>
-                                                                <SolidColorBrush Color="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" Opacity="0.15" />
-                                                            </Border.Background>
                                                             <TextBlock Text="{Binding ConfidenceDisplay}"
                                                                        FontSize="11"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" />
+                                                                       FontWeight="SemiBold" />
                                                         </Border>
 
                                                         <!-- Expand toggle -->
@@ -404,17 +438,17 @@
 
                                                                         <!-- Confidence -->
                                                                         <Border Grid.Column="3"
+                                                                                Classes="confBadge"
+                                                                                Classes.high="{Binding IsHighConfidence}"
+                                                                                Classes.medium="{Binding IsMediumConfidence}"
+                                                                                Classes.low="{Binding IsLowConfidence}"
                                                                                 CornerRadius="3"
                                                                                 Padding="4,1"
                                                                                 HorizontalAlignment="Right"
                                                                                 VerticalAlignment="Center">
-                                                                            <Border.Background>
-                                                                                <SolidColorBrush Color="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" Opacity="0.15" />
-                                                                            </Border.Background>
                                                                             <TextBlock Text="{Binding ConfidenceDisplay}"
                                                                                        FontSize="10"
-                                                                                       FontWeight="SemiBold"
-                                                                                       Foreground="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" />
+                                                                                       FontWeight="SemiBold" />
                                                                         </Border>
                                                                     </Grid>
                                                                 </Border>

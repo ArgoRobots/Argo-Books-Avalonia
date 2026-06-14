@@ -1,9 +1,4 @@
-using ArgoBooks.Core;
-using ArgoBooks.Core.Models.AI;
-using Avalonia;
 using Avalonia.Data.Converters;
-using Avalonia.Media;
-using Avalonia.Styling;
 
 namespace ArgoBooks.Converters;
 
@@ -23,41 +18,8 @@ public static class Converters
     /// </summary>
     public static readonly IValueConverter BoolToFinishNext = new BoolToFixedStringConverter("Finish", "Next");
 
-    /// <summary>
-    /// Whether the app is currently using the dark theme. Badge colors that are tuned
-    /// for light surfaces look muddy on dark backgrounds, so we brighten them in dark mode.
-    /// <para>
-    /// Use <see cref="ThemeService"/> as the source of truth: it is the same authority the
-    /// rest of the app trusts and correctly resolves Light/Dark/System. The raw
-    /// <c>Application.ActualThemeVariant</c> check is only a fallback, because it can report
-    /// a non-Dark variant even when the app is visually dark (the dark look is driven by
-    /// swapped resource dictionaries, not solely by the Avalonia theme variant).
-    /// </para>
-    /// </summary>
-    private static bool IsDarkTheme =>
-        ArgoBooks.Services.ThemeService.Instance?.IsDarkTheme
-            ?? (Application.Current?.ActualThemeVariant == ThemeVariant.Dark);
-
-    /// <summary>
-    /// Converts a ProcessingTier enum to a color for tier badge display.
-    /// </summary>
-    public static readonly IValueConverter TierToColor =
-        new FuncValueConverter<ProcessingTier, Color>(tier => tier switch
-        {
-            ProcessingTier.Tier1_Mapping => Color.Parse(IsDarkTheme ? "#60A5FA" : AppColors.Primary),
-            ProcessingTier.Tier2_LlmProcessing => Color.Parse(IsDarkTheme ? "#A78BFA" : "#7C3AED"),
-            _ => Color.Parse(IsDarkTheme ? "#9CA3AF" : AppColors.GrayText)
-        });
-
-    /// <summary>
-    /// Converts a confidence level string ("High", "Medium", "Low") to a color.
-    /// </summary>
-    public static readonly IValueConverter ConfidenceLevelToColor =
-        new FuncValueConverter<string, Color>(level => level switch
-        {
-            "High" => Color.Parse(IsDarkTheme ? "#4ADE80" : AppColors.SuccessDark),
-            "Medium" => Color.Parse(IsDarkTheme ? "#FBBF24" : AppColors.WarningDark),
-            "Low" => Color.Parse(IsDarkTheme ? "#F87171" : AppColors.Error),
-            _ => Color.Parse(IsDarkTheme ? "#9CA3AF" : AppColors.GrayText)
-        });
+    // Note: the AI-import tier/confidence badge colors are no longer computed here. They come
+    // from per-theme DynamicResource brushes (Confidence*/Tier* in DarkTheme.axaml / LightTheme.axaml)
+    // applied via style classes in ImportMappingDialog.axaml, so they are always correct for the
+    // active theme without any runtime theme detection.
 }
