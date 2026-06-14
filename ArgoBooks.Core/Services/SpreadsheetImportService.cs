@@ -41,6 +41,24 @@ public class ImportOptions
     /// Reset before each sheet import. Used internally by import methods.
     /// </summary>
     internal int SkippedCount { get; set; }
+
+    /// <summary>
+    /// Per-row currency resolved deterministically from the amount cells before import
+    /// (see <see cref="CurrencyImportPreparer"/>): sheet name -> (0-based data-row ordinal -> ISO code).
+    /// When a row has an entry, financial builders set <c>OriginalCurrency</c> to that code and
+    /// convert amounts to USD. Rows without an entry keep the existing company-currency behavior.
+    /// Applies to deterministic (Tier 1) imports.
+    /// </summary>
+    public Dictionary<string, Dictionary<int, string>> RowCurrencyBySheet { get; set; }
+        = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Global resolution of ambiguous currency symbols chosen by the user (e.g. "$" -> "CAD").
+    /// Used to normalize a symbol the LLM emits into <c>originalCurrency</c> on the Tier 2 path,
+    /// where per-row ordinals are not available.
+    /// </summary>
+    public Dictionary<string, string> SymbolResolution { get; set; }
+        = new(StringComparer.Ordinal);
 }
 
 /// <summary>
@@ -806,7 +824,19 @@ public class SpreadsheetImportService
         var countBefore = GetEntityCount(data, sheetType);
         if (options != null)
             options.SkippedCount = 0;
-        ImportBySheetType(sheetType, data, headers, rows, options);
+
+        // Make this sheet's per-row currency (resolved by CurrencyImportPreparer) available to the
+        // financial builders for the duration of this sheet import, then clear it.
+        _currentSheetRowCurrency = options?.RowCurrencyBySheet is { } bySheet
+            && bySheet.TryGetValue(sheetName, out var rowMap) ? rowMap : null;
+        try
+        {
+            ImportBySheetType(sheetType, data, headers, rows, options);
+        }
+        finally
+        {
+            _currentSheetRowCurrency = null;
+        }
         var countAfter = GetEntityCount(data, sheetType);
         var inserted = Math.Max(0, countAfter - countBefore);
 
@@ -864,22 +894,124 @@ public class SpreadsheetImportService
     }
 
     /// <summary>
-    /// Reads a mapped per-row currency code from the entity JSON (the schema maps a source
-    /// "Currency" column to <c>originalCurrency</c>). Returns the trimmed, upper-cased code when
-    /// a non-empty currency value is present, otherwise <c>null</c> (meaning: no currency column
-    /// was mapped for this row, so the importer keeps its existing company-currency behavior).
+    /// Reads a per-row currency from the entity JSON's <c>originalCurrency</c> (mapped from a
+    /// currency column, or emitted by the LLM from an in-cell symbol/code) and normalizes it to
+    /// an ISO code. Returns <c>null</c> when no currency is present or it cannot be resolved, so
+    /// the importer keeps its existing company-currency behavior.
     /// </summary>
-    private static string? ExtractRowCurrency(JsonElement entityJson)
+    private static string? ExtractRowCurrency(JsonElement entityJson, ImportOptions? options = null)
     {
         if (entityJson.ValueKind == JsonValueKind.Object
             && entityJson.TryGetProperty("originalCurrency", out var curProp)
             && curProp.ValueKind == JsonValueKind.String)
         {
-            var code = curProp.GetString();
-            if (!string.IsNullOrWhiteSpace(code))
-                return code.Trim().ToUpperInvariant();
+            return NormalizeCurrencyToken(curProp.GetString(), options);
         }
         return null;
+    }
+
+    /// <summary>
+    /// Normalizes a raw currency token into an ISO code: a known code is used as-is; an
+    /// unambiguous symbol resolves to its code; an ambiguous symbol resolves via the user's
+    /// choice (<see cref="ImportOptions.SymbolResolution"/>). Blank/unknown returns <c>null</c>.
+    /// </summary>
+    internal static string? NormalizeCurrencyToken(string? raw, ImportOptions? options)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var token = raw.Trim();
+
+        if (CurrencyInfo.All.ContainsKey(token))
+            return token.ToUpperInvariant();
+        if (CurrencyInfo.TryResolveSymbol(token, out var code))
+            return code;
+        if (options?.SymbolResolution is { } map && map.TryGetValue(token, out var chosen))
+            return chosen;
+        return null;
+    }
+
+    /// <summary>
+    /// The current Tier 1 sheet's per-row currency (data-row ordinal -> ISO code), set for the
+    /// duration of one sheet import so deterministic builders can resolve currency by row order
+    /// without threading the sheet name through every builder. <c>null</c> when no currency was
+    /// detected for the sheet.
+    /// </summary>
+    private Dictionary<int, string>? _currentSheetRowCurrency;
+
+    /// <summary>The ISO code detected for the given Tier 1 data-row ordinal, or <c>null</c>.</summary>
+    private string? Tier1RowCurrency(int rowIndex)
+        => _currentSheetRowCurrency is { } map && map.TryGetValue(rowIndex, out var code) ? code : null;
+
+    /// <summary>
+    /// Sets <c>OriginalCurrency</c> and the USD fields on a Revenue/Expense from the per-row
+    /// detected currency, or the company currency (raw passthrough) when none was detected.
+    /// </summary>
+    private void ApplyTransactionCurrency(Transaction txn, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+        {
+            txn.OriginalCurrency = code;
+            txn.TotalUSD = ConvertRowAmountToUSD(txn.Total, code, txn.Date);
+            txn.TaxAmountUSD = ConvertRowAmountToUSD(txn.TaxAmount, code, txn.Date);
+            txn.ShippingCostUSD = ConvertRowAmountToUSD(txn.ShippingCost, code, txn.Date);
+        }
+        else
+        {
+            txn.OriginalCurrency = data.Settings.Localization.Currency;
+            txn.TotalUSD = txn.Total;
+            txn.TaxAmountUSD = txn.TaxAmount;
+            txn.ShippingCostUSD = txn.ShippingCost;
+        }
+    }
+
+    /// <summary>Per-row currency for a Payment (or company currency when none detected).</summary>
+    private void ApplyPaymentCurrency(Payment payment, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+        {
+            payment.OriginalCurrency = code;
+            payment.AmountUSD = ConvertRowAmountToUSD(payment.Amount, code, payment.Date);
+        }
+        else
+        {
+            payment.OriginalCurrency = data.Settings.Localization.Currency;
+            payment.AmountUSD = payment.Amount;
+        }
+    }
+
+    /// <summary>Per-row currency for an Invoice (or company currency when none detected).</summary>
+    private void ApplyInvoiceCurrency(Invoice invoice, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+        {
+            invoice.OriginalCurrency = code;
+            invoice.TotalUSD = ConvertRowAmountToUSD(invoice.Total, code, invoice.IssueDate);
+            invoice.BalanceUSD = ConvertRowAmountToUSD(invoice.Balance, code, invoice.IssueDate);
+        }
+        else
+        {
+            invoice.OriginalCurrency = data.Settings.Localization.Currency;
+            invoice.TotalUSD = invoice.Total;
+            invoice.BalanceUSD = invoice.Balance;
+        }
+    }
+
+    /// <summary>Per-row currency for a PurchaseOrder (or company currency when none detected).</summary>
+    private void ApplyPurchaseOrderCurrency(PurchaseOrder po, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+        {
+            po.OriginalCurrency = code;
+            po.TotalUSD = ConvertRowAmountToUSD(po.Total, code, po.OrderDate);
+        }
+        else
+        {
+            po.OriginalCurrency = data.Settings.Localization.Currency;
+            po.TotalUSD = po.Total;
+        }
     }
 
     /// <summary>
@@ -1184,7 +1316,7 @@ public class SpreadsheetImportService
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
                 {
-                    var expenseCurrency = ExtractRowCurrency(entityJson);
+                    var expenseCurrency = ExtractRowCurrency(entityJson, options);
                     if (!string.IsNullOrEmpty(expenseCurrency))
                     {
                         // A per-row currency column was mapped: convert each amount to USD at the
@@ -1250,7 +1382,7 @@ public class SpreadsheetImportService
                 {
                     // PaymentStatus is already normalized by the enum's JSON
                     // converter (legacy typos → Paid fallback), no separate call.
-                    var revenueCurrency = ExtractRowCurrency(entityJson);
+                    var revenueCurrency = ExtractRowCurrency(entityJson, options);
                     if (!string.IsNullOrEmpty(revenueCurrency))
                     {
                         // A per-row currency column was mapped: convert each amount to USD at the
@@ -1315,7 +1447,7 @@ public class SpreadsheetImportService
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
-                    var paymentCurrency = ExtractRowCurrency(entityJson);
+                    var paymentCurrency = ExtractRowCurrency(entityJson, options);
                     if (!string.IsNullOrEmpty(paymentCurrency))
                     {
                         // A per-row currency column was mapped: convert the amount to USD at the
@@ -2853,8 +2985,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportInvoices(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var invoiceNumber = GetString(row, headers, "Invoice #");
             var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -2881,10 +3014,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             }
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
-            // Set currency values from company settings
-            invoice.OriginalCurrency = data.Settings.Localization.Currency;
-            invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyInvoiceCurrency(invoice, rowIndex, data);
 
             if (existing == null)
                 data.Invoices.Add(invoice);
@@ -2925,8 +3056,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportPurchases(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
             var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -2948,11 +3080,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
             purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            // Set currency values from company settings
-            purchase.OriginalCurrency = data.Settings.Localization.Currency;
-            purchase.TotalUSD = purchase.Total;
-            purchase.TaxAmountUSD = purchase.TaxAmount;
-            purchase.ShippingCostUSD = purchase.ShippingCost;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyTransactionCurrency(purchase, rowIndex, data);
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Expense-type categories when there are duplicate names
@@ -3119,8 +3248,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportPayments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
             var existing = data.Payments.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3137,9 +3267,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             payment.ReferenceNumber = GetNullableString(row, headers, "Reference");
             payment.Notes = GetString(row, headers, "Notes");
 
-            // Set currency values from company settings
-            payment.OriginalCurrency = data.Settings.Localization.Currency;
-            payment.AmountUSD = payment.Amount;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyPaymentCurrency(payment, rowIndex, data);
 
             if (existing == null)
                 data.Payments.Add(payment);
@@ -3177,8 +3306,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
             var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3200,11 +3330,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
             revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            // Set currency values from company settings
-            revenue.OriginalCurrency = data.Settings.Localization.Currency;
-            revenue.TotalUSD = revenue.Total;
-            revenue.TaxAmountUSD = revenue.TaxAmount;
-            revenue.ShippingCostUSD = revenue.ShippingCost;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyTransactionCurrency(revenue, rowIndex, data);
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Revenue-type categories when there are duplicate names
@@ -3634,8 +3761,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportPurchaseOrders(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
             var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3647,6 +3775,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             po.ExpectedDeliveryDate = GetDateTime(row, headers, "Expected Date");
             po.Total = GetDecimal(row, headers, "Total");
             po.Status = ParseEnum(GetString(row, headers, "Status"), PurchaseOrderStatus.Draft);
+
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyPurchaseOrderCurrency(po, rowIndex, data);
 
             if (existing == null)
                 data.PurchaseOrders.Add(po);

@@ -190,7 +190,7 @@ public static class ImportSchemaDefinition
                 new("Reference", "string", "External reference number", JsonName: "referenceNumber"),
                 new("Payment Method", "enum:Cash,CreditCard,DebitCard,BankTransfer,Check,PayPal,Other", "How payment was made", JsonName: "paymentMethod"),
                 new("Shipping", "decimal", "Cost of shipping", JsonName: "shippingCost"),
-                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Only map when the sheet has a per-row currency column; leave unmapped if all amounts are in the company currency", JsonName: "originalCurrency"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Revenue] =
@@ -206,7 +206,7 @@ public static class ImportSchemaDefinition
                 new("Reference", "string", "External reference number", JsonName: "referenceNumber"),
                 new("Payment Status", "enum:Paid,Unpaid,Partial,Pending,Overdue", "Status of the payment", JsonName: "paymentStatus"),
                 new("Shipping", "decimal", "Cost of shipping", JsonName: "shippingCost"),
-                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Only map when the sheet has a per-row currency column; leave unmapped if all amounts are in the company currency", JsonName: "originalCurrency"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Inventory] =
@@ -231,7 +231,7 @@ public static class ImportSchemaDefinition
                 new("Payment Method", "enum:Cash,CreditCard,DebitCard,BankTransfer,Check,PayPal,Other", "How payment was made", JsonName: "paymentMethod"),
                 new("Reference", "string", "Payment reference number", JsonName: "referenceNumber"),
                 new("Notes", "string", "Additional notes", JsonName: "notes"),
-                new("Currency", "string", "ISO currency code the amount is in (e.g., USD, EUR, GBP). Only map when the sheet has a per-row currency column; leave unmapped if all amounts are in the company currency", JsonName: "originalCurrency"),
+                new("Currency", "string", "ISO currency code the amount is in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when the amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Locations] =
