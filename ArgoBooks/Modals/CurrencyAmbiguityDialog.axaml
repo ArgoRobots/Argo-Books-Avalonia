@@ -57,29 +57,28 @@
                         </Grid>
                     </Border>
 
-                    <!-- Body: one row per ambiguous symbol -->
-                    <ScrollViewer Grid.Row="1" Padding="24,16" MaxHeight="360"
-                                  VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Symbols}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:SymbolChoiceViewModel">
-                                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,14">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding Header}"
-                                                   VerticalAlignment="Center"
-                                                   TextWrapping="Wrap"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <ComboBox Grid.Column="1"
-                                                  MinWidth="200"
-                                                  Margin="16,0,0,0"
-                                                  ItemsSource="{Binding Options}"
-                                                  SelectedItem="{Binding SelectedOption}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <!-- Body: one row per ambiguous symbol. No ScrollViewer: there are only a few
+                         distinct ambiguous symbols, so the body sizes directly to its content and
+                         can never clip a row. -->
+                    <ItemsControl Grid.Row="1" Padding="24,16" ItemsSource="{Binding Symbols}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SymbolChoiceViewModel">
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Header}"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <ComboBox Grid.Column="1"
+                                              MinWidth="200"
+                                              Margin="16,0,0,0"
+                                              ItemsSource="{Binding Options}"
+                                              SelectedItem="{Binding SelectedOption}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <!-- Footer -->
                     <Border Grid.Row="2"
