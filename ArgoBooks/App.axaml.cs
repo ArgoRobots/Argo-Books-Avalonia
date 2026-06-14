@@ -2275,6 +2275,10 @@ public partial class App : Application
             foreach (var unsupported in unsupportedSheets)
                 allWarnings.Add($"Sheet \"{unsupported.SourceSheetName}\" was skipped: {unsupported.UnsupportedReason}");
 
+            // If part of the AI analysis failed, tell the user their import is partial.
+            if (!string.IsNullOrEmpty(updatedAnalysis.PartialAnalysisWarning))
+                allWarnings.Add(updatedAnalysis.PartialAnalysisWarning);
+
             // Collect skip reasons from all sheets
             var allSkipReasons = allSheetResults
                 .SelectMany(sr => sr.SkipReasons)

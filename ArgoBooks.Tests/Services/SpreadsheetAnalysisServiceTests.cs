@@ -144,7 +144,6 @@ public class SpreadsheetAnalysisServiceTests
     {
         var result = new SpreadsheetAnalysisResult();
         Assert.Empty(result.Sheets);
-        Assert.Empty(result.Warnings);
         Assert.Equal(string.Empty, result.FileName);
     }
 

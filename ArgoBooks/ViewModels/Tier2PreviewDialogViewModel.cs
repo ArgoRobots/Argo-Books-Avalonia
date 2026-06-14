@@ -11,13 +11,24 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// A single flattened preview row for the Tier 2 preview dialog. Each row summarizes
-/// one AI-normalized entity as a readable one-line string.
+/// A single preview row for the Tier 2 preview dialog: one AI-normalized entity broken
+/// into the columns a user cares about (id, description, date, amount), with "-" shown for
+/// fields the entity doesn't have. <see cref="Summary"/> keeps the full flattened field
+/// list for the CSV export so no detail is lost.
 /// </summary>
 public sealed class Tier2PreviewRow
 {
     public required string Sheet { get; init; }
+    public string? Id { get; init; }
+    public string? Description { get; init; }
+    public string? Date { get; init; }
+    public string? Amount { get; init; }
     public required string Summary { get; init; }
+
+    public string IdDisplay => string.IsNullOrWhiteSpace(Id) ? "-" : Id!;
+    public string DescriptionDisplay => string.IsNullOrWhiteSpace(Description) ? "-" : Description!;
+    public string DateDisplay => string.IsNullOrWhiteSpace(Date) ? "-" : Date!;
+    public string AmountDisplay => string.IsNullOrWhiteSpace(Amount) ? "-" : Amount!;
 }
 
 /// <summary>
@@ -61,6 +72,10 @@ public partial class Tier2PreviewDialogViewModel : ViewModelBase
             Rows.Add(new Tier2PreviewRow
             {
                 Sheet = sheetName,
+                Id = ExtractField(entity, IdKeys),
+                Description = ExtractField(entity, DescriptionKeys),
+                Date = ExtractField(entity, DateKeys),
+                Amount = ExtractAmount(entity),
                 Summary = FlattenEntity(entity)
             });
         }
@@ -116,16 +131,65 @@ public partial class Tier2PreviewDialogViewModel : ViewModelBase
         };
     }
 
+    // Column field-name candidates, tried in order. Case-insensitive.
+    private static readonly string[] IdKeys = ["id", "invoiceNumber", "invoiceId", "reference", "referenceNumber"];
+    private static readonly string[] DescriptionKeys = ["description", "name", "title", "productName", "item", "product"];
+    private static readonly string[] DateKeys = ["date", "issueDate", "transactionDate", "startDate"];
+    private static readonly string[] AmountKeys = ["total", "amount", "totalCost", "unitPrice", "grandTotal"];
+
+    /// <summary>Returns the first present, non-empty property among the given key candidates, or null.</summary>
+    private static string? ExtractField(JsonElement entity, string[] keys)
+    {
+        if (entity.ValueKind != JsonValueKind.Object) return null;
+        foreach (var key in keys)
+        {
+            foreach (var prop in entity.EnumerateObject())
+            {
+                if (!string.Equals(prop.Name, key, StringComparison.OrdinalIgnoreCase)) continue;
+                var value = FormatValue(prop.Value);
+                if (!string.IsNullOrWhiteSpace(value)) return value.Trim();
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Like <see cref="ExtractField"/> for amounts, but formats numeric values with thousands separators.</summary>
+    private static string? ExtractAmount(JsonElement entity)
+    {
+        if (entity.ValueKind != JsonValueKind.Object) return null;
+        foreach (var key in AmountKeys)
+        {
+            foreach (var prop in entity.EnumerateObject())
+            {
+                if (!string.Equals(prop.Name, key, StringComparison.OrdinalIgnoreCase)) continue;
+                if (prop.Value.ValueKind == JsonValueKind.Number && prop.Value.TryGetDouble(out var n))
+                    return n.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+                var value = FormatValue(prop.Value);
+                if (!string.IsNullOrWhiteSpace(value)) return value.Trim();
+            }
+        }
+        return null;
+    }
+
     /// <summary>
-    /// Builds CSV text for the displayed sample with header Sheet,Summary.
+    /// Builds CSV text for the displayed sample with header Sheet,ID,Description,Date,Amount,Details.
+    /// The Details column keeps the full flattened field list so nothing is lost in the export.
     /// </summary>
     public string BuildSampleCsv()
     {
         var sb = new StringBuilder();
-        sb.AppendLine("Sheet,Summary");
+        sb.AppendLine("Sheet,ID,Description,Date,Amount,Details");
         foreach (var row in Rows)
         {
             sb.Append(CsvQuote(row.Sheet));
+            sb.Append(',');
+            sb.Append(CsvQuote(row.Id ?? ""));
+            sb.Append(',');
+            sb.Append(CsvQuote(row.Description ?? ""));
+            sb.Append(',');
+            sb.Append(CsvQuote(row.Date ?? ""));
+            sb.Append(',');
+            sb.Append(CsvQuote(row.Amount ?? ""));
             sb.Append(',');
             sb.AppendLine(CsvQuote(row.Summary));
         }

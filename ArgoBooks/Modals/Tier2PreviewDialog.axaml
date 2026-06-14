@@ -10,6 +10,22 @@
              x:DataType="vm:Tier2PreviewDialogViewModel"
              Focusable="True">
 
+    <UserControl.Styles>
+        <Style Selector="TextBlock.t2-head">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+        <Style Selector="TextBlock.t2-cell">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </UserControl.Styles>
+
     <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                            ClosingCommand="{Binding CancelCommand}">
         <controls:ModalOverlay.ModalContent>
@@ -17,8 +33,8 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="520"
-                MaxHeight="640"
+                Width="660"
+                MaxHeight="680"
                 Margin="40"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -65,8 +81,28 @@
                 </Border>
 
                 <!-- Content -->
-                <Grid Grid.Row="1" Margin="24,16">
-                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                <Grid Grid.Row="1" Margin="24,12,24,16" RowDefinitions="Auto,Auto,*">
+                    <!-- Explanation: make it clear what this dialog is for -->
+                    <TextBlock Grid.Row="0"
+                               Text="These rows were reformatted by AI from messy parts of your spreadsheet. Review them below, then click Import to add them to your records, or Cancel to discard them. Nothing is saved until you save the file."
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextWrapping="Wrap"
+                               Margin="2,0,2,12" />
+
+                    <!-- Column headers -->
+                    <Grid Grid.Row="1" ColumnDefinitions="84,96,*,104,96" Margin="8,0,12,6">
+                        <TextBlock Grid.Column="0" Text="Sheet" Classes="t2-head" />
+                        <TextBlock Grid.Column="1" Text="ID" Classes="t2-head" />
+                        <TextBlock Grid.Column="2" Text="Description" Classes="t2-head" />
+                        <TextBlock Grid.Column="3" Text="Date" Classes="t2-head" />
+                        <TextBlock Grid.Column="4" Text="Amount" Classes="t2-head"
+                                   HorizontalAlignment="Right" Margin="0" />
+                    </Grid>
+
+                    <!-- Rows -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceAltBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
@@ -77,24 +113,25 @@
                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="vm:Tier2PreviewRow">
-                                    <Grid ColumnDefinitions="Auto,*" Margin="0,3">
+                                    <Grid ColumnDefinitions="84,96,*,104,96" Margin="4,3" MinHeight="24">
                                         <Border Grid.Column="0"
                                                 Background="{DynamicResource SurfaceBrush}"
                                                 CornerRadius="4"
                                                 Padding="6,2"
                                                 Margin="0,0,8,0"
+                                                HorizontalAlignment="Left"
                                                 VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Sheet}"
                                                        FontSize="11"
                                                        FontWeight="Medium"
+                                                       TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </Border>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding Summary}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   TextWrapping="Wrap"
-                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding IdDisplay}" Classes="t2-cell" />
+                                        <TextBlock Grid.Column="2" Text="{Binding DescriptionDisplay}" Classes="t2-cell" />
+                                        <TextBlock Grid.Column="3" Text="{Binding DateDisplay}" Classes="t2-cell" />
+                                        <TextBlock Grid.Column="4" Text="{Binding AmountDisplay}" Classes="t2-cell"
+                                                   HorizontalAlignment="Right" Margin="0" />
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>

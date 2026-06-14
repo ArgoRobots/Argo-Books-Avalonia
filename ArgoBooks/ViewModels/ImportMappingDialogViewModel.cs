@@ -224,10 +224,6 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
     public ObservableCollection<SheetAnalysisViewModel> Sheets { get; } = [];
 
-    public ObservableCollection<string> Warnings { get; } = [];
-
-    public bool HasWarnings => Warnings.Count > 0;
-
     /// <summary>
     /// Sheets that could not be matched to a supported Argo Books entity type.
     /// Displayed in a read-only "Cannot import" section in the dialog.
@@ -271,7 +267,6 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
         // Clear previous state
         Sheets.Clear();
-        Warnings.Clear();
         UnsupportedSheets.Clear();
         SkipExistingRecords = true;
 
@@ -284,12 +279,6 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
                 UnsupportedSheets.Add(new UnsupportedSheetViewModel(sheet));
             else
                 Sheets.Add(new SheetAnalysisViewModel(sheet));
-        }
-
-        // Populate warnings
-        foreach (var warning in analysis.Warnings)
-        {
-            Warnings.Add(warning);
         }
 
         // Calculate summary stats (exclude unsupported sheets from the totals)
@@ -311,7 +300,6 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
             ShowRateLimit = false;
         }
 
-        OnPropertyChanged(nameof(HasWarnings));
         OnPropertyChanged(nameof(HasUnsupportedSheets));
         OnPropertyChanged(nameof(HasImportableContent));
         OnPropertyChanged(nameof(AcceptButtonText));

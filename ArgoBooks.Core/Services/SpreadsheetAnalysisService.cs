@@ -192,18 +192,14 @@ public class SpreadsheetAnalysisService(
 
         var merged = new SpreadsheetAnalysisResult { FileName = fileName };
         foreach (var batchResult in succeeded)
-        {
             merged.Sheets.AddRange(batchResult!.Sheets);
-            merged.Warnings.AddRange(batchResult.Warnings);
-        }
 
-        // If some batches failed, surface it instead of silently importing only a subset.
+        // If some batches failed, flag the import as partial so the user is told some sheets
+        // were skipped instead of silently importing only a subset.
         var failedBatches = batchResults.Length - succeeded.Count;
         if (failedBatches > 0)
-        {
-            merged.Warnings.Add(
-                $"{failedBatches} of {batchResults.Length} sheet group(s) could not be analyzed and were skipped.");
-        }
+            merged.PartialAnalysisWarning =
+                $"{failedBatches} of {batchResults.Length} sheet group(s) could not be analyzed and were skipped, so those sheets were not imported.";
 
         // Populate row counts from our data
         foreach (var sheet in merged.Sheets)
@@ -551,8 +547,7 @@ Respond with valid JSON only, no markdown code blocks.";
       ""unmappedSourceColumns"": [""<columns that don't map to any target>""],
       ""unmappedTargetColumns"": [""<target columns with no source match>""]
     }
-  ],
-  ""warnings"": [""<any general warnings>""]
+  ]
 }
 
 IMPORTANT:
@@ -719,12 +714,6 @@ IMPORTANT:
 
                     result.Sheets.Add(sheet);
                 }
-            }
-
-            if (root.TryGetProperty("warnings", out var warningsArray))
-            {
-                foreach (var warning in warningsArray.EnumerateArray())
-                    result.Warnings.Add(warning.GetString() ?? "");
             }
 
             return result;

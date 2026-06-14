@@ -210,35 +210,6 @@
                                 </Border>
                             </Grid>
 
-                            <!-- Warnings -->
-                            <Border Background="#1AF59E0B"
-                                    CornerRadius="8"
-                                    Padding="16"
-                                    IsVisible="{Binding HasWarnings}">
-                                <StackPanel Spacing="8">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
-                                                  Width="16" Height="16"
-                                                  Foreground="{DynamicResource WarningBrush}" />
-                                        <TextBlock Text="Warnings"
-                                                   FontSize="13"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource WarningBrush}" />
-                                    </StackPanel>
-                                    <ItemsControl ItemsSource="{Binding Warnings}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           TextWrapping="Wrap"
-                                                           Margin="24,2,0,0" />
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </Border>
-
                             <!-- Cannot Import section: sheets with unrecognised types -->
                             <Border Background="#1AEF4444"
                                     CornerRadius="8"
