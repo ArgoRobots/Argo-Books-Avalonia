@@ -29,7 +29,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     private TimeZoneItem _originalTimeZone = TimeZones.FindById("UTC");
     private string _originalTimeFormat = "12h";
     private int _originalMaxPieSlices = 6;
-    private bool _originalExperimentalLayoutInterpretation;
     private bool _originalLowStockAlert = true;
     private bool _originalOutOfStockAlert = true;
     private bool _originalInvoiceOverdue = true;
@@ -135,13 +134,6 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _maxPieSlices = 6;
-
-    /// <summary>
-    /// Experimental: AI layout interpretation for messy spreadsheets during import.
-    /// App-level user preference, persisted in global settings. Off by default.
-    /// </summary>
-    [ObservableProperty]
-    private bool _experimentalLayoutInterpretation;
 
     /// <summary>
     /// Available options for max pie slices.
@@ -1312,7 +1304,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTimeZone.Id != _originalTimeZone.Id ||
         SelectedTimeFormat != _originalTimeFormat ||
         MaxPieSlices != _originalMaxPieSlices ||
-        ExperimentalLayoutInterpretation != _originalExperimentalLayoutInterpretation ||
         LowStockAlert != _originalLowStockAlert ||
         OutOfStockAlert != _originalOutOfStockAlert ||
         InvoiceOverdue != _originalInvoiceOverdue ||
@@ -1389,7 +1380,6 @@ public partial class SettingsModalViewModel : ViewModelBase
                 MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
                 SelectedTimeZone = TimeZones.FindById(globalSettings.Ui.TimeZone);
                 SelectedTimeFormat = globalSettings.Ui.TimeFormat;
-                ExperimentalLayoutInterpretation = globalSettings.Ui.ExperimentalLayoutInterpretation;
             }
         }
 
@@ -1407,7 +1397,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
-        _originalExperimentalLayoutInterpretation = ExperimentalLayoutInterpretation;
         _originalLowStockAlert = LowStockAlert;
         _originalOutOfStockAlert = OutOfStockAlert;
         _originalInvoiceOverdue = InvoiceOverdue;
@@ -1496,7 +1485,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             MaxPieSlices = _originalMaxPieSlices;
         }
-        ExperimentalLayoutInterpretation = _originalExperimentalLayoutInterpretation;
         LowStockAlert = _originalLowStockAlert;
         OutOfStockAlert = _originalOutOfStockAlert;
         InvoiceOverdue = _originalInvoiceOverdue;
@@ -1529,7 +1517,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalTimeZone = SelectedTimeZone;
         _originalTimeFormat = SelectedTimeFormat;
         _originalMaxPieSlices = MaxPieSlices;
-        _originalExperimentalLayoutInterpretation = ExperimentalLayoutInterpretation;
         _originalLowStockAlert = LowStockAlert;
         _originalOutOfStockAlert = OutOfStockAlert;
         _originalInvoiceOverdue = InvoiceOverdue;
@@ -1573,7 +1560,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             globalSettings.Ui.Language = SelectedLanguage;
             globalSettings.Ui.TimeZone = SelectedTimeZone.Id;
             globalSettings.Ui.TimeFormat = SelectedTimeFormat;
-            globalSettings.Ui.ExperimentalLayoutInterpretation = ExperimentalLayoutInterpretation;
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }
 

@@ -56,14 +56,6 @@ public class UiSettings
     public ChartSettings Chart { get; set; } = new();
 
     /// <summary>
-    /// Experimental: when enabled, messy spreadsheets (long preambles, merged/multi-row
-    /// headers, cross-tabs, stacked tables) are run through AI layout interpretation
-    /// before the normal import analysis. Off by default. When false, the import flow is
-    /// byte-for-byte unchanged (no extra LLM call, no normalization step).
-    /// </summary>
-    public bool ExperimentalLayoutInterpretation { get; set; } = false;
-
-    /// <summary>
     /// Per-company chart settings, keyed by company file path.
     /// </summary>
     public Dictionary<string, ChartSettings> CompanyChartSettings { get; set; } = new();

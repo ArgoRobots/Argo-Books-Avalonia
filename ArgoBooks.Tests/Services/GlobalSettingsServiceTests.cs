@@ -86,33 +86,6 @@ public class GlobalSettingsServiceTests : IDisposable
         Assert.Empty(settings.RecentCompanies);
     }
 
-    [Fact]
-    public void ExperimentalLayoutInterpretation_DefaultsToFalse()
-    {
-        // The experimental AI layout-interpretation import feature must be OFF by default
-        // so a fresh install (or any settings file without the key) never runs the extra
-        // LLM normalization step.
-        var settings = new GlobalSettings();
-
-        Assert.False(settings.Ui.ExperimentalLayoutInterpretation);
-    }
-
-    [Fact]
-    public async Task ExperimentalLayoutInterpretation_RoundTripsWhenEnabled()
-    {
-        var original = new GlobalSettings();
-        original.Ui.ExperimentalLayoutInterpretation = true;
-
-        IGlobalSettingsService globalService = _settingsService;
-        await globalService.SaveAsync(original);
-
-        var newService = new GlobalSettingsService(_platformService);
-        IGlobalSettingsService newGlobalService = newService;
-        var loaded = await newGlobalService.LoadAsync();
-
-        Assert.True(loaded.Ui.ExperimentalLayoutInterpretation);
-    }
-
     #endregion
 
     #region SaveAsync Tests

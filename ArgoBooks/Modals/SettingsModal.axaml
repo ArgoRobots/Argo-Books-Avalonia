@@ -180,36 +180,6 @@
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
-
-                                <!-- AI / Import (Experimental) Section -->
-                                <StackPanel Spacing="8" Margin="0,8,0,0">
-                                    <TextBlock Text="{loc:Loc 'AI / Import'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center"
-                                                        Margin="0,0,12,0">
-                                                <TextBlock Text="{loc:Loc 'Experimental: AI layout interpretation for messy spreadsheets'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                           TextWrapping="Wrap" />
-                                                <TextBlock Text="{loc:Loc 'Experimental and off by default. When on, spreadsheets with preambles, merged headers, or cross-tabs are reinterpreted by AI before import.'}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           TextWrapping="Wrap" />
-                                            </StackPanel>
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding ExperimentalLayoutInterpretation}"
-                                                          VerticalAlignment="Center" />
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
