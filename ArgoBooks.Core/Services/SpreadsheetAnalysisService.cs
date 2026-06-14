@@ -33,6 +33,11 @@ public class SpreadsheetAnalysisService(
     private const int MaxColumnsPerAnalysisBatch = 40;
     private const int MaxConcurrentAnalysisBatches = 5;
 
+    // How many times to attempt a batch's classification. Classification can wobble run-to-run
+    // for structurally ambiguous sheets (e.g. cross-tabs) whose confidence lands near the
+    // threshold; a bounded retry re-rolls that wobble instead of rejecting the sheet outright.
+    private const int MaxAnalysisAttempts = 2;
+
     #region Analysis Phase
 
     /// <summary>
@@ -167,7 +172,7 @@ public class SpreadsheetAnalysisService(
                 await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    return await AnalyzeBatchAsync(batch, cancellationToken);
+                    return await AnalyzeBatchWithRetryAsync(batch, cancellationToken);
                 }
                 finally
                 {
@@ -247,6 +252,47 @@ public class SpreadsheetAnalysisService(
     }
 
     /// <summary>
+    /// Runs <see cref="AnalyzeBatchAsync"/> with a bounded retry. A retry is attempted only when
+    /// the call/parse failed, or a sheet was classified as a known type but landed just under the
+    /// confidence threshold (the wobble that makes an ambiguous sheet flip between importable and
+    /// "cannot import" across runs). A confident "Unknown" is NOT retried, so genuinely
+    /// unsupported sheets (notes, summaries) don't cost extra calls. The attempt with the fewest
+    /// unsupported sheets wins.
+    /// </summary>
+    private async Task<SpreadsheetAnalysisResult?> AnalyzeBatchWithRetryAsync(
+        List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> batch,
+        CancellationToken cancellationToken)
+    {
+        SpreadsheetAnalysisResult? best = null;
+        var bestUnsupported = int.MaxValue;
+
+        for (int attempt = 1; attempt <= MaxAnalysisAttempts; attempt++)
+        {
+            var result = await AnalyzeBatchAsync(batch, cancellationToken);
+
+            if (result != null)
+            {
+                var unsupported = result.Sheets.Count(s => s.UnsupportedReason != null);
+                if (unsupported < bestUnsupported)
+                {
+                    best = result;
+                    bestUnsupported = unsupported;
+                }
+
+                // Only a known-type-but-low-confidence sheet is worth re-rolling. If none remain,
+                // this result is as good as it gets (any leftover unsupported sheets are confidently
+                // Unknown), so stop.
+                var hasBorderlineKnown = result.Sheets.Any(s =>
+                    s.DetectedType != SpreadsheetSheetType.Unknown && s.Confidence < MinTypeConfidence);
+                if (!hasBorderlineKnown)
+                    break;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
     /// Runs one batch of sheets through the LLM and parses the response.
     /// Returns null if the call failed or the response could not be parsed.
     /// </summary>
@@ -264,7 +310,7 @@ public class SpreadsheetAnalysisService(
         var maxTokens = Math.Max(4000, totalColumns * 200 + batch.Count * 400);
 
         var response = await geminiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.0, cancellationToken);
 
         if (string.IsNullOrEmpty(response))
         {
