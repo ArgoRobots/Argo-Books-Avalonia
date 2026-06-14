@@ -90,8 +90,9 @@
                                TextWrapping="Wrap"
                                Margin="2,0,2,12" />
 
-                    <!-- Column headers -->
-                    <Grid Grid.Row="1" ColumnDefinitions="84,96,*,104,96" Margin="8,0,12,6">
+                    <!-- Column headers (right margin reserves a gutter for the scrollbar so the
+                         Amount column lines up with the rows below) -->
+                    <Grid Grid.Row="1" ColumnDefinitions="84,96,*,104,96" Margin="12,0,20,6">
                         <TextBlock Grid.Column="0" Text="Sheet" Classes="t2-head" />
                         <TextBlock Grid.Column="1" Text="ID" Classes="t2-head" />
                         <TextBlock Grid.Column="2" Text="Description" Classes="t2-head" />
@@ -100,42 +101,42 @@
                                    HorizontalAlignment="Right" Margin="0" />
                     </Grid>
 
-                    <!-- Rows -->
+                    <!-- Rows: read-only (ItemsControl, not a ListBox) so they aren't selectable -->
                     <Border Grid.Row="2"
                             Background="{DynamicResource SurfaceAltBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
-                            Padding="4">
-                        <ListBox ItemsSource="{Binding Rows}"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="vm:Tier2PreviewRow">
-                                    <Grid ColumnDefinitions="84,96,*,104,96" Margin="4,3" MinHeight="24">
-                                        <Border Grid.Column="0"
-                                                Background="{DynamicResource SurfaceBrush}"
-                                                CornerRadius="4"
-                                                Padding="6,2"
-                                                Margin="0,0,8,0"
-                                                HorizontalAlignment="Left"
-                                                VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Sheet}"
-                                                       FontSize="11"
-                                                       FontWeight="Medium"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding IdDisplay}" Classes="t2-cell" />
-                                        <TextBlock Grid.Column="2" Text="{Binding DescriptionDisplay}" Classes="t2-cell" />
-                                        <TextBlock Grid.Column="3" Text="{Binding DateDisplay}" Classes="t2-cell" />
-                                        <TextBlock Grid.Column="4" Text="{Binding AmountDisplay}" Classes="t2-cell"
-                                                   HorizontalAlignment="Right" Margin="0" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                            Padding="0,4">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:Tier2PreviewRow">
+                                        <Grid ColumnDefinitions="84,96,*,104,96" Margin="12,2,20,2" MinHeight="26">
+                                            <Border Grid.Column="0"
+                                                    Background="{DynamicResource SurfaceBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    Margin="0,0,8,0"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Sheet}"
+                                                           FontSize="11"
+                                                           FontWeight="Medium"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding IdDisplay}" Classes="t2-cell" />
+                                            <TextBlock Grid.Column="2" Text="{Binding DescriptionDisplay}" Classes="t2-cell" />
+                                            <TextBlock Grid.Column="3" Text="{Binding DateDisplay}" Classes="t2-cell" />
+                                            <TextBlock Grid.Column="4" Text="{Binding AmountDisplay}" Classes="t2-cell"
+                                                       HorizontalAlignment="Right" Margin="0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
 
