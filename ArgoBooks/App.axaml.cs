@@ -14,6 +14,7 @@ using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Layout;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -1888,6 +1889,27 @@ public partial class App : Application
                 "AI Not Configured".Translate(),
                 "AI-powered import requires portal access. Please register your company first.".Translate());
             return;
+        }
+
+        // AI layout interpretation for messy spreadsheets (long preambles, merged/multi-row
+        // headers, cross-tabs, stacked tables): rewrite messy sheets into clean single-header
+        // tables before analysis. The cheap, local LayoutGate inside NormalizeAsync skips clean
+        // sheets and returns the ORIGINAL path when nothing needs interpreting, so normal imports
+        // pay no extra cost. Any failure falls back to the original file, so it can never break
+        // an import. CSV files are single-table and never need layout interpretation.
+        if (!isCsv)
+        {
+            try
+            {
+                filePath = await new LayoutNormalizationService(geminiService, ErrorLogger)
+                    .NormalizeAsync(filePath, analysisCts.Token);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "AI layout interpretation failed; importing the original file unchanged");
+                // filePath is left as the original path: the import proceeds normally.
+            }
         }
 
         var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
