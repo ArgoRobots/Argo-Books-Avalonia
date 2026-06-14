@@ -191,21 +191,24 @@ public class CurrencyImportPreparerTests : IDisposable
         var svc = new SpreadsheetImportService();
         await svc.ImportWithMappingsAsync(path, data, analysis, new ImportOptions { RowCurrencyBySheet = scan.Resolved });
 
-        // Expenses: amounts non-zero, currency detected from the cell format/code.
+        // Expenses: amounts non-zero, currency detected from the cell format/code, and the
+        // record is internally consistent (line-item amount == total, so the edit modal agrees).
         var e1 = data.Expenses.Single(e => e.Id == "E1");
         Assert.Equal(140m, e1.Total);
+        Assert.Equal(140m, e1.Amount);
         Assert.Equal("GBP", e1.OriginalCurrency);
         Assert.Equal("CAD", data.Expenses.Single(e => e.Id == "E2").OriginalCurrency);
         Assert.Equal("USD", data.Expenses.Single(e => e.Id == "E3").OriginalCurrency); // resolved $
         Assert.Equal(1500m, data.Expenses.Single(e => e.Id == "E4").Total);           // plain number
 
-        // Revenue: a spread of currencies, all amounts non-zero.
+        // Revenue: a spread of currencies, all amounts non-zero and consistent.
         Assert.Equal("GBP", data.Revenues.Single(r => r.Id == "R1").OriginalCurrency);
         Assert.Equal("EUR", data.Revenues.Single(r => r.Id == "R2").OriginalCurrency);
         Assert.Equal("CAD", data.Revenues.Single(r => r.Id == "R3").OriginalCurrency);
         Assert.Equal("JPY", data.Revenues.Single(r => r.Id == "R4").OriginalCurrency); // resolved ¥
         Assert.Equal(800m, data.Revenues.Single(r => r.Id == "R2").Total);
-        Assert.All(data.Revenues, r => Assert.True(r.Total > 0, $"{r.Id} total should be > 0"));
+        Assert.All(data.Revenues, r => Assert.True(r.Total > 0 && r.Amount == r.Total,
+            $"{r.Id}: total={r.Total} amount={r.Amount} should be equal and > 0"));
     }
 
     // ─── Tier 2 normalization (LLM-emitted symbol/code) ──────────────────────
