@@ -1978,6 +1978,32 @@ public partial class App : Application
                 SkipExistingRecords = mappingDialog.SkipExistingRecords
             };
 
+            // Detect currency written into the amount cells (symbols/codes). Unambiguous cases
+            // (an explicit code, or a symbol used by one currency like £/€) resolve silently; an
+            // ambiguous symbol like "$" prompts the user once and is applied to every matching row.
+            try
+            {
+                var currencyScan = CurrencyImportPreparer.ScanWorkbook(filePath, updatedAnalysis);
+                if (currencyScan.Ambiguities.Count > 0)
+                {
+                    var companyCurrency = companyData.Settings?.Localization?.Currency ?? "USD";
+                    var currencyDialog = _appShellViewModel.CurrencyAmbiguityDialogViewModel;
+                    var currencyResult = await currencyDialog.ShowAsync(currencyScan.Ambiguities, companyCurrency);
+                    if (currencyResult == CurrencyAmbiguityDialogResult.Cancel)
+                        return;
+
+                    CurrencyImportPreparer.ApplyResolution(currencyScan, currencyDialog.Resolution);
+                    importOptions.SymbolResolution = currencyDialog.Resolution
+                        .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
+                }
+                importOptions.RowCurrencyBySheet = currencyScan.Resolved;
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "In-cell currency detection failed; importing without per-row currency");
+            }
+
             // Tier 1: Validate with mappings
             SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)

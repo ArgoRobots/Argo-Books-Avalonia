@@ -155,6 +155,12 @@ public partial class AppShellViewModel : ViewModelBase
     public ImportMappingDialogViewModel ImportMappingDialogViewModel { get; }
 
     /// <summary>
+    /// Gets the currency-ambiguity resolution dialog view model (shown during import when an
+    /// ambiguous currency symbol like "$" is found in the amount cells).
+    /// </summary>
+    public CurrencyAmbiguityDialogViewModel CurrencyAmbiguityDialogViewModel { get; }
+
+    /// <summary>
     /// Gets the Tier 2 AI preview dialog view model.
     /// </summary>
     public Tier2PreviewDialogViewModel Tier2PreviewDialogViewModel { get; }
@@ -722,6 +728,7 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create import mapping dialog
         ImportMappingDialogViewModel = new ImportMappingDialogViewModel();
+        CurrencyAmbiguityDialogViewModel = new CurrencyAmbiguityDialogViewModel();
 
         // Create Tier 2 AI preview dialog
         Tier2PreviewDialogViewModel = new Tier2PreviewDialogViewModel();
