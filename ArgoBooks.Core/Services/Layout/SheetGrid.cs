@@ -121,11 +121,36 @@ public sealed class SheetGrid
             XLDataType.DateTime => cell.GetDateTime().TimeOfDay == TimeSpan.Zero
                 ? cell.GetDateTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
                 : cell.GetDateTime().ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture),
-            XLDataType.Number => cell.GetDouble().ToString(CultureInfo.InvariantCulture),
+            XLDataType.Number => ReadNumberCell(cell),
             XLDataType.Boolean => cell.GetBoolean().ToString(),
             _ => cell.GetString()
         };
     }
+
+    /// <summary>
+    /// Reads a numeric cell as its raw invariant value, EXCEPT when the cell's number format
+    /// carries a currency marker (e.g. a value of 100 displayed as "£100.00"). In that case the
+    /// formatted string is kept so the currency that lives only in the format survives the rewrite
+    /// to the normalized temp workbook and can still be detected by the import currency pre-pass.
+    /// A cheap format-string guard runs first so plain numbers and percentages pay no extra cost.
+    /// </summary>
+    private static string ReadNumberCell(IXLCell cell)
+    {
+        var raw = cell.GetDouble().ToString(CultureInfo.InvariantCulture);
+
+        var format = cell.Style.NumberFormat.Format;
+        if (string.IsNullOrEmpty(format) || !FormatCarriesCurrency(format))
+            return raw;
+
+        var formatted = cell.GetFormattedString();
+        var detection = CurrencyCellDetector.Detect(formatted);
+        return detection.Code != null || detection.AmbiguousSymbol != null ? formatted : raw;
+    }
+
+    /// <summary>Cheap check for a currency marker in an Excel number-format string.</summary>
+    private static bool FormatCarriesCurrency(string format) =>
+        format.Contains('$') || format.Contains('£') || format.Contains('€') ||
+        format.Contains('¥') || format.Contains('₹') || format.Contains("[$", StringComparison.Ordinal);
 
     /// <summary>
     /// Returns <c>true</c> when the cell holds numeric or date/time data.

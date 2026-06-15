@@ -139,6 +139,19 @@ public class ExchangeRateService
     }
 
     /// <summary>
+    /// Returns the most recently dated cached rate for a currency pair, ignoring the date, or -1 if
+    /// nothing is cached. Cache-only (never fetches). Used to convert a row whose exact transaction
+    /// date isn't cached (e.g. historical import) at the nearest-known rate rather than leaving it
+    /// unconverted.
+    /// </summary>
+    public decimal GetLatestCachedRate(string fromCurrency, string toCurrency)
+    {
+        if (string.Equals(fromCurrency, toCurrency, StringComparison.OrdinalIgnoreCase))
+            return 1m;
+        return _cache.TryGetLatestRate(fromCurrency, toCurrency, out var rate) ? rate : -1m;
+    }
+
+    /// <summary>
     /// Synchronously converts a USD amount to the target currency using only cached rates.
     /// Returns the amount unchanged if the target is USD or no cached rate is available.
     /// Shared by the report renderer and accounting data service so the same-currency,

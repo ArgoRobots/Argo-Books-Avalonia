@@ -111,6 +111,12 @@ public partial class SheetAnalysisViewModel : ObservableObject
     /// </summary>
     public void ApplyChanges()
     {
+        // If the user reclassified the sheet, the AI-assigned Tier (and the Tier-2 row-processing
+        // reasoning behind it) no longer applies to the new type. Route the user-asserted type
+        // through deterministic direct mapping so the tier split and the currency scan, which both
+        // key off Tier, stay consistent with the type the user chose.
+        if (DetectedType != _analysis.DetectedType)
+            _analysis.Tier = ProcessingTier.Tier1_Mapping;
         _analysis.DetectedType = DetectedType;
         _analysis.IsIncluded = IsIncluded;
     }

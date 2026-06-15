@@ -36,7 +36,7 @@ public static class CsvReader
                   .ToList();
     }
 
-    public static char DetectDelimiter(string path)
+    private static char DetectDelimiter(string path)
     {
         using var reader = new StreamReader(path, detectEncodingFromByteOrderMarks: true);
         string? first;

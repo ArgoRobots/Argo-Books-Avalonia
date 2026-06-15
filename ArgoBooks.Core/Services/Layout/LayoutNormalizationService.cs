@@ -67,6 +67,11 @@ public sealed class LayoutNormalizationService
         if (string.IsNullOrWhiteSpace(xlsxPath))
             return xlsxPath;
 
+        // Best-effort sweep of temp files left by previous imports so they don't accumulate.
+        // Only files older than an hour are removed, so an in-flight (or concurrent) run's file
+        // is never deleted out from under it.
+        CleanupStaleTempFiles();
+
         try
         {
             // First pass: open the source and decide which sheets (if any) are messy.
@@ -152,6 +157,25 @@ public sealed class LayoutNormalizationService
                 "Layout normalization failed; returning original path unchanged");
             return xlsxPath;
         }
+    }
+
+    /// <summary>Deletes layout temp files older than an hour, ignoring any that can't be removed.</summary>
+    private static void CleanupStaleTempFiles()
+    {
+        try
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-1);
+            foreach (var file in Directory.EnumerateFiles(Path.GetTempPath(), "argo-layout-*.xlsx"))
+            {
+                try
+                {
+                    if (File.GetLastWriteTimeUtc(file) < cutoff)
+                        File.Delete(file);
+                }
+                catch { /* file in use or already gone; ignore */ }
+            }
+        }
+        catch { /* best effort */ }
     }
 
     /// <summary>

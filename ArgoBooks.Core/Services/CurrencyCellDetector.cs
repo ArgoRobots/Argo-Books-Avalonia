@@ -108,17 +108,42 @@ public static class CurrencyCellDetector
         if (string.IsNullOrWhiteSpace(s)) return 0m;
 
         var cleaned = s.Trim();
-        foreach (var token in StripTokens)
-            cleaned = cleaned.Replace(token, "", StringComparison.OrdinalIgnoreCase);
-        cleaned = cleaned.Trim();
 
-        // Parentheses denote a negative amount: (123.45) -> -123.45
+        // Parentheses denote a negative amount: (123.45) -> -123.45, "($100)" -> -100. Unwrap
+        // them FIRST so any currency symbol they enclose becomes boundary-adjacent and strippable.
+        bool negative = false;
         if (cleaned.StartsWith('(') && cleaned.EndsWith(')'))
-            cleaned = "-" + cleaned[1..^1];
+        {
+            negative = true;
+            cleaned = cleaned[1..^1].Trim();
+        }
 
-        return decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var result)
-            ? result
-            : 0m;
+        // Strip currency symbols/codes only where they actually decorate the amount: at the
+        // start or end of the string. A blind Replace anywhere in the string would corrupt a
+        // non-money value that happens to contain a token substring (e.g. an ISO code embedded
+        // in other text), since ParseAmount is shared by GetDecimal for columns like Tax/Discount.
+        bool stripped = true;
+        while (stripped && cleaned.Length > 0)
+        {
+            stripped = false;
+            foreach (var token in StripTokens)
+            {
+                if (cleaned.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                {
+                    cleaned = cleaned[token.Length..].Trim();
+                    stripped = true;
+                }
+                if (cleaned.EndsWith(token, StringComparison.OrdinalIgnoreCase))
+                {
+                    cleaned = cleaned[..^token.Length].Trim();
+                    stripped = true;
+                }
+            }
+        }
+
+        if (!decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+            return 0m;
+        return negative ? -result : result;
     }
 
     /// <summary>Returns the maximal runs of letters in the string (currency-code candidates).</summary>
