@@ -195,12 +195,7 @@ public partial class Tier2PreviewDialogViewModel : ViewModelBase
         }
         return sb.ToString();
 
-        static string CsvQuote(string field)
-        {
-            if (field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r'))
-                return "\"" + field.Replace("\"", "\"\"") + "\"";
-            return field;
-        }
+        static string CsvQuote(string field) => Core.Services.CsvWriter.QuoteField(field);
     }
 
     [RelayCommand]

@@ -360,12 +360,6 @@ public class SpreadsheetImportService
                 progress?.Report(($"Processing {dataRows.Count:N0} rows...", 20));
                 var rows = dataRows.Select(r => r.Cast<object?>().ToList()).ToList();
 
-                if (rows.Count == 0)
-                {
-                    result.Warnings.Add("CSV file has no data rows.");
-                    return;
-                }
-
                 var sheetAnalysis = analysis.Sheets.FirstOrDefault();
 
                 if (sheetAnalysis != null)
@@ -603,7 +597,11 @@ public class SpreadsheetImportService
             entitiesToImport.Add((chunkEntityType, withId, false));
         }
 
-        if (reimportMatches > 0)
+        // Only claim "updated" when existing records are actually overwritten. With
+        // SkipExistingRecords on (the default), these rows are skipped instead, and that is
+        // already reported via the per-row skipped/unimported path, so the warning would be
+        // both wrong ("updated") and a duplicate.
+        if (reimportMatches > 0 && options?.SkipExistingRecords != true)
             sheetResult.Warnings.Add($"{reimportMatches} row(s) look like a re-import and were updated.");
 
         foreach (var (chunkEntityType, entityJson, skipImport) in entitiesToImport)
@@ -1015,22 +1013,28 @@ public class SpreadsheetImportService
     }
 
     /// <summary>
-    /// Converts a row amount from its original currency to USD at the transaction date, reusing
-    /// the same cached-rate mechanism as manual entry (see <c>CurrencyService.CreateMonetaryValue</c>):
-    /// <c>amount * rate(originalCurrency -&gt; USD, date)</c>, rounded to 2 dp. If the currency is
-    /// already USD, or no rate is available, the amount is returned unchanged (so a missing rate
-    /// degrades to the legacy "assume USD-equivalent" behavior rather than zeroing the value).
+    /// Converts a row amount from its original currency to USD: <c>amount * rate(originalCurrency
+    /// -&gt; USD, date)</c>, rounded to 2 dp. Tries the exact transaction date first, then falls back
+    /// to the most recent cached rate for the pair (so a historical row, or one whose date cell did
+    /// not parse and is <see cref="DateTime.MinValue"/>, still converts at the nearest-known rate
+    /// instead of being silently stored as if the foreign number were already USD). Only when NO
+    /// rate is cached at all (e.g. offline with an empty cache) is the amount returned unchanged.
+    /// The import flow seeds current rates before importing so that last case is rare.
     /// </summary>
     private decimal ConvertRowAmountToUSD(decimal amount, string originalCurrency, DateTime date)
     {
         if (amount == 0m || string.Equals(originalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
             return amount;
 
-        var rate = ExchangeRates?.GetExchangeRate(originalCurrency, "USD", date) ?? -1m;
-        if (rate > 0)
-            return Math.Round(amount * rate, 2);
+        var rates = ExchangeRates;
+        if (rates == null)
+            return amount;
 
-        return amount;
+        var rate = date > DateTime.MinValue ? rates.GetExchangeRate(originalCurrency, "USD", date) : -1m;
+        if (rate <= 0)
+            rate = rates.GetLatestCachedRate(originalCurrency, "USD");
+
+        return rate > 0 ? Math.Round(amount * rate, 2) : amount;
     }
 
     #region Task 2C: natural-key identity for id-less rows
@@ -1048,24 +1052,24 @@ public class SpreadsheetImportService
     internal static string? NaturalKey(SpreadsheetSheetType type, JsonElement json)
     {
         // Each entity type contributes a small, stable set of identifying fields. A field only
-        // "counts" toward the key when it carries a non-empty value; we require a minimum number
-        // of present fields so a near-empty row does not get a meaningless (and collision-prone)
-        // key.
-        List<(string Field, int MinPresent)> spec = type switch
+        // "counts" toward the key when it carries a non-empty value; we require at least two
+        // present fields (checked below) so a near-empty row does not get a meaningless (and
+        // collision-prone) key.
+        string[] fields = type switch
         {
             SpreadsheetSheetType.Expenses or SpreadsheetSheetType.Revenue =>
-                [("date", 0), ("amount", 0), ("total", 0), ("description", 0)],
+                ["date", "amount", "total", "description"],
             SpreadsheetSheetType.Invoices =>
-                [("invoiceNumber", 0), ("issueDate", 0), ("total", 0)],
+                ["invoiceNumber", "issueDate", "total"],
             SpreadsheetSheetType.Payments =>
-                [("date", 0), ("amount", 0), ("customerId", 0), ("invoiceId", 0)],
+                ["date", "amount", "customerId", "invoiceId"],
             _ =>
-                [("date", 0), ("amount", 0), ("total", 0), ("description", 0), ("name", 0), ("customerId", 0), ("supplierId", 0)]
+                ["date", "amount", "total", "description", "name", "customerId", "supplierId"]
         };
 
         var parts = new List<string>();
         int present = 0;
-        foreach (var (field, _) in spec)
+        foreach (var field in fields)
         {
             var value = NormalizeKeyField(json, field);
             if (!string.IsNullOrEmpty(value))
