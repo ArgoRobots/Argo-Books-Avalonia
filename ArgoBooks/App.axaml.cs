@@ -1996,6 +1996,27 @@ public partial class App : Application
                         .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
                 }
                 importOptions.RowCurrencyBySheet = currencyScan.Resolved;
+
+                // If any non-USD currency was detected, seed today's rates once (a single batch
+                // call fetches USD->all). Combined with the importer's nearest-cached-rate fallback,
+                // this ensures non-USD rows are actually converted to USD instead of being stored
+                // with the raw foreign number as if it were already USD when the cache is empty.
+                var hasNonUsd =
+                    currencyScan.Resolved.Values.SelectMany(m => m.Values)
+                        .Concat(importOptions.SymbolResolution.Values)
+                        .Any(c => !string.IsNullOrEmpty(c) && !string.Equals(c, "USD", StringComparison.OrdinalIgnoreCase));
+                if (hasNonUsd && ExchangeRateService.Instance is { } exchangeRates)
+                {
+                    try
+                    {
+                        await exchangeRates.PreloadRatesAsync([DateTime.Today]);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                            "Failed to preload exchange rates for import; non-USD rows may convert at a stale or missing rate");
+                    }
+                }
             }
             catch (Exception ex)
             {

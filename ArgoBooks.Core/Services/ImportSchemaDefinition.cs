@@ -175,6 +175,7 @@ public static class ImportSchemaDefinition
                 new("Paid", "decimal", "Amount already paid", JsonName: "amountPaid"),
                 new("Balance", "decimal", "Remaining balance", JsonName: "balance"),
                 new("Status", "enum:Draft,Sent,Paid,Overdue,Cancelled", "Invoice status", JsonName: "status"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Expenses] =
@@ -333,6 +334,7 @@ public static class ImportSchemaDefinition
                 new("Expected Date", "datetime", "Expected delivery date", JsonName: "expectedDeliveryDate"),
                 new("Total", "decimal", "Order total", JsonName: "total"),
                 new("Status", "enum:Draft,Submitted,Approved,Received,Cancelled", "Order status", JsonName: "status"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.PurchaseOrderLineItems] =
