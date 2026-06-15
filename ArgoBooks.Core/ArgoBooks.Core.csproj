@@ -32,10 +32,17 @@
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />
         <PackageReference Include="EPPlus" />
+        <!-- Pin EPPlus's transitive ImageSharp to a patched version (CVE-2025-54575 GIF DoS) -->
+        <PackageReference Include="SixLabors.ImageSharp" />
+        <!-- Legacy .xls (BIFF) reading; converted to .xlsx at the import entry point -->
+        <PackageReference Include="NPOI" />
 
         <!-- Machine Learning (for local forecasting) -->
         <PackageReference Include="Microsoft.ML" />
         <PackageReference Include="Microsoft.ML.TimeSeries" />
+
+        <!-- CSV parsing (RFC 4180) -->
+        <PackageReference Include="CsvHelper" />
 
         <!-- Pinned to patch vulnerability in transitive 10.0.0 (pulled in via ClosedXML/OpenXML) -->
         <PackageReference Include="System.Security.Cryptography.Xml" />

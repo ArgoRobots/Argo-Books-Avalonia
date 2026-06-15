@@ -11,6 +11,42 @@
              x:Class="ArgoBooks.Modals.ImportMappingDialog"
              x:DataType="vm:ImportMappingDialogViewModel">
 
+    <UserControl.Styles>
+        <!-- Badge colors come from the theme dictionaries (DynamicResource) so they are correct
+             in dark and light without any runtime theme detection. Class is set by the VM. -->
+        <Style Selector="Border.tierBadge">
+            <Setter Property="Background" Value="{DynamicResource TierMappingSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tierBadge TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TierMappingBrush}" />
+        </Style>
+        <Style Selector="Border.tierBadge.llm">
+            <Setter Property="Background" Value="{DynamicResource TierLlmSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tierBadge.llm TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TierLlmBrush}" />
+        </Style>
+
+        <Style Selector="Border.confBadge.high">
+            <Setter Property="Background" Value="{DynamicResource ConfidenceHighSoftBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.high TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ConfidenceHighBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.medium">
+            <Setter Property="Background" Value="{DynamicResource ConfidenceMediumSoftBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.medium TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ConfidenceMediumBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.low">
+            <Setter Property="Background" Value="{DynamicResource ConfidenceLowSoftBrush}" />
+        </Style>
+        <Style Selector="Border.confBadge.low TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ConfidenceLowBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                            ClosingCommand="{Binding RequestCloseCommand}">
         <controls:ModalOverlay.ModalContent>
@@ -40,11 +76,11 @@
                                     Margin="0,0,16,0"
                                     VerticalAlignment="Center">
                                 <Border.Background>
-                                    <SolidColorBrush Color="#7C3AED" Opacity="0.15" />
+                                    <SolidColorBrush Color="{DynamicResource AiAccentColor}" Opacity="0.15" />
                                 </Border.Background>
                                 <PathIcon Data="{x:Static icons:Icons.Lightning}"
                                           Width="20" Height="20"
-                                          Foreground="#7C3AED" />
+                                          Foreground="{DynamicResource AiAccentBrush}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -58,12 +94,12 @@
                                             VerticalAlignment="Center"
                                             IsVisible="{Binding ShowRateLimit}">
                                         <Border.Background>
-                                            <SolidColorBrush Color="#7C3AED" Opacity="0.12" />
+                                            <SolidColorBrush Color="{DynamicResource AiAccentColor}" Opacity="0.12" />
                                         </Border.Background>
                                         <TextBlock Text="{Binding RateLimitDisplay}"
                                                    FontSize="11"
                                                    FontWeight="Medium"
-                                                   Foreground="#7C3AED" />
+                                                   Foreground="{DynamicResource AiAccentBrush}" />
                                     </Border>
                                 </StackPanel>
                                 <TextBlock FontSize="13"
@@ -168,35 +204,49 @@
                                         <TextBlock Text="{Binding Tier2SheetCount}"
                                                    FontSize="24"
                                                    FontWeight="Bold"
-                                                   Foreground="#7C3AED"
+                                                   Foreground="{DynamicResource AiAccentBrush}"
                                                    HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
 
-                            <!-- Warnings -->
-                            <Border Background="#1AF59E0B"
+                            <!-- Cannot Import section: sheets with unrecognised types -->
+                            <Border Background="#1AEF4444"
                                     CornerRadius="8"
                                     Padding="16"
-                                    IsVisible="{Binding HasWarnings}">
+                                    IsVisible="{Binding HasUnsupportedSheets}">
                                 <StackPanel Spacing="8">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="{x:Static icons:Icons.WarningCircle}"
                                                   Width="16" Height="16"
-                                                  Foreground="{DynamicResource WarningBrush}" />
-                                        <TextBlock Text="Warnings"
+                                                  Foreground="{DynamicResource ErrorBrush}" />
+                                        <TextBlock Text="Cannot import"
                                                    FontSize="13"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource WarningBrush}" />
+                                                   Foreground="{DynamicResource ErrorBrush}" />
                                     </StackPanel>
-                                    <ItemsControl ItemsSource="{Binding Warnings}">
+                                    <TextBlock Text="These sheets do not match a data type Argo Books can import and will be skipped."
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap"
+                                               Margin="24,0,0,0" />
+                                    <ItemsControl ItemsSource="{Binding UnsupportedSheets}">
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           TextWrapping="Wrap"
-                                                           Margin="24,2,0,0" />
+                                            <DataTemplate DataType="vm:UnsupportedSheetViewModel">
+                                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="6"
+                                                        Padding="12,8"
+                                                        Margin="24,4,0,0">
+                                                    <StackPanel Spacing="2">
+                                                        <TextBlock Text="{Binding SourceSheetName}"
+                                                                   FontSize="13"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <TextBlock Text="{Binding RowCountDisplay}"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -238,7 +288,7 @@
                                                                 <TextBlock Text="{Binding DetectedType}"
                                                                            FontSize="14"
                                                                            FontWeight="Medium"
-                                                                           Foreground="#7C3AED" />
+                                                                           Foreground="{DynamicResource AiAccentBrush}" />
                                                             </StackPanel>
                                                             <TextBlock FontSize="12"
                                                                        Foreground="{DynamicResource TextTertiaryBrush}">
@@ -253,32 +303,30 @@
 
                                                         <!-- Tier badge -->
                                                         <Border Grid.Column="2"
+                                                                Classes="tierBadge"
+                                                                Classes.llm="{Binding IsTier2}"
                                                                 CornerRadius="10"
                                                                 Padding="8,3"
                                                                 Margin="8,0"
                                                                 VerticalAlignment="Center">
-                                                            <Border.Background>
-                                                                <SolidColorBrush Color="{Binding Tier, Converter={x:Static converters:Converters.TierToColor}}" Opacity="0.12" />
-                                                            </Border.Background>
                                                             <TextBlock Text="{Binding TierDisplay}"
                                                                        FontSize="11"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{Binding Tier, Converter={x:Static converters:Converters.TierToColor}}" />
+                                                                       FontWeight="SemiBold" />
                                                         </Border>
 
                                                         <!-- Confidence badge -->
                                                         <Border Grid.Column="3"
+                                                                Classes="confBadge"
+                                                                Classes.high="{Binding IsHighConfidence}"
+                                                                Classes.medium="{Binding IsMediumConfidence}"
+                                                                Classes.low="{Binding IsLowConfidence}"
                                                                 CornerRadius="10"
                                                                 Padding="8,3"
                                                                 Margin="0,0,8,0"
                                                                 VerticalAlignment="Center">
-                                                            <Border.Background>
-                                                                <SolidColorBrush Color="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" Opacity="0.15" />
-                                                            </Border.Background>
                                                             <TextBlock Text="{Binding ConfidenceDisplay}"
                                                                        FontSize="11"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" />
+                                                                       FontWeight="SemiBold" />
                                                         </Border>
 
                                                         <!-- Expand toggle -->
@@ -348,30 +396,30 @@
 
                                                                         <!-- Target column -->
                                                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                                                                            <Border Background="#1A7C3AED"
+                                                                            <Border Background="{DynamicResource AiAccentSoftBrush}"
                                                                                     CornerRadius="4"
                                                                                     Padding="8,4"
                                                                                     HorizontalAlignment="Left">
                                                                                 <TextBlock Text="{Binding TargetColumn}"
                                                                                            FontSize="12"
                                                                                            FontFamily="JetBrains Mono, Consolas, monospace"
-                                                                                           Foreground="#7C3AED" />
+                                                                                           Foreground="{DynamicResource AiAccentBrush}" />
                                                                             </Border>
                                                                         </StackPanel>
 
                                                                         <!-- Confidence -->
                                                                         <Border Grid.Column="3"
+                                                                                Classes="confBadge"
+                                                                                Classes.high="{Binding IsHighConfidence}"
+                                                                                Classes.medium="{Binding IsMediumConfidence}"
+                                                                                Classes.low="{Binding IsLowConfidence}"
                                                                                 CornerRadius="3"
                                                                                 Padding="4,1"
                                                                                 HorizontalAlignment="Right"
                                                                                 VerticalAlignment="Center">
-                                                                            <Border.Background>
-                                                                                <SolidColorBrush Color="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" Opacity="0.15" />
-                                                                            </Border.Background>
                                                                             <TextBlock Text="{Binding ConfidenceDisplay}"
                                                                                        FontSize="10"
-                                                                                       FontWeight="SemiBold"
-                                                                                       Foreground="{Binding ConfidenceLevel, Converter={x:Static converters:Converters.ConfidenceLevelToColor}}" />
+                                                                                       FontWeight="SemiBold" />
                                                                         </Border>
                                                                     </Grid>
                                                                 </Border>
@@ -386,11 +434,11 @@
                                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                                 <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
                                                                           Width="14" Height="14"
-                                                                          Foreground="#7C3AED" />
+                                                                          Foreground="{DynamicResource AiAccentBrush}" />
                                                                 <TextBlock Text="This sheet requires AI row processing"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
-                                                                           Foreground="#7C3AED" />
+                                                                           Foreground="{DynamicResource AiAccentBrush}" />
                                                             </StackPanel>
                                                             <TextBlock Text="{Binding TierReason}"
                                                                        FontSize="12"
@@ -482,11 +530,12 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="6">
-                                <TextBlock Text="Review the detected mappings above, then click Accept to proceed with import."
+                                <TextBlock Text="{Binding FooterHint}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            TextWrapping="Wrap" />
-                                <CheckBox IsChecked="{Binding SkipExistingRecords}">
+                                <CheckBox IsChecked="{Binding SkipExistingRecords}"
+                                          IsVisible="{Binding HasImportableContent}">
                                     <TextBlock Text="Don't overwrite existing records"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -498,9 +547,10 @@
                                         VerticalAlignment="Bottom">
                                 <Button Classes="secondary-button"
                                         Content="Cancel"
+                                        IsVisible="{Binding HasImportableContent}"
                                         Command="{Binding RequestCloseCommand}" />
                                 <Button Classes="primary-button"
-                                        Content="Accept &amp; Import"
+                                        Content="{Binding AcceptButtonText}"
                                         Command="{Binding AcceptCommand}" />
                             </StackPanel>
                         </Grid>

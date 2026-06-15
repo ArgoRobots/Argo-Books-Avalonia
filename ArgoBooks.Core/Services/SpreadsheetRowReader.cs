@@ -159,25 +159,9 @@ internal static class SpreadsheetRowReader
         };
     }
 
-    public static decimal ParseDecimalString(string s)
-    {
-        if (string.IsNullOrWhiteSpace(s)) return 0m;
-
-        // Strip common currency symbols and whitespace before parsing
-        var cleaned = s.Trim();
-        foreach (var symbol in new[] { "$", "€", "£", "¥", "₹", "CHF", "CAD", "AUD", "USD", "EUR", "GBP" })
-            cleaned = cleaned.Replace(symbol, "", StringComparison.OrdinalIgnoreCase);
-        cleaned = cleaned.Trim();
-
-        // Handle parentheses as negative: (123.45) → -123.45
-        if (cleaned.StartsWith('(') && cleaned.EndsWith(')'))
-            cleaned = "-" + cleaned[1..^1];
-
-        if (decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
-            return result;
-
-        return 0m;
-    }
+    // Amount parsing (currency-symbol/code stripping, parentheses-as-negative, invariant parse)
+    // is shared with the currency detector so both interpret amounts identically.
+    public static decimal ParseDecimalString(string s) => CurrencyCellDetector.ParseAmount(s);
 
     public static int GetInt(List<object?> row, List<string> headers, string columnName)
     {

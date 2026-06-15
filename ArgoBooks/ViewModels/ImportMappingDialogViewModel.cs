@@ -17,6 +17,24 @@ public enum ImportMappingDialogResult
 }
 
 /// <summary>
+/// Read-only ViewModel for a sheet that cannot be imported due to an unrecognised type.
+/// </summary>
+public sealed class UnsupportedSheetViewModel
+{
+    private readonly SheetAnalysis _analysis;
+
+    public UnsupportedSheetViewModel(SheetAnalysis analysis)
+    {
+        _analysis = analysis;
+    }
+
+    public string SourceSheetName => _analysis.SourceSheetName;
+    public string Reason => _analysis.UnsupportedReason ?? string.Empty;
+    public int RowCount => _analysis.RowCount;
+    public string RowCountDisplay => $"{RowCount:N0} rows";
+}
+
+/// <summary>
 /// ViewModel wrapper for a SheetAnalysis, making it observable for the UI.
 /// </summary>
 public partial class SheetAnalysisViewModel : ObservableObject
@@ -65,6 +83,12 @@ public partial class SheetAnalysisViewModel : ObservableObject
         > 0.7 => "Medium",
         _ => "Low"
     };
+
+    // Theme-aware badge styling keys off these booleans (see ImportMappingDialog.axaml styles),
+    // so the badge colors come from the theme dictionaries rather than a theme-guessing converter.
+    public bool IsHighConfidence => Confidence > 0.9;
+    public bool IsMediumConfidence => Confidence is > 0.7 and <= 0.9;
+    public bool IsLowConfidence => Confidence <= 0.7;
 
     [ObservableProperty]
     private SpreadsheetSheetType _detectedType;
@@ -126,6 +150,10 @@ public partial class ColumnMappingViewModel : ObservableObject
         > 0.7 => "Medium",
         _ => "Low"
     };
+
+    public bool IsHighConfidence => Confidence > 0.9;
+    public bool IsMediumConfidence => Confidence is > 0.7 and <= 0.9;
+    public bool IsLowConfidence => Confidence <= 0.7;
 
     public bool HasTransformHint => !string.IsNullOrEmpty(TransformHint);
 }
@@ -196,9 +224,32 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
     public ObservableCollection<SheetAnalysisViewModel> Sheets { get; } = [];
 
-    public ObservableCollection<string> Warnings { get; } = [];
+    /// <summary>
+    /// Sheets that could not be matched to a supported Argo Books entity type.
+    /// Displayed in a read-only "Cannot import" section in the dialog.
+    /// </summary>
+    public ObservableCollection<UnsupportedSheetViewModel> UnsupportedSheets { get; } = [];
 
-    public bool HasWarnings => Warnings.Count > 0;
+    public bool HasUnsupportedSheets => UnsupportedSheets.Count > 0;
+
+    /// <summary>
+    /// True when at least one sheet can actually be imported. When false the file
+    /// produced nothing importable (every sheet was unsupported), so the dialog
+    /// becomes an informational "Close" rather than an "Accept &amp; Import".
+    /// </summary>
+    public bool HasImportableContent => Sheets.Count > 0;
+
+    /// <summary>
+    /// Primary button caption: an import action when there's content, otherwise a plain close.
+    /// </summary>
+    public string AcceptButtonText => HasImportableContent ? "Accept & Import" : "Close";
+
+    /// <summary>
+    /// Footer hint text, reflecting whether there's anything to import.
+    /// </summary>
+    public string FooterHint => HasImportableContent
+        ? "Review the detected mappings above, then click Accept to proceed with import."
+        : "There's nothing here that Argo Books can import. The sheets above don't match a supported data type and will be skipped.";
 
     private TaskCompletionSource<ImportMappingDialogResult>? _completionSource;
     private SpreadsheetAnalysisResult? _analysisResult;
@@ -216,29 +267,27 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
 
         // Clear previous state
         Sheets.Clear();
-        Warnings.Clear();
+        UnsupportedSheets.Clear();
         SkipExistingRecords = true;
 
         FileName = analysis.FileName;
 
-        // Populate sheets
+        // Populate sheets: supported sheets go to the main list, unsupported to their own list
         foreach (var sheet in analysis.Sheets)
         {
-            Sheets.Add(new SheetAnalysisViewModel(sheet));
+            if (sheet.UnsupportedReason != null)
+                UnsupportedSheets.Add(new UnsupportedSheetViewModel(sheet));
+            else
+                Sheets.Add(new SheetAnalysisViewModel(sheet));
         }
 
-        // Populate warnings
-        foreach (var warning in analysis.Warnings)
-        {
-            Warnings.Add(warning);
-        }
-
-        // Calculate summary stats
-        TotalSheets = analysis.Sheets.Count;
-        TotalRows = analysis.Sheets.Sum(s => s.RowCount);
-        TotalMappedColumns = analysis.Sheets.Sum(s => s.ColumnMappings.Count);
-        Tier1SheetCount = analysis.Sheets.Count(s => s.Tier == ProcessingTier.Tier1_Mapping);
-        Tier2SheetCount = analysis.Sheets.Count(s => s.Tier == ProcessingTier.Tier2_LlmProcessing);
+        // Calculate summary stats (exclude unsupported sheets from the totals)
+        var supportedSheets = analysis.Sheets.Where(s => s.UnsupportedReason == null).ToList();
+        TotalSheets = supportedSheets.Count;
+        TotalRows = supportedSheets.Sum(s => s.RowCount);
+        TotalMappedColumns = supportedSheets.Sum(s => s.ColumnMappings.Count);
+        Tier1SheetCount = supportedSheets.Count(s => s.Tier == ProcessingTier.Tier1_Mapping);
+        Tier2SheetCount = supportedSheets.Count(s => s.Tier == ProcessingTier.Tier2_LlmProcessing);
 
         // Rate limit display
         if (remainingImports >= 0 && maxImports > 0)
@@ -251,7 +300,10 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
             ShowRateLimit = false;
         }
 
-        OnPropertyChanged(nameof(HasWarnings));
+        OnPropertyChanged(nameof(HasUnsupportedSheets));
+        OnPropertyChanged(nameof(HasImportableContent));
+        OnPropertyChanged(nameof(AcceptButtonText));
+        OnPropertyChanged(nameof(FooterHint));
 
         IsOpen = true;
         _completionSource = new TaskCompletionSource<ImportMappingDialogResult>();
@@ -306,6 +358,14 @@ public partial class ImportMappingDialogViewModel : ViewModelBase
     [RelayCommand]
     private void Accept()
     {
+        // Nothing importable: the primary button is just a "Close", so don't kick off an import.
+        if (!HasImportableContent)
+        {
+            IsOpen = false;
+            _completionSource?.TrySetResult(ImportMappingDialogResult.Cancel);
+            return;
+        }
+
         // Apply any user edits back to the analysis
         foreach (var sheetVm in Sheets)
         {

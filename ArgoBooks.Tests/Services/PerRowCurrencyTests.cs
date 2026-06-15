@@ -1,0 +1,180 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Platform;
+using ArgoBooks.Core.Services;
+using Xunit;
+
+namespace ArgoBooks.Tests.Services;
+
+/// <summary>
+/// Phase 4, Task 4B-1: a spreadsheet with a per-row currency column converts each row at its
+/// transaction-date rate (the same mechanism manual entry uses), instead of assuming every
+/// amount is already in the company currency. When no currency column is mapped, behavior is
+/// unchanged: OriginalCurrency = company currency and the USD-equivalent = the raw amount.
+/// </summary>
+public class PerRowCurrencyTests
+{
+    private static readonly DateTime TxnDate = new(2026, 3, 15);
+
+    private static JsonElement Json(string raw) => JsonDocument.Parse(raw).RootElement.Clone();
+
+    private static LlmProcessedData Chunk(SpreadsheetSheetType type, params JsonElement[] entities)
+    {
+        var chunk = new LlmProcessedData { EntityType = type };
+        foreach (var e in entities)
+            chunk.Entities.Add(e);
+        return chunk;
+    }
+
+    /// <summary>
+    /// Builds an ExchangeRateService whose cache holds a known USD->EUR rate for <see cref="TxnDate"/>,
+    /// seeded through the real fetch path with a stub HTTP handler. The inverse (EUR->USD) is stored
+    /// automatically, so conversion from EUR to USD is deterministic.
+    /// </summary>
+    private static async Task<ExchangeRateService> SeededServiceAsync(decimal usdToEur)
+    {
+        var handler = new StubRatesHandler(usdToEur);
+        var service = new ExchangeRateService(new MockPlatformService(), new HttpClient(handler));
+        // Populate the cache for TxnDate via the normal async fetch path.
+        await service.GetExchangeRateAsync("USD", "EUR", TxnDate);
+        return service;
+    }
+
+    [Fact]
+    public async Task ExpenseRows_WithCurrencyColumn_ConvertPerRow_CompanyCurrencyUnchanged()
+    {
+        // USD->EUR = 0.90, so EUR->USD = 1/0.90 ≈ 1.111111.
+        var service = await SeededServiceAsync(0.90m);
+
+        var data = new CompanyData();
+        data.Settings.Localization.Currency = "USD"; // company currency
+        var svc = new SpreadsheetImportService(exchangeRateService: service);
+
+        var usdRow = Json($$"""
+            { "id": "EXP-USD", "date": "{{TxnDate:yyyy-MM-dd}}", "total": 100.00, "taxAmount": 0,
+              "description": "USD expense", "originalCurrency": "USD" }
+            """);
+        var eurRow = Json($$"""
+            { "id": "EXP-EUR", "date": "{{TxnDate:yyyy-MM-dd}}", "total": 100.00, "taxAmount": 0,
+              "description": "EUR expense", "originalCurrency": "EUR" }
+            """);
+
+        svc.ImportProcessedEntities(data, [Chunk(SpreadsheetSheetType.Expenses, usdRow, eurRow)], "Expenses");
+
+        var usd = data.Expenses.Single(e => e.Id == "EXP-USD");
+        var eur = data.Expenses.Single(e => e.Id == "EXP-EUR");
+
+        // OriginalCurrency is taken from the cell.
+        Assert.Equal("USD", usd.OriginalCurrency);
+        Assert.Equal("EUR", eur.OriginalCurrency);
+
+        // USD row: USD-equivalent equals the raw total (no conversion).
+        Assert.Equal(usd.Total, usd.TotalUSD);
+
+        // EUR row: converted, so TotalUSD differs from the raw total and equals total * (1/0.90).
+        Assert.NotEqual(eur.Total, eur.TotalUSD);
+        Assert.Equal(Math.Round(100.00m * (1m / 0.90m), 2), eur.TotalUSD);
+
+        // The company currency setting is untouched.
+        Assert.Equal("USD", data.Settings.Localization.Currency);
+    }
+
+    [Fact]
+    public void ExpenseRow_NoCurrencyColumn_KeepsCompanyCurrencyAndRawUsd()
+    {
+        var data = new CompanyData();
+        data.Settings.Localization.Currency = "CAD"; // non-USD company currency
+        // No exchange service needed: the no-currency-column path must not convert.
+        var svc = new SpreadsheetImportService();
+
+        var row = Json($$"""
+            { "id": "EXP-1", "date": "{{TxnDate:yyyy-MM-dd}}", "total": 250.00, "taxAmount": 10.00,
+              "shippingCost": 5.00, "description": "Plain expense" }
+            """);
+
+        svc.ImportProcessedEntities(data, [Chunk(SpreadsheetSheetType.Expenses, row)], "Expenses");
+
+        var exp = data.Expenses.Single(e => e.Id == "EXP-1");
+
+        // Existing behavior preserved exactly: company currency, USD-equivalent = raw amounts.
+        Assert.Equal("CAD", exp.OriginalCurrency);
+        Assert.Equal(exp.Total, exp.TotalUSD);
+        Assert.Equal(exp.TaxAmount, exp.TaxAmountUSD);
+        Assert.Equal(exp.ShippingCost, exp.ShippingCostUSD);
+        Assert.Equal("CAD", data.Settings.Localization.Currency);
+    }
+
+    [Fact]
+    public void ExpenseRow_EmptyCurrencyCell_FallsBackToCompanyCurrency()
+    {
+        var data = new CompanyData();
+        data.Settings.Localization.Currency = "USD";
+        var svc = new SpreadsheetImportService();
+
+        // An empty/blank currency cell must be treated as "not mapped" (no conversion).
+        var row = Json($$"""
+            { "id": "EXP-BLANK", "date": "{{TxnDate:yyyy-MM-dd}}", "total": 75.00, "taxAmount": 0,
+              "description": "Blank currency", "originalCurrency": "  " }
+            """);
+
+        svc.ImportProcessedEntities(data, [Chunk(SpreadsheetSheetType.Expenses, row)], "Expenses");
+
+        var exp = data.Expenses.Single(e => e.Id == "EXP-BLANK");
+        Assert.Equal("USD", exp.OriginalCurrency);
+        Assert.Equal(exp.Total, exp.TotalUSD);
+    }
+
+    #region Stubs
+
+    private sealed class StubRatesHandler(decimal usdToEur) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var payload = $$"""{ "success": true, "base": "USD", "rates": { "EUR": {{usdToEur}} } }""";
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            };
+            return Task.FromResult(response);
+        }
+    }
+
+    private sealed class MockPlatformService : IPlatformService
+    {
+        public PlatformType Platform => PlatformType.Linux;
+        public string GetAppDataPath() => Path.GetTempPath();
+        public string GetTempPath() => Path.GetTempPath();
+        public string GetDefaultDocumentsPath() => Path.GetTempPath();
+        public string GetLogsPath() => Path.GetTempPath();
+        public string GetCachePath() => Path.GetTempPath();
+        public void EnsureDirectoryExists(string path) { }
+        public bool SupportsFileSystem => false; // skip disk persistence in tests
+        public bool SupportsNativeDialogs => false;
+        public bool SupportsBiometrics => false;
+        public Task<bool> IsBiometricAvailableAsync() => Task.FromResult(false);
+        public Task<string> GetBiometricAvailabilityDetailsAsync() => Task.FromResult("Not supported");
+        public Task<bool> AuthenticateWithBiometricAsync(string reason) => Task.FromResult(false);
+        public void StorePasswordForBiometric(string fileId, string password) { }
+        public string? GetPasswordForBiometric(string fileId) => null;
+        public void ClearPasswordForBiometric(string fileId) { }
+        public bool SupportsAutoUpdate => false;
+        public int MaxRecentCompanies => 10;
+        public string NormalizePath(string path) => path;
+        public string CombinePaths(params string[] paths) => Path.Combine(paths);
+        public string GetMachineId() => "test-machine-id";
+        public void RegisterFileTypeAssociations(string iconPath) { }
+        public StringComparer PathComparer => StringComparer.Ordinal;
+    }
+
+    #endregion
+}

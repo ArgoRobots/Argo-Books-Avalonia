@@ -14,6 +14,7 @@ using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Layout;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -1834,9 +1835,37 @@ public partial class App : Application
     {
         if (_appShellViewModel == null) return;
 
+        // The name the user actually picked. filePath may later be swapped for a temp file
+        // (legacy .xls conversion, or experimental layout normalization), so capture the
+        // display name up front and use it in all user-facing UI instead of the temp path.
+        var originalFileName = Path.GetFileName(filePath);
+
         var analysisCts = new CancellationTokenSource();
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
+
+        // Legacy .xls (BIFF) is not read by the pipeline directly. Convert it to a temp
+        // .xlsx up front so the rest of the flow only ever sees .xlsx/.csv (unchanged).
+        // Note: a true .xlsx ends in ".xls" only via the longer ".xlsx" suffix, so we
+        // explicitly exclude .xlsx here. isCsv is left untouched (stays false for .xls).
+        if (!isCsv
+            && filePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase)
+            && !filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                filePath = await Task.Run(() => LegacyXlsConverter.ConvertXlsToTempXlsx(filePath));
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to convert legacy .xls file for import");
+                await ShowErrorMessageBoxAsync(
+                    "Import Failed".Translate(),
+                    "This .xls file could not be read. Try re-saving it as .xlsx and importing that instead.".Translate());
+                return;
+            }
+        }
 
         // Check rate limit via server-side API
         using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
@@ -1862,6 +1891,27 @@ public partial class App : Application
             return;
         }
 
+        // AI layout interpretation for messy spreadsheets (long preambles, merged/multi-row
+        // headers, cross-tabs, stacked tables): rewrite messy sheets into clean single-header
+        // tables before analysis. The cheap, local LayoutGate inside NormalizeAsync skips clean
+        // sheets and returns the ORIGINAL path when nothing needs interpreting, so normal imports
+        // pay no extra cost. Any failure falls back to the original file, so it can never break
+        // an import. CSV files are single-table and never need layout interpretation.
+        if (!isCsv)
+        {
+            try
+            {
+                filePath = await new LayoutNormalizationService(geminiService, ErrorLogger)
+                    .NormalizeAsync(filePath, analysisCts.Token);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "AI layout interpretation failed; importing the original file unchanged");
+                // filePath is left as the original path: the import proceeds normally.
+            }
+        }
+
         var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, geminiService);
 
@@ -1884,9 +1934,12 @@ public partial class App : Application
             {
                 await ShowErrorMessageBoxAsync(
                     "Analysis Failed".Translate(),
-                    "Could not analyze the file structure. The file may be empty or in an unsupported format.".Translate());
+                    "Could not analyze the file. The spreadsheet may be empty, or the AI response was incomplete. Please try importing again.".Translate());
                 return;
             }
+
+            // Show the file the user actually selected, not the temp file we may have analyzed.
+            analysis.FileName = originalFileName;
 
             // Step 2: Show mapping review dialog
             var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
@@ -1924,6 +1977,32 @@ public partial class App : Application
                 SkipExistingRecords = mappingDialog.SkipExistingRecords
             };
 
+            // Detect currency written into the amount cells (symbols/codes). Unambiguous cases
+            // (an explicit code, or a symbol used by one currency like £/€) resolve silently; an
+            // ambiguous symbol like "$" prompts the user once and is applied to every matching row.
+            try
+            {
+                var currencyScan = CurrencyImportPreparer.ScanWorkbook(filePath, updatedAnalysis);
+                if (currencyScan.Ambiguities.Count > 0)
+                {
+                    var companyCurrency = companyData.Settings?.Localization?.Currency ?? "USD";
+                    var currencyDialog = _appShellViewModel.CurrencyAmbiguityDialogViewModel;
+                    var currencyResult = await currencyDialog.ShowAsync(currencyScan.Ambiguities, companyCurrency);
+                    if (currencyResult == CurrencyAmbiguityDialogResult.Cancel)
+                        return;
+
+                    CurrencyImportPreparer.ApplyResolution(currencyScan, currencyDialog.Resolution);
+                    importOptions.SymbolResolution = currencyDialog.Resolution
+                        .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
+                }
+                importOptions.RowCurrencyBySheet = currencyScan.Resolved;
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "In-cell currency detection failed; importing without per-row currency");
+            }
+
             // Tier 1: Validate with mappings
             SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)
@@ -1939,17 +2018,29 @@ public partial class App : Application
 
                 if (validationResult.HasIssues)
                 {
-                    var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
-                    var valResult = await validationDialog.ShowAsync(validationResult);
-
-                    if (valResult == ImportValidationDialogResult.Cancel)
-                        return;
-
-                    if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
+                    // Auto-create any missing references (suppliers, customers, categories,
+                    // etc.) silently. The user shouldn't have to approve creating placeholder
+                    // records, it should "just work".
+                    if (validationResult.HasMissingReferences)
                         importOptions.AutoCreateMissingReferences = true;
 
-                    if (validationResult.Errors.Count > 0)
-                        return;
+                    // Only interrupt with the issues dialog when there's something the user
+                    // must act on: critical errors or issues that can't be auto-fixed. When
+                    // everything is auto-fixable, proceed straight to import.
+                    if (validationResult.Errors.Count > 0 || validationResult.HasNonAutoFixableIssues)
+                    {
+                        var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
+                        var valResult = await validationDialog.ShowAsync(validationResult);
+
+                        if (valResult == ImportValidationDialogResult.Cancel)
+                            return;
+
+                        if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
+                            importOptions.AutoCreateMissingReferences = true;
+
+                        if (validationResult.Errors.Count > 0)
+                            return;
+                    }
                 }
 
                 // Import Tier 1 data
@@ -2060,6 +2151,55 @@ public partial class App : Application
                 estimateTimerCts.Cancel();
                 try { await timerTask; } catch (OperationCanceledException) { }
 
+                // Preview gate: let the user review a capped sample of the AI-normalized
+                // entities before any of them are committed to company data. The cheaper
+                // "process first chunk only -> preview -> process the rest" optimization is
+                // deferred; we process all chunks first (Phase A above) and preview the
+                // results, which is lower risk than restructuring the parallel async block.
+                var totalEntities = allProcessedChunks.Sum(chunks => chunks.Sum(c => c.Entities.Count));
+                if (totalEntities > 0)
+                {
+                    var previewSample = new List<(string SheetName, System.Text.Json.JsonElement Entity)>();
+                    for (int i = 0; i < tier2Sheets.Count
+                        && previewSample.Count < Tier2PreviewDialogViewModel.MaxSampleSize; i++)
+                    {
+                        var sheetName = tier2Sheets[i].SourceSheetName;
+                        foreach (var chunk in allProcessedChunks[i])
+                        {
+                            foreach (var entity in chunk.Entities)
+                            {
+                                previewSample.Add((sheetName, entity));
+                                if (previewSample.Count >= Tier2PreviewDialogViewModel.MaxSampleSize)
+                                    break;
+                            }
+                            if (previewSample.Count >= Tier2PreviewDialogViewModel.MaxSampleSize)
+                                break;
+                        }
+                    }
+
+                    // Hide the loading overlay so the preview dialog isn't queued behind it.
+                    await Task.Yield();
+                    _mainWindowViewModel?.HideLoading();
+
+                    var previewVm = _appShellViewModel.Tier2PreviewDialogViewModel;
+                    var committed = await previewVm.ShowAsync(previewSample, totalEntities);
+                    if (!committed)
+                    {
+                        // User cancelled: roll back everything imported in this run (including any
+                        // Tier 1 data already applied above) so cancel means "nothing imported".
+                        RestoreCompanyDataFromSnapshot(companyData, snapshot);
+                        _mainWindowViewModel?.HideLoading();
+                        return;
+                    }
+
+                    // Re-show the loading overlay for Phase B import + categorization.
+                    _mainWindowViewModel?.ShowLoading(
+                        "Importing data...".Translate(),
+                        progress: 90,
+                        cts: tier2Cts,
+                        cancelConfirmation: ConfirmCancelAsync);
+                }
+
                 // Phase B: Import sequentially (CompanyData mutation is not thread-safe)
                 for (int i = 0; i < tier2Sheets.Count; i++)
                 {
@@ -2130,6 +2270,15 @@ public partial class App : Application
             // Collect all warnings
             var allWarnings = (tier1Result?.Warnings ?? []).ToList();
 
+            // Report any sheets that were out of scope (detected type Unknown or confidence too low)
+            var unsupportedSheets = updatedAnalysis.Sheets.Where(s => s.UnsupportedReason != null).ToList();
+            foreach (var unsupported in unsupportedSheets)
+                allWarnings.Add($"Sheet \"{unsupported.SourceSheetName}\" was skipped: {unsupported.UnsupportedReason}");
+
+            // If part of the AI analysis failed, tell the user their import is partial.
+            if (!string.IsNullOrEmpty(updatedAnalysis.PartialAnalysisWarning))
+                allWarnings.Add(updatedAnalysis.PartialAnalysisWarning);
+
             // Collect skip reasons from all sheets
             var allSkipReasons = allSheetResults
                 .SelectMany(sr => sr.SkipReasons)
@@ -2137,13 +2286,27 @@ public partial class App : Application
                 .Select(g => g.Count() > 1 ? $"{g.Key} (\u00d7{g.Count()})" : g.Key)
                 .ToList();
 
+            // Collect unimported rows from all tiers
+            var allUnimported = (tier1Result?.UnimportedRows ?? new List<UnimportedRow>())
+                .Concat(allSheetResults.SelectMany(r => r.UnimportedRows))
+                .ToList();
+
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
             await resultDialog.ShowAsync(
-                Path.GetFileName(filePath),
+                originalFileName,
                 allSheetResults,
                 totalImported, totalUpdated, totalSkipped,
-                allSkipReasons, allWarnings, totalProcessed > 0);
+                allSkipReasons, allWarnings, totalProcessed > 0,
+                allUnimported);
+
+            // Rebuild the current page so its charts/widgets show the freshly imported data.
+            // This mirrors navigating away and back, which is otherwise needed because chart
+            // widgets don't reliably repaint while hidden behind the import dialogs. Posted at
+            // Background priority so it runs after the result dialog has finished closing.
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => NavigationService?.RefreshCurrentPage(),
+                Avalonia.Threading.DispatcherPriority.Background);
         }
         catch (OperationCanceledException)
         {

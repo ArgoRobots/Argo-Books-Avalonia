@@ -30,9 +30,10 @@ public class SpreadsheetAnalysisResult
     public List<SheetAnalysis> Sheets { get; set; } = [];
 
     /// <summary>
-    /// General warnings about the file (e.g., unrecognized sheets).
+    /// Set when part of the AI analysis failed and some sheets were skipped, so the user can be
+    /// told their import is partial instead of silently missing sheets. Null when analysis was complete.
     /// </summary>
-    public List<string> Warnings { get; set; } = [];
+    public string? PartialAnalysisWarning { get; set; }
 
     /// <summary>
     /// The file name that was analyzed (for display purposes).
@@ -94,6 +95,12 @@ public class SheetAnalysis
     /// Total number of data rows detected in this sheet.
     /// </summary>
     public int RowCount { get; set; }
+
+    /// <summary>
+    /// When non-null, this sheet could not be matched to a supported Argo Books entity type
+    /// and will be excluded from import. The value is a human-readable explanation.
+    /// </summary>
+    public string? UnsupportedReason { get; set; }
 }
 
 /// <summary>

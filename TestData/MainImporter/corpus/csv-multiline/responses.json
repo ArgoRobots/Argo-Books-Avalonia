@@ -1,0 +1,3 @@
+{
+  "Notes": "{\"sheets\":[{\"sourceSheetName\":\"input\",\"detectedType\":\"Customers\",\"confidence\":0.98,\"tier\":\"Tier1_Mapping\",\"tierReason\":\"\",\"columnMappings\":[{\"sourceColumn\":\"ID\",\"targetColumn\":\"ID\",\"confidence\":0.99,\"transformHint\":null},{\"sourceColumn\":\"Name\",\"targetColumn\":\"Name\",\"confidence\":0.99,\"transformHint\":null},{\"sourceColumn\":\"Notes\",\"targetColumn\":\"Notes\",\"confidence\":0.95,\"transformHint\":null}],\"unmappedSourceColumns\":[],\"unmappedTargetColumns\":[]}],\"warnings\":[]}"
+}

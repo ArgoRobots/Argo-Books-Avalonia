@@ -1,0 +1,9 @@
+{
+  "knownGap": true,
+  "knownGapReason": "Cross-tab layout: 3 products x 3 months. Current importer cannot pivot wide month columns into long-form Revenue rows. Phase 3 must add a pivot transform so each cell becomes a dated Revenue entry (9 rows total).",
+  "sheets": [ { "name": "Sales", "detectedType": "Revenue", "tier": "Tier1_Mapping" } ],
+  "import": { "totalImported": 9, "totalUpdated": 0 },
+  "keyRecords": [],
+  "expectedDropReasonSubstrings": [],
+  "unsupportedSheets": []
+}

@@ -1,0 +1,3 @@
+{
+  "Customers": "{\"sheets\":[{\"sourceSheetName\":\"Customers\",\"detectedType\":\"Customers\",\"confidence\":0.98,\"tier\":\"Tier1_Mapping\",\"tierReason\":\"\",\"columnMappings\":[{\"sourceColumn\":\"ID\",\"targetColumn\":\"ID\",\"confidence\":0.99,\"transformHint\":null},{\"sourceColumn\":\"Client Name\",\"targetColumn\":\"Name\",\"confidence\":0.95,\"transformHint\":null},{\"sourceColumn\":\"Email\",\"targetColumn\":\"Email\",\"confidence\":0.95,\"transformHint\":null}],\"unmappedSourceColumns\":[],\"unmappedTargetColumns\":[]}],\"warnings\":[]}"
+}

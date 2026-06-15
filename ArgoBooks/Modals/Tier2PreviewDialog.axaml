@@ -1,0 +1,174 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="640"
+             x:Class="ArgoBooks.Modals.Tier2PreviewDialog"
+             x:DataType="vm:Tier2PreviewDialogViewModel"
+             Focusable="True">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.t2-head">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+        <Style Selector="TextBlock.t2-cell">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </UserControl.Styles>
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CancelCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="660"
+                MaxHeight="680"
+                Margin="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="20"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <SolidColorBrush Color="{DynamicResource PrimaryColor}" Opacity="0.15" />
+                            </Border.Background>
+                            <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="Review AI-processed rows"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding Header}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Width="32" Height="32"
+                                VerticalAlignment="Top"
+                                Command="{Binding CancelCommand}">
+                            <PathIcon Data="{x:Static icons:Icons.Close}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <Grid Grid.Row="1" Margin="24,12,24,16" RowDefinitions="Auto,Auto,*">
+                    <!-- Explanation: make it clear what this dialog is for -->
+                    <TextBlock Grid.Row="0"
+                               Text="These rows were reformatted by AI from messy parts of your spreadsheet. Review them below, then click Import to add them to your records, or Cancel to discard them. Nothing is saved until you save the file."
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               TextWrapping="Wrap"
+                               Margin="2,0,2,12" />
+
+                    <!-- Column headers (right margin reserves a gutter for the scrollbar so the
+                         Amount column lines up with the rows below) -->
+                    <Grid Grid.Row="1" ColumnDefinitions="84,96,*,104,96" Margin="12,0,20,6">
+                        <TextBlock Grid.Column="0" Text="Sheet" Classes="t2-head" />
+                        <TextBlock Grid.Column="1" Text="ID" Classes="t2-head" />
+                        <TextBlock Grid.Column="2" Text="Description" Classes="t2-head" />
+                        <TextBlock Grid.Column="3" Text="Date" Classes="t2-head" />
+                        <TextBlock Grid.Column="4" Text="Amount" Classes="t2-head"
+                                   HorizontalAlignment="Right" Margin="0" />
+                    </Grid>
+
+                    <!-- Rows: read-only (ItemsControl, not a ListBox) so they aren't selectable -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="0,4">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:Tier2PreviewRow">
+                                        <Grid ColumnDefinitions="84,96,*,104,96" Margin="12,2,20,2" MinHeight="26">
+                                            <Border Grid.Column="0"
+                                                    Background="{DynamicResource SurfaceBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    Margin="0,0,8,0"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Sheet}"
+                                                           FontSize="11"
+                                                           FontWeight="Medium"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding IdDisplay}" Classes="t2-cell" />
+                                            <TextBlock Grid.Column="2" Text="{Binding DescriptionDisplay}" Classes="t2-cell" />
+                                            <TextBlock Grid.Column="3" Text="{Binding DateDisplay}" Classes="t2-cell" />
+                                            <TextBlock Grid.Column="4" Text="{Binding AmountDisplay}" Classes="t2-cell"
+                                                       HorizontalAlignment="Right" Margin="0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <Button Grid.Column="0"
+                                Classes="secondary-button"
+                                Content="Export sample..."
+                                FontSize="12"
+                                VerticalAlignment="Center"
+                                Command="{Binding ExportSampleCommand}" />
+                        <Button Grid.Column="2"
+                                Classes="secondary-button"
+                                Content="Cancel"
+                                MinWidth="80"
+                                Margin="0,0,8,0"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding CancelCommand}" />
+                        <Button Grid.Column="3"
+                                Classes="primary-button"
+                                Content="Import"
+                                MinWidth="80"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding CommitCommand}" />
+                    </Grid>
+                </Border>
+            </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

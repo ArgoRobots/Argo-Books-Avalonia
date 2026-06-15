@@ -2150,6 +2150,11 @@
                             </StackPanel>
                         </Grid>
                     </Border>
+
+                    <!-- Empty state when no product is selected (or none to select) -->
+                    <controls:ChartEmptyState Grid.Column="2"
+                                              IsVisible="{Binding !HasSelectedProduct}"
+                                              DefaultMessage="{loc:Loc 'Select a product to view its revenue trend'}" />
                     </Grid>
             </Grid>
         </Panel>
