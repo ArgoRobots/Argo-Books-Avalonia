@@ -47,13 +47,14 @@ public class AiImportUsageService : IDisposable
     /// <inheritdoc />
     public async Task<AiImportCheckResult> CheckUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new AiImportCheckResult
             {
                 CanImport = false,
-                ErrorMessage = "No license key found. Please activate your license.",
+                ErrorMessage = "No license key or device ID found.",
                 ImportCount = 0,
                 MonthlyLimit = 0,
                 Remaining = 0
@@ -183,13 +184,14 @@ public class AiImportUsageService : IDisposable
     /// <inheritdoc />
     public async Task<AiImportIncrementResult> IncrementUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new AiImportIncrementResult
             {
                 Success = false,
-                ErrorMessage = "No license key found"
+                ErrorMessage = "No license key or device ID found"
             };
         }
 
@@ -300,9 +302,11 @@ public class AiImportUsageService : IDisposable
 
     private async Task<AiImportApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)
     {
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
         var requestBody = new
         {
             license_key = licenseKey,
+            device_id = deviceId,
             action
         };
 
