@@ -238,7 +238,14 @@ If nothing was missed, return: {{""missingItems"": []}}";
                 prompt,
                 base64Image,
                 mimeType,
-                maxTokens: 4000,
+                // gemini-2.5-flash spends hidden "thinking" tokens out of this
+                // budget. At 4000 the reasoning could exhaust it before the JSON
+                // answer was written, truncating the response (finishReason
+                // MAX_TOKENS) and silently failing this best-effort verify pass.
+                // Match the main scan's budget; the verify output itself is small,
+                // so the headroom just covers thinking (billing is per token used,
+                // not per the ceiling).
+                maxTokens: 16000,
                 temperature: 0.0,
                 model: "gemini-2.5-flash",
                 cancellationToken: cancellationToken);
