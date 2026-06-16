@@ -399,7 +399,7 @@ public partial class App
                 {
                     _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                     ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company");
-                    await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
+                    await ShowErrorMessageBoxAsync("Error".Translate(), GetFriendlySaveErrorMessage(ex));
                 }
             }
         };

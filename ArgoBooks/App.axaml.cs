@@ -1005,7 +1005,7 @@ public partial class App : Application
                     {
                         _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                         ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company on close");
-                        await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
+                        await ShowErrorMessageBoxAsync("Error".Translate(), GetFriendlySaveErrorMessage(ex));
                     }
                 }
             };
@@ -2873,10 +2873,48 @@ public partial class App : Application
             {
                 _suppressSavedFeedback = false;
                 ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
-                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
+                await ShowErrorMessageBoxAsync("Error".Translate(), GetFriendlySaveErrorMessage(ex));
                 return false;
             }
         }
+    }
+
+    /// <summary>
+    /// Turns a save/file exception into a message a non-technical user can act on.
+    /// Windows surfaces cryptic text like "A device which does not exist was specified"
+    /// when the company file's drive is unplugged (USB/external) or a mapped/network
+    /// drive disconnects; this explains what happened and how to recover instead of
+    /// showing the raw OS error. Unknown failures fall back to the original message.
+    /// </summary>
+    private static string GetFriendlySaveErrorMessage(Exception ex)
+    {
+        // Win32 errors HRESULT-wrapped by .NET file APIs:
+        //   ERROR_NOT_READY     (21) -> 0x80070015: drive present but not ready (no media / spun down)
+        //   ERROR_DEV_NOT_EXIST (55) -> 0x80070037: the volume is gone (ejected, disconnected, letter changed)
+        const int errorNotReady = unchecked((int)0x80070015);
+        const int errorDevNotExist = unchecked((int)0x80070037);
+
+        var driveUnavailable =
+            ex is DriveNotFoundException ||
+            ex is DirectoryNotFoundException ||
+            (ex is IOException && (ex.HResult == errorNotReady || ex.HResult == errorDevNotExist));
+
+        if (driveUnavailable)
+        {
+            return ("The drive where this company file is stored is no longer available. "
+                + "This usually happens when a USB or external drive is unplugged, or a network drive disconnects. "
+                + "Reconnect the drive and try again, or use \"Save As\" to save the file somewhere else "
+                + "(such as your main drive). Your work is still open, so nothing has been lost yet.").Translate();
+        }
+
+        if (ex is UnauthorizedAccessException)
+        {
+            return ("Argo Books does not have permission to save to this location. "
+                + "Use \"Save As\" to save the file to a folder you own, such as your Documents folder.").Translate();
+        }
+
+        // Unknown failure: keep the raw error text so detail isn't hidden.
+        return "Failed to save: {0}".TranslateFormat(ex.Message);
     }
 
     /// <summary>
