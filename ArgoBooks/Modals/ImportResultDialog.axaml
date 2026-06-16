@@ -158,6 +158,23 @@
                             </Border>
                         </Grid>
 
+                        <!-- Reminder to verify imported data -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                Padding="16,12">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource PrimaryBrush}"
+                                          VerticalAlignment="Center" />
+                                <TextBlock Text="Please double-check all imported data for accuracy."
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
                         <!-- Per-sheet breakdown (only when multiple sheets) -->
                         <StackPanel Spacing="6" IsVisible="{Binding HasMultipleSheets}">
                             <TextBlock Text="Per sheet"

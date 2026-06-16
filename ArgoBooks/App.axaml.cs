@@ -2172,56 +2172,12 @@ public partial class App : Application
                 estimateTimerCts.Cancel();
                 try { await timerTask; } catch (OperationCanceledException) { }
 
-                // Preview gate: let the user review a capped sample of the AI-normalized
-                // entities before any of them are committed to company data. The cheaper
-                // "process first chunk only -> preview -> process the rest" optimization is
-                // deferred; we process all chunks first (Phase A above) and preview the
-                // results, which is lower risk than restructuring the parallel async block.
-                var totalEntities = allProcessedChunks.Sum(chunks => chunks.Sum(c => c.Entities.Count));
-                if (totalEntities > 0)
-                {
-                    var previewSample = new List<(string SheetName, System.Text.Json.JsonElement Entity)>();
-                    for (int i = 0; i < tier2Sheets.Count
-                        && previewSample.Count < Tier2PreviewDialogViewModel.MaxSampleSize; i++)
-                    {
-                        var sheetName = tier2Sheets[i].SourceSheetName;
-                        foreach (var chunk in allProcessedChunks[i])
-                        {
-                            foreach (var entity in chunk.Entities)
-                            {
-                                previewSample.Add((sheetName, entity));
-                                if (previewSample.Count >= Tier2PreviewDialogViewModel.MaxSampleSize)
-                                    break;
-                            }
-                            if (previewSample.Count >= Tier2PreviewDialogViewModel.MaxSampleSize)
-                                break;
-                        }
-                    }
-
-                    // Hide the loading overlay so the preview dialog isn't queued behind it.
-                    await Task.Yield();
-                    _mainWindowViewModel?.HideLoading();
-
-                    var previewVm = _appShellViewModel.Tier2PreviewDialogViewModel;
-                    var committed = await previewVm.ShowAsync(previewSample, totalEntities);
-                    if (!committed)
-                    {
-                        // User cancelled: roll back everything imported in this run (including any
-                        // Tier 1 data already applied above) so cancel means "nothing imported".
-                        RestoreCompanyDataFromSnapshot(companyData, snapshot);
-                        _mainWindowViewModel?.HideLoading();
-                        return;
-                    }
-
-                    // Re-show the loading overlay for Phase B import + categorization.
-                    _mainWindowViewModel?.ShowLoading(
-                        "Importing data...".Translate(),
-                        progress: 90,
-                        cts: tier2Cts,
-                        cancelConfirmation: ConfirmCancelAsync);
-                }
-
                 // Phase B: Import sequentially (CompanyData mutation is not thread-safe)
+                _mainWindowViewModel?.ShowLoading(
+                    "Importing data...".Translate(),
+                    progress: 90,
+                    cts: tier2Cts,
+                    cancelConfirmation: ConfirmCancelAsync);
                 for (int i = 0; i < tier2Sheets.Count; i++)
                 {
                     var tier2Result = importService.ImportProcessedEntities(
