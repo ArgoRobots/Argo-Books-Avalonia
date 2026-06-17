@@ -128,6 +128,11 @@
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
+    <!-- ToolTip overrides, kept in sync with the Light theme so colors track the variant. -->
+    <SolidColorBrush x:Key="ToolTipForeground" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="{StaticResource BorderColor}" />
+
     <!-- AI Accent (used by AI import badges) - brighter violet so it reads on dark surfaces -->
     <Color x:Key="AiAccentColor">#A78BFA</Color>
     <SolidColorBrush x:Key="AiAccentBrush" Color="{StaticResource AiAccentColor}" />
