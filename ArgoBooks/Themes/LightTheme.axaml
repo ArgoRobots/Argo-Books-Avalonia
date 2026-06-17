@@ -131,12 +131,6 @@
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
-    <!-- ToolTip overrides (Fluent's defaults render light-on-light in this theme).
-         Keyed in the Light theme dictionary so they track the active variant. -->
-    <SolidColorBrush x:Key="ToolTipForeground" Color="{StaticResource TextPrimaryColor}" />
-    <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource SurfaceColor}" />
-    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="{StaticResource BorderColor}" />
-
     <!-- AI Accent (used by AI import badges) -->
     <Color x:Key="AiAccentColor">#7C3AED</Color>
     <SolidColorBrush x:Key="AiAccentBrush" Color="{StaticResource AiAccentColor}" />
