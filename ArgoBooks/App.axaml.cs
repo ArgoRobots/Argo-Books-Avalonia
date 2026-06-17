@@ -1997,24 +1997,45 @@ public partial class App : Application
                 }
                 importOptions.RowCurrencyBySheet = currencyScan.Resolved;
 
-                // If any non-USD currency was detected, seed today's rates once (a single batch
-                // call fetches USD->all). Combined with the importer's nearest-cached-rate fallback,
-                // this ensures non-USD rows are actually converted to USD instead of being stored
-                // with the raw foreign number as if it were already USD when the cache is empty.
+                // If any non-USD currency was detected, fetch the EXACT-date rate for every
+                // transaction date before importing, so money never converts at a wrong-date rate
+                // (see docs/Calculations.md). If rates can't be fetched (offline or server down),
+                // pause with a connect-and-retry prompt. Best-effort: any row the scan misses still
+                // self-heals via IsPendingConversion.
                 var hasNonUsd =
                     currencyScan.Resolved.Values.SelectMany(m => m.Values)
                         .Concat(importOptions.SymbolResolution.Values)
                         .Any(c => !string.IsNullOrEmpty(c) && !string.Equals(c, "USD", StringComparison.OrdinalIgnoreCase));
                 if (hasNonUsd && ExchangeRateService.Instance is { } exchangeRates)
                 {
-                    try
+                    var importDates = importService.CollectTransactionDates(filePath, updatedAnalysis);
+                    var readinessSvc = new RateReadinessService(exchangeRates, new ConnectivityService());
+                    while (true)
                     {
-                        await exchangeRates.PreloadRatesAsync([DateTime.Today]);
-                    }
-                    catch (Exception ex)
-                    {
-                        ErrorLogger?.LogError(ex, ErrorCategory.Import,
-                            "Failed to preload exchange rates for import; non-USD rows may convert at a stale or missing rate");
+                        RateReadiness readiness;
+                        try
+                        {
+                            readiness = await readinessSvc.EnsureRatesAsync(importDates);
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Rate readiness check failed");
+                            readiness = new RateReadiness(RateReadinessStatus.Unavailable, RateUnavailableReason.Unknown, []);
+                        }
+
+                        if (readiness.Status == RateReadinessStatus.Ready)
+                        {
+                            if (readiness.FutureDatesDeferred.Count > 0)
+                                ErrorLogger?.LogWarning(
+                                    $"{readiness.FutureDatesDeferred.Count} future-dated rows will import as pending (no rate yet).",
+                                    "Import");
+                            break;
+                        }
+
+                        var choice = await _appShellViewModel.RateUnavailableDialogViewModel.ShowAsync(readiness.Reason);
+                        if (choice == RateRetryResult.Cancel)
+                            return; // abort: nothing imported
+                        // else loop and retry
                     }
                 }
             }

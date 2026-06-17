@@ -90,6 +90,49 @@ public class PerRowCurrencyTests
     }
 
     [Fact]
+    public async Task ExpenseRow_FutureDatedForeign_NoRate_IsPendingConversion()
+    {
+        var service = await SeededServiceAsync(0.90m); // caches USD->EUR for TxnDate only
+        var future = new DateTime(2999, 1, 1);
+
+        var data = new CompanyData();
+        data.Settings.Localization.Currency = "USD";
+        var svc = new SpreadsheetImportService(exchangeRateService: service);
+
+        var row = Json($$"""
+            { "id": "EXP-FUT", "date": "{{future:yyyy-MM-dd}}", "total": 100.00, "taxAmount": 0,
+              "description": "Future foreign expense", "originalCurrency": "EUR" }
+            """);
+        svc.ImportProcessedEntities(data, [Chunk(SpreadsheetSheetType.Expenses, row)], "Expenses");
+
+        var exp = data.Expenses.Single(e => e.Id == "EXP-FUT");
+        Assert.True(exp.IsPendingConversion);
+        Assert.Equal(0m, exp.TotalUSD);
+        Assert.Equal(100.00m, exp.Total); // native amount preserved
+        Assert.Contains(data.PendingConversions, p => p.TransactionId == "EXP-FUT"); // enqueued to self-heal
+    }
+
+    [Fact]
+    public async Task ExpenseRow_PastForeign_ExactRateCached_ConvertsNotPending()
+    {
+        var service = await SeededServiceAsync(0.90m); // USD->EUR = 0.90 at TxnDate
+
+        var data = new CompanyData();
+        data.Settings.Localization.Currency = "USD";
+        var svc = new SpreadsheetImportService(exchangeRateService: service);
+
+        var row = Json($$"""
+            { "id": "EXP-PAST", "date": "{{TxnDate:yyyy-MM-dd}}", "total": 100.00, "taxAmount": 0,
+              "description": "Past foreign expense", "originalCurrency": "EUR" }
+            """);
+        svc.ImportProcessedEntities(data, [Chunk(SpreadsheetSheetType.Expenses, row)], "Expenses");
+
+        var exp = data.Expenses.Single(e => e.Id == "EXP-PAST");
+        Assert.False(exp.IsPendingConversion);
+        Assert.Equal(Math.Round(100.00m * (1m / 0.90m), 2), exp.TotalUSD);
+    }
+
+    [Fact]
     public void ExpenseRow_NoCurrencyColumn_KeepsCompanyCurrencyAndRawUsd()
     {
         var data = new CompanyData();

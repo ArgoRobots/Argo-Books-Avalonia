@@ -11,33 +11,52 @@ using Xunit;
 namespace ArgoBooks.Tests.Services;
 
 /// <summary>
-/// Regression: an imported foreign-currency row dated in the past (e.g. £1,200 on 2026-01-05)
-/// must still convert to the company currency for display. The importer only seeds *today's*
-/// rate, and the display path looked up the rate by the transaction's exact date with a
-/// cache-only call and no fallback. That exact-date lookup missed, so the converter silently
-/// returned the raw USD amount, e.g. showing the USD value "$1,611.40" labelled as CAD instead
-/// of the real ~$2,255.96 CAD. The display converter must mirror the importer and fall back to
-/// the nearest-known cached rate (<see cref="ExchangeRateService.GetLatestCachedRate"/>).
+/// The exact-date rule: money converts only at the transaction's own date. When that date's rate
+/// is not cached, the strict chokepoint <see cref="ExchangeRateService.TryConvertExact"/> reports
+/// failure (so callers show a pending state) rather than substituting a different date's rate or
+/// the raw USD amount.
 /// </summary>
 public class CurrencyDisplayFallbackTests
 {
     [Fact]
-    public async Task ConvertFromUSD_ExactDateUncached_FallsBackToLatestCachedRate()
+    public async Task TryConvertExact_ExactDateUncached_ReturnsFalse_NoWrongDateRate()
     {
-        // Only "today's" USD->CAD rate is cached (as the import flow seeds it).
+        // Only "today's" USD->CAD rate is cached.
         var seededDate = new DateTime(2026, 6, 16);
         var service = new ExchangeRateService(new MockPlatformService(), new HttpClient(new StubCadHandler(1.40m)));
         await service.GetExchangeRateAsync("USD", "CAD", seededDate);
 
-        // A historical transaction whose exact-date rate was never cached.
+        // A historical transaction whose exact-date rate was never cached must NOT convert from a
+        // different date's rate.
         var txnDate = new DateTime(2026, 1, 5);
-        Assert.Equal(-1m, service.GetExchangeRate("USD", "CAD", txnDate)); // precondition: exact-date miss
+        var ok = service.TryConvertExact(1611.40m, "USD", "CAD", txnDate, out var result);
 
-        // £1,200 stored as 1,611.40 USD should display as ~2,255.96 CAD, not the raw USD amount.
-        var result = service.ConvertFromUSD(1611.40m, "CAD", txnDate);
+        Assert.False(ok);
+        Assert.Equal(0m, result);
+    }
 
+    [Fact]
+    public async Task TryConvertExact_ExactDateCached_ConvertsPrecisely()
+    {
+        var date = new DateTime(2026, 1, 5);
+        var service = new ExchangeRateService(new MockPlatformService(), new HttpClient(new StubCadHandler(1.40m)));
+        await service.GetExchangeRateAsync("USD", "CAD", date); // seed the exact date
+
+        var ok = service.TryConvertExact(1611.40m, "USD", "CAD", date, out var result);
+
+        Assert.True(ok);
         Assert.Equal(Math.Round(1611.40m * 1.40m, 2), result);
-        Assert.NotEqual(1611.40m, result);
+    }
+
+    [Fact]
+    public void TryConvertExact_SameCurrency_ReturnsAmount()
+    {
+        var service = new ExchangeRateService(new MockPlatformService(), new HttpClient(new StubCadHandler(1.40m)));
+
+        var ok = service.TryConvertExact(99.99m, "CAD", "CAD", new DateTime(2026, 1, 5), out var result);
+
+        Assert.True(ok);
+        Assert.Equal(99.99m, result);
     }
 
     private sealed class StubCadHandler(decimal usdToCad) : HttpMessageHandler

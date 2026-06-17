@@ -139,42 +139,44 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Returns the most recently dated cached rate for a currency pair, ignoring the date, or -1 if
-    /// nothing is cached. Cache-only (never fetches). Used to convert a row whose exact transaction
-    /// date isn't cached (e.g. historical import) at the nearest-known rate rather than leaving it
-    /// unconverted.
+    /// Converts an amount between currencies using ONLY the exact-date cached rate. Returns
+    /// <see langword="true"/> with the converted, 2dp-rounded amount when the rate is available
+    /// (or when <paramref name="from"/> == <paramref name="to"/>); otherwise returns
+    /// <see langword="false"/> and <paramref name="result"/> = 0. This is the strict chokepoint for
+    /// all money conversion: it never substitutes a different date's rate, so a caller treats a
+    /// false result as "pending", not as a number. See docs/Calculations.md (Rule 3a).
     /// </summary>
-    public decimal GetLatestCachedRate(string fromCurrency, string toCurrency)
+    public bool TryConvertExact(decimal amount, string from, string to, DateTime date, out decimal result)
     {
-        if (string.Equals(fromCurrency, toCurrency, StringComparison.OrdinalIgnoreCase))
-            return 1m;
-        return _cache.TryGetLatestRate(fromCurrency, toCurrency, out var rate) ? rate : -1m;
+        if (string.Equals(from, to, StringComparison.OrdinalIgnoreCase))
+        {
+            result = amount;
+            return true;
+        }
+
+        var rate = GetExchangeRate(from, to, date); // cache-only, exact-date
+        if (rate <= 0)
+        {
+            result = 0m;
+            return false;
+        }
+
+        result = Math.Round(amount * rate, 2);
+        return true;
     }
+
+    /// <summary>Exact-date USD-&gt;target conversion. See <see cref="TryConvertExact"/>.</summary>
+    public bool TryConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date, out decimal result)
+        => TryConvertExact(amountUSD, BaseCurrency, toCurrency, date, out result);
 
     /// <summary>
-    /// Synchronously converts a USD amount to the target currency using only cached rates.
-    /// Returns the amount unchanged if the target is USD or no cached rate is available.
-    /// Shared by the report renderer and accounting data service so the same-currency,
-    /// rate-availability, and rounding rules live in one place.
-    /// <para>Tries the exact <paramref name="date"/> first, then falls back to the most recent
-    /// cached rate for the pair (mirroring the importer's <c>ConvertRowAmountToUSD</c>). Without
-    /// that fallback, a historical-dated amount whose exact-date rate was never cached (the import
-    /// flow only seeds today's rate) would be shown as its raw USD value labelled with the company
-    /// currency symbol, instead of being converted.</para>
+    /// Converts a USD amount to the target currency at the exact <paramref name="date"/>. Returns
+    /// the converted amount on an exact-date hit, or the USD amount unchanged on a miss. No
+    /// wrong-date fallback. Retained only for the report/accounting callers that cannot yet show a
+    /// pending state; prefer <see cref="TryConvertFromUSD"/> at any call site that can.
     /// </summary>
     public decimal ConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date)
-    {
-        if (string.Equals(toCurrency, BaseCurrency, StringComparison.OrdinalIgnoreCase))
-            return amountUSD;
-
-        var rate = GetExchangeRate(BaseCurrency, toCurrency, date);
-        if (rate <= 0)
-            rate = GetLatestCachedRate(BaseCurrency, toCurrency);
-        if (rate <= 0)
-            return amountUSD;
-
-        return Math.Round(amountUSD * rate, 2);
-    }
+        => TryConvertFromUSD(amountUSD, toCurrency, date, out var converted) ? converted : amountUSD;
 
     /// <summary>
     /// Converts an amount from one currency to another.

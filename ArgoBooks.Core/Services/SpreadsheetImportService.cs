@@ -864,6 +864,54 @@ public class SpreadsheetImportService
         return result;
     }
 
+    /// <summary>
+    /// Collects every transaction date in the included Tier 1 financial sheets, using the SAME
+    /// parser the import uses (so it cannot diverge from how dates are read) and the correct mapped
+    /// date-column name per sheet type. Lets the import rate gate pre-fetch each date's exact rate.
+    /// Best-effort: CSV and unparseable dates are skipped; any row the gate misses still self-heals
+    /// via <see cref="Transaction.IsPendingConversion"/> + <see cref="PendingConversionService"/>.
+    /// </summary>
+    public List<DateTime> CollectTransactionDates(string filePath, SpreadsheetAnalysisResult analysis)
+    {
+        var dates = new List<DateTime>();
+        if (analysis is null || filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            return dates;
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var wb = new XLWorkbook(stream);
+            foreach (var sheet in analysis.Sheets)
+            {
+                if (!sheet.IsIncluded || sheet.Tier != ProcessingTier.Tier1_Mapping)
+                    continue;
+                var dateColumn = sheet.DetectedType switch
+                {
+                    SpreadsheetSheetType.Revenue or SpreadsheetSheetType.Expenses
+                        or SpreadsheetSheetType.Payments => "Date",
+                    SpreadsheetSheetType.Invoices => "Issue Date",
+                    SpreadsheetSheetType.PurchaseOrders => "Order Date",
+                    _ => null
+                };
+                if (dateColumn is null) continue;
+                if (!wb.TryGetWorksheet(sheet.SourceSheetName, out var ws)) continue;
+
+                var headers = SpreadsheetRowReader.GetHeaders(ws);
+                ApplyColumnMapping(headers, sheet); // source -> target names, in place
+                var rows = SpreadsheetRowReader.GetDataRows(ws, headers.Count);
+                foreach (var row in rows)
+                {
+                    var d = SpreadsheetRowReader.GetNullableDateTime(row, headers, dateColumn);
+                    if (d.HasValue) dates.Add(d.Value.Date);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogWarning($"Could not pre-scan import dates: {ex.Message}", "Import");
+        }
+        return dates;
+    }
+
     internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
     {
         foreach (var mapping in sheetAnalysis.ColumnMappings)
@@ -948,10 +996,7 @@ public class SpreadsheetImportService
         var code = Tier1RowCurrency(rowIndex);
         if (code != null)
         {
-            txn.OriginalCurrency = code;
-            txn.TotalUSD = ConvertRowAmountToUSD(txn.Total, code, txn.Date);
-            txn.TaxAmountUSD = ConvertRowAmountToUSD(txn.TaxAmount, code, txn.Date);
-            txn.ShippingCostUSD = ConvertRowAmountToUSD(txn.ShippingCost, code, txn.Date);
+            ApplyTransactionCurrencyCode(txn, code, data);
         }
         else
         {
@@ -969,7 +1014,9 @@ public class SpreadsheetImportService
         if (code != null)
         {
             payment.OriginalCurrency = code;
-            payment.AmountUSD = ConvertRowAmountToUSD(payment.Amount, code, payment.Date);
+            if (!TryConvertRowAmountToUSD(payment.Amount, code, payment.Date, out var amtUsd))
+                _errorLogger?.LogWarning($"Unpriceable payment row {payment.Id} ({code} {payment.Date:yyyy-MM-dd}); USD set to 0", "Import");
+            payment.AmountUSD = amtUsd;
         }
         else
         {
@@ -985,8 +1032,20 @@ public class SpreadsheetImportService
         if (code != null)
         {
             invoice.OriginalCurrency = code;
-            invoice.TotalUSD = ConvertRowAmountToUSD(invoice.Total, code, invoice.IssueDate);
-            invoice.BalanceUSD = ConvertRowAmountToUSD(invoice.Balance, code, invoice.IssueDate);
+            if (TryConvertRowAmountToUSD(invoice.Total, code, invoice.IssueDate, out var totalUsd))
+            {
+                invoice.TotalUSD = totalUsd;
+                TryConvertRowAmountToUSD(invoice.Balance, code, invoice.IssueDate, out var balUsd);
+                invoice.BalanceUSD = balUsd;
+                invoice.IsPendingConversion = false;
+            }
+            else
+            {
+                // Unpriceable (future-dated): keep native amounts, defer USD until the date arrives.
+                invoice.TotalUSD = 0m;
+                invoice.BalanceUSD = 0m;
+                invoice.IsPendingConversion = true;
+            }
         }
         else
         {
@@ -1003,7 +1062,9 @@ public class SpreadsheetImportService
         if (code != null)
         {
             po.OriginalCurrency = code;
-            po.TotalUSD = ConvertRowAmountToUSD(po.Total, code, po.OrderDate);
+            if (!TryConvertRowAmountToUSD(po.Total, code, po.OrderDate, out var poUsd))
+                _errorLogger?.LogWarning($"Unpriceable purchase order {po.Id} ({code} {po.OrderDate:yyyy-MM-dd}); USD set to 0", "Import");
+            po.TotalUSD = poUsd;
         }
         else
         {
@@ -1013,28 +1074,80 @@ public class SpreadsheetImportService
     }
 
     /// <summary>
-    /// Converts a row amount from its original currency to USD: <c>amount * rate(originalCurrency
-    /// -&gt; USD, date)</c>, rounded to 2 dp. Tries the exact transaction date first, then falls back
-    /// to the most recent cached rate for the pair (so a historical row, or one whose date cell did
-    /// not parse and is <see cref="DateTime.MinValue"/>, still converts at the nearest-known rate
-    /// instead of being silently stored as if the foreign number were already USD). Only when NO
-    /// rate is cached at all (e.g. offline with an empty cache) is the amount returned unchanged.
-    /// The import flow seeds current rates before importing so that last case is rare.
+    /// Converts a row amount from its original currency to USD at the row's EXACT date. Returns
+    /// <see langword="false"/> when no exact-date rate is cached (e.g. a future-dated row, or a date
+    /// the import gate missed); the caller then marks the row pending instead of storing a
+    /// wrong-date value. The import rate gate fetches every past/today date before import runs, so a
+    /// false result means the date is genuinely unpriceable (future). See docs/Calculations.md.
     /// </summary>
-    private decimal ConvertRowAmountToUSD(decimal amount, string originalCurrency, DateTime date)
+    private bool TryConvertRowAmountToUSD(decimal amount, string originalCurrency, DateTime date, out decimal usd)
     {
         if (amount == 0m || string.Equals(originalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
-            return amount;
-
+        {
+            usd = amount;
+            return true;
+        }
         var rates = ExchangeRates;
         if (rates == null)
-            return amount;
+        {
+            usd = 0m;
+            return false;
+        }
+        return rates.TryConvertExact(amount, originalCurrency, "USD", date, out usd);
+    }
 
-        var rate = date > DateTime.MinValue ? rates.GetExchangeRate(originalCurrency, "USD", date) : -1m;
-        if (rate <= 0)
-            rate = rates.GetLatestCachedRate(originalCurrency, "USD");
+    /// <summary>
+    /// Applies a detected per-row currency to a Revenue/Expense: converts its amounts to USD at the
+    /// exact transaction date. When the exact-date rate is unavailable (future-dated, or a gate
+    /// miss), the native amounts are kept, the USD fields are zeroed, the row is flagged
+    /// <see cref="Transaction.IsPendingConversion"/>, and it is enqueued so the background
+    /// <see cref="PendingConversionService"/> converts it at its exact date once that rate exists.
+    /// </summary>
+    private void ApplyTransactionCurrencyCode(Transaction txn, string code, CompanyData data)
+    {
+        txn.OriginalCurrency = code;
+        if (TryConvertRowAmountToUSD(txn.Total, code, txn.Date, out var totalUsd))
+        {
+            txn.TotalUSD = totalUsd;
+            TryConvertRowAmountToUSD(txn.TaxAmount, code, txn.Date, out var taxUsd);
+            txn.TaxAmountUSD = taxUsd;
+            TryConvertRowAmountToUSD(txn.ShippingCost, code, txn.Date, out var shipUsd);
+            txn.ShippingCostUSD = shipUsd;
+            txn.IsPendingConversion = false;
+        }
+        else
+        {
+            txn.TotalUSD = 0m;
+            txn.TaxAmountUSD = 0m;
+            txn.ShippingCostUSD = 0m;
+            txn.IsPendingConversion = true;
+            EnqueueImportPending(data, txn);
+        }
+    }
 
-        return rate > 0 ? Math.Round(amount * rate, 2) : amount;
+    /// <summary>
+    /// Enqueues an import row that could not be converted (future-dated or a gate miss) so the
+    /// background <see cref="PendingConversionService"/> converts it at its exact date later. Only
+    /// Revenue/Expense are supported by the pending queue. Mirrors the manual-entry enqueue.
+    /// </summary>
+    private static void EnqueueImportPending(CompanyData data, Transaction txn)
+    {
+        var type = txn is Revenue ? "Revenue" : "Expense";
+        if (data.PendingConversions.Any(p => p.TransactionId == txn.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = txn.Id,
+            TransactionType = type,
+            OriginalCurrency = txn.OriginalCurrency,
+            TransactionDate = txn.Date,
+            Total = txn.Total,
+            TaxAmount = txn.TaxAmount,
+            ShippingCost = txn.ShippingCost,
+            Discount = txn.Discount,
+            Fee = txn.Fee,
+            UnitPrice = txn.UnitPrice
+        });
     }
 
     #region Task 2C: natural-key identity for id-less rows
@@ -1324,11 +1437,8 @@ public class SpreadsheetImportService
                     if (!string.IsNullOrEmpty(expenseCurrency))
                     {
                         // A per-row currency column was mapped: convert each amount to USD at the
-                        // transaction date, mirroring manual entry. The company currency is untouched.
-                        expense.OriginalCurrency = expenseCurrency;
-                        expense.TotalUSD = ConvertRowAmountToUSD(expense.Total, expenseCurrency, expense.Date);
-                        expense.TaxAmountUSD = ConvertRowAmountToUSD(expense.TaxAmount, expenseCurrency, expense.Date);
-                        expense.ShippingCostUSD = ConvertRowAmountToUSD(expense.ShippingCost, expenseCurrency, expense.Date);
+                        // transaction's EXACT date. Future-dated/unpriceable rows become pending.
+                        ApplyTransactionCurrencyCode(expense, expenseCurrency, data);
                     }
                     else
                     {
@@ -1390,11 +1500,8 @@ public class SpreadsheetImportService
                     if (!string.IsNullOrEmpty(revenueCurrency))
                     {
                         // A per-row currency column was mapped: convert each amount to USD at the
-                        // transaction date, mirroring manual entry. The company currency is untouched.
-                        revenue.OriginalCurrency = revenueCurrency;
-                        revenue.TotalUSD = ConvertRowAmountToUSD(revenue.Total, revenueCurrency, revenue.Date);
-                        revenue.TaxAmountUSD = ConvertRowAmountToUSD(revenue.TaxAmount, revenueCurrency, revenue.Date);
-                        revenue.ShippingCostUSD = ConvertRowAmountToUSD(revenue.ShippingCost, revenueCurrency, revenue.Date);
+                        // transaction's EXACT date. Future-dated/unpriceable rows become pending.
+                        ApplyTransactionCurrencyCode(revenue, revenueCurrency, data);
                     }
                     else
                     {
@@ -1457,7 +1564,9 @@ public class SpreadsheetImportService
                         // A per-row currency column was mapped: convert the amount to USD at the
                         // payment date, mirroring manual entry. The company currency is untouched.
                         payment.OriginalCurrency = paymentCurrency;
-                        payment.AmountUSD = ConvertRowAmountToUSD(payment.Amount, paymentCurrency, payment.Date);
+                        if (!TryConvertRowAmountToUSD(payment.Amount, paymentCurrency, payment.Date, out var payUsd))
+                            _errorLogger?.LogWarning($"Unpriceable payment row {payment.Id} ({paymentCurrency} {payment.Date:yyyy-MM-dd}); USD set to 0", "Import");
+                        payment.AmountUSD = payUsd;
                     }
                     else
                     {

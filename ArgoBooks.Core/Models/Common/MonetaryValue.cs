@@ -108,6 +108,33 @@ public class MonetaryValue
     }
 
     /// <summary>
+    /// Exact-date display amount for <paramref name="targetCurrency"/>. Returns the exact original
+    /// amount when the target is the original currency; the stored USD when the target is USD;
+    /// otherwise converts USD-&gt;target via <paramref name="tryConvert"/>. Returns
+    /// <see langword="false"/> when the exact-date rate is unavailable, so the caller shows a
+    /// pending marker rather than a wrong-date number. See docs/Calculations.md (Rule 3a).
+    /// </summary>
+    public bool TryGetDisplayAmount(
+        string targetCurrency,
+        Func<string, string, DateTime, (bool ok, decimal value)> tryConvert,
+        out decimal result)
+    {
+        if (string.Equals(targetCurrency, OriginalCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            result = OriginalAmount;
+            return true;
+        }
+        if (string.Equals(targetCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            result = AmountUSD;
+            return true;
+        }
+        var (ok, value) = tryConvert("USD", targetCurrency, RateDate);
+        result = ok ? value : 0m;
+        return ok;
+    }
+
+    /// <summary>
     /// Returns the USD amount for calculations and comparisons.
     /// </summary>
     public override string ToString() => $"{AmountUSD:F2} USD (original: {OriginalAmount:F2} {OriginalCurrency})";

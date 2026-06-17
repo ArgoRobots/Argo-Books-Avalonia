@@ -15,6 +15,7 @@ public class PendingConversionService
 
     private readonly IPlatformService _platformService;
     private readonly IErrorLogger? _errorLogger;
+    private readonly ExchangeRateService? _exchangeRateService;
     private readonly List<PendingConversion> _queue = [];
     private readonly Lock _lock = new();
 
@@ -40,10 +41,11 @@ public class PendingConversionService
     {
     }
 
-    public PendingConversionService(IPlatformService platformService, IErrorLogger? errorLogger = null)
+    public PendingConversionService(IPlatformService platformService, IErrorLogger? errorLogger = null, ExchangeRateService? exchangeRateService = null)
     {
         _platformService = platformService;
         _errorLogger = errorLogger;
+        _exchangeRateService = exchangeRateService;
         Instance ??= this;
     }
 
@@ -160,7 +162,7 @@ public class PendingConversionService
     /// </summary>
     public async Task ProcessPendingConversionsAsync(CompanyData companyData)
     {
-        var exchangeService = ExchangeRateService.Instance;
+        var exchangeService = _exchangeRateService ?? ExchangeRateService.Instance;
         if (exchangeService == null)
             return;
 
@@ -179,21 +181,14 @@ public class PendingConversionService
         {
             try
             {
-                // Try to get the exchange rate (will fetch from API if missing)
+                // Convert ONLY at the exact transaction-date rate (fetching it if missing). Never
+                // fall back to today's or any other date's rate: a row stays pending until its own
+                // date's rate is available. See docs/Calculations.md (Rule 3a).
                 var rate = await exchangeService.GetExchangeRateAsync(
                     entry.OriginalCurrency, "USD", entry.TransactionDate, fetchIfMissing: true);
 
-                // If the specific date's rate is unavailable and the date is not in the future,
-                // try today's rate as a fallback. Future-dated transactions must wait until
-                // their date arrives so they get the correct historical rate.
-                if (rate <= 0 && entry.TransactionDate.Date != DateTime.Today && entry.TransactionDate.Date < DateTime.Today)
-                {
-                    rate = await exchangeService.GetExchangeRateAsync(
-                        entry.OriginalCurrency, "USD", DateTime.Today, fetchIfMissing: true);
-                }
-
                 if (rate <= 0)
-                    continue; // Still offline or rate unavailable, skip
+                    continue; // Exact-date rate unavailable (offline, or future-dated); stay pending
 
                 // Find the transaction and apply the conversion
                 var transaction = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);

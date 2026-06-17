@@ -161,6 +161,12 @@ public partial class AppShellViewModel : ViewModelBase
     public CurrencyAmbiguityDialogViewModel CurrencyAmbiguityDialogViewModel { get; }
 
     /// <summary>
+    /// Gets the rate-unavailable dialog view model (shown during import when the exact-date
+    /// exchange rates cannot be fetched, offering connect-and-retry).
+    /// </summary>
+    public RateUnavailableDialogViewModel RateUnavailableDialogViewModel { get; }
+
+    /// <summary>
     /// Gets the export as modal view model.
     /// </summary>
     public ExportAsModalViewModel ExportAsModalViewModel { get; }
@@ -724,6 +730,7 @@ public partial class AppShellViewModel : ViewModelBase
         // Create import mapping dialog
         ImportMappingDialogViewModel = new ImportMappingDialogViewModel();
         CurrencyAmbiguityDialogViewModel = new CurrencyAmbiguityDialogViewModel();
+        RateUnavailableDialogViewModel = new RateUnavailableDialogViewModel();
 
         // Create export as modal
         ExportAsModalViewModel = new ExportAsModalViewModel();
