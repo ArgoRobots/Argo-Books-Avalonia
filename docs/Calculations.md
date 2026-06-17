@@ -70,6 +70,32 @@ Symptoms of breaking this rule: stat card shows `$91`, chart bar shows `$66.46`,
 
 The helper for any new chart surface: `ChartLoaderService.ConvertUSDValuesToDisplay(double[])`.
 
+### Rule 3a: Always convert at the transaction's EXACT-date rate.
+
+Every monetary conversion uses the exchange rate for the transaction's own date, with USD as the
+base, fetched from the Argo server (`/api/exchange-rates*.php`, which returns USD -> all per date).
+The app never substitutes a different date's rate or shows a raw cross-currency amount.
+
+- The single chokepoint is `ExchangeRateService.TryConvertExact`; it succeeds only on an exact-date
+  cache hit (or same-currency). There is no "nearest cached rate" fallback for money.
+- **Import** runs `RateReadinessService.EnsureRatesAsync` first and PAUSES with a connect-and-retry
+  prompt (offline vs server-unreachable) until the needed rates are cached. Any row still
+  unpriceable (future-dated, or a date the pre-scan missed) imports as `IsPendingConversion` and is
+  enqueued, so it converts automatically later instead of using a wrong-date rate. The gate is a
+  best-effort optimization; the pending self-heal is the guarantee.
+- **Manual add/edit** saves a row as `IsPendingConversion` when its exact-date rate is unavailable;
+  it converts automatically later (`PendingConversionService`) once that exact rate is fetchable.
+- **Future-dated rows** have no rate (the future is unpriced) and stay pending until their date
+  arrives.
+- **Display** shows `CurrencyService.PendingMarker` instead of a number when a row's exact-date
+  rate is unavailable, never a wrong-date figure.
+
+Phase 2 extends this to aggregates: each transaction is converted at its own date before summing,
+so totals match the sum of the displayed rows to the cent (supersedes the "convert the USD sum at
+one date" step in Rule 3 for non-USD display currencies). Until then, the report/accounting callers
+of `ExchangeRateService.ConvertFromUSD` still show the USD amount on a miss (rare after the import
+gate); this is the one bounded surface not yet on the strict path.
+
 ---
 
 ## 3. Effective USD properties

@@ -44,6 +44,42 @@ public static class CurrencyService
     public static string CurrentDisplayString => CurrentCurrency.DisplayString;
 
     /// <summary>
+    /// Shown in place of an amount when no exact-date rate is available to convert it to the
+    /// display currency (e.g. a future-dated row, or one saved offline whose rate was never
+    /// fetched). The exact-date rule forbids showing a wrong-date number. See docs/Calculations.md.
+    /// </summary>
+    public const string PendingMarker = "Pending";
+
+    /// <summary>
+    /// Exact-date USD-&gt;display-currency conversion. Returns <see langword="false"/> when the rate
+    /// for <paramref name="date"/> is unavailable, so formatters can show <see cref="PendingMarker"/>
+    /// instead of a wrong number. Returns the USD amount unchanged only when no exchange service is
+    /// available (headless), which never happens in the running app.
+    /// </summary>
+    private static bool TryDisplayFromUSD(decimal amountUSD, DateTime date, out decimal amount)
+    {
+        var svc = ExchangeRateService.Instance;
+        if (svc == null)
+        {
+            amount = amountUSD;
+            return true;
+        }
+        return svc.TryConvertFromUSD(amountUSD, CurrentCurrencyCode, date, out amount);
+    }
+
+    /// <summary>Exact-date display amount for a MonetaryValue. See <see cref="TryDisplayFromUSD"/>.</summary>
+    private static bool TryDisplay(MonetaryValue value, out decimal amount)
+    {
+        var svc = ExchangeRateService.Instance;
+        return value.TryGetDisplayAmount(
+            CurrentCurrencyCode,
+            (from, to, rateDate) => svc != null && svc.TryConvertExact(value.AmountUSD, from, to, rateDate, out var v)
+                ? (true, v)
+                : (false, 0m),
+            out amount);
+    }
+
+    /// <summary>
     /// Formats an amount using the current currency symbol.
     /// </summary>
     /// <param name="amount">The amount to format.</param>
@@ -74,8 +110,7 @@ public static class CurrencyService
         if (value == null)
             return Format(0m);
 
-        var displayAmount = GetDisplayAmount(value);
-        return Format(displayAmount);
+        return TryDisplay(value, out var amount) ? Format(amount) : PendingMarker;
     }
 
     /// <summary>
@@ -86,64 +121,45 @@ public static class CurrencyService
         if (value == null)
             return FormatWholeNumber(0m);
 
-        var displayAmount = GetDisplayAmount(value);
-        return FormatWholeNumber(displayAmount);
+        return TryDisplay(value, out var amount) ? FormatWholeNumber(amount) : PendingMarker;
     }
 
     /// <summary>
-    /// Gets the display amount for a MonetaryValue in the current display currency.
+    /// Gets the display amount for a MonetaryValue in the current display currency, at its exact
+    /// date. Returns the stored USD amount when no exact-date rate is available (a numeric
+    /// best-effort for aggregation callers); display callers use <see cref="Format(MonetaryValue?)"/>
+    /// which shows <see cref="PendingMarker"/> instead.
     /// </summary>
     /// <param name="value">The monetary value.</param>
     /// <returns>The amount converted to the current display currency.</returns>
     public static decimal GetDisplayAmount(MonetaryValue value)
     {
-        var targetCurrency = CurrentCurrencyCode;
-
-        // If target is the original currency, return exact original (avoids USD round-trip rounding).
-        if (string.Equals(targetCurrency, value.OriginalCurrency, StringComparison.OrdinalIgnoreCase))
-        {
-            return value.OriginalAmount;
-        }
-
-        // Convert from USD to target currency. ConvertFromUSD handles the target==USD case and
-        // falls back to the nearest cached rate when the exact RateDate isn't cached, so a
-        // historical row still converts instead of silently displaying the raw USD amount.
-        var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService == null)
-            return value.AmountUSD;
-
-        return exchangeService.ConvertFromUSD(value.AmountUSD, targetCurrency, value.RateDate);
+        return TryDisplay(value, out var amount) ? amount : value.AmountUSD;
     }
 
     /// <summary>
-    /// Gets the display amount for a legacy decimal value (assumes USD).
-    /// Converts to the current display currency.
+    /// Gets the display amount for a legacy decimal value (assumes USD), at the exact
+    /// <paramref name="date"/>. Returns the USD amount when no exact-date rate is available (numeric
+    /// best-effort); display callers use <see cref="FormatFromUSD"/> which shows the pending marker.
     /// </summary>
     /// <param name="amountUSD">The amount in USD.</param>
     /// <param name="date">The date for exchange rate lookup.</param>
     /// <returns>The amount in the current display currency.</returns>
     public static decimal GetDisplayAmount(decimal amountUSD, DateTime date)
     {
-        // ConvertFromUSD handles the target==USD case and falls back to the nearest cached rate
-        // when the exact date isn't cached, so a historical-dated amount still converts to the
-        // company currency instead of silently displaying the raw USD value.
-        var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService == null)
-            return amountUSD;
-
-        return exchangeService.ConvertFromUSD(amountUSD, CurrentCurrencyCode, date);
+        return TryDisplayFromUSD(amountUSD, date, out var amount) ? amount : amountUSD;
     }
 
     /// <summary>
-    /// Formats a legacy decimal value (assumes USD) in the current display currency.
+    /// Formats a legacy decimal value (assumes USD) in the current display currency, at the exact
+    /// <paramref name="date"/>. Shows <see cref="PendingMarker"/> when no exact-date rate is available.
     /// </summary>
     /// <param name="amountUSD">The amount in USD.</param>
     /// <param name="date">The date for exchange rate lookup.</param>
     /// <returns>The formatted currency string.</returns>
     public static string FormatFromUSD(decimal amountUSD, DateTime date)
     {
-        var displayAmount = GetDisplayAmount(amountUSD, date);
-        return Format(displayAmount);
+        return TryDisplayFromUSD(amountUSD, date, out var amount) ? Format(amount) : PendingMarker;
     }
 
     /// <summary>
@@ -169,8 +185,7 @@ public static class CurrencyService
     /// </summary>
     public static string FormatWholeNumberFromUSD(decimal amountUSD, DateTime date)
     {
-        var displayAmount = GetDisplayAmount(amountUSD, date);
-        return FormatWholeNumber(displayAmount);
+        return TryDisplayFromUSD(amountUSD, date, out var amount) ? FormatWholeNumber(amount) : PendingMarker;
     }
 
     /// <summary>
