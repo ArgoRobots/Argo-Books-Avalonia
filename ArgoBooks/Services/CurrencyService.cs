@@ -48,7 +48,7 @@ public static class CurrencyService
     /// display currency (e.g. a future-dated row, or one saved offline whose rate was never
     /// fetched). The exact-date rule forbids showing a wrong-date number. See docs/Calculations.md.
     /// </summary>
-    public const string PendingMarker = "—";
+    public const string PendingMarker = "Pending";
 
     /// <summary>
     /// Exact-date USD-&gt;display-currency conversion. Returns <see langword="false"/> when the rate

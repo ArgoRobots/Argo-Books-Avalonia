@@ -1108,11 +1108,19 @@ public class SpreadsheetImportService
         txn.OriginalCurrency = code;
         if (TryConvertRowAmountToUSD(txn.Total, code, txn.Date, out var totalUsd))
         {
+            // Convert every money field at the exact date, matching PendingConversionService's
+            // heal path so an immediately-converted row and a later-healed row are identical.
             txn.TotalUSD = totalUsd;
             TryConvertRowAmountToUSD(txn.TaxAmount, code, txn.Date, out var taxUsd);
             txn.TaxAmountUSD = taxUsd;
             TryConvertRowAmountToUSD(txn.ShippingCost, code, txn.Date, out var shipUsd);
             txn.ShippingCostUSD = shipUsd;
+            TryConvertRowAmountToUSD(txn.Discount, code, txn.Date, out var discUsd);
+            txn.DiscountUSD = discUsd;
+            TryConvertRowAmountToUSD(txn.Fee, code, txn.Date, out var feeUsd);
+            txn.FeeUSD = feeUsd;
+            TryConvertRowAmountToUSD(txn.UnitPrice, code, txn.Date, out var unitUsd);
+            txn.UnitPriceUSD = unitUsd;
             txn.IsPendingConversion = false;
         }
         else
@@ -1120,6 +1128,9 @@ public class SpreadsheetImportService
             txn.TotalUSD = 0m;
             txn.TaxAmountUSD = 0m;
             txn.ShippingCostUSD = 0m;
+            txn.DiscountUSD = 0m;
+            txn.FeeUSD = 0m;
+            txn.UnitPriceUSD = 0m;
             txn.IsPendingConversion = true;
             EnqueueImportPending(data, txn);
         }
@@ -1148,6 +1159,50 @@ public class SpreadsheetImportService
             Fee = txn.Fee,
             UnitPrice = txn.UnitPrice
         });
+    }
+
+    /// <summary>
+    /// Creates the linked Revenue for a paid/partially-paid imported invoice (so it shows on the
+    /// dashboard and analytics). When the invoice's USD value is not yet known (future-dated, or a
+    /// rate the gate missed), the Revenue is created pending and enqueued so it converts at the
+    /// exact date later, instead of storing the native amount as if it were USD.
+    /// </summary>
+    private static void AddAutoRevenueForInvoice(CompanyData data, Invoice invoice)
+    {
+        if (invoice.AmountPaid <= 0 || data.Revenues.Any(r => r.InvoiceId == invoice.Id))
+            return;
+
+        data.IdCounters.Revenue++;
+        var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
+        var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
+
+        var revenue = new Revenue
+        {
+            Id = revenueId,
+            Date = invoice.IssueDate,
+            CustomerId = invoice.CustomerId,
+            Description = $"Invoice {invoice.InvoiceNumber}",
+            Quantity = 1,
+            UnitPrice = invoice.Subtotal,
+            Subtotal = invoice.Subtotal,
+            Amount = invoice.Subtotal,
+            TaxAmount = invoice.TaxAmount,
+            Total = invoice.Total,
+            PaymentMethod = PaymentMethod.Other,
+            PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
+            Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
+            InvoiceId = invoice.Id,
+            ReferenceNumber = invoice.InvoiceNumber,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            OriginalCurrency = invoice.OriginalCurrency,
+            IsPendingConversion = invoice.IsPendingConversion,
+            TotalUSD = invoice.IsPendingConversion ? 0m : (invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total)
+        };
+        data.Revenues.Add(revenue);
+
+        if (invoice.IsPendingConversion)
+            EnqueueImportPending(data, revenue);
     }
 
     #region Task 2C: natural-key identity for id-less rows
@@ -1394,37 +1449,10 @@ public class SpreadsheetImportService
                     if (existing != null) data.Invoices.Remove(existing);
                     data.Invoices.Add(invoice);
 
-                    // Create a linked Revenue entry for paid/partially paid invoices
-                    // so they appear on the dashboard and analytics pages
-                    if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
-                    {
-                        data.IdCounters.Revenue++;
-                        var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
-                        var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
-
-                        data.Revenues.Add(new Revenue
-                        {
-                            Id = revenueId,
-                            Date = invoice.IssueDate,
-                            CustomerId = invoice.CustomerId,
-                            Description = $"Invoice {invoice.InvoiceNumber}",
-                            Quantity = 1,
-                            UnitPrice = invoice.Subtotal,
-                            Subtotal = invoice.Subtotal,
-                            Amount = invoice.Subtotal,
-                            TaxAmount = invoice.TaxAmount,
-                            Total = invoice.Total,
-                            PaymentMethod = PaymentMethod.Other,
-                            PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
-                            Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
-                            InvoiceId = invoice.Id,
-                            ReferenceNumber = invoice.InvoiceNumber,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            OriginalCurrency = invoice.OriginalCurrency,
-                            TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
-                        });
-                    }
+                    // Create a linked Revenue entry for paid/partially paid invoices so they appear
+                    // on the dashboard and analytics pages (pending when the invoice's USD value is
+                    // not yet known).
+                    AddAutoRevenueForInvoice(data, invoice);
 
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
@@ -3133,37 +3161,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (existing == null)
                 data.Invoices.Add(invoice);
 
-            // Create a linked Revenue entry for paid/partially paid invoices
-            // so they appear on the dashboard and analytics pages
-            if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
-            {
-                data.IdCounters.Revenue++;
-                var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
-                var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
-
-                data.Revenues.Add(new Revenue
-                {
-                    Id = revenueId,
-                    Date = invoice.IssueDate,
-                    CustomerId = invoice.CustomerId,
-                    Description = $"Invoice {invoice.InvoiceNumber}",
-                    Quantity = 1,
-                    UnitPrice = invoice.Subtotal,
-                    Subtotal = invoice.Subtotal,
-                    Amount = invoice.Subtotal,
-                    TaxAmount = invoice.TaxAmount,
-                    Total = invoice.Total,
-                    PaymentMethod = PaymentMethod.Other,
-                    PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
-                    Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
-                    InvoiceId = invoice.Id,
-                    ReferenceNumber = invoice.InvoiceNumber,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    OriginalCurrency = invoice.OriginalCurrency,
-                    TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
-                });
-            }
+            // Create a linked Revenue entry for paid/partially paid invoices so they appear on the
+            // dashboard and analytics pages (pending when the invoice's USD value is not yet known).
+            AddAutoRevenueForInvoice(data, invoice);
         }
     }
 
