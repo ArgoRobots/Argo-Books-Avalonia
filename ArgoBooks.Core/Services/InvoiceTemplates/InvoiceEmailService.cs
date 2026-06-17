@@ -112,21 +112,21 @@ public class InvoiceEmailService : IDisposable
             // Send the request
             return await SendEmailRequestAsync(request, emailSettings, cancellationToken);
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = "The request timed out. Please check your internet connection and try again.",
+                Message = await ConnectivityMessage.ResolveAsync(),
                 ErrorCode = "TIMEOUT"
             };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
             return new InvoiceEmailResponse
             {
                 Success = false,
-                Message = $"Network error: {ex.Message}",
+                Message = await ConnectivityMessage.ResolveAsync(),
                 ErrorCode = "NETWORK_ERROR"
             };
         }

@@ -275,6 +275,27 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Shows the one, consistent connectivity-error dialog (same title, body, and style)
+    /// used everywhere an online action fails because the device is offline or the server
+    /// is unreachable. Uses the neutral confirmation dialog (no alarming red error styling)
+    /// since being offline is a normal, recoverable situation.
+    /// </summary>
+    public static async Task ShowConnectivityErrorAsync(string? message = null)
+    {
+        var dialog = ConfirmationDialog;
+        if (dialog == null) return;
+
+        await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = ConnectivityMessage.Title.Translate(),
+            Message = string.IsNullOrWhiteSpace(message) ? ConnectivityMessage.NoInternet.Translate() : message,
+            PrimaryButtonText = "OK".Translate(),
+            CancelButtonText = null,
+            SecondaryButtonText = null
+        });
+    }
+
+    /// <summary>
     /// Shows a modal info message box.
     /// </summary>
     private static async Task ShowInfoMessageBoxAsync(string title, string message)
@@ -3301,7 +3322,10 @@ public partial class App : Application
                     else if (!string.IsNullOrEmpty(args.ErrorMessage))
                     {
                         _mainWindowViewModel?.HideLoading();
-                        await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
+                        if (ConnectivityMessage.IsConnectivityMessage(args.ErrorMessage))
+                            await ShowConnectivityErrorAsync(args.ErrorMessage);
+                        else
+                            await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
                     }
                     else
                     {

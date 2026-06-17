@@ -182,9 +182,9 @@ public class RefundService
             parsed.Ok = res.IsSuccessStatusCode && parsed.Success;
             return parsed;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new T { ErrorCode = "NETWORK_ERROR", Message = ex.Message, HttpStatus = (int)HttpStatusCode.ServiceUnavailable };
+            return new T { ErrorCode = "NETWORK_ERROR", Message = await ConnectivityMessage.ResolveAsync(), HttpStatus = (int)HttpStatusCode.ServiceUnavailable };
         }
         catch (TaskCanceledException)
         {

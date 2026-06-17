@@ -10,7 +10,6 @@ namespace ArgoBooks.Core.Services;
 public class AiImportUsageService : IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/ai-import/usage.php";
-    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
@@ -130,9 +129,11 @@ public class AiImportUsageService : IDisposable
         }
         catch (HttpRequestException)
         {
-            // Network error, allow import if we have non-expired cached data showing capacity.
-            // Without the expiry check a stale cache could permit imports past the server-side quota.
-            if (_cachedUsage != null && _cachedUsage.CanImport && DateTime.UtcNow < _cacheExpiry)
+            // Allow the import only if the usage server hiccuped but we still have internet
+            // (a fresh cache shows capacity). When fully offline the AI call can't run, so
+            // report the connectivity problem now instead of letting it fail mid-import.
+            if (_cachedUsage != null && _cachedUsage.CanImport && DateTime.UtcNow < _cacheExpiry
+                && await _connectivityService.IsInternetAvailableAsync(cancellationToken))
             {
                 return new AiImportCheckResult
                 {
@@ -146,7 +147,7 @@ public class AiImportUsageService : IDisposable
                 };
             }
 
-            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            var errorMessage = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken);
             return new AiImportCheckResult
             {
                 CanImport = false,
@@ -155,7 +156,7 @@ public class AiImportUsageService : IDisposable
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
         {
-            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            var errorMessage = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken);
             return new AiImportCheckResult
             {
                 CanImport = false,
@@ -272,32 +273,6 @@ public class AiImportUsageService : IDisposable
             _httpClient.Dispose();
         }
         _disposed = true;
-    }
-
-    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
-
-            if (!hasInternet)
-            {
-                return "No internet connection. Please check your network and try again.";
-            }
-
-            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
-
-            if (!isApiReachable)
-            {
-                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
-            }
-
-            return "Unable to verify usage. Please try again.";
-        }
-        catch
-        {
-            return "Unable to verify usage. Please check your internet connection.";
-        }
     }
 
     private async Task<AiImportApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)

@@ -875,10 +875,19 @@ public partial class SettingsModalViewModel : ViewModelBase
                 PortalLogoSource = null;
                 HasPortalLogo = false;
             }
+            else if (ConnectivityMessage.IsConnectivityMessage(result.Message))
+            {
+                await App.ShowConnectivityErrorAsync(result.Message);
+            }
+            else
+            {
+                await ShowErrorDialogAsync("Couldn't Remove Logo".Translate(),
+                    (result.Message ?? "Failed to remove logo.").Translate());
+            }
         }
         catch
         {
-            // Silently fail
+            await App.ShowConnectivityErrorAsync();
         }
         finally
         {
@@ -1094,11 +1103,20 @@ public partial class SettingsModalViewModel : ViewModelBase
                 // Notify invoice views and other subscribers that provider state changed
                 PaymentProviderService.NotifyProvidersChanged();
             }
+            else if (ConnectivityMessage.IsConnectivityMessage(response.Message))
+            {
+                // The service reports connectivity problems via Message rather than throwing.
+                await App.ShowConnectivityErrorAsync(response.Message);
+            }
+            else
+            {
+                await ShowErrorDialogAsync("Couldn't Disconnect".Translate(),
+                    (response.Message ?? "Failed to disconnect provider. Please try again.").Translate());
+            }
         }
         catch
         {
-            await ShowErrorDialogAsync("Error".Translate(),
-                "Failed to disconnect provider. Please try again.".Translate());
+            await App.ShowConnectivityErrorAsync();
         }
     }
 

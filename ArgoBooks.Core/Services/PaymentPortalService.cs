@@ -81,9 +81,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalStatusResponse { Success = false, Connected = false, Message = "Connection timed out." };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalStatusResponse { Success = false, Connected = false, Message = $"Connection failed: {ex.Message}" };
+            return new PortalStatusResponse { Success = false, Connected = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
     }
 
@@ -192,9 +192,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalPublishResponse { Success = false, Message = "Request timed out.", ErrorCode = "TIMEOUT" };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalPublishResponse { Success = false, Message = $"Network error: {ex.Message}", ErrorCode = "NETWORK_ERROR" };
+            return new PortalPublishResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync(), ErrorCode = "NETWORK_ERROR" };
         }
         catch (Exception)
         {
@@ -262,9 +262,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalSyncResponse { Success = false, Message = "Sync timed out.", ErrorCode = "TIMEOUT" };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalSyncResponse { Success = false, Message = $"Network error: {ex.Message}", ErrorCode = "NETWORK_ERROR" };
+            return new PortalSyncResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync(), ErrorCode = "NETWORK_ERROR" };
         }
     }
 
@@ -583,9 +583,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalOAuthResponse { Success = false, Message = "Request timed out.", ErrorCode = "TIMEOUT" };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalOAuthResponse { Success = false, Message = $"Network error: {ex.Message}", ErrorCode = "NETWORK_ERROR" };
+            return new PortalOAuthResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync(), ErrorCode = "NETWORK_ERROR" };
         }
     }
 
@@ -624,9 +624,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalDisconnectResponse { Success = false, Message = "Request timed out." };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalDisconnectResponse { Success = false, Message = $"Network error: {ex.Message}" };
+            return new PortalDisconnectResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
     }
 
@@ -687,9 +687,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalRegisterResponse { Success = false, Message = "Request timed out." };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalRegisterResponse { Success = false, Message = $"Network error: {ex.Message}" };
+            return new PortalRegisterResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
     }
 
@@ -739,9 +739,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalCompanyNameResponse { Success = false, Message = "Request timed out." };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalCompanyNameResponse { Success = false, Message = $"Network error: {ex.Message}" };
+            return new PortalCompanyNameResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
     }
 
@@ -813,9 +813,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalLogoResponse { Success = false, Message = "Request timed out." };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalLogoResponse { Success = false, Message = $"Network error: {ex.Message}" };
+            return new PortalLogoResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
         catch (Exception)
         {
@@ -859,9 +859,9 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalLogoResponse { Success = false, Message = "Request timed out." };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
-            return new PortalLogoResponse { Success = false, Message = $"Network error: {ex.Message}" };
+            return new PortalLogoResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
     }
 

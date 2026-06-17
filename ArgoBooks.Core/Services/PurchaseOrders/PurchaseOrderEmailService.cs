@@ -80,21 +80,21 @@ public class PurchaseOrderEmailService : IDisposable
         {
             return await SendRequestAsync(request, cancellationToken);
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return new PurchaseOrderEmailResponse
             {
                 Success = false,
-                Message = "The request timed out. Please check your internet connection and try again.",
+                Message = await ConnectivityMessage.ResolveAsync(),
                 ErrorCode = "TIMEOUT"
             };
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
             return new PurchaseOrderEmailResponse
             {
                 Success = false,
-                Message = $"Network error: {ex.Message}",
+                Message = await ConnectivityMessage.ResolveAsync(),
                 ErrorCode = "NETWORK_ERROR"
             };
         }

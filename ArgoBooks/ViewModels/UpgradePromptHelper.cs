@@ -43,22 +43,8 @@ public static class UpgradePromptHelper
     /// otherwise read a misleading "0/0"). The message is produced by the usage service,
     /// which checks connectivity to tailor the wording.
     /// </summary>
-    public static async Task ShowUsageCheckFailedAsync(string? message)
-    {
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        await dialog.ShowAsync(new ConfirmationDialogOptions
-        {
-            Title = "Connection Problem".Translate(),
-            Message = string.IsNullOrWhiteSpace(message)
-                ? "No internet connection. Please check your network and try again.".Translate()
-                : message,
-            PrimaryButtonText = "OK".Translate(),
-            CancelButtonText = null,
-            SecondaryButtonText = null
-        });
-    }
+    public static Task ShowUsageCheckFailedAsync(string? message)
+        => App.ShowConnectivityErrorAsync(message);
 
     /// <summary>
     /// Shows a compelling upgrade prompt when the AI import limit is reached.

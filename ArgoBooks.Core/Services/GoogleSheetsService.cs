@@ -234,8 +234,21 @@ public class GoogleSheetsService
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         GoogleCredentialsManager.AddAuthHeaders(request);
 
-        var response = await _httpClient.SendAsync(request, cancellationToken);
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        HttpResponseMessage response;
+        string responseBody;
+        try
+        {
+            response = await _httpClient.SendAsync(request, cancellationToken);
+            responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            throw new InvalidOperationException(await ConnectivityMessage.ResolveAsync());
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new InvalidOperationException(await ConnectivityMessage.ResolveAsync());
+        }
 
         if (!response.IsSuccessStatusCode)
         {

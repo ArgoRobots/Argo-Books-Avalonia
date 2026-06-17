@@ -129,7 +129,10 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         catch (Exception ex)
         {
             _errorLogger?.LogWarning($"Update check failed: {ex.Message}", "AutoUpdate");
-            LastError = ex.Message;
+            // An update check is an HTTP fetch of the appcast, so a failure is almost
+            // always a connectivity problem. Show a clear message instead of the raw
+            // exception text (the probe also covers the server-down case).
+            LastError = await Core.Services.ConnectivityMessage.ResolveAsync();
             SetState(UpdateState.Error);
             return null;
         }
@@ -233,7 +236,13 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         catch (Exception ex)
         {
             _errorLogger?.LogWarning($"Update download failed: {ex.Message}", "AutoUpdate");
-            LastError = ex.Message;
+            // Use a friendly connectivity message for network failures, but preserve the
+            // original message for security-critical ones (e.g. signature verification).
+            var isNetwork = ex is HttpRequestException or TaskCanceledException
+                || ex.InnerException is HttpRequestException or System.Net.Sockets.SocketException;
+            LastError = isNetwork
+                ? await Core.Services.ConnectivityMessage.ResolveAsync()
+                : ex.Message;
             SetState(UpdateState.Error);
             throw;
         }
