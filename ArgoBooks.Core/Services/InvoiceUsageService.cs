@@ -10,6 +10,7 @@ namespace ArgoBooks.Core.Services;
 public class InvoiceUsageService : IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/invoice/usage.php";
+    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
     // Must match the server's free-tier default (config/pricing.php
     // FREE_INVOICE_MONTHLY_LIMIT). Used only as a fallback when the
     // server check fails or hasn't completed yet.
@@ -18,6 +19,7 @@ public class InvoiceUsageService : IDisposable
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private readonly LicenseService? _licenseService;
+    private readonly IConnectivityService _connectivityService;
     private readonly IErrorLogger? _errorLogger;
     private bool _disposed;
 
@@ -27,15 +29,16 @@ public class InvoiceUsageService : IDisposable
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
     public InvoiceUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null)
-        : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, errorLogger)
+        : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService(), errorLogger)
     {
         _ownsHttpClient = true;
     }
 
-    public InvoiceUsageService(LicenseService? licenseService, HttpClient httpClient, IErrorLogger? errorLogger = null)
+    public InvoiceUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService, IErrorLogger? errorLogger = null)
     {
         _licenseService = licenseService;
         _httpClient = httpClient;
+        _connectivityService = connectivityService;
         _errorLogger = errorLogger;
     }
 
@@ -108,6 +111,13 @@ public class InvoiceUsageService : IDisposable
             // Network error, allow sending if cache is fresh and shows capacity.
             // Without the expiry check a stale cache could permit sends past the server-side quota.
             var hasFreshCache = _cachedUsage != null && DateTime.UtcNow < _cacheExpiry;
+
+            // No usable cache: explain whether it's a connectivity or server problem so the
+            // caller can tell the user instead of falsely claiming a send limit was reached.
+            var errorMessage = hasFreshCache
+                ? "Unable to verify usage."
+                : await GetConnectivityErrorMessageAsync(cancellationToken);
+
             return new InvoiceUsageResult
             {
                 Success = false,
@@ -115,8 +125,36 @@ public class InvoiceUsageService : IDisposable
                 SendCount = hasFreshCache ? _cachedUsage!.SendCount : 0,
                 MonthlyLimit = hasFreshCache ? _cachedUsage!.MonthlyLimit : DefaultFreeLimit,
                 Remaining = hasFreshCache ? _cachedUsage!.Remaining : DefaultFreeLimit,
-                ErrorMessage = "Unable to verify usage."
+                ErrorMessage = errorMessage
             };
+        }
+    }
+
+    /// <summary>
+    /// Determines whether a failed usage check is due to no internet or the server being
+    /// unreachable, mirroring the receipt/AI-import usage services so messaging is consistent.
+    /// </summary>
+    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
+            if (!hasInternet)
+            {
+                return "No internet connection. Please check your network and try again.";
+            }
+
+            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
+            if (!isApiReachable)
+            {
+                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
+            }
+
+            return "Unable to verify usage. Please try again.";
+        }
+        catch
+        {
+            return "Unable to verify usage. Please check your internet connection.";
         }
     }
 

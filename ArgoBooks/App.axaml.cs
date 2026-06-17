@@ -1874,10 +1874,21 @@ public partial class App : Application
         if (!usageCheck.CanImport)
         {
             _mainWindowViewModel?.HideLoading();
-            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(
-                usageCheck.ImportCount,
-                usageCheck.MonthlyLimit,
-                usageCheck.ResetsAt);
+
+            // A populated ErrorMessage means the usage check couldn't complete (offline or
+            // server unreachable) rather than a real limit being hit, so show the connection
+            // error instead of a misleading "0/0" import-limit prompt.
+            if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+            {
+                await UpgradePromptHelper.ShowUsageCheckFailedAsync(usageCheck.ErrorMessage);
+            }
+            else
+            {
+                await UpgradePromptHelper.ShowAiImportLimitPromptAsync(
+                    usageCheck.ImportCount,
+                    usageCheck.MonthlyLimit,
+                    usageCheck.ResetsAt);
+            }
             return;
         }
 

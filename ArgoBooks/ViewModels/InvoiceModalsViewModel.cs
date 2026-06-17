@@ -1315,6 +1315,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 var usage = await usageService.CheckUsageAsync();
                 if (!usage.CanSend)
                 {
+                    // A failed check (offline / server unreachable) reports an ErrorMessage
+                    // rather than a real limit. Show that inline instead of falsely claiming
+                    // the monthly send limit was reached.
+                    if (!usage.Success && !string.IsNullOrEmpty(usage.ErrorMessage))
+                    {
+                        await ShowSendErrorAsync(usage.ErrorMessage);
+                        return;
+                    }
+
                     var limit = usage.MonthlyLimit > 0 ? usage.MonthlyLimit : InvoicesPageViewModel.DefaultFreeInvoiceLimit;
                     await UpgradePromptHelper.ShowInvoiceLimitPromptAsync(limit);
                     return;

@@ -917,8 +917,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             if (!usageCheck.CanScan)
             {
                 IsBulkScanning = false;
-                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
-                    usageCheck.ScanCount, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
+                if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+                {
+                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(usageCheck.ErrorMessage);
+                }
+                else
+                {
+                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                        usageCheck.ScanCount, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
+                }
                 return;
             }
 
@@ -1557,10 +1564,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var usageCheck = await _usageService.CheckUsageAsync();
         if (!usageCheck.CanScan)
         {
-            await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
-                usageCheck.ScanCount,
-                usageCheck.MonthlyLimit,
-                usageCheck.ResetsAt);
+            if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+            {
+                await UpgradePromptHelper.ShowUsageCheckFailedAsync(usageCheck.ErrorMessage);
+            }
+            else
+            {
+                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                    usageCheck.ScanCount,
+                    usageCheck.MonthlyLimit,
+                    usageCheck.ResetsAt);
+            }
             return false;
         }
         return true;
@@ -1672,10 +1686,22 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 if (!usageCheck.CanScan)
                 {
                     IsScanning = false;
-                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
-                        usageCheck.ScanCount,
-                        usageCheck.MonthlyLimit,
-                        usageCheck.ResetsAt);
+
+                    // A populated ErrorMessage means the check itself failed (offline or
+                    // server unreachable), not that a real limit was hit. Surface that
+                    // instead of a "0/0" scan-limit prompt.
+                    if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+                    {
+                        HasScanError = true;
+                        ScanErrorMessage = usageCheck.ErrorMessage;
+                    }
+                    else
+                    {
+                        await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(
+                            usageCheck.ScanCount,
+                            usageCheck.MonthlyLimit,
+                            usageCheck.ResetsAt);
+                    }
                     return;
                 }
             }
