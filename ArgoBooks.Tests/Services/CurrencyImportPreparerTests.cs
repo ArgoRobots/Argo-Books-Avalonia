@@ -59,6 +59,51 @@ public class CurrencyImportPreparerTests : IDisposable
         return path;
     }
 
+    /// <summary>A Revenue sheet whose Total cells carry the "¥" glyph in the NUMBER FORMAT, with
+    /// JPY (0 decimals) and CNY (2 decimals) distinguished only by their decimal formatting.</summary>
+    private string BuildYenFormatRevenueSheet()
+    {
+        var path = NewTempXlsx();
+        using var wb = new XLWorkbook();
+        var ws = wb.AddWorksheet("Revenue");
+        ws.Cell(1, 1).Value = "ID";
+        ws.Cell(1, 2).Value = "Date";
+        ws.Cell(1, 3).Value = "Total";
+        ws.Cell(1, 4).Value = "Description";
+
+        // Row 1: yen, formatted with 0 decimals -> "¥95,000"
+        ws.Cell(2, 1).Value = "R1";
+        ws.Cell(2, 2).Value = "2026-01-01";
+        ws.Cell(2, 3).Value = 95000;
+        ws.Cell(2, 3).Style.NumberFormat.Format = "\"¥\"#,##0";
+        ws.Cell(2, 4).Value = "Tokyo sale";
+
+        // Row 2: yuan, formatted with 2 decimals -> "¥1,200.00"
+        ws.Cell(3, 1).Value = "R2";
+        ws.Cell(3, 2).Value = "2026-01-02";
+        ws.Cell(3, 3).Value = 1200;
+        ws.Cell(3, 3).Style.NumberFormat.Format = "\"¥\"#,##0.00";
+        ws.Cell(3, 4).Value = "Beijing sale";
+
+        wb.SaveAs(path);
+        return path;
+    }
+
+    [Fact]
+    public void ScanWorkbook_YenSymbol_DisambiguatedByDecimalFormat_NotAmbiguous()
+    {
+        var path = BuildYenFormatRevenueSheet();
+
+        var scan = CurrencyImportPreparer.ScanWorkbook(path, RevenueAnalysis());
+
+        var rows = scan.Resolved["Revenue"];
+        Assert.Equal("JPY", rows[0]); // "¥"#,##0    (0 decimals) -> Japanese Yen
+        Assert.Equal("CNY", rows[1]); // "¥"#,##0.00 (2 decimals) -> Chinese Yuan
+
+        // ¥ is resolved from the cell's decimal formatting, so it is not left ambiguous.
+        Assert.DoesNotContain(scan.Ambiguities, a => a.Symbol == "¥");
+    }
+
     private static SpreadsheetAnalysisResult RevenueAnalysis() => new()
     {
         Sheets =
@@ -181,10 +226,12 @@ public class CurrencyImportPreparerTests : IDisposable
 
         var scan = CurrencyImportPreparer.ScanWorkbook(path, analysis);
 
-        // The $ (twice) and ¥ symbols are flagged as ambiguous; the user resolves them.
+        // Only "$" is genuinely ambiguous. "¥" is resolved from the cell's 0-decimal format
+        // ("¥"#,##0) to JPY automatically, so it is not flagged for the user.
         Assert.Contains(scan.Ambiguities, a => a.Symbol == "$");
-        Assert.Contains(scan.Ambiguities, a => a.Symbol == "¥");
-        CurrencyImportPreparer.ApplyResolution(scan, new Dictionary<string, string> { ["$"] = "USD", ["¥"] = "JPY" });
+        Assert.DoesNotContain(scan.Ambiguities, a => a.Symbol == "¥");
+        Assert.Equal("JPY", scan.Resolved["Sales"][3]); // R4 (¥95,000) resolved before any prompt
+        CurrencyImportPreparer.ApplyResolution(scan, new Dictionary<string, string> { ["$"] = "USD" });
 
         var data = new CompanyData();
         data.Settings.Localization.Currency = "USD";

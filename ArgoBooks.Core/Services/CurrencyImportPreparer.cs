@@ -154,8 +154,17 @@ public static class CurrencyImportPreparer
 
                 var d = CurrencyCellDetector.Detect(text);
                 if (d.Code != null) { resolved = d.Code; break; }
-                if (d.AmbiguousSymbol != null && pendingSymbol == null)
-                    pendingSymbol = d.AmbiguousSymbol;
+                if (d.AmbiguousSymbol != null)
+                {
+                    // A symbol shared by currencies with different decimal conventions (e.g. "¥" =
+                    // JPY with 0 decimals or CNY with 2) is resolved from the cell's own formatting
+                    // when the displayed decimal count picks exactly one candidate, so it doesn't
+                    // need to prompt and won't default to the wrong currency.
+                    var byFormat = DisambiguateByDecimals(d.AmbiguousSymbol, text);
+                    if (byFormat != null) { resolved = byFormat; break; }
+                    if (pendingSymbol == null)
+                        pendingSymbol = d.AmbiguousSymbol;
+                }
             }
 
             if (resolved != null)
@@ -198,6 +207,50 @@ public static class CurrencyImportPreparer
             map[sheet] = rows;
         }
         rows[ordinal] = code;
+    }
+
+    /// <summary>
+    /// Resolves an ambiguous currency symbol from the cell's displayed decimal count when that
+    /// uniquely identifies one candidate (e.g. "¥95,000" -> JPY (0 dp), "¥1,200.00" -> CNY (2 dp)).
+    /// Returns <c>null</c> when the symbol is unknown, has a single candidate, or more than one
+    /// candidate shares the displayed decimal count (e.g. "$" -> USD/CAD/AUD are all 2 dp).
+    /// </summary>
+    private static string? DisambiguateByDecimals(string symbol, string formattedText)
+    {
+        var candidates = CurrencyInfo.CandidatesForSymbol(symbol);
+        if (candidates.Count < 2)
+            return null;
+
+        var shown = DisplayedDecimalPlaces(formattedText);
+        string? match = null;
+        foreach (var code in candidates)
+        {
+            if (CurrencyInfo.GetByCode(code).DecimalPlaces != shown)
+                continue;
+            if (match != null)
+                return null; // more than one candidate shares this decimal count
+            match = code;
+        }
+        return match;
+    }
+
+    /// <summary>Counts the fractional digits shown in a formatted amount, e.g. "¥1,200.00" -> 2,
+    /// "¥95,000" -> 0. Uses the last '.' as the decimal point (thousands use ',').</summary>
+    private static int DisplayedDecimalPlaces(string text)
+    {
+        var dot = text.LastIndexOf('.');
+        if (dot < 0)
+            return 0;
+
+        var count = 0;
+        for (var i = dot + 1; i < text.Length; i++)
+        {
+            if (char.IsDigit(text[i]))
+                count++;
+            else
+                break;
+        }
+        return count;
     }
 
     /// <summary>

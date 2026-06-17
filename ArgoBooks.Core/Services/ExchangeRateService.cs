@@ -156,6 +156,11 @@ public class ExchangeRateService
     /// Returns the amount unchanged if the target is USD or no cached rate is available.
     /// Shared by the report renderer and accounting data service so the same-currency,
     /// rate-availability, and rounding rules live in one place.
+    /// <para>Tries the exact <paramref name="date"/> first, then falls back to the most recent
+    /// cached rate for the pair (mirroring the importer's <c>ConvertRowAmountToUSD</c>). Without
+    /// that fallback, a historical-dated amount whose exact-date rate was never cached (the import
+    /// flow only seeds today's rate) would be shown as its raw USD value labelled with the company
+    /// currency symbol, instead of being converted.</para>
     /// </summary>
     public decimal ConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date)
     {
@@ -163,6 +168,8 @@ public class ExchangeRateService
             return amountUSD;
 
         var rate = GetExchangeRate(BaseCurrency, toCurrency, date);
+        if (rate <= 0)
+            rate = GetLatestCachedRate(BaseCurrency, toCurrency);
         if (rate <= 0)
             return amountUSD;
 

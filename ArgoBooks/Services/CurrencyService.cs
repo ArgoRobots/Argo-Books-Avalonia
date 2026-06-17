@@ -99,31 +99,20 @@ public static class CurrencyService
     {
         var targetCurrency = CurrentCurrencyCode;
 
-        // If target is the original currency, return exact original
+        // If target is the original currency, return exact original (avoids USD round-trip rounding).
         if (string.Equals(targetCurrency, value.OriginalCurrency, StringComparison.OrdinalIgnoreCase))
         {
             return value.OriginalAmount;
         }
 
-        // If target is USD, return stored USD amount
-        if (string.Equals(targetCurrency, "USD", StringComparison.OrdinalIgnoreCase))
-        {
-            return value.AmountUSD;
-        }
-
-        // Convert from USD to target currency
+        // Convert from USD to target currency. ConvertFromUSD handles the target==USD case and
+        // falls back to the nearest cached rate when the exact RateDate isn't cached, so a
+        // historical row still converts instead of silently displaying the raw USD amount.
         var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService != null)
-        {
-            var rate = exchangeService.GetExchangeRate("USD", targetCurrency, value.RateDate);
-            if (rate > 0)
-            {
-                return Math.Round(value.AmountUSD * rate, 2);
-            }
-        }
+        if (exchangeService == null)
+            return value.AmountUSD;
 
-        // Fallback to USD amount
-        return value.AmountUSD;
+        return exchangeService.ConvertFromUSD(value.AmountUSD, targetCurrency, value.RateDate);
     }
 
     /// <summary>
@@ -135,24 +124,14 @@ public static class CurrencyService
     /// <returns>The amount in the current display currency.</returns>
     public static decimal GetDisplayAmount(decimal amountUSD, DateTime date)
     {
-        var targetCurrency = CurrentCurrencyCode;
-
-        if (string.Equals(targetCurrency, "USD", StringComparison.OrdinalIgnoreCase))
-        {
-            return amountUSD;
-        }
-
+        // ConvertFromUSD handles the target==USD case and falls back to the nearest cached rate
+        // when the exact date isn't cached, so a historical-dated amount still converts to the
+        // company currency instead of silently displaying the raw USD value.
         var exchangeService = ExchangeRateService.Instance;
-        if (exchangeService != null)
-        {
-            var rate = exchangeService.GetExchangeRate("USD", targetCurrency, date);
-            if (rate > 0)
-            {
-                return Math.Round(amountUSD * rate, 2);
-            }
-        }
+        if (exchangeService == null)
+            return amountUSD;
 
-        return amountUSD;
+        return exchangeService.ConvertFromUSD(amountUSD, CurrentCurrencyCode, date);
     }
 
     /// <summary>
