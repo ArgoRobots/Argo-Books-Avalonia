@@ -579,6 +579,17 @@ public class TutorialService
     }
 
     /// <summary>
+    /// Closes the survey overlay without recording an answer or a dismissal. Used when a
+    /// submit failure leaves the user stuck: they can cancel out of the overlay, but the
+    /// dashboard banner keeps prompting (ShouldShowSourceSurvey stays true) until they
+    /// successfully answer or explicitly dismiss it.
+    /// </summary>
+    public void CloseSourceSurveyOverlay()
+    {
+        SourceSurveyVisibilityChanged?.Invoke(this, false);
+    }
+
+    /// <summary>
     /// Persists that the user dismissed the survey without answering. Closes the overlay
     /// and prevents the dashboard banner from showing on future loads.
     /// </summary>

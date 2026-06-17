@@ -70,13 +70,22 @@
                                FontSize="12"
                                TextWrapping="Wrap" />
 
-                    <!-- Actions: Submit only, no dismiss path, the user must answer. -->
-                    <Button Classes="primary"
-                            Content="{loc:Loc 'Submit'}"
-                            Command="{Binding SubmitCommand}"
-                            IsEnabled="{Binding CanSubmit}"
-                            HorizontalAlignment="Right"
-                            Margin="0,4,0,0" />
+                    <!-- Actions: Submit is the only path until a submit failure, after which
+                         a Cancel button appears so the user isn't trapped. Cancelling closes
+                         the overlay but leaves the dashboard banner prompting them to answer. -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="12"
+                                HorizontalAlignment="Right"
+                                Margin="0,4,0,0">
+                        <Button Classes="secondary"
+                                Content="{loc:Loc 'Cancel'}"
+                                Command="{Binding CancelCommand}"
+                                IsVisible="{Binding SubmitError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        <Button Classes="primary"
+                                Content="{loc:Loc 'Submit'}"
+                                Command="{Binding SubmitCommand}"
+                                IsEnabled="{Binding CanSubmit}" />
+                    </StackPanel>
 
                 </StackPanel>
             </Border>
