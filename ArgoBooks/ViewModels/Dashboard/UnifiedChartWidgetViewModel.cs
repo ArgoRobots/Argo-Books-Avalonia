@@ -9,6 +9,7 @@ using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -157,10 +158,31 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         var formattedSum = CurrencyService.FormatFromUSD(totalProfit, DateTime.Now);
         ChartTitle = $"{localizedName}: {formattedSum}";
 
+        // A non-USD display currency shows the pending marker when today's rate isn't cached yet.
+        // Fetch it in the background (if online) and recompute the title so it shows the number.
+        if (formattedSum == CurrencyService.PendingMarker)
+            _ = RefreshProfitTitleWhenRateReadyAsync(totalProfit, localizedName);
+
         XAxes = ChartLoaderService.CreateDateXAxes(dates);
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = dates.Length > 0;
+    }
+
+    private async Task RefreshProfitTitleWhenRateReadyAsync(decimal totalProfitUsd, string localizedName)
+    {
+        try
+        {
+            if (!await CurrencyService.TryWarmTodayRateAsync())
+                return; // offline or server down: leave the pending marker
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+                ChartTitle = $"{localizedName}: {CurrencyService.FormatFromUSD(totalProfitUsd, DateTime.Now)}");
+        }
+        catch
+        {
+            // Best-effort: if the warm/recompute fails, the title keeps the pending marker.
+        }
     }
 
     private void LoadDistributionChart(object result)

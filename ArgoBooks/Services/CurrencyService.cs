@@ -163,6 +163,33 @@ public static class CurrencyService
     }
 
     /// <summary>
+    /// Ensures today's exact-date USD-&gt;display-currency rate is cached, fetching it if missing and
+    /// online. "As of now" aggregate displays (e.g. the profit chart title) convert at today's rate,
+    /// which is never fetched on its own when no transaction is dated today and the currency wasn't
+    /// changed this session, so they show <see cref="PendingMarker"/> until this fills it in. Returns
+    /// <see langword="true"/> only when a fetch actually filled a previously-missing rate, so the
+    /// caller knows to recompute. No-op (returns <see langword="false"/>) for a USD display currency
+    /// or when the rate is already cached.
+    /// </summary>
+    public static async Task<bool> TryWarmTodayRateAsync(CancellationToken cancellationToken = default)
+    {
+        var code = CurrentCurrencyCode;
+        if (string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var svc = ExchangeRateService.Instance;
+        if (svc == null)
+            return false;
+
+        var today = DateTime.Today;
+        if (svc.GetExchangeRate("USD", code, today) > 0)
+            return false; // already cached, nothing pending to fix
+
+        var rate = await svc.GetExchangeRateAsync("USD", code, today, fetchIfMissing: true, cancellationToken: cancellationToken);
+        return rate > 0;
+    }
+
+    /// <summary>
     /// Formats an amount using the original value when the display currency matches
     /// the original currency, avoiding rounding errors from USD round-trip conversion.
     /// </summary>

@@ -12,6 +12,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
@@ -2052,8 +2053,33 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
 
         // Update chart title to include the total profit amount (matches dashboard format)
-        _profitOverTimeTitleText = $"Total profits: {CurrencyService.FormatFromUSD(totalProfit, DateTime.Now)}";
+        var formattedSum = CurrencyService.FormatFromUSD(totalProfit, DateTime.Now);
+        _profitOverTimeTitleText = $"Total profits: {formattedSum}";
         OnPropertyChanged(nameof(ProfitOverTimeTitle));
+
+        // A non-USD display currency shows the pending marker when today's rate isn't cached yet.
+        // Fetch it in the background (if online) and recompute the title so it shows the number.
+        if (formattedSum == CurrencyService.PendingMarker)
+            _ = RefreshProfitTitleWhenRateReadyAsync(totalProfit);
+    }
+
+    private async Task RefreshProfitTitleWhenRateReadyAsync(decimal totalProfitUsd)
+    {
+        try
+        {
+            if (!await CurrencyService.TryWarmTodayRateAsync())
+                return; // offline or server down: leave the pending marker
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                _profitOverTimeTitleText = $"Total profits: {CurrencyService.FormatFromUSD(totalProfitUsd, DateTime.Now)}";
+                OnPropertyChanged(nameof(ProfitOverTimeTitle));
+            });
+        }
+        catch
+        {
+            // Best-effort: if the warm/recompute fails, the title keeps the pending marker.
+        }
     }
 
     private void LoadRevenueVsExpensesChart(CompanyData data)
