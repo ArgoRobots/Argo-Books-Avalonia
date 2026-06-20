@@ -2319,10 +2319,8 @@ public partial class App : Application
                 .Select(g => g.Count() > 1 ? $"{g.Key} (\u00d7{g.Count()})" : g.Key)
                 .ToList();
 
-            // Collect unimported rows from all tiers
-            var allUnimported = (tier1Result?.UnimportedRows ?? new List<UnimportedRow>())
-                .Concat(allSheetResults.SelectMany(r => r.UnimportedRows))
-                .ToList();
+            // Collect unimported rows from every sheet
+            var allUnimported = allSheetResults.SelectMany(r => r.UnimportedRows).ToList();
 
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;

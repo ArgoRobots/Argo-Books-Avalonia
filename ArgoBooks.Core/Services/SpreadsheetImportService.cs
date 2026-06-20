@@ -104,7 +104,6 @@ public class SpreadsheetImportResult
     public int TotalSkipped { get; set; }
     public List<string> Warnings { get; } = [];
     public List<SheetImportResult> SheetResults { get; } = [];
-    public List<UnimportedRow> UnimportedRows { get; } = [];
 }
 
 /// <summary>

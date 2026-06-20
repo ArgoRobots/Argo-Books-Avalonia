@@ -74,40 +74,6 @@ public class MonetaryValue
     public static implicit operator MonetaryValue(decimal amount) => new(amount);
 
     /// <summary>
-    /// Gets the display amount for the specified target currency.
-    /// </summary>
-    /// <param name="targetCurrency">The currency to display in.</param>
-    /// <param name="getExchangeRate">Function to get exchange rate from USD to target currency.</param>
-    /// <returns>The amount in the target currency.</returns>
-    public decimal GetDisplayAmount(string targetCurrency, Func<string, string, DateTime, decimal>? getExchangeRate = null)
-    {
-        // If target is the original currency, return exact original amount
-        if (string.Equals(targetCurrency, OriginalCurrency, StringComparison.OrdinalIgnoreCase))
-        {
-            return OriginalAmount;
-        }
-
-        // If target is USD, return the stored USD amount
-        if (string.Equals(targetCurrency, "USD", StringComparison.OrdinalIgnoreCase))
-        {
-            return AmountUSD;
-        }
-
-        // Convert from USD to target currency
-        if (getExchangeRate != null)
-        {
-            var rate = getExchangeRate("USD", targetCurrency, RateDate);
-            if (rate > 0)
-            {
-                return Math.Round(AmountUSD * rate, 2);
-            }
-        }
-
-        // Fallback: return USD amount if no rate available
-        return AmountUSD;
-    }
-
-    /// <summary>
     /// Exact-date display amount for <paramref name="targetCurrency"/>. Returns the exact original
     /// amount when the target is the original currency; the stored USD when the target is USD;
     /// otherwise converts USD-&gt;target via <paramref name="tryConvert"/>. Returns

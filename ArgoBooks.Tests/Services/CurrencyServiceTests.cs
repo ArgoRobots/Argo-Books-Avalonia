@@ -222,36 +222,6 @@ public class CurrencyServiceTests
         Assert.Equal(date, value.RateDate);
     }
 
-    [Fact]
-    public void MonetaryValue_GetDisplayAmount_OriginalCurrency_ReturnsOriginalAmount()
-    {
-        var value = new MonetaryValue(150m, "CAD", 112.50m, DateTime.UtcNow);
-
-        var displayAmount = value.GetDisplayAmount("CAD");
-
-        Assert.Equal(150m, displayAmount);
-    }
-
-    [Fact]
-    public void MonetaryValue_GetDisplayAmount_USD_ReturnsAmountUSD()
-    {
-        var value = new MonetaryValue(150m, "CAD", 112.50m, DateTime.UtcNow);
-
-        var displayAmount = value.GetDisplayAmount("USD");
-
-        Assert.Equal(112.50m, displayAmount);
-    }
-
-    [Fact]
-    public void MonetaryValue_GetDisplayAmount_DifferentCurrencyNoRate_FallsBackToUSD()
-    {
-        var value = new MonetaryValue(150m, "CAD", 112.50m, DateTime.UtcNow);
-
-        var displayAmount = value.GetDisplayAmount("EUR");
-
-        Assert.Equal(112.50m, displayAmount);
-    }
-
     #endregion
 
     #region ZeroDecimalCurrency Tests
