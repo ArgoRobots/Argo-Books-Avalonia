@@ -1703,8 +1703,11 @@ public partial class App : Application
 
                 _mainWindowViewModel.HideLoading();
 
-                // Check for issues and show validation dialog
-                if (validationResult.HasIssues)
+                // Only interrupt with the issues dialog when there's something the user must act
+                // on (errors or issues that can't be auto-fixed); when everything is auto-fixable,
+                // proceed straight to import. Mirrors the regular import path so the dialog never
+                // opens in an empty "no issues found" state.
+                if (validationResult.Errors.Count > 0 || validationResult.HasNonAutoFixableIssues)
                 {
                     var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
                     var dialogResult = await validationDialog.ShowAsync(validationResult);
