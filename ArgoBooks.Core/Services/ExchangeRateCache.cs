@@ -76,44 +76,6 @@ public class ExchangeRateCache
     }
 
     /// <summary>
-    /// Returns the most recently dated cached rate for a currency pair, ignoring the date. Used as
-    /// a fallback when no rate is cached for an exact transaction date (e.g. historical import rows),
-    /// so an amount is converted at the nearest-known rate instead of being left unconverted.
-    /// Cache keys are "yyyy-MM-dd_FROM_TO", and that date prefix sorts lexically == chronologically.
-    /// </summary>
-    public bool TryGetLatestRate(string fromCurrency, string toCurrency, out decimal rate)
-    {
-        var directSuffix = $"_{fromCurrency.ToUpperInvariant()}_{toCurrency.ToUpperInvariant()}";
-        var inverseSuffix = $"_{toCurrency.ToUpperInvariant()}_{fromCurrency.ToUpperInvariant()}";
-
-        string? bestDate = null;
-        decimal bestValue = 0;
-        bool bestIsInverse = false;
-
-        lock (_lock)
-        {
-            foreach (var kvp in _memoryCache)
-            {
-                var isDirect = kvp.Key.EndsWith(directSuffix, StringComparison.Ordinal);
-                var isInverse = !isDirect && kvp.Key.EndsWith(inverseSuffix, StringComparison.Ordinal);
-                if (!isDirect && !isInverse) continue;
-                if (kvp.Key.Length < 10) continue;
-
-                var datePart = kvp.Key[..10];
-                if (bestDate == null || string.CompareOrdinal(datePart, bestDate) > 0)
-                {
-                    bestDate = datePart;
-                    bestValue = kvp.Value;
-                    bestIsInverse = isInverse;
-                }
-            }
-        }
-
-        rate = bestIsInverse ? (bestValue != 0 ? 1m / bestValue : 0) : bestValue;
-        return bestDate != null && rate > 0;
-    }
-
-    /// <summary>
     /// Stores an exchange rate in the cache.
     /// </summary>
     /// <param name="fromCurrency">Source currency code.</param>
