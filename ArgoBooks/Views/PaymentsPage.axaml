@@ -345,19 +345,28 @@
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowAmountColumn}">
                                             <table:ArgoTableCell.CellContent>
-                                                <TextBlock Text="{Binding AmountFormatted}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           VerticalAlignment="Center"
-                                                           TextTrimming="CharacterEllipsis">
-                                                    <TextBlock.Foreground>
-                                                        <Binding Path="IsRefund">
-                                                            <Binding.Converter>
-                                                                <local:BoolToColorConverter TrueColor="#DC2626" FalseColor="default" />
-                                                            </Binding.Converter>
-                                                        </Binding>
-                                                    </TextBlock.Foreground>
-                                                </TextBlock>
+                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding AmountFormatted}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis">
+                                                        <TextBlock.Foreground>
+                                                            <Binding Path="IsRefund">
+                                                                <Binding.Converter>
+                                                                    <local:BoolToColorConverter TrueColor="#DC2626" FalseColor="default" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </TextBlock.Foreground>
+                                                    </TextBlock>
+                                                    <!-- Explains why the amount shows "Pending" (awaiting the exact-date rate) -->
+                                                    <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                                              Width="13" Height="13"
+                                                              VerticalAlignment="Center"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                                              IsVisible="{Binding IsAmountPending}"
+                                                              ToolTip.Tip="{Binding PendingConversionHint}" />
+                                                </StackPanel>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>
 

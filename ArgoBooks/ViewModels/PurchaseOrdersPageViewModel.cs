@@ -725,6 +725,15 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     private DateTime _updatedAt;
 
     /// <summary>
+    /// True when the total is showing the pending-conversion marker (its display-currency value
+    /// isn't available yet). Drives the info glyph + tooltip next to the "Pending" text.
+    /// </summary>
+    public bool IsTotalPending => TotalDisplay == CurrencyService.PendingMarker;
+
+    /// <summary>Friendly explanation shown in the info tooltip when <see cref="IsTotalPending"/>.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, OrderDate);
+
+    /// <summary>
     /// Gets the status badge color based on status.
     /// </summary>
     public string StatusColor => Status switch

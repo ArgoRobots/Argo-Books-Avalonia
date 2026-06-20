@@ -921,6 +921,15 @@ public partial class PaymentDisplayItem : ObservableObject
         : CurrencyService.FormatWithOriginal(Amount, OriginalCurrency, AmountUSD, Date);
 
     /// <summary>
+    /// True when the amount is showing the pending-conversion marker (its display-currency value
+    /// isn't available yet). Drives the info glyph + tooltip next to the "Pending" text.
+    /// </summary>
+    public bool IsAmountPending => AmountFormatted == CurrencyService.PendingMarker;
+
+    /// <summary>Friendly explanation shown in the info tooltip when <see cref="IsAmountPending"/>.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Amount, OriginalCurrency, Date);
+
+    /// <summary>
     /// Gets whether the amount is negative (refund).
     /// </summary>
     public bool IsRefund => Amount < 0;

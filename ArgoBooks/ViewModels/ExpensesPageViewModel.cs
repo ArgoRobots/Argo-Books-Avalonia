@@ -815,6 +815,9 @@ public partial class ExpenseDisplayItem : ObservableObject
         : CurrencyService.FormatWithOriginal(UnitPrice, OriginalCurrency, UnitPriceUSD, Date);
     public string ReceiptIcon => HasReceipt ? "✓" : "✗";
 
+    /// <summary>Friendly explanation for the info tooltip next to the "Pending" status badge.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, Date);
+
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
     public bool IsLostDamaged => StatusDisplay == "Lost / Damaged";

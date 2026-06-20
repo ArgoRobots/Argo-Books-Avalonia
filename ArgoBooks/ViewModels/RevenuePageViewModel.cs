@@ -849,6 +849,9 @@ public partial class RevenueDisplayItem : ObservableObject
         ? CurrencyService.Format(UnitPrice)
         : CurrencyService.FormatWithOriginal(UnitPrice, OriginalCurrency, UnitPriceUSD, Date);
 
+    /// <summary>Friendly explanation for the info tooltip next to the "Pending" status badge.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, Date);
+
     public string CustomerInitials
     {
         get

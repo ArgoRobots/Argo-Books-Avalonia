@@ -322,10 +322,20 @@
                                                         Padding="8,4"
                                                         CornerRadius="4"
                                                         Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusBackground}}">
-                                                    <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
-                                                               FontSize="12"
-                                                               FontWeight="Medium"
-                                                               Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusForeground}}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
+                                                                   FontSize="12"
+                                                                   FontWeight="Medium"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusForeground}}" />
+                                                        <!-- Explains the "Pending" conversion status (awaiting the exact-date rate) -->
+                                                        <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                                                  Width="12" Height="12"
+                                                                  VerticalAlignment="Center"
+                                                                  Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusForeground}}"
+                                                                  IsVisible="{Binding IsPendingConversion}"
+                                                                  ToolTip.Tip="{Binding PendingConversionHint}" />
+                                                    </StackPanel>
                                                 </Border>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>

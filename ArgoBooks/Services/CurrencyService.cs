@@ -51,6 +51,31 @@ public static class CurrencyService
     public const string PendingMarker = "Pending";
 
     /// <summary>
+    /// Builds a friendly, per-row explanation for the info tooltip shown next to a
+    /// <see cref="PendingMarker"/>: the amount can't be shown in the display currency yet because the
+    /// exact-date exchange rate isn't available. Future-dated rows (the common case) get
+    /// date-arrives wording; a past date whose rate simply hasn't been fetched gets rate-available
+    /// wording. Both promise an automatic conversion to the default currency, so the user never
+    /// thinks the value is lost. See docs/Calculations.md (Rule 3a).
+    /// </summary>
+    public static string BuildPendingConversionHint(decimal originalAmount, string originalCurrency, DateTime date)
+    {
+        var original = CurrencyInfo.GetByCode(originalCurrency).Format(originalAmount);
+        var defaultCode = CurrentCurrencyCode;
+        var dateText = date.ToString("MMM d, yyyy");
+
+        if (date.Date > DateTime.Today)
+        {
+            return $"This amount is dated {dateText}, which is in the future. {original} will "
+                 + $"convert to your default currency ({defaultCode}) automatically using that "
+                 + "day's exchange rate once the date arrives.";
+        }
+
+        return $"{original} will convert to your default currency ({defaultCode}) automatically as "
+             + $"soon as the exchange rate for {dateText} is available.";
+    }
+
+    /// <summary>
     /// Exact-date USD-&gt;display-currency conversion. Returns <see langword="false"/> when the rate
     /// for <paramref name="date"/> is unavailable, so formatters can show <see cref="PendingMarker"/>
     /// instead of a wrong number. Returns the USD amount unchanged only when no exchange service is
