@@ -44,6 +44,12 @@ public partial class ProductSalesRow : ObservableObject
     /// <summary>True when the product has a SKU worth displaying.</summary>
     public bool HasSku => !string.IsNullOrEmpty(Sku);
 
+    /// <summary>
+    /// Combined "Name · SKU" label shown in the product picker. Also the text the
+    /// picker searches against, so typing either the name or the SKU finds the row.
+    /// </summary>
+    public string DisplayLabel => HasSku ? $"{ProductName} · {Sku}" : ProductName;
+
     /// <summary>Highlights the row when it is the one shown in the detail panel.</summary>
     [ObservableProperty]
     private bool _isSelected;

@@ -65,21 +65,6 @@ public partial class AnalyticsPage : UserControl
         }
     }
 
-    /// <summary>
-    /// Keeps the Product Profitability table's columns sized to the available width.
-    /// </summary>
-    private void OnProductsHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        if (DataContext is AnalyticsPageViewModel vm && e.WidthChanged)
-            vm.ProductsResponsiveHeader.HeaderWidth = e.NewSize.Width;
-    }
-
-    private void OnProductsTableSizeChanged(object? sender, SizeChangedEventArgs e)
-    {
-        if (DataContext is AnalyticsPageViewModel vm && e.WidthChanged)
-            vm.ProductColumns.SetAvailableWidth(e.NewSize.Width);
-    }
-
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
@@ -139,7 +124,7 @@ public partial class AnalyticsPage : UserControl
         // Only kick once per visible transition, and after layout settles, so the chart
         // has a real size before LiveCharts recomputes its geometry.
         if (_renderedPieCharts.Add(pie))
-            Dispatcher.UIThread.Post(() => pie.CoreChart?.Update(new ChartUpdateParams()),
+            Dispatcher.UIThread.Post(() => pie.CoreChart.Update(new ChartUpdateParams()),
                 DispatcherPriority.Background);
     }
 

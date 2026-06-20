@@ -85,7 +85,14 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="text">The title text.</param>
     /// <returns>A configured LabelVisual for use as a chart title.</returns>
-    public static LabelVisual CreateChartTitle(string text)
+    public static LabelVisual CreateChartTitle(string text) =>
+        CreateChartTitle(text, new Padding(15, 12));
+
+    /// <summary>
+    /// Creates a chart title with a custom padding. Pass a smaller vertical padding
+    /// to let the title sit higher and give the plot area more room.
+    /// </summary>
+    public static LabelVisual CreateChartTitle(string text, Padding padding)
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
@@ -99,7 +106,7 @@ public class ChartLoaderService
         {
             Text = translatedText,
             TextSize = 16,
-            Padding = new Padding(15, 12),
+            Padding = padding,
             Paint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
         };
     }

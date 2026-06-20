@@ -117,36 +117,20 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         if (IsRefundsTabSelected) RefreshRefundMetrics();
 
         // Make sure a product is selected when arriving on the Products tab so
-        // the detail panel is populated even if the first load raced the tab.
+        // the detail chart is populated even if the first load raced the tab.
         if (IsProductsTabSelected && SelectedProduct == null)
-            SelectedProduct = _filteredSortedProducts.FirstOrDefault();
+            SelectedProduct = Products.FirstOrDefault();
     }
 
     #endregion
 
     #region Products Tab
 
-    private readonly ProductSalesTableColumnWidths _productColumns = new();
-    private List<ProductSalesRow> _allProductRows = [];
-    private List<ProductSalesRow> _filteredSortedProducts = [];
-
-    /// <summary>Column width manager for the Sales by Product table.</summary>
-    public ProductSalesTableColumnWidths ProductColumns => _productColumns;
-
-    /// <summary>Responsive header sizing for the Sales by Product table.</summary>
-    public ResponsiveHeaderHelper ProductsResponsiveHeader { get; } = new();
-
-    /// <summary>The product rows currently shown (after search + sort).</summary>
+    /// <summary>
+    /// All products sold in the period, ordered by revenue (highest first).
+    /// Backs the product picker; the first entry is the default selection.
+    /// </summary>
     public ObservableCollection<ProductSalesRow> Products { get; } = [];
-
-    [ObservableProperty]
-    private string _productSearchQuery = string.Empty;
-
-    [ObservableProperty]
-    private string _productSortColumn = "Revenue";
-
-    [ObservableProperty]
-    private SortDirection _productSortDirection = SortDirection.Descending;
 
     [ObservableProperty]
     private bool _hasProductData;
@@ -163,20 +147,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private string _productsSoldCount = string.Empty;
 
-    // Pagination for the product table.
     [ObservableProperty]
-    private int _productCurrentPage = 1;
-
-    [ObservableProperty]
-    private int _productTotalPages = 1;
-
-    [ObservableProperty]
-    private int _productPageSize = 10;
-
-    [ObservableProperty]
-    private string _productPaginationText = string.Empty;
-
-    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SelectPreviousProductCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SelectNextProductCommand))]
     private ProductSalesRow? _selectedProduct;
 
     // Per-product detail trend chart.
@@ -192,89 +165,28 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private bool _hasProductTrendData;
 
-    /// <summary>True when a product row is selected (drives the detail panel).</summary>
+    /// <summary>True when a product is selected (drives the detail chart).</summary>
     public bool HasSelectedProduct => SelectedProduct != null;
 
+    // Tight vertical padding keeps the title near the top of the card so the plot
+    // gets as much height as possible (the card already names the product above).
     public LabelVisual ProductRevenueTrendTitle =>
-        ChartLoaderService.CreateChartTitle(ChartDataType.ProductRevenueTrend.GetDisplayName());
-
-    private RelayCommand<string>? _productSortByCommand;
-
-    /// <summary>Sorts the product table by a column; toggles direction on repeat.</summary>
-    public ICommand ProductSortByCommand => _productSortByCommand ??= new RelayCommand<string>(ProductSortBy);
-
-    private void ProductSortBy(string? column)
-    {
-        if (string.IsNullOrEmpty(column))
-            return;
-
-        if (ProductSortColumn == column)
-        {
-            ProductSortDirection = ProductSortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            ProductSortColumn = column;
-            ProductSortDirection = SortDirection.Descending;
-        }
-
-        ProductCurrentPage = 1;
-        ApplyProductFilterAndSort();
-    }
-
-    partial void OnProductSearchQueryChanged(string value)
-    {
-        ProductCurrentPage = 1;
-        ApplyProductFilterAndSort();
-    }
-
-    partial void OnProductPageSizeChanged(int value)
-    {
-        ProductCurrentPage = 1;
-        ApplyProductFilterAndSort();
-    }
-
-    partial void OnProductCurrentPageChanged(int value) => PageProducts();
-
-    [RelayCommand]
-    private void GoToProductPage(int page)
-    {
-        if (page >= 1 && page <= ProductTotalPages && page != ProductCurrentPage)
-            ProductCurrentPage = page;
-    }
-
-    [RelayCommand]
-    private void ProductPreviousPage()
-    {
-        if (ProductCurrentPage > 1)
-            ProductCurrentPage--;
-    }
-
-    [RelayCommand]
-    private void ProductNextPage()
-    {
-        if (ProductCurrentPage < ProductTotalPages)
-            ProductCurrentPage++;
-    }
+        ChartLoaderService.CreateChartTitle(
+            ChartDataType.ProductRevenueTrend.GetDisplayName(),
+            new LiveChartsCore.Drawing.Padding(15, 2));
 
     /// <summary>
     /// Aggregates per-product sales for the current date range (cash-basis,
-    /// matching the other analytics tabs) and refreshes the table + KPI cards.
+    /// matching the other analytics tabs) and refreshes the picker list + KPI cards.
     /// </summary>
     private void LoadProductSales(CompanyData data)
     {
         var displayDate = EndDate;
         var rows = ProductSalesService.GetProductSales(data, StartDate, EndDate, cashBasis: true)
             .Select(d => new ProductSalesRow(d, displayDate))
+            .OrderByDescending(r => r.RevenueUSD)
             .ToList();
 
-        _allProductRows = rows;
         HasProductData = rows.Count > 0;
 
         var totalRevenue = rows.Sum(r => r.RevenueUSD);
@@ -286,66 +198,21 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         AvgProductSalePrice = CurrencyService.FormatFromUSD(avgPrice, displayDate);
         ProductsSoldCount = rows.Count.ToString();
 
-        // Preserve the current selection if its product still exists; otherwise
-        // auto-select the top row so the detail panel is populated on arrival.
-        var previouslySelectedId = SelectedProduct?.ProductId;
-
-        ApplyProductFilterAndSort();
-
-        SelectedProduct =
-            (previouslySelectedId != null ? _filteredSortedProducts.FirstOrDefault(r => r.ProductId == previouslySelectedId) : null)
-            ?? _filteredSortedProducts.FirstOrDefault();
-    }
-
-    private void ApplyProductFilterAndSort()
-    {
-        IEnumerable<ProductSalesRow> query = _allProductRows;
-
-        if (!string.IsNullOrWhiteSpace(ProductSearchQuery))
-        {
-            var q = ProductSearchQuery.Trim();
-            query = query.Where(r =>
-                r.ProductName.Contains(q, StringComparison.OrdinalIgnoreCase) ||
-                r.Sku.Contains(q, StringComparison.OrdinalIgnoreCase));
-        }
-
-        _filteredSortedProducts = query.ApplySort(
-            ProductSortColumn,
-            ProductSortDirection,
-            new Dictionary<string, Func<ProductSalesRow, object?>>
-            {
-                ["Product"] = r => r.ProductName,
-                ["Units"] = r => r.UnitsSold,
-                ["Revenue"] = r => r.RevenueUSD,
-                ["AvgPrice"] = r => r.AvgSalePriceUSD
-            },
-            r => r.RevenueUSD);
-
-        ProductTotalPages = Math.Max(1, (int)Math.Ceiling((double)_filteredSortedProducts.Count / ProductPageSize));
-        if (ProductCurrentPage > ProductTotalPages)
-            ProductCurrentPage = ProductTotalPages;  // re-pages via OnProductCurrentPageChanged
-        else
-            PageProducts();
-    }
-
-    /// <summary>Fills the visible <see cref="Products"/> page from the filtered, sorted set.</summary>
-    private void PageProducts()
-    {
-        ProductPaginationText = PaginationTextHelper.FormatPaginationText(
-            _filteredSortedProducts.Count, ProductCurrentPage, ProductPageSize, ProductTotalPages, "product");
-
         Products.Clear();
-        foreach (var row in _filteredSortedProducts.Skip((ProductCurrentPage - 1) * ProductPageSize).Take(ProductPageSize))
+        foreach (var row in rows)
             Products.Add(row);
+
+        // Keep the current selection if its product still exists; otherwise
+        // auto-select the highest-revenue product so the chart is never empty.
+        var previouslySelectedId = SelectedProduct?.ProductId;
+        SelectedProduct =
+            (previouslySelectedId != null ? rows.FirstOrDefault(r => r.ProductId == previouslySelectedId) : null)
+            ?? rows.FirstOrDefault();
     }
 
     partial void OnSelectedProductChanged(ProductSalesRow? value)
     {
         OnPropertyChanged(nameof(HasSelectedProduct));
-
-        foreach (var row in _allProductRows)
-            row.IsSelected = ReferenceEquals(row, value);
-
         ReloadProductRevenueTrend();
     }
 
@@ -373,9 +240,29 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         HasProductTrendData = series.Count > 0;
     }
 
-    /// <summary>Sets the table selection (invoked by row clicks in the view).</summary>
-    [RelayCommand]
-    private void SelectProduct(ProductSalesRow? row) => SelectedProduct = row;
+    /// <summary>Steps the picker to the previous product in the list.</summary>
+    [RelayCommand(CanExecute = nameof(CanSelectPreviousProduct))]
+    private void SelectPreviousProduct()
+    {
+        var index = SelectedProduct != null ? Products.IndexOf(SelectedProduct) : -1;
+        if (index > 0)
+            SelectedProduct = Products[index - 1];
+    }
+
+    private bool CanSelectPreviousProduct() =>
+        SelectedProduct != null && Products.IndexOf(SelectedProduct) > 0;
+
+    /// <summary>Steps the picker to the next product in the list.</summary>
+    [RelayCommand(CanExecute = nameof(CanSelectNextProduct))]
+    private void SelectNextProduct()
+    {
+        var index = SelectedProduct != null ? Products.IndexOf(SelectedProduct) : -1;
+        if (index >= 0 && index < Products.Count - 1)
+            SelectedProduct = Products[index + 1];
+    }
+
+    private bool CanSelectNextProduct() =>
+        SelectedProduct != null && Products.IndexOf(SelectedProduct) < Products.Count - 1;
 
     #endregion
 
