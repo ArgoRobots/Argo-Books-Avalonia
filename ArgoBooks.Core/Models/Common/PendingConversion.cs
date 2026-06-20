@@ -13,7 +13,9 @@ public class PendingConversion
     public string TransactionId { get; set; } = "";
 
     /// <summary>
-    /// The type of transaction: "Revenue" or "Expense".
+    /// The type of record: "Revenue", "Expense", "Payment", or "PurchaseOrder". For Payment and
+    /// PurchaseOrder only <see cref="Total"/> is used (the single amount to convert); the other
+    /// amount fields stay 0.
     /// </summary>
     [JsonPropertyName("transactionType")]
     public string TransactionType { get; set; } = "";

@@ -1014,9 +1014,20 @@ public class SpreadsheetImportService
         if (code != null)
         {
             payment.OriginalCurrency = code;
-            if (!TryConvertRowAmountToUSD(payment.Amount, code, payment.Date, out var amtUsd))
-                _errorLogger?.LogWarning($"Unpriceable payment row {payment.Id} ({code} {payment.Date:yyyy-MM-dd}); USD set to 0", "Import");
-            payment.AmountUSD = amtUsd;
+            if (TryConvertRowAmountToUSD(payment.Amount, code, payment.Date, out var amtUsd))
+            {
+                payment.AmountUSD = amtUsd;
+                payment.IsPendingConversion = false;
+            }
+            else
+            {
+                // Unpriceable (future-dated, or a gate miss): keep the native amount, defer the USD
+                // value, and enqueue so PendingConversionService converts it at the exact date later
+                // instead of leaving a permanent 0. Mirrors the Revenue/Expense path.
+                payment.AmountUSD = 0m;
+                payment.IsPendingConversion = true;
+                EnqueueImportPendingPayment(data, payment);
+            }
         }
         else
         {
@@ -1062,9 +1073,19 @@ public class SpreadsheetImportService
         if (code != null)
         {
             po.OriginalCurrency = code;
-            if (!TryConvertRowAmountToUSD(po.Total, code, po.OrderDate, out var poUsd))
-                _errorLogger?.LogWarning($"Unpriceable purchase order {po.Id} ({code} {po.OrderDate:yyyy-MM-dd}); USD set to 0", "Import");
-            po.TotalUSD = poUsd;
+            if (TryConvertRowAmountToUSD(po.Total, code, po.OrderDate, out var poUsd))
+            {
+                po.TotalUSD = poUsd;
+                po.IsPendingConversion = false;
+            }
+            else
+            {
+                // Unpriceable (future-dated, or a gate miss): defer the USD value and enqueue so it
+                // converts at the exact date later instead of staying 0. Mirrors the Revenue/Expense path.
+                po.TotalUSD = 0m;
+                po.IsPendingConversion = true;
+                EnqueueImportPendingPurchaseOrder(data, po);
+            }
         }
         else
         {
@@ -1158,6 +1179,42 @@ public class SpreadsheetImportService
             Discount = txn.Discount,
             Fee = txn.Fee,
             UnitPrice = txn.UnitPrice
+        });
+    }
+
+    /// <summary>
+    /// Enqueues an unpriceable imported Payment so the background <see cref="PendingConversionService"/>
+    /// converts its amount at the exact payment date later. Only the single amount is carried.
+    /// </summary>
+    private static void EnqueueImportPendingPayment(CompanyData data, Payment payment)
+    {
+        if (data.PendingConversions.Any(p => p.TransactionId == payment.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = payment.Id,
+            TransactionType = "Payment",
+            OriginalCurrency = payment.OriginalCurrency,
+            TransactionDate = payment.Date,
+            Total = payment.Amount
+        });
+    }
+
+    /// <summary>
+    /// Enqueues an unpriceable imported PurchaseOrder so the background <see cref="PendingConversionService"/>
+    /// converts its total at the exact order date later. Only the single amount is carried.
+    /// </summary>
+    private static void EnqueueImportPendingPurchaseOrder(CompanyData data, PurchaseOrder po)
+    {
+        if (data.PendingConversions.Any(p => p.TransactionId == po.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = po.Id,
+            TransactionType = "PurchaseOrder",
+            OriginalCurrency = po.OriginalCurrency,
+            TransactionDate = po.OrderDate,
+            Total = po.Total
         });
     }
 

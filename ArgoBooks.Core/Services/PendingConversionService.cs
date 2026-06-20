@@ -141,12 +141,8 @@ public class PendingConversionService
                 }
             }
 
-            // Remove entries for transactions that have already been converted
-            _queue.RemoveAll(p =>
-            {
-                var transaction = FindTransaction(companyData, p.TransactionId, p.TransactionType);
-                return transaction != null && !transaction.IsPendingConversion;
-            });
+            // Remove entries for records that have already been converted
+            _queue.RemoveAll(p => IsConverted(companyData, p));
 
             // Sync back to CompanyData
             companyData.PendingConversions.Clear();
@@ -190,24 +186,9 @@ public class PendingConversionService
                 if (rate <= 0)
                     continue; // Exact-date rate unavailable (offline, or future-dated); stay pending
 
-                // Find the transaction and apply the conversion
-                var transaction = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);
-                if (transaction == null)
-                {
-                    // Transaction was deleted, remove from queue
-                    processed.Add(entry);
-                    continue;
-                }
-
-                // Apply USD conversion
-                transaction.TotalUSD = Math.Round(entry.Total * rate, 2);
-                transaction.TaxAmountUSD = Math.Round(entry.TaxAmount * rate, 2);
-                transaction.ShippingCostUSD = Math.Round(entry.ShippingCost * rate, 2);
-                transaction.DiscountUSD = Math.Round(entry.Discount * rate, 2);
-                transaction.FeeUSD = Math.Round(entry.Fee * rate, 2);
-                transaction.UnitPriceUSD = Math.Round(entry.UnitPrice * rate, 2);
-                transaction.IsPendingConversion = false;
-
+                // Apply the conversion to the matching record (a no-op if it was deleted since it
+                // was enqueued); either way the entry is done and leaves the queue.
+                ApplyConversion(companyData, entry, rate);
                 processed.Add(entry);
             }
             catch (Exception ex)
@@ -248,6 +229,60 @@ public class PendingConversionService
             _ => null
         };
     }
+
+    /// <summary>
+    /// Applies the exact-date conversion to the record named by <paramref name="entry"/>, at the
+    /// supplied <paramref name="rate"/> (original currency -> USD). Handles Revenue/Expense (every
+    /// money field) and Payment/PurchaseOrder (the single amount). No-ops when the record was deleted
+    /// since it was enqueued. Rounding matches the import-time conversion so an immediately-converted
+    /// row and a later-healed row are identical.
+    /// </summary>
+    private static void ApplyConversion(CompanyData companyData, PendingConversion entry, decimal rate)
+    {
+        switch (entry.TransactionType)
+        {
+            case "Revenue":
+            case "Expense":
+                var txn = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);
+                if (txn == null) return;
+                txn.TotalUSD = Math.Round(entry.Total * rate, 2);
+                txn.TaxAmountUSD = Math.Round(entry.TaxAmount * rate, 2);
+                txn.ShippingCostUSD = Math.Round(entry.ShippingCost * rate, 2);
+                txn.DiscountUSD = Math.Round(entry.Discount * rate, 2);
+                txn.FeeUSD = Math.Round(entry.Fee * rate, 2);
+                txn.UnitPriceUSD = Math.Round(entry.UnitPrice * rate, 2);
+                txn.IsPendingConversion = false;
+                return;
+
+            case "Payment":
+                var payment = companyData.Payments.FirstOrDefault(p => p.Id == entry.TransactionId);
+                if (payment == null) return;
+                payment.AmountUSD = Math.Round(entry.Total * rate, 2);
+                payment.IsPendingConversion = false;
+                return;
+
+            case "PurchaseOrder":
+                var po = companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entry.TransactionId);
+                if (po == null) return;
+                po.TotalUSD = Math.Round(entry.Total * rate, 2);
+                po.IsPendingConversion = false;
+                return;
+        }
+    }
+
+    /// <summary>
+    /// True when the record named by <paramref name="entry"/> still exists and is no longer pending,
+    /// so its queue entry can be dropped. A deleted record returns false (kept; the process pass
+    /// removes it). Mirrors the type set handled by <see cref="ApplyConversion"/>.
+    /// </summary>
+    private static bool IsConverted(CompanyData companyData, PendingConversion entry) => entry.TransactionType switch
+    {
+        "Revenue" => companyData.Revenues.FirstOrDefault(r => r.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "Expense" => companyData.Expenses.FirstOrDefault(e => e.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "Payment" => companyData.Payments.FirstOrDefault(p => p.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "PurchaseOrder" => companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entry.TransactionId) is { IsPendingConversion: false },
+        _ => false
+    };
 
     private async Task SaveToDiskAsync()
     {

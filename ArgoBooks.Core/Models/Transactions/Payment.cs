@@ -118,12 +118,23 @@ public class Payment
     public decimal AmountUSD { get; set; }
 
     /// <summary>
-    /// Gets the effective amount in USD. For USD payments (including legacy data), returns Amount directly.
-    /// For non-USD payments, returns the converted AmountUSD value.
+    /// True when this payment was imported/saved without a USD conversion because its exact-date
+    /// rate was unavailable (future-dated, or a gate miss). While pending, <see cref="EffectiveAmountUSD"/>
+    /// reports 0 (Calculations.md §3) and <c>PendingConversionService</c> fills in <see cref="AmountUSD"/>
+    /// once that date's rate is fetchable. Defaults to false for backward compatibility.
+    /// </summary>
+    [JsonPropertyName("isPendingConversion")]
+    public bool IsPendingConversion { get; set; }
+
+    /// <summary>
+    /// Gets the effective amount in USD. Returns 0 while the conversion is pending (per Calculations.md
+    /// §3, so a not-yet-converted row never contaminates a USD aggregate). For USD payments (including
+    /// legacy data), returns Amount directly; for non-USD payments, returns the converted AmountUSD.
     /// </summary>
     [JsonIgnore]
     public decimal EffectiveAmountUSD =>
-        string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? Amount : AmountUSD;
+        IsPendingConversion ? 0m
+        : string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? Amount : AmountUSD;
 
     #endregion
 
