@@ -234,22 +234,28 @@ public static class CurrencyImportPreparer
         return match;
     }
 
-    /// <summary>Counts the fractional digits shown in a formatted amount, e.g. "¥1,200.00" -> 2,
-    /// "¥95,000" -> 0. Uses the last '.' as the decimal point (thousands use ',').</summary>
+    /// <summary>Counts the fractional digits shown in a formatted amount, handling both US
+    /// ("¥1,200.00" -> 2) and European ("¥1.200,00" -> 2) grouping. The decimal separator is
+    /// whichever of '.'/',' appears last; with only one separator present, a 3-digit run is
+    /// treated as a thousands group ("¥95,000" -> 0) rather than a fraction.</summary>
     private static int DisplayedDecimalPlaces(string text)
     {
-        var dot = text.LastIndexOf('.');
-        if (dot < 0)
+        var lastDot = text.LastIndexOf('.');
+        var lastComma = text.LastIndexOf(',');
+        var sep = Math.Max(lastDot, lastComma);
+        if (sep < 0)
             return 0;
 
         var count = 0;
-        for (var i = dot + 1; i < text.Length; i++)
-        {
-            if (char.IsDigit(text[i]))
-                count++;
-            else
-                break;
-        }
+        for (var i = sep + 1; i < text.Length && char.IsDigit(text[i]); i++)
+            count++;
+
+        // When only one separator type is present we can't tell a thousands group from a
+        // fraction; a run of exactly 3 digits is far more likely a thousands group.
+        var oneSeparatorOnly = (lastDot < 0) ^ (lastComma < 0);
+        if (oneSeparatorOnly && count == 3)
+            return 0;
+
         return count;
     }
 
