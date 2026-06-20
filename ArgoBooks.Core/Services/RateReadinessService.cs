@@ -24,7 +24,6 @@ public sealed record RateReadiness(
 /// </summary>
 public sealed class RateReadinessService
 {
-    private const string Host = "https://argorobots.com";
     private const string ProbeCurrency = "EUR"; // any always-present currency confirms a date is cached
 
     private readonly ExchangeRateService _rates;
@@ -72,7 +71,7 @@ public sealed class RateReadinessService
     {
         if (!await _connectivity.IsInternetAvailableAsync(ct))
             return RateUnavailableReason.NoInternet;
-        if (!await _connectivity.IsHostReachableAsync(Host, ct))
+        if (!await _connectivity.IsHostReachableAsync(ApiConfig.BaseUrl, ct))
             return RateUnavailableReason.ServerUnreachable;
         return RateUnavailableReason.Unknown;
     }
