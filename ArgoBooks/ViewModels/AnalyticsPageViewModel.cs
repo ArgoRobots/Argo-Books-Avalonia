@@ -133,9 +133,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public ObservableCollection<ProductSalesRow> Products { get; } = [];
 
     [ObservableProperty]
-    private bool _hasProductData;
-
-    [ObservableProperty]
     private string _totalProductRevenue = string.Empty;
 
     [ObservableProperty]
@@ -165,9 +162,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private bool _hasProductTrendData;
 
-    /// <summary>True when a product is selected (drives the detail chart).</summary>
-    public bool HasSelectedProduct => SelectedProduct != null;
-
     // Tight vertical padding keeps the title near the top of the card so the plot
     // gets as much height as possible (the card already names the product above).
     public LabelVisual ProductRevenueTrendTitle =>
@@ -186,8 +180,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             .Select(d => new ProductSalesRow(d, displayDate))
             .OrderByDescending(r => r.RevenueUSD)
             .ToList();
-
-        HasProductData = rows.Count > 0;
 
         var totalRevenue = rows.Sum(r => r.RevenueUSD);
         var totalUnits = rows.Sum(r => r.UnitsSold);
@@ -212,7 +204,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     partial void OnSelectedProductChanged(ProductSalesRow? value)
     {
-        OnPropertyChanged(nameof(HasSelectedProduct));
         ReloadProductRevenueTrend();
     }
 
@@ -1340,7 +1331,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         nameof(LossesOverTimeTitle), nameof(LossReasonsTitle), nameof(FinancialImpactOfLossesTitle),
         nameof(LossesByCategoryTitle), nameof(LossesByProductTitle), nameof(ExpenseVsRevenueLossesTitle),
         nameof(TaxCollectedVsPaidTitle), nameof(TaxLiabilityTrendTitle), nameof(TaxByCategoryTitle),
-        nameof(TaxRateDistributionTitle), nameof(TaxByProductTitle), nameof(ExpenseVsRevenueTaxTitle)
+        nameof(TaxRateDistributionTitle), nameof(TaxByProductTitle), nameof(ExpenseVsRevenueTaxTitle),
+        nameof(ProductRevenueTrendTitle)
     ];
 
     /// <summary>
@@ -1850,8 +1842,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LoadTaxRateDistributionChart(data);
         LoadExpenseVsRevenueTaxChart(data);
 
-        // Products detail chart (cartesian) reacts to chart-style changes too
-        ReloadProductRevenueTrend();
+        // Products detail chart (cartesian) reacts to chart-style changes too. On a data/filter
+        // change LoadProductSales (below) reassigns SelectedProduct and reloads it, so only the
+        // style-only path needs an explicit reload here (avoids reloading the trend twice).
+        if (styleChangeOnly)
+            ReloadProductRevenueTrend();
 
         // Pie charts and geo map are style-independent, only reload on data/filter changes
         if (!styleChangeOnly)

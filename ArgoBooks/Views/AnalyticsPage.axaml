@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:enums="using:ArgoBooks.Core.Enums"
@@ -2193,23 +2192,6 @@
     </Panel>
 
     <UserControl.Styles>
-        <!-- Sales by Product table rows -->
-        <Style Selector="Button.product-row">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.product-row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource TableRowHoverBrush}" />
-        </Style>
-        <!-- Selected row: theme-aware tint plus a primary left accent -->
-        <Style Selector="Button.product-row Border.selected">
-            <Setter Property="Background" Value="{DynamicResource TableRowSelectedBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="3,0,0,1" />
-        </Style>
-
         <!-- TabControl - page tabs styling -->
         <Style Selector="TabControl.page-tabs">
             <Setter Property="Background" Value="Transparent" />

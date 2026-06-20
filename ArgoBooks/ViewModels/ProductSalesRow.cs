@@ -1,16 +1,15 @@
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Services;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// Row in the Analytics "Sales by Product" table. Wraps a
+/// A product in the Analytics "Sales by Product" picker. Wraps a
 /// <see cref="ProductSalesData"/> and exposes display-currency strings for
 /// binding, plus the raw USD figures for sorting. Currency conversion happens
 /// here, at the presentation boundary (see docs/Calculations.md §13).
 /// </summary>
-public partial class ProductSalesRow : ObservableObject
+public class ProductSalesRow
 {
     public ProductSalesRow(ProductSalesData data, DateTime displayDate)
     {
@@ -49,8 +48,4 @@ public partial class ProductSalesRow : ObservableObject
     /// picker searches against, so typing either the name or the SKU finds the row.
     /// </summary>
     public string DisplayLabel => HasSku ? $"{ProductName} · {Sku}" : ProductName;
-
-    /// <summary>Highlights the row when it is the one shown in the detail panel.</summary>
-    [ObservableProperty]
-    private bool _isSelected;
 }
