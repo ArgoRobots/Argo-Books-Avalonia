@@ -206,6 +206,10 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         if (App.NavigationService != null)
             App.NavigationService.Navigated += OnNavigated;
 
+        // Refresh totals + row displays when the display currency changes (mirrors the Payments page),
+        // so the currency-aware TotalDisplay/TotalValue recompute instead of showing stale amounts.
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
+
         // Subscribe to modal events to refresh when orders are saved
         if (App.PurchaseOrdersModalsViewModel != null)
         {
@@ -232,6 +236,16 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     {
         SearchQuery = null;
         CurrentPage = 1;
+        FilterOrders();
+    }
+
+    /// <summary>
+    /// Refreshes the total stat and the per-row displays when the display currency changes, so the
+    /// currency-aware TotalValue/TotalDisplay reconvert to the new currency.
+    /// </summary>
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        UpdateStatistics();
         FilterOrders();
     }
 
@@ -305,7 +319,10 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         TotalOrders = _allOrders.Count;
         PendingOrders = _allOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
         OnOrderCount = _allOrders.Count(o => o.Status == PurchaseOrderStatus.OnOrder || o.Status == PurchaseOrderStatus.Sent);
-        TotalValue = $"${_allOrders.Sum(o => o.Total):N0}";
+        // Sum in USD (the normalized base) so mixed-currency POs aren't added as if same-currency,
+        // then render in the display currency at today's rate. Pending POs contribute 0 until they
+        // heal (Calculations.md §3). The old "$" + raw Total sum added EUR/GBP/USD numerals together.
+        TotalValue = CurrencyService.FormatWholeNumberFromUSD(_allOrders.Sum(o => o.EffectiveTotalUSD), DateTime.Today);
     }
 
     /// <summary>
@@ -423,7 +440,14 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 Subtotal = order.Subtotal,
                 ShippingCost = order.ShippingCost,
                 Total = order.Total,
-                TotalDisplay = CurrencyService.Format(order.Total),
+                // Currency-aware like the Payments list: convert the order's original-currency total
+                // to the display currency at its order date, and show "Pending" when that exact-date
+                // rate is unavailable (a future-dated PO whose conversion hasn't healed yet). Using
+                // the currency-blind Format(Total) here stamped the display symbol on the raw native
+                // number, so a foreign PO showed an unconverted amount and never showed pending.
+                TotalDisplay = CurrencyService.FormatWithOriginal(
+                    order.Total, order.OriginalCurrency, order.EffectiveTotalUSD, order.OrderDate),
+                OriginalCurrency = order.OriginalCurrency,
                 Status = order.Status,
                 StatusDisplay = FormatStatus(order.Status),
                 ExpectedDeliveryDate = order.ExpectedDeliveryDate,
@@ -675,6 +699,9 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _totalDisplay = string.Empty;
+
+    [ObservableProperty]
+    private string _originalCurrency = "USD";
 
     [ObservableProperty]
     private PurchaseOrderStatus _status;
