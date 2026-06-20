@@ -77,17 +77,21 @@ public class NameResolutionImportTests
     }
 
     [Fact]
-    public void AmbiguousCustomerName_CreatesPlaceholder_WarnsAndDoesNotMislink()
+    public void AmbiguousCustomerName_CreatesNewCustomer_WarnsAndDoesNotMislink()
     {
         var data = new CompanyData();
-        data.Customers.Add(new Customer { Id = "CUS-1", Name = "Smith Plumbing" });
-        data.Customers.Add(new Customer { Id = "CUS-2", Name = "Smith Electrical" });
+        // Two existing customers whose names differ by a single character. The resolver is
+        // pure-Levenshtein with a 0.92 accept threshold and a 0.05 tie margin, so a reference
+        // that sits one edit from BOTH scores a dead tie at the top and is genuinely ambiguous
+        // (a short substring like "Smith" against longer names would just score too low to match).
+        data.Customers.Add(new Customer { Id = "CUS-1", Name = "Northwind Tradimg" });
+        data.Customers.Add(new Customer { Id = "CUS-2", Name = "Northwind Tradinh" });
 
         var svc = new SpreadsheetImportService();
 
-        // "Smith" is ambiguous between the two existing customers.
+        // "Northwind Trading" is one edit from each existing name -> ambiguous, must not guess.
         var invoice = Json("""
-            { "id": "INV-200", "customerId": "Smith", "total": 25 }
+            { "id": "INV-200", "customerId": "Northwind Trading", "total": 25 }
             """);
 
         var result = svc.ImportProcessedEntities(
@@ -99,17 +103,18 @@ public class NameResolutionImportTests
         Assert.NotEqual("CUS-1", imported.CustomerId);
         Assert.NotEqual("CUS-2", imported.CustomerId);
 
-        // A placeholder was created keyed on the unresolved reference value.
-        Assert.Equal("Smith", imported.CustomerId);
+        // A new customer was created, named after the unresolved reference value (not a
+        // misleading "Customer (...)" placeholder, and not linked to either ambiguous match).
+        Assert.Equal("Northwind Trading", imported.CustomerId);
         Assert.Equal(3, data.Customers.Count);
-        Assert.Contains(data.Customers, c => c.Id == "Smith" && c.Name.Contains("Customer ("));
+        Assert.Contains(data.Customers, c => c.Id == "Northwind Trading" && c.Name == "Northwind Trading");
 
-        // The situation is surfaced as a warning.
-        Assert.Contains(result.Warnings, w => w.Contains("Smith") && w.Contains("placeholder"));
+        // The ambiguity is surfaced as a warning.
+        Assert.Contains(result.Warnings, w => w.Contains("Northwind Trading") && w.Contains("more than one"));
     }
 
     [Fact]
-    public void UnknownCustomerName_CreatesPlaceholder_AndWarns()
+    public void UnknownCustomerName_CreatesNewCustomer_AndWarns()
     {
         var data = new CompanyData();
         data.Customers.Add(new Customer { Id = "CUS-1", Name = "Acme Ltd" });
@@ -126,7 +131,8 @@ public class NameResolutionImportTests
         var imported = Assert.Single(data.Invoices);
         Assert.Equal("Totally Unrelated Co", imported.CustomerId);
         Assert.Equal(2, data.Customers.Count);
-        Assert.Contains(result.Warnings, w => w.Contains("could not be matched"));
+        Assert.Contains(data.Customers, c => c.Id == "Totally Unrelated Co" && c.Name == "Totally Unrelated Co");
+        Assert.Contains(result.Warnings, w => w.Contains("was not found"));
     }
 
     [Fact]

@@ -3477,9 +3477,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// - Empty reference: returned unchanged.
     /// - Reference is already an existing customer id: returned unchanged (the common re-import case).
     /// - Reference is NOT an existing id: consult the name index. On a confident match the
-    ///   reference is REWRITTEN to the matched id (links to the existing record, no stub created).
-    ///   On ambiguous/no match a placeholder stub is created (as before) and a warning is recorded;
-    ///   an ambiguous match is NEVER auto-linked to a guess.
+    ///   reference is REWRITTEN to the matched id (links to the existing record, nothing created).
+    ///   On no match a new record is created, named after the reference. On an ambiguous match a new
+    ///   record is likewise created and a warning is recorded; an ambiguous match is NEVER
+    ///   auto-linked to a guess.
     /// </summary>
     private static string? EnsureCustomerExists(CompanyData data, string? customerId, ReferenceResolutionContext? ctx)
     {
@@ -3493,12 +3494,12 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 return matchedId; // link to the existing record; no placeholder
 
             if (isAmbiguous)
-                ctx.Warnings.Add($"Referenced customer '{customerId}' matched multiple existing customers; created a placeholder instead of guessing.");
+                ctx.Warnings.Add($"Referenced customer '{customerId}' matched more than one existing customer; created a new customer instead of guessing.");
             else
-                ctx.Warnings.Add($"Referenced customer '{customerId}' could not be matched; created a placeholder.");
+                ctx.Warnings.Add($"Referenced customer '{customerId}' was not found; created a new customer.");
         }
 
-        data.Customers.Add(new Customer { Id = customerId, Name = $"Customer ({customerId})" });
+        data.Customers.Add(new Customer { Id = customerId, Name = customerId });
         return customerId;
     }
 
@@ -3517,12 +3518,12 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 return matchedId; // link to the existing record; no placeholder
 
             if (isAmbiguous)
-                ctx.Warnings.Add($"Referenced supplier '{supplierId}' matched multiple existing suppliers; created a placeholder instead of guessing.");
+                ctx.Warnings.Add($"Referenced supplier '{supplierId}' matched more than one existing supplier; created a new supplier instead of guessing.");
             else
-                ctx.Warnings.Add($"Referenced supplier '{supplierId}' could not be matched; created a placeholder.");
+                ctx.Warnings.Add($"Referenced supplier '{supplierId}' was not found; created a new supplier.");
         }
 
-        data.Suppliers.Add(new Supplier { Id = supplierId, Name = $"Supplier ({supplierId})" });
+        data.Suppliers.Add(new Supplier { Id = supplierId, Name = supplierId });
         return supplierId;
     }
 
