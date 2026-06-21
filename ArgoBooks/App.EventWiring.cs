@@ -95,20 +95,8 @@ public partial class App
                 }
             }
 
-            // Reconcile and process any pending currency conversions
-            if (PendingConversionService != null && CompanyManager.CompanyData != null)
-            {
-                await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
-                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
-            }
-
-            // Start periodic timer to process pending conversions when connectivity returns
-            StartPendingConversionTimer();
-
-            // Check for low stock and overdue invoice notifications
-            CheckAndSendNotifications();
-
             // Load company-specific chart settings (date range, chart type, etc.)
+            // before navigating so the dashboard renders with the right range.
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
             // Migrate: if a legacy .env API key exists but the company has no persisted key,
@@ -127,19 +115,9 @@ public partial class App
                 portalSettings.PersistedApiKey = DotEnv.Get(PortalSettings.ApiKeyEnvVar);
             }
 
-            // Load this company's portal API key into the process-level cache
+            // Load this company's portal API key into the process-level cache (cheap, so any
+            // portal-dependent UI has it on first paint; the actual sync is deferred below).
             PortalSettings.ActivateApiKey(portalSettings);
-
-            // Auto-sync online payments from the portal on company open
-            await AutoSyncPortalPaymentsAsync();
-
-            // Start periodic portal sync every 5 minutes
-            _portalSyncTimer?.Dispose();
-            _portalSyncTimer = new Timer(
-                state => { _ = AutoSyncPortalPaymentsAsync(); },
-                null,
-                TimeSpan.FromMinutes(5),
-                TimeSpan.FromMinutes(5));
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
@@ -148,6 +126,43 @@ public partial class App
             // overlay together so the user never sees a half-initialized dashboard.
             _mainWindowViewModel.OpenCompany(args.CompanyName);
             _mainWindowViewModel.HideLoading();
+
+            // Defer non-visual and network work until after the dashboard has painted,
+            // so the company opens as fast as possible. Posted on the UI thread at
+            // Background priority to keep thread affinity but yield to rendering first.
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                try
+                {
+                    // Reconcile and process any pending currency conversions
+                    if (PendingConversionService != null && CompanyManager.CompanyData != null)
+                    {
+                        await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
+                        await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+                    }
+
+                    // Start periodic timer to process pending conversions when connectivity returns
+                    StartPendingConversionTimer();
+
+                    // Check for low stock and overdue invoice notifications
+                    CheckAndSendNotifications();
+
+                    // Auto-sync online payments from the portal on company open
+                    await AutoSyncPortalPaymentsAsync();
+
+                    // Start periodic portal sync every 5 minutes
+                    _portalSyncTimer?.Dispose();
+                    _portalSyncTimer = new Timer(
+                        state => { _ = AutoSyncPortalPaymentsAsync(); },
+                        null,
+                        TimeSpan.FromMinutes(5),
+                        TimeSpan.FromMinutes(5));
+                }
+                catch (Exception ex)
+                {
+                    ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Deferred post-open initialization failed");
+                }
+            }, Avalonia.Threading.DispatcherPriority.Background);
         };
 
         CompanyManager.CompanyClosed += async (_, _) =>
