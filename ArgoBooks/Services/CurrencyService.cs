@@ -188,6 +188,22 @@ public static class CurrencyService
     }
 
     /// <summary>
+    /// Sums per-item USD amounts after converting EACH to the display currency at that item's OWN
+    /// date, per the Phase 2 aggregate rule in docs/Calculations.md §3a. Use this for any total over
+    /// multiple transactions instead of converting the pre-summed USD at one date
+    /// (<c>FormatFromUSD(sum, DateTime.Now)</c>), which silently re-prices historical rows at today's
+    /// rate. For a USD display currency this is identical to summing the USD amounts directly.
+    /// </summary>
+    public static decimal SumDisplayFromUSD<T>(
+        IEnumerable<T> items, Func<T, decimal> amountUSD, Func<T, DateTime> date)
+    {
+        decimal total = 0m;
+        foreach (var item in items)
+            total += GetDisplayAmount(amountUSD(item), date(item));
+        return total;
+    }
+
+    /// <summary>
     /// Ensures today's exact-date USD-&gt;display-currency rate is cached, fetching it if missing and
     /// online. "As of now" aggregate displays (e.g. the profit chart title) convert at today's rate,
     /// which is never fetched on its own when no transaction is dated today and the currency wasn't

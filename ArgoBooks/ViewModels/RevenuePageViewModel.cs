@@ -367,12 +367,17 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Total monthly revenue, net of refunds (cash-basis: refund counts on
         // the day it was issued). Mirrors the dashboard's stat-card semantics
         // exactly so the two never drift: paid-only, capped at end of month.
-        var monthlyGrossUSD = RevenueAggregator.SumCollectedRevenueUSD(
-            _allRevenue, startOfMonth, endOfMonth);
-        var monthlyRefundsUSD = companyData?.Payments != null
-            ? RefundAggregator.GetRefundedInDateRangeUSD(companyData.Payments, startOfMonth, endOfMonth)
+        // Convert each row/refund at its OWN date before summing (Calculations.md §3a Phase 2).
+        var monthlyGrossDisplay = CurrencyService.SumDisplayFromUSD(
+            RevenueAggregator.OnlyCollected(
+                _allRevenue.Where(s => s.Date >= startOfMonth && s.Date <= endOfMonth)),
+            s => s.EffectiveTotalUSD, s => s.Date);
+        var monthlyRefundsDisplay = companyData?.Payments != null
+            ? CurrencyService.SumDisplayFromUSD(
+                companyData.Payments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= endOfMonth),
+                p => Math.Abs(p.EffectiveAmountUSD), p => p.Date)
             : 0m;
-        TotalMonthlyRevenue = CurrencyService.FormatFromUSD(monthlyGrossUSD - monthlyRefundsUSD, now);
+        TotalMonthlyRevenue = CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay);
 
         // Sales count
         SalesCount = _allRevenue.Count;

@@ -11,7 +11,10 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public class ProductSalesRow
 {
-    public ProductSalesRow(ProductSalesData data, DateTime displayDate)
+    // The ProductSalesData here already holds display-currency amounts: GetProductSales was called
+    // with a per-date converter so each sale was converted at its OWN date before aggregation
+    // (Calculations.md §3a Phase 2). So format directly, with no further currency conversion.
+    public ProductSalesRow(ProductSalesData data)
     {
         ProductId = data.ProductId;
         ProductName = data.ProductName;
@@ -22,8 +25,8 @@ public class ProductSalesRow
         AvgSalePriceUSD = data.AvgSalePriceUSD;
 
         UnitsDisplay = data.UnitsSold.ToString("0.##");
-        RevenueDisplay = CurrencyService.FormatFromUSD(data.RevenueUSD, displayDate);
-        AvgSalePriceDisplay = CurrencyService.FormatFromUSD(data.AvgSalePriceUSD, displayDate);
+        RevenueDisplay = CurrencyService.Format(data.RevenueUSD);
+        AvgSalePriceDisplay = CurrencyService.Format(data.AvgSalePriceUSD);
     }
 
     public string ProductId { get; }

@@ -68,12 +68,15 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
 
     private void LoadTopCustomers(CompanyData data)
     {
-        // Refund totals per customer (USD), so the leaderboard reflects what
-        // the customer actually retained (gross − refunds).
+        // Refund totals per customer, so the leaderboard reflects what the customer actually
+        // retained (gross − refunds). Each refund is converted to display currency at its OWN
+        // date before summing (Calculations.md §3a Phase 2), so a non-USD display total isn't
+        // re-priced at today's rate.
         var refundsByCustomer = data.Payments
             .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.CustomerId))
             .GroupBy(p => p.CustomerId)
-            .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.EffectiveAmountUSD)));
+            .ToDictionary(g => g.Key, g => CurrencyService.SumDisplayFromUSD(
+                g, p => Math.Abs(p.EffectiveAmountUSD), p => p.Date));
 
         var grouped = data.Revenues
             .Where(r => !string.IsNullOrEmpty(r.CustomerId))
@@ -82,7 +85,8 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
             .Select(g => new
             {
                 CustomerId = g.Key,
-                TotalRevenue = g.Sum(r => r.EffectiveTotalUSD)
+                // Each revenue row converted at its OWN date, refunds already in display currency.
+                TotalRevenue = CurrencyService.SumDisplayFromUSD(g, r => r.EffectiveTotalUSD, r => r.Date)
                                 - (refundsByCustomer.TryGetValue(g.Key, out var rf) ? rf : 0m),
                 Count = g.Count()
             });
@@ -97,7 +101,8 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
             {
                 var customer = data.GetCustomer(g.CustomerId);
                 var name = customer?.Name ?? "Unknown";
-                var formatted = CurrencyService.FormatFromUSD(g.TotalRevenue, DateTime.Now);
+                // TotalRevenue is already in display currency, so just format.
+                var formatted = CurrencyService.Format(g.TotalRevenue);
                 return new TopCustomerItem(i + 1, name, formatted, g.Count);
             })
             .ToList();

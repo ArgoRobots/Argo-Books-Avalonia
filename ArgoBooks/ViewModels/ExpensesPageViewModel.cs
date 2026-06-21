@@ -365,11 +365,12 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Total monthly expenses (in USD, then convert to display currency)
-        var monthlyTotalUSD = _allExpenses
-            .Where(p => p.Date >= startOfMonth)
-            .Sum(p => p.EffectiveTotalUSD);
-        TotalMonthlyExpenses = CurrencyService.FormatFromUSD(monthlyTotalUSD, now);
+        // Total monthly expenses: convert each at its OWN date before summing (Calculations.md
+        // §3a Phase 2), so a non-USD display total isn't re-priced at today's rate.
+        var monthlyTotalDisplay = CurrencyService.SumDisplayFromUSD(
+            _allExpenses.Where(p => p.Date >= startOfMonth),
+            p => p.EffectiveTotalUSD, p => p.Date);
+        TotalMonthlyExpenses = CurrencyService.Format(monthlyTotalDisplay);
 
         // Transaction count
         TransactionCount = _allExpenses.Count;

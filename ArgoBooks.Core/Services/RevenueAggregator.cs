@@ -56,4 +56,30 @@ public static class RevenueAggregator
             .Where(IsCollected)
             .Sum(s => s.EffectiveSubtotalUSD);
     }
+
+    /// <summary>
+    /// Display-currency variant of <see cref="SumCollectedRevenueUSD"/>: converts each row at its
+    /// OWN date via <paramref name="toDisplay"/> before summing (docs/Calculations.md §3a Phase 2).
+    /// Pass <c>CurrencyService.GetDisplayAmount</c>. Equals the USD sum for a USD display currency.
+    /// </summary>
+    public static decimal SumCollectedRevenueDisplay(
+        IEnumerable<Revenue> revenues, DateTime start, DateTime end, Func<decimal, DateTime, decimal> toDisplay)
+    {
+        return revenues
+            .Where(s => s.Date >= start && s.Date <= end)
+            .Where(IsCollected)
+            .Sum(s => toDisplay(s.EffectiveTotalUSD, s.Date));
+    }
+
+    /// <summary>
+    /// Display-currency variant of <see cref="SumCollectedRevenuePreTaxUSD"/> (per-date conversion).
+    /// </summary>
+    public static decimal SumCollectedRevenuePreTaxDisplay(
+        IEnumerable<Revenue> revenues, DateTime start, DateTime end, Func<decimal, DateTime, decimal> toDisplay)
+    {
+        return revenues
+            .Where(s => s.Date >= start && s.Date <= end)
+            .Where(IsCollected)
+            .Sum(s => toDisplay(s.EffectiveSubtotalUSD, s.Date));
+    }
 }

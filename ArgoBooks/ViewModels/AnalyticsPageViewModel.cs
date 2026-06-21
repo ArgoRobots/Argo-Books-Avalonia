@@ -175,9 +175,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private void LoadProductSales(CompanyData data)
     {
-        var displayDate = EndDate;
-        var rows = ProductSalesService.GetProductSales(data, StartDate, EndDate, cashBasis: true)
-            .Select(d => new ProductSalesRow(d, displayDate))
+        // Convert each sale at its OWN date during aggregation (Calculations.md §3a Phase 2), so
+        // the per-product and total figures aren't re-priced at a single date. The resulting
+        // amounts are already in the display currency.
+        var rows = ProductSalesService.GetProductSales(data, StartDate, EndDate, cashBasis: true, CurrencyService.GetDisplayAmount)
+            .Select(d => new ProductSalesRow(d))
             .OrderByDescending(r => r.RevenueUSD)
             .ToList();
 
@@ -185,9 +187,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var totalUnits = rows.Sum(r => r.UnitsSold);
         var avgPrice = totalUnits > 0 ? totalRevenue / totalUnits : 0;
 
-        TotalProductRevenue = CurrencyService.FormatFromUSD(totalRevenue, displayDate);
+        TotalProductRevenue = CurrencyService.Format(totalRevenue);
         TotalProductUnits = totalUnits.ToString("0.##");
-        AvgProductSalePrice = CurrencyService.FormatFromUSD(avgPrice, displayDate);
+        AvgProductSalePrice = CurrencyService.Format(avgPrice);
         ProductsSoldCount = rows.Count.ToString();
 
         Products.Clear();
@@ -1934,34 +1936,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         HasProfitTrendsData = series.Count > 0;
 
 
-        // Update chart title to include the total profit amount (matches dashboard format)
-        var formattedSum = CurrencyService.FormatFromUSD(totalProfit, DateTime.Now);
-        _profitOverTimeTitleText = $"Total profits: {formattedSum}";
+        // totalProfit is already in the display currency, converted per-day at each day's OWN date
+        // (Calculations.md §3a Phase 2), so the title matches the bars and needs no today's-rate step.
+        _profitOverTimeTitleText = $"Total profits: {CurrencyService.Format(totalProfit)}";
         OnPropertyChanged(nameof(ProfitOverTimeTitle));
-
-        // A non-USD display currency shows the pending marker when today's rate isn't cached yet.
-        // Fetch it in the background (if online) and recompute the title so it shows the number.
-        if (formattedSum == CurrencyService.PendingMarker)
-            _ = RefreshProfitTitleWhenRateReadyAsync(totalProfit);
-    }
-
-    private async Task RefreshProfitTitleWhenRateReadyAsync(decimal totalProfitUsd)
-    {
-        try
-        {
-            if (!await CurrencyService.TryWarmTodayRateAsync())
-                return; // offline or server down: leave the pending marker
-
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                _profitOverTimeTitleText = $"Total profits: {CurrencyService.FormatFromUSD(totalProfitUsd, DateTime.Now)}";
-                OnPropertyChanged(nameof(ProfitOverTimeTitle));
-            });
-        }
-        catch
-        {
-            // Best-effort: if the warm/recompute fails, the title keeps the pending marker.
-        }
     }
 
     private void LoadRevenueVsExpensesChart(CompanyData data)
@@ -2312,16 +2290,22 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var profitChange = prevNetProfit != 0 ? ((netProfitUSD - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
         var marginChange = margin - prevMargin;
 
-        // Update properties (convert from USD to display currency)
-        TotalPurchases = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(totalPurchasesUSD, DateTime.Now));
+        // Update properties (convert each transaction at its OWN date per Calculations.md §3a).
+        var totalPurchasesDisplay = ExpenseAggregator.SumExpensesDisplay(data.Expenses, StartDate, EndDate, CurrencyService.GetDisplayAmount);
+        var totalRevenueDisplay =
+            RevenueAggregator.SumCollectedRevenueDisplay(data.Revenues, StartDate, EndDate, CurrencyService.GetDisplayAmount)
+            - RefundAggregator.GetRefundedInDateRangeDisplay(data.Payments, StartDate, EndDate, CurrencyService.GetDisplayAmount);
+        var netProfitDisplay = ProfitCalculator.CalculateNetProfitDisplay(data, StartDate, EndDate, CurrencyService.GetDisplayAmount);
+
+        TotalPurchases = CurrencyService.FormatWholeNumber(totalPurchasesDisplay);
         PurchasesChangeValue = hasPrevPeriodData && prevPurchasesUSD > 0 ? (double)purchasesChange : null;
         PurchasesChangeText = hasPrevPeriodData && prevPurchasesUSD > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
 
-        TotalRevenue = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(totalRevenueUSD, DateTime.Now));
+        TotalRevenue = CurrencyService.FormatWholeNumber(totalRevenueDisplay);
         RevenueChangeValue = hasPrevPeriodData && prevSalesUSD > 0 ? (double)revenueChange : null;
         RevenueChangeText = hasPrevPeriodData && prevSalesUSD > 0 ? $"{Math.Abs(revenueChange):F1}%" : null;
 
-        NetProfit = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(netProfitUSD, DateTime.Now));
+        NetProfit = CurrencyService.FormatWholeNumber(netProfitDisplay);
         ProfitChangeValue = hasPrevPeriodData && prevNetProfit != 0 ? (double)profitChange : null;
         ProfitChangeText = hasPrevPeriodData && prevNetProfit != 0 ? $"{Math.Abs(profitChange):F1}%" : null;
 
@@ -2383,6 +2367,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var allTransactionValues = sales.Select(s => s.EffectiveTotalUSD).Concat(purchases.Select(p => p.EffectiveTotalUSD)).ToList();
         var avgTransactionValue = allTransactionValues.Count > 0 ? allTransactionValues.Average() : 0;
 
+        // Average display value: convert each transaction at its OWN date (Calculations.md §3a),
+        // sum, then divide by the same count used above.
+        var transactionsValueDisplay =
+            CurrencyService.SumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date)
+            + CurrencyService.SumDisplayFromUSD(purchases, p => p.EffectiveTotalUSD, p => p.Date);
+        var avgTransactionValueDisplay = totalTransactionsCount > 0 ? transactionsValueDisplay / totalTransactionsCount : 0;
+
         // Shipping costs from purchases
         var avgShipping = purchases.Count > 0 ? purchases.Average(p => p.ShippingCost) : 0;
 
@@ -2424,7 +2415,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         TotalTransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
         TotalTransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
-        AvgTransactionValue = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(avgTransactionValue, DateTime.Now));
+        AvgTransactionValue = CurrencyService.FormatWholeNumber(avgTransactionValueDisplay);
         AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
         AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
@@ -2468,13 +2459,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             .Where(RevenueAggregator.IsCollected)
             .ToList();
         var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
-        var avgValueUSD = customerIds.Count > 0 ? sales.Sum(s => s.EffectiveTotalUSD) / customerIds.Count : 0;
+        // Convert each sale at its OWN date (Calculations.md §3a), then divide by the
+        // same distinct-customer count.
+        var salesValueDisplay = CurrencyService.SumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date);
+        var avgValueDisplay = customerIds.Count > 0 ? salesValueDisplay / customerIds.Count : 0;
 
         RetentionRate = "N/A";
         RetentionChangeValue = null;
         RetentionChangeText = null;
 
-        AvgCustomerValue = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(avgValueUSD, DateTime.Now));
+        AvgCustomerValue = CurrencyService.FormatWholeNumber(avgValueDisplay);
         AvgCustomerValueChangeValue = null;
         AvgCustomerValueChangeText = null;
     }
@@ -2624,15 +2618,23 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var liabilityChange = prevNetLiability != 0 ? ((netLiability - prevNetLiability) / Math.Abs(prevNetLiability)) * 100 : 0;
         var rateChange = effectiveRate - prevEffectiveRate;
 
-        TotalTaxCollected = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(taxCollectedUSD, DateTime.Now));
+        // Convert each transaction's tax at its OWN date (Calculations.md §3a). The per-row
+        // USD selector mirrors taxCollectedUSD/taxPaidUSD above so USD display is identity.
+        var taxCollectedDisplay = CurrencyService.SumDisplayFromUSD(
+            revenues, r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r => r.Date);
+        var taxPaidDisplay = CurrencyService.SumDisplayFromUSD(
+            expenses, e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e => e.Date);
+        var netLiabilityDisplay = taxCollectedDisplay - taxPaidDisplay;
+
+        TotalTaxCollected = CurrencyService.FormatWholeNumber(taxCollectedDisplay);
         TaxCollectedChangeValue = hasPrevPeriodData && prevTaxCollected > 0 ? (double)collectedChange : null;
         TaxCollectedChangeText = hasPrevPeriodData && prevTaxCollected > 0 ? $"{Math.Abs(collectedChange):F1}%" : null;
 
-        TotalTaxPaid = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(taxPaidUSD, DateTime.Now));
+        TotalTaxPaid = CurrencyService.FormatWholeNumber(taxPaidDisplay);
         TaxPaidChangeValue = hasPrevPeriodData && prevTaxPaid > 0 ? (double)paidChange : null;
         TaxPaidChangeText = hasPrevPeriodData && prevTaxPaid > 0 ? $"{Math.Abs(paidChange):F1}%" : null;
 
-        NetTaxLiability = CurrencyService.FormatWholeNumber(CurrencyService.GetDisplayAmount(netLiability, DateTime.Now));
+        NetTaxLiability = CurrencyService.FormatWholeNumber(netLiabilityDisplay);
         TaxLiabilityChangeValue = hasPrevPeriodData && prevNetLiability != 0 ? (double)liabilityChange : null;
         TaxLiabilityChangeText = hasPrevPeriodData && prevNetLiability != 0 ? $"{Math.Abs(liabilityChange):F1}%" : null;
 
@@ -2684,39 +2686,40 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         if (company == null) return;
 
         var since = DateTime.Today.AddDays(-90);
-        var now = DateTime.Now;
 
-        // RefundAnalyticsService returns USD-normalized amounts so multi-
-        // currency portals roll up consistently; display goes through
-        // CurrencyService.FormatFromUSD per Calculations.md §3.
-        var totalUSD = RefundAnalyticsService.TotalRefundedUSD(company, since);
+        // RefundAnalyticsService converts each refund at its OWN date (Calculations.md §3a)
+        // when passed CurrencyService.GetDisplayAmount, returning display-currency amounts
+        // that we format directly with CurrencyService.Format (no second conversion).
+        var toDisplay = (Func<decimal, DateTime, decimal>)CurrencyService.GetDisplayAmount;
+        var total = RefundAnalyticsService.TotalRefundedDisplay(company, since, toDisplay);
         var rateDecimal = RefundAnalyticsService.RefundRate(company, since);
         var avgLatency = RefundAnalyticsService.AverageRefundLatencyDays(company, since);
 
-        RefundsTotal = CurrencyService.FormatFromUSD(totalUSD, now);
+        RefundsTotal = CurrencyService.Format(total);
         RefundsRate = (rateDecimal * 100).ToString("F1") + "%";
         RefundsAvgLatency = avgLatency > 0 ? $"{avgLatency:F1} days" : "—";
-        HasAnyRefunds = totalUSD > 0;
+        HasAnyRefunds = total > 0;
 
         RefundsTopCustomers.Clear();
-        foreach (var c in RefundAnalyticsService.TopRefundedCustomers(company, since, 10))
-            RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, CurrencyService.FormatFromUSD(c.AmountUSD, now), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
+        foreach (var c in RefundAnalyticsService.TopRefundedCustomers(company, since, 10, toDisplay))
+            RefundsTopCustomers.Add(new RefundsRow(c.CustomerName, CurrencyService.Format(c.AmountUSD), $"{c.Count} refund{(c.Count == 1 ? "" : "s")}"));
 
         RefundsTopProducts.Clear();
-        foreach (var p in RefundAnalyticsService.TopRefundedProducts(company, since, 10))
-            RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, CurrencyService.FormatFromUSD(p.AmountUSD, now), null));
+        foreach (var p in RefundAnalyticsService.TopRefundedProducts(company, since, 10, toDisplay))
+            RefundsTopProducts.Add(new RefundsRow(p.ProductLabel, CurrencyService.Format(p.AmountUSD), null));
 
         RefundsTopReasons.Clear();
-        foreach (var r in RefundAnalyticsService.TopReasons(company, since, 5))
-            RefundsTopReasons.Add(new RefundsRow(r.Reason, CurrencyService.FormatFromUSD(r.TotalAmountUSD, now), $"{r.Count}"));
+        foreach (var r in RefundAnalyticsService.TopReasons(company, since, 5, toDisplay))
+            RefundsTopReasons.Add(new RefundsRow(r.Reason, CurrencyService.Format(r.TotalAmountUSD), $"{r.Count}"));
 
         RefundsChannelBreakdown.Clear();
-        foreach (var (channel, amount) in RefundAnalyticsService.ChannelBreakdown(company, since)
+        foreach (var (channel, amount) in RefundAnalyticsService.ChannelBreakdown(company, since, toDisplay)
                      .OrderByDescending(kv => kv.Value))
-            RefundsChannelBreakdown.Add(new RefundsRow(channel, CurrencyService.FormatFromUSD(amount, now), null));
+            RefundsChannelBreakdown.Add(new RefundsRow(channel, CurrencyService.Format(amount), null));
 
+        // Each refund is converted at its OWN date before monthly bucketing (Calculations.md §3a).
         RefundsMonthlyTotals.Clear();
-        foreach (var m in RefundAnalyticsService.MonthlyTotals(company, 12))
+        foreach (var m in RefundAnalyticsService.MonthlyTotals(company, 12, toDisplay))
             RefundsMonthlyTotals.Add(new RefundsMonthBucket(m.Month.ToString("MMM yyyy"), m.AmountUSD));
     }
 

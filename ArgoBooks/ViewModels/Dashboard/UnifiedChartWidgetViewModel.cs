@@ -140,14 +140,27 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         }
 
         var service = new ReportChartDataService(data, filters);
-        var result = service.GetChartData(ChartDataType);
 
         if (IsDistribution)
+        {
+            // Currency distribution pies must convert each transaction at its OWN date before
+            // grouping into a slice (Calculations.md §3a Phase 2). Count-based distributions are
+            // unaffected because GetDisplayAmount only scales monetary aggregates. The time-series
+            // paths below intentionally stay in USD: CreateDateTimeSeries already converts per
+            // bucket date, so passing a converter there would double-convert.
+            var result = service.GetChartData(ChartDataType, CurrencyService.GetDisplayAmount);
             LoadDistributionChart(result);
+        }
         else if (ChartDataType.IsMultiSeries())
+        {
+            var result = service.GetChartData(ChartDataType);
             LoadMultiSeriesChart(result);
+        }
         else
+        {
+            var result = service.GetChartData(ChartDataType);
             LoadSingleSeriesChart(result);
+        }
     }
 
     private void LoadTotalProfitsChart(CompanyData data, DateTime startDate, DateTime endDate)
@@ -155,34 +168,14 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         var (series, _, dates, totalProfit) = ChartLoaderService.LoadProfitsOverviewChart(data, startDate, endDate);
 
         var localizedName = ChartDataType.TotalProfits.GetDisplayName().Translate();
-        var formattedSum = CurrencyService.FormatFromUSD(totalProfit, DateTime.Now);
-        ChartTitle = $"{localizedName}: {formattedSum}";
-
-        // A non-USD display currency shows the pending marker when today's rate isn't cached yet.
-        // Fetch it in the background (if online) and recompute the title so it shows the number.
-        if (formattedSum == CurrencyService.PendingMarker)
-            _ = RefreshProfitTitleWhenRateReadyAsync(totalProfit, localizedName);
+        // totalProfit is already in the display currency, converted per-day at each day's OWN date
+        // (Calculations.md §3a Phase 2), so the title matches the bars and needs no today's-rate step.
+        ChartTitle = $"{localizedName}: {CurrencyService.Format(totalProfit)}";
 
         XAxes = ChartLoaderService.CreateDateXAxes(dates);
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = dates.Length > 0;
-    }
-
-    private async Task RefreshProfitTitleWhenRateReadyAsync(decimal totalProfitUsd, string localizedName)
-    {
-        try
-        {
-            if (!await CurrencyService.TryWarmTodayRateAsync())
-                return; // offline or server down: leave the pending marker
-
-            await Dispatcher.UIThread.InvokeAsync(() =>
-                ChartTitle = $"{localizedName}: {CurrencyService.FormatFromUSD(totalProfitUsd, DateTime.Now)}");
-        }
-        catch
-        {
-            // Best-effort: if the warm/recompute fails, the title keeps the pending marker.
-        }
     }
 
     private void LoadDistributionChart(object result)
@@ -197,12 +190,12 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         var isDonut = ChartStyle == "donut";
         var series = new ObservableCollection<ISeries>();
 
-        // Convert USD aggregates to display currency once at this boundary
-        // so pie slices / tooltips / export all agree with the stat cards.
-        // See docs/Calculations.md §3.
+        // Distribution points already arrive in the display currency: currency distributions are
+        // converted per transaction at each transaction's OWN date inside the data service
+        // (Calculations.md §3a Phase 2), and count-based distributions are raw counts that must NOT
+        // be FX-converted. So use the point values directly here, no further conversion.
         var top = points.OrderByDescending(p => p.Value).Take(8).ToList();
-        var displayValues = ChartLoaderService.ConvertUSDValuesToDisplay(
-            top.Select(p => p.Value).ToArray());
+        var displayValues = top.Select(p => p.Value).ToArray();
         for (int i = 0; i < top.Count; i++)
         {
             var point = top[i];
@@ -269,9 +262,9 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         if (seriesData.Count > 0)
         {
-            // Export values in display currency too, so spreadsheet/PDF
-            // exports match what the chart shows.
-            var primaryDisplay = ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[0]);
+            // Export values in display currency too, so spreadsheet/PDF exports match the chart.
+            // Convert each bucket at its OWN date (Calculations.md §3a Phase 2).
+            var primaryDisplay = ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[0], allDates);
             ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
             {
                 ChartTitle = ChartTitle,
@@ -281,7 +274,7 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
                 SeriesName = seriesData[0].Name,
                 AdditionalSeries = seriesData
                     .Skip(1)
-                    .Select((sd, idx) => (sd.Name, ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[idx + 1])))
+                    .Select((sd, idx) => (sd.Name, ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[idx + 1], allDates)))
                     .ToList()
             });
         }
@@ -328,7 +321,8 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             ChartTitle = ChartTitle,
             ChartType = ChartDataType.GetChartExportType(),
             Labels = dated.Select(p => p.Label).ToArray(),
-            Values = ChartLoaderService.ConvertUSDValuesToDisplay(usdValues),
+            // Convert each bucket at its OWN date (Calculations.md §3a Phase 2).
+            Values = ChartLoaderService.ConvertUSDValuesToDisplay(usdValues, dates),
             SeriesName = ChartDataType.GetDisplayName()
         });
     }

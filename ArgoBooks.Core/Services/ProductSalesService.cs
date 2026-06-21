@@ -19,7 +19,8 @@ public static class ProductSalesService
     /// (formal-report convention). Results are ordered by revenue descending.
     /// </summary>
     public static List<ProductSalesData> GetProductSales(
-        CompanyData data, DateTime start, DateTime end, bool cashBasis)
+        CompanyData data, DateTime start, DateTime end, bool cashBasis,
+        Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         var acc = new Dictionary<string, (decimal Revenue, decimal Quantity)>();
 
@@ -39,8 +40,14 @@ public static class ProductSalesService
                     ? Math.Round(li.Subtotal / lineItemsTotal * totalUSD, 2)
                     : 0;
 
+                // When a display converter is supplied, convert each allocated amount at the
+                // transaction's OWN date before accumulating (Calculations.md §3a Phase 2), so the
+                // per-product totals aren't re-priced at one date. Default (null) keeps USD for the
+                // formal report path (a documented exception) and unit tests.
+                var revenue = toDisplay != null ? toDisplay(revenueUSD, s.Date) : revenueUSD;
+
                 var cur = acc.GetValueOrDefault(pid);
-                acc[pid] = (cur.Revenue + revenueUSD, cur.Quantity + li.Quantity);
+                acc[pid] = (cur.Revenue + revenue, cur.Quantity + li.Quantity);
             }
         }
 

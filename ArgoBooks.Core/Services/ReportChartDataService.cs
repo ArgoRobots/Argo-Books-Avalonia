@@ -63,7 +63,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets revenue distribution by category (in USD).
     /// Allocates multi-line-item transactions proportionally across categories.
     /// </summary>
-    public List<ChartDataPoint> GetRevenueDistribution()
+    public List<ChartDataPoint> GetRevenueDistribution(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
             return [];
@@ -76,6 +76,12 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .Where(RevenueAggregator.IsCollected))
         {
+            // When a display converter is supplied, convert each transaction's USD amount at the
+            // transaction's OWN date before grouping (Calculations.md §3a Phase 2) so the category
+            // totals aren't re-priced at one date. Default (null) keeps USD for the formal report
+            // path (a documented exception) and unit tests.
+            decimal Display(decimal amountUSD) => toDisplay != null ? toDisplay(amountUSD, s.Date) : amountUSD;
+
             if (s.LineItems.Count > 0)
             {
                 var lineItemsTotal = s.LineItems.Sum(li => li.Subtotal);
@@ -90,20 +96,20 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                             ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
                             : "Other";
                         categoryTotals.TryAdd(categoryName, 0);
-                        categoryTotals[categoryName] += li.Subtotal / lineItemsTotal * subtotalUSD;
+                        categoryTotals[categoryName] += Display(li.Subtotal / lineItemsTotal * subtotalUSD);
                     }
                 }
                 else
                 {
                     // Line items sum to 0, allocate full transaction amount to "Other"
                     categoryTotals.TryAdd("Other", 0);
-                    categoryTotals["Other"] += subtotalUSD;
+                    categoryTotals["Other"] += Display(subtotalUSD);
                 }
             }
             else
             {
                 categoryTotals.TryAdd("Other", 0);
-                categoryTotals["Other"] += s.EffectiveTotalUSD;
+                categoryTotals["Other"] += Display(s.EffectiveTotalUSD);
             }
         }
 
@@ -157,7 +163,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets expense distribution by category (in USD).
     /// Allocates multi-line-item transactions proportionally across categories.
     /// </summary>
-    public List<ChartDataPoint> GetExpenseDistribution()
+    public List<ChartDataPoint> GetExpenseDistribution(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Expenses == null)
             return [];
@@ -168,6 +174,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         foreach (var p in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
+            // When a display converter is supplied, convert each transaction's USD amount at the
+            // transaction's OWN date before grouping (Calculations.md §3a Phase 2). Default (null)
+            // keeps USD for the formal report path and unit tests.
+            decimal Display(decimal amountUSD) => toDisplay != null ? toDisplay(amountUSD, p.Date) : amountUSD;
+
             if (p.LineItems.Count > 0)
             {
                 var lineItemsTotal = p.LineItems.Sum(li => li.Subtotal);
@@ -182,20 +193,20 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                             ? companyData.GetCategory(product.CategoryId)?.Name ?? "Other"
                             : "Other";
                         categoryTotals.TryAdd(categoryName, 0);
-                        categoryTotals[categoryName] += li.Subtotal / lineItemsTotal * subtotalUSD;
+                        categoryTotals[categoryName] += Display(li.Subtotal / lineItemsTotal * subtotalUSD);
                     }
                 }
                 else
                 {
                     // Line items sum to 0, allocate full transaction amount to "Other"
                     categoryTotals.TryAdd("Other", 0);
-                    categoryTotals["Other"] += subtotalUSD;
+                    categoryTotals["Other"] += Display(subtotalUSD);
                 }
             }
             else
             {
                 categoryTotals.TryAdd("Other", 0);
-                categoryTotals["Other"] += p.EffectiveTotalUSD;
+                categoryTotals["Other"] += Display(p.EffectiveTotalUSD);
             }
         }
 
@@ -698,21 +709,25 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets sales by customer country.
     /// </summary>
-    public List<ChartDataPoint> GetRevenueByCountryOfOrigin()
+    public List<ChartDataPoint> GetRevenueByCountryOfOrigin(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
-        return GetRevenueByCustomerCountry();
+        return GetRevenueByCustomerCountry(toDisplay);
     }
 
     /// <summary>
     /// Gets sales grouped by customer country.
     /// Used for geographic distribution charts showing where customers are located.
     /// </summary>
-    public List<ChartDataPoint> GetRevenueByCustomerCountry()
+    public List<ChartDataPoint> GetRevenueByCustomerCountry(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
+
+        // When a display converter is supplied, convert each transaction's USD amount at its OWN
+        // date before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
@@ -725,7 +740,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+                Value = (double)g.Sum(s => Display(s.EffectiveTotalUSD, s.Date))
             })
             // Filter out "Unknown" entries with zero or negligible value
             .Where(p => p.Label != "Unknown" || p.Value > 0.01)
@@ -782,12 +797,16 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets purchases by supplier country.
     /// </summary>
-    public List<ChartDataPoint> GetExpensesByCountryOfDestination()
+    public List<ChartDataPoint> GetExpensesByCountryOfDestination(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Expenses == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
+
+        // When a display converter is supplied, convert each transaction's USD amount at its OWN
+        // date before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
@@ -799,7 +818,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(p => p.EffectiveTotalUSD)
+                Value = (double)g.Sum(p => Display(p.EffectiveTotalUSD, p.Date))
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -809,12 +828,16 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets purchases by supplier company name.
     /// </summary>
-    public List<ChartDataPoint> GetExpensesBySupplierCompany()
+    public List<ChartDataPoint> GetExpensesBySupplierCompany(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Expenses == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
+
+        // When a display converter is supplied, convert each transaction's USD amount at its OWN
+        // date before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
@@ -823,7 +846,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(p => p.EffectiveTotalUSD)
+                Value = (double)g.Sum(p => Display(p.EffectiveTotalUSD, p.Date))
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -833,12 +856,16 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets sales by customer.
     /// </summary>
-    public List<ChartDataPoint> GetRevenueByCompanyOfOrigin()
+    public List<ChartDataPoint> GetRevenueByCompanyOfOrigin(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
+
+        // When a display converter is supplied, convert each transaction's USD amount at its OWN
+        // date before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate)
@@ -847,7 +874,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
-                Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+                Value = (double)g.Sum(s => Display(s.EffectiveTotalUSD, s.Date))
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -858,12 +885,16 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets sales by customer company (destination companies).
     /// Only includes customers with CompanyName set.
     /// </summary>
-    public List<ChartDataPoint> GetRevenueByCompanyOfDestination()
+    public List<ChartDataPoint> GetRevenueByCompanyOfDestination(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
+
+        // When a display converter is supplied, convert each transaction's USD amount at its OWN
+        // date before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
@@ -874,7 +905,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key!,
-                Value = (double)g.Sum(x => x.Revenue.EffectiveTotalUSD)
+                Value = (double)g.Sum(x => Display(x.Revenue.EffectiveTotalUSD, x.Revenue.Date))
             })
             .OrderByDescending(p => p.Value)
             .Take(10)
@@ -1723,14 +1754,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets tax amounts grouped by product category.
     /// </summary>
-    public List<ChartDataPoint> GetTaxByCategory()
+    public List<ChartDataPoint> GetTaxByCategory(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var allTransactions = new List<(decimal TaxUSD, string? CategoryId)>();
+        var allTransactions = new List<(decimal TaxUSD, string? CategoryId, DateTime Date)>();
 
         allTransactions.AddRange(companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
@@ -1738,7 +1769,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             {
                 var productId = r.LineItems.FirstOrDefault()?.ProductId;
                 var product = productId != null ? companyData.GetProduct(productId) : null;
-                return (r.EffectiveTaxAmountUSD, product?.CategoryId);
+                return (r.EffectiveTaxAmountUSD, product?.CategoryId, r.Date);
             }));
 
         allTransactions.AddRange(companyData.Expenses
@@ -1747,11 +1778,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             {
                 var productId = e.LineItems.FirstOrDefault()?.ProductId;
                 var product = productId != null ? companyData.GetProduct(productId) : null;
-                return (e.EffectiveTaxAmountUSD, product?.CategoryId);
+                return (e.EffectiveTaxAmountUSD, product?.CategoryId, e.Date);
             }));
 
         if (allTransactions.Count == 0)
             return [];
+
+        // When a display converter is supplied, convert each transaction's tax USD at its OWN date
+        // before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return allTransactions
             .GroupBy(t => t.CategoryId ?? "Unknown")
@@ -1761,7 +1796,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return new ChartDataPoint
                 {
                     Label = categoryName,
-                    Value = (double)g.Sum(t => t.TaxUSD)
+                    Value = (double)g.Sum(t => Display(t.TaxUSD, t.Date))
                 };
             })
             .OrderByDescending(p => p.Value)
@@ -1830,25 +1865,29 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets tax amounts grouped by product.
     /// </summary>
-    public List<ChartDataPoint> GetTaxByProduct()
+    public List<ChartDataPoint> GetTaxByProduct(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var allTransactions = new List<(decimal TaxUSD, string? ProductId)>();
+        var allTransactions = new List<(decimal TaxUSD, string? ProductId, DateTime Date)>();
 
         allTransactions.AddRange(companyData.Revenues
             .Where(r => r.Date >= startDate && r.Date <= endDate && (r.TaxAmountUSD > 0 || r.TaxAmount > 0))
-            .Select(r => (r.EffectiveTaxAmountUSD, r.LineItems.FirstOrDefault()?.ProductId)));
+            .Select(r => (r.EffectiveTaxAmountUSD, r.LineItems.FirstOrDefault()?.ProductId, r.Date)));
 
         allTransactions.AddRange(companyData.Expenses
             .Where(e => e.Date >= startDate && e.Date <= endDate && (e.TaxAmountUSD > 0 || e.TaxAmount > 0))
-            .Select(e => (e.EffectiveTaxAmountUSD, e.LineItems.FirstOrDefault()?.ProductId)));
+            .Select(e => (e.EffectiveTaxAmountUSD, e.LineItems.FirstOrDefault()?.ProductId, e.Date)));
 
         if (allTransactions.Count == 0)
             return [];
+
+        // When a display converter is supplied, convert each transaction's tax USD at its OWN date
+        // before grouping (Calculations.md §3a Phase 2). Default (null) keeps USD.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return allTransactions
             .GroupBy(t => t.ProductId ?? "Unknown")
@@ -1858,7 +1897,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return new ChartDataPoint
                 {
                     Label = productName,
-                    Value = (double)g.Sum(t => t.TaxUSD)
+                    Value = (double)g.Sum(t => Display(t.TaxUSD, t.Date))
                 };
             })
             .OrderByDescending(p => p.Value)
@@ -2041,8 +2080,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets chart data for a specific chart type.
     /// Results are cached per chart type for the lifetime of this service instance.
     /// </summary>
-    public object GetChartData(ChartDataType chartType)
+    public object GetChartData(ChartDataType chartType, Func<decimal, DateTime, decimal>? toDisplay = null)
     {
+        // When a display converter is supplied (dashboard distribution path), bypass the cache
+        // entirely: a USD result computed earlier (e.g. for the report) must not be served when a
+        // converter is requested, and a converted result must never poison the USD cache.
+        if (toDisplay != null)
+            return ComputeChartData(chartType, toDisplay);
+
         if (_cache.TryGetValue(chartType, out var cached))
             return cached;
 
@@ -2054,17 +2099,17 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Computes chart data for a specific chart type.
     /// </summary>
-    private object ComputeChartData(ChartDataType chartType)
+    private object ComputeChartData(ChartDataType chartType, Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         return chartType switch
         {
             // Revenue charts
             ChartDataType.TotalRevenue => GetRevenueOverTime(),
-            ChartDataType.RevenueDistribution => GetRevenueDistribution(),
+            ChartDataType.RevenueDistribution => GetRevenueDistribution(toDisplay),
 
             // Expense charts
             ChartDataType.TotalExpenses => GetExpensesOverTime(),
-            ChartDataType.ExpensesDistribution => GetExpenseDistribution(),
+            ChartDataType.ExpensesDistribution => GetExpenseDistribution(toDisplay),
 
             // Financial charts
             ChartDataType.TotalProfits => GetProfitOverTime(),
@@ -2077,10 +2122,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             // Geographic charts
             ChartDataType.WorldMap => GetWorldMapData(),
-            ChartDataType.CountriesOfOrigin => GetRevenueByCountryOfOrigin(),
-            ChartDataType.CountriesOfDestination => GetExpensesByCountryOfDestination(),
-            ChartDataType.CompaniesOfOrigin => GetRevenueByCompanyOfOrigin(),
-            ChartDataType.CompaniesOfDestination => GetRevenueByCompanyOfDestination(),
+            ChartDataType.CountriesOfOrigin => GetRevenueByCountryOfOrigin(toDisplay),
+            ChartDataType.CountriesOfDestination => GetExpensesByCountryOfDestination(toDisplay),
+            ChartDataType.CompaniesOfOrigin => GetRevenueByCompanyOfOrigin(toDisplay),
+            ChartDataType.CompaniesOfDestination => GetRevenueByCompanyOfDestination(toDisplay),
 
             // Accountant charts
             ChartDataType.AccountantsTransactions => GetTransactionsByAccountant(),
@@ -2112,9 +2157,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             // Taxes charts
             ChartDataType.TaxCollectedVsPaid => GetTaxCollectedVsPaid(),
             ChartDataType.TaxLiabilityTrend => GetTaxLiabilityOverTime(),
-            ChartDataType.TaxByCategory => GetTaxByCategory(),
+            ChartDataType.TaxByCategory => GetTaxByCategory(toDisplay),
             ChartDataType.TaxRateDistribution => GetTaxRateDistribution(),
-            ChartDataType.TaxByProduct => GetTaxByProduct(),
+            ChartDataType.TaxByProduct => GetTaxByProduct(toDisplay),
             ChartDataType.ExpenseVsRevenueTax => GetExpenseVsRevenueTax(),
 
             _ => new List<ChartDataPoint>()

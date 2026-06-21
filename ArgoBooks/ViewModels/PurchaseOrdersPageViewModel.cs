@@ -342,7 +342,9 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // Sum in USD (the normalized base) so mixed-currency POs aren't added as if same-currency,
         // then render in the display currency at today's rate. Pending POs contribute 0 until they
         // heal (Calculations.md §3). The old "$" + raw Total sum added EUR/GBP/USD numerals together.
-        TotalValue = CurrencyService.FormatWholeNumberFromUSD(_allOrders.Sum(o => o.EffectiveTotalUSD), DateTime.Today);
+        // Convert each PO at its OWN order date before summing (Calculations.md §3a Phase 2).
+        TotalValue = CurrencyService.FormatWholeNumber(
+            CurrencyService.SumDisplayFromUSD(_allOrders, o => o.EffectiveTotalUSD, o => o.OrderDate));
     }
 
     /// <summary>

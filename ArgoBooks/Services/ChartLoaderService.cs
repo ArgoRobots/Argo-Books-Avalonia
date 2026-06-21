@@ -55,6 +55,24 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Per-bucket-date variant of <see cref="ConvertUSDValuesToDisplay(double[])"/>: converts each
+    /// USD bucket value at its OWN date (docs/Calculations.md §3a Phase 2) instead of today's rate,
+    /// so a non-USD chart isn't re-priced. <paramref name="dates"/> must align 1:1 with
+    /// <paramref name="usdValues"/>. For a USD display currency this is a no-op.
+    /// </summary>
+    public static double[] ConvertUSDValuesToDisplay(double[] usdValues, DateTime[] dates)
+    {
+        if (usdValues.Length == 0) return usdValues;
+        var result = new double[usdValues.Length];
+        for (int i = 0; i < usdValues.Length; i++)
+        {
+            var date = i < dates.Length ? dates[i] : DateTime.Now;
+            result[i] = (double)CurrencyService.GetDisplayAmount((decimal)usdValues[i], date);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Gets the legend text paint based on the current theme.
     /// </summary>
     public static SolidColorPaint GetLegendTextPaint()
@@ -256,7 +274,7 @@ public class ChartLoaderService
         // / axis labels all agree with stat cards. Callers passing counts
         // (returns, losses, transaction counts) pass convertFromUSD=false.
         if (convertFromUSD)
-            values = ConvertUSDValuesToDisplay(values);
+            values = ConvertUSDValuesToDisplay(values, dates);
         var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
 
         return SelectedChartStyle switch
@@ -333,10 +351,10 @@ public class ChartLoaderService
         SKColor positiveColor, SKColor negativeColor,
         string negativeSuffix, SKColor lineColor)
     {
-        // Values are always USD-aggregated currency, convert to display
-        // currency at this boundary so bars / tooltips / axis agree with
-        // the stat cards and chart titles.
-        values = ConvertUSDValuesToDisplay(values);
+        // Values are always USD-aggregated currency, convert to display currency at this boundary
+        // so bars / tooltips / axis agree with the stat cards. Convert each bucket at its OWN date
+        // (docs/Calculations.md §3a Phase 2), not today's rate.
+        values = ConvertUSDValuesToDisplay(values, dates);
 
         var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
                            SelectedChartStyle != ChartStyle.StepLine &&
@@ -1196,8 +1214,11 @@ public class ChartLoaderService
             return (series, labels, dates, totalProfit);
         }
 
-        // Always compute total profit from daily data before bucketing
-        totalProfit = (decimal)dailyPoints.Sum(p => p.Value);
+        // Total profit for the chart title, in the DISPLAY currency. Convert each day at its OWN
+        // date (Calculations.md §3a Phase 2) so the title matches the per-bucket bars and isn't
+        // re-priced at today's rate. Computed from daily data before bucketing for exact dates.
+        totalProfit = dailyPoints.Sum(p =>
+            CurrencyService.GetDisplayAmount((decimal)p.Value, p.Date ?? DateTime.Now));
 
         var dataPoints = StoreDailyAndBucket(ChartDataType.TotalProfits, dailyPoints);
         labels = dataPoints.Select(p => p.Label).ToArray();
@@ -1375,12 +1396,15 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetRevenueDistribution().ToList();
+        // Convert each transaction at its OWN date during aggregation (docs/Calculations.md §3a
+        // Phase 2), so a category total spanning many dates isn't re-priced at one rate. Values
+        // are already in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetRevenueDistribution(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
@@ -1407,7 +1431,9 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetExpenseDistribution().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetExpenseDistribution(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
         {
@@ -1415,7 +1441,7 @@ public class ChartLoaderService
             return ([], []);
         }
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data for Google Sheets/Excel export
         PieChartExportData = new ChartExportData
@@ -1660,12 +1686,14 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetExpensesByCountryOfDestination().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetExpensesByCountryOfDestination(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfOrigin] = new ChartExportData
@@ -1692,12 +1720,14 @@ public class ChartLoaderService
         var dataService = new ReportChartDataService(companyData, filters);
 
         // Use sales with customer country lookup - destination is where products are shipped to (customer location)
-        var dataPoints = dataService.GetRevenueByCustomerCountry().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetRevenueByCustomerCountry(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfDestination] = new ChartExportData
@@ -1723,12 +1753,14 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetExpensesBySupplierCompany().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetExpensesBySupplierCompany(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfOrigin] = new ChartExportData
@@ -1754,12 +1786,14 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetRevenueByCompanyOfDestination().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetRevenueByCompanyOfDestination(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfDestination] = new ChartExportData
@@ -1790,7 +1824,9 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        // Values are transaction COUNTS per accountant, not currency amounts, so they must not be
+        // FX-converted (the export SeriesName is "Count").
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
         var exportData = new ChartExportData
@@ -2517,12 +2553,14 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetTaxByCategory().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetTaxByCategory(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         _chartExportDataByType[ChartDataType.TaxByCategory] = new ChartExportData
         {
@@ -2622,12 +2660,14 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetTaxByProduct().ToList();
+        // Per-transaction conversion at each row's OWN date (docs/Calculations.md §3a Phase 2);
+        // values come back in display currency, so the pie helper must not convert again.
+        var dataPoints = dataService.GetTaxByProduct(CurrencyService.GetDisplayAmount).ToList();
 
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
 
         _chartExportDataByType[ChartDataType.TaxByProduct] = new ChartExportData
         {

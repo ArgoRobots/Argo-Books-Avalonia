@@ -200,11 +200,12 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        var onlineReceivedUSD = _allPayments
-            .Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0)
-            .Sum(p => p.EffectiveAmountUSD);
+        // Convert each payment at its OWN date before summing (Calculations.md §3a Phase 2).
+        var onlineReceivedDisplay = CurrencyService.SumDisplayFromUSD(
+            _allPayments.Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0),
+            p => p.EffectiveAmountUSD, p => p.Date);
 
-        OnlineReceivedThisMonth = CurrencyService.FormatFromUSD(onlineReceivedUSD, now);
+        OnlineReceivedThisMonth = CurrencyService.Format(onlineReceivedDisplay);
     }
 
     private static string FormatTimeSince(DateTime utcTime)
@@ -556,11 +557,14 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
         // Received this month, net of refunds in the same window, same
         // cash-basis logic the dashboard uses.
-        var monthlyReceivedUSD = _allPayments
-            .Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed")
-            .Sum(p => p.EffectiveAmountUSD);
-        var monthlyRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(_allPayments, startOfMonth, now);
-        ReceivedThisMonth = CurrencyService.FormatFromUSD(monthlyReceivedUSD - monthlyRefundsUSD, now);
+        // Convert each payment/refund at its OWN date before summing (Calculations.md §3a Phase 2).
+        var monthlyReceivedDisplay = CurrencyService.SumDisplayFromUSD(
+            _allPayments.Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed"),
+            p => p.EffectiveAmountUSD, p => p.Date);
+        var monthlyRefundsDisplay = CurrencyService.SumDisplayFromUSD(
+            _allPayments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= now),
+            p => Math.Abs(p.EffectiveAmountUSD), p => p.Date);
+        ReceivedThisMonth = CurrencyService.Format(monthlyReceivedDisplay - monthlyRefundsDisplay);
 
         // Total transactions: counts only the user-facing rows (refund records
         // are collapsed into their parent so they don't double-count here).
