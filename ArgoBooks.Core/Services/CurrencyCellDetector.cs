@@ -141,9 +141,63 @@ public static class CurrencyCellDetector
             }
         }
 
-        if (!decimal.TryParse(cleaned, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+        if (!TryParseFlexible(cleaned, out var result))
             return 0m;
         return negative ? -result : result;
+    }
+
+    /// <summary>
+    /// Parses a numeric string that may use either US (<c>1,234.56</c>) or European
+    /// (<c>1.234,56</c> / <c>1234,56</c>) grouping and decimal separators, plus space grouping
+    /// (<c>1 234,56</c>). The separator nearest the end is treated as the decimal separator; the
+    /// other is treated as a thousands separator and removed. Single-separator strings stay on the
+    /// US interpretation unless the pattern is unambiguously a decimal comma (one comma followed by
+    /// one or two digits), so existing US inputs are never reinterpreted. Returns
+    /// <see langword="false"/> when the string is not a number.
+    /// </summary>
+    private static bool TryParseFlexible(string s, out decimal value)
+    {
+        value = 0m;
+        if (string.IsNullOrWhiteSpace(s)) return false;
+
+        // Whitespace (incl. NBSP) is only ever a thousands separator here; drop it.
+        var t = new string(s.Where(c => !char.IsWhiteSpace(c)).ToArray());
+        if (t.Length == 0) return false;
+
+        int lastDot = t.LastIndexOf('.');
+        int lastComma = t.LastIndexOf(',');
+
+        string normalized;
+        if (lastDot >= 0 && lastComma >= 0)
+        {
+            // Both separators present: the last one is the decimal point, the other is grouping.
+            char dec = lastDot > lastComma ? '.' : ',';
+            char group = dec == '.' ? ',' : '.';
+            normalized = t.Replace(group.ToString(), string.Empty);
+            if (dec == ',') normalized = normalized.Replace(',', '.');
+        }
+        else if (lastComma >= 0)
+        {
+            // Only comma(s). A single comma with one or two trailing digits is a decimal comma
+            // (e.g. "1234,56"); anything else (3-digit group, or multiple commas) is US grouping.
+            int commaCount = t.Count(c => c == ',');
+            int trailing = t.Length - lastComma - 1;
+            normalized = commaCount == 1 && trailing is 1 or 2
+                ? t.Replace(',', '.')
+                : t.Replace(",", string.Empty);
+        }
+        else if (lastDot >= 0 && t.Count(c => c == '.') > 1)
+        {
+            // Only dots, more than one: dots are grouping (e.g. European "1.234.567").
+            normalized = t.Replace(".", string.Empty);
+        }
+        else
+        {
+            // A single dot (decimal point) or no separator at all: already invariant.
+            normalized = t;
+        }
+
+        return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
     }
 
     /// <summary>Returns the maximal runs of letters in the string (currency-code candidates).</summary>

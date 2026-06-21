@@ -127,7 +127,8 @@ internal static class SpreadsheetRowReader
         var value = row[index];
         return value switch
         {
-            double d => (decimal)d,
+            // A formula-error cell can surface as NaN/Infinity; (decimal)NaN throws, so coerce to 0.
+            double d => double.IsFinite(d) ? (decimal)d : 0m,
             decimal dec => dec,
             int i => i,
             long l => l,
@@ -149,7 +150,8 @@ internal static class SpreadsheetRowReader
         return value switch
         {
             null => null,
-            double d => (decimal)d,
+            // A formula-error cell can surface as NaN/Infinity; (decimal)NaN throws, so coerce to 0.
+            double d => double.IsFinite(d) ? (decimal)d : 0m,
             decimal dec => dec,
             int i => i,
             long l => l,
@@ -171,7 +173,7 @@ internal static class SpreadsheetRowReader
         var value = row[index];
         return value switch
         {
-            double d => (int)d,
+            double d => double.IsFinite(d) ? (int)d : 0,
             decimal dec => (int)dec,
             int i => i,
             long l => (int)l,

@@ -43,6 +43,21 @@ public class ImportOptions
     internal int SkippedCount { get; set; }
 
     /// <summary>
+    /// Tracks the number of existing records updated in place during import (matched by id
+    /// and not skipped). Reset before each sheet import. Used internally by import methods so
+    /// the per-sheet result can report updates instead of misattributing them to dropped rows.
+    /// </summary>
+    internal int UpdatedCount { get; set; }
+
+    /// <summary>
+    /// Tracks rows inserted for grouped sheet types whose entities are not added 1:1 to a
+    /// collection (purchase-order line items, which are merged onto their parent order). Reset
+    /// before each sheet import. Used internally so the count cannot be inferred from a
+    /// collection-size delta.
+    /// </summary>
+    internal int InsertedCount { get; set; }
+
+    /// <summary>
     /// Per-row currency resolved deterministically from the amount cells before import
     /// (see <see cref="CurrencyImportPreparer"/>): sheet name -> (0-based data-row ordinal -> ISO code).
     /// When a row has an entry, financial builders set <c>OriginalCurrency</c> to that code and
@@ -363,6 +378,9 @@ public class SpreadsheetImportService
 
                 if (sheetAnalysis != null)
                 {
+                    // Ensure a non-null options so per-sheet insert/update/skip counts are tracked
+                    // (the counters live on ImportOptions); otherwise updates would be misreported.
+                    options ??= new ImportOptions();
                     progress?.Report(($"Importing {rows.Count:N0} records...", 50));
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
@@ -832,7 +850,11 @@ public class SpreadsheetImportService
     {
         var countBefore = GetEntityCount(data, sheetType);
         if (options != null)
+        {
             options.SkippedCount = 0;
+            options.UpdatedCount = 0;
+            options.InsertedCount = 0;
+        }
 
         // Make this sheet's per-row currency (resolved by CurrencyImportPreparer) available to the
         // financial builders for the duration of this sheet import, then clear it.
@@ -847,13 +869,22 @@ public class SpreadsheetImportService
             _currentSheetRowCurrency = null;
         }
         var countAfter = GetEntityCount(data, sheetType);
-        var inserted = Math.Max(0, countAfter - countBefore);
+
+        // Purchase-order line items are merged onto their parent order rather than added as
+        // first-class entities, so the collection-count delta doesn't reflect the rows processed.
+        // Use the explicit per-row count the importer recorded instead.
+        var inserted = sheetType == SpreadsheetSheetType.PurchaseOrderLineItems && options != null
+            ? options.InsertedCount
+            : Math.Max(0, countAfter - countBefore);
 
         var result = new SheetImportResult
         {
             SheetName = sheetName,
             EntityType = sheetType.ToString(),
-            Inserted = inserted
+            Inserted = inserted,
+            // Updates mutate an existing record in place (no collection growth), so they have to be
+            // counted explicitly; otherwise they'd be misreported as dropped "missing field" rows.
+            Updated = options?.UpdatedCount ?? 0
         };
 
         if (options?.SkipExistingRecords == true)
@@ -863,13 +894,21 @@ public class SpreadsheetImportService
                 result.SkipReasons.Add($"{result.Skipped} {sheetType} records skipped (already exist)");
         }
 
-        // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows)
-        var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
-        var unaccounted = rows.Count - totalAccountedFor;
-        if (unaccounted > 0)
+        // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows).
+        // Only meaningful where one row maps to one entity. Grouped sheet types (rental records
+        // span several rows; purchase-order line items merge onto a parent) legitimately have
+        // more rows than entities, so the difference there is expected, not a dropped row.
+        bool rowMapsToEntity = sheetType is not (
+            SpreadsheetSheetType.RentalRecords or SpreadsheetSheetType.PurchaseOrderLineItems);
+        if (rowMapsToEntity)
         {
-            result.Skipped += unaccounted;
-            result.SkipReasons.Add($"{unaccounted} rows with missing or empty required fields");
+            var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
+            var unaccounted = rows.Count - totalAccountedFor;
+            if (unaccounted > 0)
+            {
+                result.Skipped += unaccounted;
+                result.SkipReasons.Add($"{unaccounted} rows with missing or empty required fields");
+            }
         }
 
         return result;
@@ -3278,6 +3317,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Customers.Add(customer);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3317,6 +3358,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Invoices.Add(invoice);
+            else if (options != null)
+                options.UpdatedCount++;
 
             // Create a linked Revenue entry for paid/partially paid invoices so they appear on the
             // dashboard and analytics pages (pending when the invoice's USD value is not yet known).
@@ -3393,6 +3436,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Expenses.Add(purchase);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3506,6 +3551,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 if (!string.IsNullOrEmpty(product.Name))
                     productsByName.TryAdd(product.Name, product);
             }
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3532,6 +3579,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Inventory.Add(item);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3561,6 +3610,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Payments.Add(payment);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3590,6 +3641,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Suppliers.Add(supplier);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3643,6 +3696,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Revenues.Add(revenue);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3811,6 +3866,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.RentalInventory.Add(item);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3873,6 +3930,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Rentals.Add(record);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3905,6 +3964,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Categories.Add(category);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3923,6 +3984,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Departments.Add(department);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3959,6 +4022,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Employees.Add(employee);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3988,6 +4053,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Locations.Add(location);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -4013,6 +4080,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.RecurringInvoices.Add(recurring);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -4046,6 +4115,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.StockAdjustments.Add(adjustment);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -4071,6 +4142,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.PurchaseOrders.Add(po);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -4102,12 +4175,27 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var (poId, lineItems) in lineItemsByPo)
         {
             var po = data.PurchaseOrders.FirstOrDefault(p => p.Id == poId);
-            if (po != null)
+            // No matching order: leave these rows unassigned (counted as unimported by the caller).
+            if (po == null) continue;
+
+            if (options?.SkipExistingRecords == true && po.LineItems.Count > 0)
             {
-                if (options?.SkipExistingRecords == true && po.LineItems.Count > 0) continue;
-                po.LineItems = lineItems;
-                // Calculate subtotal from line items
-                po.Subtotal = lineItems.Sum(li => li.Total);
+                options.SkippedCount += lineItems.Count;
+                continue;
+            }
+
+            // An order that already had line items is being replaced (an update); one that had
+            // none is a fresh insert. Count per line-item row so the per-sheet result is accurate,
+            // because line items don't grow a top-level collection the way other entities do.
+            bool hadLineItems = po.LineItems.Count > 0;
+            po.LineItems = lineItems;
+            // Calculate subtotal from line items
+            po.Subtotal = lineItems.Sum(li => li.Total);
+
+            if (options != null)
+            {
+                if (hadLineItems) options.UpdatedCount += lineItems.Count;
+                else options.InsertedCount += lineItems.Count;
             }
         }
     }
@@ -4164,6 +4252,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Returns.Add(returnRecord);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -4209,6 +4299,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.LostDamaged.Add(lostDamaged);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
