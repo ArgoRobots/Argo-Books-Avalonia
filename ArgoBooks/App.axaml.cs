@@ -288,7 +288,11 @@ public partial class App : Application
         await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = ConnectivityMessage.Title.Translate(),
-            Message = string.IsNullOrWhiteSpace(message) ? ConnectivityMessage.NoInternet.Translate() : message,
+            // Localize the known connectivity constants (they're translation keys) instead of showing
+            // them verbatim; leave any other caller-supplied message untouched.
+            Message = string.IsNullOrWhiteSpace(message)
+                ? ConnectivityMessage.NoInternet.Translate()
+                : (ConnectivityMessage.IsConnectivityMessage(message) ? message.Translate() : message),
             PrimaryButtonText = "OK".Translate(),
             CancelButtonText = null,
             SecondaryButtonText = null

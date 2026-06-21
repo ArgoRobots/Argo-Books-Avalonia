@@ -885,9 +885,14 @@ public partial class SettingsModalViewModel : ViewModelBase
                     (result.Message ?? "Failed to remove logo.").Translate());
             }
         }
-        catch
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or System.Threading.Tasks.TaskCanceledException or System.TimeoutException or System.Net.Sockets.SocketException)
         {
             await App.ShowConnectivityErrorAsync();
+        }
+        catch
+        {
+            // A non-network failure shouldn't be reported as a connection problem.
+            await ShowErrorDialogAsync("Couldn't Remove Logo".Translate(), "Failed to remove logo.".Translate());
         }
         finally
         {
@@ -1114,9 +1119,14 @@ public partial class SettingsModalViewModel : ViewModelBase
                     (response.Message ?? "Failed to disconnect provider. Please try again.").Translate());
             }
         }
-        catch
+        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or System.Threading.Tasks.TaskCanceledException or System.TimeoutException or System.Net.Sockets.SocketException)
         {
             await App.ShowConnectivityErrorAsync();
+        }
+        catch
+        {
+            // A non-network failure shouldn't be reported as a connection problem.
+            await ShowErrorDialogAsync("Couldn't Disconnect".Translate(), "Failed to disconnect provider. Please try again.".Translate());
         }
     }
 
