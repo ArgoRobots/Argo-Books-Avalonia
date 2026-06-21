@@ -32,6 +32,13 @@ public class CompanySettings
     [JsonPropertyName("backtestVersion")]
     public string? BacktestVersion { get; set; }
 
+    /// <summary>
+    /// Version marker for the one-time invoice-totals healing pass that runs on
+    /// open. When it matches the app's current heal version, the pass is skipped.
+    /// </summary>
+    [JsonPropertyName("invoiceTotalsHealedVersion")]
+    public string? InvoiceTotalsHealedVersion { get; set; }
+
     [JsonPropertyName("company")]
     public CompanyInfo Company { get; set; } = new();
     [JsonPropertyName("localization")]

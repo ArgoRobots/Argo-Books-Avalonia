@@ -583,24 +583,8 @@ public class CompanyManager : IDisposable
             CompanyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
 
             // One-time recalc: heal any historic drift between Invoice
-            // totals and the Payment rows that drive them. Only runs for
-            // invoices that actually have Payment rows. Spreadsheet
-            // imports without payments record AmountPaid directly on the
-            // invoice and would otherwise be wiped to zero here.
-            // Recalculate (not just RecalculateFromPayments) so stored
-            // Status is also healed, e.g. Paid → PartiallyRefunded for
-            // historic invoices saved before the refund-status rules.
-            var invoicesWithPayments = CompanyData.Payments
-                .Select(p => p.InvoiceId)
-                .Where(id => !string.IsNullOrEmpty(id))
-                .ToHashSet();
-            foreach (var invoice in CompanyData.Invoices)
-            {
-                if (invoicesWithPayments.Contains(invoice.Id))
-                {
-                    InvoiceTotalsService.Recalculate(invoice, CompanyData.Payments);
-                }
-            }
+            // totals and the Payment rows that drive them.
+            HealInvoiceTotalsIfNeeded(CompanyData);
 
             CurrentFilePath = filePath;
             _currentPassword = password;
@@ -646,6 +630,47 @@ public class CompanyManager : IDisposable
             CompanyData = null;
             throw;
         }
+    }
+
+    /// <summary>
+    /// Current version of the invoice-totals healing logic. Bump this when the
+    /// healing rules change so the pass re-runs once on the next open.
+    /// </summary>
+    public const string InvoiceTotalsHealVersion = "1";
+
+    /// <summary>
+    /// One-time recalc that heals any historic drift between Invoice totals and
+    /// the Payment rows that drive them. Only runs for invoices that actually
+    /// have Payment rows; spreadsheet imports without payments record AmountPaid
+    /// directly on the invoice and would otherwise be wiped to zero here. Uses
+    /// Recalculate (not just RecalculateFromPayments) so stored Status is also
+    /// healed, e.g. Paid to PartiallyRefunded for historic invoices saved before
+    /// the refund-status rules.
+    ///
+    /// Skipped once <see cref="CompanySettings.InvoiceTotalsHealedVersion"/>
+    /// matches <see cref="InvoiceTotalsHealVersion"/>. The marker persists on the
+    /// next save; the pass is idempotent, so re-running it before then is harmless.
+    /// </summary>
+    public static void HealInvoiceTotalsIfNeeded(CompanyData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        if (data.Settings.InvoiceTotalsHealedVersion == InvoiceTotalsHealVersion)
+            return;
+
+        var invoicesWithPayments = data.Payments
+            .Select(p => p.InvoiceId)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .ToHashSet();
+        foreach (var invoice in data.Invoices)
+        {
+            if (invoicesWithPayments.Contains(invoice.Id))
+            {
+                InvoiceTotalsService.Recalculate(invoice, data.Payments);
+            }
+        }
+
+        data.Settings.InvoiceTotalsHealedVersion = InvoiceTotalsHealVersion;
     }
 
     /// <summary>

@@ -1,3 +1,6 @@
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -99,6 +102,48 @@ public class CompanyManagerTests : IDisposable
 
         Assert.Throws<ArgumentNullException>(() =>
             new CompanyManager(fileService, settingsService, null!));
+    }
+
+    #endregion
+
+    #region HealInvoiceTotalsIfNeeded Tests
+
+    private static CompanyData BuildCompanyWithDriftedInvoice(string? healedVersion)
+    {
+        return new CompanyData
+        {
+            Settings = new CompanySettings { InvoiceTotalsHealedVersion = healedVersion },
+            Invoices =
+            {
+                new Invoice { Id = "INV-1", Total = 100m, OriginalCurrency = "USD" }
+            },
+            Payments =
+            {
+                new Payment { InvoiceId = "INV-1", Amount = 40m, OriginalCurrency = "USD" }
+            }
+        };
+    }
+
+    [Fact]
+    public void HealInvoiceTotalsIfNeeded_NotYetHealed_RecalculatesAndStampsVersion()
+    {
+        var data = BuildCompanyWithDriftedInvoice(healedVersion: null);
+
+        CompanyManager.HealInvoiceTotalsIfNeeded(data);
+
+        Assert.Equal(40m, data.Invoices[0].AmountPaid);
+        Assert.Equal(CompanyManager.InvoiceTotalsHealVersion, data.Settings.InvoiceTotalsHealedVersion);
+    }
+
+    [Fact]
+    public void HealInvoiceTotalsIfNeeded_AlreadyHealed_SkipsRecalculation()
+    {
+        var data = BuildCompanyWithDriftedInvoice(healedVersion: CompanyManager.InvoiceTotalsHealVersion);
+
+        CompanyManager.HealInvoiceTotalsIfNeeded(data);
+
+        // Heal was skipped, so the (default) totals are left untouched.
+        Assert.Equal(0m, data.Invoices[0].AmountPaid);
     }
 
     #endregion
