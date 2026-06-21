@@ -71,6 +71,44 @@ public static class KeyDerivation
     }
 
     /// <summary>
+    /// Derives BOTH the AES encryption key (first 32 bytes) and the password
+    /// verification hash (last 32 bytes) from a single PBKDF2 master-key pass.
+    /// Equivalent to calling <see cref="DeriveKey(string, byte[])"/> and
+    /// <see cref="ComputePasswordHash(string, byte[])"/> separately, but runs
+    /// PBKDF2 only once instead of twice.
+    /// </summary>
+    /// <param name="password">The password to derive from.</param>
+    /// <param name="salt">The salt bytes.</param>
+    /// <param name="encryptionKey">Outputs the 32-byte AES encryption key.</param>
+    /// <param name="verificationHash">Outputs the 32-byte verification hash.</param>
+    public static void DeriveKeyAndHash(
+        string password, byte[] salt, out byte[] encryptionKey, out byte[] verificationHash)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(password);
+        ArgumentNullException.ThrowIfNull(salt);
+
+        var masterKey = Rfc2898DeriveBytes.Pbkdf2(
+            password,
+            salt,
+            Iterations,
+            HashAlgorithmName.SHA256,
+            MasterKeySize);
+        try
+        {
+            encryptionKey = new byte[KeySize];
+            verificationHash = new byte[HashSize];
+
+            // First 32 bytes are the encryption key, last 32 are the verification hash.
+            Buffer.BlockCopy(masterKey, 0, encryptionKey, 0, KeySize);
+            Buffer.BlockCopy(masterKey, KeySize, verificationHash, 0, HashSize);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(masterKey);
+        }
+    }
+
+    /// <summary>
     /// Derives an encryption key from a password using PBKDF2-SHA256.
     /// </summary>
     /// <param name="password">The password to derive the key from.</param>
@@ -156,32 +194,5 @@ public static class KeyDerivation
         var salt = Convert.FromBase64String(saltBase64);
         var hash = ComputePasswordHash(password, salt);
         return Convert.ToBase64String(hash);
-    }
-
-    /// <summary>
-    /// Verifies a password against a stored hash using constant-time comparison.
-    /// </summary>
-    /// <param name="password">The password to verify.</param>
-    /// <param name="storedHash">The stored hash bytes.</param>
-    /// <param name="salt">The salt bytes.</param>
-    /// <returns>True if the password matches.</returns>
-    public static bool VerifyPassword(string password, byte[] storedHash, byte[] salt)
-    {
-        var computedHash = ComputePasswordHash(password, salt);
-        return CryptographicOperations.FixedTimeEquals(computedHash, storedHash);
-    }
-
-    /// <summary>
-    /// Verifies a password against a stored hash using constant-time comparison.
-    /// </summary>
-    /// <param name="password">The password to verify.</param>
-    /// <param name="storedHashBase64">Base64-encoded stored hash.</param>
-    /// <param name="saltBase64">Base64-encoded salt.</param>
-    /// <returns>True if the password matches.</returns>
-    public static bool VerifyPasswordBase64(string password, string storedHashBase64, string saltBase64)
-    {
-        var storedHash = Convert.FromBase64String(storedHashBase64);
-        var salt = Convert.FromBase64String(saltBase64);
-        return VerifyPassword(password, storedHash, salt);
     }
 }

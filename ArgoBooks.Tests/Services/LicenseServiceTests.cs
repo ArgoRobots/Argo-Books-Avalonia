@@ -279,9 +279,6 @@ public class LicenseServiceTests
         public string HashPassword(string password, string salt) =>
             Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(password + salt));
 
-        public bool ValidatePassword(string password, string storedHash, string salt) =>
-            HashPassword(password, salt) == storedHash;
-
         public byte[] Encrypt(byte[] data, string password, string salt, string iv)
         {
             // Simple mock: just store the data and return a marker
@@ -310,11 +307,20 @@ public class LicenseServiceTests
             return Task.FromResult(new MemoryStream(encrypted));
         }
 
-        public Task<MemoryStream> DecryptAsync(Stream encryptedStream, string password, string salt, string iv)
+        public byte[] DecryptWithVerification(
+            byte[] encryptedData, string password, string salt, string iv, string expectedPasswordHash)
+        {
+            if (HashPassword(password, salt) != expectedPasswordHash)
+                throw new UnauthorizedAccessException("Invalid password.");
+            return Decrypt(encryptedData, password, salt, iv);
+        }
+
+        public Task<MemoryStream> DecryptWithVerificationAsync(
+            Stream encryptedStream, string password, string salt, string iv, string expectedPasswordHash)
         {
             using var ms = new MemoryStream();
             encryptedStream.CopyTo(ms);
-            var decrypted = Decrypt(ms.ToArray(), password, salt, iv);
+            var decrypted = DecryptWithVerification(ms.ToArray(), password, salt, iv, expectedPasswordHash);
             return Task.FromResult(new MemoryStream(decrypted));
         }
 

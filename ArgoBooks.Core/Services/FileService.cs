@@ -98,7 +98,8 @@ public class FileService(
         var footer = await footerService.ReadFooterAsync(filePath, cancellationToken)
             ?? throw new InvalidDataException("Invalid file format or corrupted file.");
 
-        // Verify password if encrypted
+        // Guard: encrypted files need a password and the encryption service.
+        // This is a cheap check, no key derivation yet.
         if (footer.IsEncrypted)
         {
             if (string.IsNullOrEmpty(password))
@@ -106,19 +107,19 @@ public class FileService(
 
             if (encryptionService == null)
                 throw new InvalidOperationException("Encryption service not available.");
-
-            if (!encryptionService.ValidatePassword(password, footer.PasswordHash!, footer.Salt!))
-                throw new UnauthorizedAccessException("Invalid password.");
         }
 
         // Read content (excluding footer)
         await using var contentStream = await footerService.ReadContentAsync(filePath, cancellationToken);
 
-        // Decrypt if needed
+        // Verify the password and decrypt in a single PBKDF2 pass. The hash is
+        // checked (constant-time) before the AES pass, so a wrong password still
+        // fails fast and throws UnauthorizedAccessException, as before.
         Stream dataStream = contentStream;
         if (footer.IsEncrypted && encryptionService != null)
         {
-            dataStream = await encryptionService.DecryptAsync(contentStream, password!, footer.Salt!, footer.Iv!);
+            dataStream = await encryptionService.DecryptWithVerificationAsync(
+                contentStream, password!, footer.Salt!, footer.Iv!, footer.PasswordHash!);
         }
 
         // Decompress GZip

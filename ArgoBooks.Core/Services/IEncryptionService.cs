@@ -31,15 +31,6 @@ public interface IEncryptionService
     /// <returns>Base64-encoded password hash.</returns>
     string HashPassword(string password, string salt);
 
-    /// <summary>
-    /// Validates a password against a stored hash.
-    /// </summary>
-    /// <param name="password">Password to validate.</param>
-    /// <param name="storedHash">Base64-encoded stored hash.</param>
-    /// <param name="salt">Base64-encoded salt.</param>
-    /// <returns>True if password matches.</returns>
-    bool ValidatePassword(string password, string storedHash, string salt);
-
     #endregion
 
     #region Encryption (Byte Arrays)
@@ -80,14 +71,25 @@ public interface IEncryptionService
     Task<MemoryStream> EncryptAsync(Stream inputStream, string password, string salt, string iv);
 
     /// <summary>
-    /// Decrypts a stream that was encrypted with AES-256-GCM.
+    /// Verifies the password against <paramref name="expectedPasswordHash"/> and
+    /// decrypts the data in a single PBKDF2 pass. Verifies the stored hash and then
+    /// decrypts (as <see cref="Decrypt"/> does), but derives the key material only once.
     /// </summary>
-    /// <param name="encryptedStream">Stream containing encrypted data.</param>
+    /// <param name="encryptedData">Encrypted data with authentication tag.</param>
     /// <param name="password">Password for decryption.</param>
     /// <param name="salt">Base64-encoded salt for key derivation.</param>
     /// <param name="iv">Base64-encoded IV/nonce.</param>
-    /// <returns>Memory stream containing decrypted data.</returns>
-    Task<MemoryStream> DecryptAsync(Stream encryptedStream, string password, string salt, string iv);
+    /// <param name="expectedPasswordHash">Base64-encoded stored password hash to verify against.</param>
+    /// <returns>Decrypted data.</returns>
+    /// <exception cref="System.UnauthorizedAccessException">Thrown if the password does not match.</exception>
+    byte[] DecryptWithVerification(
+        byte[] encryptedData, string password, string salt, string iv, string expectedPasswordHash);
+
+    /// <summary>
+    /// Stream overload of <see cref="DecryptWithVerification"/>.
+    /// </summary>
+    Task<MemoryStream> DecryptWithVerificationAsync(
+        Stream encryptedStream, string password, string salt, string iv, string expectedPasswordHash);
 
     #endregion
 
