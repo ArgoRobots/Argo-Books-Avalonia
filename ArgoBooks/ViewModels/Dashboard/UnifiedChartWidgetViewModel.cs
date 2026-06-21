@@ -239,20 +239,26 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             .SelectMany(s => s.DataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value))
             .Distinct().OrderBy(d => d).ToArray();
 
-        // CreateDateTimeSeries converts USD aggregates to display currency
-        // internally, pass USD values straight through.
+        // Convert each DAILY point to display currency at its OWN date BEFORE pivoting onto the
+        // aligned date axis (Calculations.md §3a Phase 2). The pivoted values are then already
+        // display currency, so CreateDateTimeSeries must not convert again.
+        foreach (var sd in seriesData)
+            foreach (var p in sd.DataPoints)
+                if (p.Date.HasValue)
+                    p.Value = (double)CurrencyService.GetDisplayAmount((decimal)p.Value, p.Date.Value);
+
         var series = new ObservableCollection<ISeries>();
-        var seriesUsdValues = new List<double[]>();
+        var seriesDisplayValues = new List<double[]>();
         for (int i = 0; i < seriesData.Count; i++)
         {
             var sd = seriesData[i];
-            var usdValues = allDates.Select(date =>
+            var displayValues = allDates.Select(date =>
                 sd.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
-            seriesUsdValues.Add(usdValues);
+            seriesDisplayValues.Add(displayValues);
 
             var colorHex = sd.Color ?? AppColors.Palette[i % AppColors.Palette.Length];
             series.Add(ChartLoaderService.CreateDateTimeSeries(
-                allDates, usdValues, sd.Name, SKColor.Parse(colorHex)));
+                allDates, displayValues, sd.Name, SKColor.Parse(colorHex), convertFromUSD: false));
         }
 
         XAxes = ChartLoaderService.CreateDateXAxes(allDates);
@@ -262,19 +268,17 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         if (seriesData.Count > 0)
         {
-            // Export values in display currency too, so spreadsheet/PDF exports match the chart.
-            // Convert each bucket at its OWN date (Calculations.md §3a Phase 2).
-            var primaryDisplay = ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[0], allDates);
+            // Values are already display currency, so the export uses them directly.
             ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
             {
                 ChartTitle = ChartTitle,
                 ChartType = ChartDataType.GetChartExportType(),
                 Labels = allDates.Select(d => d.ToString("yyyy-MM-dd")).ToArray(),
-                Values = primaryDisplay,
+                Values = seriesDisplayValues[0],
                 SeriesName = seriesData[0].Name,
                 AdditionalSeries = seriesData
                     .Skip(1)
-                    .Select((sd, idx) => (sd.Name, ChartLoaderService.ConvertUSDValuesToDisplay(seriesUsdValues[idx + 1], allDates)))
+                    .Select((sd, idx) => (sd.Name, seriesDisplayValues[idx + 1]))
                     .ToList()
             });
         }
@@ -291,6 +295,11 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
 
         var dated = points.Where(p => p.Date.HasValue).ToList();
 
+        // Convert each DAILY point to display currency at its OWN date BEFORE re-bucketing, so the
+        // bucket sum is a sum of per-day-correct display values (Calculations.md §3a Phase 2).
+        foreach (var p in dated)
+            p.Value = (double)CurrencyService.GetDisplayAmount((decimal)p.Value, p.Date!.Value);
+
         // Bucket daily data into weeks/months when the date range is wide so
         // column bars are a readable width instead of hairline-thin slivers.
         if (dated.Count >= 2)
@@ -302,27 +311,26 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         }
 
         var dates = dated.Select(p => p.Date!.Value).ToArray();
-        var usdValues = dated.Select(p => p.Value).ToArray();
+        // Values are already display currency (converted per day above), so don't convert again.
+        var displayValues = dated.Select(p => p.Value).ToArray();
 
-        // CreateDateTimeSeries converts USD → display currency internally.
         var series = new ObservableCollection<ISeries>();
         series.Add(ChartLoaderService.CreateDateTimeSeries(
-            dates, usdValues, ChartDataType.GetDisplayName(), SKColor.Parse(AppColors.Palette[0])));
+            dates, displayValues, ChartDataType.GetDisplayName(), SKColor.Parse(AppColors.Palette[0]),
+            convertFromUSD: false));
 
         XAxes = ChartLoaderService.CreateDateXAxes(dates);
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
         HasData = dates.Length > 0;
 
-        // Export values in display currency too, so spreadsheet/PDF
-        // exports match what the chart shows.
+        // Values are already display currency, so the export uses them directly (no further conversion).
         ChartLoaderService.StoreExportData(ChartDataType, new ChartExportData
         {
             ChartTitle = ChartTitle,
             ChartType = ChartDataType.GetChartExportType(),
             Labels = dated.Select(p => p.Label).ToArray(),
-            // Convert each bucket at its OWN date (Calculations.md §3a Phase 2).
-            Values = ChartLoaderService.ConvertUSDValuesToDisplay(usdValues, dates),
+            Values = displayValues,
             SeriesName = ChartDataType.GetDisplayName()
         });
     }

@@ -73,6 +73,18 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Convert each daily point to the display currency at its OWN date so re-bucketing sums
+    /// per-day-correct values (Calculations.md §3a Phase 2). Identity for a USD display currency.
+    /// </summary>
+    private static List<ChartDataPoint> ConvertDailyPointsToDisplay(List<ChartDataPoint> dailyPoints)
+    {
+        foreach (var p in dailyPoints)
+            if (p.Date.HasValue)
+                p.Value = (double)CurrencyService.GetDisplayAmount((decimal)p.Value, p.Date.Value);
+        return dailyPoints;
+    }
+
+    /// <summary>
     /// Gets the legend text paint based on the current theme.
     /// </summary>
     public static SolidColorPaint GetLegendTextPaint()
@@ -335,12 +347,14 @@ public class ChartLoaderService
     /// </summary>
     private IEnumerable<ISeries> CreateSignedValueDateTimeSeries(
         DateTime[] dates, double[] values, string name,
-        ChartDataType chartType, string negativeSuffix)
+        ChartDataType chartType, string negativeSuffix,
+        bool convertFromUSD = true)
         => CreateSignedValueDateTimeSeries(dates, values, name,
             positiveColor: ChartColors.ForValue(chartType, 1),
             negativeColor: ChartColors.ForValue(chartType, -1),
             negativeSuffix: negativeSuffix,
-            lineColor: ChartColors.ForValue(chartType, 0));
+            lineColor: ChartColors.ForValue(chartType, 0),
+            convertFromUSD: convertFromUSD);
 
     /// <summary>
     /// Creates a date-time series where positive and negative values get distinct colors
@@ -349,12 +363,15 @@ public class ChartLoaderService
     private IEnumerable<ISeries> CreateSignedValueDateTimeSeries(
         DateTime[] dates, double[] values, string name,
         SKColor positiveColor, SKColor negativeColor,
-        string negativeSuffix, SKColor lineColor)
+        string negativeSuffix, SKColor lineColor,
+        bool convertFromUSD = true)
     {
-        // Values are always USD-aggregated currency, convert to display currency at this boundary
-        // so bars / tooltips / axis agree with the stat cards. Convert each bucket at its OWN date
-        // (docs/Calculations.md §3a Phase 2), not today's rate.
-        values = ConvertUSDValuesToDisplay(values, dates);
+        // Values are USD-aggregated currency unless the caller already converted them. When
+        // converting here, do it per bucket at its OWN date (docs/Calculations.md §3a Phase 2),
+        // not today's rate. Callers whose values already come from per-day-converted, re-bucketed
+        // data pass convertFromUSD:false so we don't double-convert.
+        if (convertFromUSD)
+            values = ConvertUSDValuesToDisplay(values, dates);
 
         var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
                            SelectedChartStyle != ChartStyle.StepLine &&
@@ -552,6 +569,11 @@ public class ChartLoaderService
     /// </summary>
     private List<ChartDataPoint> StoreDailyAndBucket(ChartDataType chartType, List<ChartDataPoint> dailyPoints)
     {
+        // Convert each daily point to display currency at its OWN date BEFORE bucketing, so the
+        // bucket sum is a sum of per-day-correct display values (Calculations.md §3a Phase 2).
+        // The stored daily cache and returned bucketed points are therefore already display-currency.
+        dailyPoints = ConvertDailyPointsToDisplay(dailyPoints);
+
         _dailyDataByChart[chartType] = dailyPoints;
 
         if (dailyPoints.Count < 2 || !dailyPoints[0].Date.HasValue || !dailyPoints[^1].Date.HasValue)
@@ -572,6 +594,12 @@ public class ChartLoaderService
     private List<ChartSeriesData> StoreDailySeriesAndBucket(
         ChartDataType chartType, List<ChartSeriesData> dailySeries)
     {
+        // Convert each series' daily points to display currency at each point's OWN date BEFORE
+        // bucketing, so bucket sums are per-day-correct (Calculations.md §3a Phase 2). The stored
+        // daily cache and returned bucketed series are therefore already display-currency.
+        foreach (var s in dailySeries)
+            s.DataPoints = ConvertDailyPointsToDisplay(s.DataPoints);
+
         _dailySeriesDataByChart[chartType] = dailySeries;
 
         var allDates = dailySeries
@@ -1119,7 +1147,9 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ChartColors.Expense));
+        // Values already come from StoreDailyAndBucket (per-day-converted then re-bucketed),
+        // so they are already display-currency. Don't convert again (Calculations.md §3a Phase 2).
+        series.Add(CreateDateTimeSeries(dates, values, "Expenses", ChartColors.Expense, convertFromUSD: false));
 
         StoreExportData(ChartDataType.TotalExpenses, new ChartExportData
         {
@@ -1168,7 +1198,9 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
-        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ChartColors.Revenue));
+        // Values already come from StoreDailyAndBucket (per-day-converted then re-bucketed),
+        // so they are already display-currency. Don't convert again (Calculations.md §3a Phase 2).
+        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ChartColors.Revenue, convertFromUSD: false));
 
         StoreExportData(ChartDataType.TotalRevenue, new ChartExportData
         {
@@ -1225,8 +1257,10 @@ public class ChartLoaderService
         dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
         var values = dataPoints.Select(p => p.Value).ToArray();
 
+        // Values already come from StoreDailyAndBucket (per-day-converted then re-bucketed),
+        // so they are already display-currency. Don't convert again (Calculations.md §3a Phase 2).
         foreach (var s in CreateSignedValueDateTimeSeries(dates, values, "Profit",
-                     ChartDataType.TotalProfits, "(Loss)"))
+                     ChartDataType.TotalProfits, "(Loss)", convertFromUSD: false))
         {
             series.Add(s);
         }
@@ -1366,8 +1400,10 @@ public class ChartLoaderService
         // Add series (expenses first, then revenue for consistency)
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
+            // Values already come from StoreDailySeriesAndBucket (per-day-converted then re-bucketed),
+            // so they are already display-currency. Don't convert again (Calculations.md §3a Phase 2).
+            series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense, convertFromUSD: false));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue, convertFromUSD: false));
         }
 
         // Store export data for multi-series chart
