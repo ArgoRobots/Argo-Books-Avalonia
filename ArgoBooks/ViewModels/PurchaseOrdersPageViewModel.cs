@@ -289,6 +289,26 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         LoadOrders();
     }
 
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch. Mirrors the Payments/Revenue/Expenses pages.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
+        if (App.PurchaseOrdersModalsViewModel != null)
+        {
+            App.PurchaseOrdersModalsViewModel.OrderSaved -= OnOrderSaved;
+            App.PurchaseOrdersModalsViewModel.OrderDeleted -= OnOrderDeleted;
+            App.PurchaseOrdersModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.PurchaseOrdersModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+    }
+
     #endregion
 
     #region Data Loading

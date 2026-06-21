@@ -729,6 +729,20 @@ public partial class App : Application
     /// </summary>
     private static void ClearPageCaches()
     {
+        // Tear down each cached page VM's event subscriptions (the static LanguageChanged and
+        // CurrencyChanged events, modal events, etc.) before dropping it. Without this, a company
+        // switch leaves the orphaned VMs rooted by those static events and still reacting to them.
+        foreach (var vm in new object?[]
+        {
+            _dashboardPageViewModel, _analyticsPageViewModel, _insightsPageViewModel, _reportsPageViewModel,
+            _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel, _paymentsPageViewModel,
+            _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
+            _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
+            _customersPageViewModel, _suppliersPageViewModel, _departmentsPageViewModel, _rentalInventoryPageViewModel,
+            _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
+        })
+            (vm as SortablePageViewModelBase)?.Cleanup();
+
         _dashboardPageViewModel = null;
         _analyticsPageViewModel = null;
         _insightsPageViewModel = null;
