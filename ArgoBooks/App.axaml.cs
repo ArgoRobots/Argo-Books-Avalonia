@@ -2300,8 +2300,14 @@ public partial class App : Application
 
             var totalProcessed = totalImported + totalUpdated;
 
-            // Collect all warnings
-            var allWarnings = (tier1Result?.Warnings ?? []).ToList();
+            // Collect all warnings: the top-level tier-1 warnings plus every per-sheet warning
+            // (reference-resolution "created a new customer/supplier" and re-import notices added on
+            // the Tier 2 path), which would otherwise never reach the user. Distinct() guards against
+            // a per-sheet warning that was also surfaced at the top level.
+            var allWarnings = (tier1Result?.Warnings ?? [])
+                .Concat(allSheetResults.SelectMany(sr => sr.Warnings))
+                .Distinct()
+                .ToList();
 
             // Report any sheets that were out of scope (detected type Unknown or confidence too low)
             var unsupportedSheets = updatedAnalysis.Sheets.Where(s => s.UnsupportedReason != null).ToList();
