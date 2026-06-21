@@ -1,10 +1,12 @@
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.Core.Services;
 
 /// <summary>Whether all required exact-date rates are cached.</summary>
 public enum RateReadinessStatus { Ready, Unavailable }
 
 /// <summary>Why rates could not be made ready (for the user-facing message).</summary>
-public enum RateUnavailableReason { None, NoInternet, ServerUnreachable, Unknown }
+public enum RateUnavailableReason { None, NoInternet, ServerUnreachable, Unknown, RateLimited }
 
 /// <summary>
 /// Result of <see cref="RateReadinessService.EnsureRatesAsync"/>. <see cref="FutureDatesDeferred"/>
@@ -28,14 +30,17 @@ public sealed class RateReadinessService
 
     private readonly ExchangeRateService _rates;
     private readonly IConnectivityService _connectivity;
+    private readonly IErrorLogger? _errorLogger;
 
-    public RateReadinessService(ExchangeRateService rates, IConnectivityService connectivity)
+    public RateReadinessService(ExchangeRateService rates, IConnectivityService connectivity, IErrorLogger? errorLogger = null)
     {
         _rates = rates;
         _connectivity = connectivity;
+        _errorLogger = errorLogger;
     }
 
-    public async Task<RateReadiness> EnsureRatesAsync(IEnumerable<DateTime> dates, CancellationToken ct = default)
+    public async Task<RateReadiness> EnsureRatesAsync(
+        IEnumerable<DateTime> dates, IProgress<int>? progress = null, CancellationToken ct = default)
     {
         var today = DateTime.Today;
         var distinct = dates.Select(d => d.Date).Distinct().ToList();
@@ -43,6 +48,9 @@ public sealed class RateReadinessService
         var required = distinct.Where(d => d <= today).ToList();
 
         var missing = required.Where(d => _rates.GetExchangeRate("USD", ProbeCurrency, d) <= 0).ToList();
+        _errorLogger?.LogInfo(
+            $"[RateGate] {distinct.Count} distinct dates: {required.Count} required, {future.Count} future-deferred, {missing.Count} missing from cache" +
+            (missing.Count > 0 ? $": {string.Join(", ", missing.OrderBy(d => d).Take(40).Select(d => d.ToString("yyyy-MM-dd")))}" : "."));
         if (missing.Count == 0)
             return new RateReadiness(RateReadinessStatus.Ready, RateUnavailableReason.None, future);
 
@@ -51,19 +59,39 @@ public sealed class RateReadinessService
         if (!await _connectivity.IsInternetAvailableAsync(ct))
             return new RateReadiness(RateReadinessStatus.Unavailable, RateUnavailableReason.NoInternet, future);
 
-        // Try to fetch the missing dates (PreloadRatesAsync batches and falls back per-date).
+        // Try to fetch the missing dates (PreloadRatesAsync batches and falls back per-date). It
+        // reports 0-100% progress so the import overlay can show a determinate bar for this phase.
         try
         {
-            await _rates.PreloadRatesAsync(missing, cancellationToken: ct);
+            await _rates.PreloadRatesAsync(missing, progress, ct);
         }
         catch (OperationCanceledException) { throw; }
-        catch { /* fall through to re-check + reason classification */ }
+        catch (RateLimitedException)
+        {
+            // The server's rate limiter rejected us. We backed off immediately (no per-date fanout),
+            // so tell the user to wait a moment rather than showing a misleading connection error.
+            _errorLogger?.LogError(
+                $"[RateGate] Rate-limited by the server while fetching {missing.Count} dates; backed off without fanning out. Wait and retry.",
+                ErrorCategory.Import, "RateReadiness");
+            return new RateReadiness(RateReadinessStatus.Unavailable, RateUnavailableReason.RateLimited, future);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogWarning($"[RateGate] PreloadRatesAsync threw: {ex.Message}", "RateReadiness");
+            /* fall through to re-check + reason classification */
+        }
 
         var stillMissing = missing.Where(d => _rates.GetExchangeRate("USD", ProbeCurrency, d) <= 0).ToList();
         if (stillMissing.Count == 0)
             return new RateReadiness(RateReadinessStatus.Ready, RateUnavailableReason.None, future);
 
         var reason = await ClassifyAsync(ct);
+        // LogError (not Warning) so it reaches telemetry and survives the session: this is the exact
+        // set of dates that blocked the import, the single most useful clue for "could not get rates".
+        _errorLogger?.LogError(
+            $"[RateGate] BLOCKED: {stillMissing.Count} of {missing.Count} required dates still unpriced after fetch (reason={reason}): " +
+            $"{string.Join(", ", stillMissing.OrderBy(d => d).Take(40).Select(d => d.ToString("yyyy-MM-dd")))}",
+            ErrorCategory.Import, "RateReadiness");
         return new RateReadiness(RateReadinessStatus.Unavailable, reason, future);
     }
 

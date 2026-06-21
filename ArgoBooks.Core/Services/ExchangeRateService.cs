@@ -251,8 +251,14 @@ public class ExchangeRateService
             return;
         }
 
+        _errorLogger?.LogInfo($"[RatePreload] {total} dates needed, {datesToFetch.Count} to fetch ({cached} already cached).");
+
         // Try batch endpoint first (one POST for all dates)
         var fetched = await FetchBatchRatesAsync(datesToFetch, cancellationToken);
+        if (fetched == null)
+            _errorLogger?.LogWarning(
+                $"Batch rate fetch returned nothing for {datesToFetch.Count} dates; falling back to slow per-date requests.",
+                "ExchangeRate");
         var failedDates = new List<DateTime>();
 
         foreach (var date in datesToFetch)
@@ -271,7 +277,11 @@ public class ExchangeRateService
             }
         }
 
-        // Fall back to single-date requests for any dates the batch missed
+        // Fall back to single-date requests for any dates the batch missed. Only advance progress on
+        // a successful fetch, so the bar never reaches 100% while dates are still unpriced (which
+        // would let the "could not get rates" prompt appear right after a misleading full bar).
+        var perDateOk = 0;
+        var stillFailed = new List<DateTime>();
         foreach (var date in failedDates)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -279,10 +289,24 @@ public class ExchangeRateService
             if (rates != null)
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                cached++;
+                perDateOk++;
+                progress?.Report(cached * 100 / total);
             }
-            cached++;
-            progress?.Report(cached * 100 / total);
+            else
+            {
+                stillFailed.Add(date);
+            }
         }
+
+        if (stillFailed.Count > 0)
+            _errorLogger?.LogError(
+                $"Rate fetch incomplete: {stillFailed.Count}/{datesToFetch.Count} dates unpriced after batch + per-date fallback: " +
+                $"{string.Join(", ", stillFailed.OrderBy(d => d).Take(40).Select(d => d.ToString("yyyy-MM-dd")))}",
+                ErrorCategory.Api, "ExchangeRate");
+        else if (failedDates.Count > 0)
+            _errorLogger?.LogWarning(
+                $"Batch missed {failedDates.Count} dates; per-date fallback recovered all of them.", "ExchangeRate");
 
         await _cache.SaveAsync();
     }
@@ -291,6 +315,9 @@ public class ExchangeRateService
     /// Fetches exchange rates for multiple dates in a single batch request.
     /// Returns a dictionary mapping date strings to their rate dictionaries, or null on failure.
     /// </summary>
+    /// <summary>A short, log-safe prefix of a response body for diagnostics.</summary>
+    private static string Snippet(string s) => string.IsNullOrEmpty(s) ? "(empty)" : s.Length <= 300 ? s : s[..300] + "…";
+
     private async Task<Dictionary<string, Dictionary<string, decimal>>?> FetchBatchRatesAsync(
         List<DateTime> dates, CancellationToken cancellationToken = default)
     {
@@ -305,24 +332,55 @@ public class ExchangeRateService
             using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(BatchUrl, content, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _errorLogger?.LogError($"Batch exchange rate API returned {response.StatusCode}", ErrorCategory.Api);
+                _errorLogger?.LogError(
+                    $"Batch exchange rate API returned {(int)response.StatusCode} for {dates.Count} dates. Body[{body.Length}]: {Snippet(body)}",
+                    ErrorCategory.Api);
+                // 429 = the server's rate limiter. Surface it so the caller backs off instead of
+                // fanning out to one request per date (which only digs the rate-limit hole deeper).
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                    throw new RateLimitedException();
                 return null;
             }
 
-            var result = await response.Content.ReadFromJsonAsync<BatchExchangeRatesResponse>(cancellationToken: cancellationToken);
+            BatchExchangeRatesResponse? result;
+            try
+            {
+                result = JsonSerializer.Deserialize<BatchExchangeRatesResponse>(body);
+            }
+            catch (Exception parseEx)
+            {
+                // A parse failure here is the prime suspect for "could not get rates": log the actual
+                // status + body length + snippet so a truncated/malformed batch response is visible.
+                _errorLogger?.LogError(parseEx, ErrorCategory.Api,
+                    $"Batch exchange rate response failed to parse for {dates.Count} dates. Body[{body.Length}]: {Snippet(body)}");
+                return null;
+            }
+
             if (result?.Success == true && result.Results != null)
             {
                 success = true;
+                if (result.Failed is { Count: > 0 } serverFailed)
+                    _errorLogger?.LogWarning(
+                        $"Batch priced {result.Results.Count}/{dates.Count} dates; server reported {serverFailed.Count} unavailable: {string.Join(", ", serverFailed.Take(20))}",
+                        "ExchangeRate");
                 return result.Results;
             }
 
+            _errorLogger?.LogError(
+                $"Batch exchange rate response unusable for {dates.Count} dates (success={result?.Success}, results={(result?.Results == null ? "null" : result.Results.Count.ToString())}). Body[{body.Length}]: {Snippet(body)}",
+                ErrorCategory.Api);
             return null;
         }
         catch (OperationCanceledException)
         {
             throw;
+        }
+        catch (RateLimitedException)
+        {
+            throw; // propagate so PreloadRatesAsync skips the per-date fanout
         }
         catch (Exception ex)
         {
@@ -373,7 +431,11 @@ public class ExchangeRateService
                 if (!response.IsSuccessStatusCode)
                 {
                     _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
-                    continue; // retry
+                    // Don't retry a rate-limit: hammering it 3x per date is exactly what causes the
+                    // lockout. Surface it so the whole preload backs off.
+                    if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                        throw new RateLimitedException();
+                    continue; // retry other transient errors
                 }
 
                 var result = await response.Content.ReadFromJsonAsync<ProxyExchangeRatesResponse>();
@@ -384,6 +446,10 @@ public class ExchangeRateService
                 }
 
                 _errorLogger?.LogError($"Exchange rate API returned invalid data (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
+            }
+            catch (RateLimitedException)
+            {
+                throw; // propagate so the preload backs off instead of retrying
             }
             catch (Exception ex)
             {
@@ -444,3 +510,10 @@ public class ExchangeRateService
         public List<string>? Failed { get; init; }
     }
 }
+
+/// <summary>
+/// Thrown when the exchange-rate proxy responds with HTTP 429 (its rate limiter). Callers stop and
+/// back off rather than retrying or fanning out to per-date requests, which would only make the
+/// rate-limit worse. See <see cref="RateReadinessService"/> for how this maps to a user message.
+/// </summary>
+internal sealed class RateLimitedException : Exception;

@@ -68,7 +68,33 @@ public class RateReadinessServiceTests
         Assert.Equal(RateUnavailableReason.ServerUnreachable, result.Reason);
     }
 
+    [Fact]
+    public async Task EnsureRatesAsync_BatchRateLimited_ReturnsRateLimited_WithoutFanningOut()
+    {
+        var handler = new RateLimitedHandler();
+        var ex = new ExchangeRateService(new MockPlatform(), new HttpClient(handler));
+        var svc = new RateReadinessService(ex, new AlwaysOnlineConnectivity());
+
+        var result = await svc.EnsureRatesAsync([new DateTime(2026, 1, 5)]);
+
+        Assert.Equal(RateReadinessStatus.Unavailable, result.Status);
+        Assert.Equal(RateUnavailableReason.RateLimited, result.Reason);
+        // The whole fix: a 429 makes exactly ONE request (the batch) and stops. Before the fix this
+        // batch failure fanned out to per-date requests (1 + 3 retries here), worsening the lockout.
+        Assert.Equal(1, handler.RequestCount);
+    }
+
     // ---- stubs ----
+    private sealed class RateLimitedHandler : HttpMessageHandler
+    {
+        public int RequestCount;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken c)
+        {
+            Interlocked.Increment(ref RequestCount);
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.TooManyRequests)
+            { Content = new StringContent("{\"success\":false,\"errorCode\":\"RATE_LIMITED\"}", Encoding.UTF8, "application/json") });
+        }
+    }
     private sealed class RatesHandler(decimal usdToEur) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken c)

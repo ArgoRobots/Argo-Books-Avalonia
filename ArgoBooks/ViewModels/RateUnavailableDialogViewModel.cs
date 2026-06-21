@@ -32,6 +32,9 @@ public partial class RateUnavailableDialogViewModel : ViewModelBase
             RateUnavailableReason.ServerUnreachable => (
                 "Exchange rates are temporarily unavailable",
                 "Argo's exchange-rate service could not be reached. Please wait a moment and press Retry."),
+            RateUnavailableReason.RateLimited => (
+                "Exchange-rate service is busy",
+                "Argo has requested exchange rates a lot in a short time. Please wait a minute, then press Retry."),
             _ => (
                 "Could not get exchange rates",
                 "Argo could not fetch the exchange rates needed for this import. Check your connection and press Retry."),

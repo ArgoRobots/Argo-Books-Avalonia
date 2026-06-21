@@ -1460,7 +1460,9 @@ public partial class App : Application
     {
         try
         {
-            var exchangeService = new ExchangeRateService();
+            // Pass the logger/telemetry so the rate-fetch diagnostics (batch outcome, per-date
+            // fallback, unpriced dates) are actually recorded when an import can't get rates.
+            var exchangeService = new ExchangeRateService(ErrorLogger, TelemetryManager);
             await exchangeService.InitializeAsync();
         }
         catch (Exception ex)
@@ -2062,13 +2064,27 @@ public partial class App : Application
                 if (hasNonUsd && ExchangeRateService.Instance is { } exchangeRates)
                 {
                     var importDates = importService.CollectTransactionDates(filePath, updatedAnalysis);
-                    var readinessSvc = new RateReadinessService(exchangeRates, new ConnectivityService());
+                    var readinessSvc = new RateReadinessService(exchangeRates, new ConnectivityService(), ErrorLogger);
+
+                    // Fetching the exact-date rate for every transaction date can take seconds to
+                    // minutes, and it runs before any rows are inserted. Show it as an explicit,
+                    // cancelable phase with a determinate progress bar so the import doesn't look frozen.
+                    using var rateCts = new CancellationTokenSource();
+                    _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
+                    var rateProgress = new Progress<int>(pct =>
+                        _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, pct, rateCts, ConfirmCancelAsync));
+
                     while (true)
                     {
                         RateReadiness readiness;
                         try
                         {
-                            readiness = await readinessSvc.EnsureRatesAsync(importDates);
+                            readiness = await readinessSvc.EnsureRatesAsync(importDates, rateProgress, rateCts.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            _mainWindowViewModel?.HideLoading();
+                            return; // user canceled while fetching rates
                         }
                         catch (Exception ex)
                         {
@@ -2085,11 +2101,15 @@ public partial class App : Application
                             break;
                         }
 
+                        // Pause the progress overlay while the connect-and-retry prompt is up, then restore it.
+                        _mainWindowViewModel?.HideLoading();
                         var choice = await _appShellViewModel.RateUnavailableDialogViewModel.ShowAsync(readiness.Reason);
                         if (choice == RateRetryResult.Cancel)
                             return; // abort: nothing imported
-                        // else loop and retry
+                        _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
                     }
+
+                    _mainWindowViewModel?.HideLoading();
                 }
             }
             catch (Exception ex)
