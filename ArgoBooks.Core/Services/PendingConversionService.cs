@@ -211,6 +211,22 @@ public class PendingConversionService
                 companyData.PendingConversions.AddRange(_queue);
             }
 
+            // A healed Payment's EffectiveAmountUSD changes from 0 to a real value, which shifts the
+            // owning invoice's USD balance. Recalculate those invoices so cross-currency outstanding
+            // aggregates aren't left stale until the next company open.
+            var healedInvoiceIds = processed
+                .Where(e => e.TransactionType == "Payment")
+                .Select(e => companyData.Payments.FirstOrDefault(p => p.Id == e.TransactionId)?.InvoiceId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+            foreach (var invoiceId in healedInvoiceIds)
+            {
+                var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+                if (invoice != null)
+                    InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
+            }
+
             await SaveToDiskAsync();
 
             // Mark company data as changed so the next save includes the updated USD values
@@ -267,6 +283,14 @@ public class PendingConversionService
                 po.TotalUSD = Math.Round(entry.Total * rate, 2);
                 po.IsPendingConversion = false;
                 return;
+
+            case "Invoice":
+                var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == entry.TransactionId);
+                if (invoice == null) return;
+                invoice.TotalUSD = Math.Round(entry.Total * rate, 2);
+                invoice.BalanceUSD = Math.Round(entry.Balance * rate, 2);
+                invoice.IsPendingConversion = false;
+                return;
         }
     }
 
@@ -281,6 +305,7 @@ public class PendingConversionService
         "Expense" => companyData.Expenses.FirstOrDefault(e => e.Id == entry.TransactionId) is { IsPendingConversion: false },
         "Payment" => companyData.Payments.FirstOrDefault(p => p.Id == entry.TransactionId) is { IsPendingConversion: false },
         "PurchaseOrder" => companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "Invoice" => companyData.Invoices.FirstOrDefault(i => i.Id == entry.TransactionId) is { IsPendingConversion: false },
         _ => false
     };
 

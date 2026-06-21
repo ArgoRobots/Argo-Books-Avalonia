@@ -192,6 +192,62 @@ public class PaymentPurchaseOrderPendingConversionTests
         Assert.Equal(111.11m, po.EffectiveTotalUSD);
     }
 
+    [Fact]
+    public async Task Process_PendingInvoice_ExactRateAvailable_ConvertsTotalAndBalanceAndClears()
+    {
+        var past = DateTime.Today.AddMonths(-2);
+        var ex = new ExchangeRateService(new MockPlatform(), new HttpClient(new AlwaysEurHandler(UsdToEur)));
+        await ex.GetExchangeRateAsync("USD", "EUR", past);
+
+        var data = new CompanyData();
+        var invoice = new Invoice
+        {
+            Id = "INV-1",
+            Total = 200m,
+            Balance = 80m,
+            OriginalCurrency = "EUR",
+            IssueDate = past,
+            IsPendingConversion = true,
+            TotalUSD = 0m,
+            BalanceUSD = 0m
+        };
+        data.Invoices.Add(invoice);
+
+        var svc = new PendingConversionService(new MockPlatform(), exchangeRateService: ex);
+        await svc.AddPendingConversionAsync(new PendingConversion
+        {
+            TransactionId = "INV-1",
+            TransactionType = "Invoice",
+            Total = 200m,
+            Balance = 80m,
+            OriginalCurrency = "EUR",
+            TransactionDate = past
+        });
+
+        await svc.ProcessPendingConversionsAsync(data);
+
+        Assert.False(invoice.IsPendingConversion);
+        Assert.Equal(EurToUsd(200m), invoice.TotalUSD);
+        Assert.Equal(EurToUsd(80m), invoice.BalanceUSD);
+        Assert.Equal(EurToUsd(200m), invoice.EffectiveTotalUSD);   // now visible to outstanding aggregates
+        Assert.Equal(EurToUsd(80m), invoice.EffectiveBalanceUSD);
+        Assert.Equal(0, svc.PendingCount);
+    }
+
+    [Fact]
+    public void Invoice_EffectiveUSD_IsZeroWhilePending()
+    {
+        var inv = new Invoice { Total = 200m, Balance = 80m, OriginalCurrency = "EUR", TotalUSD = 0m, BalanceUSD = 0m, IsPendingConversion = true };
+        Assert.Equal(0m, inv.EffectiveTotalUSD);
+        Assert.Equal(0m, inv.EffectiveBalanceUSD);
+
+        inv.TotalUSD = 222.22m;
+        inv.BalanceUSD = 88.89m;
+        inv.IsPendingConversion = false;
+        Assert.Equal(222.22m, inv.EffectiveTotalUSD);
+        Assert.Equal(88.89m, inv.EffectiveBalanceUSD);
+    }
+
     #region Stubs
 
     private sealed class AlwaysEurHandler(decimal usdToEur) : HttpMessageHandler

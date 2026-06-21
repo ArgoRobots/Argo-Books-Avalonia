@@ -1006,32 +1006,52 @@ public class SpreadsheetImportService
         }
     }
 
+    /// <summary>
+    /// True when an exact-date original-&gt;USD rate is available (or the row is already USD), so the
+    /// row can be priced now rather than deferred. Used to gate the pending decision independently of
+    /// the amount, so a row whose primary amount is 0 but which has non-zero secondary amounts (tax,
+    /// shipping) is still deferred when its rate is missing, instead of being silently zeroed.
+    /// </summary>
+    private bool HasExactRate(string code, DateTime date)
+    {
+        if (string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
+            return true;
+        return ExchangeRates is { } rates && rates.GetExchangeRate(code, "USD", date) > 0;
+    }
+
     /// <summary>Per-row currency for a Payment (or company currency when none detected).</summary>
     private void ApplyPaymentCurrency(Payment payment, int rowIndex, CompanyData data)
     {
         var code = Tier1RowCurrency(rowIndex);
         if (code != null)
-        {
-            payment.OriginalCurrency = code;
-            if (TryConvertRowAmountToUSD(payment.Amount, code, payment.Date, out var amtUsd))
-            {
-                payment.AmountUSD = amtUsd;
-                payment.IsPendingConversion = false;
-            }
-            else
-            {
-                // Unpriceable (future-dated, or a gate miss): keep the native amount, defer the USD
-                // value, and enqueue so PendingConversionService converts it at the exact date later
-                // instead of leaving a permanent 0. Mirrors the Revenue/Expense path.
-                payment.AmountUSD = 0m;
-                payment.IsPendingConversion = true;
-                EnqueueImportPendingPayment(data, payment);
-            }
-        }
+            ApplyPaymentCurrencyCode(payment, code, data);
         else
         {
             payment.OriginalCurrency = data.Settings.Localization.Currency;
             payment.AmountUSD = payment.Amount;
+        }
+    }
+
+    /// <summary>
+    /// Converts a Payment's amount to USD at its exact date for <paramref name="code"/>; on an
+    /// unpriceable (future-dated, or gate miss) row, defers the USD value and enqueues it so
+    /// PendingConversionService converts it later instead of leaving a permanent 0. Shared by the
+    /// Tier 1 and Tier 2 import paths.
+    /// </summary>
+    private void ApplyPaymentCurrencyCode(Payment payment, string code, CompanyData data)
+    {
+        payment.OriginalCurrency = code;
+        if (HasExactRate(code, payment.Date))
+        {
+            TryConvertRowAmountToUSD(payment.Amount, code, payment.Date, out var amtUsd);
+            payment.AmountUSD = amtUsd;
+            payment.IsPendingConversion = false;
+        }
+        else
+        {
+            payment.AmountUSD = 0m;
+            payment.IsPendingConversion = true;
+            EnqueueImportPendingPayment(data, payment);
         }
     }
 
@@ -1040,23 +1060,7 @@ public class SpreadsheetImportService
     {
         var code = Tier1RowCurrency(rowIndex);
         if (code != null)
-        {
-            invoice.OriginalCurrency = code;
-            if (TryConvertRowAmountToUSD(invoice.Total, code, invoice.IssueDate, out var totalUsd))
-            {
-                invoice.TotalUSD = totalUsd;
-                TryConvertRowAmountToUSD(invoice.Balance, code, invoice.IssueDate, out var balUsd);
-                invoice.BalanceUSD = balUsd;
-                invoice.IsPendingConversion = false;
-            }
-            else
-            {
-                // Unpriceable (future-dated): keep native amounts, defer USD until the date arrives.
-                invoice.TotalUSD = 0m;
-                invoice.BalanceUSD = 0m;
-                invoice.IsPendingConversion = true;
-            }
-        }
+            ApplyInvoiceCurrencyCode(invoice, code, data);
         else
         {
             invoice.OriginalCurrency = data.Settings.Localization.Currency;
@@ -1065,31 +1069,63 @@ public class SpreadsheetImportService
         }
     }
 
+    /// <summary>
+    /// Converts an Invoice's Total and Balance to USD at its exact issue date; on an unpriceable row,
+    /// defers both USD values and enqueues it so PendingConversionService converts it later. Shared by
+    /// the Tier 1 and Tier 2 import paths.
+    /// </summary>
+    private void ApplyInvoiceCurrencyCode(Invoice invoice, string code, CompanyData data)
+    {
+        invoice.OriginalCurrency = code;
+        if (HasExactRate(code, invoice.IssueDate))
+        {
+            TryConvertRowAmountToUSD(invoice.Total, code, invoice.IssueDate, out var totalUsd);
+            invoice.TotalUSD = totalUsd;
+            TryConvertRowAmountToUSD(invoice.Balance, code, invoice.IssueDate, out var balUsd);
+            invoice.BalanceUSD = balUsd;
+            invoice.IsPendingConversion = false;
+        }
+        else
+        {
+            invoice.TotalUSD = 0m;
+            invoice.BalanceUSD = 0m;
+            invoice.IsPendingConversion = true;
+            EnqueueImportPendingInvoice(data, invoice);
+        }
+    }
+
     /// <summary>Per-row currency for a PurchaseOrder (or company currency when none detected).</summary>
     private void ApplyPurchaseOrderCurrency(PurchaseOrder po, int rowIndex, CompanyData data)
     {
         var code = Tier1RowCurrency(rowIndex);
         if (code != null)
-        {
-            po.OriginalCurrency = code;
-            if (TryConvertRowAmountToUSD(po.Total, code, po.OrderDate, out var poUsd))
-            {
-                po.TotalUSD = poUsd;
-                po.IsPendingConversion = false;
-            }
-            else
-            {
-                // Unpriceable (future-dated, or a gate miss): defer the USD value and enqueue so it
-                // converts at the exact date later instead of staying 0. Mirrors the Revenue/Expense path.
-                po.TotalUSD = 0m;
-                po.IsPendingConversion = true;
-                EnqueueImportPendingPurchaseOrder(data, po);
-            }
-        }
+            ApplyPurchaseOrderCurrencyCode(po, code, data);
         else
         {
             po.OriginalCurrency = data.Settings.Localization.Currency;
             po.TotalUSD = po.Total;
+        }
+    }
+
+    /// <summary>
+    /// Converts a PurchaseOrder's Total to USD at its exact order date; on an unpriceable row, defers
+    /// the USD value and enqueues it so PendingConversionService converts it later. Shared by the
+    /// Tier 1 and Tier 2 import paths.
+    /// </summary>
+    private void ApplyPurchaseOrderCurrencyCode(PurchaseOrder po, string code, CompanyData data)
+    {
+        po.OriginalCurrency = code;
+        if (HasExactRate(code, po.OrderDate))
+        {
+            TryConvertRowAmountToUSD(po.Total, code, po.OrderDate, out var poUsd);
+            po.TotalUSD = poUsd;
+            po.IsPendingConversion = false;
+        }
+        else
+        {
+            po.TotalUSD = 0m;
+            po.IsPendingConversion = true;
+            EnqueueImportPendingPurchaseOrder(data, po);
         }
     }
 
@@ -1126,10 +1162,14 @@ public class SpreadsheetImportService
     private void ApplyTransactionCurrencyCode(Transaction txn, string code, CompanyData data)
     {
         txn.OriginalCurrency = code;
-        if (TryConvertRowAmountToUSD(txn.Total, code, txn.Date, out var totalUsd))
+        // Gate on rate availability, not on Total, so a row with Total == 0 but non-zero tax/shipping
+        // is still deferred (and healed later) when its exact-date rate is missing, instead of being
+        // marked converted with those secondary USD fields silently zeroed.
+        if (HasExactRate(code, txn.Date))
         {
             // Convert every money field at the exact date, matching PendingConversionService's
             // heal path so an immediately-converted row and a later-healed row are identical.
+            TryConvertRowAmountToUSD(txn.Total, code, txn.Date, out var totalUsd);
             txn.TotalUSD = totalUsd;
             TryConvertRowAmountToUSD(txn.TaxAmount, code, txn.Date, out var taxUsd);
             txn.TaxAmountUSD = taxUsd;
@@ -1214,6 +1254,26 @@ public class SpreadsheetImportService
             OriginalCurrency = po.OriginalCurrency,
             TransactionDate = po.OrderDate,
             Total = po.Total
+        });
+    }
+
+    /// <summary>
+    /// Enqueues an unpriceable imported Invoice so the background <see cref="PendingConversionService"/>
+    /// converts its Total and Balance at the exact issue date later, instead of leaving the invoice's
+    /// USD value (and the Outstanding/Overdue aggregates that depend on it) permanently at 0.
+    /// </summary>
+    private static void EnqueueImportPendingInvoice(CompanyData data, Invoice invoice)
+    {
+        if (data.PendingConversions.Any(p => p.TransactionId == invoice.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = invoice.Id,
+            TransactionType = "Invoice",
+            OriginalCurrency = invoice.OriginalCurrency,
+            TransactionDate = invoice.IssueDate,
+            Total = invoice.Total,
+            Balance = invoice.Balance
         });
     }
 
@@ -1492,10 +1552,20 @@ public class SpreadsheetImportService
                     if (string.IsNullOrEmpty(invoice.InvoiceNumber))
                         invoice.InvoiceNumber = invoice.Id;
 
-                    var currency = data.Settings.Localization.Currency;
-                    invoice.OriginalCurrency = currency;
-                    invoice.TotalUSD = invoice.Total;
-                    invoice.BalanceUSD = invoice.Balance;
+                    var invoiceCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(invoiceCurrency))
+                    {
+                        // A per-row currency column was mapped: convert Total/Balance at the exact
+                        // issue date, deferring (pending + enqueue) when unpriceable. Shared with Tier 1.
+                        ApplyInvoiceCurrencyCode(invoice, invoiceCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: amounts are already in the company currency.
+                        invoice.OriginalCurrency = data.Settings.Localization.Currency;
+                        invoice.TotalUSD = invoice.Total;
+                        invoice.BalanceUSD = invoice.Balance;
+                    }
 
                     // Resolve customer reference by name, else create a placeholder
                     invoice.CustomerId = EnsureCustomerExists(data, invoice.CustomerId, refContext) ?? invoice.CustomerId;
@@ -1645,12 +1715,10 @@ public class SpreadsheetImportService
                     var paymentCurrency = ExtractRowCurrency(entityJson, options);
                     if (!string.IsNullOrEmpty(paymentCurrency))
                     {
-                        // A per-row currency column was mapped: convert the amount to USD at the
-                        // payment date, mirroring manual entry. The company currency is untouched.
-                        payment.OriginalCurrency = paymentCurrency;
-                        if (!TryConvertRowAmountToUSD(payment.Amount, paymentCurrency, payment.Date, out var payUsd))
-                            _errorLogger?.LogWarning($"Unpriceable payment row {payment.Id} ({paymentCurrency} {payment.Date:yyyy-MM-dd}); USD set to 0", "Import");
-                        payment.AmountUSD = payUsd;
+                        // A per-row currency column was mapped: convert at the exact payment date,
+                        // deferring (pending + enqueue) when unpriceable so it self-heals later rather
+                        // than being stuck at 0. Shared with the Tier 1 path.
+                        ApplyPaymentCurrencyCode(payment, paymentCurrency, data);
                     }
                     else
                     {
@@ -1781,6 +1849,20 @@ public class SpreadsheetImportService
                 var po = JsonSerializer.Deserialize<PurchaseOrder>(jsonStr, opts);
                 if (po != null && !string.IsNullOrEmpty(po.Id))
                 {
+                    var poCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(poCurrency))
+                    {
+                        // A per-row currency column was mapped: convert at the exact order date,
+                        // deferring (pending + enqueue) when unpriceable. Shared with the Tier 1 path.
+                        ApplyPurchaseOrderCurrencyCode(po, poCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: the total is already in the company currency.
+                        po.OriginalCurrency = data.Settings.Localization.Currency;
+                        po.TotalUSD = po.Total;
+                    }
+
                     if (!string.IsNullOrEmpty(po.SupplierId))
                         po.SupplierId = EnsureSupplierExists(data, po.SupplierId, refContext) ?? po.SupplierId;
 
