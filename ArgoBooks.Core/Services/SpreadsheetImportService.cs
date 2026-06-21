@@ -3330,18 +3330,37 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
-            var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
+            var date = GetDateTime(row, headers, "Date");
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+
+            // Skip summary/blank rows (e.g. "Subtotal", "Grand Total") that carry an amount but no
+            // real expense content, so they aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && date == DateTime.MinValue
+                && string.IsNullOrWhiteSpace(description) && string.IsNullOrWhiteSpace(supplierId))
+                continue;
+
+            // No ID column (or a blank ID): mint a unique one so distinct rows aren't collapsed into a
+            // single record (or skipped as "already exists") when the sheet has no identifier. Without
+            // this, an ID-less sheet imports only its first row.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Expense++;
+                id = $"PUR-{DateTime.UtcNow:yyyy}-{data.IdCounters.Expense:D5}";
+            }
+
+            var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
+
             var purchase = existing ?? new Expense();
             purchase.Id = id;
-            purchase.Date = GetDateTime(row, headers, "Date");
-            purchase.SupplierId = GetNullableString(row, headers, "Supplier ID");
+            purchase.Date = date;
+            purchase.SupplierId = supplierId;
             purchase.Description = description;
             purchase.Amount = GetDecimal(row, headers, "Unit Price");
             purchase.TaxAmount = GetDecimal(row, headers, "Tax");

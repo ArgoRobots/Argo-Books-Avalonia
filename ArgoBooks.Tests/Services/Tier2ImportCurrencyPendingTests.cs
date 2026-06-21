@@ -54,7 +54,7 @@ public class Tier2ImportCurrencyPendingTests
         Assert.True(imported.IsPendingConversion);
         Assert.Equal(0m, imported.TotalUSD);
         Assert.Equal("EUR", imported.OriginalCurrency);
-        var entry = Assert.Single(data.PendingConversions.Where(p => p.TransactionId == "INV-1"));
+        var entry = Assert.Single(data.PendingConversions, p => p.TransactionId == "INV-1");
         Assert.Equal("Invoice", entry.TransactionType);
         Assert.Equal(200m, entry.Total);
         Assert.Equal(80m, entry.Balance); // balance carried so the heal can convert it too
