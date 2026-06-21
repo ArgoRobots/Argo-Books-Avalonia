@@ -136,6 +136,25 @@ public class NameResolutionImportTests
     }
 
     [Fact]
+    public void Customer_WithEmailButNoName_FallsBackToUnknown()
+    {
+        var data = new CompanyData();
+        var svc = new SpreadsheetImportService();
+
+        // A real customer row that carries an email but no name should not import nameless.
+        var customer = Json("""
+            { "id": "CUST-9", "email": "jane@example.com" }
+            """);
+
+        svc.ImportProcessedEntities(
+            data, [Chunk(SpreadsheetSheetType.Customers, customer)], "Customers");
+
+        var imported = Assert.Single(data.Customers);
+        Assert.Equal("Unknown", imported.Name);
+        Assert.Equal("jane@example.com", imported.Email);
+    }
+
+    [Fact]
     public void ExistingId_IsLeftUnchanged_NoResolverWarning()
     {
         var data = new CompanyData();

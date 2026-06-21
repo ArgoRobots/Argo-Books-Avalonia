@@ -1524,6 +1524,7 @@ public class SpreadsheetImportService
                 var customer = JsonSerializer.Deserialize<Customer>(jsonStr, opts);
                 if (customer != null && !string.IsNullOrEmpty(customer.Id))
                 {
+                    customer.Name = NameOrUnknown(customer.Name);
                     var existing = data.Customers.FirstOrDefault(c => c.Id == customer.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Customers.Remove(existing);
@@ -3243,6 +3244,12 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     #region Import Methods (Merge Logic)
 
+    /// <summary>
+    /// A blank imported name falls back to "Unknown" so a record that has other data (e.g. a customer
+    /// with only an email) is never shown nameless.
+    /// </summary>
+    private static string NameOrUnknown(string? name) => string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
+
     private void ImportCustomers(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
@@ -3253,7 +3260,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             var customer = existing ?? new Customer();
             customer.Id = id;
-            customer.Name = GetString(row, headers, "Name");
+            customer.Name = NameOrUnknown(GetString(row, headers, "Name"));
             customer.CompanyName = GetNullableString(row, headers, "Company");
             customer.Email = GetString(row, headers, "Email");
             customer.Phone = GetString(row, headers, "Phone");
