@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -90,6 +91,47 @@ public class FileServiceTests
         if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
         {
             try { Directory.Delete(dir, recursive: true); } catch { /* best effort */ }
+        }
+    }
+
+    #endregion
+
+    #region Deferred Receipts Tests
+
+    [Fact]
+    public async Task LoadCompanyData_WithLoadReceiptsFalse_DefersReceipts()
+    {
+        var service = CreateService();
+        var filePath = Path.Combine(Path.GetTempPath(), $"argo-test-{Guid.NewGuid():N}.argo");
+        string? temp = null;
+
+        try
+        {
+            await service.CreateCompanyAsync(filePath, "Receipts Co");
+            temp = await service.OpenCompanyAsync(filePath);
+
+            // Place a receipt into the extracted company so receipts.json is non-empty.
+            var receipt = new Receipt { Id = "RCP-1", FileName = "r.jpg", FileData = "QUJD" };
+            await service.WriteJsonAsync(temp, "receipts.json", new List<Receipt> { receipt });
+
+            // Deferred load leaves Receipts empty...
+            var deferred = await service.LoadCompanyDataAsync(temp, loadReceipts: false);
+            Assert.Empty(deferred.Receipts);
+
+            // ...but the receipts are still readable separately, intact.
+            var loaded = await service.LoadReceiptsAsync(temp);
+            Assert.Single(loaded);
+            Assert.Equal("RCP-1", loaded[0].Id);
+            Assert.Equal("QUJD", loaded[0].FileData);
+
+            // Default load still loads receipts eagerly (back-compat for other callers).
+            var eager = await service.LoadCompanyDataAsync(temp);
+            Assert.Single(eager.Receipts);
+        }
+        finally
+        {
+            CleanupTemp(temp);
+            if (File.Exists(filePath)) File.Delete(filePath);
         }
     }
 

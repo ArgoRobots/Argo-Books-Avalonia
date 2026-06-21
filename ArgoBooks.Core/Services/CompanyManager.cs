@@ -25,6 +25,15 @@ public class CompanyManager : IDisposable
     private FileStream? _fileLock;
     private bool _isDisposed;
 
+    // Receipts are loaded off the critical open path (they carry base64 image data).
+    // _receiptsLoadTask reads receipts.json in the background; EnsureReceiptsLoadedAsync
+    // merges them into CompanyData.Receipts exactly once, before any save that writes
+    // receipts.json and before the receipts UI reads them. _receiptsLock guards the
+    // merge-once flag and the task reference.
+    private readonly object _receiptsLock = new();
+    private Task<List<Models.Tracking.Receipt>>? _receiptsLoadTask;
+    private bool _receiptsMerged;
+
     /// <summary>
     /// Gets whether a company is currently open.
     /// </summary>
@@ -579,8 +588,12 @@ public class CompanyManager : IDisposable
             // Open the file
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
-            // Load company data
-            CompanyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
+            // Load company data, but defer receipts (they carry base64 image data and
+            // aren't needed to show the dashboard). They load in the background and are
+            // merged in by EnsureReceiptsLoadedAsync before any save or receipts UI read.
+            CompanyData = await _fileService.LoadCompanyDataAsync(
+                _currentTempDirectory, cancellationToken, loadReceipts: false);
+            StartReceiptsBackgroundLoad(_currentTempDirectory);
 
             // One-time recalc: heal any historic drift between Invoice
             // totals and the Payment rows that drive them.
@@ -674,6 +687,53 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Starts reading receipts.json on a background thread. The read does no shared-state
+    /// mutation; the merge into CompanyData.Receipts happens in EnsureReceiptsLoadedAsync.
+    /// </summary>
+    private void StartReceiptsBackgroundLoad(string tempDirectory)
+    {
+        lock (_receiptsLock)
+        {
+            _receiptsMerged = false;
+            _receiptsLoadTask = Task.Run(() => _fileService.LoadReceiptsAsync(tempDirectory));
+        }
+    }
+
+    /// <summary>
+    /// Awaits the background receipts load started on open and merges the persisted
+    /// receipts into <see cref="CompanyData"/> exactly once. Must be awaited before any
+    /// save that writes receipts.json and before the receipts UI reads attachments, so
+    /// the deferred load can never drop receipt data.
+    ///
+    /// The continuation (the merge) runs on the caller's context. All real callers are on
+    /// the UI thread, so this preserves the app-wide invariant that CompanyData.Receipts
+    /// is only mutated on the UI thread. Receipts added by the user during the load window
+    /// are already in the list and are preserved (the persisted ones are appended).
+    /// </summary>
+    public async Task EnsureReceiptsLoadedAsync()
+    {
+        Task<List<Models.Tracking.Receipt>>? task;
+        lock (_receiptsLock)
+        {
+            if (_receiptsMerged)
+                return;
+            task = _receiptsLoadTask;
+        }
+        if (task == null)
+            return;
+
+        var loaded = await task;
+
+        lock (_receiptsLock)
+        {
+            if (_receiptsMerged)
+                return;
+            CompanyData?.Receipts.AddRange(loaded);
+            _receiptsMerged = true;
+        }
+    }
+
+    /// <summary>
     /// Saves the current company to its file.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -686,6 +746,10 @@ public class CompanyManager : IDisposable
             {
                 throw new InvalidOperationException("No company is currently open.");
             }
+
+            // Make sure the deferred receipts have been merged before we write
+            // receipts.json, otherwise the save would drop them.
+            await EnsureReceiptsLoadedAsync();
 
             // Notify listeners to sync in-memory state before saving
             CompanySaving?.Invoke(this, EventArgs.Empty);
@@ -781,6 +845,9 @@ public class CompanyManager : IDisposable
 
             ArgumentException.ThrowIfNullOrEmpty(newFilePath);
 
+            // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
+            await EnsureReceiptsLoadedAsync();
+
             // Notify listeners to sync in-memory state before saving
             CompanySaving?.Invoke(this, EventArgs.Empty);
 
@@ -851,6 +918,13 @@ public class CompanyManager : IDisposable
         CurrentFilePath = null;
         _currentPassword = null;
         PendingRenamePath = null;
+
+        // Drop any in-flight receipts load so it can't merge into the next company.
+        lock (_receiptsLock)
+        {
+            _receiptsLoadTask = null;
+            _receiptsMerged = false;
+        }
 
         // Raise event
         CompanyClosed?.Invoke(this, EventArgs.Empty);
@@ -1231,6 +1305,9 @@ public class CompanyManager : IDisposable
 
             ArgumentException.ThrowIfNullOrEmpty(backupPath);
 
+            // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
+            await EnsureReceiptsLoadedAsync();
+
             // Sync in-memory state before exporting (e.g., event log)
             CompanySaving?.Invoke(this, EventArgs.Empty);
 
@@ -1265,6 +1342,11 @@ public class CompanyManager : IDisposable
         {
             if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
                 return;
+
+            // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
+            // This save path is auto-triggered by portal sync shortly after open, so the
+            // gate here is what prevents an early sync from dropping receipts.
+            await EnsureReceiptsLoadedAsync();
 
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);

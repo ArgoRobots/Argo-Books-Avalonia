@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
@@ -144,6 +145,67 @@ public class CompanyManagerTests : IDisposable
 
         // Heal was skipped, so the (default) totals are left untouched.
         Assert.Equal(0m, data.Invoices[0].AmountPaid);
+    }
+
+    #endregion
+
+    #region Deferred Receipts Round-Trip Tests
+
+    [Fact]
+    public async Task DeferredReceipts_SurviveSaveAndReopen()
+    {
+        var filePath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(filePath, "Receipts Co");
+            _manager.CompanyData!.Receipts.Add(new Receipt { Id = "RCP-1", FileName = "r.jpg", FileData = "QUJD" });
+            await _manager.SaveCompanyAsync();
+            await _manager.CloseCompanyAsync();
+
+            Assert.True(await _manager.OpenCompanyAsync(filePath));
+
+            // Receipts load in the background; after ensuring, the persisted one is present.
+            await _manager.EnsureReceiptsLoadedAsync();
+            Assert.Single(_manager.CompanyData!.Receipts);
+            Assert.Equal("RCP-1", _manager.CompanyData.Receipts[0].Id);
+            Assert.Equal("QUJD", _manager.CompanyData.Receipts[0].FileData);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task Save_ImmediatelyAfterOpen_DoesNotDropDeferredReceipts()
+    {
+        // The critical data-safety case: a save that runs before receipts finish loading
+        // (e.g. the auto portal-sync save) must merge them first, not overwrite with empties.
+        var filePath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(filePath, "Receipts Co");
+            _manager.CompanyData!.Receipts.Add(new Receipt { Id = "RCP-1", FileName = "r.jpg", FileData = "QUJD" });
+            await _manager.SaveCompanyAsync();
+            await _manager.CloseCompanyAsync();
+
+            await _manager.OpenCompanyAsync(filePath);
+            // Save right away, WITHOUT an explicit EnsureReceiptsLoadedAsync first.
+            await _manager.SaveCompanyAsync();
+            await _manager.CloseCompanyAsync();
+
+            // Reopen: the receipt must still be there.
+            await _manager.OpenCompanyAsync(filePath);
+            await _manager.EnsureReceiptsLoadedAsync();
+            Assert.Single(_manager.CompanyData!.Receipts);
+            Assert.Equal("RCP-1", _manager.CompanyData.Receipts[0].Id);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
     }
 
     #endregion

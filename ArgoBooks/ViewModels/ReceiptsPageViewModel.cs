@@ -426,12 +426,22 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #region Data Loading
 
-    private void LoadReceipts()
+    private async void LoadReceipts()
     {
+        // Receipts load in the background after a company opens; make sure they're
+        // merged before reading them. EnsureReceiptsLoadedAsync completes synchronously
+        // once merged, so this only actually waits on the first call right after open.
+        var manager = App.CompanyManager;
+        if (manager != null)
+        {
+            try { await manager.EnsureReceiptsLoadedAsync(); }
+            catch { /* fall through and show whatever is available */ }
+        }
+
         _allReceipts.Clear();
         Receipts.Clear();
 
-        var companyData = App.CompanyManager?.CompanyData;
+        var companyData = manager?.CompanyData;
         if (companyData?.Receipts == null)
             return;
 

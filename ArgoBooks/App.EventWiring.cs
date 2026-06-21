@@ -134,6 +134,11 @@ public partial class App
             {
                 try
                 {
+                    // Merge the deferred receipts on the UI thread now that the dashboard
+                    // has painted, so the rest of the app sees them and any auto-save below
+                    // writes them back. Save paths also gate on this, so it's safe either way.
+                    await CompanyManager.EnsureReceiptsLoadedAsync();
+
                     // Reconcile and process any pending currency conversions
                     if (PendingConversionService != null && CompanyManager.CompanyData != null)
                     {

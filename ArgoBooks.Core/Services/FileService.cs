@@ -309,7 +309,8 @@ public class FileService(
     /// </remarks>
     public async Task<CompanyData> LoadCompanyDataAsync(
         string tempDirectory,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool loadReceipts = true)
     {
         var settingsTask          = ReadJsonAsync<CompanySettings>(tempDirectory, "appSettings.json", cancellationToken);
         var idCountersTask        = ReadJsonAsync<IdCounters>(tempDirectory, "idCounters.json", cancellationToken);
@@ -334,7 +335,12 @@ public class FileService(
         var rentalsTask           = ReadJsonAsync<List<Models.Rentals.RentalRecord>>(tempDirectory, "rentals.json", cancellationToken);
         var returnsTask           = ReadJsonAsync<List<Models.Tracking.Return>>(tempDirectory, "returns.json", cancellationToken);
         var lostDamagedTask       = ReadJsonAsync<List<Models.Tracking.LostDamaged>>(tempDirectory, "lostDamaged.json", cancellationToken);
-        var receiptsTask          = ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken);
+        // Receipts carry base64 image data and can dominate load time, but nothing on
+        // the dashboard needs them. When loadReceipts is false the caller loads them
+        // separately (see LoadReceiptsAsync) so they stay off the critical open path.
+        var receiptsTask          = loadReceipts
+            ? ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken)
+            : Task.FromResult<List<Models.Tracking.Receipt>?>([]);
         var reportTemplatesTask   = ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken);
         var invoiceTemplatesTask  = ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken);
         var eventLogTask          = ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken);
@@ -405,6 +411,18 @@ public class FileService(
             ForecastRecords = forecastRecordsTask.Result ?? [],
             BankImportSessions = bankImportSessionsTask.Result ?? []
         };
+    }
+
+    /// <summary>
+    /// Reads just the receipts (receipts.json) from an extracted temp directory.
+    /// Used to load receipt attachments off the critical open path; pair with
+    /// <see cref="LoadCompanyDataAsync"/> called with <c>loadReceipts: false</c>.
+    /// </summary>
+    public async Task<List<Models.Tracking.Receipt>> LoadReceiptsAsync(
+        string tempDirectory,
+        CancellationToken cancellationToken = default)
+    {
+        return await ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken) ?? [];
     }
 
     /// <summary>
