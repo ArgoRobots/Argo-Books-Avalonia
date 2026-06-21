@@ -137,7 +137,7 @@
                                            ChangeValue="{Binding ProfitGrowthValue}"
                                            ChangeText="{Binding ProfitGrowth}"
                                            ChangeLabel="{Binding ComparisonLabel}"
-                                           ValueColor="Success"
+                                           ValueColor="{Binding ProfitValueColor}"
                                            UseAltBackground="True" />
                         <controls:StatCard Label="{Binding CustomersLabel}"
                                            Value="{Binding ForecastedCustomers}"

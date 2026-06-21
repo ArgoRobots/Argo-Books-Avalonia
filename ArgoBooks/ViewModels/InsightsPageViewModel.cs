@@ -5,6 +5,7 @@ using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Controls;
 using ArgoBooks.Services;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -427,6 +428,10 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _forecastedProfit = "$0";
+
+    /// <summary>Green for a projected profit, red for a projected loss.</summary>
+    [ObservableProperty]
+    private StatCardColor _profitValueColor = StatCardColor.Success;
 
     [ObservableProperty]
     private double _profitGrowthValue;
@@ -952,6 +957,8 @@ public partial class InsightsPageViewModel : ViewModelBase
             _ => (forecast.ForecastedProfit, forecast.ProfitGrowthPercent)
         };
         ForecastedProfit = profit.ToString("C0");
+        // Red for a projected loss, green for a projected profit.
+        ProfitValueColor = profit < 0 ? StatCardColor.Danger : StatCardColor.Success;
         ProfitGrowthValue = (double)profitGrowth;
         ProfitGrowth = $"{Math.Abs(profitGrowth):F1}%";
 
@@ -1031,6 +1038,7 @@ public partial class InsightsPageViewModel : ViewModelBase
         ExpenseGrowthValue = 0;
         ExpenseGrowth = "0%";
         ForecastedProfit = "$0";
+        ProfitValueColor = StatCardColor.Success;
         ProfitGrowthValue = 0;
         ProfitGrowth = "0%";
         ForecastedCustomers = "0";
