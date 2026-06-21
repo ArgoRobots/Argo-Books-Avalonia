@@ -367,6 +367,18 @@ public class SpreadsheetImportService
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
                     var csvSheetName = Path.GetFileNameWithoutExtension(filePath);
+
+                    // The xlsx workbook scan doesn't cover CSV, so detect per-row currency here (an
+                    // in-cell symbol/code or a "Currency" column) and feed it to the importer keyed by
+                    // the same row index, so CSV imports honor per-row currency like Excel does.
+                    var csvCurrency = CurrencyImportPreparer.ScanRows(headers, rows);
+                    if (csvCurrency.Count > 0)
+                    {
+                        options ??= new ImportOptions();
+                        options.RowCurrencyBySheet ??= new Dictionary<string, Dictionary<int, string>>(StringComparer.OrdinalIgnoreCase);
+                        options.RowCurrencyBySheet[csvSheetName] = csvCurrency;
+                    }
+
                     var sheetResult = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows, csvSheetName, options);
                     result.TotalImported += sheetResult.Inserted;
                     result.TotalUpdated += sheetResult.Updated;

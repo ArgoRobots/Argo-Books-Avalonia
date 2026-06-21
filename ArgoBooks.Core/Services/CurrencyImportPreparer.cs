@@ -102,6 +102,67 @@ public static class CurrencyImportPreparer
         return result;
     }
 
+    /// <summary>
+    /// Per-row currency scan for a single already-mapped table, used by the CSV import path (which
+    /// ClosedXML's workbook scan doesn't cover). <paramref name="mappedHeaders"/> are the target
+    /// column names; <paramref name="rows"/> are the data rows in import order, so the returned map is
+    /// keyed by the same row index the importer uses. Resolves a "Currency" column code, an explicit
+    /// in-cell code, an unambiguous symbol, or one disambiguated by its decimals. Ambiguous symbols
+    /// (e.g. a bare "$") are left unresolved (the row imports in the company currency) because the CSV
+    /// path has no symbol-resolution dialog.
+    /// </summary>
+    public static Dictionary<int, string> ScanRows(
+        IReadOnlyList<string> mappedHeaders, IReadOnlyList<IReadOnlyList<object?>> rows)
+    {
+        var resolved = new Dictionary<int, string>();
+        if (mappedHeaders == null || rows == null)
+            return resolved;
+
+        var amountCols = new List<int>(); // 0-based column indices
+        int currencyCol = -1;
+        for (int i = 0; i < mappedHeaders.Count; i++)
+        {
+            if (MoneyTargets.Contains(mappedHeaders[i])) amountCols.Add(i);
+            else if (string.Equals(mappedHeaders[i], "Currency", StringComparison.OrdinalIgnoreCase)) currencyCol = i;
+        }
+        if (amountCols.Count == 0 && currencyCol < 0)
+            return resolved;
+
+        for (int r = 0; r < rows.Count; r++)
+        {
+            var row = rows[r];
+            string? code = null;
+
+            if (currencyCol >= 0 && currencyCol < row.Count
+                && row[currencyCol]?.ToString() is { Length: > 0 } ctext
+                && CurrencyCellDetector.Detect(ctext).Code is { } colCode)
+                code = colCode;
+
+            if (code == null)
+            {
+                foreach (var col in amountCols)
+                {
+                    if (col >= row.Count) continue;
+                    var text = row[col]?.ToString();
+                    if (string.IsNullOrWhiteSpace(text)) continue;
+
+                    var d = CurrencyCellDetector.Detect(text);
+                    if (d.Code != null) { code = d.Code; break; }
+                    if (d.AmbiguousSymbol != null)
+                    {
+                        var byFormat = DisambiguateByDecimals(d.AmbiguousSymbol, text);
+                        if (byFormat != null) { code = byFormat; break; }
+                    }
+                }
+            }
+
+            if (code != null)
+                resolved[r] = code;
+        }
+
+        return resolved;
+    }
+
     private static void ScanSheet(
         IXLWorksheet ws, SheetAnalysis sheet, CurrencyScanResult result,
         Dictionary<string, int> ambiguousCounts)
@@ -124,7 +185,13 @@ public static class CurrencyImportPreparer
             if (MoneyTargets.Contains(mapped[i]))
                 amountCols.Add(i + 1);
 
-        if (amountCols.Count == 0)
+        // A dedicated per-row currency column (schema target "Currency") takes precedence over
+        // in-cell symbols, so a sheet can carry clean numeric amounts plus an explicit ISO-code column.
+        int currencyCol = 0; // 1-based; 0 = none
+        for (int i = 0; i < mapped.Count; i++)
+            if (string.Equals(mapped[i], "Currency", StringComparison.OrdinalIgnoreCase)) { currencyCol = i + 1; break; }
+
+        if (amountCols.Count == 0 && currencyCol == 0)
             return;
 
         var lastRow = ws.LastRowUsed()?.RowNumber() ?? headerRow;
@@ -143,27 +210,39 @@ public static class CurrencyImportPreparer
             if (allEmpty)
                 continue;
 
-            // First resolved code on any amount cell wins; otherwise remember an ambiguous symbol.
+            // A dedicated currency column with an explicit ISO code wins outright; otherwise the
+            // first resolved code on any amount cell wins, else we remember an ambiguous symbol.
             string? resolved = null;
             string? pendingSymbol = null;
-            foreach (var col in amountCols)
-            {
-                var text = ReadFormatted(xlRow.Cell(col));
-                if (string.IsNullOrWhiteSpace(text))
-                    continue;
 
-                var d = CurrencyCellDetector.Detect(text);
-                if (d.Code != null) { resolved = d.Code; break; }
-                if (d.AmbiguousSymbol != null)
+            if (currencyCol != 0)
+            {
+                var ctext = ReadFormatted(xlRow.Cell(currencyCol));
+                if (!string.IsNullOrWhiteSpace(ctext) && CurrencyCellDetector.Detect(ctext).Code is { } colCode)
+                    resolved = colCode;
+            }
+
+            if (resolved == null)
+            {
+                foreach (var col in amountCols)
                 {
-                    // A symbol shared by currencies with different decimal conventions (e.g. "¥" =
-                    // JPY with 0 decimals or CNY with 2) is resolved from the cell's own formatting
-                    // when the displayed decimal count picks exactly one candidate, so it doesn't
-                    // need to prompt and won't default to the wrong currency.
-                    var byFormat = DisambiguateByDecimals(d.AmbiguousSymbol, text);
-                    if (byFormat != null) { resolved = byFormat; break; }
-                    if (pendingSymbol == null)
-                        pendingSymbol = d.AmbiguousSymbol;
+                    var text = ReadFormatted(xlRow.Cell(col));
+                    if (string.IsNullOrWhiteSpace(text))
+                        continue;
+
+                    var d = CurrencyCellDetector.Detect(text);
+                    if (d.Code != null) { resolved = d.Code; break; }
+                    if (d.AmbiguousSymbol != null)
+                    {
+                        // A symbol shared by currencies with different decimal conventions (e.g. "¥" =
+                        // JPY with 0 decimals or CNY with 2) is resolved from the cell's own formatting
+                        // when the displayed decimal count picks exactly one candidate, so it doesn't
+                        // need to prompt and won't default to the wrong currency.
+                        var byFormat = DisambiguateByDecimals(d.AmbiguousSymbol, text);
+                        if (byFormat != null) { resolved = byFormat; break; }
+                        if (pendingSymbol == null)
+                            pendingSymbol = d.AmbiguousSymbol;
+                    }
                 }
             }
 
