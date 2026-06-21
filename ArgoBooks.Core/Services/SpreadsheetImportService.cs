@@ -1659,12 +1659,18 @@ public class SpreadsheetImportService
                     if (!string.IsNullOrEmpty(expense.SupplierId))
                         expense.SupplierId = EnsureSupplierExists(data, expense.SupplierId, refContext);
 
+                    // The AI emits quantity + unit price but not the pre-tax Amount, so derive it
+                    // (Quantity defaults to 1) before building the line item, so the line-item
+                    // subtotal reconciles with the stored Total.
+                    if (expense.Amount == 0)
+                        expense.Amount = expense.Quantity * expense.UnitPrice;
+
                     // Link product by name and auto-create if missing
                     var expProductName = expense.Description;
                     if (!string.IsNullOrEmpty(expProductName))
                     {
                         var expProduct = FindProductByName(data, expProductName, CategoryType.Expense)
-                                         ?? AutoCreateProduct(data, expProductName, expense.Amount, CategoryType.Expense);
+                                         ?? AutoCreateProduct(data, expProductName, expense.UnitPrice, CategoryType.Expense);
 
                         if (expense.LineItems.Count == 0)
                         {
@@ -1674,8 +1680,8 @@ public class SpreadsheetImportService
                                 {
                                     ProductId = expProduct.Id,
                                     Description = expProductName,
-                                    Quantity = 1,
-                                    UnitPrice = expense.Amount,
+                                    Quantity = expense.Quantity,
+                                    UnitPrice = expense.UnitPrice,
                                     TaxRate = expense.Amount > 0 ? expense.TaxAmount / expense.Amount : 0
                                 }
                             ];
@@ -1722,12 +1728,17 @@ public class SpreadsheetImportService
                     if (!string.IsNullOrEmpty(revenue.CustomerId))
                         revenue.CustomerId = EnsureCustomerExists(data, revenue.CustomerId, refContext) ?? revenue.CustomerId;
 
+                    // The AI emits quantity + unit price but not the pre-tax Amount, so derive it
+                    // (Quantity defaults to 1) before building the line item.
+                    if (revenue.Amount == 0)
+                        revenue.Amount = revenue.Quantity * revenue.UnitPrice;
+
                     // Link product by name and auto-create if missing
                     var productName = revenue.Description;
                     if (!string.IsNullOrEmpty(productName))
                     {
                         var revenueProduct = FindProductByName(data, productName, CategoryType.Revenue)
-                                             ?? AutoCreateProduct(data, productName, revenue.Amount, CategoryType.Revenue);
+                                             ?? AutoCreateProduct(data, productName, revenue.UnitPrice, CategoryType.Revenue);
 
                         // Ensure line items reference the product
                         if (revenue.LineItems.Count == 0)
@@ -1738,8 +1749,8 @@ public class SpreadsheetImportService
                                 {
                                     ProductId = revenueProduct.Id,
                                     Description = productName,
-                                    Quantity = 1,
-                                    UnitPrice = revenue.Amount,
+                                    Quantity = revenue.Quantity,
+                                    UnitPrice = revenue.UnitPrice,
                                     TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
                                 }
                             ];
@@ -3400,12 +3411,21 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
+            // Quantity is optional: sheets that list a single amount per row have no quantity
+            // column, so default to 1. When a quantity column IS present, the pre-tax Amount is
+            // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
+            var quantity = GetDecimal(row, headers, "Quantity");
+            if (quantity <= 0) quantity = 1;
+            var unitPrice = GetDecimal(row, headers, "Unit Price");
+
             var purchase = existing ?? new Expense();
             purchase.Id = id;
             purchase.Date = date;
             purchase.SupplierId = supplierId;
             purchase.Description = description;
-            purchase.Amount = GetDecimal(row, headers, "Unit Price");
+            purchase.Quantity = quantity;
+            purchase.UnitPrice = unitPrice;
+            purchase.Amount = quantity * unitPrice;
             purchase.TaxAmount = GetDecimal(row, headers, "Tax");
             purchase.Total = GetDecimal(row, headers, "Total");
             purchase.ReferenceNumber = GetString(row, headers, "Reference");
@@ -3421,14 +3441,14 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (!string.IsNullOrEmpty(description))
             {
                 var product = FindProductByName(data, description, CategoryType.Expense)
-                              ?? AutoCreateProduct(data, description, purchase.Amount, CategoryType.Expense);
+                              ?? AutoCreateProduct(data, description, unitPrice, CategoryType.Expense);
 
                 var lineItem = new LineItem
                 {
                     ProductId = product.Id,
                     Description = description,
-                    Quantity = 1,
-                    UnitPrice = purchase.Amount,
+                    Quantity = quantity,
+                    UnitPrice = unitPrice,
                     TaxRate = purchase.Amount > 0 ? purchase.TaxAmount / purchase.Amount : 0
                 };
                 purchase.LineItems = [lineItem];
@@ -3660,12 +3680,20 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
+            // Quantity is optional (see ImportPurchases): default 1, and the pre-tax Amount is
+            // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
+            var quantity = GetDecimal(row, headers, "Quantity");
+            if (quantity <= 0) quantity = 1;
+            var unitPrice = GetDecimal(row, headers, "Unit Price");
+
             var revenue = existing ?? new Revenue();
             revenue.Id = id;
             revenue.Date = GetDateTime(row, headers, "Date");
             revenue.CustomerId = GetNullableString(row, headers, "Customer ID");
             revenue.Description = description;
-            revenue.Amount = GetDecimal(row, headers, "Unit Price");
+            revenue.Quantity = quantity;
+            revenue.UnitPrice = unitPrice;
+            revenue.Amount = quantity * unitPrice;
             revenue.TaxAmount = GetDecimal(row, headers, "Tax");
             revenue.Total = GetDecimal(row, headers, "Total");
             revenue.ReferenceNumber = GetString(row, headers, "Reference");
@@ -3680,15 +3708,15 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
-                var product = FindProductByName(data, description, CategoryType.Revenue) 
-                              ?? AutoCreateProduct(data, description, revenue.Amount, CategoryType.Revenue);
+                var product = FindProductByName(data, description, CategoryType.Revenue)
+                              ?? AutoCreateProduct(data, description, unitPrice, CategoryType.Revenue);
 
                 var lineItem = new LineItem
                 {
                     ProductId = product.Id,
                     Description = description,
-                    Quantity = 1,
-                    UnitPrice = revenue.Amount,
+                    Quantity = quantity,
+                    UnitPrice = unitPrice,
                     TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
                 };
                 revenue.LineItems = [lineItem];
