@@ -1234,21 +1234,17 @@ public class ReportRenderer : IDisposable
         if (_chartDataService == null)
             return null;
 
-        var data = _chartDataService.GetChartData(ChartDataType.WorldMap);
+        // Convert each country's revenue at each transaction's OWN date during aggregation
+        // (docs/Calculations.md §3a Phase 2) instead of converting the country total at today's
+        // rate. Null for a USD report (identity).
+        var converter = string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase)
+            ? (Func<decimal, DateTime, decimal>?)null
+            : (usd, date) => (decimal)ConvertFromUSD((double)usd, date);
 
-        if (data is Dictionary<string, double> mapData)
-        {
-            // World map data is computed in USD, convert to display currency
-            if (!string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            {
-                var keys = mapData.Keys.ToList();
-                foreach (var key in keys)
-                    mapData[key] = ConvertFromUSD(mapData[key]);
-            }
-            return mapData;
-        }
+        var data = _chartDataService.GetChartData(ChartDataType.WorldMap, converter);
 
-        return null;
+        // Values are already in the display currency (or USD); do not re-convert.
+        return data as Dictionary<string, double>;
     }
 
     /// <summary>

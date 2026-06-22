@@ -20,34 +20,123 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         return companyData?.Settings.Localization.Currency ?? "USD";
     }
 
-    /// <summary>
-    /// Converts a USD amount to the company's configured display currency.
-    /// Uses the report's end date for the exchange rate.
-    /// Returns the amount unchanged if the display currency is USD or no rate is available.
-    /// </summary>
-    private decimal ConvertFromUSD(decimal amountUSD)
-        => ExchangeRateService.Instance?.ConvertFromUSD(
-               amountUSD, GetCurrencyCode(), filters.EndDate ?? DateTime.Today)
-           ?? amountUSD;
+    // Lazily computed, report-wide display currency decision (see DisplayCode).
+    private string? _displayCode;
 
     /// <summary>
-    /// Gets a subtitle indicating the currency used in the report.
+    /// The single currency the whole report is rendered in (docs/Calculations.md §3a Phase 2).
+    ///
+    /// Chosen ONCE per report so a printed document is never a mix of currencies:
+    /// <list type="bullet">
+    ///   <item>USD company => "USD" (identity, no conversion).</item>
+    ///   <item>Non-USD company AND an exact-date USD->code rate is cached for EVERY date the report
+    ///         converts => the company currency, converting each value at its OWN date.</item>
+    ///   <item>Otherwise (any needed exact-date rate missing, or no rate service) => "USD" fallback,
+    ///         showing the entire report in USD.</item>
+    /// </list>
     /// </summary>
-    private string GetCurrencySubtitle()
+    private string DisplayCode => _displayCode ??= ResolveDisplayCode();
+
+    private string ResolveDisplayCode()
     {
-        var currencyCode = GetCurrencyCode();
-        return $"Amounts in {currencyCode}";
+        var code = GetCurrencyCode();
+
+        // USD company (the default): identity, never convert.
+        if (string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
+            return "USD";
+
+        var rates = ExchangeRateService.Instance;
+        if (rates == null || companyData == null)
+            return "USD"; // No way to convert -> show USD so the document stays single-currency.
+
+        // Convert at the company currency only if an exact-date USD->code rate is available for
+        // EVERY date the report needs to convert. Any single miss -> whole report falls back to USD.
+        foreach (var date in GetConversionDates())
+        {
+            if (!rates.TryConvertFromUSD(1m, code, date, out _))
+                return "USD";
+        }
+
+        return code;
     }
 
     /// <summary>
-    /// Formats a currency amount using the company's configured currency.
-    /// Converts from USD to the display currency before formatting.
+    /// The distinct set of dates the report converts at: every transaction the report sums or needs
+    /// (revenues, expenses, payments, purchase orders, and relevant invoices) PLUS the report end
+    /// date (used for point-in-time valuations such as inventory and AR aging). If ANY of these
+    /// lacks an exact-date rate for the company currency, the report falls back to USD.
+    /// </summary>
+    private IEnumerable<DateTime> GetConversionDates()
+    {
+        var dates = new HashSet<DateTime>();
+        if (companyData != null)
+        {
+            // Revenues and expenses summed across Income Statement, Cash Flow, Balance Sheet,
+            // General Ledger, Tax Summary and Product Sales: gate on every recorded date.
+            foreach (var r in companyData.Revenues)
+                dates.Add(r.Date.Date);
+            foreach (var e in companyData.Expenses)
+                dates.Add(e.Date.Date);
+
+            // Payments (Cash Flow, Balance Sheet cash, General Ledger).
+            foreach (var p in companyData.Payments)
+                dates.Add(p.Date.Date);
+
+            // Purchase orders (Balance Sheet accounts payable).
+            foreach (var po in companyData.PurchaseOrders)
+                dates.Add(po.OrderDate.Date);
+
+            // Invoices (Balance Sheet AR, AR aging) are converted at their issue date.
+            foreach (var i in companyData.Invoices)
+                dates.Add(i.IssueDate.Date);
+        }
+
+        // Point-in-time valuations (inventory, balances "as of") use the end date.
+        dates.Add((filters.EndDate ?? DateTime.Today).Date);
+
+        return dates;
+    }
+
+    /// <summary>
+    /// Converts a USD amount to <see cref="DisplayCode"/> at the given transaction date.
+    /// Returns the USD amount unchanged when the report is in USD (USD company or fallback).
+    /// Per docs/Calculations.md §3a, conversion happens at PRODUCTION (before aggregation), so a
+    /// total equals the sum of its rows converted at each row's own date.
+    /// </summary>
+    private decimal ToDisplay(decimal amountUSD, DateTime date)
+    {
+        if (string.Equals(DisplayCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return amountUSD;
+
+        // DisplayCode is only set to a non-USD code when every conversion date has an exact-date
+        // rate, so this lookup is expected to succeed; fall back to the USD amount defensively.
+        return ExchangeRateService.Instance != null
+               && ExchangeRateService.Instance.TryConvertFromUSD(amountUSD, DisplayCode, date, out var converted)
+            ? converted
+            : amountUSD;
+    }
+
+    /// <summary>
+    /// The end date used for point-in-time valuations (inventory, balances "as of").
+    /// </summary>
+    private DateTime EndDateForValuation => (filters.EndDate ?? DateTime.Today).Date;
+
+    /// <summary>
+    /// Gets a subtitle indicating the currency the report is rendered in (the resolved DisplayCode,
+    /// so the fallback case correctly reads "Amounts in USD").
+    /// </summary>
+    private string GetCurrencySubtitle()
+    {
+        return $"Amounts in {DisplayCode}";
+    }
+
+    /// <summary>
+    /// Formats a currency amount that is ALREADY in <see cref="DisplayCode"/> (conversion happens at
+    /// production via <see cref="ToDisplay"/>), so this only formats; it does not convert.
     /// </summary>
     private string FormatCurrency(decimal amount)
     {
-        var currencyCode = GetCurrencyCode();
-        var displayAmount = ConvertFromUSD(amount);
-        return CurrencyInfo.FormatAmount(displayAmount, currencyCode);
+        return CurrencyInfo.FormatAmount(amount, DisplayCode);
     }
 
     /// <summary>
@@ -134,7 +223,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// <summary>
     /// Groups transaction pre-tax totals by category, derived from line items' product IDs.
     /// Uses Subtotal (pre-tax) because sales tax is a liability, not revenue/expense.
-    /// All amounts are converted to USD for consistent cross-currency aggregation.
+    /// Each transaction's USD amounts are converted to DisplayCode at the transaction's OWN date
+    /// (docs/Calculations.md §3a Phase 2) before being summed, so the result is already in
+    /// DisplayCode.
     /// </summary>
     private Dictionary<string, decimal> GroupTransactionsByCategory(
         IEnumerable<Models.Transactions.Transaction> transactions)
@@ -153,19 +244,20 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 {
                     var categoryName = GetCategoryNameForProduct(lineItem.ProductId);
                     result.TryAdd(categoryName, 0);
-                    // Proportionally allocate USD subtotal across line items
+                    // Proportionally allocate USD subtotal across line items, then convert at the
+                    // transaction's own date.
                     var lineItemUSD = lineItemsTotal != 0
                         ? Math.Round(lineItem.Subtotal / lineItemsTotal * subtotalUSD, 2)
                         : 0;
-                    result[categoryName] += lineItemUSD;
+                    result[categoryName] += ToDisplay(lineItemUSD, txn.Date);
                 }
             }
             else
             {
-                // No line items, use the USD-converted pre-tax amount
+                // No line items, use the pre-tax amount converted at the transaction's own date.
                 var categoryName = "Uncategorized";
                 result.TryAdd(categoryName, 0);
-                result[categoryName] += txn.EffectiveSubtotalUSD;
+                result[categoryName] += ToDisplay(txn.EffectiveSubtotalUSD, txn.Date);
             }
         }
 
@@ -322,50 +414,57 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         // Cash = Revenue (Paid, no invoice) + Payments - Expenses, all filtered by date.
         // Uses post-tax (total) amounts because cash includes tax collected/paid.
+        // Each component is converted at its OWN date, then combined (a derived figure: do not
+        // convert the combined result). See docs/Calculations.md §3a Phase 2.
         var cashFromRevenue = companyData.Revenues
             .Where(r => RevenueAggregator.IsCollected(r)
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsOnOrBeforeEndDate(r.Date))
-            .Sum(r => r.EffectiveTotalUSD);
+            .Sum(r => ToDisplay(r.EffectiveTotalUSD, r.Date));
 
         var cashFromPayments = companyData.Payments
             .Where(p => IsOnOrBeforeEndDate(p.Date))
-            .Sum(p => p.EffectiveAmountUSD);
+            .Sum(p => ToDisplay(p.EffectiveAmountUSD, p.Date));
 
         var cashPaidForExpenses = companyData.Expenses
             .Where(e => IsOnOrBeforeEndDate(e.Date))
-            .Sum(e => e.EffectiveTotalUSD);
+            .Sum(e => ToDisplay(e.EffectiveTotalUSD, e.Date));
 
         var cash = cashFromRevenue + cashFromPayments - cashPaidForExpenses;
 
-        // Accounts Receivable = unpaid/uncancelled invoices (excluding drafts)
+        // Accounts Receivable = unpaid/uncancelled invoices (excluding drafts), each balance
+        // converted at the invoice's issue date.
         var accountsReceivable = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
                         && i.Status != InvoiceStatus.Draft)
-            .Sum(i => i.EffectiveBalanceUSD);
+            .Sum(i => ToDisplay(i.EffectiveBalanceUSD, i.IssueDate));
 
         // Inventory valued at current unit cost, using stock levels
         // reconstructed as of the report end date. See docs/Calculations.md §10.
-        var inventoryValue = InventoryValuationService.TotalValueAsOf(
-            companyData, filters.EndDate ?? DateTime.Today);
+        // A point-in-time valuation: convert the USD value at the end date.
+        var inventoryValue = ToDisplay(
+            InventoryValuationService.TotalValueAsOf(companyData, EndDateForValuation),
+            EndDateForValuation);
 
         var totalCurrentAssets = cash + accountsReceivable + inventoryValue;
         var totalAssets = totalCurrentAssets;
 
-        // Accounts Payable = purchase orders not received and not cancelled (USD-converted)
+        // Accounts Payable = purchase orders not received and not cancelled, each converted at the
+        // order date.
         var accountsPayable = companyData.PurchaseOrders
             .Where(po => po.Status != PurchaseOrderStatus.Received
                          && po.Status != PurchaseOrderStatus.Cancelled)
-            .Sum(po => po.EffectiveTotalUSD);
+            .Sum(po => ToDisplay(po.EffectiveTotalUSD, po.OrderDate));
 
-        // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses
+        // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses.
+        // Components converted at each transaction's own date, then combined (derived figure).
         var taxCollected = companyData.Revenues
             .Where(r => IsOnOrBeforeEndDate(r.Date))
-            .Sum(r => r.EffectiveTotalUSD - r.EffectiveSubtotalUSD);
+            .Sum(r => ToDisplay(r.EffectiveTotalUSD - r.EffectiveSubtotalUSD, r.Date));
         var taxPaidOnExpenses = companyData.Expenses
             .Where(e => IsOnOrBeforeEndDate(e.Date))
-            .Sum(e => e.EffectiveTotalUSD - e.EffectiveSubtotalUSD);
+            .Sum(e => ToDisplay(e.EffectiveTotalUSD - e.EffectiveSubtotalUSD, e.Date));
         var salesTaxPayable = taxCollected - taxPaidOnExpenses;
 
         var totalLiabilities = accountsPayable + salesTaxPayable;
@@ -564,15 +663,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             .Where(r => RevenueAggregator.IsCollected(r)
                         && string.IsNullOrEmpty(r.InvoiceId)
                         && IsInDateRange(r.Date))
-            .Sum(r => r.EffectiveTotalUSD);
+            .Sum(r => ToDisplay(r.EffectiveTotalUSD, r.Date));
 
         var cashFromInvoicePayments = companyData.Payments
             .Where(p => IsInDateRange(p.Date))
-            .Sum(p => p.EffectiveAmountUSD);
+            .Sum(p => ToDisplay(p.EffectiveAmountUSD, p.Date));
 
         var cashPaidForExpenses = companyData.Expenses
             .Where(e => IsInDateRange(e.Date))
-            .Sum(e => e.EffectiveTotalUSD);
+            .Sum(e => ToDisplay(e.EffectiveTotalUSD, e.Date));
 
         var totalOperating = cashFromSales + cashFromInvoicePayments - cashPaidForExpenses;
 
@@ -688,7 +787,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         Description = li.Description.Length > 0 ? li.Description : rev.Description,
                         Reference = rev.Id,
                         Debit = 0,
-                        Credit = lineItemUSD
+                        Credit = ToDisplay(lineItemUSD, rev.Date)
                     });
                 }
             }
@@ -700,7 +799,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     Description = rev.Description,
                     Reference = rev.Id,
                     Debit = 0,
-                    Credit = rev.EffectiveSubtotalUSD
+                    Credit = ToDisplay(rev.EffectiveSubtotalUSD, rev.Date)
                 });
             }
         }
@@ -724,7 +823,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         Date = exp.Date,
                         Description = li.Description.Length > 0 ? li.Description : exp.Description,
                         Reference = exp.Id,
-                        Debit = lineItemUSD,
+                        Debit = ToDisplay(lineItemUSD, exp.Date),
                         Credit = 0
                     });
                 }
@@ -736,7 +835,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     Date = exp.Date,
                     Description = exp.Description,
                     Reference = exp.Id,
-                    Debit = exp.EffectiveSubtotalUSD,
+                    Debit = ToDisplay(exp.EffectiveSubtotalUSD, exp.Date),
                     Credit = 0
                 });
             }
@@ -751,7 +850,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 Date = pmt.Date,
                 Description = $"Payment from {customerName}",
                 Reference = pmt.Id,
-                Debit = pmt.EffectiveAmountUSD,
+                Debit = ToDisplay(pmt.EffectiveAmountUSD, pmt.Date),
                 Credit = 0
             });
         }
@@ -838,11 +937,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         if (companyData == null)
             return data;
 
+        // Pass ToDisplay so each line item is converted at its transaction's own date
+        // (Calculations.md §3a Phase 2); the returned RevenueUSD/AvgSalePriceUSD are then already
+        // in DisplayCode (USD identity for the USD-company/fallback path).
         var products = ProductSalesService.GetProductSales(
             companyData,
             filters.StartDate ?? DateTime.MinValue,
             filters.EndDate ?? DateTime.MaxValue,
-            cashBasis: false);
+            cashBasis: false,
+            toDisplay: ToDisplay);
 
         if (products.Count == 0)
         {
@@ -954,7 +1057,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             foreach (var invoice in group)
             {
                 var daysPastDue = (today - invoice.DueDate.Date).Days;
-                var balance = invoice.EffectiveBalanceUSD;
+                // Convert each open invoice's balance at its issue date (Calculations.md §3a Phase 2).
+                var balance = ToDisplay(invoice.EffectiveBalanceUSD, invoice.IssueDate);
 
                 if (daysPastDue <= 0)
                     current += balance;
@@ -1246,7 +1350,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     {
                         var rate = Math.Round(li.TaxRate, 2);
                         taxCollectedByRate.TryAdd(rate, 0);
-                        taxCollectedByRate[rate] += Math.Round(li.TaxAmount * usdRatio, 2);
+                        taxCollectedByRate[rate] +=
+                            ToDisplay(Math.Round(li.TaxAmount * usdRatio, 2), rev.Date);
                     }
                 }
             }
@@ -1257,7 +1362,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 var rate = Math.Round(rev.TaxRate / 100m, 4);
                 var taxAmountUSD = rev.EffectiveTaxAmountUSD;
                 taxCollectedByRate.TryAdd(rate, 0);
-                taxCollectedByRate[rate] += taxAmountUSD;
+                taxCollectedByRate[rate] += ToDisplay(taxAmountUSD, rev.Date);
             }
         }
 
@@ -1279,7 +1384,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     {
                         var rate = Math.Round(li.TaxRate, 2);
                         taxPaidByRate.TryAdd(rate, 0);
-                        taxPaidByRate[rate] += Math.Round(li.TaxAmount * usdRatio, 2);
+                        taxPaidByRate[rate] +=
+                            ToDisplay(Math.Round(li.TaxAmount * usdRatio, 2), exp.Date);
                     }
                 }
             }
@@ -1290,7 +1396,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 var rate = Math.Round(exp.TaxRate / 100m, 4);
                 var taxAmountUSD = exp.EffectiveTaxAmountUSD;
                 taxPaidByRate.TryAdd(rate, 0);
-                taxPaidByRate[rate] += taxAmountUSD;
+                taxPaidByRate[rate] += ToDisplay(taxAmountUSD, exp.Date);
             }
         }
 

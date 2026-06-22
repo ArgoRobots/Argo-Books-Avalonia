@@ -753,7 +753,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets world map data (countries with sales totals) by customer country.
     /// Returns country names as keys.
     /// </summary>
-    public Dictionary<string, double> GetWorldMapData()
+    public Dictionary<string, double> GetWorldMapData(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
             return [];
@@ -769,7 +769,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return customer?.Address.Country;
             })
             .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.EffectiveTotalUSD));
+            // Convert each revenue at its OWN date before summing per country
+            // (docs/Calculations.md §3a Phase 2); null keeps USD.
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(s =>
+                toDisplay != null ? toDisplay(s.EffectiveTotalUSD, s.Date) : s.EffectiveTotalUSD));
     }
 
     /// <summary>
@@ -2121,7 +2124,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.AverageShippingCosts => GetAverageShippingCosts(),
 
             // Geographic charts
-            ChartDataType.WorldMap => GetWorldMapData(),
+            ChartDataType.WorldMap => GetWorldMapData(toDisplay),
             ChartDataType.CountriesOfOrigin => GetRevenueByCountryOfOrigin(toDisplay),
             ChartDataType.CountriesOfDestination => GetExpensesByCountryOfDestination(toDisplay),
             ChartDataType.CompaniesOfOrigin => GetRevenueByCompanyOfOrigin(toDisplay),
