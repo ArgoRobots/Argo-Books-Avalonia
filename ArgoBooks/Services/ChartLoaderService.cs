@@ -36,29 +36,15 @@ public class ChartLoaderService
     private SKColor _gridColor = SKColor.Parse(AppColors.ChartAxis);
 
     /// <summary>
-    /// Convert an array of USD amounts to the user's display currency.
-    /// Chart aggregations are all USD-normalized (so multi-currency data
-    /// rolls up consistently), but charts must render in the display
-    /// currency or the bars / tooltips disagree with the stat cards.
-    /// Apply this at the boundary right before passing values to LiveCharts.
-    /// </summary>
-    public static double[] ConvertUSDValuesToDisplay(double[] usdValues)
-    {
-        if (usdValues.Length == 0) return usdValues;
-        var now = DateTime.Now;
-        var result = new double[usdValues.Length];
-        for (int i = 0; i < usdValues.Length; i++)
-        {
-            result[i] = (double)CurrencyService.GetDisplayAmount((decimal)usdValues[i], now);
-        }
-        return result;
-    }
-
-    /// <summary>
-    /// Per-bucket-date variant of <see cref="ConvertUSDValuesToDisplay(double[])"/>: converts each
+    /// Convert an array of USD amounts to the user's display currency, converting each
     /// USD bucket value at its OWN date (docs/Calculations.md §3a Phase 2) instead of today's rate,
     /// so a non-USD chart isn't re-priced. <paramref name="dates"/> must align 1:1 with
     /// <paramref name="usdValues"/>. For a USD display currency this is a no-op.
+    ///
+    /// Chart aggregations are all USD-normalized (so multi-currency data rolls up consistently),
+    /// but charts must render in the display currency or the bars / tooltips disagree with the
+    /// stat cards. Apply this at the boundary right before passing values to LiveCharts.
+    /// (Replaces the single-date variant, which was removed.)
     /// </summary>
     public static double[] ConvertUSDValuesToDisplay(double[] usdValues, DateTime[] dates)
     {
@@ -1440,7 +1426,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
@@ -1477,7 +1463,7 @@ public class ChartLoaderService
             return ([], []);
         }
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
         PieChartExportData = new ChartExportData
@@ -1729,7 +1715,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfOrigin] = new ChartExportData
@@ -1763,7 +1749,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CountriesOfDestination] = new ChartExportData
@@ -1796,7 +1782,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfOrigin] = new ChartExportData
@@ -1829,7 +1815,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CompaniesOfDestination] = new ChartExportData
@@ -1862,7 +1848,7 @@ public class ChartLoaderService
 
         // Values are transaction COUNTS per accountant, not currency amounts, so they must not be
         // FX-converted (the export SeriesName is "Count").
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
         var exportData = new ChartExportData
@@ -1895,7 +1881,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Values are counts of revenues per status, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerPaymentStatus] = new ChartExportData
@@ -1927,7 +1913,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Customer counts, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ActiveVsInactiveCustomers] = new ChartExportData
@@ -1960,7 +1946,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Loss counts grouped by reason, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossReasons] = new ChartExportData
@@ -1993,7 +1979,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Loss counts per product, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByProduct] = new ChartExportData
@@ -2067,7 +2053,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Return counts grouped by reason, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         var exportData = new ChartExportData
@@ -2101,7 +2087,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Return counts grouped by category, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByCategory] = new ChartExportData
@@ -2266,7 +2252,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Return counts per product, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByProduct] = new ChartExportData
@@ -2300,7 +2286,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Loss counts per category, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByCategory] = new ChartExportData
@@ -2596,7 +2582,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         _chartExportDataByType[ChartDataType.TaxByCategory] = new ChartExportData
         {
@@ -2703,7 +2689,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return ([], []);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, convertFromUSD: false);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         _chartExportDataByType[ChartDataType.TaxByProduct] = new ChartExportData
         {
@@ -2951,28 +2937,24 @@ public class ChartLoaderService
     /// <param name="dataPoints">The source data points.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
-        List<ChartDataPoint> dataPoints,
-        bool convertFromUSD = true)
+        List<ChartDataPoint> dataPoints)
     {
         var maxSlices = ChartSettingsService.GetMaxPieSlices();
-        return CreatePieSeriesWithLegend(dataPoints, maxSlices, convertFromUSD);
+        return CreatePieSeriesWithLegend(dataPoints, maxSlices);
     }
 
     /// <summary>
     /// Creates pie chart series and legend items with "Other" grouping.
+    /// Values are used as-is: currency pies are pre-converted per-date in the
+    /// data layer, and count-based pies (return reasons, customer counts, etc.)
+    /// are never converted.
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
     /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
-    /// <param name="convertFromUSD">
-    /// True (default) when the values are USD aggregates that should be
-    /// displayed in the user's currency. False for count-based pies
-    /// (return reasons, customer counts, etc.).
-    /// </param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints,
-        int maxSlices,
-        bool convertFromUSD = true)
+        int maxSlices)
     {
         var series = new ObservableCollection<ISeries>();
         var legendItems = new ObservableCollection<PieLegendItem>();
@@ -2980,16 +2962,11 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return (series, legendItems);
 
-        // Convert USD aggregates to display currency at this boundary so
-        // slice values / tooltips / legend numbers all agree with stat cards.
-        var now = DateTime.Now;
-        decimal Convert(double v) => convertFromUSD
-            ? CurrencyService.GetDisplayAmount((decimal)v, now)
-            : (decimal)v;
+        // Values are already in the correct units (display currency pre-converted
+        // per-date in the data layer, or plain counts), so use them as-is.
+        decimal Convert(double v) => (decimal)v;
 
-        string FormatTooltip(double v) => convertFromUSD
-            ? CurrencyService.Format((decimal)v)
-            : ((decimal)v).ToString("N0");
+        string FormatTooltip(double v) => ((decimal)v).ToString("N0");
 
         // Sort by value descending
         var sortedPoints = dataPoints.OrderByDescending(p => p.Value).ToList();

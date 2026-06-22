@@ -68,7 +68,7 @@ Conversion happens at the **presentation boundary**, not at the data layer:
 
 Symptoms of breaking this rule: stat card shows `$91`, chart bar shows `$66.46`, chart title shows `$81`. All three are derived from the same underlying revenue row, they only disagree when display conversion is applied unevenly.
 
-The helper for any new chart surface: `ChartLoaderService.ConvertUSDValuesToDisplay(double[])`.
+The helper for any new chart surface: `ChartLoaderService.ConvertUSDValuesToDisplay(double[], DateTime[])`, which converts each value at its own bucket date (Calculations.md §3a).
 
 ### Rule 3a: Always convert at the transaction's EXACT-date rate.
 
