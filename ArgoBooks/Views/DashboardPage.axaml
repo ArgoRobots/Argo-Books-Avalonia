@@ -91,25 +91,40 @@
                     </StackPanel>
 
                     <!-- Edit Dashboard Button (hidden in edit mode) -->
-                    <Button Grid.Column="1"
-                            Classes="edit-toolbar-btn"
-                            VerticalAlignment="Top"
-                            Margin="0,0,12,0"
-                            Command="{Binding LayoutViewModel.EnterEditModeCommand}"
-                            IsVisible="{Binding !LayoutViewModel.IsEditMode}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                                      Width="14" Height="14"
-                                      Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBlock Text="{loc:Loc 'Edit Dashboard'}" FontSize="13" />
-                        </StackPanel>
-                    </Button>
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Top"
+                                Spacing="4"
+                                Margin="0,0,12,0"
+                                IsVisible="{Binding !LayoutViewModel.IsEditMode}">
+                        <!-- Invisible spacer matching the Chart / Date Range labels so the
+                             button lines up with the dropdowns, not their labels. -->
+                        <TextBlock Text="&#160;" FontSize="12" />
+                        <Button Classes="edit-toolbar-btn"
+                                Command="{Binding LayoutViewModel.EnterEditModeCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                          Width="14" Height="14"
+                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Edit Dashboard'}" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
 
                     <!-- Chart Type Selector -->
-                    <controls:ChartTypeSelector Grid.Column="2" VerticalAlignment="Top" Margin="0,0,16,0" />
+                    <StackPanel Grid.Column="2" VerticalAlignment="Top" Spacing="4" Margin="0,0,16,0">
+                        <TextBlock Text="{loc:Loc 'Chart'}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <controls:ChartTypeSelector />
+                    </StackPanel>
 
                     <!-- Date Range Selector -->
-                    <controls:DateRangeSelector Grid.Column="3" VerticalAlignment="Top" />
+                    <StackPanel Grid.Column="3" VerticalAlignment="Top" Spacing="4">
+                        <TextBlock Text="{loc:Loc 'Date Range'}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <controls:DateRangeSelector />
+                    </StackPanel>
                 </Grid>
 
                 <!-- Source Survey Banner (shown to users who skipped the tutorial).
