@@ -59,6 +59,9 @@
                                Foreground="{DynamicResource TextPrimaryBrush}" />
                     <Button Grid.Column="1"
                             Classes="ghost"
+                            VerticalAlignment="Center"
+                            MinHeight="0"
+                            Padding="12,2"
                             Command="{Binding NavigateToRentalsCommand}">
                         <TextBlock Text="{loc:Loc 'View All'}" FontSize="13" />
                     </Button>
