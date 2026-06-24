@@ -63,7 +63,7 @@
             </TabControl>
 
             <!-- Bank lines tab -->
-            <Grid Grid.Row="3" IsVisible="{Binding IsLinesTab}" RowDefinitions="Auto,*">
+            <Grid Grid.Row="3" IsVisible="{Binding IsLinesTab}" RowDefinitions="Auto,*,Auto">
                     <TextBlock Grid.Row="0" Margin="2,0,0,10" FontSize="12" TextWrapping="Wrap"
                                IsVisible="{Binding !LinesShowCalendar}"
                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -154,9 +154,10 @@
                         <ItemsControl Classes="table-rows" IsVisible="{Binding !LinesShowCalendar}" ItemsSource="{Binding Lines}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="vm:BankLineRow">
-                                    <Border Padding="24,0" MinHeight="52"
-                                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                                        <StackPanel Orientation="Horizontal">
+                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                                        <Panel>
+                                        <!-- Standard row (non-unmatched): compact, single line -->
+                                        <StackPanel Orientation="Horizontal" IsVisible="{Binding !IsUnmatched}" Margin="24,0" MinHeight="52">
                                             <table:ArgoTableCell Text="{Binding DateDisplay}"
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.DateColumnWidth}" />
                                             <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.DescriptionColumnWidth}">
@@ -222,6 +223,114 @@
                                                 </table:ArgoTableCell.CellContent>
                                             </table:ArgoTableCell>
                                         </StackPanel>
+
+                                        <!-- Create row (unmatched): shows resolution controls -->
+                                        <Grid IsVisible="{Binding IsUnmatched}" RowDefinitions="Auto,Auto" Margin="24,6,24,6">
+                                            <!-- Top line: date, description, amount, status chip, existing action buttons -->
+                                            <StackPanel Grid.Row="0" Orientation="Horizontal" MinHeight="36">
+                                                <table:ArgoTableCell Text="{Binding DateDisplay}"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.DateColumnWidth}" />
+                                                <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.DescriptionColumnWidth}">
+                                                    <table:ArgoTableCell.CellContent>
+                                                        <TextBlock Text="{Binding Description}" VerticalAlignment="Center" FontSize="13"
+                                                                   TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    </table:ArgoTableCell.CellContent>
+                                                </table:ArgoTableCell>
+                                                <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.AmountColumnWidth}">
+                                                    <table:ArgoTableCell.CellContent>
+                                                        <TextBlock Text="{Binding AmountDisplay}" VerticalAlignment="Center" FontSize="13"
+                                                                   FontWeight="SemiBold" Foreground="{Binding AmountColor}" />
+                                                    </table:ArgoTableCell.CellContent>
+                                                </table:ArgoTableCell>
+                                                <!-- Status + needs-review badge -->
+                                                <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.StatusColumnWidth}">
+                                                    <table:ArgoTableCell.CellContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding StatusDisplay}" FontSize="12"
+                                                                       FontWeight="SemiBold" Foreground="{Binding StatusColor}" />
+                                                            <Border IsVisible="{Binding NeedsReview}" CornerRadius="8" Padding="6,2"
+                                                                    Background="{DynamicResource WarningLightBrush}" VerticalAlignment="Center">
+                                                                <TextBlock Text="{loc:Loc 'Needs review'}" FontSize="11"
+                                                                           Foreground="{DynamicResource WarningBrush}" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </table:ArgoTableCell.CellContent>
+                                                </table:ArgoTableCell>
+                                                <!-- Matched column: used as a spacer here -->
+                                                <table:ArgoTableCell Text=""
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.MatchedColumnWidth}" />
+                                                <!-- Actions: choose/ignore remain available -->
+                                                <table:ArgoTableCell ShowSeparator="False"
+                                                                     ColumnWidth="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).BankLineColumns.ActionsColumnWidth}">
+                                                    <table:ArgoTableCell.CellContent>
+                                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                            <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Choose match'}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).OpenCandidatePickerCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                            </Button>
+                                                            <Button Classes="icon-button danger" ToolTip.Tip="{loc:Loc 'Ignore line'}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).IgnoreLineCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </table:ArgoTableCell.CellContent>
+                                                </table:ArgoTableCell>
+                                            </StackPanel>
+
+                                            <!-- Second line: create controls -->
+                                            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,4,0,4">
+                                                <!-- Select checkbox -->
+                                                <CheckBox IsChecked="{Binding IsSelectedForCreate, Mode=TwoWay}"
+                                                          IsEnabled="{Binding CanCreate}"
+                                                          VerticalAlignment="Center"
+                                                          ToolTip.Tip="{loc:Loc 'Select to create'}" />
+
+                                                <!-- Expense / Revenue toggle -->
+                                                <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                                                    <ToggleButton Classes="icon-button"
+                                                                  IsChecked="{Binding !CreateAsRevenue}"
+                                                                  ToolTip.Tip="{loc:Loc 'Create as expense'}"
+                                                                  Padding="8,4" FontSize="12" MinWidth="64">
+                                                        <TextBlock Text="{loc:Loc 'Expense'}" FontSize="12" />
+                                                    </ToggleButton>
+                                                    <ToggleButton Classes="icon-button"
+                                                                  IsChecked="{Binding CreateAsRevenue}"
+                                                                  ToolTip.Tip="{loc:Loc 'Create as revenue'}"
+                                                                  Padding="8,4" FontSize="12" MinWidth="64">
+                                                        <TextBlock Text="{loc:Loc 'Revenue'}" FontSize="12" />
+                                                    </ToggleButton>
+                                                </StackPanel>
+
+                                                <!-- Category dropdown -->
+                                                <controls:SearchableDropdown
+                                                    Width="180"
+                                                    Placeholder="{loc:Loc 'Category...'}"
+                                                    ItemsSource="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).AvailableCategories}"
+                                                    SelectedItem="{Binding ResolvedCategoryObject, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name" />
+
+                                                <!-- Supplier dropdown (expense) -->
+                                                <controls:SearchableDropdown
+                                                    IsVisible="{Binding !CreateAsRevenue}"
+                                                    Width="180"
+                                                    Placeholder="{loc:Loc 'Supplier...'}"
+                                                    ItemsSource="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).AvailableSuppliers}"
+                                                    SelectedItem="{Binding ResolvedSupplierObject, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name" />
+
+                                                <!-- Customer dropdown (revenue) -->
+                                                <controls:SearchableDropdown
+                                                    IsVisible="{Binding CreateAsRevenue}"
+                                                    Width="180"
+                                                    Placeholder="{loc:Loc 'Customer...'}"
+                                                    ItemsSource="{Binding $parent[ItemsControl].((vm:BankMatchingPageViewModel)DataContext).AvailableCustomers}"
+                                                    SelectedItem="{Binding ResolvedCustomerObject, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name" />
+                                            </StackPanel>
+                                        </Grid>
+                                        </Panel>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -229,6 +338,23 @@
                         </Panel>
                     </table:ArgoTable.RowsContent>
                 </table:ArgoTable>
+
+                <!-- Create selected footer bar: visible when at least one row is selected for creation -->
+                <Border Grid.Row="2"
+                        IsVisible="{Binding HasSelectedForCreate}"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        Padding="16,10" Margin="0,4,0,0" CornerRadius="0,0,8,8">
+                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}">
+                            <Run Text="{Binding SelectedForCreateCount}" />
+                            <Run Text="{loc:Loc 'line(s) selected'}" />
+                        </TextBlock>
+                        <Button Classes="primary-button"
+                                Command="{Binding CreateSelectedCommand}"
+                                Content="{loc:Loc 'Create selected'}" />
+                    </StackPanel>
+                </Border>
             </Grid>
 
             <!-- Missing from statement tab -->

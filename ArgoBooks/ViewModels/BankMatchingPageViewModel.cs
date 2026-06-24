@@ -4,6 +4,8 @@ using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
+using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
@@ -99,6 +101,23 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     public bool HasUnmatchedBook => UnmatchedBookCount > 0;
 
     partial void OnUnmatchedBookCountChanged(int value) => OnPropertyChanged(nameof(HasUnmatchedBook));
+
+    /// <summary>Number of unmatched lines currently selected for creation.</summary>
+    [ObservableProperty]
+    private int _selectedForCreateCount;
+
+    public bool HasSelectedForCreate => SelectedForCreateCount > 0;
+
+    partial void OnSelectedForCreateCountChanged(int value) => OnPropertyChanged(nameof(HasSelectedForCreate));
+
+    /// <summary>Categories available for assigning to new transactions.</summary>
+    public ObservableCollection<Category> AvailableCategories { get; } = [];
+
+    /// <summary>Suppliers available for assigning to new expense transactions.</summary>
+    public ObservableCollection<Supplier> AvailableSuppliers { get; } = [];
+
+    /// <summary>Customers available for assigning to new revenue transactions.</summary>
+    public ObservableCollection<Customer> AvailableCustomers { get; } = [];
 
     #endregion
 
@@ -269,16 +288,69 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         {
             var top = ResolveTopCandidate(line)
                       ?? (line.MatchStatus == BankLineMatchStatus.Matched ? BuildMatchedCandidate(line) : null);
-            _allRows.Add(new BankLineRow(line, top));
+            var row = new BankLineRow(line, top);
+            row.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is nameof(BankLineRow.IsSelectedForCreate) or nameof(BankLineRow.CanCreate))
+                    RefreshSelectedCount();
+            };
+            _allRows.Add(row);
         }
 
         _allMissing = _result.UnmatchedBookRecords;
         UnmatchedBookCount = _allMissing.Count;
         RefreshMissing();
 
+        PrefillResolutions(data);
+        RefreshEntityCollections(data);
         RecomputeCounts();
         RefreshCalendars();
         ApplyFiltersAndPaginate();
+    }
+
+    /// <summary>Runs rule-based pre-fill on all unmatched rows so category/type are ready for creation.</summary>
+    private void PrefillResolutions(CompanyData data)
+    {
+        foreach (var row in _allRows.Where(r => r.IsUnmatched))
+        {
+            var rule = CategoryRuleService.Match(data.BankCategoryRules, row.Line.Description);
+            if (rule != null)
+            {
+                row.ResolvedCategoryId = rule.CategoryId;
+                row.ResolvedCounterpartyId = rule.CounterpartyId;
+                if (rule.TransactionType is { } t) row.CreateAsRevenue = t == BookRecordType.Revenue;
+                row.NeedsReview = false;
+            }
+            else
+            {
+                // TODO: AI category suggestion (batched proxy call) can clear NeedsReview in the future.
+                row.NeedsReview = true;
+            }
+
+            row.SyncObjectsFromIds(data.Categories, data.Suppliers, data.Customers);
+        }
+        RefreshSelectedCount();
+    }
+
+    /// <summary>Refreshes the entity collections used by the create-row dropdowns.</summary>
+    private void RefreshEntityCollections(CompanyData data)
+    {
+        AvailableCategories.Clear();
+        foreach (var c in data.Categories.OrderBy(c => c.Name))
+            AvailableCategories.Add(c);
+
+        AvailableSuppliers.Clear();
+        foreach (var s in data.Suppliers.OrderBy(s => s.Name))
+            AvailableSuppliers.Add(s);
+
+        AvailableCustomers.Clear();
+        foreach (var cu in data.Customers.OrderBy(cu => cu.Name))
+            AvailableCustomers.Add(cu);
+    }
+
+    private void RefreshSelectedCount()
+    {
+        SelectedForCreateCount = _allRows.Count(r => r.IsSelectedForCreate && r.CanCreate);
     }
 
     /// <summary>Applies the missing-tab search/filter/sort and pagination to produce the visible records.</summary>
@@ -549,6 +621,100 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             MissingCurrentPage = page;
     }
 
+    /// <summary>Creates transactions for all selected, ready-to-create unmatched lines in a single undo batch.</summary>
+    [RelayCommand]
+    private void CreateSelected()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        var toCreate = _allRows.Where(r => r.IsSelectedForCreate && r.CanCreate).ToList();
+        if (toCreate.Count == 0) return;
+
+        var resolutions = toCreate.Select(r => new BankLineResolution
+        {
+            Line = r.Line,
+            Type = r.CreateAsRevenue ? BookRecordType.Revenue : BookRecordType.Expense,
+            CategoryId = r.ResolvedCategoryId,
+            CounterpartyId = r.ResolvedCounterpartyId,
+            NewCounterpartyName = r.ResolvedCounterpartyId == null ? r.NewCounterpartyName : null
+        }).ToList();
+
+        var creation = new BankLineImportService().CreateFromLines(data, resolutions);
+
+        // Learn a rule per created line so the next import is pre-filled.
+        foreach (var res in resolutions.Where(x => x.CategoryId != null))
+            CategoryRuleService.Learn(data, res.Line.Description, res.CategoryId!, res.Type, res.CounterpartyId);
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            "Create transactions from bank lines".Translate(),
+            () => UndoCreation(data, creation, resolutions),
+            () => RedoCreation(data, creation, resolutions)));
+
+        App.CompanyManager?.MarkAsChanged();
+        Reload();
+    }
+
+    /// <summary>Removes all created transactions and entities, and restores each line to Unmatched.</summary>
+    private void UndoCreation(CompanyData data, BankImportCreation creation, List<BankLineResolution> resolutions)
+    {
+        foreach (var tx in creation.CreatedTransactions)
+        {
+            if (tx is Expense e) data.Expenses.Remove(e);
+            else if (tx is Revenue r) data.Revenues.Remove(r);
+        }
+
+        foreach (var entity in creation.CreatedEntities)
+        {
+            if (entity is Supplier s) data.Suppliers.Remove(s);
+            else if (entity is Customer c) data.Customers.Remove(c);
+            else if (entity is Category cat) data.Categories.Remove(cat);
+        }
+
+        foreach (var res in resolutions)
+        {
+            res.Line.MatchStatus = BankLineMatchStatus.Unmatched;
+            res.Line.MatchedRecordType = null;
+            res.Line.MatchedRecordId = null;
+            res.Line.MatchedDate = null;
+        }
+
+        data.MarkAsModified();
+        App.CompanyManager?.MarkAsChanged();
+        Reload();
+    }
+
+    /// <summary>Re-applies a previously undone creation batch.</summary>
+    private void RedoCreation(CompanyData data, BankImportCreation creation, List<BankLineResolution> resolutions)
+    {
+        // Re-add the entities first so transactions can reference them.
+        foreach (var entity in creation.CreatedEntities)
+        {
+            if (entity is Supplier s && !data.Suppliers.Contains(s)) data.Suppliers.Add(s);
+            else if (entity is Customer c && !data.Customers.Contains(c)) data.Customers.Add(c);
+            else if (entity is Category cat && !data.Categories.Contains(cat)) data.Categories.Add(cat);
+        }
+
+        foreach (var tx in creation.CreatedTransactions)
+        {
+            if (tx is Expense e && !data.Expenses.Contains(e)) data.Expenses.Add(e);
+            else if (tx is Revenue r && !data.Revenues.Contains(r)) data.Revenues.Add(r);
+        }
+
+        // Restore the line match state that CreateFromLines originally set.
+        foreach (var (res, tx) in resolutions.Zip(creation.CreatedTransactions))
+        {
+            res.Line.MatchStatus = BankLineMatchStatus.Matched;
+            res.Line.MatchedRecordType = res.Type;
+            res.Line.MatchedRecordId = tx.Id;
+            res.Line.MatchedDate = tx.BankMatchedDate;
+        }
+
+        data.MarkAsModified();
+        App.CompanyManager?.MarkAsChanged();
+        Reload();
+    }
+
     [RelayCommand]
     private void AcceptSuggestion(BankLineRow? row)
     {
@@ -756,6 +922,7 @@ public partial class BankLineRow : ObservableObject
     {
         Line = line;
         TopCandidate = topCandidate;
+        CreateAsRevenue = line.Amount > 0;
         Refresh(topCandidate);
     }
 
@@ -764,6 +931,94 @@ public partial class BankLineRow : ObservableObject
 
     [ObservableProperty]
     private string _matchedDisplay = string.Empty;
+
+    // --- Resolution state for create-from-unmatched ---
+
+    [ObservableProperty]
+    private bool _isSelectedForCreate;
+
+    [ObservableProperty]
+    private string? _resolvedCategoryId;
+
+    [ObservableProperty]
+    private string? _resolvedCounterpartyId;
+
+    [ObservableProperty]
+    private string? _newCounterpartyName;
+
+    /// <summary>True when no rule matched and the user has not yet resolved category/type.</summary>
+    [ObservableProperty]
+    private bool _needsReview;
+
+    /// <summary>True = create as Revenue, false = create as Expense. Defaults from the line amount sign.</summary>
+    [ObservableProperty]
+    private bool _createAsRevenue;
+
+    /// <summary>True when this row can be selected and created (unmatched and fully resolved).</summary>
+    public bool CanCreate => IsUnmatched && !NeedsReview;
+
+    partial void OnNeedsReviewChanged(bool value) => OnPropertyChanged(nameof(CanCreate));
+
+    // Object-typed wrappers used by SearchableDropdown (which only supports SelectedItem, not SelectedValue).
+    // Setting these syncs back to the corresponding Id property.
+
+    private Category? _resolvedCategoryObject;
+    public Category? ResolvedCategoryObject
+    {
+        get => _resolvedCategoryObject;
+        set
+        {
+            if (SetProperty(ref _resolvedCategoryObject, value))
+                ResolvedCategoryId = value?.Id;
+        }
+    }
+
+    private Supplier? _resolvedSupplierObject;
+    public Supplier? ResolvedSupplierObject
+    {
+        get => _resolvedSupplierObject;
+        set
+        {
+            if (SetProperty(ref _resolvedSupplierObject, value))
+                ResolvedCounterpartyId = value?.Id;
+        }
+    }
+
+    private Customer? _resolvedCustomerObject;
+    public Customer? ResolvedCustomerObject
+    {
+        get => _resolvedCustomerObject;
+        set
+        {
+            if (SetProperty(ref _resolvedCustomerObject, value))
+                ResolvedCounterpartyId = value?.Id;
+        }
+    }
+
+    /// <summary>
+    /// Looks up the current Id fields in the provided collections and syncs the object-typed
+    /// properties so dropdowns display the pre-filled selection correctly.
+    /// </summary>
+    public void SyncObjectsFromIds(
+        IEnumerable<Category> categories,
+        IEnumerable<Supplier> suppliers,
+        IEnumerable<Customer> customers)
+    {
+        if (ResolvedCategoryId != null)
+            _resolvedCategoryObject = categories.FirstOrDefault(c => c.Id == ResolvedCategoryId);
+
+        if (ResolvedCounterpartyId != null)
+        {
+            _resolvedSupplierObject = suppliers.FirstOrDefault(s => s.Id == ResolvedCounterpartyId);
+            _resolvedCustomerObject = customers.FirstOrDefault(c => c.Id == ResolvedCounterpartyId);
+        }
+
+        OnPropertyChanged(nameof(ResolvedCategoryObject));
+        OnPropertyChanged(nameof(ResolvedSupplierObject));
+        OnPropertyChanged(nameof(ResolvedCustomerObject));
+    }
+
+    // ---------------------------------------------------
 
     public string DateDisplay => Line.Date == DateTime.MinValue ? "-" : Line.Date.ToString("MMM dd, yyyy");
     public string Description => string.IsNullOrWhiteSpace(Line.Description) ? "-" : Line.Description;
@@ -816,5 +1071,6 @@ public partial class BankLineRow : ObservableObject
         OnPropertyChanged(nameof(IsUnmatched));
         OnPropertyChanged(nameof(IsIgnored));
         OnPropertyChanged(nameof(IsActionable));
+        OnPropertyChanged(nameof(CanCreate));
     }
 }
