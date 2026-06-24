@@ -73,19 +73,30 @@
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
-                <!-- Extra Buttons Content (AI Scan Receipt) -->
+                <!-- Extra Buttons Content (Import menu) -->
                 <table:ArgoTable.ExtraButtonsContent>
-                    <Button x:Name="AiScanButton"
+                    <Button x:Name="ImportMenuButton"
                             Classes="primary-button"
                             Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                             Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                            Click="OnAiScanButtonClick"
-                            ToolTip.Tip="{loc:Loc 'AI Scan Receipt'}">
+                            ToolTip.Tip="{loc:Loc 'Import'}">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Header="{loc:Loc 'Scan a receipt'}"
+                                          Click="OnAiScanButtonClick" />
+                                <MenuItem Header="{loc:Loc 'Import bank statement'}"
+                                          Click="OnImportBankStatementClick" />
+                            </MenuFlyout>
+                        </Button.Flyout>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
+                            <PathIcon Data="{x:Static icons:Icons.ImportData}"
                                       Width="16" Height="16"
                                       Foreground="White" />
-                            <TextBlock Text="{loc:Loc 'AI Scan Receipt'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                            <TextBlock Text="{loc:Loc 'Import'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                            <PathIcon Data="{x:Static icons:Icons.ChevronDown}"
+                                      Width="12" Height="12"
+                                      Foreground="White"
+                                      IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
                         </StackPanel>
                     </Button>
                 </table:ArgoTable.ExtraButtonsContent>

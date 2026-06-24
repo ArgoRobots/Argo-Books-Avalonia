@@ -62,4 +62,16 @@ public partial class RevenuePage : UserControl
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnAiScanButtonClick");
         }
     }
+
+    private async void OnImportBankStatementClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        try
+        {
+            await App.StartBankImportAsync();
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "OnImportBankStatementClick");
+        }
+    }
 }

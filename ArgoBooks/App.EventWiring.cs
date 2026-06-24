@@ -1531,6 +1531,12 @@ public partial class App
                 return;
             }
 
+            if (format.ToUpperInvariant() == "BANKSTATEMENT")
+            {
+                await StartBankImportAsync();
+                return;
+            }
+
             // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {

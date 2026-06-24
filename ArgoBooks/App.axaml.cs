@@ -2482,6 +2482,16 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Navigates to the Bank Matching page and immediately triggers the bank statement import flow.
+    /// Called from the Expenses/Revenue "Import bank statement" menu item.
+    /// </summary>
+    public static async Task StartBankImportAsync()
+    {
+        NavigationService?.NavigateTo(PageNames.BankMatching);
+        await PerformBankImportAsync();
+    }
+
+    /// <summary>
     /// Imports a bank statement via the smart importer (parse only, no commit) and shows it on the
     /// Bank Matching page. Triggered by the page's Import button.
     /// </summary>
