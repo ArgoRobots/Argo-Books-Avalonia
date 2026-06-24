@@ -640,23 +640,49 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             NewCounterpartyName = r.ResolvedCounterpartyId == null ? r.NewCounterpartyName : null
         }).ToList();
 
+        // Snapshot id counters before CreateFromLines bumps them.
+        var preCounters = new IdCounterSnapshot(data.IdCounters);
+
         var creation = new BankLineImportService().CreateFromLines(data, resolutions);
 
         // Learn a rule per created line so the next import is pre-filled.
+        // Capture before/after state so undo/redo can precisely reverse each Learn call.
+        var ruleCaptures = new List<RuleLearningCapture>();
         foreach (var res in resolutions.Where(x => x.CategoryId != null))
-            CategoryRuleService.Learn(data, res.Line.Description, res.CategoryId!, res.Type, res.CounterpartyId);
+        {
+            var normalized = ArgoBooks.Core.Services.MerchantNormalizer.Normalize(res.Line.Description);
+            var existing = data.BankCategoryRules.FirstOrDefault(r =>
+                r.Pattern == normalized && r.MatchType == ArgoBooks.Core.Models.BankMatching.RuleMatchType.Contains);
+
+            // Snapshot the prior state of an existing rule before Learn overwrites it.
+            RulePriorState? prior = existing == null ? null : new RulePriorState(
+                existing.CategoryId, existing.TransactionType, existing.CounterpartyId,
+                existing.Source, existing.UpdatedAt);
+
+            var rule = CategoryRuleService.Learn(data, res.Line.Description, res.CategoryId!, res.Type, res.CounterpartyId);
+
+            // Snapshot the post-Learn state for redo restoration.
+            var post = new RulePostState(rule.CategoryId, rule.TransactionType, rule.CounterpartyId,
+                rule.Source, rule.UpdatedAt);
+
+            ruleCaptures.Add(new RuleLearningCapture(rule, prior, post));
+        }
+
+        // Snapshot id counters after all creation is done.
+        var postCounters = new IdCounterSnapshot(data.IdCounters);
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             "Create transactions from bank lines".Translate(),
-            () => UndoCreation(data, creation, resolutions),
-            () => RedoCreation(data, creation, resolutions)));
+            () => UndoCreation(data, creation, resolutions, ruleCaptures, preCounters),
+            () => RedoCreation(data, creation, resolutions, ruleCaptures, postCounters)));
 
         App.CompanyManager?.MarkAsChanged();
         Reload();
     }
 
-    /// <summary>Removes all created transactions and entities, and restores each line to Unmatched.</summary>
-    private void UndoCreation(CompanyData data, BankImportCreation creation, List<BankLineResolution> resolutions)
+    /// <summary>Removes all created transactions and entities, reverses learned rules, and restores each line to Unmatched.</summary>
+    private void UndoCreation(CompanyData data, BankImportCreation creation, List<BankLineResolution> resolutions,
+        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot preCounters)
     {
         foreach (var tx in creation.CreatedTransactions)
         {
@@ -679,13 +705,36 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             res.Line.MatchedDate = null;
         }
 
+        // Reverse learned rules: remove new rules or restore prior field values on updated rules.
+        foreach (var cap in ruleCaptures)
+        {
+            if (cap.Prior == null)
+            {
+                // Rule was newly added by Learn; remove it.
+                data.BankCategoryRules.Remove(cap.Rule);
+            }
+            else
+            {
+                // Rule already existed; restore the field values that Learn overwrote.
+                cap.Rule.CategoryId = cap.Prior.CategoryId;
+                cap.Rule.TransactionType = cap.Prior.TransactionType;
+                cap.Rule.CounterpartyId = cap.Prior.CounterpartyId;
+                cap.Rule.Source = cap.Prior.Source;
+                cap.Rule.UpdatedAt = cap.Prior.UpdatedAt;
+            }
+        }
+
+        // Restore id counters to their pre-creation values.
+        preCounters.RestoreTo(data.IdCounters);
+
         data.MarkAsModified();
         App.CompanyManager?.MarkAsChanged();
         Reload();
     }
 
     /// <summary>Re-applies a previously undone creation batch.</summary>
-    private void RedoCreation(CompanyData data, BankImportCreation creation, List<BankLineResolution> resolutions)
+    private void RedoCreation(CompanyData data, BankImportCreation creation, List<BankLineResolution> resolutions,
+        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot postCounters)
     {
         // Re-add the entities first so transactions can reference them.
         foreach (var entity in creation.CreatedEntities)
@@ -709,6 +758,29 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
             res.Line.MatchedRecordId = tx.Id;
             res.Line.MatchedDate = tx.BankMatchedDate;
         }
+
+        // Re-apply learned rule state: re-add new rules (guard duplicates) or restore post-Learn fields.
+        foreach (var cap in ruleCaptures)
+        {
+            if (cap.Prior == null)
+            {
+                // Was a new rule; re-add it if it was removed by undo.
+                if (!data.BankCategoryRules.Contains(cap.Rule))
+                    data.BankCategoryRules.Add(cap.Rule);
+            }
+            else
+            {
+                // Was an update; re-apply the post-Learn field values.
+                cap.Rule.CategoryId = cap.Post.CategoryId;
+                cap.Rule.TransactionType = cap.Post.TransactionType;
+                cap.Rule.CounterpartyId = cap.Post.CounterpartyId;
+                cap.Rule.Source = cap.Post.Source;
+                cap.Rule.UpdatedAt = cap.Post.UpdatedAt;
+            }
+        }
+
+        // Restore id counters to their post-creation values.
+        postCounters.RestoreTo(data.IdCounters);
 
         data.MarkAsModified();
         App.CompanyManager?.MarkAsChanged();
@@ -911,6 +983,59 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         DateTime? MatchedDate,
         double Confidence,
         List<BankMatchCandidate>? Candidates);
+
+    /// <summary>Field values on a BankCategoryRule before a Learn call overwrites them.</summary>
+    private sealed record RulePriorState(
+        string CategoryId,
+        ArgoBooks.Core.Enums.BookRecordType? TransactionType,
+        string? CounterpartyId,
+        ArgoBooks.Core.Models.BankMatching.RuleSource Source,
+        DateTime UpdatedAt);
+
+    /// <summary>Field values on a BankCategoryRule after a Learn call (used to re-apply on redo).</summary>
+    private sealed record RulePostState(
+        string CategoryId,
+        ArgoBooks.Core.Enums.BookRecordType? TransactionType,
+        string? CounterpartyId,
+        ArgoBooks.Core.Models.BankMatching.RuleSource Source,
+        DateTime UpdatedAt);
+
+    /// <summary>
+    /// Per-resolution record of what Learn did: the resulting rule, its prior state (null when new),
+    /// and the post-Learn state needed for redo.
+    /// </summary>
+    private sealed record RuleLearningCapture(
+        ArgoBooks.Core.Models.BankMatching.BankCategoryRule Rule,
+        RulePriorState? Prior,
+        RulePostState Post);
+
+    /// <summary>Snapshot of the five IdCounter fields bumped by CreateFromLines.</summary>
+    private sealed class IdCounterSnapshot
+    {
+        private readonly int _expense;
+        private readonly int _revenue;
+        private readonly int _supplier;
+        private readonly int _customer;
+        private readonly int _category;
+
+        public IdCounterSnapshot(ArgoBooks.Core.Data.IdCounters counters)
+        {
+            _expense = counters.Expense;
+            _revenue = counters.Revenue;
+            _supplier = counters.Supplier;
+            _customer = counters.Customer;
+            _category = counters.Category;
+        }
+
+        public void RestoreTo(ArgoBooks.Core.Data.IdCounters counters)
+        {
+            counters.Expense = _expense;
+            counters.Revenue = _revenue;
+            counters.Supplier = _supplier;
+            counters.Customer = _customer;
+            counters.Category = _category;
+        }
+    }
 }
 
 /// <summary>Display wrapper for a bank statement line in the table.</summary>
