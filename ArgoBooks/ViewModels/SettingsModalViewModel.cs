@@ -3,6 +3,8 @@ using System.Diagnostics;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.BankMatching;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
@@ -1321,6 +1323,70 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
+    #region Bank Import Rules
+
+    /// <summary>
+    /// Rows shown in the "Bank import rules" tab, each wrapping a <see cref="BankCategoryRule"/>.
+    /// </summary>
+    public ObservableCollection<BankCategoryRuleRow> BankCategoryRules { get; } = [];
+
+    /// <summary>
+    /// Categories available for the rule category picker.
+    /// </summary>
+    public ObservableCollection<Category> AvailableBankCategories { get; } = [];
+
+    /// <summary>
+    /// Loads bank category rules and available categories from company data.
+    /// Called each time the settings modal opens.
+    /// </summary>
+    public void LoadBankRules()
+    {
+        BankCategoryRules.Clear();
+        AvailableBankCategories.Clear();
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var cat in data.Categories.OrderBy(c => c.Name))
+            AvailableBankCategories.Add(cat);
+
+        foreach (var r in data.BankCategoryRules)
+            BankCategoryRules.Add(new BankCategoryRuleRow(r, AvailableBankCategories));
+    }
+
+    /// <summary>
+    /// Adds a new blank bank category rule.
+    /// </summary>
+    [RelayCommand]
+    private void AddBankRule()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+        var rule = new BankCategoryRule
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Source = RuleSource.Manual
+        };
+        data.BankCategoryRules.Add(rule);
+        BankCategoryRules.Add(new BankCategoryRuleRow(rule, AvailableBankCategories));
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    /// <summary>
+    /// Deletes the given bank category rule row.
+    /// </summary>
+    [RelayCommand]
+    private void DeleteBankRule(BankCategoryRuleRow? row)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (row == null || data == null) return;
+        data.BankCategoryRules.Remove(row.Rule);
+        BankCategoryRules.Remove(row);
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    #endregion
+
     /// <summary>
     /// Whether there are unsaved changes in the settings.
     /// </summary>
@@ -1413,6 +1479,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         // Load portal settings
         LoadPortalSettings();
+
+        // Load bank import rules
+        LoadBankRules();
 
         // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
@@ -2280,4 +2349,61 @@ public class LanguageSettingsChangedEventArgs(string language, bool applied) : E
     /// Whether the language change has been applied (translations downloaded and active).
     /// </summary>
     public bool Applied { get; } = applied;
+}
+
+/// <summary>
+/// Wraps a <see cref="BankCategoryRule"/> for display in the "Bank import rules" settings tab.
+/// Exposes <see cref="SelectedCategory"/> as a <see cref="Category"/> object so the category
+/// picker can bind to it, while keeping <see cref="BankCategoryRule.CategoryId"/> in sync.
+/// </summary>
+public class BankCategoryRuleRow : ObservableObject
+{
+    private readonly IReadOnlyList<Category> _allCategories;
+
+    public BankCategoryRuleRow(BankCategoryRule rule, IReadOnlyList<Category> allCategories)
+    {
+        Rule = rule;
+        _allCategories = allCategories;
+        _selectedCategory = allCategories.FirstOrDefault(c => c.Id == rule.CategoryId);
+    }
+
+    /// <summary>The underlying rule stored in company data.</summary>
+    public BankCategoryRule Rule { get; }
+
+    /// <summary>
+    /// The text pattern to match against bank statement descriptions.
+    /// Bound TwoWay in the settings UI; writes through to <see cref="BankCategoryRule.Pattern"/>.
+    /// </summary>
+    public string Pattern
+    {
+        get => Rule.Pattern;
+        set
+        {
+            if (Rule.Pattern == value) return;
+            Rule.Pattern = value;
+            Rule.UpdatedAt = DateTime.UtcNow;
+            OnPropertyChanged();
+            App.CompanyManager?.MarkAsChanged();
+        }
+    }
+
+    private Category? _selectedCategory;
+
+    /// <summary>
+    /// The category object selected in the picker.
+    /// Setting this updates <see cref="BankCategoryRule.CategoryId"/> and marks the file dirty.
+    /// </summary>
+    public Category? SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            if (_selectedCategory == value) return;
+            _selectedCategory = value;
+            Rule.CategoryId = value?.Id ?? string.Empty;
+            Rule.UpdatedAt = DateTime.UtcNow;
+            OnPropertyChanged();
+            App.CompanyManager?.MarkAsChanged();
+        }
+    }
 }
