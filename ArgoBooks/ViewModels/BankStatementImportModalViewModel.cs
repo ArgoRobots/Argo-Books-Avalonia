@@ -23,7 +23,9 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     [ObservableProperty] private bool _isOpen;
     [ObservableProperty] private int _includedCount;
     [ObservableProperty] private bool _hasValidationMessage;
-    [ObservableProperty] private bool _canImport;
+
+    // Set to true the first time the user clicks Import, so error highlights appear.
+    private bool _validationAttempted;
 
     public ObservableCollection<ImportLineRow> Rows { get; } = [];
     public ObservableCollection<Category> AvailableCategories { get; } = [];
@@ -61,6 +63,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         if (lines.Count == 0) return;
 
+        _validationAttempted = false;
         PopulateRows(lines);
         IsOpen = true;
     }
@@ -69,7 +72,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // Commands
     // -----------------------------------------------------------------------
 
-    [RelayCommand(CanExecute = nameof(CanImport))]
+    [RelayCommand]
     private void Import()
     {
         var data = App.CompanyManager?.CompanyData;
@@ -77,6 +80,14 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         var toImport = Rows.Where(r => r.IsIncluded).ToList();
         if (toImport.Count == 0) return;
+
+        // Gate: show required-field errors if any included row is incomplete.
+        if (!_validationAttempted || toImport.Any(r => !r.IsComplete))
+        {
+            _validationAttempted = true;
+            RefreshState();
+            if (toImport.Any(r => !r.IsComplete)) return;
+        }
 
         var resolutions = toImport.Select(r =>
         {
@@ -275,22 +286,24 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         var includedRows = Rows.Where(r => r.IsIncluded).ToList();
 
-        // Every included row needs a category (resolved or pending new) and a counterparty.
-        var allComplete = includedRows.Count > 0 && includedRows.All(r => r.IsComplete);
-
-        CanImport = allComplete;
-        ImportCommand.NotifyCanExecuteChanged();
-
-        HasValidationMessage = includedRows.Count > 0 && !allComplete;
-
-        // Propagate per-row error state for visual feedback.
-        foreach (var row in includedRows)
+        // Show errors and the summary hint only after the user has attempted an import.
+        if (_validationAttempted)
         {
-            row.HasCategoryError = !row.HasCategory;
-            row.HasCounterpartyError = !row.HasCounterparty;
+            var allComplete = includedRows.Count > 0 && includedRows.All(r => r.IsComplete);
+            HasValidationMessage = includedRows.Count > 0 && !allComplete;
+
+            foreach (var row in includedRows)
+            {
+                row.HasCategoryError = !row.HasCategory;
+                row.HasCounterpartyError = !row.HasCounterparty;
+            }
+        }
+        else
+        {
+            HasValidationMessage = false;
         }
 
-        // Clear errors on excluded rows.
+        // Always clear errors on excluded rows.
         foreach (var row in Rows.Where(r => !r.IsIncluded))
         {
             row.HasCategoryError = false;

@@ -240,8 +240,7 @@
                             <Button Grid.Column="3"
                                     Content="{loc:Loc Import}"
                                     Classes="primary-button"
-                                    Command="{Binding ImportCommand}"
-                                    IsEnabled="{Binding CanImport}" />
+                                    Command="{Binding ImportCommand}" />
                         </Grid>
                     </Border>
 
