@@ -959,6 +959,33 @@ public partial class BankLineRow : ObservableObject
 
     partial void OnNeedsReviewChanged(bool value) => OnPropertyChanged(nameof(CanCreate));
 
+    /// <summary>
+    /// Clears the needs-review flag when the user picks a category, so the row becomes creatable.
+    /// </summary>
+    partial void OnResolvedCategoryIdChanged(string? value)
+    {
+        if (value != null)
+            NeedsReview = false;
+    }
+
+    /// <summary>
+    /// Clears the needs-review flag when the user types a new counterparty name, so the row becomes
+    /// creatable even without an existing entity selected.
+    /// </summary>
+    partial void OnNewCounterpartyNameChanged(string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            NeedsReview = false;
+    }
+
+    /// <summary>Sets the transaction type to Expense.</summary>
+    [RelayCommand]
+    private void SetExpense() => CreateAsRevenue = false;
+
+    /// <summary>Sets the transaction type to Revenue.</summary>
+    [RelayCommand]
+    private void SetRevenue() => CreateAsRevenue = true;
+
     // Object-typed wrappers used by SearchableDropdown (which only supports SelectedItem, not SelectedValue).
     // Setting these syncs back to the corresponding Id property.
 
