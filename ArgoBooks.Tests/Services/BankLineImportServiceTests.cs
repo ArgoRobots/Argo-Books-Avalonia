@@ -63,4 +63,20 @@ public class BankLineImportServiceTests
         Assert.Equal(1200m, data.Revenues[0].Total);
         Assert.Equal(BankLineMatchStatus.Matched, line.MatchStatus);
     }
+
+    [Fact]
+    public void CreateFromLines_LinkToBankLineFalse_CreatesPlainTransaction()
+    {
+        var data = new CompanyData();
+        data.Categories.Add(new Core.Models.Entities.Category { Id = "CAT-PUR-001", Name = "Office", Type = CategoryType.Expense });
+        var line = new BankStatementLine { Id = "L1", Date = new DateTime(2026, 4, 5), Description = "AMZN", Amount = -10m };
+        var resolution = new BankLineResolution { Line = line, Type = BookRecordType.Expense, CategoryId = "CAT-PUR-001" };
+
+        new BankLineImportService().CreateFromLines(data, [resolution], linkToBankLine: false);
+
+        Assert.Single(data.Expenses);
+        Assert.False(data.Expenses[0].BankMatched);
+        Assert.Null(data.Expenses[0].BankMatchedLineId);
+        Assert.Equal(BankLineMatchStatus.Unmatched, line.MatchStatus); // unchanged from default
+    }
 }

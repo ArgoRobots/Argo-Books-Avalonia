@@ -18,7 +18,7 @@ public class BankImportCreation
 /// </summary>
 public class BankLineImportService
 {
-    public BankImportCreation CreateFromLines(CompanyData data, IReadOnlyList<BankLineResolution> resolutions)
+    public BankImportCreation CreateFromLines(CompanyData data, IReadOnlyList<BankLineResolution> resolutions, bool linkToBankLine = true)
     {
         var creation = new BankImportCreation();
 
@@ -74,17 +74,23 @@ public class BankLineImportService
                 ? TransactionFactory.CreateExpense(data, draft)
                 : TransactionFactory.CreateRevenue(data, draft);
 
-            tx.BankMatched = true;
-            tx.BankMatchedLineId = r.Line.Id;
-            tx.BankMatchedDate = DateTime.UtcNow;
+            if (linkToBankLine)
+            {
+                tx.BankMatched = true;
+                tx.BankMatchedLineId = r.Line.Id;
+                tx.BankMatchedDate = DateTime.UtcNow;
+            }
 
             if (isExpense) data.Expenses.Add((Expense)tx);
             else data.Revenues.Add((Revenue)tx);
 
-            r.Line.MatchStatus = BankLineMatchStatus.Matched;
-            r.Line.MatchedRecordType = r.Type;
-            r.Line.MatchedRecordId = tx.Id;
-            r.Line.MatchedDate = DateTime.UtcNow;
+            if (linkToBankLine)
+            {
+                r.Line.MatchStatus = BankLineMatchStatus.Matched;
+                r.Line.MatchedRecordType = r.Type;
+                r.Line.MatchedRecordId = tx.Id;
+                r.Line.MatchedDate = DateTime.UtcNow;
+            }
 
             creation.CreatedTransactions.Add(tx);
         }
