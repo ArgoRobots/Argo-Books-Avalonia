@@ -2487,13 +2487,27 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Navigates to the Bank Matching page and immediately triggers the bank statement import flow.
+    /// Opens a file picker for a bank statement and passes the chosen file directly to
+    /// the BankStatementImportModal without navigating to the Bank Matching page first.
     /// Called from the Expenses/Revenue "Import bank statement" menu item.
     /// </summary>
-    public static async Task StartBankImportAsync()
+    public static async Task OpenBankStatementImportAsync()
     {
-        NavigationService?.NavigateTo(PageNames.BankMatching);
-        await PerformBankImportAsync();
+        if (BankStatementImportModalViewModel == null) return;
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+
+        var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Bank Statement".Translate(),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Bank statements") { Patterns = ["*.csv", "*.xlsx", "*.xls", "*.pdf"] }
+            ]
+        });
+        if (file.Count == 0) return;
+
+        await BankStatementImportModalViewModel.OpenAsync(file[0].Path.LocalPath);
     }
 
     /// <summary>

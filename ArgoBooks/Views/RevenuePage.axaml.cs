@@ -67,7 +67,7 @@ public partial class RevenuePage : UserControl
     {
         try
         {
-            await App.StartBankImportAsync();
+            await App.OpenBankStatementImportAsync();
         }
         catch (Exception ex)
         {

@@ -1533,7 +1533,7 @@ public partial class App
 
             if (format.ToUpperInvariant() == "BANKSTATEMENT")
             {
-                await StartBankImportAsync();
+                await OpenBankStatementImportAsync();
                 return;
             }
 
