@@ -162,7 +162,8 @@
                                                     VerticalAlignment="Center" />
 
                                                 <!-- Counterparty column: supplier or customer dropdown + new-name TextBox -->
-                                                <Panel Grid.Column="6" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="6" Margin="8,0,0,0" Spacing="4"
+                                                            VerticalAlignment="Center">
 
                                                     <!-- Supplier dropdown (expense) -->
                                                     <controls:SearchableDropdown
@@ -182,12 +183,12 @@
                                                         SelectedItem="{Binding ResolvedCustomerObject, Mode=TwoWay}"
                                                         DisplayMemberPath="Name" />
 
-                                                    <!-- New counterparty name (shown when no existing entity selected) -->
+                                                    <!-- New counterparty name (shown below dropdown when no existing entity selected) -->
                                                     <TextBox IsVisible="{Binding ResolvedCounterpartyId, Converter={x:Static StringConverters.IsNullOrEmpty}}"
                                                              Text="{Binding NewCounterpartyName, Mode=TwoWay}"
                                                              PlaceholderText="{loc:Loc 'Or type a new name'}"
                                                              Width="172" FontSize="13" />
-                                                </Panel>
+                                                </StackPanel>
 
                                             </Grid>
                                         </Border>
