@@ -191,6 +191,11 @@ public partial class App : Application
     public static PdfStatementReviewModalViewModel? PdfStatementReviewModalViewModel => _appShellViewModel?.PdfStatementReviewModalViewModel;
 
     /// <summary>
+    /// Gets the bank statement import modal view model for shared access.
+    /// </summary>
+    public static BankStatementImportModalViewModel? BankStatementImportModalViewModel => _appShellViewModel?.BankStatementImportModalViewModel;
+
+    /// <summary>
     /// Gets the purchase orders modals view model for shared access.
     /// </summary>
     public static PurchaseOrdersModalsViewModel? PurchaseOrdersModalsViewModel => _appShellViewModel?.PurchaseOrdersModalsViewModel;

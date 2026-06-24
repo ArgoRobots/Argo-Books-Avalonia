@@ -38,6 +38,7 @@ public partial class AppShellViewModel : ViewModelBase
     private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
     private BankMatchingModalsViewModel? _bankMatchingModalsViewModel;
     private PdfStatementReviewModalViewModel? _pdfStatementReviewModalViewModel;
+    private BankStatementImportModalViewModel? _bankStatementImportModalViewModel;
     private PurchaseOrdersModalsViewModel? _purchaseOrdersModalsViewModel;
     private ReceiptsModalsViewModel? _receiptsModalsViewModel;
     private LostDamagedModalsViewModel? _lostDamagedModalsViewModel;
@@ -511,6 +512,22 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _pdfStatementReviewModalViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the bank statement import modal view model.
+    /// </summary>
+    public BankStatementImportModalViewModel BankStatementImportModalViewModel
+    {
+        get
+        {
+            if (_bankStatementImportModalViewModel == null)
+            {
+                _bankStatementImportModalViewModel = new BankStatementImportModalViewModel();
+                OnPropertyChanged();
+            }
+            return _bankStatementImportModalViewModel;
         }
     }
 
