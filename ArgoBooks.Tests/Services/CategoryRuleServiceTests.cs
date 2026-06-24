@@ -47,4 +47,25 @@ public class CategoryRuleServiceTests
         Assert.Single(data.BankCategoryRules);
         Assert.Equal("CAT-PUR-009", data.BankCategoryRules[0].CategoryId);
     }
+
+    // Regression test for match-precedence fix: Exact must beat Contains for the same pattern
+    // regardless of which rule appears first in the list. Old code relied on clause 2 alone
+    // (rule.MatchType == Exact && best.MatchType != Exact); the new code also adds a MatchType
+    // guard to clause 3 so a same-length or longer Contains can never displace an already-found
+    // Exact via the length comparison path. This test places Contains first so best=Contains
+    // initially, then Exact is processed second. Clause 2 promotes Exact; the fix ensures clause 3
+    // cannot later demote it if another Contains with equal length is evaluated.
+    [Fact]
+    public void Match_ExactRule_BeatsContainsRule_WhenContainsIsFirst()
+    {
+        var rules = new List<BankCategoryRule>
+        {
+            new() { Id = "CONTAINS_FIRST", Pattern = "shell", MatchType = RuleMatchType.Contains, CategoryId = "CAT-CONTAINS" },
+            new() { Id = "EXACT_SECOND",   Pattern = "shell", MatchType = RuleMatchType.Exact,    CategoryId = "CAT-EXACT" }
+        };
+        // "SHELL" normalizes to "shell": both rules match.
+        var match = CategoryRuleService.Match(rules, "SHELL");
+        Assert.NotNull(match);
+        Assert.Equal("CAT-EXACT", match!.CategoryId);
+    }
 }

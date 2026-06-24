@@ -26,10 +26,10 @@ public static class CategoryRuleService
                 : token.Contains(p, StringComparison.Ordinal);
             if (!isMatch) continue;
 
-            // Exact beats Contains; otherwise the longer pattern is the more specific match.
+            // Exact beats Contains; among the same MatchType, the longer pattern is more specific.
             if (best == null
                 || (rule.MatchType == RuleMatchType.Exact && best.MatchType != RuleMatchType.Exact)
-                || rule.Pattern.Length > best.Pattern.Length)
+                || (rule.MatchType == best.MatchType && rule.Pattern.Length > best.Pattern.Length))
             {
                 best = rule;
             }
@@ -49,6 +49,7 @@ public static class CategoryRuleService
             existing.CategoryId = categoryId;
             existing.TransactionType = type;
             existing.CounterpartyId = counterpartyId;
+            existing.Source = RuleSource.Learned;
             existing.UpdatedAt = DateTime.UtcNow;
             return existing;
         }
