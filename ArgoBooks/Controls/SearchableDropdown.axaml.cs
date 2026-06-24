@@ -71,6 +71,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string> AddNewTextProperty =
         AvaloniaProperty.Register<SearchableDropdown, string>(nameof(AddNewText), "Add new...");
 
+    public static readonly StyledProperty<ICommand?> AddNewCommandProperty =
+        AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(AddNewCommand));
+
     public static readonly StyledProperty<string?> EmptyMessageProperty =
         AvaloniaProperty.Register<SearchableDropdown, string?>(nameof(EmptyMessage));
 
@@ -336,7 +339,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Command executed when "Add new" is clicked.
     /// </summary>
-    public ICommand? AddNewCommand { get; set; }
+    public ICommand? AddNewCommand
+    {
+        get => GetValue(AddNewCommandProperty);
+        set => SetValue(AddNewCommandProperty, value);
+    }
 
     #endregion
 

@@ -6,7 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks"
-             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="700"
              x:Class="ArgoBooks.Modals.BankStatementImportModal"
              x:DataType="vm:BankStatementImportModalViewModel">
 
@@ -16,7 +16,7 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="Padding" Value="10,6" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="CornerRadius" Value="4" />
@@ -45,7 +45,7 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12"
-                    Width="860" MaxHeight="680"
+                    Width="1060" MaxHeight="700"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
 
@@ -66,11 +66,13 @@
                     </Border>
 
                     <!-- Row list -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24,16">
 
-                            <!-- Column header labels -->
-                            <Grid ColumnDefinitions="28,120,*,110,140,180,180" Margin="0,0,0,6">
+                            <!-- Column header labels — same column layout as data rows -->
+                            <Grid ColumnDefinitions="28,90,*,90,148,*,*" Margin="0,0,0,6">
                                 <TextBlock Grid.Column="1"
                                            Text="{loc:Loc Date}"
                                            FontSize="12" FontWeight="SemiBold"
@@ -92,7 +94,7 @@
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Grid.Column="6" Margin="8,0,0,0"
-                                           Text="{loc:Loc Counterparty}"
+                                           Text="{loc:Loc 'Supplier / Customer'}"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Grid>
@@ -103,20 +105,20 @@
                                         <Border Padding="0,4"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="28,120,*,110,140,180,180">
+                                            <!-- Same column layout as the header row above -->
+                                            <Grid ColumnDefinitions="28,90,*,90,148,*,*">
 
                                                 <!-- Include checkbox -->
                                                 <CheckBox Grid.Column="0"
                                                           IsChecked="{Binding IsIncluded, Mode=TwoWay}"
                                                           VerticalAlignment="Center" />
 
-                                                <!-- Date -->
-                                                <DatePicker Grid.Column="1"
-                                                            SelectedDate="{Binding Date, Mode=TwoWay}"
-                                                            Classes="form-datepicker"
-                                                            MinWidth="0"
-                                                            HorizontalAlignment="Stretch"
-                                                            VerticalAlignment="Center" />
+                                                <!-- Date — compact read-only formatted text -->
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DateFormatted}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center" />
 
                                                 <!-- Description -->
                                                 <TextBox Grid.Column="2" Margin="8,0,0,0"
@@ -125,10 +127,11 @@
                                                          MaxLength="200"
                                                          VerticalAlignment="Center" />
 
-                                                <!-- Amount -->
+                                                <!-- Amount — narrow, no spinner buttons -->
                                                 <NumericUpDown Grid.Column="3" Margin="8,0,0,0"
                                                                Value="{Binding Amount, Mode=TwoWay}"
                                                                FormatString="F2"
+                                                               ShowButtonSpinner="False"
                                                                HorizontalAlignment="Stretch"
                                                                VerticalAlignment="Center" />
 
@@ -137,7 +140,7 @@
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         CornerRadius="6" Padding="4"
                                                         VerticalAlignment="Center">
-                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <StackPanel Orientation="Horizontal" Spacing="2">
                                                         <Button Content="{loc:Loc Expense}"
                                                                 Command="{Binding SetExpenseCommand}"
                                                                 Classes="type-toggle-button"
@@ -151,44 +154,56 @@
                                                     </StackPanel>
                                                 </Border>
 
-                                                <!-- Category dropdown -->
+                                                <!-- Category dropdown with inline create -->
                                                 <controls:SearchableDropdown
                                                     Grid.Column="5" Margin="8,0,0,0"
-                                                    Width="172"
+                                                    Classes="compact"
                                                     Placeholder="{loc:Loc 'Category...'}"
                                                     ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableCategories}"
                                                     SelectedItem="{Binding ResolvedCategoryObject, Mode=TwoWay}"
+                                                    SearchText="{Binding CategorySearchText, Mode=TwoWay}"
                                                     DisplayMemberPath="Name"
+                                                    ShowAddNew="True"
+                                                    AddNewText="{loc:Loc 'Create one'}"
+                                                    AddNewCommand="{Binding CreateNewCategoryCommand}"
+                                                    HasError="{Binding HasCategoryError}"
+                                                    ErrorMessage="{loc:Loc 'Please select or create a category.'}"
                                                     VerticalAlignment="Center" />
 
-                                                <!-- Counterparty column: supplier or customer dropdown + new-name TextBox -->
-                                                <StackPanel Grid.Column="6" Margin="8,0,0,0" Spacing="4"
-                                                            VerticalAlignment="Center">
+                                                <!-- Supplier / Customer column -->
+                                                <Grid Grid.Column="6" Margin="8,0,0,0"
+                                                      VerticalAlignment="Center">
 
                                                     <!-- Supplier dropdown (expense) -->
                                                     <controls:SearchableDropdown
                                                         IsVisible="{Binding !CreateAsRevenue}"
-                                                        Width="172"
+                                                        Classes="compact"
                                                         Placeholder="{loc:Loc 'Supplier...'}"
                                                         ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableSuppliers}"
                                                         SelectedItem="{Binding ResolvedSupplierObject, Mode=TwoWay}"
-                                                        DisplayMemberPath="Name" />
+                                                        SearchText="{Binding CounterpartySearchText, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding CreateNewCounterpartyCommand}"
+                                                        HasError="{Binding HasCounterpartyError}"
+                                                        ErrorMessage="{loc:Loc 'Please select or create a supplier.'}" />
 
                                                     <!-- Customer dropdown (revenue) -->
                                                     <controls:SearchableDropdown
                                                         IsVisible="{Binding CreateAsRevenue}"
-                                                        Width="172"
+                                                        Classes="compact"
                                                         Placeholder="{loc:Loc 'Customer...'}"
                                                         ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableCustomers}"
                                                         SelectedItem="{Binding ResolvedCustomerObject, Mode=TwoWay}"
-                                                        DisplayMemberPath="Name" />
-
-                                                    <!-- New counterparty name (shown below dropdown when no existing entity selected) -->
-                                                    <TextBox IsVisible="{Binding ResolvedCounterpartyId, Converter={x:Static StringConverters.IsNullOrEmpty}}"
-                                                             Text="{Binding NewCounterpartyName, Mode=TwoWay}"
-                                                             PlaceholderText="{loc:Loc 'Or type a new name'}"
-                                                             Width="172" FontSize="13" />
-                                                </StackPanel>
+                                                        SearchText="{Binding CounterpartySearchText, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding CreateNewCounterpartyCommand}"
+                                                        HasError="{Binding HasCounterpartyError}"
+                                                        ErrorMessage="{loc:Loc 'Please select or create a customer.'}" />
+                                                </Grid>
 
                                             </Grid>
                                         </Border>
@@ -203,22 +218,30 @@
                     <Border Grid.Row="2" Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{loc:Loc 'Please enter all required fields'}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding HasValidationMessage}" />
                             <TextBlock Grid.Column="0"
                                        VerticalAlignment="Center"
                                        FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       IsVisible="{Binding !HasValidationMessage}">
                                 <Run Text="{Binding IncludedCount}" />
                                 <Run Text="{loc:Loc 'line(s) to import'}" />
                             </TextBlock>
-                            <Button Grid.Column="1" Margin="0,0,12,0"
+                            <Button Grid.Column="2" Margin="0,0,12,0"
                                     Content="{loc:Loc Cancel}"
                                     Classes="secondary-button"
                                     Command="{Binding CancelCommand}" />
-                            <Button Grid.Column="2"
+                            <Button Grid.Column="3"
                                     Content="{loc:Loc Import}"
                                     Classes="primary-button"
-                                    Command="{Binding ImportCommand}" />
+                                    Command="{Binding ImportCommand}"
+                                    IsEnabled="{Binding CanImport}" />
                         </Grid>
                     </Border>
 

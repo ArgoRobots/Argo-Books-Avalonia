@@ -22,6 +22,8 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 {
     [ObservableProperty] private bool _isOpen;
     [ObservableProperty] private int _includedCount;
+    [ObservableProperty] private bool _hasValidationMessage;
+    [ObservableProperty] private bool _canImport;
 
     public ObservableCollection<ImportLineRow> Rows { get; } = [];
     public ObservableCollection<Category> AvailableCategories { get; } = [];
@@ -67,7 +69,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // Commands
     // -----------------------------------------------------------------------
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanImport))]
     private void Import()
     {
         var data = App.CompanyManager?.CompanyData;
@@ -92,7 +94,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 Line = line,
                 Type = r.CreateAsRevenue ? BookRecordType.Revenue : BookRecordType.Expense,
                 CategoryId = r.ResolvedCategoryId,
-                NewCategoryName = null,
+                NewCategoryName = r.ResolvedCategoryId == null ? r.NewCategoryName : null,
                 CounterpartyId = r.ResolvedCounterpartyId,
                 NewCounterpartyName = r.ResolvedCounterpartyId == null ? r.NewCounterpartyName : null
             };
@@ -260,16 +262,40 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 }
             }
 
-            row.PropertyChanged += (_, _) => RefreshIncludedCount();
+            row.PropertyChanged += (_, _) => RefreshState();
             Rows.Add(row);
         }
 
-        RefreshIncludedCount();
+        RefreshState();
     }
 
-    private void RefreshIncludedCount()
+    private void RefreshState()
     {
         IncludedCount = Rows.Count(r => r.IsIncluded);
+
+        var includedRows = Rows.Where(r => r.IsIncluded).ToList();
+
+        // Every included row needs a category (resolved or pending new) and a counterparty.
+        var allComplete = includedRows.Count > 0 && includedRows.All(r => r.IsComplete);
+
+        CanImport = allComplete;
+        ImportCommand.NotifyCanExecuteChanged();
+
+        HasValidationMessage = includedRows.Count > 0 && !allComplete;
+
+        // Propagate per-row error state for visual feedback.
+        foreach (var row in includedRows)
+        {
+            row.HasCategoryError = !row.HasCategory;
+            row.HasCounterpartyError = !row.HasCounterparty;
+        }
+
+        // Clear errors on excluded rows.
+        foreach (var row in Rows.Where(r => !r.IsIncluded))
+        {
+            row.HasCategoryError = false;
+            row.HasCounterpartyError = false;
+        }
     }
 
     /// <summary>
@@ -394,14 +420,83 @@ public partial class ImportLineRow : ObservableObject
 
     [ObservableProperty] private string? _resolvedCounterpartyId;
 
+    /// <summary>Pending new category name typed by the user via the inline create affordance.</summary>
+    [ObservableProperty] private string? _newCategoryName;
+
+    /// <summary>Pending new counterparty name typed by the user via the inline create affordance.</summary>
     [ObservableProperty] private string? _newCounterpartyName;
 
-    partial void OnResolvedCategoryIdChanged(string? value) { /* hook for future needsReview logic */ }
+    /// <summary>Search text bound TwoWay to the category SearchableDropdown.</summary>
+    [ObservableProperty] private string? _categorySearchText;
 
-    partial void OnNewCounterpartyNameChanged(string? value) { /* hook for future needsReview logic */ }
+    /// <summary>Search text bound TwoWay to the counterparty SearchableDropdown.</summary>
+    [ObservableProperty] private string? _counterpartySearchText;
+
+    /// <summary>Whether the category field has a validation error.</summary>
+    [ObservableProperty] private bool _hasCategoryError;
+
+    /// <summary>Whether the counterparty field has a validation error.</summary>
+    [ObservableProperty] private bool _hasCounterpartyError;
+
+    partial void OnResolvedCategoryIdChanged(string? value)
+    {
+        // Clear pending new name when a real category is resolved.
+        if (value != null) NewCategoryName = null;
+    }
+
+    partial void OnResolvedCounterpartyIdChanged(string? value)
+    {
+        // Clear pending new name when a real counterparty is resolved.
+        if (value != null) NewCounterpartyName = null;
+    }
+
+    /// <summary>True when this row has a category (resolved or pending new).</summary>
+    public bool HasCategory => ResolvedCategoryId != null || !string.IsNullOrWhiteSpace(NewCategoryName);
+
+    /// <summary>True when this row has a counterparty (resolved or pending new).</summary>
+    public bool HasCounterparty => ResolvedCounterpartyId != null || !string.IsNullOrWhiteSpace(NewCounterpartyName);
+
+    /// <summary>True when the row is fully complete and ready to import.</summary>
+    public bool IsComplete => HasCategory && HasCounterparty;
+
+    /// <summary>Formatted date string for read-only display.</summary>
+    public string DateFormatted => Date.ToString("MMM d, yyyy");
 
     [RelayCommand] private void SetExpense() => CreateAsRevenue = false;
     [RelayCommand] private void SetRevenue() => CreateAsRevenue = true;
+
+    /// <summary>
+    /// Captures the current CategorySearchText as a pending new category name.
+    /// Called when the user clicks "Create one" in the category dropdown.
+    /// </summary>
+    [RelayCommand]
+    private void CreateNewCategory()
+    {
+        var name = CategorySearchText?.Trim();
+        if (!string.IsNullOrEmpty(name))
+        {
+            NewCategoryName = name;
+            ResolvedCategoryId = null;
+            ResolvedCategoryObject = null;
+        }
+    }
+
+    /// <summary>
+    /// Captures the current CounterpartySearchText as a pending new counterparty name.
+    /// Called when the user clicks "Create one" in the supplier/customer dropdown.
+    /// </summary>
+    [RelayCommand]
+    private void CreateNewCounterparty()
+    {
+        var name = CounterpartySearchText?.Trim();
+        if (!string.IsNullOrEmpty(name))
+        {
+            NewCounterpartyName = name;
+            ResolvedCounterpartyId = null;
+            ResolvedSupplierObject = null;
+            ResolvedCustomerObject = null;
+        }
+    }
 
     // Object-typed wrappers for SearchableDropdown (which binds SelectedItem, not SelectedValue).
     private Category? _resolvedCategoryObject;
@@ -411,7 +506,10 @@ public partial class ImportLineRow : ObservableObject
         set
         {
             if (SetProperty(ref _resolvedCategoryObject, value))
+            {
                 ResolvedCategoryId = value?.Id;
+                if (value != null) NewCategoryName = null;
+            }
         }
     }
 
@@ -422,7 +520,10 @@ public partial class ImportLineRow : ObservableObject
         set
         {
             if (SetProperty(ref _resolvedSupplierObject, value))
+            {
                 ResolvedCounterpartyId = value?.Id;
+                if (value != null) NewCounterpartyName = null;
+            }
         }
     }
 
@@ -433,7 +534,10 @@ public partial class ImportLineRow : ObservableObject
         set
         {
             if (SetProperty(ref _resolvedCustomerObject, value))
+            {
                 ResolvedCounterpartyId = value?.Id;
+                if (value != null) NewCounterpartyName = null;
+            }
         }
     }
 
