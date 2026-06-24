@@ -52,7 +52,15 @@ public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger?
     public static List<BankStatementLine> ParseRows(string json)
     {
         var rows = new List<BankStatementLine>();
-        var root = JsonSerializer.Deserialize<JsonElement>(json);
+        JsonElement root;
+        try
+        {
+            root = JsonSerializer.Deserialize<JsonElement>(json);
+        }
+        catch (JsonException)
+        {
+            return rows;
+        }
         if (!root.TryGetProperty("success", out var ok) || !ok.GetBoolean()) return rows;
         if (!root.TryGetProperty("lines", out var lines) || lines.ValueKind != JsonValueKind.Array) return rows;
 

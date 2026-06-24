@@ -28,4 +28,11 @@ public class PdfStatementExtractorTests
     {
         Assert.Empty(PdfStatementExtractor.ParseRows("""{ "success": false }"""));
     }
+
+    [Fact]
+    public void ParseRows_MalformedJson_ReturnsEmpty()
+    {
+        Assert.Empty(PdfStatementExtractor.ParseRows("not json <html>error</html>"));
+        Assert.Empty(PdfStatementExtractor.ParseRows(""));
+    }
 }
