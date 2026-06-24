@@ -37,6 +37,7 @@ public partial class AppShellViewModel : ViewModelBase
     private LocationsModalsViewModel? _locationsModalsViewModel;
     private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
     private BankMatchingModalsViewModel? _bankMatchingModalsViewModel;
+    private PdfStatementReviewModalViewModel? _pdfStatementReviewModalViewModel;
     private PurchaseOrdersModalsViewModel? _purchaseOrdersModalsViewModel;
     private ReceiptsModalsViewModel? _receiptsModalsViewModel;
     private LostDamagedModalsViewModel? _lostDamagedModalsViewModel;
@@ -494,6 +495,22 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _bankMatchingModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the PDF statement review modal view model.
+    /// </summary>
+    public PdfStatementReviewModalViewModel PdfStatementReviewModalViewModel
+    {
+        get
+        {
+            if (_pdfStatementReviewModalViewModel == null)
+            {
+                _pdfStatementReviewModalViewModel = new PdfStatementReviewModalViewModel();
+                OnPropertyChanged();
+            }
+            return _pdfStatementReviewModalViewModel;
         }
     }
 

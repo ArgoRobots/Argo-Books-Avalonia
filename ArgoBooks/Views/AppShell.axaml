@@ -237,6 +237,7 @@
         <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
         <modals:StockAdjustmentsModals DataContext="{Binding StockAdjustmentsModalsViewModel}" />
         <modals:BankMatchingModals DataContext="{Binding BankMatchingModalsViewModel}" />
+        <modals:PdfStatementReviewModal DataContext="{Binding PdfStatementReviewModalViewModel}" />
         <modals:ReceiptsModals DataContext="{Binding ReceiptsModalsViewModel}" />
         <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
         <modals:LostDamagedModals DataContext="{Binding LostDamagedModalsViewModel}" />
