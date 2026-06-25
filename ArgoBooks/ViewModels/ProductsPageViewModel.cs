@@ -80,6 +80,25 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     partial void OnShowOverstockColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Overstock", value); ColumnVisibilityHelper.Save("Products", "Overstock", value); }
     partial void OnShowTrackInventoryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("TrackInventory", value); ColumnVisibilityHelper.Save("Products", "TrackInventory", value); }
 
+    /// <summary>
+    /// Pushes the loaded column-visibility state into the shared column-width manager.
+    /// Inline [ObservableProperty] field initializers do not fire the generated
+    /// On...Changed partials, so without this the manager treats persisted-hidden
+    /// columns (e.g. the inventory columns, hidden by default) as visible and reserves
+    /// proportional width for them, leaving an empty gap on the right of the table.
+    /// </summary>
+    private void SyncColumnVisibility()
+    {
+        ColumnWidths.SetColumnVisibility("Name", ShowNameColumn);
+        ColumnWidths.SetColumnVisibility("Type", ShowTypeColumn);
+        ColumnWidths.SetColumnVisibility("Description", ShowDescriptionColumn);
+        ColumnWidths.SetColumnVisibility("Category", ShowCategoryColumn);
+        ColumnWidths.SetColumnVisibility("Supplier", ShowSupplierColumn);
+        ColumnWidths.SetColumnVisibility("Reorder", ShowReorderColumn);
+        ColumnWidths.SetColumnVisibility("Overstock", ShowOverstockColumn);
+        ColumnWidths.SetColumnVisibility("TrackInventory", ShowTrackInventoryColumn);
+    }
+
     [RelayCommand]
     private void ToggleColumnMenu()
     {
@@ -342,6 +361,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// </summary>
     public ProductsPageViewModel()
     {
+        SyncColumnVisibility();
         LoadProducts();
 
         // Subscribe to undo/redo state changes to refresh UI
