@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -836,6 +837,74 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     [RelayCommand]
     private void OpenCreateSupplier() => OpenCreateCounterparty();
+
+    #endregion
+
+    #region Inline Product Creation (per line item)
+
+    /// <summary>
+    /// Wires the per-line-item AddProductFromNameCommand so the product SearchableDropdown
+    /// "Add new" button can create a product scoped to that specific line item.
+    /// </summary>
+    protected override void OnLineItemCreated(ExpenseLineItem lineItem)
+    {
+        var capturedLineItem = lineItem;
+        lineItem.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedLineItem));
+    }
+
+    /// <summary>
+    /// Creates a new expense product from the name typed into a line item's product
+    /// SearchableDropdown "Add new" button, then selects it on that line item.
+    /// </summary>
+    private void AddProductFromNameForLineItem(string? name, ExpenseLineItem lineItem)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null) return;
+
+        // Find or create a fallback expense category
+        var category = companyData.Categories.FirstOrDefault(c => c.Type == CategoryType.Expense);
+        if (category == null)
+        {
+            companyData.IdCounters.Category++;
+            category = new Category
+            {
+                Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
+                Name = "General Expenses",
+                Type = CategoryType.Expense
+            };
+            companyData.Categories.Add(category);
+        }
+
+        companyData.IdCounters.Product++;
+        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
+
+        var newProduct = new Product
+        {
+            Id = newId,
+            Name = name.Trim(),
+            Description = string.Empty,
+            CostPrice = lineItem.UnitPrice ?? 0,
+            UnitPrice = 0,
+            CategoryId = category.Id,
+            Type = CategoryType.Expense
+        };
+
+        companyData.Products.Add(newProduct);
+
+        var option = new ProductOption
+        {
+            Id = newId,
+            Name = newProduct.Name,
+            Description = string.Empty,
+            UnitPrice = newProduct.CostPrice
+        };
+        ProductOptions.Add(option);
+        lineItem.SelectedProduct = option;
+
+        companyData.MarkAsModified();
+    }
 
     #endregion
 }

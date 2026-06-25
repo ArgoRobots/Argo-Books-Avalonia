@@ -626,6 +626,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     UnitPrice = unitPrice
                 };
                 lineItem.PropertyChanged += OnLineItemPropertyChanged;
+                OnLineItemCreated(lineItem);
                 LineItems.Add(lineItem);
             }
         }
@@ -643,6 +644,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 UnitPrice = unitPrice
             };
             lineItem.PropertyChanged += OnLineItemPropertyChanged;
+            OnLineItemCreated(lineItem);
             LineItems.Add(lineItem);
         }
         UpdateTotals();
@@ -1163,11 +1165,18 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     #region Line Items
 
+    /// <summary>
+    /// Called after a new line item is created and before it is added to LineItems.
+    /// Override in derived classes to wire per-line-item commands (e.g. AddProductFromNameCommand).
+    /// </summary>
+    protected virtual void OnLineItemCreated(TLineItem lineItem) { }
+
     [RelayCommand]
     protected void AddLineItem()
     {
         var lineItem = new TLineItem();
         lineItem.PropertyChanged += OnLineItemPropertyChanged;
+        OnLineItemCreated(lineItem);
         LineItems.Add(lineItem);
         UpdateTotals();
     }
@@ -1511,6 +1520,13 @@ public abstract partial class TransactionLineItemBase : ObservableObject
 
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => CurrencyService.Format(Amount);
+
+    /// <summary>
+    /// Command invoked by the product SearchableDropdown's "Add new" button.
+    /// Receives the typed search text as its parameter and creates a new product,
+    /// then selects it on this line item. Set by the parent view model.
+    /// </summary>
+    public IRelayCommand<string>? AddProductFromNameCommand { get; set; }
 
     partial void OnSelectedProductChanged(ProductOption? value)
     {
