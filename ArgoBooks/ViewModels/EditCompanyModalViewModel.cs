@@ -4,6 +4,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -259,6 +260,36 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         Email = email ?? "";
 
         IsOpen = true;
+
+        // Some TwoWay-bound controls (e.g., ComboBox, CountryInput, PhoneInput) may
+        // write back a normalised or coerced value after the binding settles.
+        // Re-snapshot all originals once the UI thread has processed those updates so
+        // that HasChanges is false immediately after Open(), while still detecting any
+        // genuine change the user makes afterwards.
+        Dispatcher.UIThread.Post(SnapshotOriginals, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// Re-captures the current field values as the baseline for change detection.
+    /// Called once after Open() via a deferred Dispatcher post so that any
+    /// TwoWay binding write-backs from controls (ComboBox normalisation, CountryInput,
+    /// PhoneInput) have already settled before we take the snapshot.
+    /// </summary>
+    private void SnapshotOriginals()
+    {
+        _originalCompanyName = CompanyName;
+        _originalBusinessType = BusinessType;
+        _originalIndustry = Industry;
+        _originalLogo = LogoSource;
+        _originalPhoneNumber = PhoneNumber;
+        _originalSelectedPhoneCountry = SelectedPhoneCountry;
+        _originalCountry = Country;
+        _originalCity = City;
+        _originalAddress = Address;
+        _originalProvinceState = ProvinceState;
+        _originalEmail = Email;
+        _originalCurrency = SelectedCurrency;
+        OnPropertyChanged(nameof(HasChanges));
     }
 
     /// <summary>
