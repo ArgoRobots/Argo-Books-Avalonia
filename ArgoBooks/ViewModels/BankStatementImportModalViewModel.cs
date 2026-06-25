@@ -23,12 +23,6 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     [ObservableProperty] private bool _isOpen;
     [ObservableProperty] private int _includedCount;
 
-    // Entities created via "Create one" during this modal session.
-    // Used to roll them back on Cancel and to fold them into the Import undo action.
-    private readonly List<Category> _createdCategories = [];
-    private readonly List<Supplier> _createdSuppliers = [];
-    private readonly List<Customer> _createdCustomers = [];
-
     /// <summary>Footer summary with correct singular/plural, e.g. "1 line to import" / "6 lines to import".</summary>
     public string IncludedCountText => IncludedCount == 1
         ? "1 line to import".Translate()
@@ -152,19 +146,10 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         var postCounters = new IdCounterSnapshot(data.IdCounters);
 
-        // Capture the "Create one" entities so the undo action can remove them too.
-        var createOneCategories = _createdCategories.ToList();
-        var createOneSuppliers = _createdSuppliers.ToList();
-        var createOneCustomers = _createdCustomers.ToList();
-
         App.UndoRedoManager.RecordAction(new DelegateAction(
             "Import bank statement".Translate(),
-            () => UndoImport(data, creation, ruleCaptures, preCounters, createOneCategories, createOneSuppliers, createOneCustomers),
-            () => RedoImport(data, creation, ruleCaptures, postCounters, createOneCategories, createOneSuppliers, createOneCustomers)));
-
-        _createdCategories.Clear();
-        _createdSuppliers.Clear();
-        _createdCustomers.Clear();
+            () => UndoImport(data, creation, ruleCaptures, preCounters),
+            () => RedoImport(data, creation, ruleCaptures, postCounters)));
 
         App.CompanyManager?.MarkAsChanged();
         IsOpen = false;
@@ -173,31 +158,6 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     [RelayCommand]
     private void Cancel()
     {
-        // Remove any entities created via "Create one" during this session.
-        var data = App.CompanyManager?.CompanyData;
-        if (data != null)
-        {
-            foreach (var cat in _createdCategories)
-            {
-                data.Categories.Remove(cat);
-                AvailableCategories.Remove(cat);
-            }
-            foreach (var sup in _createdSuppliers)
-            {
-                data.Suppliers.Remove(sup);
-                AvailableSuppliers.Remove(sup);
-            }
-            foreach (var cus in _createdCustomers)
-            {
-                data.Customers.Remove(cus);
-                AvailableCustomers.Remove(cus);
-            }
-        }
-
-        _createdCategories.Clear();
-        _createdSuppliers.Clear();
-        _createdCustomers.Clear();
-
         IsOpen = false;
     }
 
@@ -206,8 +166,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // -----------------------------------------------------------------------
 
     private void UndoImport(CompanyData data, BankImportCreation creation,
-        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot preCounters,
-        List<Category> createOneCategories, List<Supplier> createOneSuppliers, List<Customer> createOneCustomers)
+        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot preCounters)
     {
         foreach (var tx in creation.CreatedTransactions)
         {
@@ -221,11 +180,6 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             else if (entity is Customer c) data.Customers.Remove(c);
             else if (entity is Category cat) data.Categories.Remove(cat);
         }
-
-        // Also remove entities that were pre-created via "Create one" during the modal session.
-        foreach (var cat in createOneCategories) data.Categories.Remove(cat);
-        foreach (var sup in createOneSuppliers) data.Suppliers.Remove(sup);
-        foreach (var cus in createOneCustomers) data.Customers.Remove(cus);
 
         foreach (var cap in ruleCaptures)
         {
@@ -249,17 +203,8 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     private void RedoImport(CompanyData data, BankImportCreation creation,
-        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot postCounters,
-        List<Category> createOneCategories, List<Supplier> createOneSuppliers, List<Customer> createOneCustomers)
+        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot postCounters)
     {
-        // Re-add "Create one" entities before the transactions that reference them.
-        foreach (var cat in createOneCategories)
-            if (!data.Categories.Contains(cat)) data.Categories.Add(cat);
-        foreach (var sup in createOneSuppliers)
-            if (!data.Suppliers.Contains(sup)) data.Suppliers.Add(sup);
-        foreach (var cus in createOneCustomers)
-            if (!data.Customers.Contains(cus)) data.Customers.Add(cus);
-
         foreach (var entity in creation.CreatedEntities)
         {
             if (entity is Supplier s && !data.Suppliers.Contains(s)) data.Suppliers.Add(s);
@@ -307,10 +252,6 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         AvailableSuppliers.Clear();
         AvailableCustomers.Clear();
 
-        _createdCategories.Clear();
-        _createdSuppliers.Clear();
-        _createdCustomers.Clear();
-
         if (data != null)
         {
             foreach (var c in data.Categories.OrderBy(c => c.Name)) AvailableCategories.Add(c);
@@ -324,10 +265,9 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         {
             var row = new ImportLineRow(line);
 
-            // Wire "Create one" delegates so the row can immediately create and select real entities.
-            row.CreateCategoryFromName = (name, asRevenue) => CreateCategoryFromName(name, asRevenue);
-            row.CreateSupplierFromName = name => CreateSupplierFromName(name);
-            row.CreateCustomerFromName = name => CreateCustomerFromName(name);
+            // Wire "Create one" delegates so the row opens the standard create modals.
+            row.OpenCreateCategory = () => OpenCreateCategoryForRow(row);
+            row.OpenCreateCounterparty = () => OpenCreateCounterpartyForRow(row);
 
             // Rule pre-fill.
             if (data != null)
@@ -352,86 +292,133 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     // -----------------------------------------------------------------------
-    // "Create one" entity creation — called by row delegates
+    // "Create one" — open standard create modals and select the new entity on the row
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Creates a new Category, adds it to CompanyData and AvailableCategories, tracks it for
-    /// cancel/undo, and returns it. Returns null for blank names.
+    /// Opens the standard Category create modal. When saved, reloads available categories
+    /// and selects the newly created one on <paramref name="row"/>.
     /// </summary>
-    private Category? CreateCategoryFromName(string? name, bool asRevenue)
+    private void OpenCreateCategoryForRow(ImportLineRow row)
     {
-        if (string.IsNullOrWhiteSpace(name)) return null;
+        var categoryModals = App.CategoryModalsViewModel;
+        if (categoryModals == null) return;
 
         var data = App.CompanyManager?.CompanyData;
-        if (data == null) return null;
+        if (data == null) return;
 
-        data.IdCounters.Category++;
-        var prefix = asRevenue ? "CAT-SAL" : "CAT-PUR";
-        var category = new Category
+        // Snapshot existing category ids so we can find the new one after save.
+        var knownIds = data.Categories.Select(c => c.Id).ToHashSet();
+
+        void OnSaved(object? s, EventArgs e)
         {
-            Id = $"{prefix}-{data.IdCounters.Category:D3}",
-            Name = name.Trim(),
-            Type = asRevenue ? CategoryType.Revenue : CategoryType.Expense
-        };
+            categoryModals.CategorySaved -= OnSaved;
+            ReloadCategories();
 
-        data.Categories.Add(category);
-        AvailableCategories.Add(category);
-        _createdCategories.Add(category);
-        data.MarkAsModified();
-        return category;
+            // Find the newly created category by diffing against the snapshot.
+            var newCategory = data.Categories.FirstOrDefault(c => !knownIds.Contains(c.Id));
+            if (newCategory != null)
+            {
+                row.ResolvedCategoryObject = newCategory;
+                row.CategorySearchText = newCategory.Name;
+                row.NewCategoryName = null;
+                row.HasCategoryError = false;
+            }
+        }
+
+        categoryModals.CategorySaved += OnSaved;
+        categoryModals.OpenAddModal(isExpensesTab: !row.CreateAsRevenue);
     }
 
     /// <summary>
-    /// Creates a new Supplier, adds it to CompanyData and AvailableSuppliers, tracks it for
-    /// cancel/undo, and returns it. Returns null for blank names.
+    /// Opens the standard Supplier modal (expense rows) or Customer modal (revenue rows).
+    /// When saved, reloads available counterparties and selects the new entity on <paramref name="row"/>.
     /// </summary>
-    private Supplier? CreateSupplierFromName(string? name)
+    private void OpenCreateCounterpartyForRow(ImportLineRow row)
     {
-        if (string.IsNullOrWhiteSpace(name)) return null;
-
         var data = App.CompanyManager?.CompanyData;
-        if (data == null) return null;
+        if (data == null) return;
 
-        data.IdCounters.Supplier++;
-        var supplier = new Supplier
+        if (!row.CreateAsRevenue)
         {
-            Id = $"SUP-{data.IdCounters.Supplier:D3}",
-            Name = name.Trim(),
-            Notes = "Created from bank statement import".Translate()
-        };
+            var supplierModals = App.SupplierModalsViewModel;
+            if (supplierModals == null) return;
 
-        data.Suppliers.Add(supplier);
-        AvailableSuppliers.Add(supplier);
-        _createdSuppliers.Add(supplier);
-        data.MarkAsModified();
-        return supplier;
+            var knownIds = data.Suppliers.Select(s => s.Id).ToHashSet();
+
+            void OnSaved(object? s, EventArgs e)
+            {
+                supplierModals.SupplierSaved -= OnSaved;
+                ReloadSuppliers();
+
+                var newSupplier = data.Suppliers.FirstOrDefault(s => !knownIds.Contains(s.Id));
+                if (newSupplier != null)
+                {
+                    row.ResolvedSupplierObject = newSupplier;
+                    row.CounterpartySearchText = newSupplier.Name;
+                    row.NewCounterpartyName = null;
+                    row.HasCounterpartyError = false;
+                }
+            }
+
+            supplierModals.SupplierSaved += OnSaved;
+            supplierModals.OpenAddModal();
+        }
+        else
+        {
+            var customerModals = App.CustomerModalsViewModel;
+            if (customerModals == null) return;
+
+            var knownIds = data.Customers.Select(c => c.Id).ToHashSet();
+
+            void OnSaved(object? s, EventArgs e)
+            {
+                customerModals.CustomerSaved -= OnSaved;
+                ReloadCustomers();
+
+                var newCustomer = data.Customers.FirstOrDefault(c => !knownIds.Contains(c.Id));
+                if (newCustomer != null)
+                {
+                    row.ResolvedCustomerObject = newCustomer;
+                    row.CounterpartySearchText = newCustomer.Name;
+                    row.NewCounterpartyName = null;
+                    row.HasCounterpartyError = false;
+                }
+            }
+
+            customerModals.CustomerSaved += OnSaved;
+            customerModals.OpenAddModal();
+        }
     }
 
-    /// <summary>
-    /// Creates a new Customer, adds it to CompanyData and AvailableCustomers, tracks it for
-    /// cancel/undo, and returns it. Returns null for blank names.
-    /// </summary>
-    private Customer? CreateCustomerFromName(string? name)
+    /// <summary>Reloads <see cref="AvailableCategories"/> from CompanyData.</summary>
+    private void ReloadCategories()
     {
-        if (string.IsNullOrWhiteSpace(name)) return null;
-
         var data = App.CompanyManager?.CompanyData;
-        if (data == null) return null;
+        AvailableCategories.Clear();
+        if (data != null)
+            foreach (var c in data.Categories.OrderBy(c => c.Name))
+                AvailableCategories.Add(c);
+    }
 
-        data.IdCounters.Customer++;
-        var customer = new Customer
-        {
-            Id = $"CUS-{data.IdCounters.Customer:D3}",
-            Name = name.Trim(),
-            Notes = "Created from bank statement import".Translate()
-        };
+    /// <summary>Reloads <see cref="AvailableSuppliers"/> from CompanyData.</summary>
+    private void ReloadSuppliers()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        AvailableSuppliers.Clear();
+        if (data != null)
+            foreach (var s in data.Suppliers.OrderBy(s => s.Name))
+                AvailableSuppliers.Add(s);
+    }
 
-        data.Customers.Add(customer);
-        AvailableCustomers.Add(customer);
-        _createdCustomers.Add(customer);
-        data.MarkAsModified();
-        return customer;
+    /// <summary>Reloads <see cref="AvailableCustomers"/> from CompanyData.</summary>
+    private void ReloadCustomers()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        AvailableCustomers.Clear();
+        if (data != null)
+            foreach (var c in data.Customers.OrderBy(c => c.Name))
+                AvailableCustomers.Add(c);
     }
 
     private void RefreshState()
@@ -637,100 +624,36 @@ public partial class ImportLineRow : ObservableObject
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Creates a Category with the given name. The bool argument is true when this row
-    /// is currently in Revenue mode. Set by the parent modal VM.
+    /// Opens the standard Category create modal for this row.
+    /// Set by the parent modal VM.
     /// </summary>
-    public Func<string, bool, Category?>? CreateCategoryFromName { get; set; }
+    public Action? OpenCreateCategory { get; set; }
 
     /// <summary>
-    /// Creates a Supplier with the given name. Set by the parent modal VM.
+    /// Opens the standard Supplier or Customer create modal for this row
+    /// (branching on <see cref="CreateAsRevenue"/>).
+    /// Set by the parent modal VM.
     /// </summary>
-    public Func<string, Supplier?>? CreateSupplierFromName { get; set; }
+    public Action? OpenCreateCounterparty { get; set; }
 
     /// <summary>
-    /// Creates a Customer with the given name. Set by the parent modal VM.
-    /// </summary>
-    public Func<string, Customer?>? CreateCustomerFromName { get; set; }
-
-    /// <summary>
-    /// Immediately creates a new Category from the typed name and selects it on this row.
-    /// Falls back to stashing a pending name when the delegate is not yet wired.
-    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/> which passes
-    /// the current SearchText as the parameter.
+    /// Opens the standard Category create modal.
+    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/>.
     /// </summary>
     [RelayCommand]
     private void CreateNewCategory(string? typedName)
     {
-        var name = (typedName ?? CategorySearchText)?.Trim();
-        if (string.IsNullOrEmpty(name)) return;
-
-        if (CreateCategoryFromName != null)
-        {
-            var category = CreateCategoryFromName(name, CreateAsRevenue);
-            if (category != null)
-            {
-                ResolvedCategoryObject = category;
-                CategorySearchText = category.Name;
-                NewCategoryName = null;
-                HasCategoryError = false;
-                return;
-            }
-        }
-
-        // Fallback: stash as pending name (delegate not yet wired).
-        ResolvedCategoryId = null;
-        ResolvedCategoryObject = null;
-        NewCategoryName = name;
-        CategorySearchText = name;
-        HasCategoryError = false;
+        OpenCreateCategory?.Invoke();
     }
 
     /// <summary>
-    /// Immediately creates a new Supplier or Customer (based on <see cref="CreateAsRevenue"/>)
-    /// from the typed name and selects it on this row.
-    /// Falls back to stashing a pending name when the delegate is not yet wired.
-    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/> which passes
-    /// the current SearchText as the parameter.
+    /// Opens the standard Supplier or Customer create modal (based on <see cref="CreateAsRevenue"/>).
+    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/>.
     /// </summary>
     [RelayCommand]
     private void CreateNewCounterparty(string? typedName)
     {
-        var name = (typedName ?? CounterpartySearchText)?.Trim();
-        if (string.IsNullOrEmpty(name)) return;
-
-        if (!CreateAsRevenue && CreateSupplierFromName != null)
-        {
-            var supplier = CreateSupplierFromName(name);
-            if (supplier != null)
-            {
-                ResolvedSupplierObject = supplier;
-                CounterpartySearchText = supplier.Name;
-                NewCounterpartyName = null;
-                HasCounterpartyError = false;
-                return;
-            }
-        }
-
-        if (CreateAsRevenue && CreateCustomerFromName != null)
-        {
-            var customer = CreateCustomerFromName(name);
-            if (customer != null)
-            {
-                ResolvedCustomerObject = customer;
-                CounterpartySearchText = customer.Name;
-                NewCounterpartyName = null;
-                HasCounterpartyError = false;
-                return;
-            }
-        }
-
-        // Fallback: stash as pending name (delegate not yet wired).
-        ResolvedCounterpartyId = null;
-        ResolvedSupplierObject = null;
-        ResolvedCustomerObject = null;
-        NewCounterpartyName = name;
-        CounterpartySearchText = name;
-        HasCounterpartyError = false;
+        OpenCreateCounterparty?.Invoke();
     }
 
     // Object-typed wrappers for SearchableDropdown (which binds SelectedItem, not SelectedValue).

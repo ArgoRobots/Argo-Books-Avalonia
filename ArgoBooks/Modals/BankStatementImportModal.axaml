@@ -70,7 +70,7 @@
                     <ScrollViewer Grid.Row="1"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled">
-                        <Grid MinWidth="1320" Margin="24,16" RowDefinitions="Auto,*">
+                        <Grid MinWidth="1320" Margin="24,16,24,30" RowDefinitions="Auto,*">
 
                             <!-- Column header labels — same column layout as data rows -->
                             <Grid Grid.Row="0" ColumnDefinitions="28,90,1.3*,120,160,1.5*,1.5*" Margin="0,0,0,6">
@@ -129,6 +129,7 @@
                                                          Text="{Binding Description, Mode=TwoWay}"
                                                          Classes="form-input"
                                                          MaxLength="200"
+                                                         HorizontalAlignment="Stretch"
                                                          VerticalAlignment="Center" />
 
                                                 <!-- Amount — narrow, no spinner buttons -->
