@@ -450,6 +450,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     /// </summary>
     private void OnCreateCategoryClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        IsDropdownOpen = false;
         OpenCategoriesPageCommand?.Execute(null);
     }
 }
