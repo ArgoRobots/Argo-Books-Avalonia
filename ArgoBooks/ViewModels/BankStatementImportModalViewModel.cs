@@ -22,6 +22,19 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 {
     [ObservableProperty] private bool _isOpen;
     [ObservableProperty] private int _includedCount;
+
+    // Entities created via "Create one" during this modal session.
+    // Used to roll them back on Cancel and to fold them into the Import undo action.
+    private readonly List<Category> _createdCategories = [];
+    private readonly List<Supplier> _createdSuppliers = [];
+    private readonly List<Customer> _createdCustomers = [];
+
+    /// <summary>Footer summary with correct singular/plural, e.g. "1 line to import" / "6 lines to import".</summary>
+    public string IncludedCountText => IncludedCount == 1
+        ? "1 line to import".Translate()
+        : "{0} lines to import".TranslateFormat(IncludedCount);
+
+    partial void OnIncludedCountChanged(int value) => OnPropertyChanged(nameof(IncludedCountText));
     [ObservableProperty] private bool _hasValidationMessage;
 
     // Set to true the first time the user clicks Import, so error highlights appear.
@@ -139,10 +152,19 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         var postCounters = new IdCounterSnapshot(data.IdCounters);
 
+        // Capture the "Create one" entities so the undo action can remove them too.
+        var createOneCategories = _createdCategories.ToList();
+        var createOneSuppliers = _createdSuppliers.ToList();
+        var createOneCustomers = _createdCustomers.ToList();
+
         App.UndoRedoManager.RecordAction(new DelegateAction(
             "Import bank statement".Translate(),
-            () => UndoImport(data, creation, ruleCaptures, preCounters),
-            () => RedoImport(data, creation, ruleCaptures, postCounters)));
+            () => UndoImport(data, creation, ruleCaptures, preCounters, createOneCategories, createOneSuppliers, createOneCustomers),
+            () => RedoImport(data, creation, ruleCaptures, postCounters, createOneCategories, createOneSuppliers, createOneCustomers)));
+
+        _createdCategories.Clear();
+        _createdSuppliers.Clear();
+        _createdCustomers.Clear();
 
         App.CompanyManager?.MarkAsChanged();
         IsOpen = false;
@@ -151,6 +173,31 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     [RelayCommand]
     private void Cancel()
     {
+        // Remove any entities created via "Create one" during this session.
+        var data = App.CompanyManager?.CompanyData;
+        if (data != null)
+        {
+            foreach (var cat in _createdCategories)
+            {
+                data.Categories.Remove(cat);
+                AvailableCategories.Remove(cat);
+            }
+            foreach (var sup in _createdSuppliers)
+            {
+                data.Suppliers.Remove(sup);
+                AvailableSuppliers.Remove(sup);
+            }
+            foreach (var cus in _createdCustomers)
+            {
+                data.Customers.Remove(cus);
+                AvailableCustomers.Remove(cus);
+            }
+        }
+
+        _createdCategories.Clear();
+        _createdSuppliers.Clear();
+        _createdCustomers.Clear();
+
         IsOpen = false;
     }
 
@@ -159,7 +206,8 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // -----------------------------------------------------------------------
 
     private void UndoImport(CompanyData data, BankImportCreation creation,
-        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot preCounters)
+        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot preCounters,
+        List<Category> createOneCategories, List<Supplier> createOneSuppliers, List<Customer> createOneCustomers)
     {
         foreach (var tx in creation.CreatedTransactions)
         {
@@ -173,6 +221,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             else if (entity is Customer c) data.Customers.Remove(c);
             else if (entity is Category cat) data.Categories.Remove(cat);
         }
+
+        // Also remove entities that were pre-created via "Create one" during the modal session.
+        foreach (var cat in createOneCategories) data.Categories.Remove(cat);
+        foreach (var sup in createOneSuppliers) data.Suppliers.Remove(sup);
+        foreach (var cus in createOneCustomers) data.Customers.Remove(cus);
 
         foreach (var cap in ruleCaptures)
         {
@@ -196,8 +249,17 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     private void RedoImport(CompanyData data, BankImportCreation creation,
-        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot postCounters)
+        List<RuleLearningCapture> ruleCaptures, IdCounterSnapshot postCounters,
+        List<Category> createOneCategories, List<Supplier> createOneSuppliers, List<Customer> createOneCustomers)
     {
+        // Re-add "Create one" entities before the transactions that reference them.
+        foreach (var cat in createOneCategories)
+            if (!data.Categories.Contains(cat)) data.Categories.Add(cat);
+        foreach (var sup in createOneSuppliers)
+            if (!data.Suppliers.Contains(sup)) data.Suppliers.Add(sup);
+        foreach (var cus in createOneCustomers)
+            if (!data.Customers.Contains(cus)) data.Customers.Add(cus);
+
         foreach (var entity in creation.CreatedEntities)
         {
             if (entity is Supplier s && !data.Suppliers.Contains(s)) data.Suppliers.Add(s);
@@ -245,6 +307,10 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         AvailableSuppliers.Clear();
         AvailableCustomers.Clear();
 
+        _createdCategories.Clear();
+        _createdSuppliers.Clear();
+        _createdCustomers.Clear();
+
         if (data != null)
         {
             foreach (var c in data.Categories.OrderBy(c => c.Name)) AvailableCategories.Add(c);
@@ -257,6 +323,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         foreach (var line in lines)
         {
             var row = new ImportLineRow(line);
+
+            // Wire "Create one" delegates so the row can immediately create and select real entities.
+            row.CreateCategoryFromName = (name, asRevenue) => CreateCategoryFromName(name, asRevenue);
+            row.CreateSupplierFromName = name => CreateSupplierFromName(name);
+            row.CreateCustomerFromName = name => CreateCustomerFromName(name);
 
             // Rule pre-fill.
             if (data != null)
@@ -278,6 +349,89 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         }
 
         RefreshState();
+    }
+
+    // -----------------------------------------------------------------------
+    // "Create one" entity creation — called by row delegates
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Creates a new Category, adds it to CompanyData and AvailableCategories, tracks it for
+    /// cancel/undo, and returns it. Returns null for blank names.
+    /// </summary>
+    private Category? CreateCategoryFromName(string? name, bool asRevenue)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return null;
+
+        data.IdCounters.Category++;
+        var prefix = asRevenue ? "CAT-SAL" : "CAT-PUR";
+        var category = new Category
+        {
+            Id = $"{prefix}-{data.IdCounters.Category:D3}",
+            Name = name.Trim(),
+            Type = asRevenue ? CategoryType.Revenue : CategoryType.Expense
+        };
+
+        data.Categories.Add(category);
+        AvailableCategories.Add(category);
+        _createdCategories.Add(category);
+        data.MarkAsModified();
+        return category;
+    }
+
+    /// <summary>
+    /// Creates a new Supplier, adds it to CompanyData and AvailableSuppliers, tracks it for
+    /// cancel/undo, and returns it. Returns null for blank names.
+    /// </summary>
+    private Supplier? CreateSupplierFromName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return null;
+
+        data.IdCounters.Supplier++;
+        var supplier = new Supplier
+        {
+            Id = $"SUP-{data.IdCounters.Supplier:D3}",
+            Name = name.Trim(),
+            Notes = "Created from bank statement import".Translate()
+        };
+
+        data.Suppliers.Add(supplier);
+        AvailableSuppliers.Add(supplier);
+        _createdSuppliers.Add(supplier);
+        data.MarkAsModified();
+        return supplier;
+    }
+
+    /// <summary>
+    /// Creates a new Customer, adds it to CompanyData and AvailableCustomers, tracks it for
+    /// cancel/undo, and returns it. Returns null for blank names.
+    /// </summary>
+    private Customer? CreateCustomerFromName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return null;
+
+        data.IdCounters.Customer++;
+        var customer = new Customer
+        {
+            Id = $"CUS-{data.IdCounters.Customer:D3}",
+            Name = name.Trim(),
+            Notes = "Created from bank statement import".Translate()
+        };
+
+        data.Customers.Add(customer);
+        AvailableCustomers.Add(customer);
+        _createdCustomers.Add(customer);
+        data.MarkAsModified();
+        return customer;
     }
 
     private void RefreshState()
@@ -478,8 +632,29 @@ public partial class ImportLineRow : ObservableObject
     [RelayCommand] private void SetExpense() => CreateAsRevenue = false;
     [RelayCommand] private void SetRevenue() => CreateAsRevenue = true;
 
+    // -----------------------------------------------------------------------
+    // Delegate callbacks — set by BankStatementImportModalViewModel after construction
+    // -----------------------------------------------------------------------
+
     /// <summary>
-    /// Captures the typed name as a pending new category.
+    /// Creates a Category with the given name. The bool argument is true when this row
+    /// is currently in Revenue mode. Set by the parent modal VM.
+    /// </summary>
+    public Func<string, bool, Category?>? CreateCategoryFromName { get; set; }
+
+    /// <summary>
+    /// Creates a Supplier with the given name. Set by the parent modal VM.
+    /// </summary>
+    public Func<string, Supplier?>? CreateSupplierFromName { get; set; }
+
+    /// <summary>
+    /// Creates a Customer with the given name. Set by the parent modal VM.
+    /// </summary>
+    public Func<string, Customer?>? CreateCustomerFromName { get; set; }
+
+    /// <summary>
+    /// Immediately creates a new Category from the typed name and selects it on this row.
+    /// Falls back to stashing a pending name when the delegate is not yet wired.
     /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/> which passes
     /// the current SearchText as the parameter.
     /// </summary>
@@ -489,15 +664,31 @@ public partial class ImportLineRow : ObservableObject
         var name = (typedName ?? CategorySearchText)?.Trim();
         if (string.IsNullOrEmpty(name)) return;
 
-        NewCategoryName = name;
-        CategorySearchText = name;
+        if (CreateCategoryFromName != null)
+        {
+            var category = CreateCategoryFromName(name, CreateAsRevenue);
+            if (category != null)
+            {
+                ResolvedCategoryObject = category;
+                CategorySearchText = category.Name;
+                NewCategoryName = null;
+                HasCategoryError = false;
+                return;
+            }
+        }
+
+        // Fallback: stash as pending name (delegate not yet wired).
         ResolvedCategoryId = null;
         ResolvedCategoryObject = null;
+        NewCategoryName = name;
+        CategorySearchText = name;
         HasCategoryError = false;
     }
 
     /// <summary>
-    /// Captures the typed name as a pending new counterparty (supplier or customer).
+    /// Immediately creates a new Supplier or Customer (based on <see cref="CreateAsRevenue"/>)
+    /// from the typed name and selects it on this row.
+    /// Falls back to stashing a pending name when the delegate is not yet wired.
     /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/> which passes
     /// the current SearchText as the parameter.
     /// </summary>
@@ -507,11 +698,38 @@ public partial class ImportLineRow : ObservableObject
         var name = (typedName ?? CounterpartySearchText)?.Trim();
         if (string.IsNullOrEmpty(name)) return;
 
-        NewCounterpartyName = name;
-        CounterpartySearchText = name;
+        if (!CreateAsRevenue && CreateSupplierFromName != null)
+        {
+            var supplier = CreateSupplierFromName(name);
+            if (supplier != null)
+            {
+                ResolvedSupplierObject = supplier;
+                CounterpartySearchText = supplier.Name;
+                NewCounterpartyName = null;
+                HasCounterpartyError = false;
+                return;
+            }
+        }
+
+        if (CreateAsRevenue && CreateCustomerFromName != null)
+        {
+            var customer = CreateCustomerFromName(name);
+            if (customer != null)
+            {
+                ResolvedCustomerObject = customer;
+                CounterpartySearchText = customer.Name;
+                NewCounterpartyName = null;
+                HasCounterpartyError = false;
+                return;
+            }
+        }
+
+        // Fallback: stash as pending name (delegate not yet wired).
         ResolvedCounterpartyId = null;
         ResolvedSupplierObject = null;
         ResolvedCustomerObject = null;
+        NewCounterpartyName = name;
+        CounterpartySearchText = name;
         HasCounterpartyError = false;
     }
 
