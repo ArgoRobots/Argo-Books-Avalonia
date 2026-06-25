@@ -328,6 +328,7 @@
                                                         HorizontalAlignment="Left"
                                                         Padding="8,4"
                                                         CornerRadius="4"
+                                                        ClipToBounds="True"
                                                         Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusBackground}}">
                                                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"

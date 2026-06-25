@@ -294,13 +294,13 @@
                                                         Margin="8,0,8,0"
                                                         Padding="8,4"
                                                         CornerRadius="4"
+                                                        ClipToBounds="True"
                                                         Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusBackground}}">
                                                     <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
                                                                    FontSize="12"
                                                                    FontWeight="Medium"
                                                                    VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"
                                                                    Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
                                                         <!-- Explains the "Pending" conversion status (awaiting the exact-date rate) -->
                                                         <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
