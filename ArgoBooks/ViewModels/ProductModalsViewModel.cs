@@ -776,6 +776,59 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     #endregion
 
+    #region Inline Supplier Creation
+
+    /// <summary>
+    /// Creates a new supplier from the name typed into the supplier SearchableDropdown's
+    /// "Add new" button, then selects it.
+    /// </summary>
+    [RelayCommand]
+    private void AddSupplierFromName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        companyData.IdCounters.Supplier++;
+        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
+
+        var newSupplier = new Supplier
+        {
+            Id = newId,
+            Name = name.Trim()
+        };
+
+        companyData.Suppliers.Add(newSupplier);
+
+        var option = new SupplierOption { Id = newId, Name = newSupplier.Name };
+        AvailableSuppliers.Add(option);
+        ModalSupplier = option;
+
+        var supplierToUndo = newSupplier;
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Add supplier '{newSupplier.Name}'",
+            () =>
+            {
+                companyData.Suppliers.Remove(supplierToUndo);
+                AvailableSuppliers.Remove(option);
+                if (ReferenceEquals(ModalSupplier, option))
+                    ModalSupplier = null;
+                companyData.MarkAsModified();
+            },
+            () =>
+            {
+                companyData.Suppliers.Add(supplierToUndo);
+                AvailableSuppliers.Add(option);
+                ModalSupplier = option;
+                companyData.MarkAsModified();
+            }));
+
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    #endregion
+
     #region Modal Helpers
 
     private void UpdateDropdownOptions()
