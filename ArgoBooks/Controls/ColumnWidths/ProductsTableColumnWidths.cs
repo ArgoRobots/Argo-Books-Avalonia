@@ -3,43 +3,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
-/// Manages column widths for the Products table.
-/// Supports both Expenses tab (8 columns) and Revenue tab (5 columns).
+/// Manages column widths for the Products table, which has two tabs with different column
+/// sets selected via <see cref="SetTabMode"/>:
+/// Expenses (Name, Type, Description, Category, Supplier, Reorder, Overstock, TrackInventory,
+/// Actions) and Revenue (Name, Type, Description, Category, Actions). Columns can carry a
+/// different star weight per tab, and the inventory/supplier columns only exist on Expenses.
 /// </summary>
-public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnWidths
+public partial class ProductsTableColumnWidths : TableColumnWidthsBase
 {
-    private double _availableWidth = 800;
-    private bool _isUpdating;
-    private bool _hasManualOverflow;
     private bool _isExpensesTab = true;
-
-    private readonly Dictionary<string, ColumnDef> _columns = new();
-
-    // Column order for Expenses tab
-    private readonly string[] _expensesColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Reorder", "Overstock", "TrackInventory", "Actions"
-    ];
-
-    // Column order for Revenue tab
-    private readonly string[] _revenueColumnOrder = ["Name", "Type", "Description", "Category", "Actions"];
-
-    public class ColumnDef
-    {
-        public string Name { get; set; } = "";
-        public double ExpensesStarValue { get; set; } = 1.0;
-        public double RevenueStarValue { get; set; } = 1.0;
-        public double MinWidth { get; set; } = 50;
-        public double MaxWidth { get; set; } = double.PositiveInfinity;
-        public bool IsVisibleInExpenses { get; set; } = true;
-        public bool IsVisibleInRevenue { get; set; } = true;
-        public bool IsVisible { get; set; } = true; // User-controlled visibility
-        public bool IsFixed { get; set; }
-        public double FixedWidth { get; set; } = 100;
-        public double CurrentWidth { get; set; }
-        public double PreferredWidth { get; set; } = 120;
-        public double MeasuredContentWidth { get; set; }
-    }
-
-    #region Column Width Properties
 
     [ObservableProperty]
     private double _nameColumnWidth = 150;
@@ -68,344 +40,49 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     [ObservableProperty]
     private double _actionsColumnWidth = 84;
 
-    [ObservableProperty]
-    private double _minimumTotalWidth;
-
-    [ObservableProperty]
-    private bool _needsHorizontalScroll;
-
-    [ObservableProperty]
-    private double _columnMenuX;
-
-    [ObservableProperty]
-    private double _columnMenuY;
-
-    #endregion
-
     public ProductsTableColumnWidths()
     {
-        InitializeColumns();
+        ColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Reorder", "Overstock", "TrackInventory", "Actions"];
+
+        RegisterColumn("Name", new TabColumnDef { ExpensesStar = 1.2, RevenueStar = 1.5, MinWidth = 120, PreferredWidth = 150 }, w => NameColumnWidth = w);
+        RegisterColumn("Type", new TabColumnDef { ExpensesStar = 0.6, RevenueStar = 0.8, MinWidth = 60, PreferredWidth = 80 }, w => TypeColumnWidth = w);
+        RegisterColumn("Description", new TabColumnDef { ExpensesStar = 1.2, RevenueStar = 2.0, MinWidth = 84, PreferredWidth = 150 }, w => DescriptionColumnWidth = w);
+        RegisterColumn("Category", new TabColumnDef { ExpensesStar = 0.8, RevenueStar = 1.0, MinWidth = 80, PreferredWidth = 100 }, w => CategoryColumnWidth = w);
+        RegisterColumn("Supplier", new TabColumnDef { ExpensesStar = 0.8, RevenueStar = 0, InRevenue = false, MinWidth = 80, PreferredWidth = 100 }, w => SupplierColumnWidth = w);
+        RegisterColumn("Reorder", new TabColumnDef { ExpensesStar = 0.6, RevenueStar = 0, InRevenue = false, MinWidth = 60, PreferredWidth = 80 }, w => ReorderColumnWidth = w);
+        RegisterColumn("Overstock", new TabColumnDef { ExpensesStar = 0.6, RevenueStar = 0, InRevenue = false, MinWidth = 60, PreferredWidth = 80 }, w => OverstockColumnWidth = w);
+        RegisterColumn("TrackInventory", new TabColumnDef { ExpensesStar = 0.6, RevenueStar = 0, InRevenue = false, MinWidth = 60, PreferredWidth = 80 }, w => TrackInventoryColumnWidth = w);
+        RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
+
+        InitializeColumnWidths();
     }
 
-    private void InitializeColumns()
-    {
-        // Name column
-        _columns["Name"] = new ColumnDef
-        {
-            Name = "Name",
-            ExpensesStarValue = 1.2,
-            RevenueStarValue = 1.5,
-            MinWidth = 120,
-            PreferredWidth = 150,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = true
-        };
-
-        // Type column
-        _columns["Type"] = new ColumnDef
-        {
-            Name = "Type",
-            ExpensesStarValue = 0.6,
-            RevenueStarValue = 0.8,
-            MinWidth = 60,
-            PreferredWidth = 80,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = true
-        };
-
-        // Description column
-        _columns["Description"] = new ColumnDef
-        {
-            Name = "Description",
-            ExpensesStarValue = 1.2,
-            RevenueStarValue = 2.0,
-            MinWidth = 84,
-            PreferredWidth = 150,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = true
-        };
-
-        // Category column
-        _columns["Category"] = new ColumnDef
-        {
-            Name = "Category",
-            ExpensesStarValue = 0.8,
-            RevenueStarValue = 1.0,
-            MinWidth = 80,
-            PreferredWidth = 100,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = true
-        };
-
-        // Supplier column (Expenses only)
-        _columns["Supplier"] = new ColumnDef
-        {
-            Name = "Supplier",
-            ExpensesStarValue = 0.8,
-            RevenueStarValue = 0,
-            MinWidth = 80,
-            PreferredWidth = 100,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = false
-        };
-
-        // Reorder column (Expenses only)
-        _columns["Reorder"] = new ColumnDef
-        {
-            Name = "Reorder",
-            ExpensesStarValue = 0.6,
-            RevenueStarValue = 0,
-            MinWidth = 60,
-            PreferredWidth = 80,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = false
-        };
-
-        // Overstock column (Expenses only)
-        _columns["Overstock"] = new ColumnDef
-        {
-            Name = "Overstock",
-            ExpensesStarValue = 0.6,
-            RevenueStarValue = 0,
-            MinWidth = 60,
-            PreferredWidth = 80,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = false
-        };
-
-        // Track Inventory column (Expenses only)
-        _columns["TrackInventory"] = new ColumnDef
-        {
-            Name = "TrackInventory",
-            ExpensesStarValue = 0.6,
-            RevenueStarValue = 0,
-            MinWidth = 60,
-            PreferredWidth = 80,
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = false
-        };
-
-        // Actions column (fixed width - 2 buttons)
-        _columns["Actions"] = new ColumnDef
-        {
-            Name = "Actions",
-            IsFixed = true,
-            FixedWidth = TableColumnWidthsBase.ActionsWidth(2),
-            MinWidth = TableColumnWidthsBase.ActionsWidth(2),
-            IsVisibleInExpenses = true,
-            IsVisibleInRevenue = true
-        };
-    }
-
+    /// <summary>
+    /// Switches between the Expenses and Revenue column sets and re-fits the columns.
+    /// </summary>
     public void SetTabMode(bool isExpensesTab)
     {
         if (_isExpensesTab == isExpensesTab) return;
         _isExpensesTab = isExpensesTab;
-        _hasManualOverflow = false;
-        RecalculateWidths();
+        ResetWidths(); // clears any manual-overflow state and re-fits to the new set
     }
 
-    private string[] GetCurrentColumnOrder()
-    {
-        return _isExpensesTab ? _expensesColumnOrder : _revenueColumnOrder;
-    }
+    /// <inheritdoc />
+    protected override double GetStarValue(ColumnDef col) =>
+        col is TabColumnDef t ? (_isExpensesTab ? t.ExpensesStar : t.RevenueStar) : col.StarValue;
 
-    private bool IsColumnVisible(ColumnDef col)
-    {
-        var tabVisible = _isExpensesTab ? col.IsVisibleInExpenses : col.IsVisibleInRevenue;
-        return tabVisible && col.IsVisible;
-    }
+    /// <inheritdoc />
+    protected override bool IsInActiveSet(ColumnDef col) =>
+        col is not TabColumnDef t || (_isExpensesTab ? t.InExpenses : t.InRevenue);
 
     /// <summary>
-    /// Updates column visibility and recalculates widths.
+    /// A column definition that carries per-tab star weights and per-tab membership.
     /// </summary>
-    public void SetColumnVisibility(string columnName, bool isVisible)
+    private sealed class TabColumnDef : ColumnDef
     {
-        if (_columns.TryGetValue(columnName, out var col))
-        {
-            col.IsVisible = isVisible;
-            RecalculateWidths();
-        }
-    }
-
-    private double GetColumnStarValue(ColumnDef col)
-    {
-        return _isExpensesTab ? col.ExpensesStarValue : col.RevenueStarValue;
-    }
-
-    public void SetAvailableWidth(double width)
-    {
-        if (Math.Abs(_availableWidth - width) < 1) return;
-
-        var totalCurrentWidth = _columns.Values
-            .Where(IsColumnVisible)
-            .Sum(c => c.CurrentWidth) + 48;
-
-        if (_hasManualOverflow)
-        {
-            // Already in overflow state - check if we still need it
-            if (width < totalCurrentWidth + 50)
-            {
-                // Still overflowing or close to it, maintain scroll state
-                _availableWidth = width;
-                MinimumTotalWidth = totalCurrentWidth;
-                NeedsHorizontalScroll = true;
-                return;
-            }
-            // Enough space now (with buffer), can reset overflow state
-            _hasManualOverflow = false;
-        }
-        else if (totalCurrentWidth > width)
-        {
-            // Window resize caused overflow - enable scrolling
-            _availableWidth = width;
-            _hasManualOverflow = true;
-            MinimumTotalWidth = totalCurrentWidth;
-            NeedsHorizontalScroll = true;
-            return;
-        }
-
-        _availableWidth = width;
-        RecalculateWidths();
-    }
-
-    public double ResizeColumn(string columnName, double delta)
-    {
-        if (!_columns.TryGetValue(columnName, out var col)) return 0;
-        if (!IsColumnVisible(col) || col.IsFixed) return 0;
-        if (Math.Abs(delta) < 0.5) return 0;
-
-        var columnOrder = GetCurrentColumnOrder();
-        var visibleColumns = columnOrder.Where(name => _columns.TryGetValue(name, out var c) && IsColumnVisible(c)).ToList();
-        var columnIndex = visibleColumns.IndexOf(columnName);
-        if (columnIndex < 0) return 0;
-
-        var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
-        double maxTotalWidth = _availableWidth - 48;
-
-        var newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, col.CurrentWidth + delta));
-        var actualDelta = newColWidth - col.CurrentWidth;
-        if (Math.Abs(actualDelta) < 0.5) return 0;
-
-        col.CurrentWidth = newColWidth;
-        ApplyWidthToProperty(columnName, newColWidth);
-
-        // Always try to shrink columns to the right when expanding
-        if (actualDelta > 0.5)
-        {
-            double shrinkNeeded = actualDelta;
-            var shrinkableColumns = columnsToRight.Where(name => !_columns[name].IsFixed).ToList();
-            foreach (var rightColName in shrinkableColumns)
-            {
-                var rightCol = _columns[rightColName];
-                double availableShrink = rightCol.CurrentWidth - rightCol.MinWidth;
-                if (availableShrink > 0.5)
-                {
-                    double actualShrink = Math.Min(shrinkNeeded, availableShrink);
-                    rightCol.CurrentWidth -= actualShrink;
-                    ApplyWidthToProperty(rightColName, rightCol.CurrentWidth);
-                    shrinkNeeded -= actualShrink;
-                    if (shrinkNeeded < 0.5) break;
-                }
-            }
-        }
-
-        // Check if we've exceeded max width
-        double newTotalWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth);
-        if (newTotalWidth > maxTotalWidth)
-        {
-            _hasManualOverflow = true;
-        }
-
-        UpdateScrollState(visibleColumns);
-        return actualDelta;
-    }
-
-    private void UpdateScrollState(List<string> visibleColumns)
-    {
-        double totalWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth) + 48;
-        if (totalWidth > _availableWidth + 1)
-        {
-            _hasManualOverflow = true;
-            NeedsHorizontalScroll = true;
-            MinimumTotalWidth = totalWidth;
-        }
-        else
-        {
-            NeedsHorizontalScroll = false;
-            MinimumTotalWidth = _columns.Values.Where(IsColumnVisible).Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
-        }
-    }
-
-    public void AutoSizeColumn(string columnName)
-    {
-        if (!_columns.TryGetValue(columnName, out var col) || !IsColumnVisible(col) || col.IsFixed) return;
-        double targetWidth = Math.Max(col.MinWidth, col.MeasuredContentWidth > 0 ? col.MeasuredContentWidth : col.PreferredWidth);
-        var delta = targetWidth - col.CurrentWidth;
-        if (Math.Abs(delta) > 0.5) ResizeColumn(columnName, delta);
-    }
-
-    public void ResetWidths()
-    {
-        _hasManualOverflow = false;
-        RecalculateWidths();
-    }
-
-    public void RecalculateWidths()
-    {
-        if (_isUpdating) return;
-        _isUpdating = true;
-
-        try
-        {
-            var visibleColumns = _columns.Values.Where(IsColumnVisible).ToList();
-            if (visibleColumns.Count == 0) return;
-
-            double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
-
-            if (_hasManualOverflow)
-            {
-                double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
-                if (totalWidth + 50 > _availableWidth) { MinimumTotalWidth = totalWidth; NeedsHorizontalScroll = true; return; }
-                _hasManualOverflow = false;
-            }
-
-            MinimumTotalWidth = minTotalWidth;
-            NeedsHorizontalScroll = _availableWidth < minTotalWidth;
-
-            double fixedTotal = visibleColumns.Where(c => c.IsFixed).Sum(c => c.FixedWidth);
-            double totalStars = visibleColumns.Where(c => !c.IsFixed).Sum(c => GetColumnStarValue(c));
-            double availableForProportional = Math.Max(100, _availableWidth - fixedTotal - 48);
-
-            if (NeedsHorizontalScroll)
-            {
-                foreach (var col in visibleColumns) { col.CurrentWidth = col.IsFixed ? col.FixedWidth : col.MinWidth; ApplyWidthToProperty(col.Name, col.CurrentWidth); }
-                return;
-            }
-
-            double widthPerStar = totalStars > 0 ? availableForProportional / totalStars : 0;
-            foreach (var col in visibleColumns)
-            {
-                col.CurrentWidth = col.IsFixed ? col.FixedWidth : Math.Max(col.MinWidth, Math.Min(col.MaxWidth, GetColumnStarValue(col) * widthPerStar));
-                ApplyWidthToProperty(col.Name, col.CurrentWidth);
-            }
-        }
-        finally { _isUpdating = false; }
-    }
-
-    private void ApplyWidthToProperty(string columnName, double width)
-    {
-        switch (columnName)
-        {
-            case "Name": NameColumnWidth = width; break;
-            case "Type": TypeColumnWidth = width; break;
-            case "Description": DescriptionColumnWidth = width; break;
-            case "Category": CategoryColumnWidth = width; break;
-            case "Supplier": SupplierColumnWidth = width; break;
-            case "Reorder": ReorderColumnWidth = width; break;
-            case "Overstock": OverstockColumnWidth = width; break;
-            case "TrackInventory": TrackInventoryColumnWidth = width; break;
-            case "Actions": ActionsColumnWidth = width; break;
-        }
+        public double ExpensesStar { get; init; }
+        public double RevenueStar { get; init; }
+        public bool InExpenses { get; init; } = true;
+        public bool InRevenue { get; init; } = true;
     }
 }

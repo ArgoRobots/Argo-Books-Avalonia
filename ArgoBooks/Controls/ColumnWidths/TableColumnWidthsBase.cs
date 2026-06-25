@@ -89,6 +89,26 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     }
 
     /// <summary>
+    /// The star weight used for proportional distribution of a column. Override to vary the
+    /// weight by the active column set (e.g. a page with Expense/Revenue tabs). Defaults to
+    /// the column's single <see cref="ColumnDef.StarValue"/>.
+    /// </summary>
+    protected virtual double GetStarValue(ColumnDef col) => col.StarValue;
+
+    /// <summary>
+    /// Whether a column belongs to the currently active column set. Override for pages whose
+    /// tabs show different columns. The default set contains every registered column.
+    /// </summary>
+    protected virtual bool IsInActiveSet(ColumnDef col) => true;
+
+    /// <summary>
+    /// Whether a column is effectively visible: present in the active set and not hidden by
+    /// the user. All width math filters on this rather than <see cref="ColumnDef.IsVisible"/>
+    /// directly so that columns absent from the active set never reserve space.
+    /// </summary>
+    protected bool IsColumnVisible(ColumnDef col) => col.IsVisible && IsInActiveSet(col);
+
+    /// <summary>
     /// Updates column visibility and recalculates widths.
     /// </summary>
     public void SetColumnVisibility(string columnName, bool isVisible)
@@ -124,7 +144,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
         }
 
         var totalCurrentWidth = Columns.Values
-            .Where(c => c.IsVisible)
+            .Where(IsColumnVisible)
             .Sum(c => c.CurrentWidth) + 48;
 
         if (_hasManualOverflow)
@@ -153,11 +173,11 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     public double ResizeColumn(string columnName, double delta)
     {
         if (!Columns.TryGetValue(columnName, out var col)) return 0;
-        if (!col.IsVisible || col.IsFixed) return 0;
+        if (!IsColumnVisible(col) || col.IsFixed) return 0;
         if (Math.Abs(delta) < 0.5) return 0;
 
         var visibleColumns = ColumnOrder
-            .Where(name => Columns.TryGetValue(name, out var c) && c.IsVisible)
+            .Where(name => Columns.TryGetValue(name, out var c) && IsColumnVisible(c))
             .ToList();
 
         var columnIndex = visibleColumns.IndexOf(columnName);
@@ -224,7 +244,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
         {
             NeedsHorizontalScroll = false;
             MinimumTotalWidth = Columns.Values
-                .Where(c => c.IsVisible)
+                .Where(IsColumnVisible)
                 .Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
         }
     }
@@ -235,7 +255,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     public void AutoSizeColumn(string columnName)
     {
         if (!Columns.TryGetValue(columnName, out var col)) return;
-        if (!col.IsVisible || col.IsFixed) return;
+        if (!IsColumnVisible(col) || col.IsFixed) return;
 
         double targetWidth = col.MeasuredContentWidth > 0
             ? Math.Max(col.MinWidth, col.MeasuredContentWidth)
@@ -269,7 +289,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
 
         try
         {
-            var visibleColumns = Columns.Values.Where(c => c.IsVisible).ToList();
+            var visibleColumns = Columns.Values.Where(IsColumnVisible).ToList();
             if (visibleColumns.Count == 0) return;
 
             double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
@@ -315,13 +335,13 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
                 var unlocked = proportionalCols.Where(c => !locked.Contains(c.Name)).ToList();
                 if (unlocked.Count == 0) break;
 
-                double totalStarsPass = unlocked.Sum(c => c.StarValue);
+                double totalStarsPass = unlocked.Sum(GetStarValue);
                 double widthPerStar = totalStarsPass > 0 ? remaining / totalStarsPass : 0;
 
                 bool anyNewLock = false;
                 foreach (var col in unlocked)
                 {
-                    double proposedWidth = col.StarValue * widthPerStar;
+                    double proposedWidth = GetStarValue(col) * widthPerStar;
                     if (proposedWidth < col.MinWidth)
                     {
                         columnWidths[col.Name] = col.MinWidth;
@@ -343,7 +363,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
                     // All remaining columns fit proportionally
                     foreach (var col in unlocked)
                     {
-                        columnWidths[col.Name] = col.StarValue * widthPerStar;
+                        columnWidths[col.Name] = GetStarValue(col) * widthPerStar;
                     }
                     break;
                 }
