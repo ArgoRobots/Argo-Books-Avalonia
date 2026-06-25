@@ -1385,6 +1385,30 @@ public partial class SettingsModalViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
     }
 
+    /// <summary>
+    /// Opens the standard Create Category modal. On save, reloads the bank categories list.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCreateCategory()
+    {
+        var categoryModals = App.CategoryModalsViewModel;
+        if (categoryModals == null) return;
+
+        void OnSaved(object? s, EventArgs e)
+        {
+            categoryModals.CategorySaved -= OnSaved;
+            AvailableBankCategories.Clear();
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData != null)
+            {
+                foreach (var cat in companyData.Categories.OrderBy(c => c.Name))
+                    AvailableBankCategories.Add(cat);
+            }
+        }
+        categoryModals.CategorySaved += OnSaved;
+        categoryModals.OpenAddModal(isExpensesTab: true);
+    }
+
     #endregion
 
     /// <summary>
@@ -2358,24 +2382,14 @@ public class LanguageSettingsChangedEventArgs(string language, bool applied) : E
 /// </summary>
 public class BankCategoryRuleRow : ObservableObject
 {
-    private readonly ObservableCollection<Category> _allCategories;
-
     public BankCategoryRuleRow(BankCategoryRule rule, ObservableCollection<Category> allCategories)
     {
         Rule = rule;
-        _allCategories = allCategories;
         _selectedCategory = allCategories.FirstOrDefault(c => c.Id == rule.CategoryId);
-        AddCategoryFromNameCommand = new RelayCommand<string>(AddCategoryFromName);
     }
 
     /// <summary>The underlying rule stored in company data.</summary>
     public BankCategoryRule Rule { get; }
-
-    /// <summary>
-    /// Command invoked by the category SearchableDropdown "Create one" button.
-    /// Receives the typed name, creates the category immediately, and selects it on this row.
-    /// </summary>
-    public IRelayCommand<string> AddCategoryFromNameCommand { get; }
 
     /// <summary>
     /// The text pattern to match against bank statement descriptions.
@@ -2414,43 +2428,4 @@ public class BankCategoryRuleRow : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Creates a new category from the name typed into the SearchableDropdown "Create one" button,
-    /// adds it to company data and the shared category list, then selects it on this row.
-    /// </summary>
-    private void AddCategoryFromName(string? typedName)
-    {
-        if (string.IsNullOrWhiteSpace(typedName)) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        var categoryType = Rule.TransactionType == BookRecordType.Revenue
-            ? CategoryType.Revenue
-            : CategoryType.Expense;
-
-        companyData.IdCounters.Category++;
-        var prefix = categoryType == CategoryType.Revenue ? "CAT-SAL" : "CAT-PUR";
-        var newId = $"{prefix}-{companyData.IdCounters.Category:D3}";
-
-        var newCategory = new Category
-        {
-            Id = newId,
-            Name = typedName.Trim(),
-            Type = categoryType
-        };
-
-        companyData.Categories.Add(newCategory);
-
-        // Insert into the shared list in alphabetical order so all rows see it.
-        var insertIndex = _allCategories
-            .Select((c, i) => (c, i))
-            .FirstOrDefault(x => string.Compare(x.c.Name, newCategory.Name, StringComparison.OrdinalIgnoreCase) > 0,
-                (null!, _allCategories.Count)).i;
-        _allCategories.Insert(insertIndex, newCategory);
-
-        SelectedCategory = newCategory;
-
-        App.CompanyManager?.MarkAsChanged();
-    }
 }

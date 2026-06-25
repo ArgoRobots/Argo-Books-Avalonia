@@ -51,7 +51,7 @@
                                                             Placeholder="{loc:Loc 'Search customers...'}"
                                                             ShowAddNew="True"
                                                             AddNewText="{loc:Loc 'Create new customer'}"
-                                                            AddNewCommand="{Binding AddCustomerFromNameCommand}"
+                                                            AddNewCommand="{Binding OpenCreateCustomerCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
@@ -269,7 +269,7 @@
                                                             Placeholder="{loc:Loc 'Search customers...'}"
                                                             ShowAddNew="True"
                                                             AddNewText="{loc:Loc 'Create new customer'}"
-                                                            AddNewCommand="{Binding AddCustomerFromNameCommand}"
+                                                            AddNewCommand="{Binding OpenCreateCustomerCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />

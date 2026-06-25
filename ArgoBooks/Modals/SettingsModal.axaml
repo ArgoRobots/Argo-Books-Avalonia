@@ -1088,7 +1088,7 @@
                                                         Placeholder="{loc:Loc 'Category...'}"
                                                         ShowAddNew="True"
                                                         AddNewText="{loc:Loc 'Create one'}"
-                                                        AddNewCommand="{Binding AddCategoryFromNameCommand}"
+                                                        AddNewCommand="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).OpenCreateCategoryCommand}"
                                                         Classes="compact"
                                                         VerticalAlignment="Center" />
 
