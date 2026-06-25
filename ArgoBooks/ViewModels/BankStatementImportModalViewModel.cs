@@ -479,36 +479,40 @@ public partial class ImportLineRow : ObservableObject
     [RelayCommand] private void SetRevenue() => CreateAsRevenue = true;
 
     /// <summary>
-    /// Captures the current CategorySearchText as a pending new category name.
-    /// Called when the user clicks "Create one" in the category dropdown.
+    /// Captures the typed name as a pending new category.
+    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/> which passes
+    /// the current SearchText as the parameter.
     /// </summary>
     [RelayCommand]
-    private void CreateNewCategory()
+    private void CreateNewCategory(string? typedName)
     {
-        var name = CategorySearchText?.Trim();
-        if (!string.IsNullOrEmpty(name))
-        {
-            NewCategoryName = name;
-            ResolvedCategoryId = null;
-            ResolvedCategoryObject = null;
-        }
+        var name = (typedName ?? CategorySearchText)?.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+
+        NewCategoryName = name;
+        CategorySearchText = name;
+        ResolvedCategoryId = null;
+        ResolvedCategoryObject = null;
+        HasCategoryError = false;
     }
 
     /// <summary>
-    /// Captures the current CounterpartySearchText as a pending new counterparty name.
-    /// Called when the user clicks "Create one" in the supplier/customer dropdown.
+    /// Captures the typed name as a pending new counterparty (supplier or customer).
+    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/> which passes
+    /// the current SearchText as the parameter.
     /// </summary>
     [RelayCommand]
-    private void CreateNewCounterparty()
+    private void CreateNewCounterparty(string? typedName)
     {
-        var name = CounterpartySearchText?.Trim();
-        if (!string.IsNullOrEmpty(name))
-        {
-            NewCounterpartyName = name;
-            ResolvedCounterpartyId = null;
-            ResolvedSupplierObject = null;
-            ResolvedCustomerObject = null;
-        }
+        var name = (typedName ?? CounterpartySearchText)?.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+
+        NewCounterpartyName = name;
+        CounterpartySearchText = name;
+        ResolvedCounterpartyId = null;
+        ResolvedSupplierObject = null;
+        ResolvedCustomerObject = null;
+        HasCounterpartyError = false;
     }
 
     // Object-typed wrappers for SearchableDropdown (which binds SelectedItem, not SelectedValue).

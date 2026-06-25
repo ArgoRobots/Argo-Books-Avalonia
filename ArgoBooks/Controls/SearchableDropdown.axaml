@@ -166,7 +166,7 @@
                         HorizontalContentAlignment="Left"
                         Padding="12,10"
                         IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}"
-                        Command="{Binding $parent[controls:SearchableDropdown].AddNewCommand}">
+                        Command="{Binding $parent[controls:SearchableDropdown].AddNewInternalCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <PathIcon Data="{x:Static local:Icons.Add}"
                                   Width="16" Height="16"

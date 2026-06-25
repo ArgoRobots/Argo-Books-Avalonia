@@ -337,6 +337,13 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public ICommand SelectItemCommand { get; }
 
     /// <summary>
+    /// Internal command bound to the "Add new" button. Closes the dropdown and
+    /// forwards the current <see cref="SearchText"/> to the consumer's
+    /// <see cref="AddNewCommand"/> as its parameter.
+    /// </summary>
+    public ICommand AddNewInternalCommand { get; }
+
+    /// <summary>
     /// Command executed when "Add new" is clicked.
     /// </summary>
     public ICommand? AddNewCommand
@@ -351,6 +358,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
         SelectItemCommand = new RelayCommand<object>(SelectItem);
+        AddNewInternalCommand = new RelayCommand(() =>
+        {
+            var text = SearchText;
+            IsDropdownOpen = false;
+            AddNewCommand?.Execute(text);
+        });
 
         InitializeComponent();
     }
