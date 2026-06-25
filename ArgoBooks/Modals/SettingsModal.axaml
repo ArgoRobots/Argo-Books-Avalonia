@@ -1080,18 +1080,17 @@
                                                              Classes="form-input"
                                                              VerticalAlignment="Center" />
 
-                                                    <!-- Category ComboBox -->
-                                                    <ComboBox Grid.Column="2"
-                                                              ItemsSource="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).AvailableBankCategories}"
-                                                              SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                                                              Classes="form-combobox"
-                                                              VerticalAlignment="Center">
-                                                        <ComboBox.ItemTemplate>
-                                                            <DataTemplate x:DataType="entities:Category">
-                                                                <TextBlock Text="{Binding Name}" />
-                                                            </DataTemplate>
-                                                        </ComboBox.ItemTemplate>
-                                                    </ComboBox>
+                                                    <!-- Category picker with inline create -->
+                                                    <controls:SearchableDropdown Grid.Column="2"
+                                                        ItemsSource="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).AvailableBankCategories}"
+                                                        SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        Placeholder="{loc:Loc 'Category...'}"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding AddCategoryFromNameCommand}"
+                                                        Classes="compact"
+                                                        VerticalAlignment="Center" />
 
                                                     <!-- Delete button -->
                                                     <Button Grid.Column="4"
