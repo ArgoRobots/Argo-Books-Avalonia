@@ -1815,6 +1815,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
                 lineItem.OnProductErrorCleared = ClearValidationMessageIfNoErrors;
                 lineItem.OnTotalPriceEdited = ValidateTotals;
+                var capturedLineItem = lineItem;
+                lineItem.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedLineItem));
                 LineItems.Add(lineItem);
             }
 
@@ -1916,7 +1918,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void AddLineItem()
     {
-        LineItems.Add(new ScannedLineItemViewModel
+        var lineItem = new ScannedLineItemViewModel
         {
             Description = string.Empty,
             Quantity = "1",
@@ -1926,7 +1928,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             IsManuallyAdded = true,
             OnProductErrorCleared = ClearValidationMessageIfNoErrors,
             OnTotalPriceEdited = ValidateTotals
-        });
+        };
+        var capturedLineItem = lineItem;
+        lineItem.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedLineItem));
+        LineItems.Add(lineItem);
         ValidateCurrentBulkItem();
     }
 
@@ -2337,6 +2342,71 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         lineItem.SelectedProduct = option;
         lineItem.ShowCreateProductSuggestion = false;
 
+        companyData.MarkAsModified();
+    }
+
+    /// <summary>
+    /// Creates a new product from the name typed into a line item's product SearchableDropdown
+    /// "Add new" button, then selects it on that line item.
+    /// This is the implementation called by the per-line-item AddProductFromNameCommand.
+    /// </summary>
+    private void AddProductFromNameForLineItem(string? name, ScannedLineItemViewModel lineItem)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null) return;
+
+        // Find or create an expense category (same logic as CreateSuggestedProductCore)
+        var category = _createdCategoryForUndo
+            ?? companyData.Categories.FirstOrDefault(c => c.Type == CategoryType.Expense);
+
+        if (category == null)
+        {
+            var aiCategory = _aiSuggestion?.NewCategory;
+            var categoryName = aiCategory?.Name ?? "General Expenses";
+
+            companyData.IdCounters.Category++;
+            category = new Category
+            {
+                Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
+                Name = categoryName,
+                Type = CategoryType.Expense,
+                Description = aiCategory?.Description
+            };
+            companyData.Categories.Add(category);
+            _createdCategoryForUndo = category;
+        }
+
+        companyData.IdCounters.Product++;
+        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
+
+        var newProduct = new Product
+        {
+            Id = newId,
+            Name = name.Trim(),
+            Description = string.Empty,
+            CostPrice = decimal.TryParse(lineItem.UnitPrice, out var price) ? price : 0,
+            UnitPrice = 0,
+            CategoryId = category.Id,
+            Type = CategoryType.Expense
+        };
+
+        companyData.Products.Add(newProduct);
+        _createdProductsForUndo.Add(newProduct);
+
+        var option = new ProductOption
+        {
+            Id = newId,
+            Name = newProduct.Name,
+            Description = string.Empty,
+            UnitPrice = newProduct.CostPrice
+        };
+        ProductOptions.Add(option);
+        lineItem.SelectedProduct = option;
+        lineItem.ShowCreateProductSuggestion = false;
+
+        UpdateHasUnmatchedProducts();
         companyData.MarkAsModified();
     }
 
@@ -2806,6 +2876,42 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Creates a new supplier from the name typed into the supplier SearchableDropdown's "Add new" button.
+    /// Mirrors <see cref="CreateSuggestedSupplier"/> but takes the name directly instead of reading
+    /// <see cref="SuggestedSupplierName"/>.
+    /// </summary>
+    [RelayCommand]
+    private void AddSupplierFromName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        companyData.IdCounters.Supplier++;
+        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
+
+        var newSupplier = new Supplier
+        {
+            Id = newId,
+            Name = name.Trim(),
+            Notes = "Created from receipt scan".Translate()
+        };
+
+        companyData.Suppliers.Add(newSupplier);
+        _createdSupplierForUndo = newSupplier;
+
+        var option = new SupplierOption { Id = newId, Name = newSupplier.Name };
+        SupplierOptions.Add(option);
+        SelectedSupplier = option;
+
+        ShowCreateSupplierSuggestion = false;
+
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    /// <summary>
     /// Dismisses the supplier suggestion without creating.
     /// </summary>
     [RelayCommand]
@@ -3010,6 +3116,13 @@ public partial class ScannedLineItemViewModel : ObservableObject
     /// Callback invoked when the total price changes so the parent can revalidate totals.
     /// </summary>
     public Action? OnTotalPriceEdited { get; set; }
+
+    /// <summary>
+    /// Command invoked by the product SearchableDropdown's "Add new" button.
+    /// Receives the typed search text as its parameter and creates a new product,
+    /// then selects it on this line item. Set by the parent ReceiptsModalsViewModel.
+    /// </summary>
+    public IRelayCommand<string>? AddProductFromNameCommand { get; set; }
 
     partial void OnTotalPriceChanged(string value) => OnTotalPriceEdited?.Invoke();
 
