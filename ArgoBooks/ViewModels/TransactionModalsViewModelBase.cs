@@ -626,7 +626,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     UnitPrice = unitPrice
                 };
                 lineItem.PropertyChanged += OnLineItemPropertyChanged;
-                OnLineItemCreated(lineItem);
                 LineItems.Add(lineItem);
             }
         }
@@ -644,7 +643,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 UnitPrice = unitPrice
             };
             lineItem.PropertyChanged += OnLineItemPropertyChanged;
-            OnLineItemCreated(lineItem);
             LineItems.Add(lineItem);
         }
         UpdateTotals();
@@ -1165,18 +1163,11 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     #region Line Items
 
-    /// <summary>
-    /// Called after a new line item is created and before it is added to LineItems.
-    /// Override in derived classes to wire per-line-item commands (e.g. AddProductFromNameCommand).
-    /// </summary>
-    protected virtual void OnLineItemCreated(TLineItem lineItem) { }
-
     [RelayCommand]
     protected void AddLineItem()
     {
         var lineItem = new TLineItem();
         lineItem.PropertyChanged += OnLineItemPropertyChanged;
-        OnLineItemCreated(lineItem);
         LineItems.Add(lineItem);
         UpdateTotals();
     }

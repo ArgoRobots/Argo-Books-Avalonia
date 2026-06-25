@@ -147,7 +147,7 @@
                                                              Placeholder="{loc:Loc 'Search for a product...'}"
                                                              ShowAddNew="True"
                                                              AddNewText="{loc:Loc 'Create new product'}"
-                                                             AddNewCommand="{Binding AddProductFromNameCommand}"
+                                                             AddNewCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).OpenCreateProductCommand}"

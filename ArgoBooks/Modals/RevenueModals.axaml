@@ -97,7 +97,7 @@
                                                             ErrorMessage="{loc:Loc 'Please select a customer.'}"
                                                             ShowAddNew="True"
                                                             AddNewText="{loc:Loc 'Create new customer'}"
-                                                            AddNewCommand="{Binding AddCustomerFromNameCommand}"
+                                                            AddNewCommand="{Binding OpenCreateCustomerCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
@@ -165,7 +165,7 @@
                                                              Placeholder="{loc:Loc 'Search for a product...'}"
                                                              ShowAddNew="True"
                                                              AddNewText="{loc:Loc 'Create new product'}"
-                                                             AddNewCommand="{Binding AddProductFromNameCommand}"
+                                                             AddNewCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
