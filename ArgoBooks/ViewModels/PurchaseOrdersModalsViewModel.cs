@@ -293,8 +293,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 UnitCost = lineItem.UnitCost.ToString("F2")
             };
             vm.PropertyChanged += OnOrderLineItemPropertyChanged;
-            var capturedVm = vm;
-            vm.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedVm));
             LineItems.Add(vm);
         }
         UpdateCalculatedTotals();
@@ -358,34 +356,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Creates a new supplier from the name typed into the supplier SearchableDropdown's
-    /// "Add new" button, then selects it.
-    /// </summary>
-    [RelayCommand]
-    private void AddSupplierFromName(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        companyData.IdCounters.Supplier++;
-        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
-
-        var newSupplier = new Supplier
-        {
-            Id = newId,
-            Name = name.Trim()
-        };
-
-        companyData.Suppliers.Add(newSupplier);
-        AvailableSuppliers.Add(newSupplier);
-        SelectedSupplier = newSupplier;
-
-        App.CompanyManager?.MarkAsChanged();
-    }
-
-    /// <summary>
     /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
@@ -404,52 +374,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Creates a new expense product from the name typed into a line item's product
-    /// SearchableDropdown "Add new" button, then selects it on that line item.
-    /// </summary>
-    private void AddProductFromNameForLineItem(string? name, OrderLineItemViewModel lineItem)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Products == null) return;
-
-        // Find or create a fallback expense category
-        var category = companyData.Categories.FirstOrDefault(c => c.Type == CategoryType.Expense);
-        if (category == null)
-        {
-            companyData.IdCounters.Category++;
-            category = new Category
-            {
-                Id = $"CAT-PUR-{companyData.IdCounters.Category:D3}",
-                Name = "General Expenses",
-                Type = CategoryType.Expense
-            };
-            companyData.Categories.Add(category);
-        }
-
-        companyData.IdCounters.Product++;
-        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
-
-        var newProduct = new Product
-        {
-            Id = newId,
-            Name = name.Trim(),
-            Description = string.Empty,
-            CostPrice = decimal.TryParse(lineItem.UnitCost, out var cost) ? cost : 0,
-            UnitPrice = 0,
-            CategoryId = category.Id,
-            Type = CategoryType.Expense
-        };
-
-        companyData.Products.Add(newProduct);
-        AvailableProducts.Add(newProduct);
-        lineItem.SelectedProduct = newProduct;
-
-        companyData.MarkAsModified();
-    }
-
-    /// <summary>
     /// Adds a new line item to the order.
     /// </summary>
     [RelayCommand]
@@ -457,8 +381,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     {
         var vm = new OrderLineItemViewModel();
         vm.PropertyChanged += OnOrderLineItemPropertyChanged;
-        var capturedVm = vm;
-        vm.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedVm));
         LineItems.Add(vm);
         UpdateCalculatedTotals();
     }
@@ -1628,13 +1550,6 @@ public partial class OrderLineItemViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasProductError;
-
-    /// <summary>
-    /// Command invoked by the product SearchableDropdown's "Add new" button.
-    /// Receives the typed search text as its parameter and creates a new product,
-    /// then selects it on this line item. Set by the parent view model.
-    /// </summary>
-    public IRelayCommand<string>? AddProductFromNameCommand { get; set; }
 
     /// <summary>
     /// Available products for the dropdown.

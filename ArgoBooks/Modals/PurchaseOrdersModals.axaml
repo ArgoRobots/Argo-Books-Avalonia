@@ -53,7 +53,7 @@
                                                             Placeholder="{loc:Loc 'Search suppliers...'}"
                                                             ShowAddNew="True"
                                                             AddNewText="{loc:Loc 'Create new supplier'}"
-                                                            AddNewCommand="{Binding AddSupplierFromNameCommand}"
+                                                            AddNewCommand="{Binding OpenCreateSupplierCommand}"
                                                             EmptyMessage="{loc:Loc 'No suppliers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateSupplierCommand}" />
@@ -143,7 +143,7 @@
                                                              Placeholder="{loc:Loc 'Search for a product...'}"
                                                              ShowAddNew="True"
                                                              AddNewText="{loc:Loc 'Create new product'}"
-                                                             AddNewCommand="{Binding AddProductFromNameCommand}"
+                                                             AddNewCommand="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).OpenCreateProductCommand}"

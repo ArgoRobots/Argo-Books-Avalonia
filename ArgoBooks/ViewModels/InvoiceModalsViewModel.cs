@@ -453,8 +453,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             InvoiceCurrencyCode = SelectedCurrencyCode
         };
         item.PropertyChanged += OnLineItemPropertyChanged;
-        var capturedItem = item;
-        item.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedItem));
         LineItems.Add(item);
         UpdateTotals();
     }
@@ -504,98 +502,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
         productModals.ProductSaved += OnProductSaved;
         productModals.OpenAddModal();
-    }
-
-    #endregion
-
-    #region Inline Customer Creation
-
-    /// <summary>
-    /// Creates a new customer from the name typed into the customer SearchableDropdown's
-    /// "Add new" button, then selects it.
-    /// </summary>
-    [RelayCommand]
-    private void AddCustomerFromName(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        companyData.IdCounters.Customer++;
-        var newId = $"CUS-{companyData.IdCounters.Customer:D3}";
-
-        var newCustomer = new Customer
-        {
-            Id = newId,
-            Name = name.Trim()
-        };
-
-        companyData.Customers.Add(newCustomer);
-
-        var option = new CustomerOption { Id = newId, Name = newCustomer.Name };
-        CustomerOptions.Add(option);
-        SelectedCustomer = option;
-
-        App.CompanyManager?.MarkAsChanged();
-    }
-
-    #endregion
-
-    #region Inline Product Creation (per line item)
-
-    /// <summary>
-    /// Creates a new revenue product from the name typed into a line item's product
-    /// SearchableDropdown "Add new" button, then selects it on that line item.
-    /// </summary>
-    private void AddProductFromNameForLineItem(string? name, LineItemDisplayModel lineItem)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return;
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Products == null) return;
-
-        // Find or create a fallback revenue category
-        var category = companyData.Categories.FirstOrDefault(c => c.Type == CategoryType.Revenue);
-        if (category == null)
-        {
-            companyData.IdCounters.Category++;
-            category = new Category
-            {
-                Id = $"CAT-SAL-{companyData.IdCounters.Category:D3}",
-                Name = "General Revenue",
-                Type = CategoryType.Revenue
-            };
-            companyData.Categories.Add(category);
-        }
-
-        companyData.IdCounters.Product++;
-        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
-
-        var newProduct = new Product
-        {
-            Id = newId,
-            Name = name.Trim(),
-            Description = string.Empty,
-            CostPrice = 0,
-            UnitPrice = lineItem.UnitPrice ?? 0,
-            CategoryId = category.Id,
-            Type = CategoryType.Revenue
-        };
-
-        companyData.Products.Add(newProduct);
-
-        var option = new ProductOption
-        {
-            Id = newId,
-            Name = newProduct.Name,
-            Description = string.Empty,
-            UnitPrice = newProduct.UnitPrice
-        };
-        ProductOptions.Add(option);
-        lineItem.SelectedProduct = option;
-
-        companyData.MarkAsModified();
     }
 
     #endregion
@@ -863,8 +769,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             InvoiceCurrencyCode = SelectedCurrencyCode
         };
         rentalLineItem.PropertyChanged += OnLineItemPropertyChanged;
-        var capturedRentalItem = rentalLineItem;
-        rentalLineItem.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedRentalItem));
         LineItems.Add(rentalLineItem);
 
         // Store security deposit separately (not as a line item)
@@ -911,8 +815,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 InvoiceCurrencyCode = SelectedCurrencyCode
             };
             lineItem.PropertyChanged += OnLineItemPropertyChanged;
-            var capturedRevenueItem = lineItem;
-            lineItem.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedRevenueItem));
             LineItems.Add(lineItem);
         }
 
@@ -1028,8 +930,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 InvoiceCurrencyCode = SelectedCurrencyCode
             };
             displayItem.PropertyChanged += OnLineItemPropertyChanged;
-            var capturedDraftItem = displayItem;
-            displayItem.AddProductFromNameCommand = new RelayCommand<string>(name => AddProductFromNameForLineItem(name, capturedDraftItem));
             LineItems.Add(displayItem);
         }
 
@@ -2156,13 +2056,6 @@ public partial class LineItemDisplayModel : ObservableObject
 
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => CurrencyInfo.GetByCode(InvoiceCurrencyCode).Format(Amount);
-
-    /// <summary>
-    /// Command invoked by the product SearchableDropdown's "Add new" button.
-    /// Receives the typed search text as its parameter and creates a new product,
-    /// then selects it on this line item. Set by the parent view model.
-    /// </summary>
-    public IRelayCommand<string>? AddProductFromNameCommand { get; set; }
 
     partial void OnSelectedProductChanged(ProductOption? value)
     {

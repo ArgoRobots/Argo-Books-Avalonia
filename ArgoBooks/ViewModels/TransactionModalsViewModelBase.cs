@@ -1512,13 +1512,6 @@ public abstract partial class TransactionLineItemBase : ObservableObject
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
     public string AmountFormatted => CurrencyService.Format(Amount);
 
-    /// <summary>
-    /// Command invoked by the product SearchableDropdown's "Add new" button.
-    /// Receives the typed search text as its parameter and creates a new product,
-    /// then selects it on this line item. Set by the parent view model.
-    /// </summary>
-    public IRelayCommand<string>? AddProductFromNameCommand { get; set; }
-
     partial void OnSelectedProductChanged(ProductOption? value)
     {
         if (value != null)
