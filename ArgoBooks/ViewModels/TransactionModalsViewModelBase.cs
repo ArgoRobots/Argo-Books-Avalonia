@@ -1168,9 +1168,16 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     {
         var lineItem = new TLineItem();
         lineItem.PropertyChanged += OnLineItemPropertyChanged;
+        OnLineItemAdded(lineItem);
         LineItems.Add(lineItem);
         UpdateTotals();
     }
+
+    /// <summary>
+    /// Called after each line item is created (via AddLineItem or ResetForm).
+    /// Override in derived classes to wire per-line-item commands before the item is added to the list.
+    /// </summary>
+    protected virtual void OnLineItemAdded(TLineItem lineItem) { }
 
     [RelayCommand]
     protected void RemoveLineItem(TLineItem? item)

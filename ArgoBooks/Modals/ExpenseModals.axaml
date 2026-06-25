@@ -85,6 +85,41 @@
                                 </StackPanel>
                             </Grid>
 
+                            <!-- Supplier and Category Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Supplier -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="{loc:Loc 'Supplier'}" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding SupplierOptions}"
+                                                                SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                                                                DisplayMemberPath="Name"
+                                                                Placeholder="{loc:Loc 'Search for a supplier...'}"
+                                                                ShowAddNew="True"
+                                                                AddNewText="{loc:Loc 'Create new supplier'}"
+                                                                AddNewCommand="{Binding AddSupplierFromNameCommand}"
+                                                                EmptyMessage="{loc:Loc 'No suppliers found.'}"
+                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                EmptyCreateCommand="{Binding OpenCreateSupplierCommand}" />
+                                </StackPanel>
+
+                                <!-- Category -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="{loc:Loc 'Category'}" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding CategoryOptions}"
+                                                                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                                                DisplayMemberPath="Name"
+                                                                Placeholder="{loc:Loc 'Search for a category...'}"
+                                                                ShowAddNew="True"
+                                                                AddNewText="{loc:Loc 'Create new category'}"
+                                                                AddNewCommand="{Binding AddCategoryFromNameCommand}"
+                                                                EmptyMessage="{loc:Loc 'No categories found.'}"
+                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                                EmptyCreateCommand="{Binding OpenCreateCategoryCommand}" />
+                                </StackPanel>
+                            </Grid>
+
                             <!-- Line Items Section -->
                             <StackPanel x:Name="LineItemsSection" Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -145,7 +180,9 @@
                                                              SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                              DisplayMemberPath="Name"
                                                              Placeholder="{loc:Loc 'Search for a product...'}"
-                                                             ShowAddNew="False"
+                                                             ShowAddNew="True"
+                                                             AddNewText="{loc:Loc 'Create new product'}"
+                                                             AddNewCommand="{Binding AddProductFromNameCommand}"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).OpenCreateProductCommand}"
