@@ -142,18 +142,24 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// Whether any changes have been made.
     /// </summary>
     public bool HasChanges =>
-        CompanyName != _originalCompanyName ||
-        BusinessType != _originalBusinessType ||
-        Industry != _originalIndustry ||
+        !StrEq(CompanyName, _originalCompanyName) ||
+        !StrEq(BusinessType, _originalBusinessType) ||
+        !StrEq(Industry, _originalIndustry) ||
         LogoSource != _originalLogo ||
-        PhoneNumber != _originalPhoneNumber ||
+        !StrEq(PhoneNumber, _originalPhoneNumber) ||
         SelectedPhoneCountry != _originalSelectedPhoneCountry ||
-        Country != _originalCountry ||
-        City != _originalCity ||
-        Address != _originalAddress ||
-        ProvinceState != _originalProvinceState ||
-        Email != _originalEmail ||
-        SelectedCurrency != _originalCurrency;
+        !StrEq(Country, _originalCountry) ||
+        !StrEq(City, _originalCity) ||
+        !StrEq(Address, _originalAddress) ||
+        !StrEq(ProvinceState, _originalProvinceState) ||
+        !StrEq(Email, _originalEmail) ||
+        !StrEq(SelectedCurrency, _originalCurrency);
+
+    // Treats null and empty as equal: clearing a field that was originally empty (null)
+    // leaves a "" behind, which must NOT count as a change. A non-empty value vs empty
+    // is still detected as a real change.
+    private static bool StrEq(string? a, string? b) =>
+        string.IsNullOrEmpty(a) ? string.IsNullOrEmpty(b) : string.Equals(a, b, StringComparison.Ordinal);
 
     /// <summary>
     /// Whether the form is valid for saving.
