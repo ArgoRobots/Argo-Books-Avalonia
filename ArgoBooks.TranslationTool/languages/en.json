@@ -874,7 +874,7 @@
   "str_image": "Image",
   "str_imagenotfound": "Image not found",
   "str_imageproperties": "Image Properties",
-  "str_import": "Import...",
+  "str_import": "Import",
   "str_importabankstatementcsvorexcelandwewillmatcheachli": "Import a bank statement (CSV or Excel) and we will match each line to your recorded expenses and revenue, so you can catch anything missing or duplicated.",
   "str_importbankstatement": "Import bank statement",
   "str_importdata": "Import Data",

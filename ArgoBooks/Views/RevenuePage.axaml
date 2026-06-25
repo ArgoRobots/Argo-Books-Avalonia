@@ -93,10 +93,6 @@
                                       Width="16" Height="16"
                                       Foreground="White" />
                             <TextBlock Text="{loc:Loc 'Import'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
-                            <PathIcon Data="{x:Static icons:Icons.ChevronDown}"
-                                      Width="12" Height="12"
-                                      Foreground="White"
-                                      IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
                         </StackPanel>
                     </Button>
                 </table:ArgoTable.ExtraButtonsContent>
