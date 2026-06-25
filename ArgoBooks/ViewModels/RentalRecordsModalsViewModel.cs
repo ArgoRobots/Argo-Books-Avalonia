@@ -3,6 +3,7 @@ using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -1511,6 +1512,40 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
 
         var names = effectiveItems.Select(li => ResolveName(li.RentalItemId));
         return string.Join(", ", names);
+    }
+
+    #endregion
+
+    #region Inline Customer Creation
+
+    /// <summary>
+    /// Creates a new customer from the name typed into the customer SearchableDropdown's
+    /// "Add new" button, then selects it.
+    /// </summary>
+    [RelayCommand]
+    private void AddCustomerFromName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        companyData.IdCounters.Customer++;
+        var newId = $"CUS-{companyData.IdCounters.Customer:D3}";
+
+        var newCustomer = new Customer
+        {
+            Id = newId,
+            Name = name.Trim()
+        };
+
+        companyData.Customers.Add(newCustomer);
+
+        var option = new CustomerOption { Id = newId, Name = newCustomer.Name };
+        AvailableCustomers.Add(option);
+        ModalCustomer = option;
+
+        App.CompanyManager?.MarkAsChanged();
     }
 
     #endregion

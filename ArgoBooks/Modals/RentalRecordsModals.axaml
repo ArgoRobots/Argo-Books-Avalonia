@@ -49,7 +49,9 @@
                                                             SelectedItem="{Binding ModalCustomer}"
                                                             DisplayMemberPath="Name"
                                                             Placeholder="{loc:Loc 'Search customers...'}"
-                                                            ShowAddNew="False"
+                                                            ShowAddNew="True"
+                                                            AddNewText="{loc:Loc 'Create new customer'}"
+                                                            AddNewCommand="{Binding AddCustomerFromNameCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
@@ -265,7 +267,9 @@
                                                             SelectedItem="{Binding ModalCustomer}"
                                                             DisplayMemberPath="Name"
                                                             Placeholder="{loc:Loc 'Search customers...'}"
-                                                            ShowAddNew="False"
+                                                            ShowAddNew="True"
+                                                            AddNewText="{loc:Loc 'Create new customer'}"
+                                                            AddNewCommand="{Binding AddCustomerFromNameCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
