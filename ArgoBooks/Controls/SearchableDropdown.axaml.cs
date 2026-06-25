@@ -363,6 +363,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             var text = SearchText;
             IsDropdownOpen = false;
             AddNewCommand?.Execute(text);
+            // The consumer command may set SearchText (showing the pending new name),
+            // which re-opens the dropdown via OnSearchTextChanged. Close it again.
+            IsDropdownOpen = false;
         });
 
         InitializeComponent();
