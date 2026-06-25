@@ -1916,7 +1916,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void AddLineItem()
     {
-        LineItems.Add(new ScannedLineItemViewModel
+        var lineItem = new ScannedLineItemViewModel
         {
             Description = string.Empty,
             Quantity = "1",
@@ -1926,7 +1926,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             IsManuallyAdded = true,
             OnProductErrorCleared = ClearValidationMessageIfNoErrors,
             OnTotalPriceEdited = ValidateTotals
-        });
+        };
+        LineItems.Add(lineItem);
         ValidateCurrentBulkItem();
     }
 

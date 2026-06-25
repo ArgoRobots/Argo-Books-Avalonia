@@ -186,6 +186,16 @@ public partial class App : Application
     public static BankMatchingModalsViewModel? BankMatchingModalsViewModel => _appShellViewModel?.BankMatchingModalsViewModel;
 
     /// <summary>
+    /// Gets the PDF statement review modal view model for shared access.
+    /// </summary>
+    public static PdfStatementReviewModalViewModel? PdfStatementReviewModalViewModel => _appShellViewModel?.PdfStatementReviewModalViewModel;
+
+    /// <summary>
+    /// Gets the bank statement import modal view model for shared access.
+    /// </summary>
+    public static BankStatementImportModalViewModel? BankStatementImportModalViewModel => _appShellViewModel?.BankStatementImportModalViewModel;
+
+    /// <summary>
     /// Gets the purchase orders modals view model for shared access.
     /// </summary>
     public static PurchaseOrdersModalsViewModel? PurchaseOrdersModalsViewModel => _appShellViewModel?.PurchaseOrdersModalsViewModel;
@@ -827,6 +837,11 @@ public partial class App : Application
     /// </summary>
     public static PendingConversionService? PendingConversionService { get; private set; }
 
+    /// <summary>
+    /// Gets the PDF bank statement extractor (premium-gated AI service).
+    /// </summary>
+    public static IPdfStatementExtractor? PdfStatementExtractor { get; private set; }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -892,6 +907,7 @@ public partial class App : Application
             ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
             PendingConversionService = new PendingConversionService(errorLogger);
+            PdfStatementExtractor = new PdfStatementExtractor(LicenseService, ErrorLogger);
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service and optional update service
@@ -2471,6 +2487,30 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Opens a file picker for a bank statement and passes the chosen file directly to
+    /// the BankStatementImportModal without navigating to the Bank Matching page first.
+    /// Called from the Expenses/Revenue "Import bank statement" menu item.
+    /// </summary>
+    public static async Task OpenBankStatementImportAsync()
+    {
+        if (BankStatementImportModalViewModel == null) return;
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+
+        var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Bank Statement".Translate(),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Bank statements") { Patterns = ["*.csv", "*.xlsx", "*.xls", "*.pdf"] }
+            ]
+        });
+        if (file.Count == 0) return;
+
+        await BankStatementImportModalViewModel.OpenAsync(file[0].Path.LocalPath);
+    }
+
+    /// <summary>
     /// Imports a bank statement via the smart importer (parse only, no commit) and shows it on the
     /// Bank Matching page. Triggered by the page's Import button.
     /// </summary>
@@ -2489,29 +2529,40 @@ public partial class App : Application
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Spreadsheets") { Patterns = ["*.xlsx", "*.csv"] }
+                new FilePickerFileType("Bank statements") { Patterns = ["*.csv", "*.xlsx", "*.xls", "*.pdf"] }
             ]
         });
         if (file.Count == 0) return;
 
         var filePath = file[0].Path.LocalPath;
-        var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
         _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate());
         await Task.Yield();
 
         try
         {
-            var parser = new BankStatementImportService(ErrorLogger);
+            List<Core.Models.BankMatching.BankStatementLine> lines;
+            if (ext == ".pdf")
+            {
+                _mainWindowViewModel?.HideLoading();
+                lines = await ImportPdfStatementAsync(filePath);
+                if (lines.Count == 0) return; // gated out, cancelled, or extraction failed
+            }
+            else
+            {
+                var parser = new BankStatementImportService(ErrorLogger);
+                var isCsv = ext == ".csv";
 
-            // Try local column detection first (instant, no AI). Fall back to AI column mapping
-            // only when the headers aren't recognized locally.
-            var lines = isCsv
-                ? await parser.ParseCsvAsync(filePath)
-                : await parser.ParseExcelAsync(filePath);
+                // Try local column detection first (instant, no AI). Fall back to AI column mapping
+                // only when the headers aren't recognized locally.
+                lines = isCsv
+                    ? await parser.ParseCsvAsync(filePath)
+                    : await parser.ParseExcelAsync(filePath);
 
-            if (lines.Count == 0)
-                lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+                if (lines.Count == 0)
+                    lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+            }
 
             _mainWindowViewModel?.HideLoading();
 
@@ -2594,6 +2645,53 @@ public partial class App : Application
             await usage.IncrementUsageAsync();
 
         return lines;
+    }
+
+    /// <summary>
+    /// Premium-gated PDF bank statement import: checks the license, checks usage, calls the AI
+    /// extractor, shows the confirm-rows modal (Task 7), and increments usage on confirm.
+    /// Returns the approved rows, or an empty list if the user cancels or is gated out.
+    /// </summary>
+    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
+    {
+        // Premium gate: PDF extraction is a premium-only feature.
+        if (LicenseService?.LoadLicense() != true)
+        {
+            // No bank-PDF-specific upgrade prompt exists yet; reusing the general upgrade modal.
+            // TODO: add a ShowBankPdfPremiumPromptAsync method to UpgradePromptHelper once
+            // copy is finalised.
+            App.OpenUpgradeModal();
+            return [];
+        }
+
+        // Usage gate.
+        // TODO: ReceiptUsageService is currently hard-wired to the receipt usage feature key
+        // server-side. Determine with the backend owner whether bank PDF extraction shares the
+        // receipt counter or gets its own feature key, then either keep ReceiptUsageService here
+        // or replace it with a parallel BankImportUsageService with the same shape.
+        using var usage = new ReceiptUsageService(LicenseService, ErrorLogger);
+        var check = await usage.CheckUsageAsync();
+        if (!check.CanScan)
+        {
+            if (check.ErrorMessage != null)
+                await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+            else
+                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+            return [];
+        }
+
+        if (PdfStatementExtractor == null) return [];
+
+        var bytes = await File.ReadAllBytesAsync(filePath);
+        var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
+        if (extracted.Count == 0) return [];
+
+        // Confirm-rows modal (Task 7). Returns the user-approved/edited rows or null on cancel.
+        var approved = await (PdfStatementReviewModalViewModel?.ReviewAsync(extracted) ?? Task.FromResult<List<Core.Models.BankMatching.BankStatementLine>?>(null));
+        if (approved == null) return [];
+
+        await usage.IncrementUsageAsync();
+        return approved;
     }
 
     private static string CreateCompanyDataSnapshot(CompanyData data)

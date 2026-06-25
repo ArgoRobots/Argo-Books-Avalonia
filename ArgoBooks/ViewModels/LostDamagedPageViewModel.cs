@@ -191,6 +191,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     public LostDamagedPageViewModel()
     {
+        Helpers.ColumnVisibilityHelper.SyncToManager(this);
         LoadItems();
 
         // Subscribe to undo/redo state changes to refresh UI

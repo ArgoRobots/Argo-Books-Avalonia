@@ -101,7 +101,9 @@
                                                                 SelectedItem="{Binding ModalSupplier}"
                                                                 DisplayMemberPath="Name"
                                                                 Placeholder="{loc:Loc 'Search suppliers...'}"
-                                                                ShowAddNew="False"
+                                                                ShowAddNew="True"
+                                                                AddNewText="{loc:Loc 'Create new supplier'}"
+                                                                AddNewCommand="{Binding OpenSuppliersWithAddModalCommand}"
                                                                 EmptyMessage="{loc:Loc 'No suppliers available.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create'}"
                                                                 EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
@@ -237,7 +239,9 @@
                                                                 SelectedItem="{Binding ModalSupplier}"
                                                                 DisplayMemberPath="Name"
                                                                 Placeholder="{loc:Loc 'Search suppliers...'}"
-                                                                ShowAddNew="False"
+                                                                ShowAddNew="True"
+                                                                AddNewText="{loc:Loc 'Create new supplier'}"
+                                                                AddNewCommand="{Binding OpenSuppliersWithAddModalCommand}"
                                                                 EmptyMessage="{loc:Loc 'No suppliers available.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create'}"
                                                                 EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />

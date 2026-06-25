@@ -1,0 +1,257 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="1080" d:DesignHeight="700"
+             x:Class="ArgoBooks.Modals.BankStatementImportModal"
+             x:DataType="vm:BankStatementImportModalViewModel">
+
+    <UserControl.Styles>
+        <!-- Expense / Revenue type toggle buttons (mirrors BankMatchingPage type-toggle-button style) -->
+        <Style Selector="Button.type-toggle-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.type-toggle-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.type-toggle-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.type-toggle-button.selected">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.type-toggle-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        </Style>
+        <Style Selector="Button.type-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CancelCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
+                    MaxWidth="1400" MaxHeight="700"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                    Margin="24">
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{loc:Loc 'Import bank statement'}"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button"
+                                    Command="{Binding CancelCommand}">
+                                <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Row list -->
+                    <ScrollViewer Grid.Row="1"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <Grid MinWidth="1320" Margin="24,16,24,30" RowDefinitions="Auto,*">
+
+                            <!-- Column header labels — same column layout as data rows -->
+                            <Grid Grid.Row="0" ColumnDefinitions="28,90,300,120,160,1.5*,1.5*" Margin="0,0,0,6">
+                                <TextBlock Grid.Column="1"
+                                           Text="{loc:Loc Date}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="2" Margin="8,0,0,0"
+                                           Text="{loc:Loc Description}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="3" Margin="8,0,0,0"
+                                           Text="{loc:Loc Amount}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="4" Margin="8,0,0,0"
+                                           Text="{loc:Loc Type}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="5" Margin="8,0,0,0"
+                                           Text="{loc:Loc Category}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="6" Margin="8,0,0,0"
+                                           Text="{loc:Loc 'Supplier / Customer'}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:ImportLineRow">
+                                        <Border Padding="0,4"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <!-- Same column layout as the header row above -->
+                                            <Grid ColumnDefinitions="28,90,300,120,160,1.5*,1.5*">
+
+                                                <!-- Include checkbox -->
+                                                <CheckBox Grid.Column="0"
+                                                          IsChecked="{Binding IsIncluded, Mode=TwoWay}"
+                                                          VerticalAlignment="Center" />
+
+                                                <!-- Date — compact read-only formatted text -->
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding DateFormatted}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center" />
+
+                                                <!-- Description -->
+                                                <TextBox Grid.Column="2" Margin="8,0,0,0"
+                                                         Text="{Binding Description, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         MaxLength="200"
+                                                         HorizontalAlignment="Stretch"
+                                                         VerticalAlignment="Center" />
+
+                                                <!-- Amount — narrow, no spinner buttons -->
+                                                <NumericUpDown Grid.Column="3" Margin="8,0,0,0"
+                                                               Value="{Binding Amount, Mode=TwoWay}"
+                                                               FormatString="F2"
+                                                               ShowButtonSpinner="False"
+                                                               HorizontalAlignment="Stretch"
+                                                               VerticalAlignment="Center" />
+
+                                                <!-- Expense / Revenue toggle -->
+                                                <Border Grid.Column="4" Margin="8,0,0,0"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="6" Padding="4"
+                                                        HorizontalAlignment="Left"
+                                                        VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                                        <Button Content="{loc:Loc Expense}"
+                                                                Command="{Binding SetExpenseCommand}"
+                                                                Classes="type-toggle-button"
+                                                                Classes.selected="{Binding !CreateAsRevenue}"
+                                                                ToolTip.Tip="{loc:Loc 'Create as expense'}" />
+                                                        <Button Content="{loc:Loc Revenue}"
+                                                                Command="{Binding SetRevenueCommand}"
+                                                                Classes="type-toggle-button"
+                                                                Classes.selected="{Binding CreateAsRevenue}"
+                                                                ToolTip.Tip="{loc:Loc 'Create as revenue'}" />
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Category dropdown with inline create -->
+                                                <controls:SearchableDropdown
+                                                    Grid.Column="5" Margin="8,0,0,0"
+                                                    Classes="compact"
+                                                    Placeholder="{loc:Loc 'Category...'}"
+                                                    ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableCategories}"
+                                                    SelectedItem="{Binding ResolvedCategoryObject, Mode=TwoWay}"
+                                                    SearchText="{Binding CategorySearchText, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name"
+                                                    ShowAddNew="True"
+                                                    AddNewText="{loc:Loc 'Create one'}"
+                                                    AddNewCommand="{Binding CreateNewCategoryCommand}"
+                                                    HasError="{Binding HasCategoryError}"
+                                                    ErrorMessage="{loc:Loc 'Please select or create a category.'}"
+                                                    VerticalAlignment="Center" />
+
+                                                <!-- Supplier / Customer column -->
+                                                <Grid Grid.Column="6" Margin="8,0,0,0"
+                                                      VerticalAlignment="Center">
+
+                                                    <!-- Supplier dropdown (expense) -->
+                                                    <controls:SearchableDropdown
+                                                        IsVisible="{Binding !CreateAsRevenue}"
+                                                        Classes="compact"
+                                                        Placeholder="{loc:Loc 'Supplier...'}"
+                                                        ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableSuppliers}"
+                                                        SelectedItem="{Binding ResolvedSupplierObject, Mode=TwoWay}"
+                                                        SearchText="{Binding CounterpartySearchText, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding CreateNewCounterpartyCommand}"
+                                                        HasError="{Binding HasCounterpartyError}"
+                                                        ErrorMessage="{loc:Loc 'Please select or create a supplier.'}" />
+
+                                                    <!-- Customer dropdown (revenue) -->
+                                                    <controls:SearchableDropdown
+                                                        IsVisible="{Binding CreateAsRevenue}"
+                                                        Classes="compact"
+                                                        Placeholder="{loc:Loc 'Customer...'}"
+                                                        ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableCustomers}"
+                                                        SelectedItem="{Binding ResolvedCustomerObject, Mode=TwoWay}"
+                                                        SearchText="{Binding CounterpartySearchText, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding CreateNewCounterpartyCommand}"
+                                                        HasError="{Binding HasCounterpartyError}"
+                                                        ErrorMessage="{loc:Loc 'Please select or create a customer.'}" />
+                                                </Grid>
+
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            </ScrollViewer>
+
+                        </Grid>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{loc:Loc 'Please enter all required fields'}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding HasValidationMessage}" />
+                            <TextBlock Grid.Column="0"
+                                       VerticalAlignment="Center"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       IsVisible="{Binding !HasValidationMessage}"
+                                       Text="{Binding IncludedCountText}" />
+                            <Button Grid.Column="2" Margin="0,0,12,0"
+                                    Content="{loc:Loc Cancel}"
+                                    Classes="secondary-button"
+                                    Command="{Binding CancelCommand}" />
+                            <Button Grid.Column="3"
+                                    Content="{loc:Loc Import}"
+                                    Classes="primary-button"
+                                    Command="{Binding ImportCommand}" />
+                        </Grid>
+                    </Border>
+
+                </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+
+</UserControl>

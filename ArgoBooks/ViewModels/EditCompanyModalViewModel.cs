@@ -4,6 +4,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -141,18 +142,24 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// Whether any changes have been made.
     /// </summary>
     public bool HasChanges =>
-        CompanyName != _originalCompanyName ||
-        BusinessType != _originalBusinessType ||
-        Industry != _originalIndustry ||
+        !StrEq(CompanyName, _originalCompanyName) ||
+        !StrEq(BusinessType, _originalBusinessType) ||
+        !StrEq(Industry, _originalIndustry) ||
         LogoSource != _originalLogo ||
-        PhoneNumber != _originalPhoneNumber ||
+        !StrEq(PhoneNumber, _originalPhoneNumber) ||
         SelectedPhoneCountry != _originalSelectedPhoneCountry ||
-        Country != _originalCountry ||
-        City != _originalCity ||
-        Address != _originalAddress ||
-        ProvinceState != _originalProvinceState ||
-        Email != _originalEmail ||
-        SelectedCurrency != _originalCurrency;
+        !StrEq(Country, _originalCountry) ||
+        !StrEq(City, _originalCity) ||
+        !StrEq(Address, _originalAddress) ||
+        !StrEq(ProvinceState, _originalProvinceState) ||
+        !StrEq(Email, _originalEmail) ||
+        !StrEq(SelectedCurrency, _originalCurrency);
+
+    // Treats null and empty as equal: clearing a field that was originally empty (null)
+    // leaves a "" behind, which must NOT count as a change. A non-empty value vs empty
+    // is still detected as a real change.
+    private static bool StrEq(string? a, string? b) =>
+        string.IsNullOrEmpty(a) ? string.IsNullOrEmpty(b) : string.Equals(a, b, StringComparison.Ordinal);
 
     /// <summary>
     /// Whether the form is valid for saving.
@@ -259,6 +266,36 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         Email = email ?? "";
 
         IsOpen = true;
+
+        // Some TwoWay-bound controls (e.g., ComboBox, CountryInput, PhoneInput) may
+        // write back a normalised or coerced value after the binding settles.
+        // Re-snapshot all originals once the UI thread has processed those updates so
+        // that HasChanges is false immediately after Open(), while still detecting any
+        // genuine change the user makes afterwards.
+        Dispatcher.UIThread.Post(SnapshotOriginals, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// Re-captures the current field values as the baseline for change detection.
+    /// Called once after Open() via a deferred Dispatcher post so that any
+    /// TwoWay binding write-backs from controls (ComboBox normalisation, CountryInput,
+    /// PhoneInput) have already settled before we take the snapshot.
+    /// </summary>
+    private void SnapshotOriginals()
+    {
+        _originalCompanyName = CompanyName;
+        _originalBusinessType = BusinessType;
+        _originalIndustry = Industry;
+        _originalLogo = LogoSource;
+        _originalPhoneNumber = PhoneNumber;
+        _originalSelectedPhoneCountry = SelectedPhoneCountry;
+        _originalCountry = Country;
+        _originalCity = City;
+        _originalAddress = Address;
+        _originalProvinceState = ProvinceState;
+        _originalEmail = Email;
+        _originalCurrency = SelectedCurrency;
+        OnPropertyChanged(nameof(HasChanges));
     }
 
     /// <summary>

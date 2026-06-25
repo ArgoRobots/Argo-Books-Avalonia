@@ -82,6 +82,12 @@ public class CompanyData
     public List<Category> Categories { get; init; } = [];
 
     /// <summary>
+    /// Bank categorization rules for automated bank statement matching.
+    /// </summary>
+    [JsonPropertyName("bankCategoryRules")]
+    public List<Models.BankMatching.BankCategoryRule> BankCategoryRules { get; init; } = [];
+
+    /// <summary>
     /// All accountants.
     /// </summary>
     [JsonPropertyName("accountants")]

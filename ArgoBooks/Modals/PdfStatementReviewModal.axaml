@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:local="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.PdfStatementReviewModal"
+             x:DataType="vm:PdfStatementReviewModalViewModel">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding CancelCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
+                    Width="700" MaxHeight="620"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{loc:Loc 'Review extracted transactions'}"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button"
+                                    Command="{Binding CancelCommand}">
+                                <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Rows list -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24,16">
+                            <!-- Column header labels -->
+                            <Grid ColumnDefinitions="160,*,130,40" Margin="0,0,0,6">
+                                <TextBlock Grid.Column="0"
+                                           Text="{loc:Loc Date}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="1" Margin="8,0,0,0"
+                                           Text="{loc:Loc Description}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="2" Margin="8,0,0,0"
+                                           Text="{loc:Loc Amount}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:PdfRowVm">
+                                        <Grid ColumnDefinitions="160,*,130,40" Margin="0,0,0,6">
+                                            <DatePicker Grid.Column="0"
+                                                        SelectedDate="{Binding Date, Mode=TwoWay}"
+                                                        Classes="form-datepicker"
+                                                        MinWidth="0"
+                                                        HorizontalAlignment="Stretch" />
+                                            <TextBox Grid.Column="1" Margin="8,0,0,0"
+                                                     Text="{Binding Description, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     MaxLength="200" />
+                                            <NumericUpDown Grid.Column="2" Margin="8,0,0,0"
+                                                           Value="{Binding Amount, Mode=TwoWay}"
+                                                           FormatString="F2"
+                                                           HorizontalAlignment="Stretch" />
+                                            <Button Grid.Column="3" Margin="8,0,0,0"
+                                                    Classes="icon-button"
+                                                    Command="{Binding $parent[ItemsControl].((vm:PdfStatementReviewModalViewModel)DataContext).DeleteRowCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <PathIcon Data="{x:Static local:Icons.Close}" Width="14" Height="14" />
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Button Grid.Column="1" Margin="0,0,12,0"
+                                    Content="{loc:Loc Cancel}"
+                                    Classes="secondary-button"
+                                    Command="{Binding CancelCommand}" />
+                            <Button Grid.Column="2"
+                                    Content="{loc:Loc Confirm}"
+                                    Classes="primary-button"
+                                    Command="{Binding ConfirmCommand}" />
+                        </Grid>
+                    </Border>
+
+                </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+
+</UserControl>

@@ -71,6 +71,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string> AddNewTextProperty =
         AvaloniaProperty.Register<SearchableDropdown, string>(nameof(AddNewText), "Add new...");
 
+    public static readonly StyledProperty<ICommand?> AddNewCommandProperty =
+        AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(AddNewCommand));
+
     public static readonly StyledProperty<string?> EmptyMessageProperty =
         AvaloniaProperty.Register<SearchableDropdown, string?>(nameof(EmptyMessage));
 
@@ -334,9 +337,20 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public ICommand SelectItemCommand { get; }
 
     /// <summary>
+    /// Internal command bound to the "Add new" button. Closes the dropdown and
+    /// forwards the current <see cref="SearchText"/> to the consumer's
+    /// <see cref="AddNewCommand"/> as its parameter.
+    /// </summary>
+    public ICommand AddNewInternalCommand { get; }
+
+    /// <summary>
     /// Command executed when "Add new" is clicked.
     /// </summary>
-    public ICommand? AddNewCommand { get; set; }
+    public ICommand? AddNewCommand
+    {
+        get => GetValue(AddNewCommandProperty);
+        set => SetValue(AddNewCommandProperty, value);
+    }
 
     #endregion
 
@@ -344,6 +358,15 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
         SelectItemCommand = new RelayCommand<object>(SelectItem);
+        AddNewInternalCommand = new RelayCommand(() =>
+        {
+            var text = SearchText;
+            IsDropdownOpen = false;
+            AddNewCommand?.Execute(text);
+            // The consumer command may set SearchText (showing the pending new name),
+            // which re-opens the dropdown via OnSearchTextChanged. Close it again.
+            IsDropdownOpen = false;
+        });
 
         InitializeComponent();
     }
