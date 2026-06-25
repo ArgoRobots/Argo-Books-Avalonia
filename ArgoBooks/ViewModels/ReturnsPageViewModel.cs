@@ -199,6 +199,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     public ReturnsPageViewModel()
     {
+        Helpers.ColumnVisibilityHelper.SyncToManager(this);
         LoadReturns();
 
         // Subscribe to undo/redo state changes to refresh UI
