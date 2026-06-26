@@ -160,7 +160,7 @@ Rules:
                 return ReceiptScanResult.Failed("File not found.");
             }
 
-            var imageData = await File.ReadAllBytesAsync(filePath, cancellationToken);
+            var imageData = await SharedFileReader.ReadAllBytesAsync(filePath, cancellationToken);
             var fileName = Path.GetFileName(filePath);
             return await ScanReceiptAsync(imageData, fileName, cancellationToken);
         }

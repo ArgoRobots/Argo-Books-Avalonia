@@ -764,7 +764,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         {
             try
             {
-                var bytes = File.ReadAllBytes(ReceiptFilePath);
+                var bytes = SharedFileReader.ReadAllBytes(ReceiptFilePath);
                 fileData = Convert.ToBase64String(bytes);
             }
             catch (Exception ex)

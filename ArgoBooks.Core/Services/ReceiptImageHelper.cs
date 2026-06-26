@@ -237,7 +237,7 @@ public static class ReceiptImageHelper
         // Phone JPEGs encode rotation in EXIF rather than re-encoding the pixels, so
         // portrait photos would otherwise end up sideways at the avatar size.
         SKEncodedOrigin origin;
-        using (var orientationStream = File.OpenRead(sourcePath))
+        using (var orientationStream = SharedFileReader.OpenRead(sourcePath))
         using (var codec = SKCodec.Create(orientationStream))
         {
             if (codec == null)

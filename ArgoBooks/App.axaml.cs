@@ -2682,7 +2682,7 @@ public partial class App : Application
 
         if (PdfStatementExtractor == null) return [];
 
-        var bytes = await File.ReadAllBytesAsync(filePath);
+        var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
         var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
         if (extracted.Count == 0) return [];
 

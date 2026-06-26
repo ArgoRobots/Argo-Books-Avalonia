@@ -768,7 +768,7 @@ public class PaymentPortalService : IDisposable
 
         try
         {
-            var fileBytes = await File.ReadAllBytesAsync(logoFilePath, cancellationToken);
+            var fileBytes = await SharedFileReader.ReadAllBytesAsync(logoFilePath, cancellationToken);
             var fileName = Path.GetFileName(logoFilePath);
             var extension = Path.GetExtension(logoFilePath).ToLowerInvariant();
             var contentType = extension switch

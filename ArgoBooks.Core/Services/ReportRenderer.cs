@@ -3126,7 +3126,7 @@ public class ReportRenderer : IDisposable
 
                 if (File.Exists(resolvedPath))
                 {
-                    using var stream = File.OpenRead(resolvedPath);
+                    using var stream = SharedFileReader.OpenRead(resolvedPath);
                     using var bitmap = SKBitmap.Decode(stream);
 
                     if (bitmap != null)
@@ -3744,7 +3744,7 @@ public class ReportRenderer : IDisposable
         {
             try
             {
-                using var stream = File.OpenRead(logoPath!);
+                using var stream = SharedFileReader.OpenRead(logoPath!);
                 using var bitmap = SKBitmap.Decode(stream);
                 if (bitmap != null)
                 {

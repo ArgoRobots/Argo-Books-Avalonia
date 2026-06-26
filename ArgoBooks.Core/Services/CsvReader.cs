@@ -22,7 +22,7 @@ public static class CsvReader
             DetectColumnCountChanges = false,
         };
 
-        using var reader = new StreamReader(path, detectEncodingFromByteOrderMarks: true);
+        using var reader = OpenSharedReader(path);
         using var csv = new CsvParser(reader, config);
 
         var all = new List<string[]>();
@@ -38,10 +38,20 @@ public static class CsvReader
 
     private static char DetectDelimiter(string path)
     {
-        using var reader = new StreamReader(path, detectEncodingFromByteOrderMarks: true);
+        using var reader = OpenSharedReader(path);
         string? first;
         do { first = reader.ReadLine(); }
         while (first != null && string.IsNullOrWhiteSpace(first));
         return SpreadsheetAnalysisService.DetectCsvDelimiter(first ?? "");
+    }
+
+    /// <summary>
+    /// Opens the file with FileShare.ReadWrite so it can still be read while it is open in
+    /// another program (Excel, LibreOffice, etc.) instead of failing with a sharing violation.
+    /// </summary>
+    private static StreamReader OpenSharedReader(string path)
+    {
+        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        return new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
     }
 }

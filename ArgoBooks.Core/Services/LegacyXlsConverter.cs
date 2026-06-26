@@ -36,7 +36,8 @@ public static class LegacyXlsConverter
         if (string.IsNullOrWhiteSpace(xlsPath))
             throw new ArgumentException("Path must not be empty.", nameof(xlsPath));
 
-        using var inStream = File.OpenRead(xlsPath);
+        // FileShare.ReadWrite so a .xls still converts/imports while it's open in Excel.
+        using var inStream = new FileStream(xlsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var source = new HSSFWorkbook(inStream);
 
         using var output = new XLWorkbook();

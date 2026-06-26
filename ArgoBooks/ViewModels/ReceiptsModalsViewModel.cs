@@ -808,7 +808,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         try
         {
-            var fileData = await File.ReadAllBytesAsync(item.FilePath);
+            var fileData = await SharedFileReader.ReadAllBytesAsync(item.FilePath);
             var isPdf = item.IsPdf;
 
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "BulkScanPreview");
@@ -981,7 +981,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 item.Status = BulkScanStatus.Scanning);
 
             // 1. Read file
-            item.FileData = await File.ReadAllBytesAsync(item.FilePath, token);
+            item.FileData = await SharedFileReader.ReadAllBytesAsync(item.FilePath, token);
             var isPdf = item.IsPdf;
             var fileData = item.FileData;
             var fileName = item.FileName;
@@ -1599,7 +1599,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         try
         {
-            var imageData = await File.ReadAllBytesAsync(filePath);
+            var imageData = await SharedFileReader.ReadAllBytesAsync(filePath);
             var fileName = Path.GetFileName(filePath);
             await OpenScanModalWithDataAsync(imageData, fileName, filePath);
         }

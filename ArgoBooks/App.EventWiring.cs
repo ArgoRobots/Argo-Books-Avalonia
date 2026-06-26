@@ -762,7 +762,7 @@ public partial class App
                     var oldLogoFilePath = CompanyManager.CurrentCompanyLogoPath;
                     if (!string.IsNullOrEmpty(oldLogoFilePath) && File.Exists(oldLogoFilePath))
                     {
-                        oldLogoBytes = await Task.Run(() => File.ReadAllBytes(oldLogoFilePath));
+                        oldLogoBytes = await Task.Run(() => SharedFileReader.ReadAllBytes(oldLogoFilePath));
                     }
 
                     var nameChanged = oldName != args.CompanyName;
@@ -795,7 +795,7 @@ public partial class App
                     var newLogoFilePath = CompanyManager.CurrentCompanyLogoPath;
                     if (!string.IsNullOrEmpty(newLogoFilePath) && File.Exists(newLogoFilePath))
                     {
-                        newLogoBytes = await Task.Run(() => File.ReadAllBytes(newLogoFilePath));
+                        newLogoBytes = await Task.Run(() => SharedFileReader.ReadAllBytes(newLogoFilePath));
                     }
 
                     // Derive temp directory for logo file operations during undo/redo
