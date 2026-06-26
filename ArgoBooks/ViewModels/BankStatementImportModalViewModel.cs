@@ -52,6 +52,23 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     public ObservableCollection<Supplier> AvailableSuppliers { get; } = [];
     public ObservableCollection<Customer> AvailableCustomers { get; } = [];
 
+    // --- Pending-product editor (opened from a row's "New" chip or "Create one") ---------------
+    // Edits a row's pending new product (name + category) without creating any entity; everything
+    // is applied to the row and only materialized when the statement is imported.
+    public ObservableCollection<Category> ProductEditorCategories { get; } = [];
+    private ImportLineRow? _editingRow;
+
+    [ObservableProperty] private bool _isProductEditorOpen;
+    [ObservableProperty] private string _productEditorName = string.Empty;
+    [ObservableProperty] private Category? _productEditorCategoryObject;
+    [ObservableProperty] private string? _productEditorCategorySearchText;
+    [ObservableProperty] private bool _productEditorNameError;
+
+    partial void OnProductEditorNameChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value)) ProductEditorNameError = false;
+    }
+
     // -----------------------------------------------------------------------
     // Entry point
     // -----------------------------------------------------------------------
@@ -462,7 +479,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         foreach (var line in lines)
         {
             var row = new ImportLineRow(line) { Index = index++ };
-            row.OpenCreateProduct = () => OpenCreateProductForRow(row);
+            row.OpenCreateProduct = () => OpenProductEditor(row);
             row.OpenCreateCounterparty = () => OpenCreateCounterpartyForRow(row);
             row.ProductCategoryNameLookup = p => data != null ? CategoryNameFor(data, p) : null;
 
@@ -555,48 +572,83 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Opens the standard Product create modal. When saved, reloads products and selects the
-    /// newly created one on <paramref name="row"/> (so its category becomes read-only/inherited).
+    /// Opens the lightweight editor for a row's pending new product. Lets the user set the product
+    /// name and category (an existing category, or a new name created on import) without touching the
+    /// shared product modal and without creating any entity until the statement is actually imported.
     /// </summary>
-    private void OpenCreateProductForRow(ImportLineRow row)
+    private void OpenProductEditor(ImportLineRow row)
     {
-        var productModals = App.ProductModalsViewModel;
         var data = App.CompanyManager?.CompanyData;
-        if (productModals == null || data == null) return;
+        if (data == null) return;
 
-        var knownIds = data.Products.Select(p => p.Id).ToHashSet();
+        _editingRow = row;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            ReloadProducts();
+        // Offer categories matching the row's type (expense vs revenue).
+        var type = row.CreateAsRevenue ? CategoryType.Revenue : CategoryType.Expense;
+        ProductEditorCategories.Clear();
+        foreach (var c in data.Categories.Where(c => c.Type == type).OrderBy(c => c.Name))
+            ProductEditorCategories.Add(c);
 
-            var newProduct = data.Products.FirstOrDefault(p => !knownIds.Contains(p.Id));
-            if (newProduct != null)
-                row.SetExistingProduct(newProduct, CategoryNameFor(data, newProduct));
-        }
+        ProductEditorNameError = false;
+        ProductEditorName = (row.IsNewProduct ? row.NewProductName : row.ProductSearchText) ?? string.Empty;
 
-        productModals.ProductSaved += OnSaved;
-        productModals.OpenAddModal(isExpensesTab: !row.CreateAsRevenue);
-
-        // Pre-fill the form with the AI-proposed (or typed) product so the user edits it rather
-        // than starting from a blank modal. The product doesn't exist yet (it's created on import),
-        // so this is the create modal seeded with the pending values.
-        var presetName = row.IsNewProduct ? row.NewProductName : row.ProductSearchText;
-        if (!string.IsNullOrWhiteSpace(presetName))
-            productModals.ModalProductName = presetName!.Trim();
-
-        // Pre-select the category only when it already exists; a brand-new category is picked/created in the modal.
+        // Seed the category: an existing one as a real selection, otherwise the pending new name as text.
         if (row.NewProductCategoryId != null)
-            productModals.ModalCategoryId = row.NewProductCategoryId;
-
-        // For an AI-proposed product, relabel the (shared) create modal so it reads as editing the
-        // suggestion rather than adding from scratch. Other callers keep the default "Add" labels.
-        if (row.IsNewProduct)
         {
-            productModals.AddModalTitle = "Edit product/service".Translate();
-            productModals.AddModalSaveText = "Save".Translate();
+            ProductEditorCategoryObject = ProductEditorCategories.FirstOrDefault(c => c.Id == row.NewProductCategoryId);
+            ProductEditorCategorySearchText = ProductEditorCategoryObject?.Name;
         }
+        else
+        {
+            ProductEditorCategoryObject = null;
+            ProductEditorCategorySearchText = row.NewProductCategoryName ?? row.CategoryDisplay;
+        }
+
+        IsProductEditorOpen = true;
+    }
+
+    [RelayCommand]
+    private void SaveProductEditor()
+    {
+        var row = _editingRow;
+        if (row == null) return;
+
+        var name = (ProductEditorName ?? string.Empty).Trim();
+        if (name.Length == 0)
+        {
+            ProductEditorNameError = true;
+            return;
+        }
+
+        // An explicit selection wins; otherwise treat typed text as an existing category (matched by
+        // name) or, failing that, a brand-new category to be created when the statement is imported.
+        string? categoryId = ProductEditorCategoryObject?.Id;
+        string? newCategoryName = null;
+        string? categoryDisplay = ProductEditorCategoryObject?.Name;
+
+        if (categoryId == null)
+        {
+            var typed = (ProductEditorCategorySearchText ?? string.Empty).Trim();
+            if (typed.Length > 0)
+            {
+                var match = ProductEditorCategories.FirstOrDefault(c => string.Equals(c.Name, typed, StringComparison.OrdinalIgnoreCase));
+                if (match != null) { categoryId = match.Id; categoryDisplay = match.Name; }
+                else { newCategoryName = typed; categoryDisplay = typed; }
+            }
+        }
+
+        row.SetNewProduct(name, categoryId, newCategoryName, categoryDisplay);
+
+        IsProductEditorOpen = false;
+        _editingRow = null;
+        RefreshState();
+    }
+
+    [RelayCommand]
+    private void CancelProductEditor()
+    {
+        IsProductEditorOpen = false;
+        _editingRow = null;
     }
 
     /// <summary>

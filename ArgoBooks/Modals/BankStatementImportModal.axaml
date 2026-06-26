@@ -72,6 +72,7 @@
         </Style>
     </UserControl.Styles>
 
+    <Panel>
     <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                            ClosingCommand="{Binding CancelCommand}">
         <controls:ModalOverlay.ModalContent>
@@ -160,8 +161,9 @@
                                         <Border Padding="0,4"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <!-- Same column layout as the header row above (trailing 16px = scrollbar gutter) -->
-                                            <Grid ColumnDefinitions="28,90,245,110,165,250,16">
+                                            <!-- Same column layout as the header row above (trailing 16px = scrollbar gutter).
+                                                 Row 0 holds the aligned controls; row 1 holds the category chip under the product. -->
+                                            <Grid ColumnDefinitions="28,90,245,110,165,250,16" RowDefinitions="Auto,Auto">
 
                                                 <!-- Include checkbox -->
                                                 <CheckBox Grid.Column="0"
@@ -175,46 +177,45 @@
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center" />
 
-                                                <!-- Product (carries the category) + read-only category chip -->
-                                                <StackPanel Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center" Spacing="2">
-                                                    <controls:SearchableDropdown
-                                                        Classes="compact"
-                                                        Placeholder="{loc:Loc 'Product...'}"
-                                                        ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableProducts}"
-                                                        SelectedItem="{Binding ResolvedProductObject, Mode=TwoWay}"
-                                                        SearchText="{Binding ProductSearchText, Mode=TwoWay}"
-                                                        DisplayMemberPath="Name"
-                                                        ShowAddNew="True"
-                                                        AddNewText="{loc:Loc 'Create one'}"
-                                                        AddNewCommand="{Binding CreateNewProductCommand}"
-                                                        HasError="{Binding HasProductError}"
-                                                        ErrorMessage="{loc:Loc 'Please select or create a product.'}" />
+                                                <!-- Product (carries the category) -->
+                                                <controls:SearchableDropdown
+                                                    Grid.Row="0" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                    Classes="compact"
+                                                    Placeholder="{loc:Loc 'Product...'}"
+                                                    ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableProducts}"
+                                                    SelectedItem="{Binding ResolvedProductObject, Mode=TwoWay}"
+                                                    SearchText="{Binding ProductSearchText, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name"
+                                                    ShowAddNew="True"
+                                                    AddNewText="{loc:Loc 'Create one'}"
+                                                    AddNewCommand="{Binding CreateNewProductCommand}"
+                                                    HasError="{Binding HasProductError}"
+                                                    ErrorMessage="{loc:Loc 'Please select or create a product.'}" />
 
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <!-- New product: clickable category chip (opens create-product to set its category) -->
-                                                        <Button IsVisible="{Binding IsNewProduct}"
-                                                                Classes="category-chip-button"
-                                                                Command="{Binding CreateNewProductCommand}"
-                                                                ToolTip.Tip="{loc:Loc 'New product. Click to set its category.'}">
-                                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                                <TextBlock Text="{loc:Loc 'New'}" FontSize="10" FontWeight="SemiBold"
-                                                                           Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" />
-                                                                <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
-                                                            </StackPanel>
-                                                        </Button>
-                                                        <!-- Existing product: read-only category chip -->
-                                                        <Border Classes="category-chip">
-                                                            <Border.IsVisible>
-                                                                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                                    <Binding Path="!IsNewProduct" />
-                                                                    <Binding Path="CategoryDisplay" Converter="{x:Static StringConverters.IsNotNullOrEmpty}" />
-                                                                </MultiBinding>
-                                                            </Border.IsVisible>
-                                                            <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                        </Border>
-                                                    </StackPanel>
+                                                <!-- Category chip under the product (new = click to edit, existing = read-only) -->
+                                                <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="8,2,0,0">
+                                                    <!-- New product: click to edit its name and category -->
+                                                    <Button IsVisible="{Binding IsNewProduct}"
+                                                            Classes="category-chip-button"
+                                                            Command="{Binding CreateNewProductCommand}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                                            <TextBlock Text="{loc:Loc 'New'}" FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" />
+                                                            <TextBlock Text="{loc:Loc 'click to edit'}" FontSize="11"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <!-- Existing product: read-only category chip -->
+                                                    <Border Classes="category-chip">
+                                                        <Border.IsVisible>
+                                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                                <Binding Path="!IsNewProduct" />
+                                                                <Binding Path="CategoryDisplay" Converter="{x:Static StringConverters.IsNotNullOrEmpty}" />
+                                                            </MultiBinding>
+                                                        </Border.IsVisible>
+                                                        <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </Border>
                                                 </StackPanel>
 
                                                 <!-- Amount — narrow, no spinner buttons -->
@@ -226,23 +227,26 @@
                                                                VerticalAlignment="Center" />
 
                                                 <!-- Expense / Revenue toggle -->
-                                                <Border Grid.Column="4" Margin="8,0,0,0"
+                                                <Border Grid.Row="0" Grid.Column="4" Margin="8,0,0,0"
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         CornerRadius="6" Padding="4"
-                                                        HorizontalAlignment="Left"
+                                                        HorizontalAlignment="Stretch"
                                                         VerticalAlignment="Center">
-                                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                                    <UniformGrid Columns="2">
                                                         <Button Content="{loc:Loc Expense}"
                                                                 Command="{Binding SetExpenseCommand}"
                                                                 Classes="type-toggle-button"
+                                                                HorizontalAlignment="Stretch"
                                                                 Classes.selected="{Binding !CreateAsRevenue}"
                                                                 ToolTip.Tip="{loc:Loc 'Create as expense'}" />
                                                         <Button Content="{loc:Loc Revenue}"
                                                                 Command="{Binding SetRevenueCommand}"
                                                                 Classes="type-toggle-button"
+                                                                HorizontalAlignment="Stretch"
+                                                                Margin="2,0,0,0"
                                                                 Classes.selected="{Binding CreateAsRevenue}"
                                                                 ToolTip.Tip="{loc:Loc 'Create as revenue'}" />
-                                                    </StackPanel>
+                                                    </UniformGrid>
                                                 </Border>
 
                                                 <!-- Category is shown read-only on the Product cell; it follows the selected product. -->
@@ -263,6 +267,8 @@
                                                         ShowAddNew="True"
                                                         AddNewText="{loc:Loc 'Create one'}"
                                                         AddNewCommand="{Binding CreateNewCounterpartyCommand}"
+                                                        EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                        EmptyCreateCommand="{Binding CreateNewCounterpartyCommand}"
                                                         HasError="{Binding HasCounterpartyError}"
                                                         ErrorMessage="{loc:Loc 'Please select or create a supplier.'}" />
 
@@ -278,6 +284,8 @@
                                                         ShowAddNew="True"
                                                         AddNewText="{loc:Loc 'Create one'}"
                                                         AddNewCommand="{Binding CreateNewCounterpartyCommand}"
+                                                        EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                        EmptyCreateCommand="{Binding CreateNewCounterpartyCommand}"
                                                         HasError="{Binding HasCounterpartyError}"
                                                         ErrorMessage="{loc:Loc 'Please select or create a customer.'}" />
                                                 </Grid>
@@ -308,8 +316,14 @@
                                        VerticalAlignment="Center"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
-                                       IsVisible="{Binding !HasValidationMessage}"
-                                       Text="{Binding IncludedCountText}" />
+                                       Text="{Binding IncludedCountText}">
+                                <TextBlock.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!HasValidationMessage" />
+                                        <Binding Path="!IsLoading" />
+                                    </MultiBinding>
+                                </TextBlock.IsVisible>
+                            </TextBlock>
                             <TextBlock Grid.Column="1" Margin="16,0,0,0"
                                        Text="{Binding AiUnavailableMessage}"
                                        FontSize="12"
@@ -334,5 +348,55 @@
             </Border>
         </controls:ModalOverlay.ModalContent>
     </controls:ModalOverlay>
+
+    <!-- Pending-product editor: set a new product's name + category without creating anything until import -->
+    <controls:ModalOverlay IsOpen="{Binding IsProductEditorOpen}"
+                           ClosingCommand="{Binding CancelProductEditorCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
+                    Width="420" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="24">
+                <StackPanel Margin="24" Spacing="18">
+                    <TextBlock Text="{loc:Loc 'Edit product'}" FontSize="18" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{loc:Loc 'Product'}" FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBox Text="{Binding ProductEditorName, Mode=TwoWay}"
+                                 Classes="form-input"
+                                 PlaceholderText="{loc:Loc 'Product name'}"
+                                 MaxLength="100" />
+                        <TextBlock Text="{loc:Loc 'Please enter a product name.'}" FontSize="12"
+                                   Foreground="{DynamicResource ErrorBrush}"
+                                   IsVisible="{Binding ProductEditorNameError}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{loc:Loc 'Category'}" FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <controls:SearchableDropdown
+                            ItemsSource="{Binding ProductEditorCategories}"
+                            SelectedItem="{Binding ProductEditorCategoryObject, Mode=TwoWay}"
+                            SearchText="{Binding ProductEditorCategorySearchText, Mode=TwoWay}"
+                            DisplayMemberPath="Name"
+                            Placeholder="{loc:Loc 'Select or type a new category...'}" />
+                        <TextBlock Text="{loc:Loc 'Type a new name to create a category on import.'}"
+                                   FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                        <Button Classes="secondary-button" Content="{loc:Loc Cancel}"
+                                Command="{Binding CancelProductEditorCommand}" />
+                        <Button Classes="primary-button" Content="{loc:Loc Save}"
+                                Command="{Binding SaveProductEditorCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+    </Panel>
 
 </UserControl>
