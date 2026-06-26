@@ -133,11 +133,20 @@
                    Text="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                    IsVisible="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
+        <!-- Only reserve the message line when there's actually a message; HasError alone still
+             shows the red border, so callers can render the message elsewhere without growing this control. -->
         <TextBlock FontSize="12"
                    Margin="0,2,0,0"
                    Foreground="{DynamicResource ErrorBrush}"
-                   Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                   IsVisible="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+                   Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+            <TextBlock.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="HasError" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
+                    <Binding Path="ErrorMessage" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}"
+                             Converter="{x:Static StringConverters.IsNotNullOrEmpty}" />
+                </MultiBinding>
+            </TextBlock.IsVisible>
+        </TextBlock>
     </StackPanel>
 
     <!-- Dropdown Popup (outside StackPanel to avoid phantom spacing) -->

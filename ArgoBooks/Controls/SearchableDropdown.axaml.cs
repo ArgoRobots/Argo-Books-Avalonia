@@ -281,7 +281,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets whether to show the empty create link (no items and command is set).
     /// </summary>
-    public bool ShowEmptyCreate => !HasItems && EmptyCreateCommand != null;
+    public bool ShowEmptyCreate => !HasItems && EmptyCreateCommand != null && string.IsNullOrWhiteSpace(SearchText);
 
     /// <summary>
     /// Gets the currently highlighted item for keyboard navigation.
@@ -394,6 +394,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         else if (change.Property == SearchTextProperty)
         {
             OnSearchTextChanged();
+            // The empty-create link should give way to whatever the field already holds (a typed
+            // value or an AI-suggested name), so the value isn't hidden behind "Create one".
+            RaisePropertyChanged(nameof(ShowEmptyCreate));
         }
         else if (change.Property == SelectedItemProperty)
         {

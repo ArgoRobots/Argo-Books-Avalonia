@@ -189,8 +189,7 @@
                                                     ShowAddNew="True"
                                                     AddNewText="{loc:Loc 'Create one'}"
                                                     AddNewCommand="{Binding CreateNewProductCommand}"
-                                                    HasError="{Binding HasProductError}"
-                                                    ErrorMessage="{loc:Loc 'Please select or create a product.'}" />
+                                                    HasError="{Binding HasProductError}" />
 
                                                 <!-- Category chip under the product (new = click to edit, existing = read-only) -->
                                                 <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="8,2,0,0">
@@ -216,6 +215,11 @@
                                                         <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                                     </Border>
+                                                    <!-- Validation message here (not inside the picker) so it doesn't push the picker up -->
+                                                    <TextBlock Text="{loc:Loc 'Please select or create a product.'}"
+                                                               FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding HasProductError}" />
                                                 </StackPanel>
 
                                                 <!-- Amount — narrow, no spinner buttons -->
@@ -252,7 +256,7 @@
                                                 <!-- Category is shown read-only on the Product cell; it follows the selected product. -->
 
                                                 <!-- Supplier / Customer column -->
-                                                <Grid Grid.Column="5" Margin="8,0,0,0"
+                                                <Grid Grid.Row="0" Grid.Column="5" Margin="8,0,0,0"
                                                       VerticalAlignment="Center">
 
                                                     <!-- Supplier dropdown (expense) -->
@@ -269,8 +273,7 @@
                                                         AddNewCommand="{Binding CreateNewCounterpartyCommand}"
                                                         EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                         EmptyCreateCommand="{Binding CreateNewCounterpartyCommand}"
-                                                        HasError="{Binding HasCounterpartyError}"
-                                                        ErrorMessage="{loc:Loc 'Please select or create a supplier.'}" />
+                                                        HasError="{Binding HasCounterpartyError}" />
 
                                                     <!-- Customer dropdown (revenue) -->
                                                     <controls:SearchableDropdown
@@ -286,9 +289,19 @@
                                                         AddNewCommand="{Binding CreateNewCounterpartyCommand}"
                                                         EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                         EmptyCreateCommand="{Binding CreateNewCounterpartyCommand}"
-                                                        HasError="{Binding HasCounterpartyError}"
-                                                        ErrorMessage="{loc:Loc 'Please select or create a customer.'}" />
+                                                        HasError="{Binding HasCounterpartyError}" />
                                                 </Grid>
+
+                                                <!-- Counterparty validation (row 1, so it doesn't push the picker up) -->
+                                                <StackPanel Grid.Row="1" Grid.Column="5" Margin="8,2,0,0"
+                                                            IsVisible="{Binding HasCounterpartyError}">
+                                                    <TextBlock Text="{loc:Loc 'Please select or create a supplier.'}"
+                                                               FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                                               IsVisible="{Binding !CreateAsRevenue}" />
+                                                    <TextBlock Text="{loc:Loc 'Please select or create a customer.'}"
+                                                               FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                                               IsVisible="{Binding CreateAsRevenue}" />
+                                                </StackPanel>
 
                                             </Grid>
                                         </Border>
