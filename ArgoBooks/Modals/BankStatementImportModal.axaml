@@ -292,15 +292,36 @@
                                                         HasError="{Binding HasCounterpartyError}" />
                                                 </Grid>
 
-                                                <!-- Counterparty validation (row 1, so it doesn't push the picker up) -->
-                                                <StackPanel Grid.Row="1" Grid.Column="5" Margin="8,2,0,0"
-                                                            IsVisible="{Binding HasCounterpartyError}">
+                                                <!-- Under the supplier/customer picker (row 1): a "New" badge for a to-be-created
+                                                     party, or the validation message. These are mutually exclusive. -->
+                                                <StackPanel Grid.Row="1" Grid.Column="5" Orientation="Horizontal" Spacing="6" Margin="8,2,0,0">
+                                                    <!-- New counterparty: will be created on import -->
+                                                    <Border Classes="category-chip"
+                                                            IsVisible="{Binding NewCounterpartyName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                        <TextBlock Text="{loc:Loc 'New'}" FontSize="10" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource PrimaryBrush}" />
+                                                    </Border>
+                                                    <!-- Validation -->
                                                     <TextBlock Text="{loc:Loc 'Please select or create a supplier.'}"
                                                                FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                                               IsVisible="{Binding !CreateAsRevenue}" />
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.IsVisible>
+                                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                                <Binding Path="HasCounterpartyError" />
+                                                                <Binding Path="!CreateAsRevenue" />
+                                                            </MultiBinding>
+                                                        </TextBlock.IsVisible>
+                                                    </TextBlock>
                                                     <TextBlock Text="{loc:Loc 'Please select or create a customer.'}"
                                                                FontSize="12" Foreground="{DynamicResource ErrorBrush}"
-                                                               IsVisible="{Binding CreateAsRevenue}" />
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.IsVisible>
+                                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                                <Binding Path="HasCounterpartyError" />
+                                                                <Binding Path="CreateAsRevenue" />
+                                                            </MultiBinding>
+                                                        </TextBlock.IsVisible>
+                                                    </TextBlock>
                                                 </StackPanel>
 
                                             </Grid>
