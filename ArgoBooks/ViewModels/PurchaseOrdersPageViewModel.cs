@@ -760,15 +760,15 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// </summary>
     public string StatusColor => Status switch
     {
-        PurchaseOrderStatus.Draft => AppColors.GrayMedium,
-        PurchaseOrderStatus.Pending => AppColors.Warning,
-        PurchaseOrderStatus.Approved => AppColors.Primary,
-        PurchaseOrderStatus.Sent => AppColors.Violet,
-        PurchaseOrderStatus.OnOrder => AppColors.Violet,
-        PurchaseOrderStatus.PartiallyReceived => AppColors.Warning,
-        PurchaseOrderStatus.Received => AppColors.Success,
-        PurchaseOrderStatus.Cancelled => AppColors.ExpenseRed,
-        _ => AppColors.GrayMedium
+        PurchaseOrderStatus.Draft => AppColors.GrayText,
+        PurchaseOrderStatus.Pending => AppColors.WarningText,
+        PurchaseOrderStatus.Approved => AppColors.PrimaryText,
+        PurchaseOrderStatus.Sent => AppColors.VioletHover,
+        PurchaseOrderStatus.OnOrder => AppColors.VioletHover,
+        PurchaseOrderStatus.PartiallyReceived => AppColors.WarningText,
+        PurchaseOrderStatus.Received => AppColors.SuccessText,
+        PurchaseOrderStatus.Cancelled => AppColors.Error,
+        _ => AppColors.GrayText
     };
 
     /// <summary>

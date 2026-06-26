@@ -3481,11 +3481,15 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Check for existing product by ID first
             productsById.TryGetValue(id, out var existing);
 
-            // Match by name for auto-created placeholder products (created from foreign key references)
+            // Match by name only to adopt an auto-created placeholder product (created from a
+            // foreign key reference; these always carry a "PRD-IMP-" id). Two real products that
+            // share a name but have their own explicit ids must stay distinct, otherwise the second
+            // row would overwrite the first one's id below and orphan anything referencing it
+            // (e.g. a sellable product vs its purchase-side twin both named "ProBook 5500 Laptop").
             if (existing == null && !string.IsNullOrEmpty(name))
             {
                 productsByName.TryGetValue(name, out var placeholder);
-                if (placeholder != null)
+                if (placeholder != null && placeholder.Id.StartsWith("PRD-IMP-", StringComparison.OrdinalIgnoreCase))
                     existing = placeholder;
             }
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
