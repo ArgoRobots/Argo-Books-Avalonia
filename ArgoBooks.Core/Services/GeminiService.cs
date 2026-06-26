@@ -94,7 +94,10 @@ public class GeminiService : IGeminiService, IDisposable
         try
         {
             var prompt = BuildBankLinePrompt(request);
-            var maxTokens = Math.Min(8000, 400 + request.Lines.Count * 120);
+            // gemini-2.5-flash spends hidden "thinking" tokens out of maxOutputTokens, so the
+            // budget must comfortably cover thinking plus the JSON output or the response comes
+            // back empty (finishReason=MAX_TOKENS). Be generous; the model only uses what it needs.
+            var maxTokens = Math.Min(16000, 4000 + request.Lines.Count * 250);
             var response = await SendApiRequestAsync(
                 "You categorize business bank statement lines. Always respond with valid JSON only, no markdown.",
                 prompt,

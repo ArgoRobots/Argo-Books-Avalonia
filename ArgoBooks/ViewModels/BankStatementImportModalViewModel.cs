@@ -578,6 +578,25 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         productModals.ProductSaved += OnSaved;
         productModals.OpenAddModal(isExpensesTab: !row.CreateAsRevenue);
+
+        // Pre-fill the form with the AI-proposed (or typed) product so the user edits it rather
+        // than starting from a blank modal. The product doesn't exist yet (it's created on import),
+        // so this is the create modal seeded with the pending values.
+        var presetName = row.IsNewProduct ? row.NewProductName : row.ProductSearchText;
+        if (!string.IsNullOrWhiteSpace(presetName))
+            productModals.ModalProductName = presetName!.Trim();
+
+        // Pre-select the category only when it already exists; a brand-new category is picked/created in the modal.
+        if (row.NewProductCategoryId != null)
+            productModals.ModalCategoryId = row.NewProductCategoryId;
+
+        // For an AI-proposed product, relabel the (shared) create modal so it reads as editing the
+        // suggestion rather than adding from scratch. Other callers keep the default "Add" labels.
+        if (row.IsNewProduct)
+        {
+            productModals.AddModalTitle = "Edit product/service".Translate();
+            productModals.AddModalSaveText = "Save".Translate();
+        }
     }
 
     /// <summary>

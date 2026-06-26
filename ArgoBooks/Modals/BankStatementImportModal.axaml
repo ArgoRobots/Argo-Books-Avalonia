@@ -128,7 +128,7 @@
 
                             <!-- Column header labels — same column layout as data rows.
                                  Trailing 16px column is a gutter so the row scrollbar doesn't overlap the Supplier/Customer box. -->
-                            <Grid Grid.Row="0" ColumnDefinitions="28,90,260,110,150,250,16" Margin="0,0,0,6">
+                            <Grid Grid.Row="0" ColumnDefinitions="28,90,245,110,165,250,16" Margin="0,0,0,6">
                                 <TextBlock Grid.Column="1"
                                            Text="{loc:Loc Date}"
                                            FontSize="12" FontWeight="SemiBold"
@@ -161,7 +161,7 @@
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
                                             <!-- Same column layout as the header row above (trailing 16px = scrollbar gutter) -->
-                                            <Grid ColumnDefinitions="28,90,260,110,150,250,16">
+                                            <Grid ColumnDefinitions="28,90,245,110,165,250,16">
 
                                                 <!-- Include checkbox -->
                                                 <CheckBox Grid.Column="0"
@@ -175,7 +175,7 @@
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center" />
 
-                                                <!-- Product (carries the category) + read-only category chip + original bank text -->
+                                                <!-- Product (carries the category) + read-only category chip -->
                                                 <StackPanel Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center" Spacing="2">
                                                     <controls:SearchableDropdown
                                                         Classes="compact"
@@ -214,10 +214,6 @@
                                                             <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                                         </Border>
-                                                        <!-- Original bank statement text -->
-                                                        <TextBlock Text="{Binding RawDescription}" FontSize="11"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                                     </StackPanel>
                                                 </StackPanel>
 
@@ -329,6 +325,7 @@
                             <Button Grid.Column="3"
                                     Content="{loc:Loc Import}"
                                     Classes="primary-button"
+                                    IsVisible="{Binding !IsLoading}"
                                     Command="{Binding ImportCommand}" />
                         </Grid>
                     </Border>

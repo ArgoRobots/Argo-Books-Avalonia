@@ -20,6 +20,15 @@ public partial class ProductModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAddModalOpen;
 
+    /// <summary>Title of the Add modal. Reset to the default on each open; callers can override it
+    /// (e.g. the bank importer customizing an AI-proposed product) after calling OpenAddModal.</summary>
+    [ObservableProperty]
+    private string _addModalTitle = "Add Product/Service";
+
+    /// <summary>Text of the Add modal's primary button. Reset to the default on each open.</summary>
+    [ObservableProperty]
+    private string _addModalSaveText = "Add Product/Service";
+
     [ObservableProperty]
     private bool _isEditModalOpen;
 
@@ -247,6 +256,8 @@ public partial class ProductModalsViewModel : ViewModelBase
         _editingProduct = null;
         ClearModalFields();
         UpdateDropdownOptions();
+        AddModalTitle = "Add Product/Service".Translate();
+        AddModalSaveText = "Add Product/Service".Translate();
         IsAddModalOpen = true;
     }
 
