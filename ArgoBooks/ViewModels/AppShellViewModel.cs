@@ -919,6 +919,15 @@ public partial class AppShellViewModel : ViewModelBase
                         case NavigationTarget.Categories:
                             CategoryModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
+                        case NavigationTarget.Locations:
+                            LocationsModalsViewModel.OpenAddModal();
+                            break;
+                        case NavigationTarget.PurchaseOrders:
+                            PurchaseOrdersModalsViewModel.OpenAddModal();
+                            break;
+                        case NavigationTarget.Adjustments:
+                            StockAdjustmentsModalsViewModel.OpenAddModal();
+                            break;
                     }
                     break;
                 case QuickActionName.OpenSettings:
@@ -935,6 +944,9 @@ public partial class AppShellViewModel : ViewModelBase
                     break;
                 case QuickActionName.OpenScanModal:
                     OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
+                    break;
+                case QuickActionName.OpenBankImport:
+                    _ = App.OpenBankStatementImportAsync();
                     break;
                 case QuickActionName.OpenEditCompany:
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);

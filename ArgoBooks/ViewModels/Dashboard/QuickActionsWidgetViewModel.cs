@@ -34,6 +34,11 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
     [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
+    private bool _showImportBankStatement;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
+    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewCustomer;
 
     [ObservableProperty]
@@ -88,6 +93,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 
     public bool HasVisibleQuickActions =>
         ShowNewInvoice || ShowNewExpense || ShowNewRevenue || ShowScanReceipt ||
+        ShowImportBankStatement ||
         ShowNewCustomer || ShowNewSupplier || ShowNewProduct || ShowRecordPayment ||
         ShowNewRentalItem || ShowNewRentalRecord ||
         ShowNewCategory || ShowNewDepartment || ShowNewLocation ||
@@ -130,6 +136,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             ShowNewExpense = qa.ShowNewExpense;
             ShowNewRevenue = qa.ShowNewRevenue;
             ShowScanReceipt = qa.ShowScanReceipt;
+            ShowImportBankStatement = qa.ShowImportBankStatement;
             ShowNewCustomer = qa.ShowNewCustomer;
             ShowNewSupplier = qa.ShowNewSupplier;
             ShowNewProduct = qa.ShowNewProduct;
@@ -152,6 +159,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             ["ShowNewExpense"] = ShowNewExpense.ToString(),
             ["ShowNewRevenue"] = ShowNewRevenue.ToString(),
             ["ShowScanReceipt"] = ShowScanReceipt.ToString(),
+            ["ShowImportBankStatement"] = ShowImportBankStatement.ToString(),
             ["ShowNewCustomer"] = ShowNewCustomer.ToString(),
             ["ShowNewSupplier"] = ShowNewSupplier.ToString(),
             ["ShowNewProduct"] = ShowNewProduct.ToString(),
@@ -172,6 +180,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         if (config.TryGetValue("ShowNewExpense", out v)) ShowNewExpense = v == "True";
         if (config.TryGetValue("ShowNewRevenue", out v)) ShowNewRevenue = v == "True";
         if (config.TryGetValue("ShowScanReceipt", out v)) ShowScanReceipt = v == "True";
+        if (config.TryGetValue("ShowImportBankStatement", out v)) ShowImportBankStatement = v == "True";
         if (config.TryGetValue("ShowNewCustomer", out v)) ShowNewCustomer = v == "True";
         if (config.TryGetValue("ShowNewSupplier", out v)) ShowNewSupplier = v == "True";
         if (config.TryGetValue("ShowNewProduct", out v)) ShowNewProduct = v == "True";
@@ -218,6 +227,12 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
 
         App.NavigationService?.NavigateTo("Receipts");
         App.ReceiptsModalsViewModel.OpenBulkDropZone();
+    }
+
+    [RelayCommand]
+    private async Task ImportBankStatement()
+    {
+        await App.OpenBankStatementImportAsync();
     }
 
     [RelayCommand]

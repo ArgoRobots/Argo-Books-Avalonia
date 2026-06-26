@@ -147,6 +147,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("New Expense", "Record a new expense", Icons.Expenses, QuickActionType.QuickAction, "Expenses", "OpenAddModal"),
             new QuickActionItem("New Revenue", "Record a new revenue entry", Icons.Revenue, QuickActionType.QuickAction, "Revenue", "OpenAddModal"),
             new QuickActionItem("Scan Receipt", "Scan and import a receipt using AI", Icons.ScanReceipt, QuickActionType.QuickAction, "Receipts", "OpenScanModal"),
+            new QuickActionItem("Import Bank Statement", "Import transactions from a bank statement", Icons.Bank, QuickActionType.QuickAction, null, "OpenBankImport"),
             new QuickActionItem("New Customer", "Add a new customer", Icons.NewCustomer, QuickActionType.QuickAction, "Customers", "OpenAddModal"),
             new QuickActionItem("New Product", "Add a new product or service", Icons.NewProduct, QuickActionType.QuickAction, "Products", "OpenAddModal"),
             new QuickActionItem("New Supplier", "Add a new supplier", Icons.Suppliers, QuickActionType.QuickAction, "Suppliers", "OpenAddModal"),
@@ -157,9 +158,6 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("New Location", "Add a new location", Icons.Locations, QuickActionType.QuickAction, "Locations", "OpenAddModal"),
             new QuickActionItem("New Purchase Order", "Create a new purchase order", Icons.NewPurchaseOrder, QuickActionType.QuickAction, "PurchaseOrders", "OpenAddModal"),
             new QuickActionItem("New Stock Adjustment", "Record a stock adjustment", Icons.NewStockAdjustment, QuickActionType.QuickAction, "Adjustments", "OpenAddModal"),
-            new QuickActionItem("New Accountant", "Add a new accountant", Icons.NewAccountant, QuickActionType.QuickAction, "Accountants", "OpenAddModal"),
-            new QuickActionItem("New Return", "Record a customer return", Icons.NewReturn, QuickActionType.QuickAction, "Returns", "OpenAddModal"),
-            new QuickActionItem("New Transfer", "Create inventory transfer", Icons.Transfers, QuickActionType.QuickAction, "Transfers", "OpenAddModal"),
         ]);
 
         // Navigation - Go to pages
@@ -183,7 +181,6 @@ public partial class QuickActionsViewModel : ViewModelBase
             // Contacts
             new QuickActionItem("Customers", "Manage customers", Icons.Customers, QuickActionType.Navigation, "Customers"),
             new QuickActionItem("Suppliers", "Manage suppliers", Icons.Suppliers, QuickActionType.Navigation, "Suppliers"),
-            new QuickActionItem("Accountants", "Manage accountants", Icons.Accountants, QuickActionType.Navigation, "Accountants"),
 
             // Inventory
             new QuickActionItem("Products", "Manage products and services", Icons.Products, QuickActionType.Navigation, "Products"),
@@ -191,7 +188,6 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("Adjustments", "Manage stock adjustments", Icons.Adjustments, QuickActionType.Navigation, "Adjustments"),
             new QuickActionItem("Categories", "Manage categories", Icons.Categories, QuickActionType.Navigation, "Categories"),
             new QuickActionItem("Locations", "Manage locations (Enterprise)", Icons.Locations, QuickActionType.Navigation, "Locations"),
-            new QuickActionItem("Transfers", "Manage inventory transfers (Enterprise)", Icons.Transfers, QuickActionType.Navigation, "Transfers"),
 
             // Rentals
             new QuickActionItem("Rental Inventory", "Manage rental items", Icons.RentalInventory, QuickActionType.Navigation, "RentalInventory"),

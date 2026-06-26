@@ -3684,7 +3684,6 @@ public partial class App : Application
         });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
         navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
-        navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
 
         // Rentals Section
         navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = _rentalInventoryPageViewModel ??= new RentalInventoryPageViewModel() });
