@@ -80,6 +80,48 @@ public class GeminiService : IGeminiService, IDisposable
     }
 
     /// <inheritdoc />
+    public async Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+        BankLineCategorizationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured || request.Lines.Count == 0)
+            return null;
+
+        var stopwatch = Stopwatch.StartNew();
+        var model = DefaultModel;
+        var success = false;
+
+        try
+        {
+            var prompt = BuildBankLinePrompt(request);
+            var maxTokens = Math.Min(8000, 400 + request.Lines.Count * 120);
+            var response = await SendApiRequestAsync(
+                "You categorize business bank statement lines. Always respond with valid JSON only, no markdown.",
+                prompt,
+                maxTokens,
+                0.2,
+                cancellationToken: cancellationToken);
+
+            if (string.IsNullOrEmpty(response))
+                return null;
+
+            success = true;
+            return ParseBankLineResponse(response);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini bank-line categorization failed");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.Gemini, stopwatch.ElapsedMilliseconds, success, model, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<string?> SendChatAsync(
         string systemPrompt,
         string userPrompt,
@@ -396,6 +438,101 @@ Respond with JSON only.";
         // Catch compound vague names like "general expenses", "other purchases", "miscellaneous items"
         var words = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return words.Length >= 1 && words.All(w => vagueExact.Contains(w));
+    }
+
+    private static string BuildBankLinePrompt(BankLineCategorizationRequest request)
+    {
+        var products = JsonSerializer.Serialize(request.ExistingProducts.Select(p => new { p.Id, p.Name, category = p.CategoryName, type = p.IsRevenue ? "revenue" : "expense" }));
+        var expenseCats = JsonSerializer.Serialize(request.ExistingExpenseCategories.Select(c => new { c.Id, c.Name }));
+        var revenueCats = JsonSerializer.Serialize(request.ExistingRevenueCategories.Select(c => new { c.Id, c.Name }));
+        var suppliers = JsonSerializer.Serialize(request.ExistingSuppliers.Select(s => new { s.Id, s.Name }));
+        var customers = JsonSerializer.Serialize(request.ExistingCustomers.Select(c => new { c.Id, c.Name }));
+        var lines = JsonSerializer.Serialize(request.Lines.Select(l => new { l.Index, l.Description, amount = l.Amount, type = l.IsRevenue ? "revenue" : "expense" }));
+
+        return $@"Categorize each bank statement line. For every line assign a PRODUCT (which carries its category) and a SUPPLIER (expense lines) or CUSTOMER (revenue lines).
+
+## Lines
+{lines}
+
+## Existing Products
+{products}
+
+## Existing Expense Categories
+{expenseCats}
+
+## Existing Revenue Categories
+{revenueCats}
+
+## Existing Suppliers (for expense lines)
+{suppliers}
+
+## Existing Customers (for revenue lines)
+{customers}
+
+## Rules
+For each line:
+1. PRODUCT: prefer an existing product of the matching type and return its id in ""productId"". Otherwise set ""productId"" to null and propose a short, specific ""newProductName"" describing the spend (e.g. ""Paint Supplies"", ""Fuel"", ""Bank Fees"", ""Consulting Revenue""). NEVER use vague names like ""Purchases"", ""General"", ""Miscellaneous"", ""Expenses"", or ""Other"".
+2. CATEGORY (only when proposing a new product): prefer an existing category of the matching type and return its id in ""categoryId"". Otherwise set ""categoryId"" to null and propose a broader ""newCategoryName"" (e.g. ""Materials"", ""Utilities"", ""Sales""). Avoid vague names.
+3. COUNTERPARTY: for expense lines pick a supplier, for revenue lines pick a customer. If a good match exists return its id in ""counterpartyId"". Otherwise set ""counterpartyId"" to null and propose a clean ""newCounterpartyName"" from the description. If the description has no identifiable party (e.g. ""ATM WITHDRAWAL"", ""MONTHLY FEE"", ""INTERAC E-TRANSFER""), set both counterparty fields to null.
+
+## Response Format (JSON array only, no markdown)
+[
+  {{ ""index"": <line index>, ""productId"": ""<id or null>"", ""newProductName"": ""<name or null>"", ""categoryId"": ""<id or null>"", ""newCategoryName"": ""<name or null>"", ""counterpartyId"": ""<id or null>"", ""newCounterpartyName"": ""<name or null>"" }}
+]
+
+Respond with the JSON array only.";
+    }
+
+    private List<BankLineSuggestion>? ParseBankLineResponse(string response)
+    {
+        try
+        {
+            var clean = JsonResponseHelper.StripMarkdownCodeBlock(response);
+            using var doc = JsonDocument.Parse(clean);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Array)
+                return null;
+
+            var results = new List<BankLineSuggestion>();
+            foreach (var el in root.EnumerateArray())
+            {
+                var s = new BankLineSuggestion
+                {
+                    Index = GetJsonInt(el, "index"),
+                    ProductId = GetJsonString(el, "productId"),
+                    NewProductName = GetJsonString(el, "newProductName"),
+                    ProductCategoryId = GetJsonString(el, "categoryId"),
+                    NewProductCategoryName = GetJsonString(el, "newCategoryName"),
+                    CounterpartyId = GetJsonString(el, "counterpartyId"),
+                    NewCounterpartyName = GetJsonString(el, "newCounterpartyName")
+                };
+
+                // Reject vague AI-proposed names so we never create a "General" product/category.
+                if (s.NewProductName != null && IsVagueCategoryName(s.NewProductName)) s.NewProductName = null;
+                if (s.NewProductCategoryName != null && IsVagueCategoryName(s.NewProductCategoryName)) s.NewProductCategoryName = null;
+
+                results.Add(s);
+            }
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse bank-line suggestions");
+            return null;
+        }
+    }
+
+    private static string? GetJsonString(JsonElement el, string name) =>
+        el.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(p.GetString())
+            ? p.GetString()
+            : null;
+
+    private static int GetJsonInt(JsonElement el, string name)
+    {
+        if (!el.TryGetProperty(name, out var p)) return -1;
+        if (p.ValueKind == JsonValueKind.Number && p.TryGetInt32(out var v)) return v;
+        if (p.ValueKind == JsonValueKind.String && int.TryParse(p.GetString(), out var sv)) return sv;
+        return -1;
     }
 
     public void Dispose()

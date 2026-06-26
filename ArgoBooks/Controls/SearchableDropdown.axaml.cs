@@ -618,8 +618,10 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         UpdateFilteredItems();
 
-        // Open dropdown when typing (but not when setting from SelectedItem programmatically)
-        if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen)
+        // Open dropdown only when the user is actually typing (search box focused), not when the
+        // text is set programmatically / via binding (e.g. pre-filled rows in the bank importer).
+        if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen
+            && _searchTextBox?.IsFocused == true)
         {
             IsDropdownOpen = true;
         }

@@ -16,7 +16,8 @@ public record TransactionDraft(
     decimal Total,
     string? CounterpartyId,
     string? Notes,
-    string OriginalCurrency = "USD");
+    string OriginalCurrency = "USD",
+    string? ProductId = null);
 
 public static class TransactionFactory
 {
@@ -66,6 +67,7 @@ public static class TransactionFactory
 
     private static LineItem BuildLine(TransactionDraft draft) => new()
     {
+        ProductId = draft.ProductId,
         Description = draft.Description,
         Quantity = 1,
         UnitPrice = draft.Total

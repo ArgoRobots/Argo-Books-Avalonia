@@ -38,7 +38,7 @@ public static class CategoryRuleService
     }
 
     public static BankCategoryRule Learn(CompanyData data, string description, string categoryId,
-        BookRecordType type, string? counterpartyId)
+        BookRecordType type, string? counterpartyId, string? productId = null)
     {
         var token = MerchantNormalizer.Normalize(description);
         var existing = data.BankCategoryRules.FirstOrDefault(r =>
@@ -47,6 +47,7 @@ public static class CategoryRuleService
         if (existing != null)
         {
             existing.CategoryId = categoryId;
+            existing.ProductId = productId;
             existing.TransactionType = type;
             existing.CounterpartyId = counterpartyId;
             existing.Source = RuleSource.Learned;
@@ -60,6 +61,7 @@ public static class CategoryRuleService
             Pattern = token,
             MatchType = RuleMatchType.Contains,
             CategoryId = categoryId,
+            ProductId = productId,
             TransactionType = type,
             CounterpartyId = counterpartyId,
             Source = RuleSource.Learned

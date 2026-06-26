@@ -16,6 +16,7 @@ public class AiImportUsageService : IDisposable
     private readonly LicenseService? _licenseService;
     private readonly IConnectivityService _connectivityService;
     private readonly IErrorLogger? _errorLogger;
+    private readonly string _importType;
     private bool _disposed;
 
     // Cache the last known usage to reduce API calls
@@ -26,21 +27,24 @@ public class AiImportUsageService : IDisposable
     /// <summary>
     /// Creates a new instance of the AiImportUsageService.
     /// </summary>
-    public AiImportUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null)
+    /// <param name="importType">"spreadsheet" (default) or "bank" - selects which monthly counter to use.</param>
+    public AiImportUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, string importType = "spreadsheet")
         : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService(), errorLogger)
     {
         _ownsHttpClient = true;
+        _importType = importType;
     }
 
     /// <summary>
     /// Creates a new instance with custom dependencies (for testing).
     /// </summary>
-    public AiImportUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService, IErrorLogger? errorLogger = null)
+    public AiImportUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService, IErrorLogger? errorLogger = null, string importType = "spreadsheet")
     {
         _licenseService = licenseService;
         _httpClient = httpClient;
         _connectivityService = connectivityService;
         _errorLogger = errorLogger;
+        _importType = importType;
     }
 
     /// <inheritdoc />
@@ -282,7 +286,8 @@ public class AiImportUsageService : IDisposable
         {
             license_key = licenseKey,
             device_id = deviceId,
-            action
+            action,
+            type = _importType
         };
 
         var json = JsonSerializer.Serialize(requestBody);

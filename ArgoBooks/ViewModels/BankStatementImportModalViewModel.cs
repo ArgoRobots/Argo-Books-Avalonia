@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -14,19 +16,30 @@ namespace ArgoBooks.ViewModels;
 
 /// <summary>
 /// ViewModel for the self-contained bank statement import modal.
-/// Parses a bank statement file, lets the user review and categorise each line,
-/// then creates plain Expense/Revenue transactions (no bank-match flag).
-/// Entry point: <see cref="OpenAsync"/>.
+/// Parses a bank statement file, categorizes each line (learned rules first, then a single
+/// batched AI pass that matches existing products/suppliers/customers or proposes new ones),
+/// lets the user review, then creates plain Expense/Revenue transactions. Each transaction is
+/// attached to a product, which carries its category. Entry point: <see cref="OpenAsync"/>.
 /// </summary>
 public partial class BankStatementImportModalViewModel : ViewModelBase
 {
     [ObservableProperty] private bool _isOpen;
     [ObservableProperty] private int _includedCount;
 
-    /// <summary>Footer summary with correct singular/plural, e.g. "1 line to import" / "6 lines to import".</summary>
-    public string IncludedCountText => IncludedCount == 1
-        ? "1 line to import".Translate()
-        : "{0} lines to import".TranslateFormat(IncludedCount);
+    /// <summary>Name of the file being imported, shown under the modal title.</summary>
+    [ObservableProperty] private string? _fileName;
+
+    /// <summary>True while parsing and AI categorization run, before the row table is revealed.</summary>
+    [ObservableProperty] private bool _isLoading;
+
+    /// <summary>True when the AI categorization pass was skipped, so the rows were left for the user.</summary>
+    [ObservableProperty] private bool _aiUnavailable;
+
+    /// <summary>Specific reason the AI pass was skipped (limit reached, offline, etc.), shown in the footer.</summary>
+    [ObservableProperty] private string? _aiUnavailableMessage;
+
+    /// <summary>Footer summary: selected out of total, e.g. "4 of 6 lines to import".</summary>
+    public string IncludedCountText => "{0} of {1} lines to import".TranslateFormat(IncludedCount, Rows.Count);
 
     partial void OnIncludedCountChanged(int value) => OnPropertyChanged(nameof(IncludedCountText));
     [ObservableProperty] private bool _hasValidationMessage;
@@ -35,7 +48,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     private bool _validationAttempted;
 
     public ObservableCollection<ImportLineRow> Rows { get; } = [];
-    public ObservableCollection<Category> AvailableCategories { get; } = [];
+    public ObservableCollection<Product> AvailableProducts { get; } = [];
     public ObservableCollection<Supplier> AvailableSuppliers { get; } = [];
     public ObservableCollection<Customer> AvailableCustomers { get; } = [];
 
@@ -44,19 +57,20 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Parses <paramref name="filePath"/> and opens the modal for user review.
-    /// Returns immediately without blocking; the modal closes itself after import
-    /// or cancel.
+    /// Parses <paramref name="filePath"/> and opens the modal for user review. Returns once the
+    /// modal is shown; the AI categorization pass then fills in the rest in the background.
     /// </summary>
     public async Task OpenAsync(string filePath)
     {
-        List<BankStatementLine> lines;
+        FileName = Path.GetFileName(filePath);
+        AiUnavailable = false;
+        AiUnavailableMessage = null;
 
+        List<BankStatementLine> lines;
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
         if (ext == ".pdf")
         {
-            // TODO: share with App.ImportPdfStatementAsync
             lines = await ImportPdfStatementAsync(filePath);
         }
         else
@@ -71,8 +85,15 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         if (lines.Count == 0) return;
 
         _validationAttempted = false;
-        PopulateRows(lines);
+
+        // Show the modal in its loading state, run deterministic + AI categorization, then reveal the table.
+        IsLoading = true;
         IsOpen = true;
+
+        PopulateRows(lines);
+        await CategorizeWithAiAsync();
+
+        IsLoading = false;
     }
 
     // -----------------------------------------------------------------------
@@ -96,26 +117,22 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             if (toImport.Any(r => !r.IsComplete)) return;
         }
 
-        var resolutions = toImport.Select(r =>
+        var resolutions = toImport.Select(r => new BankLineResolution
         {
-            // Rebuild the line with any edits the user made.
-            var line = new BankStatementLine
+            Line = new BankStatementLine
             {
                 Id = string.IsNullOrEmpty(r.SourceLine.Id) ? Guid.NewGuid().ToString("N") : r.SourceLine.Id,
                 Date = r.Date.DateTime,
                 Description = r.Description,
                 Amount = r.CreateAsRevenue ? Math.Abs(r.Amount) : -Math.Abs(r.Amount)
-            };
-
-            return new BankLineResolution
-            {
-                Line = line,
-                Type = r.CreateAsRevenue ? BookRecordType.Revenue : BookRecordType.Expense,
-                CategoryId = r.ResolvedCategoryId,
-                NewCategoryName = r.ResolvedCategoryId == null ? r.NewCategoryName : null,
-                CounterpartyId = r.ResolvedCounterpartyId,
-                NewCounterpartyName = r.ResolvedCounterpartyId == null ? r.NewCounterpartyName : null
-            };
+            },
+            Type = r.CreateAsRevenue ? BookRecordType.Revenue : BookRecordType.Expense,
+            ProductId = r.ResolvedProductId,
+            NewProductName = r.ResolvedProductId == null ? r.NewProductName : null,
+            ProductCategoryId = r.NewProductCategoryId,
+            NewProductCategoryName = r.NewProductCategoryId == null ? r.NewProductCategoryName : null,
+            CounterpartyId = r.ResolvedCounterpartyId,
+            NewCounterpartyName = r.ResolvedCounterpartyId == null ? r.NewCounterpartyName : null
         }).ToList();
 
         // Snapshot id counters before CreateFromLines bumps them.
@@ -124,25 +141,8 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         // linkToBankLine: false -> plain transactions, no bank-match flag.
         var creation = new BankLineImportService().CreateFromLines(data, resolutions, linkToBankLine: false);
 
-        // Learn a rule per categorised line so the next import is pre-filled.
-        var ruleCaptures = new List<RuleLearningCapture>();
-        foreach (var res in resolutions.Where(x => x.CategoryId != null))
-        {
-            var normalized = MerchantNormalizer.Normalize(res.Line.Description);
-            var existing = data.BankCategoryRules.FirstOrDefault(r =>
-                r.Pattern == normalized && r.MatchType == RuleMatchType.Contains);
-
-            RulePriorState? prior = existing == null ? null : new RulePriorState(
-                existing.CategoryId, existing.TransactionType, existing.CounterpartyId,
-                existing.Source, existing.UpdatedAt);
-
-            var rule = CategoryRuleService.Learn(data, res.Line.Description, res.CategoryId!, res.Type, res.CounterpartyId);
-
-            var post = new RulePostState(rule.CategoryId, rule.TransactionType, rule.CounterpartyId,
-                rule.Source, rule.UpdatedAt);
-
-            ruleCaptures.Add(new RuleLearningCapture(rule, prior, post));
-        }
+        // Learn a rule per line (merchant -> product + counterparty) so the next import is pre-filled.
+        var ruleCaptures = LearnRules(data, resolutions);
 
         var postCounters = new IdCounterSnapshot(data.IdCounters);
 
@@ -156,10 +156,205 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Cancel()
+    private async Task Cancel()
     {
+        // Confirm discard like other modals (including while AI categorization is still running).
+        if (Rows.Count > 0 && !await ConfirmDiscardNewAsync())
+            return;
         IsOpen = false;
     }
+
+    private List<RuleLearningCapture> LearnRules(CompanyData data, List<BankLineResolution> resolutions)
+    {
+        var ruleCaptures = new List<RuleLearningCapture>();
+
+        foreach (var res in resolutions)
+        {
+            // Resolve the final product id (existing, or the one just created by name+type).
+            var type = res.Type == BookRecordType.Revenue ? CategoryType.Revenue : CategoryType.Expense;
+            var productId = res.ProductId;
+            if (productId == null && !string.IsNullOrWhiteSpace(res.NewProductName))
+                productId = data.Products.FirstOrDefault(p =>
+                    p.Type == type && string.Equals(p.Name, res.NewProductName!.Trim(), StringComparison.OrdinalIgnoreCase))?.Id;
+
+            if (productId == null) continue; // nothing meaningful to remember
+
+            var counterpartyId = res.CounterpartyId;
+            if (counterpartyId == null && !string.IsNullOrWhiteSpace(res.NewCounterpartyName))
+            {
+                counterpartyId = res.Type == BookRecordType.Revenue
+                    ? data.Customers.FirstOrDefault(c => string.Equals(c.Name, res.NewCounterpartyName!.Trim(), StringComparison.OrdinalIgnoreCase))?.Id
+                    : data.Suppliers.FirstOrDefault(s => string.Equals(s.Name, res.NewCounterpartyName!.Trim(), StringComparison.OrdinalIgnoreCase))?.Id;
+            }
+
+            var categoryId = data.GetProduct(productId)?.CategoryId ?? string.Empty;
+
+            var token = MerchantNormalizer.Normalize(res.Line.Description);
+            var existing = data.BankCategoryRules.FirstOrDefault(r =>
+                r.Pattern == token && r.MatchType == RuleMatchType.Contains);
+
+            RulePriorState? prior = existing == null ? null : new RulePriorState(
+                existing.CategoryId, existing.ProductId, existing.TransactionType, existing.CounterpartyId,
+                existing.Source, existing.UpdatedAt);
+
+            var rule = CategoryRuleService.Learn(data, res.Line.Description, categoryId, res.Type, counterpartyId, productId);
+
+            var post = new RulePostState(rule.CategoryId, rule.ProductId, rule.TransactionType, rule.CounterpartyId,
+                rule.Source, rule.UpdatedAt);
+
+            ruleCaptures.Add(new RuleLearningCapture(rule, prior, post));
+        }
+
+        return ruleCaptures;
+    }
+
+    // -----------------------------------------------------------------------
+    // AI categorization (batched, runs after the modal opens)
+    // -----------------------------------------------------------------------
+
+    private async Task CategorizeWithAiAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        var pending = Rows.Where(r => !r.HasProduct || !r.HasCounterparty).ToList();
+        if (pending.Count == 0) return;
+
+        try
+        {
+            using var usage = new AiImportUsageService(App.LicenseService, App.ErrorLogger, importType: "bank");
+            var check = await usage.CheckUsageAsync();
+            // No AI imports available (or offline): leave blanks for the user. The import still works.
+            if (!check.CanImport)
+            {
+                SetAiUnavailable(!string.IsNullOrEmpty(check.ErrorMessage)
+                    ? "AI categorization is unavailable: couldn't reach the server.".Translate()
+                    : check.MonthlyLimit > 0
+                        ? "AI categorization is off: you've used all {0} AI imports this month.".TranslateFormat(check.MonthlyLimit)
+                        : "AI categorization needs a registered company.".Translate());
+                return;
+            }
+
+            using var gemini = new GeminiService(App.ErrorLogger);
+            if (!gemini.IsConfigured)
+            {
+                SetAiUnavailable("AI categorization needs a registered company.".Translate());
+                return;
+            }
+
+            var request = BuildCategorizationRequest(data, pending);
+            var suggestions = await gemini.GetBankLineSuggestionsAsync(request);
+            if (suggestions == null || suggestions.Count == 0)
+            {
+                SetAiUnavailable("AI couldn't categorize this statement. Select products manually.".Translate());
+                return;
+            }
+
+            await usage.IncrementUsageAsync();
+
+            ApplySuggestions(data, pending, suggestions);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Bank statement AI categorization failed");
+        }
+    }
+
+    private void SetAiUnavailable(string message)
+    {
+        AiUnavailable = true;
+        AiUnavailableMessage = message;
+    }
+
+    private static BankLineCategorizationRequest BuildCategorizationRequest(CompanyData data, List<ImportLineRow> rows)
+    {
+        var req = new BankLineCategorizationRequest();
+
+        foreach (var p in data.Products)
+            req.ExistingProducts.Add(new ExistingProductInfo
+            {
+                Id = p.Id,
+                Name = p.Name,
+                CategoryName = string.IsNullOrEmpty(p.CategoryId) ? null : data.GetCategory(p.CategoryId)?.Name,
+                IsRevenue = p.Type == CategoryType.Revenue
+            });
+
+        foreach (var c in data.Categories.Where(c => c.Type == CategoryType.Expense))
+            req.ExistingExpenseCategories.Add(new ExistingCategoryInfo { Id = c.Id, Name = c.Name, Description = c.Description });
+        foreach (var c in data.Categories.Where(c => c.Type == CategoryType.Revenue))
+            req.ExistingRevenueCategories.Add(new ExistingCategoryInfo { Id = c.Id, Name = c.Name, Description = c.Description });
+
+        foreach (var s in data.Suppliers)
+            req.ExistingSuppliers.Add(new ExistingSupplierInfo { Id = s.Id, Name = s.Name });
+        foreach (var c in data.Customers)
+            req.ExistingCustomers.Add(new ExistingSupplierInfo { Id = c.Id, Name = c.Name });
+
+        foreach (var r in rows)
+            req.Lines.Add(new BankLineToCategorize { Index = r.Index, Description = r.Description, Amount = r.Amount, IsRevenue = r.CreateAsRevenue });
+
+        return req;
+    }
+
+    private void ApplySuggestions(CompanyData data, List<ImportLineRow> pending, List<BankLineSuggestion> suggestions)
+    {
+        var byIndex = suggestions.Where(s => s.Index >= 0)
+            .GroupBy(s => s.Index)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        for (var i = 0; i < pending.Count; i++)
+        {
+            var row = pending[i];
+
+            // Prefer the AI's explicit index; fall back to positional order if it omitted/duplicated indices.
+            if (!byIndex.TryGetValue(row.Index, out var s))
+            {
+                if (i < suggestions.Count) s = suggestions[i];
+                else continue;
+            }
+
+            // Product (only fill if the user / rules didn't already set one).
+            if (!row.HasProduct)
+            {
+                if (s.ProductId != null)
+                {
+                    var prod = AvailableProducts.FirstOrDefault(p => p.Id == s.ProductId);
+                    if (prod != null) row.SetExistingProduct(prod, CategoryNameFor(data, prod));
+                }
+                if (!row.HasProduct && !string.IsNullOrWhiteSpace(s.NewProductName))
+                {
+                    var catName = s.ProductCategoryId != null
+                        ? data.GetCategory(s.ProductCategoryId)?.Name
+                        : s.NewProductCategoryName;
+                    row.SetNewProduct(s.NewProductName!, s.ProductCategoryId, s.NewProductCategoryName, catName);
+                }
+            }
+
+            // Counterparty (only fill if still empty).
+            if (!row.HasCounterparty)
+            {
+                if (s.CounterpartyId != null)
+                {
+                    if (row.CreateAsRevenue)
+                    {
+                        var c = AvailableCustomers.FirstOrDefault(x => x.Id == s.CounterpartyId);
+                        if (c != null) row.SetExistingCustomer(c);
+                    }
+                    else
+                    {
+                        var sup = AvailableSuppliers.FirstOrDefault(x => x.Id == s.CounterpartyId);
+                        if (sup != null) row.SetExistingSupplier(sup);
+                    }
+                }
+                if (!row.HasCounterparty && !string.IsNullOrWhiteSpace(s.NewCounterpartyName))
+                    row.SetNewCounterparty(s.NewCounterpartyName!);
+            }
+        }
+
+        RefreshState();
+    }
+
+    private static string? CategoryNameFor(CompanyData data, Product product) =>
+        string.IsNullOrEmpty(product.CategoryId) ? null : data.GetCategory(product.CategoryId)?.Name;
 
     // -----------------------------------------------------------------------
     // Undo / Redo
@@ -178,6 +373,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         {
             if (entity is Supplier s) data.Suppliers.Remove(s);
             else if (entity is Customer c) data.Customers.Remove(c);
+            else if (entity is Product p) data.Products.Remove(p);
             else if (entity is Category cat) data.Categories.Remove(cat);
         }
 
@@ -190,6 +386,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             else
             {
                 cap.Rule.CategoryId = cap.Prior.CategoryId;
+                cap.Rule.ProductId = cap.Prior.ProductId;
                 cap.Rule.TransactionType = cap.Prior.TransactionType;
                 cap.Rule.CounterpartyId = cap.Prior.CounterpartyId;
                 cap.Rule.Source = cap.Prior.Source;
@@ -209,6 +406,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         {
             if (entity is Supplier s && !data.Suppliers.Contains(s)) data.Suppliers.Add(s);
             else if (entity is Customer c && !data.Customers.Contains(c)) data.Customers.Add(c);
+            else if (entity is Product p && !data.Products.Contains(p)) data.Products.Add(p);
             else if (entity is Category cat && !data.Categories.Contains(cat)) data.Categories.Add(cat);
         }
 
@@ -228,6 +426,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             else
             {
                 cap.Rule.CategoryId = cap.Post.CategoryId;
+                cap.Rule.ProductId = cap.Post.ProductId;
                 cap.Rule.TransactionType = cap.Post.TransactionType;
                 cap.Rule.CounterpartyId = cap.Post.CounterpartyId;
                 cap.Rule.Source = cap.Post.Source;
@@ -241,48 +440,34 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     // -----------------------------------------------------------------------
-    // Helpers
+    // Populate / deterministic pre-fill
     // -----------------------------------------------------------------------
 
     private void PopulateRows(List<BankStatementLine> lines)
     {
         var data = App.CompanyManager?.CompanyData;
 
-        AvailableCategories.Clear();
+        ReloadProducts();
         AvailableSuppliers.Clear();
         AvailableCustomers.Clear();
-
         if (data != null)
         {
-            foreach (var c in data.Categories.OrderBy(c => c.Name)) AvailableCategories.Add(c);
             foreach (var s in data.Suppliers.OrderBy(s => s.Name)) AvailableSuppliers.Add(s);
             foreach (var c in data.Customers.OrderBy(c => c.Name)) AvailableCustomers.Add(c);
         }
 
         Rows.Clear();
 
+        var index = 0;
         foreach (var line in lines)
         {
-            var row = new ImportLineRow(line);
-
-            // Wire "Create one" delegates so the row opens the standard create modals.
-            row.OpenCreateCategory = () => OpenCreateCategoryForRow(row);
+            var row = new ImportLineRow(line) { Index = index++ };
+            row.OpenCreateProduct = () => OpenCreateProductForRow(row);
             row.OpenCreateCounterparty = () => OpenCreateCounterpartyForRow(row);
+            row.ProductCategoryNameLookup = p => data != null ? CategoryNameFor(data, p) : null;
 
-            // Rule pre-fill.
             if (data != null)
-            {
-                var rule = CategoryRuleService.Match(data.BankCategoryRules, line.Description);
-                if (rule != null)
-                {
-                    row.ResolvedCategoryId = rule.CategoryId;
-                    if (rule.TransactionType.HasValue)
-                        row.CreateAsRevenue = rule.TransactionType.Value == BookRecordType.Revenue;
-                    if (rule.CounterpartyId != null)
-                        row.ResolvedCounterpartyId = rule.CounterpartyId;
-                    row.SyncObjectsFromIds(AvailableCategories, AvailableSuppliers, AvailableCustomers);
-                }
-            }
+                ApplyDeterministicPrefill(data, row);
 
             row.PropertyChanged += (_, _) => RefreshState();
             Rows.Add(row);
@@ -291,48 +476,113 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         RefreshState();
     }
 
+    /// <summary>Free, instant pre-fill: learned rules first, then an obvious name match against existing entities.</summary>
+    private void ApplyDeterministicPrefill(CompanyData data, ImportLineRow row)
+    {
+        // 1. Learned rule (remembers product + counterparty + type for this merchant).
+        var rule = CategoryRuleService.Match(data.BankCategoryRules, row.Description);
+        if (rule != null)
+        {
+            if (rule.TransactionType.HasValue)
+                row.CreateAsRevenue = rule.TransactionType.Value == BookRecordType.Revenue;
+
+            if (rule.ProductId != null)
+            {
+                var prod = AvailableProducts.FirstOrDefault(p => p.Id == rule.ProductId);
+                if (prod != null) row.SetExistingProduct(prod, CategoryNameFor(data, prod));
+            }
+
+            if (rule.CounterpartyId != null)
+                ApplyCounterpartyId(row, rule.CounterpartyId);
+        }
+
+        // 2. Obvious text match for a product (merchant name already in your product list).
+        if (!row.HasProduct)
+        {
+            var prod = MatchByName(row.Description, AvailableProducts.Where(p =>
+                p.Type == (row.CreateAsRevenue ? CategoryType.Revenue : CategoryType.Expense)), p => p.Name, p => p);
+            if (prod != null) row.SetExistingProduct(prod, CategoryNameFor(data, prod));
+        }
+
+        // 3. Obvious text match for the counterparty.
+        if (!row.HasCounterparty)
+        {
+            if (row.CreateAsRevenue)
+            {
+                var c = MatchByName(row.Description, AvailableCustomers, x => x.Name, x => x);
+                if (c != null) row.SetExistingCustomer(c);
+            }
+            else
+            {
+                var s = MatchByName(row.Description, AvailableSuppliers, x => x.Name, x => x);
+                if (s != null) row.SetExistingSupplier(s);
+            }
+        }
+    }
+
+    private void ApplyCounterpartyId(ImportLineRow row, string counterpartyId)
+    {
+        if (row.CreateAsRevenue)
+        {
+            var c = AvailableCustomers.FirstOrDefault(x => x.Id == counterpartyId);
+            if (c != null) row.SetExistingCustomer(c);
+        }
+        else
+        {
+            var s = AvailableSuppliers.FirstOrDefault(x => x.Id == counterpartyId);
+            if (s != null) row.SetExistingSupplier(s);
+        }
+    }
+
+    /// <summary>Returns the first entity whose normalized name appears in the normalized description.</summary>
+    private static TResult? MatchByName<TItem, TResult>(string description, IEnumerable<TItem> items,
+        Func<TItem, string> nameSelector, Func<TItem, TResult> resultSelector) where TResult : class
+    {
+        var token = MerchantNormalizer.Normalize(description);
+        if (token.Length == 0) return null;
+
+        foreach (var item in items)
+        {
+            var name = MerchantNormalizer.Normalize(nameSelector(item));
+            if (name.Length >= 3 && token.Contains(name, StringComparison.Ordinal))
+                return resultSelector(item);
+        }
+        return null;
+    }
+
     // -----------------------------------------------------------------------
     // "Create one" — open standard create modals and select the new entity on the row
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Opens the standard Category create modal. When saved, reloads available categories
-    /// and selects the newly created one on <paramref name="row"/>.
+    /// Opens the standard Product create modal. When saved, reloads products and selects the
+    /// newly created one on <paramref name="row"/> (so its category becomes read-only/inherited).
     /// </summary>
-    private void OpenCreateCategoryForRow(ImportLineRow row)
+    private void OpenCreateProductForRow(ImportLineRow row)
     {
-        var categoryModals = App.CategoryModalsViewModel;
-        if (categoryModals == null) return;
-
+        var productModals = App.ProductModalsViewModel;
         var data = App.CompanyManager?.CompanyData;
-        if (data == null) return;
+        if (productModals == null || data == null) return;
 
-        // Snapshot existing category ids so we can find the new one after save.
-        var knownIds = data.Categories.Select(c => c.Id).ToHashSet();
+        var knownIds = data.Products.Select(p => p.Id).ToHashSet();
 
         void OnSaved(object? s, EventArgs e)
         {
-            categoryModals.CategorySaved -= OnSaved;
-            ReloadCategories();
+            productModals.ProductSaved -= OnSaved;
+            ReloadProducts();
 
-            // Find the newly created category by diffing against the snapshot.
-            var newCategory = data.Categories.FirstOrDefault(c => !knownIds.Contains(c.Id));
-            if (newCategory != null)
-            {
-                row.ResolvedCategoryObject = newCategory;
-                row.CategorySearchText = newCategory.Name;
-                row.NewCategoryName = null;
-                row.HasCategoryError = false;
-            }
+            var newProduct = data.Products.FirstOrDefault(p => !knownIds.Contains(p.Id));
+            if (newProduct != null)
+                row.SetExistingProduct(newProduct, CategoryNameFor(data, newProduct));
         }
 
-        categoryModals.CategorySaved += OnSaved;
-        categoryModals.OpenAddModal(isExpensesTab: !row.CreateAsRevenue);
+        productModals.ProductSaved += OnSaved;
+        productModals.OpenAddModal(isExpensesTab: !row.CreateAsRevenue);
     }
 
     /// <summary>
     /// Opens the standard Supplier modal (expense rows) or Customer modal (revenue rows).
-    /// When saved, reloads available counterparties and selects the new entity on <paramref name="row"/>.
+    /// When saved, reloads counterparties and selects the new entity on <paramref name="row"/>.
     /// </summary>
     private void OpenCreateCounterpartyForRow(ImportLineRow row)
     {
@@ -350,15 +600,8 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             {
                 supplierModals.SupplierSaved -= OnSaved;
                 ReloadSuppliers();
-
                 var newSupplier = data.Suppliers.FirstOrDefault(s => !knownIds.Contains(s.Id));
-                if (newSupplier != null)
-                {
-                    row.ResolvedSupplierObject = newSupplier;
-                    row.CounterpartySearchText = newSupplier.Name;
-                    row.NewCounterpartyName = null;
-                    row.HasCounterpartyError = false;
-                }
+                if (newSupplier != null) row.SetExistingSupplier(newSupplier);
             }
 
             supplierModals.SupplierSaved += OnSaved;
@@ -375,15 +618,8 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             {
                 customerModals.CustomerSaved -= OnSaved;
                 ReloadCustomers();
-
                 var newCustomer = data.Customers.FirstOrDefault(c => !knownIds.Contains(c.Id));
-                if (newCustomer != null)
-                {
-                    row.ResolvedCustomerObject = newCustomer;
-                    row.CounterpartySearchText = newCustomer.Name;
-                    row.NewCounterpartyName = null;
-                    row.HasCounterpartyError = false;
-                }
+                if (newCustomer != null) row.SetExistingCustomer(newCustomer);
             }
 
             customerModals.CustomerSaved += OnSaved;
@@ -391,17 +627,15 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Reloads <see cref="AvailableCategories"/> from CompanyData.</summary>
-    private void ReloadCategories()
+    private void ReloadProducts()
     {
         var data = App.CompanyManager?.CompanyData;
-        AvailableCategories.Clear();
+        AvailableProducts.Clear();
         if (data != null)
-            foreach (var c in data.Categories.OrderBy(c => c.Name))
-                AvailableCategories.Add(c);
+            foreach (var p in data.Products.OrderBy(p => p.Name))
+                AvailableProducts.Add(p);
     }
 
-    /// <summary>Reloads <see cref="AvailableSuppliers"/> from CompanyData.</summary>
     private void ReloadSuppliers()
     {
         var data = App.CompanyManager?.CompanyData;
@@ -411,7 +645,6 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 AvailableSuppliers.Add(s);
     }
 
-    /// <summary>Reloads <see cref="AvailableCustomers"/> from CompanyData.</summary>
     private void ReloadCustomers()
     {
         var data = App.CompanyManager?.CompanyData;
@@ -424,10 +657,10 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     private void RefreshState()
     {
         IncludedCount = Rows.Count(r => r.IsIncluded);
+        OnPropertyChanged(nameof(IncludedCountText)); // total (Rows.Count) may have changed too
 
         var includedRows = Rows.Where(r => r.IsIncluded).ToList();
 
-        // Show errors and the summary hint only after the user has attempted an import.
         if (_validationAttempted)
         {
             var allComplete = includedRows.Count > 0 && includedRows.All(r => r.IsComplete);
@@ -435,7 +668,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
             foreach (var row in includedRows)
             {
-                row.HasCategoryError = !row.HasCategory;
+                row.HasProductError = !row.HasProduct;
                 row.HasCounterpartyError = !row.HasCounterparty;
             }
         }
@@ -444,21 +677,18 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             HasValidationMessage = false;
         }
 
-        // Always clear errors on excluded rows.
         foreach (var row in Rows.Where(r => !r.IsIncluded))
         {
-            row.HasCategoryError = false;
+            row.HasProductError = false;
             row.HasCounterpartyError = false;
         }
     }
 
     /// <summary>
-    /// Premium-gated PDF bank statement import.
-    /// Reuses the same gates as App.ImportPdfStatementAsync.
+    /// Premium-gated PDF bank statement import. Reuses the same gates as App.ImportPdfStatementAsync.
     /// </summary>
     private static async Task<List<BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {
-        // TODO: share with App.ImportPdfStatementAsync
         if (App.LicenseService?.LoadLicense() != true)
         {
             App.OpenUpgradeModal();
@@ -482,7 +712,6 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         var extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
         if (extracted.Count == 0) return [];
 
-        // Let the user review/edit extracted rows via the existing PDF review modal.
         var approved = await (App.PdfStatementReviewModalViewModel?.ReviewAsync(extracted)
             ?? Task.FromResult<List<BankStatementLine>?>(null));
         if (approved == null) return [];
@@ -497,6 +726,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
     private sealed record RulePriorState(
         string CategoryId,
+        string? ProductId,
         BookRecordType? TransactionType,
         string? CounterpartyId,
         RuleSource Source,
@@ -504,6 +734,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
     private sealed record RulePostState(
         string CategoryId,
+        string? ProductId,
         BookRecordType? TransactionType,
         string? CounterpartyId,
         RuleSource Source,
@@ -521,6 +752,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         private readonly int _supplier;
         private readonly int _customer;
         private readonly int _category;
+        private readonly int _product;
 
         public IdCounterSnapshot(IdCounters counters)
         {
@@ -529,6 +761,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             _supplier = counters.Supplier;
             _customer = counters.Customer;
             _category = counters.Category;
+            _product = counters.Product;
         }
 
         public void RestoreTo(IdCounters counters)
@@ -538,6 +771,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             counters.Supplier = _supplier;
             counters.Customer = _customer;
             counters.Category = _category;
+            counters.Product = _product;
         }
     }
 }
@@ -549,127 +783,174 @@ public partial class ImportLineRow : ObservableObject
 {
     public BankStatementLine SourceLine { get; }
 
+    /// <summary>Position in the parent Rows collection, used to map AI suggestions back to the row.</summary>
+    public int Index { get; set; }
+
+    /// <summary>The original, unedited bank statement text, shown read-only as a caption.</summary>
+    public string RawDescription => SourceLine.Description;
+
     public ImportLineRow(BankStatementLine line)
     {
         SourceLine = line;
         _isIncluded = true;
         _date = line.Date == default ? DateTimeOffset.Now : new DateTimeOffset(line.Date);
-        _description = line.Description;
         _amount = line.Amount;
         _createAsRevenue = line.Amount > 0;
     }
 
     [ObservableProperty] private bool _isIncluded;
-
     [ObservableProperty] private DateTimeOffset _date;
-
-    [ObservableProperty] private string _description;
-
     [ObservableProperty] private decimal _amount;
 
     /// <summary>True = Revenue, False = Expense. Defaults from the sign of the bank line amount.</summary>
     [ObservableProperty] private bool _createAsRevenue;
 
-    [ObservableProperty] private string? _resolvedCategoryId;
+    /// <summary>Transaction description (always the raw bank text).</summary>
+    public string Description => SourceLine.Description;
+
+    // --- Product (carries the category) ---
+
+    [ObservableProperty] private string? _resolvedProductId;
+
+    /// <summary>Pending new product name (AI-proposed or typed) when no existing product is selected.</summary>
+    [ObservableProperty] private string? _newProductName;
+
+    /// <summary>Search text bound TwoWay to the product SearchableDropdown.</summary>
+    [ObservableProperty] private string? _productSearchText;
+
+    /// <summary>True when this row is creating a new product (its category chip is editable).</summary>
+    [ObservableProperty] private bool _isNewProduct;
+
+    /// <summary>Read-only category name shown as a chip, derived from the selected/new product.</summary>
+    [ObservableProperty] private string? _categoryDisplay;
+
+    /// <summary>Existing category id for a pending new product, when matched to an existing category.</summary>
+    public string? NewProductCategoryId { get; private set; }
+
+    /// <summary>New category name for a pending new product, when none matched.</summary>
+    public string? NewProductCategoryName { get; private set; }
+
+    [ObservableProperty] private bool _hasProductError;
+
+    // --- Counterparty ---
 
     [ObservableProperty] private string? _resolvedCounterpartyId;
-
-    /// <summary>Pending new category name typed by the user via the inline create affordance.</summary>
-    [ObservableProperty] private string? _newCategoryName;
-
-    /// <summary>Pending new counterparty name typed by the user via the inline create affordance.</summary>
     [ObservableProperty] private string? _newCounterpartyName;
-
-    /// <summary>Search text bound TwoWay to the category SearchableDropdown.</summary>
-    [ObservableProperty] private string? _categorySearchText;
-
-    /// <summary>Search text bound TwoWay to the counterparty SearchableDropdown.</summary>
     [ObservableProperty] private string? _counterpartySearchText;
-
-    /// <summary>Whether the category field has a validation error.</summary>
-    [ObservableProperty] private bool _hasCategoryError;
-
-    /// <summary>Whether the counterparty field has a validation error.</summary>
     [ObservableProperty] private bool _hasCounterpartyError;
 
-    partial void OnResolvedCategoryIdChanged(string? value)
-    {
-        // Clear pending new name when a real category is resolved.
-        if (value != null) NewCategoryName = null;
-    }
-
-    partial void OnResolvedCounterpartyIdChanged(string? value)
-    {
-        // Clear pending new name when a real counterparty is resolved.
-        if (value != null) NewCounterpartyName = null;
-    }
-
-    /// <summary>True when this row has a category (resolved or pending new).</summary>
-    public bool HasCategory => ResolvedCategoryId != null || !string.IsNullOrWhiteSpace(NewCategoryName);
-
-    /// <summary>True when this row has a counterparty (resolved or pending new).</summary>
+    public bool HasProduct => ResolvedProductId != null || !string.IsNullOrWhiteSpace(NewProductName);
     public bool HasCounterparty => ResolvedCounterpartyId != null || !string.IsNullOrWhiteSpace(NewCounterpartyName);
+    public bool IsComplete => HasProduct && HasCounterparty;
 
-    /// <summary>True when the row is fully complete and ready to import.</summary>
-    public bool IsComplete => HasCategory && HasCounterparty;
-
-    /// <summary>Formatted date string for read-only display.</summary>
     public string DateFormatted => Date.ToString("MMM d, yyyy");
 
     [RelayCommand] private void SetExpense() => CreateAsRevenue = false;
     [RelayCommand] private void SetRevenue() => CreateAsRevenue = true;
 
     // -----------------------------------------------------------------------
+    // Apply helpers (called by the parent VM after deterministic / AI resolution)
+    // -----------------------------------------------------------------------
+
+    public void SetExistingProduct(Product product, string? categoryName)
+    {
+        _resolvedProductObject = product;
+        ResolvedProductId = product.Id;
+        IsNewProduct = false;
+        NewProductName = null;
+        NewProductCategoryId = null;
+        NewProductCategoryName = null;
+        CategoryDisplay = categoryName;
+        ProductSearchText = product.Name;
+        HasProductError = false;
+        OnPropertyChanged(nameof(ResolvedProductObject));
+        OnPropertyChanged(nameof(HasProduct));
+    }
+
+    public void SetNewProduct(string name, string? categoryId, string? newCategoryName, string? categoryDisplay)
+    {
+        _resolvedProductObject = null;
+        OnPropertyChanged(nameof(ResolvedProductObject)); // push null to the picker first (it clears its text)
+        ResolvedProductId = null;
+        IsNewProduct = true;
+        NewProductName = name;
+        NewProductCategoryId = categoryId;
+        NewProductCategoryName = newCategoryName;
+        CategoryDisplay = categoryDisplay;
+        HasProductError = false;
+        OnPropertyChanged(nameof(HasProduct));
+        ProductSearchText = name; // set the displayed text last so it wins over the cleared selection
+    }
+
+    public void SetExistingSupplier(Supplier supplier)
+    {
+        _resolvedSupplierObject = supplier;
+        ResolvedCounterpartyId = supplier.Id;
+        NewCounterpartyName = null;
+        CounterpartySearchText = supplier.Name;
+        HasCounterpartyError = false;
+        OnPropertyChanged(nameof(ResolvedSupplierObject));
+        OnPropertyChanged(nameof(HasCounterparty));
+    }
+
+    public void SetExistingCustomer(Customer customer)
+    {
+        _resolvedCustomerObject = customer;
+        ResolvedCounterpartyId = customer.Id;
+        NewCounterpartyName = null;
+        CounterpartySearchText = customer.Name;
+        HasCounterpartyError = false;
+        OnPropertyChanged(nameof(ResolvedCustomerObject));
+        OnPropertyChanged(nameof(HasCounterparty));
+    }
+
+    public void SetNewCounterparty(string name)
+    {
+        ResolvedCounterpartyId = null;
+        NewCounterpartyName = name;
+        CounterpartySearchText = name;
+        HasCounterpartyError = false;
+        OnPropertyChanged(nameof(HasCounterparty));
+    }
+
+    // -----------------------------------------------------------------------
     // Delegate callbacks — set by BankStatementImportModalViewModel after construction
     // -----------------------------------------------------------------------
 
-    /// <summary>
-    /// Opens the standard Category create modal for this row.
-    /// Set by the parent modal VM.
-    /// </summary>
-    public Action? OpenCreateCategory { get; set; }
-
-    /// <summary>
-    /// Opens the standard Supplier or Customer create modal for this row
-    /// (branching on <see cref="CreateAsRevenue"/>).
-    /// Set by the parent modal VM.
-    /// </summary>
+    public Action? OpenCreateProduct { get; set; }
     public Action? OpenCreateCounterparty { get; set; }
 
-    /// <summary>
-    /// Opens the standard Category create modal.
-    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/>.
-    /// </summary>
+    /// <summary>Opens the create-product modal. Used by the product dropdown's "Create one" and the
+    /// editable category chip on a new-product row.</summary>
     [RelayCommand]
-    private void CreateNewCategory(string? typedName)
-    {
-        OpenCreateCategory?.Invoke();
-    }
+    private void CreateNewProduct(string? typedName) => OpenCreateProduct?.Invoke();
 
-    /// <summary>
-    /// Opens the standard Supplier or Customer create modal (based on <see cref="CreateAsRevenue"/>).
-    /// Called by <see cref="SearchableDropdown.AddNewInternalCommand"/>.
-    /// </summary>
     [RelayCommand]
-    private void CreateNewCounterparty(string? typedName)
-    {
-        OpenCreateCounterparty?.Invoke();
-    }
+    private void CreateNewCounterparty(string? typedName) => OpenCreateCounterparty?.Invoke();
 
-    // Object-typed wrappers for SearchableDropdown (which binds SelectedItem, not SelectedValue).
-    private Category? _resolvedCategoryObject;
-    public Category? ResolvedCategoryObject
+    // Object-typed wrappers for SearchableDropdown (which binds SelectedItem).
+
+    private Product? _resolvedProductObject;
+    public Product? ResolvedProductObject
     {
-        get => _resolvedCategoryObject;
+        get => _resolvedProductObject;
         set
         {
-            if (SetProperty(ref _resolvedCategoryObject, value))
+            if (SetProperty(ref _resolvedProductObject, value) && value != null)
             {
-                ResolvedCategoryId = value?.Id;
-                if (value != null) NewCategoryName = null;
+                ResolvedProductId = value.Id;
+                IsNewProduct = false;
+                NewProductName = null;
+                NewProductCategoryId = null;
+                NewProductCategoryName = null;
+                CategoryDisplay = ProductCategoryNameLookup?.Invoke(value);
+                OnPropertyChanged(nameof(HasProduct));
             }
         }
     }
+
+    /// <summary>Set by the parent VM so the row can resolve a product's category name for the chip.</summary>
+    public Func<Product, string?>? ProductCategoryNameLookup { get; set; }
 
     private Supplier? _resolvedSupplierObject;
     public Supplier? ResolvedSupplierObject
@@ -677,10 +958,11 @@ public partial class ImportLineRow : ObservableObject
         get => _resolvedSupplierObject;
         set
         {
-            if (SetProperty(ref _resolvedSupplierObject, value))
+            if (SetProperty(ref _resolvedSupplierObject, value) && value != null)
             {
-                ResolvedCounterpartyId = value?.Id;
-                if (value != null) NewCounterpartyName = null;
+                ResolvedCounterpartyId = value.Id;
+                NewCounterpartyName = null;
+                OnPropertyChanged(nameof(HasCounterparty));
             }
         }
     }
@@ -691,33 +973,12 @@ public partial class ImportLineRow : ObservableObject
         get => _resolvedCustomerObject;
         set
         {
-            if (SetProperty(ref _resolvedCustomerObject, value))
+            if (SetProperty(ref _resolvedCustomerObject, value) && value != null)
             {
-                ResolvedCounterpartyId = value?.Id;
-                if (value != null) NewCounterpartyName = null;
+                ResolvedCounterpartyId = value.Id;
+                NewCounterpartyName = null;
+                OnPropertyChanged(nameof(HasCounterparty));
             }
         }
-    }
-
-    /// <summary>
-    /// Syncs the object-typed wrapper properties from the Id fields after a rule pre-fill.
-    /// </summary>
-    public void SyncObjectsFromIds(
-        IEnumerable<Category> categories,
-        IEnumerable<Supplier> suppliers,
-        IEnumerable<Customer> customers)
-    {
-        if (ResolvedCategoryId != null)
-            _resolvedCategoryObject = categories.FirstOrDefault(c => c.Id == ResolvedCategoryId);
-
-        if (ResolvedCounterpartyId != null)
-        {
-            _resolvedSupplierObject = suppliers.FirstOrDefault(s => s.Id == ResolvedCounterpartyId);
-            _resolvedCustomerObject = customers.FirstOrDefault(c => c.Id == ResolvedCounterpartyId);
-        }
-
-        OnPropertyChanged(nameof(ResolvedCategoryObject));
-        OnPropertyChanged(nameof(ResolvedSupplierObject));
-        OnPropertyChanged(nameof(ResolvedCustomerObject));
     }
 }

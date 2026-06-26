@@ -23,6 +23,15 @@ public interface IGeminiService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Categorizes a batch of bank statement lines in a single call: picks an existing product
+    /// (which carries the category) or proposes a new product with a category, plus a
+    /// supplier/customer, for each line.
+    /// </summary>
+    Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+        BankLineCategorizationRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Sends a generic chat completion request to the Gemini API.
     /// </summary>
     /// <param name="systemPrompt">The system prompt.</param>

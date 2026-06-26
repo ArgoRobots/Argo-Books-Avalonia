@@ -25,6 +25,10 @@ public class BankCategoryRule
     [JsonPropertyName("categoryId")]
     public string CategoryId { get; set; } = string.Empty;
 
+    /// <summary>Existing product this merchant maps to, so a repeat import pre-fills the product directly.</summary>
+    [JsonPropertyName("productId")]
+    public string? ProductId { get; set; }
+
     [JsonPropertyName("transactionType")]
     public BookRecordType? TransactionType { get; set; }
 

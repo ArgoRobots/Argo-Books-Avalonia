@@ -47,6 +47,10 @@ public class LayoutNormalizationServiceTests : IDisposable
             ReceiptAnalysisRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult<SupplierCategorySuggestion?>(null);
 
+        public Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+            BankLineCategorizationRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult<List<BankLineSuggestion>?>(null);
+
         public Task<string?> SendChatAsync(
             string systemPrompt, string userPrompt,
             int maxTokens = 4000, double temperature = 0.1,

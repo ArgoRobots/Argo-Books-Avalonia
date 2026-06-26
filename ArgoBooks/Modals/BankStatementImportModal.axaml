@@ -37,6 +37,39 @@
         <Style Selector="Button.type-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         </Style>
+
+        <!-- Read-only category chip (existing product) -->
+        <Style Selector="Border.category-chip">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Clickable category chip (new product) -->
+        <Style Selector="Button.category-chip-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.category-chip-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.category-chip-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Modal width: full while reviewing, compact while the loading spinner shows -->
+        <Style Selector="Border.import-modal">
+            <Setter Property="MaxWidth" Value="960" />
+        </Style>
+        <Style Selector="Border.import-modal.loading">
+            <Setter Property="MaxWidth" Value="440" />
+        </Style>
     </UserControl.Styles>
 
     <controls:ModalOverlay IsOpen="{Binding IsOpen}"
@@ -45,7 +78,9 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12"
-                    MaxWidth="1400" MaxHeight="700"
+                    Classes="import-modal"
+                    Classes.loading="{Binding IsLoading}"
+                    MaxHeight="700"
                     HorizontalAlignment="Stretch" VerticalAlignment="Center"
                     Margin="24">
                 <Grid RowDefinitions="Auto,*,Auto">
@@ -55,31 +90,51 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Import bank statement'}"
-                                       FontSize="18" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc 'Import bank statement'}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding FileName}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding FileName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
                             <Button Grid.Column="1" Classes="icon-button"
+                                    VerticalAlignment="Top"
                                     Command="{Binding CancelCommand}">
                                 <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
                             </Button>
                         </Grid>
                     </Border>
 
-                    <!-- Row list -->
-                    <ScrollViewer Grid.Row="1"
+                    <Panel Grid.Row="1">
+                        <!-- Loading state (while parsing + AI categorization run) -->
+                        <StackPanel IsVisible="{Binding IsLoading}"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Spacing="16" Margin="24,40">
+                            <controls:LoadingSpinner SizePreset="Large" />
+                            <TextBlock Text="{loc:Loc 'Categorizing your statement...'}"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Row list -->
+                        <ScrollViewer IsVisible="{Binding !IsLoading}"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled">
-                        <Grid MinWidth="1320" Margin="24,16,24,30" RowDefinitions="Auto,*">
+                        <Grid Margin="24,16,24,30" RowDefinitions="Auto,*">
 
-                            <!-- Column header labels — same column layout as data rows -->
-                            <Grid Grid.Row="0" ColumnDefinitions="28,90,300,120,160,1.5*,1.5*" Margin="0,0,0,6">
+                            <!-- Column header labels — same column layout as data rows.
+                                 Trailing 16px column is a gutter so the row scrollbar doesn't overlap the Supplier/Customer box. -->
+                            <Grid Grid.Row="0" ColumnDefinitions="28,90,260,110,150,250,16" Margin="0,0,0,6">
                                 <TextBlock Grid.Column="1"
                                            Text="{loc:Loc Date}"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Grid.Column="2" Margin="8,0,0,0"
-                                           Text="{loc:Loc Description}"
+                                           Text="{loc:Loc 'Product'}"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Grid.Column="3" Margin="8,0,0,0"
@@ -91,10 +146,6 @@
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Grid.Column="5" Margin="8,0,0,0"
-                                           Text="{loc:Loc Category}"
-                                           FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBlock Grid.Column="6" Margin="8,0,0,0"
                                            Text="{loc:Loc 'Supplier / Customer'}"
                                            FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -109,8 +160,8 @@
                                         <Border Padding="0,4"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <!-- Same column layout as the header row above -->
-                                            <Grid ColumnDefinitions="28,90,300,120,160,1.5*,1.5*">
+                                            <!-- Same column layout as the header row above (trailing 16px = scrollbar gutter) -->
+                                            <Grid ColumnDefinitions="28,90,260,110,150,250,16">
 
                                                 <!-- Include checkbox -->
                                                 <CheckBox Grid.Column="0"
@@ -124,13 +175,51 @@
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center" />
 
-                                                <!-- Description -->
-                                                <TextBox Grid.Column="2" Margin="8,0,0,0"
-                                                         Text="{Binding Description, Mode=TwoWay}"
-                                                         Classes="form-input"
-                                                         MaxLength="200"
-                                                         HorizontalAlignment="Stretch"
-                                                         VerticalAlignment="Center" />
+                                                <!-- Product (carries the category) + read-only category chip + original bank text -->
+                                                <StackPanel Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center" Spacing="2">
+                                                    <controls:SearchableDropdown
+                                                        Classes="compact"
+                                                        Placeholder="{loc:Loc 'Product...'}"
+                                                        ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableProducts}"
+                                                        SelectedItem="{Binding ResolvedProductObject, Mode=TwoWay}"
+                                                        SearchText="{Binding ProductSearchText, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding CreateNewProductCommand}"
+                                                        HasError="{Binding HasProductError}"
+                                                        ErrorMessage="{loc:Loc 'Please select or create a product.'}" />
+
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <!-- New product: clickable category chip (opens create-product to set its category) -->
+                                                        <Button IsVisible="{Binding IsNewProduct}"
+                                                                Classes="category-chip-button"
+                                                                Command="{Binding CreateNewProductCommand}"
+                                                                ToolTip.Tip="{loc:Loc 'New product. Click to set its category.'}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                <TextBlock Text="{loc:Loc 'New'}" FontSize="10" FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <!-- Existing product: read-only category chip -->
+                                                        <Border Classes="category-chip">
+                                                            <Border.IsVisible>
+                                                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                                    <Binding Path="!IsNewProduct" />
+                                                                    <Binding Path="CategoryDisplay" Converter="{x:Static StringConverters.IsNotNullOrEmpty}" />
+                                                                </MultiBinding>
+                                                            </Border.IsVisible>
+                                                            <TextBlock Text="{Binding CategoryDisplay}" FontSize="11"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        </Border>
+                                                        <!-- Original bank statement text -->
+                                                        <TextBlock Text="{Binding RawDescription}" FontSize="11"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </StackPanel>
 
                                                 <!-- Amount — narrow, no spinner buttons -->
                                                 <NumericUpDown Grid.Column="3" Margin="8,0,0,0"
@@ -160,24 +249,10 @@
                                                     </StackPanel>
                                                 </Border>
 
-                                                <!-- Category dropdown with inline create -->
-                                                <controls:SearchableDropdown
-                                                    Grid.Column="5" Margin="8,0,0,0"
-                                                    Classes="compact"
-                                                    Placeholder="{loc:Loc 'Category...'}"
-                                                    ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableCategories}"
-                                                    SelectedItem="{Binding ResolvedCategoryObject, Mode=TwoWay}"
-                                                    SearchText="{Binding CategorySearchText, Mode=TwoWay}"
-                                                    DisplayMemberPath="Name"
-                                                    ShowAddNew="True"
-                                                    AddNewText="{loc:Loc 'Create one'}"
-                                                    AddNewCommand="{Binding CreateNewCategoryCommand}"
-                                                    HasError="{Binding HasCategoryError}"
-                                                    ErrorMessage="{loc:Loc 'Please select or create a category.'}"
-                                                    VerticalAlignment="Center" />
+                                                <!-- Category is shown read-only on the Product cell; it follows the selected product. -->
 
                                                 <!-- Supplier / Customer column -->
-                                                <Grid Grid.Column="6" Margin="8,0,0,0"
+                                                <Grid Grid.Column="5" Margin="8,0,0,0"
                                                       VerticalAlignment="Center">
 
                                                     <!-- Supplier dropdown (expense) -->
@@ -219,7 +294,8 @@
                             </ScrollViewer>
 
                         </Grid>
-                    </ScrollViewer>
+                        </ScrollViewer>
+                    </Panel>
 
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16"
@@ -238,6 +314,14 @@
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        IsVisible="{Binding !HasValidationMessage}"
                                        Text="{Binding IncludedCountText}" />
+                            <TextBlock Grid.Column="1" Margin="16,0,0,0"
+                                       Text="{Binding AiUnavailableMessage}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Left"
+                                       TextTrimming="CharacterEllipsis"
+                                       IsVisible="{Binding AiUnavailable}" />
                             <Button Grid.Column="2" Margin="0,0,12,0"
                                     Content="{loc:Loc Cancel}"
                                     Classes="secondary-button"
