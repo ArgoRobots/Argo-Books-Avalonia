@@ -10,6 +10,8 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -453,6 +455,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         companyData.Customers.Add(newCustomer);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.CustomerCreated);
         companyData.MarkAsModified();
 
         // Persist the avatar image (if one was picked) into the company temp directory

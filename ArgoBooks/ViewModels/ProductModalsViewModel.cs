@@ -8,6 +8,8 @@ using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -364,6 +366,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         };
 
         companyData.Products.Add(newProduct);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ProductCreated);
         companyData.MarkAsModified();
 
         var productToUndo = newProduct;

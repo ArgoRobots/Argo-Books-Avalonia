@@ -53,15 +53,5 @@ public enum ExportType
     /// <summary>
     /// Company backup export.
     /// </summary>
-    Backup,
-
-    /// <summary>
-    /// Receipt export.
-    /// </summary>
-    Receipts,
-
-    /// <summary>
-    /// Chart image export.
-    /// </summary>
-    ChartImage
+    Backup
 }

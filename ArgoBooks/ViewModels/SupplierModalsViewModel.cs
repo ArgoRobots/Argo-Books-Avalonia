@@ -12,6 +12,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -446,6 +448,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         };
 
         companyData.Suppliers.Add(newSupplier);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.SupplierCreated);
         companyData.MarkAsModified();
 
         // Persist the avatar (manual pick or auto-fetched favicon) into the company

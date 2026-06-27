@@ -1342,7 +1342,10 @@ public partial class App
                     // Track telemetry
                     var fileSize = new FileInfo(backupPath).Length;
                     if (TelemetryManager != null)
+                    {
                         await TelemetryManager.TrackExportAsync(ExportType.Backup, backupStopwatch.ElapsedMilliseconds, fileSize);
+                        _ = TelemetryManager.TrackFeatureAsync(FeatureName.BackupCreated);
+                    }
 
                     // Open the containing folder
                     try

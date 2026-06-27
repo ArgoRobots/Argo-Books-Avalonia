@@ -11,6 +11,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ArgoBooks.Helpers;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -739,6 +741,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         };
 
         companyData.Products.Add(newProduct);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ProductCreated);
         companyData.MarkAsModified();
 
         // Record undo action

@@ -12,6 +12,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -1706,6 +1708,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             if (success)
             {
+                _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReportGenerated);
                 ExportMessage = "Export completed successfully!";
 
                 // Auto-dismiss success message after 5 seconds

@@ -1179,7 +1179,7 @@ public partial class App : Application
                 _welcomeScreenViewModel?.InitializeTutorialMode();
             }
 
-            // Initialize telemetry session (respects user consent)
+            // Initialize telemetry session
             if (TelemetryManager != null)
             {
                 await TelemetryManager.InitializeAsync();
@@ -2477,6 +2477,7 @@ public partial class App : Application
 
             // Open it as a new company (this closes the current one)
             await OpenCompanyWithRetryAsync(destPath);
+            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.BackupRestored);
         }
         catch (Exception ex)
         {

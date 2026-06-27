@@ -16,6 +16,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -1622,6 +1624,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         // Check what changed before updating original values
         var languageChanged = SelectedLanguage != _originalLanguage;
+        var themeChanged = SelectedTheme != _originalTheme;
+        if (themeChanged)
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ThemeChanged);
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
         var timeSettingsChanged = SelectedTimeZone.Id != _originalTimeZone.Id ||
                                    SelectedTimeFormat != _originalTimeFormat;
@@ -1711,6 +1716,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 var success = await LanguageService.Instance.SetLanguageAsync(SelectedLanguage);
                 if (success)
                 {
+                    _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.LanguageChanged);
                     // Notify that language was saved successfully
                     LanguageSettingsChanged?.Invoke(this, new LanguageSettingsChangedEventArgs(SelectedLanguage, true));
                 }

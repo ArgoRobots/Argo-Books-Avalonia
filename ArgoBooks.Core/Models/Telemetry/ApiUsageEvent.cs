@@ -58,10 +58,5 @@ public enum ApiName
     /// <summary>
     /// Server proxy for receipt scanning.
     /// </summary>
-    ReceiptScanProxy,
-
-    /// <summary>
-    /// Microsoft Translator API.
-    /// </summary>
-    MicrosoftTranslator
+    ReceiptScanProxy
 }

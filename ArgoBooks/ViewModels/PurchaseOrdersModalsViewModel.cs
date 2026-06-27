@@ -14,6 +14,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -536,6 +538,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         };
 
         companyData.PurchaseOrders.Add(order);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PurchaseOrderCreated);
         companyData.MarkAsModified();
 
         // Record undo action

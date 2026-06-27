@@ -14,6 +14,8 @@ using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -2794,6 +2796,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         };
 
         companyData.Suppliers.Add(newSupplier);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.SupplierCreated);
         _createdSupplierForUndo = newSupplier;
 
         // Add to options and select

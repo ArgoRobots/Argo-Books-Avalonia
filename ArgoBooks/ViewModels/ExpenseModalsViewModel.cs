@@ -11,6 +11,8 @@ using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -567,6 +569,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         }
 
         companyData.Expenses.Add(expense);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ExpenseCreated);
 
         // Adjust inventory for tracked products
         var inventoryResults = AdjustInventoryForLineItems(companyData, modelLineItems, expenseId, isExpense: true);

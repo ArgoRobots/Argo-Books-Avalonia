@@ -9,6 +9,8 @@ using ArgoBooks.Core.Models.Rentals;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -515,6 +517,7 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         }
 
         companyData.Rentals.Add(newRecord);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RentalRecordCreated);
         companyData.MarkAsModified();
 
         var recordToUndo = newRecord;

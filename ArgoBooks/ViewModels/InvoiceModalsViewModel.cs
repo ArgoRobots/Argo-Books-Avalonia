@@ -14,6 +14,8 @@ using ArgoBooks.Core.Services.InvoiceTemplates;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -1594,6 +1596,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             // Add the new invoice to the collection and link to rentals/revenue
             companyData.Invoices.Add(invoice);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
             LinkInvoiceToRentals(invoice, companyData);
             LinkInvoiceToRevenue(invoice, companyData);
         }
@@ -1811,6 +1814,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
         LinkInvoiceToRentals(invoice, companyData);
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);

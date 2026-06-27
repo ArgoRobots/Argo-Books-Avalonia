@@ -30,21 +30,14 @@ public class FeatureUsageEvent : TelemetryEvent
 /// </summary>
 public enum FeatureName
 {
-    // Charts
-    ChartViewed,
-    ChartTypeChanged,
-
     // Reports
     ReportGenerated,
-    ReportPrinted,
 
     // Receipts
     ReceiptScanned,
-    ReceiptManualEntry,
 
     // Data Management
     DataImported,
-    DataExported,
     BackupCreated,
     BackupRestored,
 
@@ -66,10 +59,6 @@ public enum FeatureName
     // Rentals
     RentalItemCreated,
     RentalRecordCreated,
-
-    // AI Features
-    AiSearchUsed,
-    AiSuggestionAccepted,
 
     // Settings
     ThemeChanged,

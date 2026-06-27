@@ -8,6 +8,8 @@ using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -406,6 +408,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
         };
 
         companyData.Payments.Add(newPayment);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PaymentRecorded);
         // Recalc the affected invoice's totals + status. Without this the
         // invoice's AmountPaid / Balance / Status drift out of sync with
         // the Payment list. See docs/Calculations.md §5.

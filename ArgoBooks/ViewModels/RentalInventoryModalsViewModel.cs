@@ -10,6 +10,8 @@ using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -389,6 +391,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         };
 
         companyData.RentalInventory.Add(newItem);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RentalItemCreated);
         companyData.MarkAsModified();
 
         // Resolve name for undo description
@@ -809,6 +812,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         companyData.StockAdjustments.Add(adjustment);
 
         companyData.Rentals.Add(newRental);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RentalRecordCreated);
         companyData.MarkAsModified();
 
         var rentalToUndo = newRental;
