@@ -75,20 +75,31 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
         var refundsByCustomer = data.Payments
             .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.CustomerId))
             .GroupBy(p => p.CustomerId)
-            .ToDictionary(g => g.Key, g => CurrencyService.SumDisplayFromUSD(
-                g, p => Math.Abs(p.EffectiveAmountUSD), p => p.Date));
+            .ToDictionary(g => g.Key, g =>
+            {
+                var complete = CurrencyService.TrySumDisplayFromUSD(
+                    g, p => Math.Abs(p.EffectiveAmountUSD), p => p.Date, out var sum);
+                return (Sum: sum, Complete: complete);
+            });
 
         var grouped = data.Revenues
             .Where(r => !string.IsNullOrEmpty(r.CustomerId))
             .Where(RevenueAggregator.IsCollected)
             .GroupBy(r => r.CustomerId!)
-            .Select(g => new
+            .Select(g =>
             {
-                CustomerId = g.Key,
-                // Each revenue row converted at its OWN date, refunds already in display currency.
-                TotalRevenue = CurrencyService.SumDisplayFromUSD(g, r => r.EffectiveTotalUSD, r => r.Date)
-                                - (refundsByCustomer.TryGetValue(g.Key, out var rf) ? rf : 0m),
-                Count = g.Count()
+                // Each revenue row converted at its OWN date. Complete is false if any revenue or
+                // refund row is still awaiting its rate, so the amount shows Pending, not a partial.
+                var revComplete = CurrencyService.TrySumDisplayFromUSD(
+                    g, r => r.EffectiveTotalUSD, r => r.Date, out var revSum);
+                var refund = refundsByCustomer.TryGetValue(g.Key, out var rf) ? rf : (Sum: 0m, Complete: true);
+                return new
+                {
+                    CustomerId = g.Key,
+                    TotalRevenue = revSum - refund.Sum,
+                    Complete = revComplete && refund.Complete,
+                    Count = g.Count()
+                };
             });
 
         var sorted = SortBy == "count"
@@ -101,8 +112,8 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
             {
                 var customer = data.GetCustomer(g.CustomerId);
                 var name = customer?.Name ?? "Unknown";
-                // TotalRevenue is already in display currency, so just format.
-                var formatted = CurrencyService.Format(g.TotalRevenue);
+                // TotalRevenue is already in display currency; show Pending if any row awaits a rate.
+                var formatted = g.Complete ? CurrencyService.Format(g.TotalRevenue) : CurrencyService.PendingMarker;
                 return new TopCustomerItem(i + 1, name, formatted, g.Count);
             })
             .ToList();

@@ -2365,9 +2365,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Average display value: convert each transaction at its OWN date (Calculations.md §3a),
         // sum, then divide by the same count used above.
-        var transactionsValueDisplay =
-            CurrencyService.SumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date)
-            + CurrencyService.SumDisplayFromUSD(purchases, p => p.EffectiveTotalUSD, p => p.Date);
+        var salesComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date, out var salesSumDisplay);
+        var purchasesComplete = CurrencyService.TrySumDisplayFromUSD(purchases, p => p.EffectiveTotalUSD, p => p.Date, out var purchasesSumDisplay);
+        var transactionsComplete = salesComplete && purchasesComplete;
+        var transactionsValueDisplay = salesSumDisplay + purchasesSumDisplay;
         var avgTransactionValueDisplay = totalTransactionsCount > 0 ? transactionsValueDisplay / totalTransactionsCount : 0;
 
         // Shipping costs from purchases
@@ -2411,7 +2412,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         TotalTransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
         TotalTransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
-        AvgTransactionValue = CurrencyService.FormatWholeNumber(avgTransactionValueDisplay);
+        AvgTransactionValue = transactionsComplete ? CurrencyService.FormatWholeNumber(avgTransactionValueDisplay) : CurrencyService.PendingMarker;
         AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
         AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
@@ -2457,14 +2458,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
         // Convert each sale at its OWN date (Calculations.md §3a), then divide by the
         // same distinct-customer count.
-        var salesValueDisplay = CurrencyService.SumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date);
+        var custSalesComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date, out var salesValueDisplay);
         var avgValueDisplay = customerIds.Count > 0 ? salesValueDisplay / customerIds.Count : 0;
 
         RetentionRate = "N/A";
         RetentionChangeValue = null;
         RetentionChangeText = null;
 
-        AvgCustomerValue = CurrencyService.FormatWholeNumber(avgValueDisplay);
+        AvgCustomerValue = custSalesComplete ? CurrencyService.FormatWholeNumber(avgValueDisplay) : CurrencyService.PendingMarker;
         AvgCustomerValueChangeValue = null;
         AvgCustomerValueChangeText = null;
     }
@@ -2616,21 +2617,22 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Convert each transaction's tax at its OWN date (Calculations.md §3a). The per-row
         // USD selector mirrors taxCollectedUSD/taxPaidUSD above so USD display is identity.
-        var taxCollectedDisplay = CurrencyService.SumDisplayFromUSD(
-            revenues, r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r => r.Date);
-        var taxPaidDisplay = CurrencyService.SumDisplayFromUSD(
-            expenses, e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e => e.Date);
+        var collectedComplete = CurrencyService.TrySumDisplayFromUSD(
+            revenues, r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r => r.Date, out var taxCollectedDisplay);
+        var paidComplete = CurrencyService.TrySumDisplayFromUSD(
+            expenses, e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e => e.Date, out var taxPaidDisplay);
         var netLiabilityDisplay = taxCollectedDisplay - taxPaidDisplay;
 
-        TotalTaxCollected = CurrencyService.FormatWholeNumber(taxCollectedDisplay);
+        // Show Pending while any component is still awaiting its exact-date rate.
+        TotalTaxCollected = collectedComplete ? CurrencyService.FormatWholeNumber(taxCollectedDisplay) : CurrencyService.PendingMarker;
         TaxCollectedChangeValue = hasPrevPeriodData && prevTaxCollected > 0 ? (double)collectedChange : null;
         TaxCollectedChangeText = hasPrevPeriodData && prevTaxCollected > 0 ? $"{Math.Abs(collectedChange):F1}%" : null;
 
-        TotalTaxPaid = CurrencyService.FormatWholeNumber(taxPaidDisplay);
+        TotalTaxPaid = paidComplete ? CurrencyService.FormatWholeNumber(taxPaidDisplay) : CurrencyService.PendingMarker;
         TaxPaidChangeValue = hasPrevPeriodData && prevTaxPaid > 0 ? (double)paidChange : null;
         TaxPaidChangeText = hasPrevPeriodData && prevTaxPaid > 0 ? $"{Math.Abs(paidChange):F1}%" : null;
 
-        NetTaxLiability = CurrencyService.FormatWholeNumber(netLiabilityDisplay);
+        NetTaxLiability = collectedComplete && paidComplete ? CurrencyService.FormatWholeNumber(netLiabilityDisplay) : CurrencyService.PendingMarker;
         TaxLiabilityChangeValue = hasPrevPeriodData && prevNetLiability != 0 ? (double)liabilityChange : null;
         TaxLiabilityChangeText = hasPrevPeriodData && prevNetLiability != 0 ? $"{Math.Abs(liabilityChange):F1}%" : null;
 

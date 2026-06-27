@@ -204,6 +204,41 @@ public static class CurrencyService
     }
 
     /// <summary>
+    /// Like <see cref="SumDisplayFromUSD"/> but also reports (via the return value) whether EVERY
+    /// item had an exact-date rate. Returns false when any item is still awaiting its rate, so a
+    /// display caller can show <see cref="PendingMarker"/> instead of a total that silently mixes
+    /// raw USD into a display-currency figure. <paramref name="total"/> is the best-effort sum
+    /// (missing items counted at their USD amount) either way. A USD display currency is always complete.
+    /// </summary>
+    public static bool TrySumDisplayFromUSD<T>(
+        IEnumerable<T> items, Func<T, decimal> amountUSD, Func<T, DateTime> date, out decimal total)
+    {
+        total = 0m;
+        var complete = true;
+        foreach (var item in items)
+        {
+            var usd = amountUSD(item);
+            if (TryDisplayFromUSD(usd, date(item), out var amount))
+                total += amount;
+            else
+            {
+                total += usd;
+                complete = false;
+            }
+        }
+        return complete;
+    }
+
+    /// <summary>
+    /// Sums per-item amounts in the display currency, or returns <see cref="PendingMarker"/> when any
+    /// item is still awaiting its exact-date rate, so a total never silently shows a partial figure
+    /// as if it were complete.
+    /// </summary>
+    public static string FormatSumDisplayFromUSD<T>(
+        IEnumerable<T> items, Func<T, decimal> amountUSD, Func<T, DateTime> date)
+        => TrySumDisplayFromUSD(items, amountUSD, date, out var total) ? Format(total) : PendingMarker;
+
+    /// <summary>
     /// Ensures today's exact-date USD-&gt;display-currency rate is cached, fetching it if missing and
     /// online. "As of now" aggregate displays (e.g. the profit chart title) convert at today's rate,
     /// which is never fetched on its own when no transaction is dated today and the currency wasn't

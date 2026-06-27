@@ -190,9 +190,9 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         // Convert each expense at its OWN date before summing (Calculations.md §3a Phase 2), so a
         // non-USD display total isn't re-priced at today's rate. The USD value above is kept for the
         // currency-agnostic period-over-period change below.
-        Value = CurrencyService.Format(CurrencyService.SumDisplayFromUSD(
+        Value = CurrencyService.FormatSumDisplayFromUSD(
             data.Expenses.Where(e => e.Date >= startDate && e.Date <= endDate),
-            e => e.EffectiveTotalUSD, e => e.Date));
+            e => e.EffectiveTotalUSD, e => e.Date);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
         if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
@@ -216,8 +216,8 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
                      && i.Status != InvoiceStatus.Draft)
             .ToList();
         // Convert each invoice balance at its OWN issue date before summing (Calculations.md §3a Phase 2).
-        Value = CurrencyService.Format(CurrencyService.SumDisplayFromUSD(
-            unpaid, i => i.EffectiveBalanceUSD, i => i.IssueDate));
+        Value = CurrencyService.FormatSumDisplayFromUSD(
+            unpaid, i => i.EffectiveBalanceUSD, i => i.IssueDate);
         SecondaryText = $"{unpaid.Count} invoices pending";
     }
 
@@ -274,8 +274,8 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
             .Where(i => i.Status == InvoiceStatus.Overdue)
             .ToList();
         // Convert each invoice balance at its OWN issue date before summing (Calculations.md §3a Phase 2).
-        Value = CurrencyService.Format(CurrencyService.SumDisplayFromUSD(
-            overdue, i => i.EffectiveBalanceUSD, i => i.IssueDate));
+        Value = CurrencyService.FormatSumDisplayFromUSD(
+            overdue, i => i.EffectiveBalanceUSD, i => i.IssueDate);
         SecondaryText = $"{overdue.Count} overdue";
     }
 

@@ -368,16 +368,20 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // the day it was issued). Mirrors the dashboard's stat-card semantics
         // exactly so the two never drift: paid-only, capped at end of month.
         // Convert each row/refund at its OWN date before summing (Calculations.md §3a Phase 2).
-        var monthlyGrossDisplay = CurrencyService.SumDisplayFromUSD(
+        var grossComplete = CurrencyService.TrySumDisplayFromUSD(
             RevenueAggregator.OnlyCollected(
                 _allRevenue.Where(s => s.Date >= startOfMonth && s.Date <= endOfMonth)),
-            s => s.EffectiveTotalUSD, s => s.Date);
-        var monthlyRefundsDisplay = companyData?.Payments != null
-            ? CurrencyService.SumDisplayFromUSD(
+            s => s.EffectiveTotalUSD, s => s.Date, out var monthlyGrossDisplay);
+        var refundsComplete = true;
+        var monthlyRefundsDisplay = 0m;
+        if (companyData?.Payments != null)
+            refundsComplete = CurrencyService.TrySumDisplayFromUSD(
                 companyData.Payments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= endOfMonth),
-                p => Math.Abs(p.EffectiveAmountUSD), p => p.Date)
-            : 0m;
-        TotalMonthlyRevenue = CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay);
+                p => Math.Abs(p.EffectiveAmountUSD), p => p.Date, out monthlyRefundsDisplay);
+        // Pending if any component is still awaiting its rate, so the total isn't shown partial.
+        TotalMonthlyRevenue = grossComplete && refundsComplete
+            ? CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay)
+            : CurrencyService.PendingMarker;
 
         // Sales count
         SalesCount = _allRevenue.Count;
