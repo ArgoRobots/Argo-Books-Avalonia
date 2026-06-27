@@ -799,8 +799,15 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
-        // Wire up header's quick actions button to open the panel in dropdown mode
-        HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenDropdownCommand.Execute(null);
+        // Wire up header's quick actions button to open the panel in dropdown mode. Re-sync the
+        // query from the header searchbox first: closing the panel clears the panel's own
+        // SearchQuery, but the textbox keeps its text, so without this the reopened panel would
+        // show unfiltered results while the textbox still displays the search text.
+        HeaderViewModel.OpenQuickActionsRequested += (_, _) =>
+        {
+            QuickActionsViewModel.SearchQuery = HeaderViewModel.SearchQuery;
+            QuickActionsViewModel.OpenDropdownCommand.Execute(null);
+        };
 
         // Wire up header's notification button to toggle the notification panel
         HeaderViewModel.OpenNotificationsRequested += (_, _) => NotificationPanelViewModel.ToggleCommand.Execute(null);

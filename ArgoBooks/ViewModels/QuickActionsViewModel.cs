@@ -304,16 +304,18 @@ public partial class QuickActionsViewModel : ViewModelBase
         }
         else
         {
-            // No query - normal category grouping
+            // No query - show every item, grouped by category. The results list scrolls, so
+            // there's no need to cap each section the way a search does; showing the full set
+            // gives users a usable menu the moment the panel opens.
             var items = filteredList.Select(x => x.Item).ToList();
 
-            foreach (var item in items.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
+            foreach (var item in items.Where(a => a.Type == QuickActionType.QuickAction))
                 QuickActions.Add(item);
 
-            foreach (var item in items.Where(a => a.Type == QuickActionType.Navigation).Take(8))
+            foreach (var item in items.Where(a => a.Type == QuickActionType.Navigation))
                 NavigationItems.Add(item);
 
-            foreach (var item in items.Where(a => a.Type == QuickActionType.Tools).Take(4))
+            foreach (var item in items.Where(a => a.Type == QuickActionType.Tools))
                 ToolsItems.Add(item);
         }
 
@@ -438,12 +440,33 @@ public partial class QuickActionsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// All result items in visual order (must match the section order in QuickActionsPanel.axaml
+    /// so SelectedIndex lines up with the rendered rows; data Results render last).
+    /// </summary>
+    private IEnumerable<QuickActionItem> OrderedItems =>
+        TopResults.Concat(QuickActions).Concat(NavigationItems).Concat(ToolsItems).Concat(SearchResults);
+
+    /// <summary>
+    /// Highlights the item at the new selected index (and clears the rest) so the searchbox can
+    /// keep focus while the user navigates with the arrow keys.
+    /// </summary>
+    partial void OnSelectedIndexChanged(int value)
+    {
+        var index = 0;
+        foreach (var item in OrderedItems)
+        {
+            item.IsSelected = index == value;
+            index++;
+        }
+    }
+
+    /// <summary>
     /// Executes the currently selected action.
     /// </summary>
     [RelayCommand]
     private void ExecuteSelected()
     {
-        var allItems = SearchResults.Concat(TopResults).Concat(QuickActions).Concat(NavigationItems).Concat(ToolsItems).ToList();
+        var allItems = OrderedItems.ToList();
         if (SelectedIndex >= 0 && SelectedIndex < allItems.Count)
         {
             ExecuteAction(allItems[SelectedIndex]);
@@ -481,6 +504,14 @@ public partial class QuickActionsViewModel : ViewModelBase
             var score = BestScore(query, p.Name, p.Sku, p.Description);
             if (score > 0)
                 results.Add((new QuickActionItem(p.Name, string.IsNullOrWhiteSpace(p.Sku) ? p.Description : $"SKU: {p.Sku}", Icons.Products, QuickActionType.SearchResult, "Products", entityId: p.Id), score));
+        }
+
+        // Categories
+        foreach (var cat in companyData.Categories)
+        {
+            var score = BestScore(query, cat.Name, cat.Description ?? "");
+            if (score > 0)
+                results.Add((new QuickActionItem(cat.Name, $"{cat.Type} category", Icons.Categories, QuickActionType.SearchResult, "Categories", entityId: cat.Id), score));
         }
 
         // Invoices
@@ -589,8 +620,18 @@ public partial class QuickActionsViewModel : ViewModelBase
 /// <summary>
 /// Represents a quick action item.
 /// </summary>
-public class QuickActionItem
+public class QuickActionItem : ObservableObject
 {
+    /// <summary>
+    /// Whether this item is the currently highlighted result (keyboard navigation). Kept separate
+    /// from focus so the searchbox can retain focus while the user arrows through results.
+    /// </summary>
+    public bool IsSelected
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
     /// <summary>
     /// Action title.
     /// </summary>
