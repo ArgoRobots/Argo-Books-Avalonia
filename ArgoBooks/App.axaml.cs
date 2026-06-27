@@ -1972,8 +1972,11 @@ public partial class App : Application
         {
             try
             {
-                filePath = await new LayoutNormalizationService(geminiService, ErrorLogger)
-                    .NormalizeAsync(filePath, analysisCts.Token);
+                // Run off the UI thread: NormalizeAsync opens the workbook with ClosedXML
+                // synchronously (several seconds for a real file), which would otherwise block
+                // the loading overlay from even painting until it finished.
+                var normalizer = new LayoutNormalizationService(geminiService, ErrorLogger);
+                filePath = await Task.Run(() => normalizer.NormalizeAsync(filePath, analysisCts.Token), analysisCts.Token);
             }
             catch (Exception ex)
             {
@@ -1993,10 +1996,12 @@ public partial class App : Application
 
         try
         {
-            // Step 1: AI Analysis
+            // Step 1: AI Analysis. Run off the UI thread: the analyzer opens the workbook
+            // synchronously before its network calls, which would otherwise freeze the loading
+            // overlay. The Progress callback was created on the UI thread, so it still marshals back.
             var analysis = isCsv
-                ? await analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress)
-                : await analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress);
+                ? await Task.Run(() => analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress), analysisCts.Token)
+                : await Task.Run(() => analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress), analysisCts.Token);
 
             await Task.Yield();
             _mainWindowViewModel?.HideLoading();
