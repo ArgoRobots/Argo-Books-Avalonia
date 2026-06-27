@@ -129,7 +129,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // -----------------------------------------------------------------------
 
     [RelayCommand]
-    private void Import()
+    private async Task Import()
     {
         var data = App.CompanyManager?.CompanyData;
         if (data == null) return;
@@ -143,6 +143,23 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             _validationAttempted = true;
             RefreshState();
             if (toImport.Any(r => !r.IsComplete)) return;
+        }
+
+        // Confirm before re-importing rows that already exist, so the user knowingly creates
+        // duplicate transactions (or backs out and unchecks them).
+        var duplicateCount = toImport.Count(r => r.AlreadyImported);
+        if (duplicateCount > 0 && App.ConfirmationDialog is { } confirm)
+        {
+            var result = await confirm.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import duplicates?".Translate(),
+                Message = "{0} of these transactions already exist in your books. Importing will create duplicate copies. Import them again anyway?".TranslateFormat(duplicateCount),
+                PrimaryButtonText = "Import anyway".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+            if (result != ConfirmationResult.Primary)
+                return;
         }
 
         var resolutions = toImport.Select(r => new BankLineResolution
@@ -508,8 +525,40 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             Rows.Add(row);
         }
 
+        if (data != null)
+            FlagAlreadyImported(data);
+
         RefreshState();
     }
+
+    /// <summary>
+    /// Flags rows that already exist as a transaction (matched on type + date + amount +
+    /// description). They stay included and show an "Already imported" note; the import asks the
+    /// user to confirm before creating duplicates from them.
+    /// </summary>
+    private void FlagAlreadyImported(CompanyData data)
+    {
+        var existing = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var e in data.Expenses)
+            existing.Add(TxKey(isRevenue: false, e.Date, e.Total, e.Description));
+        foreach (var r in data.Revenues)
+            existing.Add(TxKey(isRevenue: true, r.Date, r.Total, r.Description));
+
+        foreach (var row in Rows)
+        {
+            var key = TxKey(row.CreateAsRevenue, row.Date.DateTime, row.Amount, row.Description);
+            if (existing.Contains(key))
+                row.AlreadyImported = true;
+        }
+    }
+
+    /// <summary>Stable key for duplicate detection: type + date (day) + absolute amount + description.</summary>
+    private static string TxKey(bool isRevenue, DateTime date, decimal amount, string? description) =>
+        string.Join("|",
+            isRevenue ? "R" : "E",
+            date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+            Math.Abs(amount).ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+            (description ?? string.Empty).Trim().ToLowerInvariant());
 
     /// <summary>Free, instant pre-fill: learned rules first, then an obvious name match against existing entities.</summary>
     private void ApplyDeterministicPrefill(CompanyData data, ImportLineRow row)
@@ -888,6 +937,11 @@ public partial class ImportLineRow : ObservableObject
     }
 
     [ObservableProperty] private bool _isIncluded;
+
+    /// <summary>True when an identical transaction (type + date + amount + description) already
+    /// exists, so the row is pre-excluded as a likely re-import. The user can re-check it.</summary>
+    [ObservableProperty] private bool _alreadyImported;
+
     [ObservableProperty] private DateTimeOffset _date;
     [ObservableProperty] private decimal _amount;
 

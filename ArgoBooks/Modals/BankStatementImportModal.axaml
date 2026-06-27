@@ -171,11 +171,20 @@
                                                           VerticalAlignment="Center" />
 
                                                 <!-- Date — compact read-only formatted text -->
-                                                <TextBlock Grid.Column="1"
+                                                <TextBlock Grid.Row="0" Grid.Column="1"
                                                            Text="{Binding DateFormatted}"
                                                            FontSize="13"
                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center" />
+
+                                                <!-- Already-imported note (row is pre-unchecked) -->
+                                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                                           Text="{loc:Loc 'Already imported'}"
+                                                           IsVisible="{Binding AlreadyImported}"
+                                                           FontSize="10"
+                                                           Foreground="{DynamicResource WarningBrush}"
+                                                           VerticalAlignment="Top"
+                                                           Margin="0,2,0,0" />
 
                                                 <!-- Product (carries the category) -->
                                                 <controls:SearchableDropdown
