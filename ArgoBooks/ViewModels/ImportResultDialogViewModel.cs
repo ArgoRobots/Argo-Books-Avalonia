@@ -20,6 +20,7 @@ public class SheetResultItem
     public int Inserted { get; init; }
     public int Updated { get; init; }
     public int Skipped { get; init; }
+    public int Imported { get; init; }
 
     public string Summary
     {
@@ -28,6 +29,7 @@ public class SheetResultItem
             var parts = new List<string>();
             if (Inserted > 0) parts.Add($"{Inserted:N0} {"new".Translate()}");
             if (Updated > 0) parts.Add($"{Updated:N0} {"updated".Translate()}");
+            if (Imported > 0) parts.Add($"{Imported:N0} {"imported".Translate()}");
             if (Skipped > 0) parts.Add($"{Skipped:N0} {"skipped".Translate()}");
             return string.Join(", ", parts);
         }
@@ -114,7 +116,7 @@ public partial class ImportResultDialogViewModel : ViewModelBase
         // Build per-sheet results
         foreach (var sr in sheetResults)
         {
-            if (sr.Inserted == 0 && sr.Updated == 0 && sr.Skipped == 0) continue;
+            if (sr.Inserted == 0 && sr.Updated == 0 && sr.Skipped == 0 && sr.BankMatchingImported == 0) continue;
 
             var label = string.Equals(sr.SheetName, sr.EntityType, StringComparison.OrdinalIgnoreCase)
                 ? sr.SheetName
@@ -125,7 +127,8 @@ public partial class ImportResultDialogViewModel : ViewModelBase
                 DisplayLabel = label,
                 Inserted = sr.Inserted,
                 Updated = sr.Updated,
-                Skipped = sr.Skipped
+                Skipped = sr.Skipped,
+                Imported = sr.BankMatchingImported
             });
         }
         HasMultipleSheets = SheetResults.Count > 1;

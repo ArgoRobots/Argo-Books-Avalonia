@@ -2329,11 +2329,12 @@ public partial class App : Application
             // Create snapshot for redo
             var importedSnapshot = CreateCompanyDataSnapshot(companyData);
 
-            // Record undo action
+            // Record undo action. Reload the Bank Matching page too: a workbook may have routed
+            // bank statement rows into a BankImportSession, so undo/redo must refresh that view.
             UndoRedoManager.RecordAction(new DelegateAction(
                 "AI import spreadsheet data".Translate(),
-                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
-                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
+                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); },
+                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); }
             ));
 
             CompanyManager.MarkAsChanged();
@@ -2382,13 +2383,17 @@ public partial class App : Application
             // Collect unimported rows from every sheet
             var allUnimported = allSheetResults.SelectMany(r => r.UnimportedRows).ToList();
 
+            // Bank statement rows are routed to the Bank Matching page (their own session), not
+            // counted as new/updated book records, so factor them into "needs save" separately.
+            var totalBankRouted = allSheetResults.Sum(sr => sr.BankMatchingImported);
+
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
             await resultDialog.ShowAsync(
                 originalFileName,
                 allSheetResults,
                 totalImported, totalUpdated, totalSkipped,
-                allSkipReasons, allWarnings, totalProcessed > 0,
+                allSkipReasons, allWarnings, totalProcessed > 0 || totalBankRouted > 0,
                 allUnimported);
 
             // Rebuild the current page so its charts/widgets show the freshly imported data.

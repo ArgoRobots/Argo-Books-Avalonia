@@ -4,6 +4,7 @@ using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -98,6 +99,12 @@ public class SheetImportResult
     public int Inserted { get; set; }
     public int Updated { get; set; }
     public int Skipped { get; set; }
+
+    /// <summary>
+    /// Rows routed to the Bank Matching feature (added as a <see cref="Models.BankMatching.BankImportSession"/>)
+    /// rather than committed as book records. Reported on its own line so it is clear they went elsewhere.
+    /// </summary>
+    public int BankMatchingImported { get; set; }
     public List<string> SkipReasons { get; } = [];
     public List<UnimportedRow> UnimportedRows { get; } = [];
 
@@ -511,12 +518,63 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(processedData);
 
-        var entityType = processedData.FirstOrDefault()?.EntityType.ToString() ?? "Unknown";
+        var firstType = processedData.FirstOrDefault()?.EntityType;
+        var entityType = firstType == SpreadsheetSheetType.BankStatement
+            ? "Bank Matching"
+            : firstType?.ToString() ?? "Unknown";
         var sheetResult = new SheetImportResult
         {
             SheetName = sheetName,
             EntityType = entityType
         };
+
+        // Bank statement rows are reference data for the Bank Matching feature, never committed as
+        // book transactions. The normal importer hands them to the dedicated bank importer, but this
+        // AI path has no per-entity bank importer (they would fall through ImportSingleEntity to
+        // Failed). Build the bank lines here and add them as a single import session, exactly the
+        // shape the Bank Matching page reads. Reported on their own line (not as new/updated book
+        // records) so it is clear they landed on a different page.
+        if (firstType == SpreadsheetSheetType.BankStatement)
+        {
+            var lines = new List<BankStatementLine>();
+            foreach (var chunk in processedData)
+            {
+                foreach (var entityJson in chunk.Entities)
+                {
+                    BankStatementLine? line;
+                    try
+                    {
+                        line = JsonSerializer.Deserialize<BankStatementLine>(entityJson.GetRawText(), ImportJsonOptions);
+                    }
+                    catch (JsonException)
+                    {
+                        line = null;
+                    }
+                    if (line == null) continue;
+
+                    line.Id = Guid.NewGuid().ToString("N");
+                    // Fall back to Credit - Debit when the AI mapped separate columns instead of a
+                    // single signed amount (matches BankStatementImportService: in is positive, out negative).
+                    if (line.Amount == 0 && (line.Debit.HasValue || line.Credit.HasValue))
+                        line.Amount = (line.Credit ?? 0) - (line.Debit ?? 0);
+                    lines.Add(line);
+                }
+            }
+
+            if (lines.Count > 0)
+            {
+                companyData.BankImportSessions.Add(new BankImportSession
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    ImportedAt = DateTime.UtcNow,
+                    SourceFileName = sheetName,
+                    Lines = lines
+                });
+                sheetResult.BankMatchingImported = lines.Count;
+                companyData.MarkAsModified();
+            }
+            return sheetResult;
+        }
 
         // Build the name->id indexes once for this import so reference resolution can link a
         // by-name reference to an existing customer/supplier instead of creating a placeholder.
@@ -4406,15 +4464,27 @@ internal class LenientEnumConverterFactory : JsonConverterFactory
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var enumType = Nullable.GetUnderlyingType(typeToConvert) ?? typeToConvert;
-        var converterType = typeof(LenientEnumConverter<>).MakeGenericType(enumType);
+        // For a nullable enum (e.g. BookRecordType?) the converter MUST handle the exact
+        // Nullable<T> type, not the underlying enum, otherwise System.Text.Json throws a
+        // "handles type X but asked to convert Y" mismatch.
+        var underlying = Nullable.GetUnderlyingType(typeToConvert);
+        if (underlying != null)
+        {
+            var nullableType = typeof(LenientNullableEnumConverter<>).MakeGenericType(underlying);
+            return (JsonConverter)Activator.CreateInstance(nullableType)!;
+        }
+
+        var converterType = typeof(LenientEnumConverter<>).MakeGenericType(typeToConvert);
         return (JsonConverter)Activator.CreateInstance(converterType)!;
     }
 }
 
-internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+/// <summary>
+/// Shared lenient enum parsing used by both the value and nullable converters.
+/// </summary>
+internal static class LenientEnumParser
 {
-    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public static T Parse<T>(ref Utf8JsonReader reader) where T : struct, Enum
     {
         if (reader.TokenType == JsonTokenType.Number)
         {
@@ -4440,7 +4510,31 @@ internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
         // Fall back to default enum value
         return default;
     }
+}
+
+internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => LenientEnumParser.Parse<T>(ref reader);
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) =>
         writer.WriteStringValue(value.ToString());
+}
+
+internal class LenientNullableEnumConverter<T> : JsonConverter<T?> where T : struct, Enum
+{
+    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+        return LenientEnumParser.Parse<T>(ref reader);
+    }
+
+    public override void Write(Utf8JsonWriter writer, T? value, JsonSerializerOptions options)
+    {
+        if (value.HasValue)
+            writer.WriteStringValue(value.Value.ToString());
+        else
+            writer.WriteNullValue();
+    }
 }
