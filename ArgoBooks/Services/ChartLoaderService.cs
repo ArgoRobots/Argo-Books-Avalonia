@@ -1881,7 +1881,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Values are counts of revenues per status, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.CustomerPaymentStatus] = new ChartExportData
@@ -1913,7 +1913,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Customer counts, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ActiveVsInactiveCustomers] = new ChartExportData
@@ -1946,7 +1946,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Loss counts grouped by reason, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossReasons] = new ChartExportData
@@ -1979,7 +1979,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Loss counts per product, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByProduct] = new ChartExportData
@@ -2053,7 +2053,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Return counts grouped by reason, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         var exportData = new ChartExportData
@@ -2087,7 +2087,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Return counts grouped by category, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByCategory] = new ChartExportData
@@ -2252,7 +2252,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Return counts per product, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.ReturnsByProduct] = new ChartExportData
@@ -2286,7 +2286,7 @@ public class ChartLoaderService
             return ([], []);
 
         // Loss counts per category, not amounts.
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         _chartExportDataByType[ChartDataType.LossesByCategory] = new ChartExportData
@@ -2935,12 +2935,15 @@ public class ChartLoaderService
     /// Creates pie chart series and legend items with "Other" grouping based on MaxPieSlices setting.
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
+    /// <param name="isCurrency">When true (the default), tooltips are formatted as money in the
+    /// display currency; pass false for count-based pies (return reasons, customer counts, etc.).</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
-        List<ChartDataPoint> dataPoints)
+        List<ChartDataPoint> dataPoints,
+        bool isCurrency = true)
     {
         var maxSlices = ChartSettingsService.GetMaxPieSlices();
-        return CreatePieSeriesWithLegend(dataPoints, maxSlices);
+        return CreatePieSeriesWithLegend(dataPoints, maxSlices, isCurrency);
     }
 
     /// <summary>
@@ -2951,10 +2954,13 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
     /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
+    /// <param name="isCurrency">When true, tooltips show money in the display currency; false shows
+    /// a plain count.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints,
-        int maxSlices)
+        int maxSlices,
+        bool isCurrency = true)
     {
         var series = new ObservableCollection<ISeries>();
         var legendItems = new ObservableCollection<PieLegendItem>();
@@ -2963,10 +2969,13 @@ public class ChartLoaderService
             return (series, legendItems);
 
         // Values are already in the correct units (display currency pre-converted
-        // per-date in the data layer, or plain counts), so use them as-is.
+        // per-date in the data layer, or plain counts), so use them as-is. Currency pies show the
+        // currency symbol and decimals in tooltips; count pies show a whole number.
         decimal Convert(double v) => (decimal)v;
 
-        string FormatTooltip(double v) => ((decimal)v).ToString("N0");
+        string FormatTooltip(double v) => isCurrency
+            ? CurrencyService.Format((decimal)v)
+            : ((decimal)v).ToString("N0");
 
         // Sort by value descending
         var sortedPoints = dataPoints.OrderByDescending(p => p.Value).ToList();

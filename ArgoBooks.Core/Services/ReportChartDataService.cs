@@ -1055,12 +1055,16 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets top customers by revenue.
     /// </summary>
-    public List<ChartDataPoint> GetTopCustomersByRevenue()
+    public List<ChartDataPoint> GetTopCustomersByRevenue(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
+
+        // Convert each revenue at its OWN date before summing (display currency), matching the
+        // other monetary distributions; falls back to raw USD when no converter is supplied.
+        decimal Display(decimal amountUSD, DateTime date) => toDisplay != null ? toDisplay(amountUSD, date) : amountUSD;
 
         return companyData.Revenues
             .Where(s => s.Date >= startDate && s.Date <= endDate && !string.IsNullOrEmpty(s.CustomerId))
@@ -1073,7 +1077,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 return new ChartDataPoint
                 {
                     Label = customerName,
-                    Value = (double)g.Sum(s => s.EffectiveTotalUSD)
+                    Value = (double)g.Sum(s => Display(s.EffectiveTotalUSD, s.Date))
                 };
             })
             .OrderByDescending(p => p.Value)
@@ -2134,7 +2138,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.AccountantsTransactions => GetTransactionsByAccountant(),
 
             // Customer charts
-            ChartDataType.TopCustomersByRevenue => GetTopCustomersByRevenue(),
+            ChartDataType.TopCustomersByRevenue => GetTopCustomersByRevenue(toDisplay),
             ChartDataType.CustomerPaymentStatus => GetCustomerPaymentStatus(),
             ChartDataType.CustomerGrowth => GetCustomerGrowth(),
             ChartDataType.CustomerLifetimeValue => GetCustomerLifetimeValue(),
