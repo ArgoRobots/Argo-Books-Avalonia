@@ -305,6 +305,15 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Shows the global indeterminate loading overlay. Exposed so view models that can't reach the
+    /// main window view model directly (e.g. modal VMs) can give instant feedback during slow work.
+    /// </summary>
+    internal static void ShowBusyOverlay(string message) => _mainWindowViewModel?.ShowLoading(message);
+
+    /// <summary>Hides the global loading overlay shown by <see cref="ShowBusyOverlay"/>.</summary>
+    internal static void HideBusyOverlay() => _mainWindowViewModel?.HideLoading();
+
+    /// <summary>
     /// Shows a modal info message box.
     /// </summary>
     internal static async Task ShowInfoMessageBoxAsync(string title, string message)
@@ -2689,40 +2698,52 @@ public partial class App : Application
             return [];
         }
 
-        // Usage gate.
-        // TODO: ReceiptUsageService is currently hard-wired to the receipt usage feature key
-        // server-side. Determine with the backend owner whether bank PDF extraction shares the
-        // receipt counter or gets its own feature key, then either keep ReceiptUsageService here
-        // or replace it with a parallel BankImportUsageService with the same shape.
-        using var usage = new ReceiptUsageService(LicenseService, ErrorLogger);
-        var check = await usage.CheckUsageAsync();
-        if (!check.CanScan)
+        // Reading the PDF is a slow network + AI round-trip; show the loading overlay for the
+        // whole wait so there's instant feedback. Hide it before any dialog.
+        ShowBusyOverlay("Reading PDF statement...".Translate());
+        try
         {
-            if (check.ErrorMessage != null)
-                await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
-            else
-                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
-            return [];
+            // Usage gate.
+            // TODO: ReceiptUsageService is currently hard-wired to the receipt usage feature key
+            // server-side. Determine with the backend owner whether bank PDF extraction shares the
+            // receipt counter or gets its own feature key, then either keep ReceiptUsageService here
+            // or replace it with a parallel BankImportUsageService with the same shape.
+            using var usage = new ReceiptUsageService(LicenseService, ErrorLogger);
+            var check = await usage.CheckUsageAsync();
+            if (!check.CanScan)
+            {
+                HideBusyOverlay();
+                if (check.ErrorMessage != null)
+                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+                else
+                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+                return [];
+            }
+
+            if (PdfStatementExtractor == null) return [];
+
+            var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
+            var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
+            HideBusyOverlay();
+            if (extracted.Count == 0)
+            {
+                // Don't fail silently: the extractor returns nothing both when the PDF has no
+                // recognizable transactions and when the server couldn't process it.
+                await ShowInfoMessageBoxAsync(
+                    "Import Bank Statement".Translate(),
+                    "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+                return [];
+            }
+
+            // Extraction succeeded: consume one credit and return the rows, which flow into the same
+            // path CSV and Excel use (no separate PDF-only confirm step).
+            await usage.IncrementUsageAsync();
+            return extracted;
         }
-
-        if (PdfStatementExtractor == null) return [];
-
-        var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
-        var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
-        if (extracted.Count == 0)
+        finally
         {
-            // Don't fail silently: the extractor returns nothing both when the PDF has no
-            // recognizable transactions and when the server couldn't process it.
-            await ShowInfoMessageBoxAsync(
-                "Import Bank Statement".Translate(),
-                "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
-            return [];
+            HideBusyOverlay();
         }
-
-        // Extraction succeeded: consume one credit and return the rows, which flow into the same
-        // path CSV and Excel use (no separate PDF-only confirm step).
-        await usage.IncrementUsageAsync();
-        return extracted;
     }
 
     private static string CreateCompanyDataSnapshot(CompanyData data)

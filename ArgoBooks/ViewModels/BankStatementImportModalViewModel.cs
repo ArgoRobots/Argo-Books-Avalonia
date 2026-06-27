@@ -833,36 +833,49 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             return [];
         }
 
-        using var usage = new ReceiptUsageService(App.LicenseService, App.ErrorLogger);
-        var check = await usage.CheckUsageAsync();
-        if (!check.CanScan)
+        // Reading the PDF is a slow network + AI round-trip (upload, server-side extraction).
+        // Show the loading overlay for the whole wait so there's instant feedback; hide it before
+        // any dialog or before the import modal opens.
+        App.ShowBusyOverlay("Reading PDF statement...".Translate());
+        try
         {
-            if (check.ErrorMessage != null)
-                await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
-            else
-                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
-            return [];
+            using var usage = new ReceiptUsageService(App.LicenseService, App.ErrorLogger);
+            var check = await usage.CheckUsageAsync();
+            if (!check.CanScan)
+            {
+                App.HideBusyOverlay();
+                if (check.ErrorMessage != null)
+                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+                else
+                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+                return [];
+            }
+
+            if (App.PdfStatementExtractor == null) return [];
+
+            var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
+            var extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
+            App.HideBusyOverlay();
+            if (extracted.Count == 0)
+            {
+                // Don't fail silently: the extractor returns nothing both when the PDF has no
+                // recognizable transactions and when the server couldn't process it.
+                await App.ShowInfoMessageBoxAsync(
+                    "Import Bank Statement".Translate(),
+                    "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+                return [];
+            }
+
+            // Extraction succeeded: consume one credit and hand the rows straight to the main import
+            // modal (the same review/categorize UI CSV and Excel use), where the user reviews, edits,
+            // or excludes rows before importing. No separate PDF-only confirm step.
+            await usage.IncrementUsageAsync();
+            return extracted;
         }
-
-        if (App.PdfStatementExtractor == null) return [];
-
-        var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
-        var extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
-        if (extracted.Count == 0)
+        finally
         {
-            // Don't fail silently: the extractor returns nothing both when the PDF has no
-            // recognizable transactions and when the server couldn't process it.
-            await App.ShowInfoMessageBoxAsync(
-                "Import Bank Statement".Translate(),
-                "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
-            return [];
+            App.HideBusyOverlay();
         }
-
-        // Extraction succeeded: consume one credit and hand the rows straight to the main import
-        // modal (the same review/categorize UI CSV and Excel use), where the user reviews, edits,
-        // or excludes rows before importing. No separate PDF-only confirm step.
-        await usage.IncrementUsageAsync();
-        return extracted;
     }
 
     // -----------------------------------------------------------------------
