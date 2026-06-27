@@ -166,7 +166,7 @@ public class SpreadsheetAnalysisService(
         try
         {
             // Analyze batches concurrently; each batch is an independent LLM call.
-            var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);
+            using var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);
             var tasks = batches.Select(batch => Task.Run(async () =>
             {
                 await semaphore.WaitAsync(cancellationToken);
@@ -451,7 +451,7 @@ public class SpreadsheetAnalysisService(
             chunks.Add((i, allRows.Skip(i).Take(Tier2ChunkSize).ToList()));
 
         // Process chunks in parallel with concurrency limit
-        var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
+        using var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
         var processedCount = 0;
         var chunkResults = new LlmProcessedData?[chunks.Count];
 

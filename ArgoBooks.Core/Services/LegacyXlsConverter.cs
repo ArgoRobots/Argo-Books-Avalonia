@@ -38,7 +38,7 @@ public static class LegacyXlsConverter
 
         // FileShare.ReadWrite so a .xls still converts/imports while it's open in Excel.
         using var inStream = new FileStream(xlsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        var source = new HSSFWorkbook(inStream);
+        using var source = new HSSFWorkbook(inStream);
 
         using var output = new XLWorkbook();
 
