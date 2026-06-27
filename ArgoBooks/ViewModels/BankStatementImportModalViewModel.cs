@@ -939,7 +939,7 @@ public partial class ImportLineRow : ObservableObject
     [ObservableProperty] private bool _isIncluded;
 
     /// <summary>True when an identical transaction (type + date + amount + description) already
-    /// exists, so the row is pre-excluded as a likely re-import. The user can re-check it.</summary>
+    /// exists. The row stays included; importing shows a confirmation before creating duplicates.</summary>
     [ObservableProperty] private bool _alreadyImported;
 
     [ObservableProperty] private DateTimeOffset _date;

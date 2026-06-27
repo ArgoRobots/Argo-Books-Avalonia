@@ -1,9 +1,6 @@
 #pragma warning disable CS0618 // LabelVisual is obsolete. DrawnLabelVisual is not API-compatible
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using ArgoBooks.Controls;
-using ArgoBooks.Controls.ColumnWidths;
-using ArgoBooks.Helpers;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
@@ -12,7 +9,6 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
