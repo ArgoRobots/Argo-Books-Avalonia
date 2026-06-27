@@ -43,16 +43,16 @@ public class CurrencyInfoReverseLookupTests
     {
         Assert.True(CurrencyInfo.TryResolveSymbol(symbol, out var code));
         Assert.Equal(expected, code);
-        Assert.False(CurrencyInfo.IsAmbiguousSymbol(symbol));
+        Assert.False(CurrencyInfo.CandidatesForSymbol(symbol).Count > 1);
     }
 
     [Theory]
     [InlineData("$")]
     [InlineData("¥")]
     [InlineData("kr")]
-    public void IsAmbiguousSymbol_SharedSymbols_AreAmbiguous(string symbol)
+    public void SharedSymbols_AreAmbiguous(string symbol)
     {
-        Assert.True(CurrencyInfo.IsAmbiguousSymbol(symbol));
+        Assert.True(CurrencyInfo.CandidatesForSymbol(symbol).Count > 1);
         Assert.False(CurrencyInfo.TryResolveSymbol(symbol, out _));
     }
 

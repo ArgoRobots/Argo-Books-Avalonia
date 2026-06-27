@@ -280,7 +280,6 @@ public class ExchangeRateService
         // Fall back to single-date requests for any dates the batch missed. Only advance progress on
         // a successful fetch, so the bar never reaches 100% while dates are still unpriced (which
         // would let the "could not get rates" prompt appear right after a misleading full bar).
-        var perDateOk = 0;
         var stillFailed = new List<DateTime>();
         foreach (var date in failedDates)
         {
@@ -290,7 +289,6 @@ public class ExchangeRateService
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
                 cached++;
-                perDateOk++;
                 progress?.Report(cached * 100 / total);
             }
             else
@@ -311,13 +309,13 @@ public class ExchangeRateService
         await _cache.SaveAsync();
     }
 
+    /// <summary>A short, log-safe prefix of a response body for diagnostics.</summary>
+    private static string Snippet(string s) => string.IsNullOrEmpty(s) ? "(empty)" : s.Length <= 300 ? s : s[..300] + "…";
+
     /// <summary>
     /// Fetches exchange rates for multiple dates in a single batch request.
     /// Returns a dictionary mapping date strings to their rate dictionaries, or null on failure.
     /// </summary>
-    /// <summary>A short, log-safe prefix of a response body for diagnostics.</summary>
-    private static string Snippet(string s) => string.IsNullOrEmpty(s) ? "(empty)" : s.Length <= 300 ? s : s[..300] + "…";
-
     private async Task<Dictionary<string, Dictionary<string, decimal>>?> FetchBatchRatesAsync(
         List<DateTime> dates, CancellationToken cancellationToken = default)
     {

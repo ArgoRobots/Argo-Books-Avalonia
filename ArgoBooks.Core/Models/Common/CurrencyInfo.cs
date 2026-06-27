@@ -133,12 +133,6 @@ public class CurrencyInfo
     }
 
     /// <summary>
-    /// True when the given symbol is used by more than one currency (e.g. "$", "¥", "kr").
-    /// </summary>
-    public static bool IsAmbiguousSymbol(string symbol) =>
-        CodesBySymbol.TryGetValue(symbol, out var codes) && codes.Count > 1;
-
-    /// <summary>
     /// When the symbol maps to exactly one currency, returns that code via <paramref name="code"/>
     /// and <see langword="true"/>. Otherwise returns <see langword="false"/> (unknown or ambiguous).
     /// </summary>
