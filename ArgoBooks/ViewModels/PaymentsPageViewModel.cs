@@ -203,7 +203,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         // Convert each payment at its OWN date before summing (Calculations.md §3a Phase 2).
         OnlineReceivedThisMonth = CurrencyService.FormatSumDisplayFromUSD(
             _allPayments.Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0),
-            p => p.EffectiveAmountUSD, p => p.Date);
+            p => p.Amount, p => p.OriginalCurrency, p => p.AmountUSD, p => p.Date);
     }
 
     private static string FormatTimeSince(DateTime utcTime)
@@ -558,10 +558,10 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         // Convert each payment/refund at its OWN date before summing (Calculations.md §3a Phase 2).
         var receivedComplete = CurrencyService.TrySumDisplayFromUSD(
             _allPayments.Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed"),
-            p => p.EffectiveAmountUSD, p => p.Date, out var monthlyReceivedDisplay);
+            p => p.Amount, p => p.OriginalCurrency, p => p.AmountUSD, p => p.Date, out var monthlyReceivedDisplay);
         var refundsComplete = CurrencyService.TrySumDisplayFromUSD(
             _allPayments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= now),
-            p => Math.Abs(p.EffectiveAmountUSD), p => p.Date, out var monthlyRefundsDisplay);
+            p => Math.Abs(p.Amount), p => p.OriginalCurrency, p => Math.Abs(p.AmountUSD), p => p.Date, out var monthlyRefundsDisplay);
         // Pending if any component is still awaiting its rate, so the total isn't shown partial.
         ReceivedThisMonth = receivedComplete && refundsComplete
             ? CurrencyService.Format(monthlyReceivedDisplay - monthlyRefundsDisplay)

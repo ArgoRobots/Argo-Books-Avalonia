@@ -204,19 +204,28 @@ public static class CurrencyService
     }
 
     /// <summary>
-    /// Like <see cref="SumDisplayFromUSD"/> but also reports (via the return value) whether EVERY
-    /// item had an exact-date rate. Returns false when any item is still awaiting its rate, so a
-    /// display caller can show <see cref="PendingMarker"/> instead of a total that silently mixes
-    /// raw USD into a display-currency figure. <paramref name="total"/> is the best-effort sum
-    /// (missing items counted at their USD amount) either way. A USD display currency is always complete.
+    /// Currency-aware per-item sum that reports (via the return value) whether EVERY item could be
+    /// shown in the display currency. Mirrors <see cref="FormatWithOriginal"/> per item: a row whose
+    /// original currency already matches the display currency uses its original amount directly (no
+    /// conversion, never "pending"); other rows convert from USD at their own date and mark the sum
+    /// incomplete when that exact-date rate isn't cached. <paramref name="total"/> is the best-effort
+    /// sum either way. This keeps company-currency rows (e.g. bank imports) out of the pending state.
     /// </summary>
     public static bool TrySumDisplayFromUSD<T>(
-        IEnumerable<T> items, Func<T, decimal> amountUSD, Func<T, DateTime> date, out decimal total)
+        IEnumerable<T> items, Func<T, decimal> originalAmount, Func<T, string> originalCurrency,
+        Func<T, decimal> amountUSD, Func<T, DateTime> date, out decimal total)
     {
         total = 0m;
         var complete = true;
+        var target = CurrentCurrencyCode;
         foreach (var item in items)
         {
+            // Already in the display currency: use the original amount as-is, no conversion needed.
+            if (string.Equals(target, originalCurrency(item), StringComparison.OrdinalIgnoreCase))
+            {
+                total += originalAmount(item);
+                continue;
+            }
             var usd = amountUSD(item);
             if (TryDisplayFromUSD(usd, date(item), out var amount))
                 total += amount;
@@ -231,12 +240,15 @@ public static class CurrencyService
 
     /// <summary>
     /// Sums per-item amounts in the display currency, or returns <see cref="PendingMarker"/> when any
-    /// item is still awaiting its exact-date rate, so a total never silently shows a partial figure
-    /// as if it were complete.
+    /// item that needs conversion is still awaiting its exact-date rate, so a total never silently
+    /// shows a partial figure as if it were complete. Rows already in the display currency never
+    /// trigger pending (see <see cref="TrySumDisplayFromUSD{T}"/>).
     /// </summary>
     public static string FormatSumDisplayFromUSD<T>(
-        IEnumerable<T> items, Func<T, decimal> amountUSD, Func<T, DateTime> date)
-        => TrySumDisplayFromUSD(items, amountUSD, date, out var total) ? Format(total) : PendingMarker;
+        IEnumerable<T> items, Func<T, decimal> originalAmount, Func<T, string> originalCurrency,
+        Func<T, decimal> amountUSD, Func<T, DateTime> date)
+        => TrySumDisplayFromUSD(items, originalAmount, originalCurrency, amountUSD, date, out var total)
+            ? Format(total) : PendingMarker;
 
     /// <summary>
     /// Ensures today's exact-date USD-&gt;display-currency rate is cached, fetching it if missing and

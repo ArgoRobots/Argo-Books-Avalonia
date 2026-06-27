@@ -78,7 +78,7 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
             .ToDictionary(g => g.Key, g =>
             {
                 var complete = CurrencyService.TrySumDisplayFromUSD(
-                    g, p => Math.Abs(p.EffectiveAmountUSD), p => p.Date, out var sum);
+                    g, p => Math.Abs(p.Amount), p => p.OriginalCurrency, p => Math.Abs(p.AmountUSD), p => p.Date, out var sum);
                 return (Sum: sum, Complete: complete);
             });
 
@@ -91,7 +91,7 @@ public partial class TopCustomersWidgetViewModel : WidgetViewModelBase
                 // Each revenue row converted at its OWN date. Complete is false if any revenue or
                 // refund row is still awaiting its rate, so the amount shows Pending, not a partial.
                 var revComplete = CurrencyService.TrySumDisplayFromUSD(
-                    g, r => r.EffectiveTotalUSD, r => r.Date, out var revSum);
+                    g, r => r.Total, r => r.OriginalCurrency, r => r.TotalUSD, r => r.Date, out var revSum);
                 var refund = refundsByCustomer.TryGetValue(g.Key, out var rf) ? rf : (Sum: 0m, Complete: true);
                 return new
                 {

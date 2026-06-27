@@ -192,7 +192,7 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         // currency-agnostic period-over-period change below.
         Value = CurrencyService.FormatSumDisplayFromUSD(
             data.Expenses.Where(e => e.Date >= startDate && e.Date <= endDate),
-            e => e.EffectiveTotalUSD, e => e.Date);
+            e => e.Total, e => e.OriginalCurrency, e => e.TotalUSD, e => e.Date);
 
         var (prevStart, prevEnd) = DashboardCalculations.GetComparisonPeriod();
         if (prevStart != DateTime.MinValue && DashboardCalculations.HasSufficientPriorData(data, prevStart))
@@ -217,7 +217,7 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
             .ToList();
         // Convert each invoice balance at its OWN issue date before summing (Calculations.md §3a Phase 2).
         Value = CurrencyService.FormatSumDisplayFromUSD(
-            unpaid, i => i.EffectiveBalanceUSD, i => i.IssueDate);
+            unpaid, i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
         SecondaryText = $"{unpaid.Count} invoices pending";
     }
 
@@ -275,7 +275,7 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
             .ToList();
         // Convert each invoice balance at its OWN issue date before summing (Calculations.md §3a Phase 2).
         Value = CurrencyService.FormatSumDisplayFromUSD(
-            overdue, i => i.EffectiveBalanceUSD, i => i.IssueDate);
+            overdue, i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
         SecondaryText = $"{overdue.Count} overdue";
     }
 

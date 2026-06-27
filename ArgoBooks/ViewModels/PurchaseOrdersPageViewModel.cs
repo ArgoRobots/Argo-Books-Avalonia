@@ -344,7 +344,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // heal (Calculations.md §3). The old "$" + raw Total sum added EUR/GBP/USD numerals together.
         // Convert each PO at its OWN order date before summing (Calculations.md §3a Phase 2).
         TotalValue = CurrencyService.TrySumDisplayFromUSD(
-            _allOrders, o => o.EffectiveTotalUSD, o => o.OrderDate, out var poTotalDisplay)
+            _allOrders, o => o.Total, o => o.OriginalCurrency, o => o.TotalUSD, o => o.OrderDate, out var poTotalDisplay)
             ? CurrencyService.FormatWholeNumber(poTotalDisplay)
             : CurrencyService.PendingMarker;
     }

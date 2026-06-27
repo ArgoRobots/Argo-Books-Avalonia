@@ -2365,8 +2365,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
         // Average display value: convert each transaction at its OWN date (Calculations.md §3a),
         // sum, then divide by the same count used above.
-        var salesComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date, out var salesSumDisplay);
-        var purchasesComplete = CurrencyService.TrySumDisplayFromUSD(purchases, p => p.EffectiveTotalUSD, p => p.Date, out var purchasesSumDisplay);
+        var salesComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.Total, s => s.OriginalCurrency, s => s.TotalUSD, s => s.Date, out var salesSumDisplay);
+        var purchasesComplete = CurrencyService.TrySumDisplayFromUSD(purchases, p => p.Total, p => p.OriginalCurrency, p => p.TotalUSD, p => p.Date, out var purchasesSumDisplay);
         var transactionsComplete = salesComplete && purchasesComplete;
         var transactionsValueDisplay = salesSumDisplay + purchasesSumDisplay;
         var avgTransactionValueDisplay = totalTransactionsCount > 0 ? transactionsValueDisplay / totalTransactionsCount : 0;
@@ -2458,7 +2458,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
         // Convert each sale at its OWN date (Calculations.md §3a), then divide by the
         // same distinct-customer count.
-        var custSalesComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.EffectiveTotalUSD, s => s.Date, out var salesValueDisplay);
+        var custSalesComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.Total, s => s.OriginalCurrency, s => s.TotalUSD, s => s.Date, out var salesValueDisplay);
         var avgValueDisplay = customerIds.Count > 0 ? salesValueDisplay / customerIds.Count : 0;
 
         RetentionRate = "N/A";
@@ -2618,9 +2618,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // Convert each transaction's tax at its OWN date (Calculations.md §3a). The per-row
         // USD selector mirrors taxCollectedUSD/taxPaidUSD above so USD display is identity.
         var collectedComplete = CurrencyService.TrySumDisplayFromUSD(
-            revenues, r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount, r => r.Date, out var taxCollectedDisplay);
+            revenues, r => r.TaxAmount, r => r.OriginalCurrency, r => r.TaxAmountUSD, r => r.Date, out var taxCollectedDisplay);
         var paidComplete = CurrencyService.TrySumDisplayFromUSD(
-            expenses, e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount, e => e.Date, out var taxPaidDisplay);
+            expenses, e => e.TaxAmount, e => e.OriginalCurrency, e => e.TaxAmountUSD, e => e.Date, out var taxPaidDisplay);
         var netLiabilityDisplay = taxCollectedDisplay - taxPaidDisplay;
 
         // Show Pending while any component is still awaiting its exact-date rate.

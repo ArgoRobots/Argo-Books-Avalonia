@@ -371,13 +371,13 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var grossComplete = CurrencyService.TrySumDisplayFromUSD(
             RevenueAggregator.OnlyCollected(
                 _allRevenue.Where(s => s.Date >= startOfMonth && s.Date <= endOfMonth)),
-            s => s.EffectiveTotalUSD, s => s.Date, out var monthlyGrossDisplay);
+            s => s.Total, s => s.OriginalCurrency, s => s.TotalUSD, s => s.Date, out var monthlyGrossDisplay);
         var refundsComplete = true;
         var monthlyRefundsDisplay = 0m;
         if (companyData?.Payments != null)
             refundsComplete = CurrencyService.TrySumDisplayFromUSD(
                 companyData.Payments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= endOfMonth),
-                p => Math.Abs(p.EffectiveAmountUSD), p => p.Date, out monthlyRefundsDisplay);
+                p => Math.Abs(p.Amount), p => p.OriginalCurrency, p => Math.Abs(p.AmountUSD), p => p.Date, out monthlyRefundsDisplay);
         // Pending if any component is still awaiting its rate, so the total isn't shown partial.
         TotalMonthlyRevenue = grossComplete && refundsComplete
             ? CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay)

@@ -567,17 +567,17 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         // Convert each invoice at its OWN issue date before summing (Calculations.md §3a Phase 2).
         TotalOutstanding = CurrencyService.FormatSumDisplayFromUSD(
             _allInvoices.Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled),
-            i => i.EffectiveBalanceUSD, i => i.IssueDate);
+            i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
         // Paid this month
         PaidThisMonth = CurrencyService.FormatSumDisplayFromUSD(
             _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
-            i => i.EffectiveTotalUSD, i => i.IssueDate);
+            i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
 
         // Overdue amount
         OverdueAmount = CurrencyService.FormatSumDisplayFromUSD(
             _allInvoices.Where(i => i.IsOverdue || i.Status == InvoiceStatus.Overdue),
-            i => i.EffectiveBalanceUSD, i => i.IssueDate);
+            i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
         // Due this week
         DueThisWeekCount = _allInvoices
