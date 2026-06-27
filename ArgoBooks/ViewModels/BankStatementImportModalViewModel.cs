@@ -858,12 +858,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             return [];
         }
 
-        var approved = await (App.PdfStatementReviewModalViewModel?.ReviewAsync(extracted)
-            ?? Task.FromResult<List<BankStatementLine>?>(null));
-        if (approved == null) return [];
-
+        // Extraction succeeded: consume one credit and hand the rows straight to the main import
+        // modal (the same review/categorize UI CSV and Excel use), where the user reviews, edits,
+        // or excludes rows before importing. No separate PDF-only confirm step.
         await usage.IncrementUsageAsync();
-        return approved;
+        return extracted;
     }
 
     // -----------------------------------------------------------------------

@@ -186,11 +186,6 @@ public partial class App : Application
     public static BankMatchingModalsViewModel? BankMatchingModalsViewModel => _appShellViewModel?.BankMatchingModalsViewModel;
 
     /// <summary>
-    /// Gets the PDF statement review modal view model for shared access.
-    /// </summary>
-    public static PdfStatementReviewModalViewModel? PdfStatementReviewModalViewModel => _appShellViewModel?.PdfStatementReviewModalViewModel;
-
-    /// <summary>
     /// Gets the bank statement import modal view model for shared access.
     /// </summary>
     public static BankStatementImportModalViewModel? BankStatementImportModalViewModel => _appShellViewModel?.BankStatementImportModalViewModel;
@@ -2673,8 +2668,9 @@ public partial class App : Application
 
     /// <summary>
     /// Premium-gated PDF bank statement import: checks the license, checks usage, calls the AI
-    /// extractor, shows the confirm-rows modal (Task 7), and increments usage on confirm.
-    /// Returns the approved rows, or an empty list if the user cancels or is gated out.
+    /// extractor, and increments usage on a successful extraction. Returns the extracted rows
+    /// (which flow into the same review path as CSV/Excel), or an empty list if gated out or
+    /// nothing could be extracted.
     /// </summary>
     private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {
@@ -2708,14 +2704,20 @@ public partial class App : Application
 
         var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
         var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
-        if (extracted.Count == 0) return [];
+        if (extracted.Count == 0)
+        {
+            // Don't fail silently: the extractor returns nothing both when the PDF has no
+            // recognizable transactions and when the server couldn't process it.
+            await ShowInfoMessageBoxAsync(
+                "Import Bank Statement".Translate(),
+                "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+            return [];
+        }
 
-        // Confirm-rows modal (Task 7). Returns the user-approved/edited rows or null on cancel.
-        var approved = await (PdfStatementReviewModalViewModel?.ReviewAsync(extracted) ?? Task.FromResult<List<Core.Models.BankMatching.BankStatementLine>?>(null));
-        if (approved == null) return [];
-
+        // Extraction succeeded: consume one credit and return the rows, which flow into the same
+        // path CSV and Excel use (no separate PDF-only confirm step).
         await usage.IncrementUsageAsync();
-        return approved;
+        return extracted;
     }
 
     private static string CreateCompanyDataSnapshot(CompanyData data)
