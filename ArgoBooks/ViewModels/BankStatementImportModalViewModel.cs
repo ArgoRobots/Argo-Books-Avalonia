@@ -848,7 +848,15 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
         var extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
-        if (extracted.Count == 0) return [];
+        if (extracted.Count == 0)
+        {
+            // Don't fail silently: the extractor returns nothing both when the PDF has no
+            // recognizable transactions and when the server couldn't process it.
+            await App.ShowInfoMessageBoxAsync(
+                "Import Bank Statement".Translate(),
+                "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+            return [];
+        }
 
         var approved = await (App.PdfStatementReviewModalViewModel?.ReviewAsync(extracted)
             ?? Task.FromResult<List<BankStatementLine>?>(null));

@@ -11,7 +11,6 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger? errorLogger = null) : IPdfStatementExtractor
 {
-    // NOTE: endpoint path /api/bank/extract.php is a placeholder pending backend confirmation.
     private static readonly string ExtractEndpoint = $"{ApiConfig.BaseUrl}/api/bank/extract.php";
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(120) };
 
