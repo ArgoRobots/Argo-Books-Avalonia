@@ -1072,18 +1072,19 @@
                                                     CornerRadius="8"
                                                     Padding="12,10"
                                                     Margin="0,0,0,4">
-                                                <Grid ColumnDefinitions="*,12,180,8,40" VerticalAlignment="Center">
+                                                <Grid ColumnDefinitions="*,12,180,8,40" RowDefinitions="Auto,Auto" VerticalAlignment="Center">
                                                     <!-- Pattern TextBox -->
-                                                    <TextBox Grid.Column="0"
+                                                    <TextBox Grid.Row="0" Grid.Column="0"
                                                              Text="{Binding Pattern, Mode=TwoWay}"
                                                              PlaceholderText="{loc:Loc 'e.g. AMAZON, UBER, NETFLIX'}"
                                                              Classes="form-input"
                                                              VerticalAlignment="Center" />
 
                                                     <!-- Category picker with inline create -->
-                                                    <controls:SearchableDropdown Grid.Column="2"
+                                                    <controls:SearchableDropdown Grid.Row="0" Grid.Column="2"
                                                         ItemsSource="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).AvailableBankCategories}"
                                                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                                        SearchText="{Binding CategorySearchText, Mode=TwoWay}"
                                                         DisplayMemberPath="Name"
                                                         Placeholder="{loc:Loc 'Category...'}"
                                                         ShowAddNew="True"
@@ -1093,7 +1094,7 @@
                                                         VerticalAlignment="Center" />
 
                                                     <!-- Delete button -->
-                                                    <Button Grid.Column="4"
+                                                    <Button Grid.Row="0" Grid.Column="4" Grid.RowSpan="2"
                                                             Classes="icon-button"
                                                             Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).DeleteBankRuleCommand}"
                                                             CommandParameter="{Binding}"
@@ -1102,6 +1103,24 @@
                                                                   Width="16" Height="16"
                                                                   Foreground="{DynamicResource ErrorBrush}" />
                                                     </Button>
+
+                                                    <!-- Pattern validation error -->
+                                                    <TextBlock Grid.Row="1" Grid.Column="0"
+                                                               Text="{Binding PatternError}"
+                                                               IsVisible="{Binding HasPatternError}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               FontSize="11"
+                                                               Margin="2,4,0,0"
+                                                               TextWrapping="Wrap" />
+
+                                                    <!-- Category validation error -->
+                                                    <TextBlock Grid.Row="1" Grid.Column="2"
+                                                               Text="{Binding CategoryError}"
+                                                               IsVisible="{Binding HasCategoryError}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               FontSize="11"
+                                                               Margin="2,4,0,0"
+                                                               TextWrapping="Wrap" />
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>

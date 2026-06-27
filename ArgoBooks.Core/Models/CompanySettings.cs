@@ -53,6 +53,14 @@ public class CompanySettings
     public PurchaseOrderEmailSettings PurchaseOrderEmail { get; set; } = new();
     [JsonPropertyName("paymentPortal")]
     public PortalSettings PaymentPortal { get; set; } = new();
+
+    /// <summary>
+    /// Bank categorization rules for automated bank statement matching. Per company; edited in
+    /// the Settings modal and learned automatically when categorizing rows during bank import.
+    /// Stored here (a company setting) so edits save/cancel with the rest of the settings.
+    /// </summary>
+    [JsonPropertyName("bankCategoryRules")]
+    public List<BankMatching.BankCategoryRule> BankCategoryRules { get; set; } = [];
 }
 
 public class CompanyInfo

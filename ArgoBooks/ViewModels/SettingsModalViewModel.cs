@@ -1352,40 +1352,54 @@ public partial class SettingsModalViewModel : ViewModelBase
         foreach (var cat in data.Categories.OrderBy(c => c.Name))
             AvailableBankCategories.Add(cat);
 
+        // Edit detached copies so typing / add / delete only affect a draft. The live rules in
+        // company settings are replaced on Save and left untouched on Cancel, so closing the
+        // modal without saving leaves no changes (and no unsaved-changes asterisk).
         foreach (var r in data.BankCategoryRules)
-            BankCategoryRules.Add(new BankCategoryRuleRow(r, AvailableBankCategories));
+            BankCategoryRules.Add(new BankCategoryRuleRow(CloneRule(r), AvailableBankCategories));
     }
 
     /// <summary>
-    /// Adds a new blank bank category rule.
+    /// Adds a new blank bank category rule to the draft list. Committed on Save.
     /// </summary>
     [RelayCommand]
     private void AddBankRule()
     {
-        var data = App.CompanyManager?.CompanyData;
-        if (data == null) return;
         var rule = new BankCategoryRule
         {
             Id = Guid.NewGuid().ToString("N"),
             Source = RuleSource.Manual
         };
-        data.BankCategoryRules.Add(rule);
         BankCategoryRules.Add(new BankCategoryRuleRow(rule, AvailableBankCategories));
-        App.CompanyManager?.MarkAsChanged();
     }
 
     /// <summary>
-    /// Deletes the given bank category rule row.
+    /// Removes the given bank category rule row from the draft list. Committed on Save.
     /// </summary>
     [RelayCommand]
     private void DeleteBankRule(BankCategoryRuleRow? row)
     {
-        var data = App.CompanyManager?.CompanyData;
-        if (row == null || data == null) return;
-        data.BankCategoryRules.Remove(row.Rule);
+        if (row == null) return;
         BankCategoryRules.Remove(row);
-        App.CompanyManager?.MarkAsChanged();
     }
+
+    /// <summary>
+    /// Creates a detached copy of a rule so the settings modal edits a draft without mutating the
+    /// live rule in company settings until the user saves.
+    /// </summary>
+    private static BankCategoryRule CloneRule(BankCategoryRule r) => new()
+    {
+        Id = r.Id,
+        Pattern = r.Pattern,
+        MatchType = r.MatchType,
+        CategoryId = r.CategoryId,
+        ProductId = r.ProductId,
+        TransactionType = r.TransactionType,
+        CounterpartyId = r.CounterpartyId,
+        Source = r.Source,
+        CreatedAt = r.CreatedAt,
+        UpdatedAt = r.UpdatedAt
+    };
 
     /// <summary>
     /// Opens the standard Create Category modal. On save, reloads the bank categories list.
@@ -1617,11 +1631,57 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Validates the bank-rule drafts. A fully blank row is ignored (it's dropped on save); a row
+    /// with a pattern needs a category, and a row with a category needs a pattern. Sets per-row
+    /// error state and returns false if any row is invalid.
+    /// </summary>
+    private bool ValidateBankRules()
+    {
+        var allValid = true;
+        foreach (var row in BankCategoryRules)
+        {
+            row.HasPatternError = false;
+            row.PatternError = null;
+            row.HasCategoryError = false;
+            row.CategoryError = null;
+
+            var hasPattern = !string.IsNullOrWhiteSpace(row.Rule.Pattern);
+            var hasCategory = row.SelectedCategory != null;
+            // Typed-but-not-selected category text still counts as "touched", so a row with only
+            // category text (no real selection, no pattern) reports errors instead of being skipped.
+            var categoryTyped = !string.IsNullOrWhiteSpace(row.CategorySearchText);
+
+            if (!hasPattern && !hasCategory && !categoryTyped) continue; // blank row, discarded on save
+
+            if (!hasPattern)
+            {
+                row.HasPatternError = true;
+                row.PatternError = "Enter a pattern.".Translate();
+                allValid = false;
+            }
+            if (!hasCategory)
+            {
+                row.HasCategoryError = true;
+                row.CategoryError = (categoryTyped ? "Pick a category from the list." : "Select a category.").Translate();
+                allValid = false;
+            }
+        }
+        return allValid;
+    }
+
+    /// <summary>
     /// Saves the settings and closes the modal.
     /// </summary>
     [RelayCommand]
     private async Task SaveAsync()
     {
+        // Block the save and surface the errors if any bank import rule is incomplete.
+        if (!ValidateBankRules())
+        {
+            SelectedTabIndex = 5; // Bank import rules tab
+            return;
+        }
+
         // Check what changed before updating original values
         var languageChanged = SelectedLanguage != _originalLanguage;
         var themeChanged = SelectedTheme != _originalTheme;
@@ -1668,13 +1728,28 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Save payment portal settings
             SavePortalSettings();
 
+            // Commit the bank-rule drafts into company settings. Blank rows (no pattern) are
+            // dropped so an unfilled "Add rule" is discarded. Replacing the list is how the draft
+            // (with adds, edits, and deletes) becomes the live set, only on Save.
+            settings.BankCategoryRules.Clear();
+            foreach (var row in BankCategoryRules)
+            {
+                if (string.IsNullOrWhiteSpace(row.Rule.Pattern)) continue;
+                settings.BankCategoryRules.Add(row.Rule);
+            }
+
             // Restart the timer with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
 
-            // Persist company settings to the .argo file immediately
+            // Persist ONLY the settings file (appSettings.json) to the .argo.
+            // SaveSettingsOnlyAsync writes just the settings, leaving the other
+            // domain files and any outstanding ChangesMade flag untouched. Using
+            // the full SaveCompanyAsync here would flush every in-memory edit to
+            // disk and clear the unsaved-changes banner, so a theme-only change
+            // would "save the entire app" instead of just the setting.
             if (App.CompanyManager?.IsCompanyOpen == true && !App.CompanyManager.IsSampleCompany)
             {
-                await App.CompanyManager.SaveCompanyAsync();
+                await App.CompanyManager.SaveSettingsOnlyAsync();
             }
         }
 
@@ -2410,7 +2485,7 @@ public class BankCategoryRuleRow : ObservableObject
             Rule.Pattern = value;
             Rule.UpdatedAt = DateTime.UtcNow;
             OnPropertyChanged();
-            App.CompanyManager?.MarkAsChanged();
+            HasPatternError = false;
         }
     }
 
@@ -2430,8 +2505,33 @@ public class BankCategoryRuleRow : ObservableObject
             Rule.CategoryId = value?.Id ?? string.Empty;
             Rule.UpdatedAt = DateTime.UtcNow;
             OnPropertyChanged();
-            App.CompanyManager?.MarkAsChanged();
+            HasCategoryError = false;
         }
     }
 
+    private string? _categorySearchText;
+    /// <summary>
+    /// Text typed into the category dropdown. Tracked so validation can flag a row where the user
+    /// typed a category name but never picked a real one (SelectedCategory stays null), which would
+    /// otherwise look like an untouched blank row and be silently skipped.
+    /// </summary>
+    public string? CategorySearchText
+    {
+        get => _categorySearchText;
+        set => SetProperty(ref _categorySearchText, value);
+    }
+
+    private bool _hasPatternError;
+    /// <summary>True when the row has a category but no pattern; shows an inline error.</summary>
+    public bool HasPatternError { get => _hasPatternError; set => SetProperty(ref _hasPatternError, value); }
+
+    private string? _patternError;
+    public string? PatternError { get => _patternError; set => SetProperty(ref _patternError, value); }
+
+    private bool _hasCategoryError;
+    /// <summary>True when the row has a pattern but no valid category; shows an inline error.</summary>
+    public bool HasCategoryError { get => _hasCategoryError; set => SetProperty(ref _hasCategoryError, value); }
+
+    private string? _categoryError;
+    public string? CategoryError { get => _categoryError; set => SetProperty(ref _categoryError, value); }
 }
