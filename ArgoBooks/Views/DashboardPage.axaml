@@ -280,9 +280,6 @@
                         <TextBlock Text="Add Row" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-
-                <!-- Bottom Spacing -->
-                <Border Height="24" />
             </StackPanel>
         </ScrollViewer>
 
