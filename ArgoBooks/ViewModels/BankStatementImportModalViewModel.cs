@@ -89,6 +89,9 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         if (ext == ".pdf")
         {
             lines = await ImportPdfStatementAsync(filePath);
+            // The PDF path shows its own messaging (premium gate, cancel, extraction failure),
+            // so just bail quietly when it returns nothing.
+            if (lines.Count == 0) return;
         }
         else
         {
@@ -97,9 +100,17 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 lines = await parser.ParseCsvAsync(filePath);
             else
                 lines = await parser.ParseExcelAsync(filePath);
-        }
 
-        if (lines.Count == 0) return;
+            // Don't fail silently when the file isn't a recognizable bank statement (e.g. the user
+            // picked the wrong spreadsheet): tell them what's expected instead of doing nothing.
+            if (lines.Count == 0)
+            {
+                await App.ShowInfoMessageBoxAsync(
+                    "Import Bank Statement".Translate(),
+                    "No transactions were found in this file. Make sure it's a bank statement with Date, Description and Amount (or Debit/Credit) columns.".Translate());
+                return;
+            }
+        }
 
         _validationAttempted = false;
 

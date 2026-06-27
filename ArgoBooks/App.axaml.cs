@@ -312,7 +312,7 @@ public partial class App : Application
     /// <summary>
     /// Shows a modal info message box.
     /// </summary>
-    private static async Task ShowInfoMessageBoxAsync(string title, string message)
+    internal static async Task ShowInfoMessageBoxAsync(string title, string message)
     {
         if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
