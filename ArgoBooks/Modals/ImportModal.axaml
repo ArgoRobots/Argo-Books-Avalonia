@@ -95,11 +95,11 @@
                                 <Border Grid.Column="0"
                                         Width="40" Height="40"
                                         CornerRadius="8"
-                                        Background="{DynamicResource SuccessIconBgBrush}"
+                                        Background="{DynamicResource PrimaryIconBgBrush}"
                                         Margin="0,0,16,0">
                                     <PathIcon Data="{x:Static icons:Icons.BarChartSquare}"
                                               Width="20" Height="20"
-                                              Foreground="{DynamicResource SuccessBrush}" />
+                                              Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                     <TextBlock Text="{loc:Loc 'Spreadsheet'}"
