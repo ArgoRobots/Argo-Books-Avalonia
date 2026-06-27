@@ -204,9 +204,12 @@ public sealed class LayoutNormalizationService
             // v1: one table per sheet — use the first region.
             var (headers, rows) = GridExtractor.Extract(grid, descriptor.Tables[0]);
 
-            if (headers.Count == 0 && rows.Count == 0)
+            if (rows.Count == 0)
             {
-                // Extractor produced nothing usable -> fall back rather than emit a blank sheet.
+                // No data rows survived extraction (e.g. a header-only result, or a wide region
+                // whose key columns were missing so every row was skipped). A header-only table is
+                // useless for import, so fall back to a faithful copy rather than emit a blank sheet
+                // and silently lose the data.
                 _errorLogger?.LogWarning(
                     $"Layout extraction produced an empty table for sheet '{srcSheet.Name}'; copying as-is",
                     nameof(LayoutNormalizationService));
