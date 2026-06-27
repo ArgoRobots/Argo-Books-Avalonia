@@ -22,6 +22,13 @@ public class BankLineImportService
     {
         var creation = new BankImportCreation();
 
+        // Bank statements carry no currency, so amounts are in the company's currency. (Previously
+        // every imported transaction was hardcoded to USD, which mislabeled amounts for non-USD
+        // companies.)
+        var companyCurrency = string.IsNullOrWhiteSpace(data.Settings.Localization.Currency)
+            ? "USD"
+            : data.Settings.Localization.Currency;
+
         // Dedup caches so repeated rows reuse one created entity instead of making duplicates.
         var supplierCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var customerCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -59,11 +66,19 @@ public class BankLineImportService
                 Total: Math.Abs(r.Line.Amount),
                 CounterpartyId: counterpartyId,
                 Notes: "Imported from bank statement",
+                OriginalCurrency: companyCurrency,
                 ProductId: productId);
 
             Transaction tx = isExpense
                 ? TransactionFactory.CreateExpense(data, draft)
                 : TransactionFactory.CreateRevenue(data, draft);
+
+            // Pass the amount straight through to the USD base (no FX conversion, no "Pending"):
+            // a bank statement has no exchange-rate data, and for a non-USD company leaving these
+            // unset would make USD-based analytics read 0. Mirrors the spreadsheet importer's
+            // passthrough for rows that have no currency column.
+            tx.TotalUSD = tx.Total;
+            tx.UnitPriceUSD = tx.UnitPrice;
 
             if (linkToBankLine)
             {
