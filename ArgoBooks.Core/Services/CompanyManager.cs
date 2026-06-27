@@ -675,15 +675,30 @@ public class CompanyManager : IDisposable
             .Select(p => p.InvoiceId)
             .Where(id => !string.IsNullOrEmpty(id))
             .ToHashSet();
+
+        // Track whether the heal actually changed anything. The version marker lives in
+        // appSettings.json, but the corrected totals live in invoices.json; a settings-only
+        // save would otherwise persist the marker without the healed invoices, permanently
+        // skipping the heal on the next open. Flagging ChangesMade ensures a full/auto save
+        // writes both. Files with no drift don't set the flag, so they get no spurious asterisk.
+        var healed = false;
         foreach (var invoice in data.Invoices)
         {
             if (invoicesWithPayments.Contains(invoice.Id))
             {
+                var before = (invoice.AmountPaid, invoice.AmountRefunded, invoice.Balance,
+                    invoice.BalanceUSD, invoice.Status);
                 InvoiceTotalsService.Recalculate(invoice, data.Payments);
+                var after = (invoice.AmountPaid, invoice.AmountRefunded, invoice.Balance,
+                    invoice.BalanceUSD, invoice.Status);
+                if (!before.Equals(after))
+                    healed = true;
             }
         }
 
         data.Settings.InvoiceTotalsHealedVersion = InvoiceTotalsHealVersion;
+        if (healed)
+            data.ChangesMade = true;
     }
 
     /// <summary>
