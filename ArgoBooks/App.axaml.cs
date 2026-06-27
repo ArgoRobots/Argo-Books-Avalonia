@@ -2334,12 +2334,25 @@ public partial class App : Application
             // Create snapshot for redo
             var importedSnapshot = CreateCompanyDataSnapshot(companyData);
 
-            // Record undo action. Reload the Bank Matching page too: a workbook may have routed
-            // bank statement rows into a BankImportSession, so undo/redo must refresh that view.
+            // Record undo action. Besides restoring the data, each direction must refresh the UI
+            // the same way the import itself does: reload the Bank Matching page (a workbook may
+            // have routed bank rows into a BankImportSession) and rebuild the current page so its
+            // charts/widgets repaint with the restored data. Without the page rebuild the charts
+            // stay stale after undo/redo until the user navigates away and back.
+            void RestoreImportSnapshotAndRefresh(string snapshotJson)
+            {
+                RestoreCompanyDataFromSnapshot(companyData, snapshotJson);
+                CompanyManager?.MarkAsChanged();
+                _bankMatchingPageViewModel?.Reload();
+                Avalonia.Threading.Dispatcher.UIThread.Post(
+                    () => NavigationService?.RefreshCurrentPage(),
+                    Avalonia.Threading.DispatcherPriority.Background);
+            }
+
             UndoRedoManager.RecordAction(new DelegateAction(
                 "AI import spreadsheet data".Translate(),
-                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); },
-                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); _bankMatchingPageViewModel?.Reload(); }
+                () => RestoreImportSnapshotAndRefresh(snapshot),
+                () => RestoreImportSnapshotAndRefresh(importedSnapshot)
             ));
 
             CompanyManager.MarkAsChanged();
