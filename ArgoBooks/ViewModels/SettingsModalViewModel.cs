@@ -1402,6 +1402,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     };
 
     /// <summary>
+    /// Tracks the outstanding CategorySaved subscription so a cancelled Create Category modal
+    /// (which never fires CategorySaved) can't leak a handler onto the shared category modal VM.
+    /// </summary>
+    private EventHandler? _categorySavedHandler;
+
+    /// <summary>
     /// Opens the standard Create Category modal. On save, reloads the bank categories list.
     /// </summary>
     [RelayCommand]
@@ -1410,9 +1416,14 @@ public partial class SettingsModalViewModel : ViewModelBase
         var categoryModals = App.CategoryModalsViewModel;
         if (categoryModals == null) return;
 
+        // Detach any handler left over from a previous open that was cancelled without saving.
+        if (_categorySavedHandler != null)
+            categoryModals.CategorySaved -= _categorySavedHandler;
+
         void OnSaved(object? s, EventArgs e)
         {
             categoryModals.CategorySaved -= OnSaved;
+            _categorySavedHandler = null;
             AvailableBankCategories.Clear();
             var companyData = App.CompanyManager?.CompanyData;
             if (companyData != null)
@@ -1421,6 +1432,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     AvailableBankCategories.Add(cat);
             }
         }
+        _categorySavedHandler = OnSaved;
         categoryModals.CategorySaved += OnSaved;
         categoryModals.OpenAddModal(isExpensesTab: true);
     }
