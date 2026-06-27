@@ -80,6 +80,14 @@ public class GeminiService : IGeminiService, IDisposable
     }
 
     /// <inheritdoc />
+    /// <summary>
+    /// Max statement lines per AI request. One request with every line can exceed the model's
+    /// output budget (finishReason=MAX_TOKENS -> empty response), so large statements are split
+    /// into batches whose results are merged by line index. 40 keeps each batch's budget
+    /// (4000 + 40*250 = 14000) comfortably under the 16000 cap including hidden "thinking" tokens.
+    /// </summary>
+    private const int BankLineBatchSize = 40;
+
     public async Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
         BankLineCategorizationRequest request,
         CancellationToken cancellationToken = default)
@@ -87,17 +95,58 @@ public class GeminiService : IGeminiService, IDisposable
         if (!IsConfigured || request.Lines.Count == 0)
             return null;
 
+        if (request.Lines.Count <= BankLineBatchSize)
+            return await GetBankLineSuggestionsBatchAsync(request, request.Lines, cancellationToken);
+
+        // Split a large statement into batches and merge. Suggestions carry the original line
+        // Index, so a plain concat maps back correctly. A failed batch leaves its lines blank
+        // (the user fills them in manually); return whatever the successful batches produced.
+        var merged = new List<BankLineSuggestion>();
+        var anySucceeded = false;
+        for (int i = 0; i < request.Lines.Count; i += BankLineBatchSize)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var batch = request.Lines.GetRange(i, Math.Min(BankLineBatchSize, request.Lines.Count - i));
+            var part = await GetBankLineSuggestionsBatchAsync(request, batch, cancellationToken);
+            if (part != null)
+            {
+                merged.AddRange(part);
+                anySucceeded = true;
+            }
+        }
+        return anySucceeded ? merged : null;
+    }
+
+    /// <summary>
+    /// Categorizes a single batch of lines, reusing <paramref name="baseRequest"/>'s context
+    /// (products/categories/counterparties) with just <paramref name="lines"/> as the work set.
+    /// </summary>
+    private async Task<List<BankLineSuggestion>?> GetBankLineSuggestionsBatchAsync(
+        BankLineCategorizationRequest baseRequest,
+        List<BankLineToCategorize> lines,
+        CancellationToken cancellationToken)
+    {
+        var batchRequest = new BankLineCategorizationRequest
+        {
+            Lines = lines,
+            ExistingProducts = baseRequest.ExistingProducts,
+            ExistingExpenseCategories = baseRequest.ExistingExpenseCategories,
+            ExistingRevenueCategories = baseRequest.ExistingRevenueCategories,
+            ExistingSuppliers = baseRequest.ExistingSuppliers,
+            ExistingCustomers = baseRequest.ExistingCustomers,
+        };
+
         var stopwatch = Stopwatch.StartNew();
         var model = DefaultModel;
         var success = false;
 
         try
         {
-            var prompt = BuildBankLinePrompt(request);
+            var prompt = BuildBankLinePrompt(batchRequest);
             // gemini-2.5-flash spends hidden "thinking" tokens out of maxOutputTokens, so the
             // budget must comfortably cover thinking plus the JSON output or the response comes
             // back empty (finishReason=MAX_TOKENS). Be generous; the model only uses what it needs.
-            var maxTokens = Math.Min(16000, 4000 + request.Lines.Count * 250);
+            var maxTokens = Math.Min(16000, 4000 + lines.Count * 250);
             var response = await SendApiRequestAsync(
                 "You categorize business bank statement lines. Always respond with valid JSON only, no markdown.",
                 prompt,
