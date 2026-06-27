@@ -270,8 +270,15 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 return;
             }
 
-            var request = BuildCategorizationRequest(data, pending);
-            var suggestions = await gemini.GetBankLineSuggestionsAsync(request);
+            // Build the request and call the model off the UI thread. Assembling the request from
+            // every existing product/category/supplier/customer and JSON-serializing them into the
+            // prompt is synchronous and was freezing the loading spinner (~0.5s) on companies with
+            // a lot of data. ApplySuggestions runs back on the UI thread (it touches bound rows).
+            var suggestions = await Task.Run(() =>
+            {
+                var request = BuildCategorizationRequest(data, pending);
+                return gemini.GetBankLineSuggestionsAsync(request);
+            });
             if (suggestions == null || suggestions.Count == 0)
             {
                 SetAiUnavailable("AI couldn't categorize this statement. Select products manually.".Translate());
