@@ -3672,17 +3672,36 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
+
+            var date = GetDateTime(row, headers, "Date");
+            var amount = GetDecimal(row, headers, "Amount");
+            var customerId = GetString(row, headers, "Customer ID");
+            var invoiceId = GetString(row, headers, "Invoice ID");
+
+            // Skip summary/blank rows that carry no real payment content.
+            if (string.IsNullOrWhiteSpace(id) && date == DateTime.MinValue && amount == 0
+                && string.IsNullOrWhiteSpace(customerId) && string.IsNullOrWhiteSpace(invoiceId))
+                continue;
+
+            // No ID column (or a blank ID): mint a unique one so distinct rows aren't collapsed into a
+            // single record (or skipped as "already exists") when the sheet has no identifier. Without
+            // this, an ID-less sheet imports only its first row. (Mirrors ImportPurchases.)
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Payment++;
+                id = $"PAY-{DateTime.UtcNow:yyyy}-{data.IdCounters.Payment:D5}";
+            }
+
             var existing = data.Payments.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var payment = existing ?? new Payment();
             payment.Id = id;
-            var invoiceId = GetString(row, headers, "Invoice ID");
             payment.InvoiceId = !string.IsNullOrEmpty(invoiceId) && data.Invoices.Any(inv => inv.Id == invoiceId)
                 ? invoiceId : "";
-            payment.CustomerId = GetString(row, headers, "Customer ID");
-            payment.Date = GetDateTime(row, headers, "Date");
-            payment.Amount = GetDecimal(row, headers, "Amount");
+            payment.CustomerId = customerId;
+            payment.Date = date;
+            payment.Amount = amount;
             payment.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
             payment.ReferenceNumber = GetNullableString(row, headers, "Reference");
             payment.Notes = GetString(row, headers, "Notes");
@@ -3734,13 +3753,32 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
-            var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
+
+            var date = GetDateTime(row, headers, "Date");
+            var customerId = GetNullableString(row, headers, "Customer ID");
+
+            // Skip summary/blank rows (e.g. "Subtotal", "Grand Total") that carry an amount but no
+            // real revenue content, so they aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && date == DateTime.MinValue
+                && string.IsNullOrWhiteSpace(description) && string.IsNullOrWhiteSpace(customerId))
+                continue;
+
+            // No ID column (or a blank ID): mint a unique one so distinct rows aren't collapsed into a
+            // single record (or skipped as "already exists") when the sheet has no identifier. Without
+            // this, an ID-less sheet imports only its first row. (Mirrors ImportPurchases.)
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Revenue++;
+                id = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
+            }
+
+            var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Quantity is optional (see ImportPurchases): default 1, and the pre-tax Amount is
             // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
@@ -3750,8 +3788,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             var revenue = existing ?? new Revenue();
             revenue.Id = id;
-            revenue.Date = GetDateTime(row, headers, "Date");
-            revenue.CustomerId = GetNullableString(row, headers, "Customer ID");
+            revenue.Date = date;
+            revenue.CustomerId = customerId;
             revenue.Description = description;
             revenue.Quantity = quantity;
             revenue.UnitPrice = unitPrice;
