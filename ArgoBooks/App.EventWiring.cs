@@ -182,7 +182,7 @@ public partial class App
             _appShellViewModel.SetCompanyInfo(null);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
-            if (!_isOpeningCompany)
+            if (!_isOpeningCompany && !_isCreatingCompany)
                 _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
@@ -198,11 +198,18 @@ public partial class App
             // Clear cached page ViewModels to ensure fresh state when opening a new company
             ClearPageCaches();
 
-            var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
-            await LanguageService.Instance.SetLanguageAsync(globalLanguage);
-
             NavigationService?.NavigateTo("Welcome");
             _welcomeScreenViewModel?.InitializeTutorialMode();
+
+            // Reset to the global language LAST. This handler is async void, and creating a new
+            // company closes the old one then immediately opens the new one, so this close handler
+            // and the open handler interleave. Keeping the only await at the very end guarantees the
+            // synchronous UI changes above (including the Welcome navigation) all run during the
+            // close, before the open navigates to the Dashboard. If the await sat earlier, this
+            // handler could resume after the open and re-navigate to "Welcome", stranding the
+            // welcome screen inside the freshly opened company's shell.
+            var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
+            await LanguageService.Instance.SetLanguageAsync(globalLanguage);
         };
 
         CompanyManager.CompanySaved += (_, _) =>
@@ -518,6 +525,11 @@ public partial class App
                 Address = args.Address
             };
 
+            // Keep the loading overlay up across the close-then-open transition inside
+            // CreateCompanyAsync so the welcome screen doesn't flash; reset on every exit path.
+            _isCreatingCompany = true;
+            try
+            {
             // Retry loop so a save blocked by security software (antivirus / ransomware
             // protection) can offer Retry / Save to a different folder instead of failing.
             while (true)
@@ -579,6 +591,11 @@ public partial class App
                     await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message));
                     return;
                 }
+            }
+            }
+            finally
+            {
+                _isCreatingCompany = false;
             }
         };
 

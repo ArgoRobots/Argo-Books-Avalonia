@@ -789,6 +789,11 @@ public partial class App : Application
     private static bool _suppressSavedFeedback;
     private static bool _isOpeningCompany;
 
+    // When true, a new company is being created. Like _isOpeningCompany, this keeps the loading
+    // overlay up across the close-then-open transition so the welcome screen doesn't flash between
+    // closing the current company and opening the new one.
+    private static bool _isCreatingCompany;
+
     /// <summary>
     /// Suppresses the "Saved" feedback label for the next save operation.
     /// </summary>
@@ -2838,6 +2843,48 @@ public partial class App : Application
             var filePath = files[0].Path.LocalPath;
             await OpenCompanyWithRetryAsync(filePath);
         }
+    }
+
+    /// <summary>
+    /// Handles a "New Company" request from the file menu or company switcher. If a company is
+    /// open with unsaved changes, prompts to save (mirroring Close Company) before opening the
+    /// create-company wizard, so making a new company can't silently discard pending edits.
+    /// The welcome screen's "Create New Company" path skips this (no company is open there).
+    /// </summary>
+    internal static async Task RequestCreateNewCompanyAsync()
+    {
+        if (_appShellViewModel == null) return;
+
+        // Use UndoRedoManager's saved state, which correctly accounts for undoing back to the
+        // last-saved point (matches the Close Company prompt).
+        if (CompanyManager?.IsCompanyOpen == true && UndoRedoManager.IsAtSavedState == false)
+        {
+            var result = await ShowUnsavedChangesDialogAsync();
+            switch (result)
+            {
+                case UnsavedChangesResult.Save:
+                    // Sample company cannot be saved directly - redirect to Save As.
+                    if (CompanyManager.IsSampleCompany)
+                    {
+                        var desktop = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+                        if (desktop == null) return;
+                        var saved = await SaveCompanyAsDialogAsync(desktop);
+                        if (!saved) return; // user cancelled Save As, abort the new-company action
+                    }
+                    else
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    break;
+                case UnsavedChangesResult.DontSave:
+                    break;
+                case UnsavedChangesResult.Cancel:
+                case UnsavedChangesResult.None:
+                    return; // user cancelled, don't open the wizard
+            }
+        }
+
+        _appShellViewModel.CreateCompanyViewModel.OpenCommand.Execute(null);
     }
 
     /// <summary>

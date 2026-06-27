@@ -826,8 +826,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up header's history button to open version history modal
         HeaderViewModel.OpenHistoryRequested += (_, _) => VersionHistoryModalViewModel.OpenCommand.Execute(null);
 
-        // Wire up file menu's create new company to open the wizard
-        FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+        // Wire up file menu's create new company to open the wizard (prompts to save first if
+        // the current company has unsaved changes).
+        FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => _ = App.RequestCreateNewCompanyAsync();
 
         // Wire up sidebar's company header click to open the company switcher
         SidebarViewModel.OpenCompanySwitcherRequested += (_, _) => CompanySwitcherPanelViewModel.ToggleCommand.Execute(null);
@@ -835,8 +836,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up sidebar navigation to close all panels
         SidebarViewModel.NavigationRequested += (_, _) => CloseAllPanels();
 
-        // Wire up company switcher's create new company to open the wizard
-        CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+        // Wire up company switcher's create new company to open the wizard (prompts to save first
+        // if the current company has unsaved changes).
+        CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => _ = App.RequestCreateNewCompanyAsync();
 
         // Wire up help panel's check for updates to open the check for update modal
         HelpPanelViewModel.CheckForUpdatesRequested += (_, _) => CheckForUpdateModalViewModel.OpenCommand.Execute(null);
