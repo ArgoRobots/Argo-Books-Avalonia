@@ -13,9 +13,10 @@
                 Spacing="16"
                 Margin="24">
 
-        <!-- Spinner -->
+        <!-- Spinner (hidden when a progress bar is shown, so we never show both) -->
         <controls:LoadingSpinner SizePreset="{Binding SpinnerPreset, RelativeSource={RelativeSource AncestorType=controls:LoadingState}}"
                                  IsSpinning="{Binding IsActive, RelativeSource={RelativeSource AncestorType=controls:LoadingState}}"
+                                 IsVisible="{Binding !ShowProgress, RelativeSource={RelativeSource AncestorType=controls:LoadingState}}"
                                  HorizontalAlignment="Center" />
 
         <!-- Primary message -->

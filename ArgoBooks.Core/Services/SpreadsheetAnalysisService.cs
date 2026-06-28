@@ -140,7 +140,7 @@ public class SpreadsheetAnalysisService(
         // The visible progress bar is driven by the UI layer from the learned duration estimate
         // (see EstimatedProgressTicker), so this no longer fakes a timer. We just report the status
         // text; percent -1 signals "no real fraction here" so nothing shows a misleading number.
-        progress?.Report(("Analyzing with AI...", -1));
+        progress?.Report(("Analyzing...", -1));
 
         // Analyze batches concurrently; each batch is an independent LLM call.
         using var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);

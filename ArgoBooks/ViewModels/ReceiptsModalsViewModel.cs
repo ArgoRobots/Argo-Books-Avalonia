@@ -1728,7 +1728,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }
             }
 
-            ScanningMessage = "Analyzing receipt with AI...".Translate();
+            ScanningMessage = "Analyzing receipt...".Translate();
             ScanProgress = 0;
             ShowScanProgress = true;
 
