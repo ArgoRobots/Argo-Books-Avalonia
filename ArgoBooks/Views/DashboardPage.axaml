@@ -189,11 +189,24 @@
                 </Border>
 
                 <!-- Date Range Message -->
-                <Border Classes="card"
-                        Padding="16"
+                <Border Background="{DynamicResource InfoLightBrush}"
+                        BorderBrush="{DynamicResource InfoBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="14,10"
+                        HorizontalAlignment="Center"
                         IsVisible="{Binding ShowFinancialDateRangeMessage}">
-                    <controls:ChartEmptyState
-                        ShowDateRangeMessage="True" />
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static icons:Icons.Calendar}"
+                                  Width="18" Height="18"
+                                  Foreground="{DynamicResource InfoTextBrush}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc 'No data available in the selected date range'}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource InfoTextBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
                 </Border>
 
                 <!-- Empty dashboard message, normal mode -->
