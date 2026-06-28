@@ -266,7 +266,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private bool _isScanning;
 
     [ObservableProperty]
-    private string _scanningMessage = "Analyzing receipt...";
+    private string _scanningMessage = "Scanning receipt...";
 
     [ObservableProperty]
     private double _scanProgress;
@@ -1730,7 +1730,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }
             }
 
-            ScanningMessage = "Analyzing receipt...".Translate();
+            ScanningMessage = "Scanning receipt...".Translate();
             ScanProgress = 0;
             ShowScanProgress = true;
 
