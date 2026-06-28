@@ -321,6 +321,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ModalHeight));
     }
 
+    partial void OnIsScanningChanged(bool value)
+    {
+        // Clear any leftover progress from the previous scan the moment scanning (re)starts, so the
+        // bar doesn't briefly flash the prior scan's 100% before the new scan's reset runs. Covers
+        // every entry point (open + retry).
+        if (value)
+        {
+            ScanProgress = 0;
+            ShowScanProgress = false;
+        }
+    }
+
     partial void OnIsFullscreenChanged(bool value)
     {
         OnPropertyChanged(nameof(ModalWidth));
