@@ -281,7 +281,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// date range filter is excluding it. Used to show "no data in selected date range" messages.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowDateRangeBanner))]
     private bool _showFinancialDateRangeMessage;
+
+    /// <summary>
+    /// Whether to actually show the "no data in the selected date range" banner: only when there
+    /// genuinely is no data in range AND the dashboard isn't being edited (the banner is noise and
+    /// gets in the way while arranging widgets).
+    /// </summary>
+    public bool ShowDateRangeBanner => ShowFinancialDateRangeMessage && !LayoutViewModel.IsEditMode;
 
     #endregion
 
@@ -322,6 +330,13 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to currency changes to refresh all monetary displays
         CurrencyService.CurrencyChanged += OnCurrencyChanged;
+
+        // Hide the date-range banner while editing the dashboard (re-evaluate when edit mode toggles).
+        LayoutViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DashboardLayoutViewModel.IsEditMode))
+                OnPropertyChanged(nameof(ShowDateRangeBanner));
+        };
 
         // Re-evaluate the source-survey banner whenever the user answers,
         // dismisses, or the tutorial state changes.

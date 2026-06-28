@@ -195,7 +195,7 @@
                         CornerRadius="8"
                         Padding="14,10"
                         HorizontalAlignment="Center"
-                        IsVisible="{Binding ShowFinancialDateRangeMessage}">
+                        IsVisible="{Binding ShowDateRangeBanner}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <PathIcon Data="{x:Static icons:Icons.Calendar}"
                                   Width="18" Height="18"
