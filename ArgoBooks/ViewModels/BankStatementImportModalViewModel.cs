@@ -234,6 +234,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
             var categoryId = data.GetProduct(productId)?.CategoryId ?? string.Empty;
 
+            // A bank import rule exists to auto-assign a CATEGORY (that's the Bank import rules tab's
+            // whole purpose). If the resolved product has no category, there's nothing for the rule
+            // to assign, so don't create a blank-category rule that just clutters the list.
+            if (string.IsNullOrEmpty(categoryId)) continue;
+
             var token = MerchantNormalizer.Normalize(res.Line.Description);
             var existing = data.BankCategoryRules.FirstOrDefault(r =>
                 r.Pattern == token && r.MatchType == RuleMatchType.Contains);
