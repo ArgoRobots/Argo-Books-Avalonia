@@ -161,8 +161,8 @@
                                                                         CornerRadius="10"
                                                                         Background="{DynamicResource SuccessIconBgBrush}"
                                                                         IsVisible="{Binding ChangeType, Converter={StaticResource IsAddedConverter}}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.PlusStroke}"
-                                                                              Width="10" Height="10"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Add}"
+                                                                              Width="12" Height="12"
                                                                               Foreground="{DynamicResource SuccessBrush}" />
                                                                 </Border>
                                                                 <!-- Modified Icon -->
@@ -170,8 +170,8 @@
                                                                         CornerRadius="10"
                                                                         Background="{DynamicResource WarningIconBgBrush}"
                                                                         IsVisible="{Binding ChangeType, Converter={StaticResource IsModifiedConverter}}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.EditStroke}"
-                                                                              Width="10" Height="10"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Edit}"
+                                                                              Width="11" Height="11"
                                                                               Foreground="{DynamicResource WarningBrush}" />
                                                                 </Border>
                                                                 <!-- Deleted Icon -->
@@ -179,8 +179,8 @@
                                                                         CornerRadius="10"
                                                                         Background="{DynamicResource DangerIconBgBrush}"
                                                                         IsVisible="{Binding ChangeType, Converter={StaticResource IsDeletedConverter}}">
-                                                                    <PathIcon Data="{x:Static icons:Icons.DeleteStroke}"
-                                                                              Width="10" Height="10"
+                                                                    <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                              Width="11" Height="11"
                                                                               Foreground="{DynamicResource DangerBrush}" />
                                                                 </Border>
                                                             </Panel>
