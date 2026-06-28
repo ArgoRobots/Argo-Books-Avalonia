@@ -403,9 +403,9 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Saves the purchase order.
     /// </summary>
     [RelayCommand]
-    private void SaveOrder()
+    private async Task SaveOrder()
     {
-        var savedOrderId = TrySaveOrder();
+        var savedOrderId = await TrySaveOrder();
         if (savedOrderId == null) return;
 
         OrderSaved?.Invoke(this, EventArgs.Empty);
@@ -417,9 +417,9 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// the PDF and review the email before actually sending.
     /// </summary>
     [RelayCommand]
-    private void SaveAndPreviewOrder()
+    private async Task SaveAndPreviewOrder()
     {
-        var savedOrderId = TrySaveOrder();
+        var savedOrderId = await TrySaveOrder();
         if (savedOrderId == null) return;
 
         OrderSaved?.Invoke(this, EventArgs.Empty);
@@ -440,7 +440,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Validates the Add/Edit form and persists the order. Returns the saved order ID on success,
     /// or null if validation failed (errors are already surfaced on the form).
     /// </summary>
-    private string? TrySaveOrder()
+    private async Task<string?> TrySaveOrder()
     {
         AddModalError = null;
         HasSupplierError = false;
@@ -495,6 +495,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return null;
+
+        // Fetch the order-date rate up front (like manual entry) so the saved order shows its amount
+        // immediately instead of a momentary "Pending".
+        await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(OrderDate?.DateTime ?? DateTime.Today);
 
         return IsEditMode && !string.IsNullOrEmpty(EditingOrderId)
             ? SaveEditedOrder(companyData, shipping)

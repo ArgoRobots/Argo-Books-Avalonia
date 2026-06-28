@@ -1415,6 +1415,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var discount = scanResult.Discount ?? 0;
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
+            // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
+            await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(transactionDate);
             var isRevenue = item.IsRevenueOverride ?? false;
             var notes = item.Notes ?? string.Empty;
             var paymentMethod = scanResult.PaymentMethod ?? "Cash";
@@ -2075,6 +2077,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 return Convert.ToBase64String(orientedData);
             });
         }
+
+        // Fetch the receipt-date rate up front (like manual entry) so the saved row shows its amount
+        // immediately instead of a momentary "Pending".
+        await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now);
 
         if (IsRevenue)
         {

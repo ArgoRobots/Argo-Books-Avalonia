@@ -278,6 +278,36 @@ public static class CurrencyService
     }
 
     /// <summary>
+    /// Ensures the exact-date display-currency-&gt;USD rate for <paramref name="date"/> is cached,
+    /// fetching it if missing. Lets a synchronous save path (receipts, purchase orders) convert from
+    /// cache without a momentary "Pending", matching the manual-entry flow that fetches the rate up
+    /// front. No-op for a USD display currency or when the rate is already cached. Best-effort: a
+    /// failed fetch just leaves the row to fall back to pending + the self-heal.
+    /// </summary>
+    public static async Task WarmRateForDateAsync(DateTime date, CancellationToken cancellationToken = default)
+    {
+        var code = CurrentCurrencyCode;
+        if (string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var svc = ExchangeRateService.Instance;
+        if (svc == null)
+            return;
+
+        if (svc.GetExchangeRate(code, "USD", date) > 0)
+            return; // already cached
+
+        try
+        {
+            await svc.GetExchangeRateAsync(code, "USD", date, fetchIfMissing: true, cancellationToken: cancellationToken);
+        }
+        catch
+        {
+            // Best-effort: ApplyDisplayCurrency falls back to pending + the self-heal.
+        }
+    }
+
+    /// <summary>
     /// Formats an amount using the original value when the display currency matches
     /// the original currency, avoiding rounding errors from USD round-trip conversion.
     /// </summary>
