@@ -7,7 +7,7 @@ namespace ArgoBooks.Core.Services;
 ///   chunks processed), call <see cref="SetRealFraction"/> continuously and the value
 ///   follows it exactly.</item>
 ///   <item><b>Time estimate</b>: otherwise the value eases along a spread-aware curve
-///   built from the operation's scaled p50/p90 anchors: it reads ~50% at p50 and ~90%
+///   built from the operation's scaled p50/p90 anchors: it reads ~85% at p50 and ~95%
 ///   at p90, then crawls toward a ~97% ceiling and never reaches 100% until
 ///   <see cref="Complete"/>. A wide p50->p90 spread (e.g. receipts that vary 5-50s)
 ///   automatically yields a slower, flatter approach, so a long outlier shows the bar
@@ -74,12 +74,18 @@ public sealed class SmoothProgressDriver
     {
         if (t <= 0)
             return 0;
+        // Ease to ~85% by the median (p50) so a run that finishes near its estimate lands high and
+        // the snap to 100% is small, not a jump from the middle. Then 85% -> 95% across p50..p90, and
+        // a slow crawl to the ceiling for the long tail.
         if (t <= _p50Ms)
-            return 0.5 * (t / _p50Ms);
+        {
+            double x = t / _p50Ms;
+            return 0.85 * (1 - (1 - x) * (1 - x));
+        }
         if (t <= _p90Ms)
-            return 0.5 + 0.4 * ((t - _p50Ms) / (_p90Ms - _p50Ms));
+            return 0.85 + 0.10 * ((t - _p50Ms) / (_p90Ms - _p50Ms));
 
         double over = (t - _p90Ms) / _p90Ms;
-        return 0.9 + (Ceiling - 0.9) * (1 - Math.Exp(-over));
+        return 0.95 + (Ceiling - 0.95) * (1 - Math.Exp(-over));
     }
 }

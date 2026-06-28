@@ -49,10 +49,14 @@ public class GeminiService : IGeminiService, IDisposable
         try
         {
             var prompt = BuildPrompt(request);
+            // gemini-2.5-flash spends hidden "thinking" tokens out of maxOutputTokens; 500 was too
+            // small and the budget was exhausted before the JSON answer (finishReason=MAX_TOKENS,
+            // truncated content), so the suggestion silently failed. The output itself is tiny, so a
+            // generous budget just covers thinking (billing is per token used, not the ceiling).
             var response = await SendApiRequestAsync(
                 "You are a helpful assistant that categorizes business expenses. Always respond with valid JSON only, no markdown.",
                 prompt,
-                500,
+                4000,
                 0.3,
                 cancellationToken: cancellationToken,
                 operation: OperationKind.SupplierCategory);

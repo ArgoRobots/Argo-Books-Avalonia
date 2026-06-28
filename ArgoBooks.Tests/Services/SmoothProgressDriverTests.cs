@@ -17,17 +17,17 @@ public class SmoothProgressDriverTests
     }
 
     [Fact]
-    public void ReadsAboutHalfAtP50()
+    public void ReadsHighAtP50()
     {
         var d = new SmoothProgressDriver(8000, 20000);
-        Assert.InRange(d.ValueAt(8000), 0.49, 0.51);
+        Assert.InRange(d.ValueAt(8000), 0.84, 0.86);
     }
 
     [Fact]
-    public void ReadsAboutNinetyAtP90()
+    public void ReadsAboutNinetyFiveAtP90()
     {
         var d = new SmoothProgressDriver(8000, 20000);
-        Assert.InRange(d.ValueAt(20000), 0.89, 0.91);
+        Assert.InRange(d.ValueAt(20000), 0.94, 0.96);
     }
 
     [Fact]
