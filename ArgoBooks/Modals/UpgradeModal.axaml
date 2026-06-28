@@ -53,19 +53,13 @@
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                         <Panel>
                             <!-- Loading Spinner -->
-                            <StackPanel IsVisible="{Binding IsLoadingPlans}"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"
-                                        Spacing="12"
-                                        Margin="48">
-                                <ProgressBar IsIndeterminate="True"
-                                             Width="200"
-                                             HorizontalAlignment="Center" />
-                                <TextBlock Text="{loc:Loc 'Loading plans...'}"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           HorizontalAlignment="Center" />
-                            </StackPanel>
+                            <controls:LoadingState IsVisible="{Binding IsLoadingPlans}"
+                                                   Message="{loc:Loc 'Loading plans...'}"
+                                                   ShowProgress="True"
+                                                   IsIndeterminate="True"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="48" />
 
                             <!-- Offline Message -->
                             <StackPanel IsVisible="{Binding IsOffline}"
