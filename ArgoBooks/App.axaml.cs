@@ -1301,6 +1301,11 @@ public partial class App : Application
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
 
+            // Initialize AI operation timing (pooled duration priors that drive accurate
+            // progress bars). Non-blocking: loads the disk cache, refreshes priors in the
+            // background, and falls back to seed priors when offline.
+            InitializeOperationTimingService();
+
             // Load pending conversion queue from disk
             if (PendingConversionService != null)
             {
@@ -1493,6 +1498,19 @@ public partial class App : Application
         catch (Exception ex)
         {
             ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize exchange rate service");
+        }
+    }
+
+    private static void InitializeOperationTimingService()
+    {
+        try
+        {
+            var timing = new OperationTimingService(ErrorLogger);
+            _ = timing.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize operation timing service");
         }
     }
 
