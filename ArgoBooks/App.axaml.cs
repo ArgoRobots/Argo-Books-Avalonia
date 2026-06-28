@@ -310,9 +310,6 @@ public partial class App : Application
     /// </summary>
     internal static void ShowBusyOverlay(string message) => _mainWindowViewModel?.ShowLoading(message);
 
-    /// <summary>Updates the global busy overlay with a determinate progress percent (0-100).</summary>
-    internal static void ShowBusyProgress(string message, double percent) => _mainWindowViewModel?.ShowLoading(message, null, percent);
-
     /// <summary>Hides the global loading overlay shown by <see cref="ShowBusyOverlay"/>.</summary>
     internal static void HideBusyOverlay() => _mainWindowViewModel?.HideLoading();
 

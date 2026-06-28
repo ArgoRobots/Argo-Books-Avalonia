@@ -112,7 +112,7 @@
                     <Panel Grid.Row="1">
                         <!-- Loading state (while parsing + AI categorization run) -->
                         <controls:LoadingState IsVisible="{Binding IsLoading}"
-                                               Message="{loc:Loc 'Categorizing your statement...'}"
+                                               Message="{Binding LoadingMessage}"
                                                ShowProgress="{Binding ShowCategorizeProgress}"
                                                Percent="{Binding CategorizeProgress}"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
