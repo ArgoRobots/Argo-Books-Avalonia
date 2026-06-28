@@ -1486,6 +1486,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
+                ApplyDisplayCurrency(companyData, revenue, "Revenue");
 
                 receipt.TransactionId = revenueId;
                 companyData.Revenues.Add(revenue);
@@ -1516,6 +1517,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
+                ApplyDisplayCurrency(companyData, expense, "Expense");
 
                 receipt.TransactionId = expenseId;
                 companyData.Expenses.Add(expense);
@@ -2094,6 +2096,54 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         CloseScanReviewModal();
     }
 
+    /// <summary>
+    /// Tags a receipt-created transaction with the company's display currency and its USD total, like
+    /// the normal expense/revenue save, so a non-USD company's receipt rows show the amount instead of
+    /// "Pending". Receipt amounts are entered in the display currency, so the original currency IS the
+    /// display currency, which makes every row column show the amount directly. The USD total is
+    /// converted at the transaction's own date when the exact-date rate is cached; otherwise the row is
+    /// marked pending and queued for the self-heal, which fills the USD values once the rate is available.
+    /// </summary>
+    private static void ApplyDisplayCurrency(
+        Core.Data.CompanyData companyData, Core.Models.Transactions.Transaction txn, string transactionType)
+    {
+        var currency = ArgoBooks.Services.CurrencyService.CurrentCurrencyCode;
+        txn.OriginalCurrency = currency;
+
+        if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            txn.TotalUSD = txn.Total;
+            txn.TaxAmountUSD = txn.TaxAmount;
+            txn.IsPendingConversion = false;
+            return;
+        }
+
+        var rates = Core.Services.ExchangeRateService.Instance;
+        if (rates != null && rates.TryConvertExact(txn.Total, currency, "USD", txn.Date, out var totalUsd))
+        {
+            txn.TotalUSD = totalUsd;
+            rates.TryConvertExact(txn.TaxAmount, currency, "USD", txn.Date, out var taxUsd);
+            txn.TaxAmountUSD = taxUsd;
+            txn.IsPendingConversion = false;
+            return;
+        }
+
+        // Exact-date rate not cached: the display is already correct (original currency == display
+        // currency); defer the USD totals to the self-heal queue, exactly like the normal save.
+        txn.IsPendingConversion = true;
+        var entry = new Core.Models.Common.PendingConversion
+        {
+            TransactionId = txn.Id,
+            TransactionType = transactionType,
+            OriginalCurrency = currency,
+            TransactionDate = txn.Date,
+            Total = txn.Total,
+            TaxAmount = txn.TaxAmount
+        };
+        companyData.PendingConversions.Add(entry);
+        _ = Core.Services.PendingConversionService.Instance?.AddPendingConversionAsync(entry);
+    }
+
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
         decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
     {
@@ -2120,6 +2170,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
+        ApplyDisplayCurrency(companyData, expense, "Expense");
 
         var receipt = new Receipt
         {
@@ -2207,6 +2258,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
+        ApplyDisplayCurrency(companyData, revenue, "Revenue");
 
         var receipt = new Receipt
         {
