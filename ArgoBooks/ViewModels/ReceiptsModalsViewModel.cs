@@ -269,6 +269,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string _scanningMessage = "Analyzing receipt...";
 
     [ObservableProperty]
+    private double _scanProgress;
+
+    [ObservableProperty]
+    private bool _showScanProgress;
+
+    [ObservableProperty]
     private bool _hasScanError;
 
     [ObservableProperty]
@@ -1680,6 +1686,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             // Check usage limit before scanning
             ScanningMessage = "Checking usage limits...".Translate();
+            ShowScanProgress = false;
+            ScanProgress = 0;
             if (_usageService != null)
             {
                 var usageCheck = await _usageService.CheckUsageAsync();
@@ -1709,12 +1717,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             }
 
             ScanningMessage = "Analyzing receipt with AI...".Translate();
+            ScanProgress = 0;
+            ShowScanProgress = true;
 
             // Run API call off the UI thread to keep the spinner smooth.
             // Image is already preprocessed in OpenScanModalWithDataAsync, so skip it here.
             var imageData = _currentImageData;
             var fileName = _currentFileName;
+            using var scanTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+                OperationKind.ReceiptScan, pct => ScanProgress = pct,
+                sizeFeature: imageData.Length, uploadBytes: imageData.Length);
+            scanTicker.Start();
             var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true));
+            scanTicker.Complete();
 
             if (!result.IsSuccess)
             {

@@ -111,15 +111,12 @@
 
                     <Panel Grid.Row="1">
                         <!-- Loading state (while parsing + AI categorization run) -->
-                        <StackPanel IsVisible="{Binding IsLoading}"
-                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Spacing="16" Margin="24,40">
-                            <controls:LoadingSpinner SizePreset="Large" />
-                            <TextBlock Text="{loc:Loc 'Categorizing your statement...'}"
-                                       FontSize="14"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center" />
-                        </StackPanel>
+                        <controls:LoadingState IsVisible="{Binding IsLoading}"
+                                               Message="{loc:Loc 'Categorizing your statement...'}"
+                                               ShowProgress="{Binding ShowCategorizeProgress}"
+                                               Percent="{Binding CategorizeProgress}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="24,40" />
 
                         <!-- Row list -->
                         <ScrollViewer IsVisible="{Binding !IsLoading}"

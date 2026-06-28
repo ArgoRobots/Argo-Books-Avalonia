@@ -32,6 +32,12 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     /// <summary>True while parsing and AI categorization run, before the row table is revealed.</summary>
     [ObservableProperty] private bool _isLoading;
 
+    /// <summary>Progress percent (0-100) for the AI categorization phase.</summary>
+    [ObservableProperty] private double _categorizeProgress;
+
+    /// <summary>Shows the determinate progress bar during the AI categorization call.</summary>
+    [ObservableProperty] private bool _showCategorizeProgress;
+
     /// <summary>True when the AI categorization pass was skipped, so the rows were left for the user.</summary>
     [ObservableProperty] private bool _aiUnavailable;
 
@@ -296,11 +302,17 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             // every existing product/category/supplier/customer and JSON-serializing them into the
             // prompt is synchronous and was freezing the loading spinner (~0.5s) on companies with
             // a lot of data. ApplySuggestions runs back on the UI thread (it touches bound rows).
+            ShowCategorizeProgress = true;
+            CategorizeProgress = 0;
+            using var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
+                OperationKind.BankCategorize, pct => CategorizeProgress = pct, sizeFeature: pending.Count);
+            ticker.Start();
             var suggestions = await Task.Run(() =>
             {
                 var request = BuildCategorizationRequest(data, pending);
                 return gemini.GetBankLineSuggestionsAsync(request);
             });
+            ticker.Complete();
             if (suggestions == null || suggestions.Count == 0)
             {
                 SetAiUnavailable("AI couldn't categorize this statement. Select products manually.".Translate());
@@ -859,7 +871,13 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             if (App.PdfStatementExtractor == null) return [];
 
             var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
+            using var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
+                OperationKind.BankPdfExtract,
+                pct => App.ShowBusyProgress("Reading PDF statement...".Translate(), pct),
+                uploadBytes: bytes.Length);
+            ticker.Start();
             var extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
+            ticker.Complete();
             App.HideBusyOverlay();
             if (extracted.Count == 0)
             {
