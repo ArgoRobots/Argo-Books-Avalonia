@@ -184,7 +184,6 @@ public partial class DepartmentModalsViewModel : ViewModelBase
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
 
         var deptToEdit = _editingDepartment;
-        App.EventLogService?.CapturePreModificationSnapshot("Department", deptToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
@@ -248,7 +247,6 @@ public partial class DepartmentModalsViewModel : ViewModelBase
             if (department == null) return;
 
             var deletedDept = department;
-            App.EventLogService?.CapturePreDeletionSnapshot("Department", deletedDept.Id);
             companyData?.Departments.Remove(department);
             companyData?.MarkAsModified();
 

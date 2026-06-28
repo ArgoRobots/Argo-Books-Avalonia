@@ -516,7 +516,6 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
 
         var itemToEdit = _editingItem;
         var itemName = ResolveRentalItemName(companyData, itemToEdit);
-        App.EventLogService?.CapturePreModificationSnapshot("RentalItem", itemToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (oldInventoryItemId != newInventoryItemId) changes["Inventory Item"] = new FieldChange { OldValue = oldInventoryItemId, NewValue = newInventoryItemId };
         if (oldDailyRate != newDailyRate) changes["Daily Rate"] = new FieldChange { OldValue = oldDailyRate.ToString("F2"), NewValue = newDailyRate.ToString("F2") };
@@ -621,7 +620,6 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
             {
                 var deletedItem = rentalItem;
                 var deletedName = item.Name;
-                App.EventLogService?.CapturePreDeletionSnapshot("RentalItem", deletedItem.Id);
                 companyData.RentalInventory.Remove(rentalItem);
                 companyData.MarkAsModified();
 

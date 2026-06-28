@@ -701,7 +701,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
         }
 
         var supplierToEdit = _editingSupplier;
-        App.EventLogService?.CapturePreModificationSnapshot("Supplier", supplierToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
@@ -813,7 +812,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
             if (supplier == null) return;
 
             var deletedSupplier = supplier;
-            App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
 
             // Snapshot the avatar bytes BEFORE deleting so undo can restore the
             // file alongside the supplier record.

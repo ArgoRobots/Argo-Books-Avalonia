@@ -68,7 +68,7 @@ public partial class App
             }
             if (CompanyManager.CompanyData != null)
             {
-                EventLogService.Initialize(CompanyManager.CompanyData.EventLog, CompanyManager.CompanyData);
+                EventLogService.Initialize(CompanyManager.CompanyData.EventLog);
 
                 _appShellViewModel.VersionHistoryModalViewModel.SetEventLogService(EventLogService);
             }

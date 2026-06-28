@@ -261,63 +261,6 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
         OnStateChanged();
     }
 
-    /// <summary>
-    /// Removes a specific action from the undo stack without executing it.
-    /// Used by EventLogService for selective undo (the service calls action.Undo() itself).
-    /// </summary>
-    /// <param name="action">The action to remove.</param>
-    /// <returns>True if the action was found and removed.</returns>
-    public bool RemoveFromUndoStack(IUndoableAction action)
-    {
-        if (!_undoStack.Contains(action))
-            return false;
-
-        var tempList = _undoStack.ToList();
-        tempList.Remove(action);
-
-        _undoStack.Clear();
-        for (int i = tempList.Count - 1; i >= 0; i--)
-        {
-            _undoStack.Push(tempList[i]);
-        }
-
-        OnStateChanged();
-        return true;
-    }
-
-    /// <summary>
-    /// Removes a specific action from the redo stack without executing it.
-    /// Used by EventLogService for selective redo (the service calls action.Redo() itself).
-    /// </summary>
-    /// <param name="action">The action to remove.</param>
-    /// <returns>True if the action was found and removed.</returns>
-    public bool RemoveFromRedoStack(IUndoableAction action)
-    {
-        if (!_redoStack.Contains(action))
-            return false;
-
-        var tempList = _redoStack.ToList();
-        tempList.Remove(action);
-
-        _redoStack.Clear();
-        for (int i = tempList.Count - 1; i >= 0; i--)
-        {
-            _redoStack.Push(tempList[i]);
-        }
-
-        OnStateChanged();
-        return true;
-    }
-
-    /// <summary>
-    /// Removes a specific action from both undo and redo stacks without executing it.
-    /// Used by EventLogService to prevent double-execution when it handles undo/redo itself.
-    /// </summary>
-    public void RemoveFromBothStacks(IUndoableAction action)
-    {
-        RemoveFromUndoStack(action);
-        RemoveFromRedoStack(action);
-    }
 
     /// <summary>
     /// Undoes the last action.

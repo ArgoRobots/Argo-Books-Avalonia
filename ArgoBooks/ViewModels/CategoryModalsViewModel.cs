@@ -311,7 +311,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
         }
 
         var categoryToEdit = _editingCategory;
-        App.EventLogService?.CapturePreModificationSnapshot("Category", categoryToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         if (oldDescription != newDescription) changes["Description"] = new FieldChange { OldValue = oldDescription ?? "", NewValue = newDescription ?? "" };
@@ -416,7 +415,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
             }
 
             var deletedCategory = category;
-            App.EventLogService?.CapturePreDeletionSnapshot("Category", deletedCategory.Id);
             companyData?.Categories.Remove(category);
             companyData?.MarkAsModified();
 

@@ -232,7 +232,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             }
 
             var deletedExpense = expense;
-            App.EventLogService?.CapturePreDeletionSnapshot("Expense", deletedExpense.Id);
             var capturedReceipt = deletedReceipt;
             var action = new DelegateAction(
                 $"Delete expense {expense.Id}",
@@ -616,7 +615,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         var modelLineItems = CreateModelLineItems();
 
         // Apply changes
-        App.EventLogService?.CapturePreModificationSnapshot("Expense", expense.Id);
         expense.Date = ModalDate?.DateTime ?? DateTime.Now;
         expense.SupplierId = SelectedSupplier?.Id;
         expense.Description = description;

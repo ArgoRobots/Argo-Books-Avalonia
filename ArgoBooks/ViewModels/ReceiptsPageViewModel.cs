@@ -956,8 +956,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (result != ConfirmationResult.Primary) return;
 
-            App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
-
             string? linkedTransactionId = null;
             string? linkedTransactionType = null;
             if (isLinked)
@@ -1086,7 +1084,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                 var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == displayItem.Id);
                 if (receipt == null) continue;
 
-                App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
                 receiptsToDelete.Add(receipt);
 
                 // Unlink from transaction

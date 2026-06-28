@@ -544,7 +544,6 @@ public partial class ProductModalsViewModel : ViewModelBase
         }
 
         var productToEdit = _editingProduct;
-        App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
@@ -694,7 +693,6 @@ public partial class ProductModalsViewModel : ViewModelBase
             if (product != null)
             {
                 var deletedProduct = product;
-                App.EventLogService?.CapturePreDeletionSnapshot("Product", deletedProduct.Id);
                 companyData.Products.Remove(product);
                 companyData.MarkAsModified();
 

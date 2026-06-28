@@ -25,7 +25,7 @@ public class EventLogServiceTests
     [Fact]
     public void RecordEvent_AddsToEventList()
     {
-        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "CUS-001", "John Doe");
+        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "John Doe");
 
         var events = _service.GetEvents();
         Assert.Single(events);
@@ -34,8 +34,8 @@ public class EventLogServiceTests
     [Fact]
     public void RecordEvent_Multiple_AccumulatesEvents()
     {
-        _service.RecordEvent(CreateMockAction("Added customer 1"), "Added customer 1", AuditAction.Added, "Customer", "CUS-001", "John");
-        _service.RecordEvent(CreateMockAction("Added customer 2"), "Added customer 2", AuditAction.Added, "Customer", "CUS-002", "Jane");
+        _service.RecordEvent(CreateMockAction("Added customer 1"), "Added customer 1", AuditAction.Added, "Customer", "John");
+        _service.RecordEvent(CreateMockAction("Added customer 2"), "Added customer 2", AuditAction.Added, "Customer", "Jane");
 
         var events = _service.GetEvents();
         Assert.Equal(2, events.Count);
@@ -47,7 +47,7 @@ public class EventLogServiceTests
         var eventRaised = false;
         _service.EventsChanged += (_, _) => eventRaised = true;
 
-        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "CUS-001", "John");
+        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "John");
 
         Assert.True(eventRaised);
     }
@@ -59,7 +59,7 @@ public class EventLogServiceTests
     [Fact]
     public void Clear_RemovesAllEvents()
     {
-        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "CUS-001", "John");
+        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "John");
         _service.Clear();
 
         var events = _service.GetEvents();
@@ -73,8 +73,8 @@ public class EventLogServiceTests
     [Fact]
     public void GetFilteredEvents_ByEntityType_FiltersCorrectly()
     {
-        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "CUS-001", "John");
-        _service.RecordEvent(CreateMockAction("Added product"), "Added product", AuditAction.Added, "Product", "PRD-001", "Widget");
+        _service.RecordEvent(CreateMockAction("Added customer"), "Added customer", AuditAction.Added, "Customer", "John");
+        _service.RecordEvent(CreateMockAction("Added product"), "Added product", AuditAction.Added, "Product", "Widget");
 
         var filtered = _service.GetFilteredEvents(entityTypeFilter: "Customer");
         Assert.Single(filtered);

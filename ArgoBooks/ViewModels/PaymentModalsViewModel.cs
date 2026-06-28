@@ -527,7 +527,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             }
 
             var paymentToEdit = _editingPayment;
-            App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit.Id);
             var changes = new Dictionary<string, FieldChange>
             {
                 ["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes }
@@ -613,7 +612,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         }
 
         var paymentToEdit2 = _editingPayment;
-        App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit2.Id);
         var changes2 = new Dictionary<string, FieldChange>();
         if (oldDate != newDate) changes2["Date"] = new FieldChange { OldValue = oldDate.ToString("d"), NewValue = newDate.ToString("d") };
         if (oldAmount != newAmount) changes2["Amount"] = new FieldChange { OldValue = oldAmount.ToString("F2"), NewValue = newAmount.ToString("F2") };
@@ -721,7 +719,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             {
                 var deletedPayment = payment;
                 var invoiceIdForRecalc = deletedPayment.InvoiceId;
-                App.EventLogService?.CapturePreDeletionSnapshot("Payment", deletedPayment.Id);
                 companyData.Payments.Remove(payment);
                 RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                 companyData.MarkAsModified();

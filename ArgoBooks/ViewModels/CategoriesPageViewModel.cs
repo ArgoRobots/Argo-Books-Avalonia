@@ -635,7 +635,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         // Update the category (keep parent unchanged)
         var categoryToEdit = _editingCategory;
-        App.EventLogService?.CapturePreModificationSnapshot("Category", categoryToEdit.Id);
         categoryToEdit.Name = newName;
         categoryToEdit.Description = newDescription;
         categoryToEdit.Icon = newIcon;

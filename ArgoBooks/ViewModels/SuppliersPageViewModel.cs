@@ -757,7 +757,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
         // Update the supplier
         var supplierToEdit = _editingSupplier;
-        App.EventLogService?.CapturePreModificationSnapshot("Supplier", supplierToEdit.Id);
         supplierToEdit.Name = newName;
         supplierToEdit.ContactPerson = newContactPerson;
         supplierToEdit.Email = newEmail;
