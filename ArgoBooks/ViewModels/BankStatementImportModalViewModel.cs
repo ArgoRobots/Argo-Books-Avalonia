@@ -41,6 +41,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     /// <summary>Message shown in the modal's loading state (PDF read phase vs categorize phase).</summary>
     [ObservableProperty] private string _loadingMessage = "Categorizing your statement...";
 
+    // The bar % where the categorize phase begins. For a PDF import the read phase fills 0..this and
+    // categorize fills this..100, so the whole import is ONE continuous bar. Stays 0 for CSV/Excel
+    // (parsing is instant), where categorize fills the whole bar.
+    private double _categorizeProgressFloor;
+
     /// <summary>True when the AI categorization pass was skipped, so the rows were left for the user.</summary>
     [ObservableProperty] private bool _aiUnavailable;
 
@@ -91,6 +96,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         FileName = Path.GetFileName(filePath);
         AiUnavailable = false;
         AiUnavailableMessage = null;
+        _categorizeProgressFloor = 0;
 
         List<BankStatementLine> lines;
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -124,11 +130,12 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         _validationAttempted = false;
 
         // Show the modal in its loading state, run deterministic + AI categorization, then reveal the
-        // table. For PDFs the modal is already open from the reading phase; this switches the message
-        // and resets the bar so it doesn't flash the read phase's 100%.
+        // table. For a PDF the modal is already open from the reading phase and the bar is partway
+        // along (_categorizeProgressFloor): keep it there so the import is one continuous bar instead
+        // of two. For CSV/Excel the floor is 0 and categorize fills the whole bar.
         LoadingMessage = "Categorizing your statement...".Translate();
-        CategorizeProgress = 0;
-        ShowCategorizeProgress = false;
+        CategorizeProgress = _categorizeProgressFloor;
+        ShowCategorizeProgress = _categorizeProgressFloor > 0;
         IsLoading = true;
         IsOpen = true;
 
@@ -311,9 +318,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             // prompt is synchronous and was freezing the loading spinner (~0.5s) on companies with
             // a lot of data. ApplySuggestions runs back on the UI thread (it touches bound rows).
             ShowCategorizeProgress = true;
-            CategorizeProgress = 0;
+            // Continue the one bar from where the read phase left off (0 for CSV/Excel, 60 for PDF).
+            var floor = _categorizeProgressFloor;
+            CategorizeProgress = floor;
             using var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
-                OperationKind.BankCategorize, pct => CategorizeProgress = pct, sizeFeature: pending.Count);
+                OperationKind.BankCategorize, pct => CategorizeProgress = floor + pct * (100 - floor) / 100, sizeFeature: pending.Count);
             ticker.Start();
             var suggestions = await Task.Run(() =>
             {
@@ -883,13 +892,16 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
         List<BankStatementLine> extracted;
+        // Reading fills the first 60% of the bar; the categorize phase fills the rest, so the whole
+        // import reads as one continuous bar.
         using (var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
-            OperationKind.BankPdfExtract, pct => CategorizeProgress = pct, uploadBytes: bytes.Length))
+            OperationKind.BankPdfExtract, pct => CategorizeProgress = pct * 0.6, uploadBytes: bytes.Length))
         {
             ticker.Start();
             extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
             ticker.Complete();
         }
+        _categorizeProgressFloor = 60;
 
         // User closed the modal during the read: abort without reopening or charging a credit.
         if (!IsOpen) return [];

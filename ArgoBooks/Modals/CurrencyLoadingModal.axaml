@@ -21,7 +21,7 @@
                 <controls:LoadingState Margin="24"
                                        IsActive="{Binding IsSavingCurrency}"
                                        Message="{loc:Loc 'Fetching Exchange Rates...'}"
-                                       Detail="{loc:Loc 'Please wait while we connect to the exchange rate service.'}"
+                                       Detail="{loc:Loc 'This may take a few seconds...'}"
                                        ShowProgress="True"
                                        Percent="{Binding CurrencyLoadingProgress}"
                                        IsCancellable="True"
