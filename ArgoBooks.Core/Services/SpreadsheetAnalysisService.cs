@@ -310,7 +310,8 @@ public class SpreadsheetAnalysisService(
         var maxTokens = Math.Max(4000, totalColumns * 200 + batch.Count * 400);
 
         var response = await geminiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: totalColumns);
 
         if (string.IsNullOrEmpty(response))
         {
@@ -356,7 +357,8 @@ public class SpreadsheetAnalysisService(
 
 
         var response = await geminiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetProcess, sizeFeature: rows.Count);
 
         if (string.IsNullOrEmpty(response))
         {

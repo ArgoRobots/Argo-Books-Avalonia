@@ -54,7 +54,8 @@ public class GeminiService : IGeminiService, IDisposable
                 prompt,
                 500,
                 0.3,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                operation: OperationKind.SupplierCategory);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -152,7 +153,9 @@ public class GeminiService : IGeminiService, IDisposable
                 prompt,
                 maxTokens,
                 0.2,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                operation: OperationKind.BankCategorize,
+                sizeFeature: lines.Count);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -179,7 +182,9 @@ public class GeminiService : IGeminiService, IDisposable
         string userPrompt,
         int maxTokens = 4000,
         double temperature = 0.1,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.Completion,
+        long? sizeFeature = null)
     {
         if (!IsConfigured)
             return null;
@@ -190,7 +195,7 @@ public class GeminiService : IGeminiService, IDisposable
 
         try
         {
-            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken: cancellationToken);
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken: cancellationToken, operation: operation, sizeFeature: sizeFeature);
             if (!string.IsNullOrEmpty(response))
                 success = true;
             return response;
@@ -222,7 +227,8 @@ public class GeminiService : IGeminiService, IDisposable
         int maxTokens = 4000,
         double temperature = 0.1,
         string? model = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.ReceiptScan)
     {
         if (!IsConfigured)
             return null;
@@ -233,7 +239,7 @@ public class GeminiService : IGeminiService, IDisposable
 
         try
         {
-            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, base64Image, mimeType, model, cancellationToken);
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, base64Image, mimeType, model, cancellationToken, operation: operation);
             if (!string.IsNullOrEmpty(response))
                 success = true;
             return response;
@@ -328,12 +334,21 @@ Respond with JSON only.";
         string? base64Image = null,
         string? mimeType = null,
         string? model = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.Completion,
+        long? sizeFeature = null)
     {
         var effectiveModel = model ?? DefaultModel;
+
+        // Uploaded payload bytes for vision calls; also the best up-front size feature when the
+        // caller didn't supply a more specific one (line count, column count, ...).
+        long uploadBytes = base64Image != null ? (long)(base64Image.Length * 0.75) : 0;
+        long? size = sizeFeature ?? (uploadBytes > 0 ? uploadBytes : null);
+        var operationTag = operation.ToServerTag();
+
         object requestBody = base64Image != null
-            ? new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, base64Image, mimeType }
-            : new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature };
+            ? new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, base64Image, mimeType, operation = operationTag, sizeFeature = size, platform = PlatformTag }
+            : new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, operation = operationTag, sizeFeature = size, platform = PlatformTag };
 
         var json = JsonSerializer.Serialize(requestBody);
 
@@ -341,6 +356,7 @@ Respond with JSON only.";
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         LicenseAuthHelper.AddAuthHeaders(request);
 
+        var wallClock = Stopwatch.StartNew();
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -350,8 +366,11 @@ Respond with JSON only.";
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        wallClock.Stop();
         using var doc = JsonDocument.Parse(responseBody);
         var root = doc.RootElement;
+
+        RecordTiming(operation, root, wallClock.Elapsed.TotalMilliseconds, uploadBytes);
 
         if (root.TryGetProperty("success", out var successProp) && successProp.GetBoolean()
             && root.TryGetProperty("content", out var contentProp))
@@ -360,6 +379,29 @@ Respond with JSON only.";
         }
 
         return null;
+    }
+
+    /// <summary>Platform tag sent with each AI call for the server-side timing records.</summary>
+    private static readonly string PlatformTag =
+        OperatingSystem.IsWindows() ? "windows"
+        : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsLinux() ? "linux" : "other";
+
+    /// <summary>
+    /// Feeds the server-measured Gemini time (and current load factor) from a response into the
+    /// shared <see cref="OperationTimingService"/> so progress estimates self-calibrate. The
+    /// difference between the client wall clock and the server time trains the upload-speed
+    /// estimate. Best-effort and no-op when the timing service or the response block is absent.
+    /// </summary>
+    private static void RecordTiming(OperationKind operation, JsonElement root, double wallClockMs, long uploadBytes)
+    {
+        var service = OperationTimingService.Instance;
+        if (service == null || !root.TryGetProperty("timing", out var timing))
+            return;
+
+        double serverMs = timing.TryGetProperty("elapsed_ms", out var e) && e.TryGetDouble(out var ev) ? ev : 0;
+        double? loadFactor = timing.TryGetProperty("load_factor", out var lf) && lf.TryGetDouble(out var lv) ? lv : null;
+        service.RecordResult(operation, serverMs, wallClockMs, uploadBytes, loadFactor);
     }
 
     private SupplierCategorySuggestion? ParseResponse(string response, ReceiptAnalysisRequest request)

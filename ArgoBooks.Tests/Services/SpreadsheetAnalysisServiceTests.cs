@@ -29,7 +29,9 @@ public class SpreadsheetAnalysisServiceTests
         public Task<string?> SendChatAsync(
             string systemPrompt, string userPrompt,
             int maxTokens = 4000, double temperature = 0.1,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.Completion,
+            long? sizeFeature = null)
         {
             LastSystemPrompt = systemPrompt;
             LastUserPrompt = userPrompt;
@@ -41,7 +43,8 @@ public class SpreadsheetAnalysisServiceTests
             string base64Image, string mimeType,
             int maxTokens = 4000, double temperature = 0.1,
             string? model = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.ReceiptScan)
             => Task.FromResult<string?>(null);
     }
 
