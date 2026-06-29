@@ -330,6 +330,12 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 return gemini.GetBankLineSuggestionsAsync(request);
             });
             ticker.Complete();
+
+            // User closed the modal while the AI was running: don't charge a credit or touch the rows
+            // (mirrors the PDF read path's cancel guard).
+            if (!IsOpen)
+                return;
+
             if (suggestions == null || suggestions.Count == 0)
             {
                 SetAiUnavailable("AI couldn't categorize this statement. Select products manually.".Translate());
