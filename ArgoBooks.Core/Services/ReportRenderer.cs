@@ -1189,7 +1189,8 @@ public class ReportRenderer : IDisposable
     private static bool ConvertsPerTransaction(ChartDataType chartType) => chartType is
         ChartDataType.AverageTransactionValue
         or ChartDataType.AverageShippingCosts
-        or ChartDataType.TaxCollectedVsPaid;
+        or ChartDataType.TaxCollectedVsPaid
+        or ChartDataType.ExpenseVsRevenueTax;
 
     private List<ChartDataPoint>? GetChartDataPoints(ChartDataType chartType)
     {

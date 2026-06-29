@@ -1938,7 +1938,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets expense tax vs revenue tax over time as two series.
     /// </summary>
-    public List<ChartSeriesData> GetExpenseVsRevenueTax()
+    public List<ChartSeriesData> GetExpenseVsRevenueTax(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData == null)
             return [];
@@ -1968,7 +1968,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.EffectiveTaxAmountUSD),
+                    .Sum(r => toDisplay != null ? toDisplay(r.EffectiveTaxAmountUSD, r.Date) : r.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -1983,7 +1983,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.EffectiveTaxAmountUSD),
+                    .Sum(e => toDisplay != null ? toDisplay(e.EffectiveTaxAmountUSD, e.Date) : e.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -2190,7 +2190,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.TaxByCategory => GetTaxByCategory(toDisplay),
             ChartDataType.TaxRateDistribution => GetTaxRateDistribution(),
             ChartDataType.TaxByProduct => GetTaxByProduct(toDisplay),
-            ChartDataType.ExpenseVsRevenueTax => GetExpenseVsRevenueTax(),
+            ChartDataType.ExpenseVsRevenueTax => GetExpenseVsRevenueTax(toDisplay),
 
             _ => new List<ChartDataPoint>()
         };
