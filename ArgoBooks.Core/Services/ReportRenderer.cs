@@ -1209,6 +1209,17 @@ public class ReportRenderer : IDisposable
         if (_chartDataService == null)
             return null;
 
+        // Revenue vs Expenses for a non-USD display currency: convert each day's value at that day's
+        // OWN rate before bucketing, so a wide range doesn't convert a month total at the month-start
+        // date (whose rate is usually uncached) and fall back to showing the raw USD figure. Matches
+        // the dashboard / analytics path (Calculations.md Rule 3a Phase 2).
+        if (chartType == ChartDataType.RevenueVsExpenses
+            && !string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartDataService.GetRevenueVsExpensesConverted(
+                (usd, date) => (decimal)ConvertFromUSD((double)usd, date));
+        }
+
         var data = _chartDataService.GetChartData(chartType);
 
         if (data is List<ChartSeriesData> seriesData)

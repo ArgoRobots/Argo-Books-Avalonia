@@ -441,6 +441,29 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         ];
     }
 
+    /// <summary>
+    /// Revenue vs Expenses already in the display currency: converts each DAY's value at that day's OWN
+    /// rate (via <paramref name="toDisplay"/>) BEFORE bucketing to the report's granularity. A wide
+    /// range must never convert a month total at the month-start date, whose exact-date rate is usually
+    /// uncached, because that falls back to the raw USD figure. Mirrors the dashboard / analytics path
+    /// (docs/Calculations.md §3a Phase 2).
+    /// </summary>
+    public List<ChartSeriesData> GetRevenueVsExpensesConverted(Func<decimal, DateTime, decimal> toDisplay)
+    {
+        var daily = GetRevenueVsExpensesDaily();
+        if (daily.Count == 0)
+            return daily;
+
+        foreach (var series in daily)
+            foreach (var point in series.DataPoints)
+                if (point.Date.HasValue)
+                    point.Value = (double)toDisplay((decimal)point.Value, point.Date.Value);
+
+        var (startDate, endDate) = GetDateRange();
+        var bucket = GetTimeBucket(startDate, endDate);
+        return bucket == TimeBucket.Day ? daily : RebucketSeriesSum(daily, bucket);
+    }
+
     #endregion
 
     #region Transaction Charts
