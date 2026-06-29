@@ -1523,7 +1523,12 @@ public partial class App : Application
         // Dispose any existing timer
         _pendingConversionTimer?.Dispose();
 
-        _pendingConversionTimer = new Timer(state => { _ = TryProcessPendingConversionsAsync(); },
+        // Run the processing on the UI thread (the network fetch is awaited, so it doesn't block):
+        // it mutates CompanyData.PendingConversions, which the save paths also mutate on the UI thread.
+        // Without this the System.Threading.Timer callback would touch that List concurrently with a
+        // save. Matches the window-Activated path, which already calls this on the UI thread.
+        _pendingConversionTimer = new Timer(
+            _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = TryProcessPendingConversionsAsync(); }),
             null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 

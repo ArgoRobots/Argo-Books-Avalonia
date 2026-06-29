@@ -80,9 +80,11 @@ public class PendingConversionService
     {
         lock (_lock)
         {
-            // Avoid duplicates
-            if (_queue.Any(p => p.TransactionId == entry.TransactionId))
-                return;
+            // Replace any existing entry for this record so a later edit's amounts win. ApplyConversion
+            // converts from this snapshot, not the live row, and the self-heal is the guarantee that an
+            // offline row eventually gets its correct exact-date USD (Calculations.md Rule 3a) - so the
+            // snapshot must reflect the row's CURRENT amounts, not the ones from its first save.
+            _queue.RemoveAll(p => p.TransactionId == entry.TransactionId);
             _queue.Add(entry);
         }
 
