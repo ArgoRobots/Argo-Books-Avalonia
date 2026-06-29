@@ -1301,6 +1301,11 @@ public partial class App : Application
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
 
+            // Initialize AI operation timing (pooled duration priors that drive accurate
+            // progress bars). Non-blocking: loads the disk cache, refreshes priors in the
+            // background, and falls back to seed priors when offline.
+            InitializeOperationTimingService();
+
             // Load pending conversion queue from disk
             if (PendingConversionService != null)
             {
@@ -1493,6 +1498,19 @@ public partial class App : Application
         catch (Exception ex)
         {
             ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize exchange rate service");
+        }
+    }
+
+    private static void InitializeOperationTimingService()
+    {
+        try
+        {
+            var timing = new OperationTimingService(ErrorLogger);
+            _ = timing.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize operation timing service");
         }
     }
 
@@ -1998,19 +2016,25 @@ public partial class App : Application
         var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, geminiService);
 
-        var analysisProgress = new Progress<(string detail, double percent)>(p =>
-        {
-            _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync);
-        });
+        // Drive the analysis bar from the learned duration estimate (smooth easing toward the pooled
+        // p50/p90, asymptoting near the ceiling and completing when the call returns) instead of the
+        // old fake timer that crawled to 95% and stalled. The service reports only the status detail.
+        var analysisDetail = "Reading file...".Translate();
+        using var analysisTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+            OperationKind.SpreadsheetAnalysis,
+            pct => _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), analysisDetail, pct, analysisCts, ConfirmCancelAsync));
+        var analysisProgress = new Progress<(string detail, double percent)>(p => analysisDetail = p.detail);
 
         try
         {
             // Step 1: AI Analysis. Run off the UI thread: the analyzer opens the workbook
             // synchronously before its network calls, which would otherwise freeze the loading
             // overlay. The Progress callback was created on the UI thread, so it still marshals back.
+            analysisTicker.Start();
             var analysis = isCsv
                 ? await Task.Run(() => analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress), analysisCts.Token)
                 : await Task.Run(() => analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress), analysisCts.Token);
+            analysisTicker.Stop();
 
             await Task.Yield();
             _mainWindowViewModel?.HideLoading();

@@ -266,7 +266,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private bool _isScanning;
 
     [ObservableProperty]
-    private string _scanningMessage = "Analyzing receipt...";
+    private string _scanningMessage = "Scanning receipt...";
+
+    [ObservableProperty]
+    private double _scanProgress;
+
+    [ObservableProperty]
+    private bool _showScanProgress;
 
     [ObservableProperty]
     private bool _hasScanError;
@@ -313,6 +319,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ModalWidth));
         OnPropertyChanged(nameof(ModalHeight));
+    }
+
+    partial void OnIsScanningChanged(bool value)
+    {
+        // Clear any leftover progress from the previous scan the moment scanning (re)starts, so the
+        // bar doesn't briefly flash the prior scan's 100% before the new scan's reset runs. Covers
+        // every entry point (open + retry).
+        if (value)
+        {
+            ScanProgress = 0;
+            ShowScanProgress = false;
+        }
     }
 
     partial void OnIsFullscreenChanged(bool value)
@@ -1397,6 +1415,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var discount = scanResult.Discount ?? 0;
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
+            // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
+            await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(transactionDate);
             var isRevenue = item.IsRevenueOverride ?? false;
             var notes = item.Notes ?? string.Empty;
             var paymentMethod = scanResult.PaymentMethod ?? "Cash";
@@ -1468,6 +1488,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
+                ApplyDisplayCurrency(companyData, revenue, "Revenue");
 
                 receipt.TransactionId = revenueId;
                 companyData.Revenues.Add(revenue);
@@ -1498,6 +1519,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
+                ApplyDisplayCurrency(companyData, expense, "Expense");
 
                 receipt.TransactionId = expenseId;
                 companyData.Expenses.Add(expense);
@@ -1680,6 +1702,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             // Check usage limit before scanning
             ScanningMessage = "Checking usage limits...".Translate();
+            ShowScanProgress = false;
+            ScanProgress = 0;
             if (_usageService != null)
             {
                 var usageCheck = await _usageService.CheckUsageAsync();
@@ -1708,13 +1732,20 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 }
             }
 
-            ScanningMessage = "Analyzing receipt with AI...".Translate();
+            ScanningMessage = "Scanning receipt...".Translate();
+            ScanProgress = 0;
+            ShowScanProgress = true;
 
             // Run API call off the UI thread to keep the spinner smooth.
             // Image is already preprocessed in OpenScanModalWithDataAsync, so skip it here.
             var imageData = _currentImageData;
             var fileName = _currentFileName;
+            using var scanTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+                OperationKind.ReceiptScan, pct => ScanProgress = pct,
+                sizeFeature: imageData.Length, uploadBytes: imageData.Length);
+            scanTicker.Start();
             var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true));
+            scanTicker.Complete();
 
             if (!result.IsSuccess)
             {
@@ -2047,6 +2078,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             });
         }
 
+        // Fetch the receipt-date rate up front (like manual entry) so the saved row shows its amount
+        // immediately instead of a momentary "Pending".
+        await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now);
+
         if (IsRevenue)
         {
             // Create revenue transaction
@@ -2065,6 +2100,54 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
         CloseScanReviewModal();
+    }
+
+    /// <summary>
+    /// Tags a receipt-created transaction with the company's display currency and its USD total, like
+    /// the normal expense/revenue save, so a non-USD company's receipt rows show the amount instead of
+    /// "Pending". Receipt amounts are entered in the display currency, so the original currency IS the
+    /// display currency, which makes every row column show the amount directly. The USD total is
+    /// converted at the transaction's own date when the exact-date rate is cached; otherwise the row is
+    /// marked pending and queued for the self-heal, which fills the USD values once the rate is available.
+    /// </summary>
+    private static void ApplyDisplayCurrency(
+        Core.Data.CompanyData companyData, Core.Models.Transactions.Transaction txn, string transactionType)
+    {
+        var currency = ArgoBooks.Services.CurrencyService.CurrentCurrencyCode;
+        txn.OriginalCurrency = currency;
+
+        if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            txn.TotalUSD = txn.Total;
+            txn.TaxAmountUSD = txn.TaxAmount;
+            txn.IsPendingConversion = false;
+            return;
+        }
+
+        var rates = Core.Services.ExchangeRateService.Instance;
+        if (rates != null && rates.TryConvertExact(txn.Total, currency, "USD", txn.Date, out var totalUsd))
+        {
+            txn.TotalUSD = totalUsd;
+            rates.TryConvertExact(txn.TaxAmount, currency, "USD", txn.Date, out var taxUsd);
+            txn.TaxAmountUSD = taxUsd;
+            txn.IsPendingConversion = false;
+            return;
+        }
+
+        // Exact-date rate not cached: the display is already correct (original currency == display
+        // currency); defer the USD totals to the self-heal queue, exactly like the normal save.
+        txn.IsPendingConversion = true;
+        var entry = new Core.Models.Common.PendingConversion
+        {
+            TransactionId = txn.Id,
+            TransactionType = transactionType,
+            OriginalCurrency = currency,
+            TransactionDate = txn.Date,
+            Total = txn.Total,
+            TaxAmount = txn.TaxAmount
+        };
+        companyData.PendingConversions.Add(entry);
+        _ = Core.Services.PendingConversionService.Instance?.AddPendingConversionAsync(entry);
     }
 
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
@@ -2093,6 +2176,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
+        ApplyDisplayCurrency(companyData, expense, "Expense");
 
         var receipt = new Receipt
         {
@@ -2180,6 +2264,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
+        ApplyDisplayCurrency(companyData, revenue, "Revenue");
 
         var receipt = new Receipt
         {

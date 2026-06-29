@@ -32,6 +32,20 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     /// <summary>True while parsing and AI categorization run, before the row table is revealed.</summary>
     [ObservableProperty] private bool _isLoading;
 
+    /// <summary>Progress percent (0-100) for the AI categorization phase.</summary>
+    [ObservableProperty] private double _categorizeProgress;
+
+    /// <summary>Shows the determinate progress bar during the AI categorization call.</summary>
+    [ObservableProperty] private bool _showCategorizeProgress;
+
+    /// <summary>Message shown in the modal's loading state (PDF read phase vs categorize phase).</summary>
+    [ObservableProperty] private string _loadingMessage = "Categorizing your statement...";
+
+    // The bar % where the categorize phase begins. For a PDF import the read phase fills 0..this and
+    // categorize fills this..100, so the whole import is ONE continuous bar. Stays 0 for CSV/Excel
+    // (parsing is instant), where categorize fills the whole bar.
+    private double _categorizeProgressFloor;
+
     /// <summary>True when the AI categorization pass was skipped, so the rows were left for the user.</summary>
     [ObservableProperty] private bool _aiUnavailable;
 
@@ -82,6 +96,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         FileName = Path.GetFileName(filePath);
         AiUnavailable = false;
         AiUnavailableMessage = null;
+        _categorizeProgressFloor = 0;
 
         List<BankStatementLine> lines;
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -114,7 +129,13 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
 
         _validationAttempted = false;
 
-        // Show the modal in its loading state, run deterministic + AI categorization, then reveal the table.
+        // Show the modal in its loading state, run deterministic + AI categorization, then reveal the
+        // table. For a PDF the modal is already open from the reading phase and the bar is partway
+        // along (_categorizeProgressFloor): keep it there so the import is one continuous bar instead
+        // of two. For CSV/Excel the floor is 0 and categorize fills the whole bar.
+        LoadingMessage = "Categorizing your statement...".Translate();
+        CategorizeProgress = _categorizeProgressFloor;
+        ShowCategorizeProgress = _categorizeProgressFloor > 0;
         IsLoading = true;
         IsOpen = true;
 
@@ -296,11 +317,19 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             // every existing product/category/supplier/customer and JSON-serializing them into the
             // prompt is synchronous and was freezing the loading spinner (~0.5s) on companies with
             // a lot of data. ApplySuggestions runs back on the UI thread (it touches bound rows).
+            ShowCategorizeProgress = true;
+            // Continue the one bar from where the read phase left off (0 for CSV/Excel, 60 for PDF).
+            var floor = _categorizeProgressFloor;
+            CategorizeProgress = floor;
+            using var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
+                OperationKind.BankCategorize, pct => CategorizeProgress = floor + pct * (100 - floor) / 100, sizeFeature: pending.Count);
+            ticker.Start();
             var suggestions = await Task.Run(() =>
             {
                 var request = BuildCategorizationRequest(data, pending);
                 return gemini.GetBankLineSuggestionsAsync(request);
             });
+            ticker.Complete();
             if (suggestions == null || suggestions.Count == 0)
             {
                 SetAiUnavailable("AI couldn't categorize this statement. Select products manually.".Translate());
@@ -828,59 +857,70 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Premium-gated PDF bank statement import. Reuses the same gates as App.ImportPdfStatementAsync.
+    /// Premium-gated PDF bank statement import. The premium gate and usage check run first (as
+    /// dialogs); on success the import modal opens and the PDF is read INSIDE it, driving the modal's
+    /// progress bar, so the whole import uses one consistent UI rather than a separate floating overlay.
     /// </summary>
-    private static async Task<List<BankStatementLine>> ImportPdfStatementAsync(string filePath)
+    private async Task<List<BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {
+        // Premium gate + usage check run before the modal opens, so a gate or limit failure shows its
+        // prompt without briefly flashing the import modal.
         if (App.LicenseService?.LoadLicense() != true)
         {
             App.OpenUpgradeModal();
             return [];
         }
+        if (App.PdfStatementExtractor == null) return [];
 
-        // Reading the PDF is a slow network + AI round-trip (upload, server-side extraction).
-        // Show the loading overlay for the whole wait so there's instant feedback; hide it before
-        // any dialog or before the import modal opens.
-        App.ShowBusyOverlay("Reading PDF statement...".Translate());
-        try
+        using var usage = new ReceiptUsageService(App.LicenseService, App.ErrorLogger);
+        var check = await usage.CheckUsageAsync();
+        if (!check.CanScan)
         {
-            using var usage = new ReceiptUsageService(App.LicenseService, App.ErrorLogger);
-            var check = await usage.CheckUsageAsync();
-            if (!check.CanScan)
-            {
-                App.HideBusyOverlay();
-                if (check.ErrorMessage != null)
-                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
-                else
-                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
-                return [];
-            }
-
-            if (App.PdfStatementExtractor == null) return [];
-
-            var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
-            var extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
-            App.HideBusyOverlay();
-            if (extracted.Count == 0)
-            {
-                // Don't fail silently: the extractor returns nothing both when the PDF has no
-                // recognizable transactions and when the server couldn't process it.
-                await App.ShowInfoMessageBoxAsync(
-                    "Import Bank Statement".Translate(),
-                    "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
-                return [];
-            }
-
-            // Extraction succeeded: consume one credit and hand the rows straight to the main import
-            // modal (the same review/categorize UI CSV and Excel use), where the user reviews, edits,
-            // or excludes rows before importing. No separate PDF-only confirm step.
-            await usage.IncrementUsageAsync();
-            return extracted;
+            if (check.ErrorMessage != null)
+                await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+            else
+                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+            return [];
         }
-        finally
+
+        // Open the import modal and read the PDF inside it (driving the modal's progress bar).
+        LoadingMessage = "Reading PDF statement...".Translate();
+        CategorizeProgress = 0;
+        ShowCategorizeProgress = true;
+        IsLoading = true;
+        IsOpen = true;
+
+        var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
+        List<BankStatementLine> extracted;
+        // Reading fills the first 60% of the bar; the categorize phase fills the rest, so the whole
+        // import reads as one continuous bar.
+        using (var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
+            OperationKind.BankPdfExtract, pct => CategorizeProgress = pct * 0.6, uploadBytes: bytes.Length))
         {
-            App.HideBusyOverlay();
+            ticker.Start();
+            extracted = await App.PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
+            ticker.Complete();
         }
+        _categorizeProgressFloor = 60;
+
+        // User closed the modal during the read: abort without reopening or charging a credit.
+        if (!IsOpen) return [];
+
+        if (extracted.Count == 0)
+        {
+            // Close the modal again and explain: the extractor returns nothing both when the PDF has
+            // no recognizable transactions and when the server couldn't process it.
+            IsOpen = false;
+            IsLoading = false;
+            await App.ShowInfoMessageBoxAsync(
+                "Import Bank Statement".Translate(),
+                "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+            return [];
+        }
+
+        // Extraction succeeded: consume one credit and hand the rows to the review/categorize UI.
+        await usage.IncrementUsageAsync();
+        return extracted;
     }
 
     // -----------------------------------------------------------------------

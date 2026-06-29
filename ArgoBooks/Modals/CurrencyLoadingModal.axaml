@@ -18,46 +18,14 @@
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
-                <StackPanel Margin="24" Spacing="20">
-                    <!-- Loading spinner and message -->
-                    <StackPanel HorizontalAlignment="Center" Spacing="16">
-                        <controls:LoadingSpinner IsSpinning="{Binding IsSavingCurrency}"
-                                                 SizePreset="Large"
-                                                 HorizontalAlignment="Center" />
-                        <TextBlock Text="{loc:Loc 'Fetching Exchange Rates...'}"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock Text="{loc:Loc 'Please wait while we connect to the exchange rate service.'}"
-                                   FontSize="14"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   TextWrapping="Wrap"
-                                   TextAlignment="Center"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
-
-                    <!-- Progress bar and percentage -->
-                    <StackPanel Spacing="8">
-                        <ProgressBar Minimum="0" Maximum="100"
-                                     Value="{Binding CurrencyLoadingProgress}"
-                                     Height="6"
-                                     CornerRadius="3"
-                                     Width="280"
-                                     HorizontalAlignment="Center"
-                                     Foreground="{DynamicResource PrimaryBrush}" />
-                        <TextBlock Text="{Binding CurrencyLoadingProgress, StringFormat='{}{0}%'}"
-                                   FontSize="12"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
-
-                    <!-- Cancel button -->
-                    <Button Classes="secondary-button"
-                            Content="{loc:Loc Cancel}"
-                            Command="{Binding CancelCurrencyLoadingCommand}"
-                            HorizontalAlignment="Center" />
-                </StackPanel>
+                <controls:LoadingState Margin="24"
+                                       IsActive="{Binding IsSavingCurrency}"
+                                       Message="{loc:Loc 'Fetching Exchange Rates...'}"
+                                       Detail="{loc:Loc 'This may take a few seconds...'}"
+                                       ShowProgress="True"
+                                       Percent="{Binding CurrencyLoadingProgress}"
+                                       IsCancellable="True"
+                                       CancelCommand="{Binding CancelCurrencyLoadingCommand}" />
             </Border>
         </controls:ModalOverlay.ModalContent>
     </controls:ModalOverlay>

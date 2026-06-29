@@ -137,57 +137,27 @@ public class SpreadsheetAnalysisService(
         // A truncated response fails to parse and would otherwise look like an unreadable file.
         var batches = SplitIntoAnalysisBatches(sheetsData);
 
-        // Estimate LLM duration for the fake progress bar (more columns → longer)
-        var estimatedSeconds = Math.Max(6, sheetsData.Sum(s => s.Headers.Count) / 4);
-        var intervalMs = (int)(estimatedSeconds * 1000.0 / 95);
+        // The visible progress bar is driven by the UI layer from the learned duration estimate
+        // (see EstimatedProgressTicker), so this no longer fakes a timer. We just report the status
+        // text; percent -1 signals "no real fraction here" so nothing shows a misleading number.
+        progress?.Report(("Analyzing...", -1));
 
-        var currentProgress = 0.0;
-        progress?.Report(("Analyzing with AI...", currentProgress));
-
-        using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(intervalMs));
-        _ = Task.Run(async () =>
+        // Analyze batches concurrently; each batch is an independent LLM call.
+        using var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);
+        var tasks = batches.Select(batch => Task.Run(async () =>
         {
-            while (await progressTimer.WaitForNextTickAsync(cancellationToken))
+            await semaphore.WaitAsync(cancellationToken);
+            try
             {
-                if (currentProgress < 95)
-                {
-                    currentProgress = Math.Min(currentProgress + 1, 95);
-                }
-                else
-                {
-                    // Slow asymptotic approach toward 99 so it never looks stuck
-                    currentProgress += (99 - currentProgress) * 0.05;
-                }
-                progress?.Report(("Analyzing with AI...", currentProgress));
+                return await AnalyzeBatchWithRetryAsync(batch, cancellationToken);
             }
-        }, cancellationToken);
-
-        SpreadsheetAnalysisResult?[] batchResults;
-        try
-        {
-            // Analyze batches concurrently; each batch is an independent LLM call.
-            using var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);
-            var tasks = batches.Select(batch => Task.Run(async () =>
+            finally
             {
-                await semaphore.WaitAsync(cancellationToken);
-                try
-                {
-                    return await AnalyzeBatchWithRetryAsync(batch, cancellationToken);
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            }, cancellationToken)).ToArray();
+                semaphore.Release();
+            }
+        }, cancellationToken)).ToArray();
 
-            batchResults = await Task.WhenAll(tasks);
-        }
-        finally
-        {
-            progressTimer.Dispose(); // stops the timer, the progress loop will complete
-        }
-
-        progress?.Report(("Analyzing with AI...", 100));
+        var batchResults = await Task.WhenAll(tasks);
 
         // Merge successful batches. A batch is null only when its LLM call failed or its
         // response could not be parsed (both already logged inside AnalyzeBatchAsync).
@@ -310,7 +280,8 @@ public class SpreadsheetAnalysisService(
         var maxTokens = Math.Max(4000, totalColumns * 200 + batch.Count * 400);
 
         var response = await geminiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: totalColumns);
 
         if (string.IsNullOrEmpty(response))
         {
@@ -356,7 +327,8 @@ public class SpreadsheetAnalysisService(
 
 
         var response = await geminiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetProcess, sizeFeature: rows.Count);
 
         if (string.IsNullOrEmpty(response))
         {

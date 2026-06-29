@@ -54,7 +54,9 @@ public class LayoutNormalizationServiceTests : IDisposable
         public Task<string?> SendChatAsync(
             string systemPrompt, string userPrompt,
             int maxTokens = 4000, double temperature = 0.1,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.Completion,
+            long? sizeFeature = null)
         {
             CallCount++;
             return Task.FromResult(_response);
@@ -63,7 +65,8 @@ public class LayoutNormalizationServiceTests : IDisposable
         public Task<string?> SendVisionChatAsync(
             string systemPrompt, string userPrompt, string base64Image, string mimeType,
             int maxTokens = 4000, double temperature = 0.1, string? model = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.ReceiptScan)
             => Task.FromResult<string?>(null);
     }
 

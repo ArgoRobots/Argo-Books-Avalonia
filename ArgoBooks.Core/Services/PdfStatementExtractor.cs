@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using ArgoBooks.Core.Models.BankMatching;
@@ -37,8 +38,11 @@ public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger?
             if (!string.IsNullOrEmpty(deviceId))
                 request.Headers.Add("X-Device-Id", deviceId);
 
+            var wallClock = Stopwatch.StartNew();
             using var response = await Http.SendAsync(request, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            wallClock.Stop();
+            RecordTiming(body, wallClock.Elapsed.TotalMilliseconds, pdfData.Length);
             return ParseRows(body);
         }
         catch (Exception ex)
@@ -76,5 +80,29 @@ public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger?
             rows.Add(line);
         }
         return rows;
+    }
+
+    /// <summary>
+    /// Feeds the server-measured extraction time (and load factor) from the response into the
+    /// shared estimator so the bank-PDF progress bar self-calibrates. Best-effort.
+    /// </summary>
+    private static void RecordTiming(string body, double wallClockMs, long uploadBytes)
+    {
+        var service = OperationTimingService.Instance;
+        if (service == null)
+            return;
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (!doc.RootElement.TryGetProperty("timing", out var timing))
+                return;
+            double serverMs = timing.TryGetProperty("elapsed_ms", out var e) && e.TryGetDouble(out var ev) ? ev : 0;
+            double? loadFactor = timing.TryGetProperty("load_factor", out var lf) && lf.TryGetDouble(out var lv) ? lv : null;
+            service.RecordResult(OperationKind.BankPdfExtract, serverMs, wallClockMs, uploadBytes, loadFactor);
+        }
+        catch (JsonException)
+        {
+            // Best-effort: a malformed/older response just means no timing sample this call.
+        }
     }
 }
