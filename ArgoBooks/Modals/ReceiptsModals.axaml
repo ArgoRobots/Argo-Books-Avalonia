@@ -269,23 +269,14 @@
                     <!-- Content -->
                     <Panel Grid.Row="1">
                             <!-- Loading State -->
-                            <StackPanel IsVisible="{Binding IsScanning}"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="16"
-                                        Margin="48">
-                                <controls:LoadingSpinner SizePreset="Large" />
-                                <TextBlock Text="{Binding ScanningMessage}"
-                                           FontSize="16"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           HorizontalAlignment="Center" />
-                                <TextBlock Text="{Binding ScanSubMessage}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextWrapping="Wrap"
-                                           TextAlignment="Center"
-                                           HorizontalAlignment="Center" />
-                            </StackPanel>
+                            <controls:LoadingState IsVisible="{Binding IsScanning}"
+                                                   Message="{Binding ScanningMessage}"
+                                                   Detail="{Binding ScanSubMessage}"
+                                                   ShowProgress="{Binding ShowScanProgress}"
+                                                   Percent="{Binding ScanProgress}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Margin="48" />
 
                             <!-- Error State -->
                             <StackPanel IsVisible="{Binding HasScanError}"
@@ -633,7 +624,9 @@
                                                                     SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                                     DisplayMemberPath="Name"
                                                                     Placeholder="{loc:Loc 'Search for a product...'}"
-                                                                    ShowAddNew="False"
+                                                                    ShowAddNew="True"
+                                                                    AddNewText="{loc:Loc 'Create new product'}"
+                                                                    AddNewCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                                     EmptyMessage="{loc:Loc 'No products found.'}"
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />
@@ -853,7 +846,9 @@
                                                     SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
                                                     DisplayMemberPath="Name"
                                                     Placeholder="{loc:Loc 'Search for a supplier...'}"
-                                                    ShowAddNew="False"
+                                                    ShowAddNew="True"
+                                                    AddNewText="{loc:Loc 'Create new supplier'}"
+                                                    AddNewCommand="{Binding OpenCreateSupplierCommand}"
                                                     EmptyMessage="{loc:Loc 'No suppliers found.'}"
                                                     HasError="{Binding HasSupplierError}"
                                                     ErrorMessage="{Binding SupplierErrorMessage}"
@@ -1907,7 +1902,9 @@
                                                                     SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                                     DisplayMemberPath="Name"
                                                                     Placeholder="Search for a product..."
-                                                                    ShowAddNew="False"
+                                                                    ShowAddNew="True"
+                                                                    AddNewText="{loc:Loc 'Create new product'}"
+                                                                    AddNewCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                                     EmptyMessage="No products found."
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />
@@ -2124,7 +2121,9 @@
                                                 SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
                                                 DisplayMemberPath="Name"
                                                 Placeholder="{loc:Loc 'Search for a supplier...'}"
-                                                ShowAddNew="False"
+                                                ShowAddNew="True"
+                                                AddNewText="{loc:Loc 'Create new supplier'}"
+                                                AddNewCommand="{Binding OpenCreateSupplierCommand}"
                                                 EmptyMessage="{loc:Loc 'No suppliers found.'}"
                                                 HasError="{Binding HasSupplierError}"
                                                 ErrorMessage="{Binding SupplierErrorMessage}"

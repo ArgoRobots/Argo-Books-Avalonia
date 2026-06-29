@@ -30,6 +30,23 @@ public static class ProfitCalculator
     }
 
     /// <summary>
+    /// Display-currency variant of <see cref="CalculateNetProfitUSD"/>: each component (revenue,
+    /// expenses, refunds) is converted to the display currency at each transaction's OWN date via
+    /// <paramref name="toDisplay"/> before the profit subtraction, per docs/Calculations.md §3a
+    /// Phase 2. Pass <c>CurrencyService.GetDisplayAmount</c>. Equals the USD profit for USD display.
+    /// </summary>
+    public static decimal CalculateNetProfitDisplay(
+        CompanyData data, DateTime start, DateTime end, Func<decimal, DateTime, decimal> toDisplay)
+    {
+        var revenuePreTax = RevenueAggregator.SumCollectedRevenuePreTaxDisplay(
+            data.Revenues, start, end, toDisplay);
+        var expenses = ExpenseAggregator.SumExpensesDisplay(data.Expenses, start, end, toDisplay);
+        var refundsPreTax = RefundAggregator.GetRefundedPreTaxInDateRangeDisplay(
+            data.Payments, BuildInvoiceLookup(data.Invoices), start, end, toDisplay);
+        return revenuePreTax - expenses - refundsPreTax;
+    }
+
+    /// <summary>
     /// Profit per day inside the range, suitable for time-series charts.
     /// Each day's value is collected pre-tax revenue minus pre-tax refunds
     /// (both keyed by the day they happened) minus expenses on that day.

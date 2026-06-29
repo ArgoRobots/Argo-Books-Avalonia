@@ -49,12 +49,17 @@ public class GeminiService : IGeminiService, IDisposable
         try
         {
             var prompt = BuildPrompt(request);
+            // gemini-2.5-flash spends hidden "thinking" tokens out of maxOutputTokens; 500 was too
+            // small and the budget was exhausted before the JSON answer (finishReason=MAX_TOKENS,
+            // truncated content), so the suggestion silently failed. The output itself is tiny, so a
+            // generous budget just covers thinking (billing is per token used, not the ceiling).
             var response = await SendApiRequestAsync(
                 "You are a helpful assistant that categorizes business expenses. Always respond with valid JSON only, no markdown.",
                 prompt,
-                500,
+                4000,
                 0.3,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                operation: OperationKind.SupplierCategory);
 
             if (string.IsNullOrEmpty(response))
                 return null;
@@ -80,12 +85,110 @@ public class GeminiService : IGeminiService, IDisposable
     }
 
     /// <inheritdoc />
+    /// <summary>
+    /// Max statement lines per AI request. One request with every line can exceed the model's
+    /// output budget (finishReason=MAX_TOKENS -> empty response), so large statements are split
+    /// into batches whose results are merged by line index. 40 keeps each batch's budget
+    /// (4000 + 40*250 = 14000) comfortably under the 16000 cap including hidden "thinking" tokens.
+    /// </summary>
+    private const int BankLineBatchSize = 40;
+
+    public async Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+        BankLineCategorizationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured || request.Lines.Count == 0)
+            return null;
+
+        if (request.Lines.Count <= BankLineBatchSize)
+            return await GetBankLineSuggestionsBatchAsync(request, request.Lines, cancellationToken);
+
+        // Split a large statement into batches and merge. Suggestions carry the original line
+        // Index, so a plain concat maps back correctly. A failed batch leaves its lines blank
+        // (the user fills them in manually); return whatever the successful batches produced.
+        var merged = new List<BankLineSuggestion>();
+        var anySucceeded = false;
+        for (int i = 0; i < request.Lines.Count; i += BankLineBatchSize)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var batch = request.Lines.GetRange(i, Math.Min(BankLineBatchSize, request.Lines.Count - i));
+            var part = await GetBankLineSuggestionsBatchAsync(request, batch, cancellationToken);
+            if (part != null)
+            {
+                merged.AddRange(part);
+                anySucceeded = true;
+            }
+        }
+        return anySucceeded ? merged : null;
+    }
+
+    /// <summary>
+    /// Categorizes a single batch of lines, reusing <paramref name="baseRequest"/>'s context
+    /// (products/categories/counterparties) with just <paramref name="lines"/> as the work set.
+    /// </summary>
+    private async Task<List<BankLineSuggestion>?> GetBankLineSuggestionsBatchAsync(
+        BankLineCategorizationRequest baseRequest,
+        List<BankLineToCategorize> lines,
+        CancellationToken cancellationToken)
+    {
+        var batchRequest = new BankLineCategorizationRequest
+        {
+            Lines = lines,
+            ExistingProducts = baseRequest.ExistingProducts,
+            ExistingExpenseCategories = baseRequest.ExistingExpenseCategories,
+            ExistingRevenueCategories = baseRequest.ExistingRevenueCategories,
+            ExistingSuppliers = baseRequest.ExistingSuppliers,
+            ExistingCustomers = baseRequest.ExistingCustomers,
+        };
+
+        var stopwatch = Stopwatch.StartNew();
+        var model = DefaultModel;
+        var success = false;
+
+        try
+        {
+            var prompt = BuildBankLinePrompt(batchRequest);
+            // gemini-2.5-flash spends hidden "thinking" tokens out of maxOutputTokens, so the
+            // budget must comfortably cover thinking plus the JSON output or the response comes
+            // back empty (finishReason=MAX_TOKENS). Be generous; the model only uses what it needs.
+            var maxTokens = Math.Min(16000, 4000 + lines.Count * 250);
+            var response = await SendApiRequestAsync(
+                "You categorize business bank statement lines. Always respond with valid JSON only, no markdown.",
+                prompt,
+                maxTokens,
+                0.2,
+                cancellationToken: cancellationToken,
+                operation: OperationKind.BankCategorize,
+                sizeFeature: lines.Count);
+
+            if (string.IsNullOrEmpty(response))
+                return null;
+
+            success = true;
+            return ParseBankLineResponse(response);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Api, "Gemini bank-line categorization failed");
+            return null;
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _ = _telemetryManager?.TrackApiCallAsync(
+                ApiName.Gemini, stopwatch.ElapsedMilliseconds, success, model, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<string?> SendChatAsync(
         string systemPrompt,
         string userPrompt,
         int maxTokens = 4000,
         double temperature = 0.1,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.Completion,
+        long? sizeFeature = null)
     {
         if (!IsConfigured)
             return null;
@@ -96,7 +199,7 @@ public class GeminiService : IGeminiService, IDisposable
 
         try
         {
-            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken: cancellationToken);
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, cancellationToken: cancellationToken, operation: operation, sizeFeature: sizeFeature);
             if (!string.IsNullOrEmpty(response))
                 success = true;
             return response;
@@ -128,7 +231,8 @@ public class GeminiService : IGeminiService, IDisposable
         int maxTokens = 4000,
         double temperature = 0.1,
         string? model = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.ReceiptScan)
     {
         if (!IsConfigured)
             return null;
@@ -139,7 +243,7 @@ public class GeminiService : IGeminiService, IDisposable
 
         try
         {
-            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, base64Image, mimeType, model, cancellationToken);
+            var response = await SendApiRequestAsync(systemPrompt, userPrompt, maxTokens, temperature, base64Image, mimeType, model, cancellationToken, operation: operation);
             if (!string.IsNullOrEmpty(response))
                 success = true;
             return response;
@@ -234,12 +338,21 @@ Respond with JSON only.";
         string? base64Image = null,
         string? mimeType = null,
         string? model = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.Completion,
+        long? sizeFeature = null)
     {
         var effectiveModel = model ?? DefaultModel;
+
+        // Uploaded payload bytes for vision calls; also the best up-front size feature when the
+        // caller didn't supply a more specific one (line count, column count, ...).
+        long uploadBytes = base64Image != null ? (long)(base64Image.Length * 0.75) : 0;
+        long? size = sizeFeature ?? (uploadBytes > 0 ? uploadBytes : null);
+        var operationTag = operation.ToServerTag();
+
         object requestBody = base64Image != null
-            ? new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, base64Image, mimeType }
-            : new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature };
+            ? new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, base64Image, mimeType, operation = operationTag, sizeFeature = size, platform = PlatformTag }
+            : new { systemPrompt, userPrompt, model = effectiveModel, maxTokens, temperature, operation = operationTag, sizeFeature = size, platform = PlatformTag };
 
         var json = JsonSerializer.Serialize(requestBody);
 
@@ -247,6 +360,7 @@ Respond with JSON only.";
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         LicenseAuthHelper.AddAuthHeaders(request);
 
+        var wallClock = Stopwatch.StartNew();
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -256,8 +370,11 @@ Respond with JSON only.";
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        wallClock.Stop();
         using var doc = JsonDocument.Parse(responseBody);
         var root = doc.RootElement;
+
+        RecordTiming(operation, root, wallClock.Elapsed.TotalMilliseconds, uploadBytes);
 
         if (root.TryGetProperty("success", out var successProp) && successProp.GetBoolean()
             && root.TryGetProperty("content", out var contentProp))
@@ -266,6 +383,29 @@ Respond with JSON only.";
         }
 
         return null;
+    }
+
+    /// <summary>Platform tag sent with each AI call for the server-side timing records.</summary>
+    private static readonly string PlatformTag =
+        OperatingSystem.IsWindows() ? "windows"
+        : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsLinux() ? "linux" : "other";
+
+    /// <summary>
+    /// Feeds the server-measured Gemini time (and current load factor) from a response into the
+    /// shared <see cref="OperationTimingService"/> so progress estimates self-calibrate. The
+    /// difference between the client wall clock and the server time trains the upload-speed
+    /// estimate. Best-effort and no-op when the timing service or the response block is absent.
+    /// </summary>
+    private static void RecordTiming(OperationKind operation, JsonElement root, double wallClockMs, long uploadBytes)
+    {
+        var service = OperationTimingService.Instance;
+        if (service == null || !root.TryGetProperty("timing", out var timing))
+            return;
+
+        double serverMs = timing.TryGetProperty("elapsed_ms", out var e) && e.TryGetDouble(out var ev) ? ev : 0;
+        double? loadFactor = timing.TryGetProperty("load_factor", out var lf) && lf.TryGetDouble(out var lv) ? lv : null;
+        service.RecordResult(operation, serverMs, wallClockMs, uploadBytes, loadFactor);
     }
 
     private SupplierCategorySuggestion? ParseResponse(string response, ReceiptAnalysisRequest request)
@@ -396,6 +536,101 @@ Respond with JSON only.";
         // Catch compound vague names like "general expenses", "other purchases", "miscellaneous items"
         var words = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return words.Length >= 1 && words.All(w => vagueExact.Contains(w));
+    }
+
+    private static string BuildBankLinePrompt(BankLineCategorizationRequest request)
+    {
+        var products = JsonSerializer.Serialize(request.ExistingProducts.Select(p => new { p.Id, p.Name, category = p.CategoryName, type = p.IsRevenue ? "revenue" : "expense" }));
+        var expenseCats = JsonSerializer.Serialize(request.ExistingExpenseCategories.Select(c => new { c.Id, c.Name }));
+        var revenueCats = JsonSerializer.Serialize(request.ExistingRevenueCategories.Select(c => new { c.Id, c.Name }));
+        var suppliers = JsonSerializer.Serialize(request.ExistingSuppliers.Select(s => new { s.Id, s.Name }));
+        var customers = JsonSerializer.Serialize(request.ExistingCustomers.Select(c => new { c.Id, c.Name }));
+        var lines = JsonSerializer.Serialize(request.Lines.Select(l => new { l.Index, l.Description, amount = l.Amount, type = l.IsRevenue ? "revenue" : "expense" }));
+
+        return $@"Categorize each bank statement line. For every line assign a PRODUCT (which carries its category) and a SUPPLIER (expense lines) or CUSTOMER (revenue lines).
+
+## Lines
+{lines}
+
+## Existing Products
+{products}
+
+## Existing Expense Categories
+{expenseCats}
+
+## Existing Revenue Categories
+{revenueCats}
+
+## Existing Suppliers (for expense lines)
+{suppliers}
+
+## Existing Customers (for revenue lines)
+{customers}
+
+## Rules
+For each line:
+1. PRODUCT: prefer an existing product of the matching type and return its id in ""productId"". Otherwise set ""productId"" to null and propose a short, specific ""newProductName"" describing the spend (e.g. ""Paint Supplies"", ""Fuel"", ""Bank Fees"", ""Consulting Revenue""). NEVER use vague names like ""Purchases"", ""General"", ""Miscellaneous"", ""Expenses"", or ""Other"".
+2. CATEGORY (only when proposing a new product): prefer an existing category of the matching type and return its id in ""categoryId"". Otherwise set ""categoryId"" to null and propose a broader ""newCategoryName"" (e.g. ""Materials"", ""Utilities"", ""Sales""). Avoid vague names.
+3. COUNTERPARTY: for expense lines pick a supplier, for revenue lines pick a customer. If a good match exists return its id in ""counterpartyId"". Otherwise set ""counterpartyId"" to null and propose a clean ""newCounterpartyName"" from the description. If the description has no identifiable party (e.g. ""ATM WITHDRAWAL"", ""MONTHLY FEE"", ""INTERAC E-TRANSFER""), set both counterparty fields to null.
+
+## Response Format (JSON array only, no markdown)
+[
+  {{ ""index"": <line index>, ""productId"": ""<id or null>"", ""newProductName"": ""<name or null>"", ""categoryId"": ""<id or null>"", ""newCategoryName"": ""<name or null>"", ""counterpartyId"": ""<id or null>"", ""newCounterpartyName"": ""<name or null>"" }}
+]
+
+Respond with the JSON array only.";
+    }
+
+    private List<BankLineSuggestion>? ParseBankLineResponse(string response)
+    {
+        try
+        {
+            var clean = JsonResponseHelper.StripMarkdownCodeBlock(response);
+            using var doc = JsonDocument.Parse(clean);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Array)
+                return null;
+
+            var results = new List<BankLineSuggestion>();
+            foreach (var el in root.EnumerateArray())
+            {
+                var s = new BankLineSuggestion
+                {
+                    Index = GetJsonInt(el, "index"),
+                    ProductId = GetJsonString(el, "productId"),
+                    NewProductName = GetJsonString(el, "newProductName"),
+                    ProductCategoryId = GetJsonString(el, "categoryId"),
+                    NewProductCategoryName = GetJsonString(el, "newCategoryName"),
+                    CounterpartyId = GetJsonString(el, "counterpartyId"),
+                    NewCounterpartyName = GetJsonString(el, "newCounterpartyName")
+                };
+
+                // Reject vague AI-proposed names so we never create a "General" product/category.
+                if (s.NewProductName != null && IsVagueCategoryName(s.NewProductName)) s.NewProductName = null;
+                if (s.NewProductCategoryName != null && IsVagueCategoryName(s.NewProductCategoryName)) s.NewProductCategoryName = null;
+
+                results.Add(s);
+            }
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogError(ex, ErrorCategory.Parsing, "Failed to parse bank-line suggestions");
+            return null;
+        }
+    }
+
+    private static string? GetJsonString(JsonElement el, string name) =>
+        el.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(p.GetString())
+            ? p.GetString()
+            : null;
+
+    private static int GetJsonInt(JsonElement el, string name)
+    {
+        if (!el.TryGetProperty(name, out var p)) return -1;
+        if (p.ValueKind == JsonValueKind.Number && p.TryGetInt32(out var v)) return v;
+        if (p.ValueKind == JsonValueKind.String && int.TryParse(p.GetString(), out var sv)) return sv;
+        return -1;
     }
 
     public void Dispose()

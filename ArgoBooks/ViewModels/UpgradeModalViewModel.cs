@@ -19,7 +19,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
     private static readonly string LicenseRedeemUrl = $"{ApiConfig.BaseUrl}/api/license/redeem.php";
-    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private static readonly string PricingApiUrl = $"{ApiConfig.BaseUrl}/api/pricing/plans.php";
     private static readonly string PremiumUpgradeUrl = $"{ApiConfig.BaseUrl}/pricing/";
@@ -462,11 +461,11 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
         catch (HttpRequestException)
         {
-            VerificationError = await GetConnectivityErrorMessageAsync();
+            VerificationError = (await ConnectivityMessage.ResolveAsync(_connectivityService)).Translate();
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || ex.CancellationToken != default)
         {
-            VerificationError = await GetConnectivityErrorMessageAsync();
+            VerificationError = (await ConnectivityMessage.ResolveAsync(_connectivityService)).Translate();
         }
         catch (TaskCanceledException)
         {
@@ -483,38 +482,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Determines whether the error is due to no internet or API being down.
-    /// </summary>
-    private async Task<string> GetConnectivityErrorMessageAsync()
-    {
-        try
-        {
-            // First check if we have internet at all
-            var hasInternet = await _connectivityService.IsInternetAvailableAsync();
-
-            if (!hasInternet)
-            {
-                return "No internet connection. Please check your network and try again.".Translate();
-            }
-
-            // We have internet, so check if the API host is reachable
-            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl);
-
-            if (!isApiReachable)
-            {
-                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.".Translate();
-            }
-
-            // API is reachable but something else went wrong
-            return "Unable to verify license. Please try again.".Translate();
-        }
-        catch
-        {
-            // If connectivity check itself fails, assume no internet
-            return "Unable to verify license. Please check your internet connection.".Translate();
-        }
-    }
 
     /// <summary>
     /// Redeems a license key on the server, marking it as used and binding to this device.

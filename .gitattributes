@@ -1,0 +1,5 @@
+# Binary test fixtures and assets must never be line-ending normalized: CRLF/LF
+# conversion corrupts them (e.g. it breaks a PDF's xref byte offsets).
+*.pdf  binary
+*.xlsx binary
+*.xls  binary

@@ -4,11 +4,14 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -229,7 +232,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             }
 
             var deletedExpense = expense;
-            App.EventLogService?.CapturePreDeletionSnapshot("Expense", deletedExpense.Id);
             var capturedReceipt = deletedReceipt;
             var action = new DelegateAction(
                 $"Delete expense {expense.Id}",
@@ -566,6 +568,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         }
 
         companyData.Expenses.Add(expense);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ExpenseCreated);
 
         // Adjust inventory for tracked products
         var inventoryResults = AdjustInventoryForLineItems(companyData, modelLineItems, expenseId, isExpense: true);
@@ -612,7 +615,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         var modelLineItems = CreateModelLineItems();
 
         // Apply changes
-        App.EventLogService?.CapturePreModificationSnapshot("Expense", expense.Id);
         expense.Date = ModalDate?.DateTime ?? DateTime.Now;
         expense.SupplierId = SelectedSupplier?.Id;
         expense.Description = description;
@@ -741,7 +743,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         {
             try
             {
-                var bytes = File.ReadAllBytes(ReceiptFilePath);
+                var bytes = SharedFileReader.ReadAllBytes(ReceiptFilePath);
                 fileData = Convert.ToBase64String(bytes);
             }
             catch (Exception ex)
@@ -838,6 +840,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     private void OpenCreateSupplier() => OpenCreateCounterparty();
 
     #endregion
+
 }
 
 /// <summary>

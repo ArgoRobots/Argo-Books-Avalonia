@@ -74,37 +74,30 @@ public class MonetaryValue
     public static implicit operator MonetaryValue(decimal amount) => new(amount);
 
     /// <summary>
-    /// Gets the display amount for the specified target currency.
+    /// Exact-date display amount for <paramref name="targetCurrency"/>. Returns the exact original
+    /// amount when the target is the original currency; the stored USD when the target is USD;
+    /// otherwise converts USD-&gt;target via <paramref name="tryConvert"/>. Returns
+    /// <see langword="false"/> when the exact-date rate is unavailable, so the caller shows a
+    /// pending marker rather than a wrong-date number. See docs/Calculations.md (Rule 3a).
     /// </summary>
-    /// <param name="targetCurrency">The currency to display in.</param>
-    /// <param name="getExchangeRate">Function to get exchange rate from USD to target currency.</param>
-    /// <returns>The amount in the target currency.</returns>
-    public decimal GetDisplayAmount(string targetCurrency, Func<string, string, DateTime, decimal>? getExchangeRate = null)
+    public bool TryGetDisplayAmount(
+        string targetCurrency,
+        Func<string, string, DateTime, (bool ok, decimal value)> tryConvert,
+        out decimal result)
     {
-        // If target is the original currency, return exact original amount
         if (string.Equals(targetCurrency, OriginalCurrency, StringComparison.OrdinalIgnoreCase))
         {
-            return OriginalAmount;
+            result = OriginalAmount;
+            return true;
         }
-
-        // If target is USD, return the stored USD amount
         if (string.Equals(targetCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
-            return AmountUSD;
+            result = AmountUSD;
+            return true;
         }
-
-        // Convert from USD to target currency
-        if (getExchangeRate != null)
-        {
-            var rate = getExchangeRate("USD", targetCurrency, RateDate);
-            if (rate > 0)
-            {
-                return Math.Round(AmountUSD * rate, 2);
-            }
-        }
-
-        // Fallback: return USD amount if no rate available
-        return AmountUSD;
+        var (ok, value) = tryConvert("USD", targetCurrency, RateDate);
+        result = ok ? value : 0m;
+        return ok;
     }
 
     /// <summary>

@@ -30,7 +30,8 @@ public static class WidgetSettingsFactory
         string[] actions =
         [
             "New Invoice:ShowNewInvoice", "New Expense:ShowNewExpense", "New Revenue:ShowNewRevenue",
-            "Scan Receipt:ShowScanReceipt", "New Customer:ShowNewCustomer", "New Supplier:ShowNewSupplier",
+            "Scan Receipt:ShowScanReceipt", "Import Bank Statement:ShowImportBankStatement",
+            "New Customer:ShowNewCustomer", "New Supplier:ShowNewSupplier",
             "New Product:ShowNewProduct", "Record Payment:ShowRecordPayment", "New Rental Item:ShowNewRentalItem",
             "New Rental Record:ShowNewRentalRecord", "New Category:ShowNewCategory", "New Department:ShowNewDepartment",
             "New Location:ShowNewLocation", "New Purchase Order:ShowNewPurchaseOrder", "New Stock Adjustment:ShowNewStockAdjustment"

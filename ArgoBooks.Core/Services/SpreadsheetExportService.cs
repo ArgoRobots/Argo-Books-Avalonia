@@ -673,15 +673,8 @@ public class SpreadsheetExportService
         };
     }
 
-    private static string EscapeCsv(string value)
-    {
-        if (string.IsNullOrEmpty(value)) return "";
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
-        {
-            return $"\"{value.Replace("\"", "\"\"")}\"";
-        }
-        return value;
-    }
+    private static string EscapeCsv(string value) =>
+        string.IsNullOrEmpty(value) ? "" : CsvWriter.QuoteField(value);
 
     private static string TruncateSheetName(string name)
     {

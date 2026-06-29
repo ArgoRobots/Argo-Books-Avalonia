@@ -340,7 +340,9 @@
                                                             SelectedItem="{Binding RentOutCustomer}"
                                                             DisplayMemberPath="Name"
                                                             Placeholder="{loc:Loc 'Search customers...'}"
-                                                            ShowAddNew="False"
+                                                            ShowAddNew="True"
+                                                            AddNewText="{loc:Loc 'Create new customer'}"
+                                                            AddNewCommand="{Binding OpenCreateCustomerCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />

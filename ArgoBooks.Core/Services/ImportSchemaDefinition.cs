@@ -175,6 +175,7 @@ public static class ImportSchemaDefinition
                 new("Paid", "decimal", "Amount already paid", JsonName: "amountPaid"),
                 new("Balance", "decimal", "Remaining balance", JsonName: "balance"),
                 new("Status", "enum:Draft,Sent,Paid,Overdue,Cancelled", "Invoice status", JsonName: "status"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Expenses] =
@@ -184,12 +185,14 @@ public static class ImportSchemaDefinition
                 new("Supplier ID", "string", "Supplier identifier", JsonName: "supplierId"),
                 new("Product", "string", "Product or description of expense", JsonName: "description"),
                 new("Description", "string", "Description (alternative to Product)", JsonName: "description"),
-                new("Unit Price", "decimal", "Amount before tax", JsonName: "unitPrice"),
+                new("Quantity", "decimal", "Number of units. Map a separate quantity/qty column when present; leave unmapped (defaults to 1) when each row is a single line amount", JsonName: "quantity"),
+                new("Unit Price", "decimal", "Price per unit before tax. When there is no quantity column, this is the row's amount before tax", JsonName: "unitPrice"),
                 new("Tax", "decimal", "Tax amount", JsonName: "taxAmount"),
                 new("Total", "decimal", "Total amount including tax", JsonName: "total"),
                 new("Reference", "string", "External reference number", JsonName: "referenceNumber"),
                 new("Payment Method", "enum:Cash,CreditCard,DebitCard,BankTransfer,Check,PayPal,Other", "How payment was made", JsonName: "paymentMethod"),
                 new("Shipping", "decimal", "Cost of shipping", JsonName: "shippingCost"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Revenue] =
@@ -199,12 +202,14 @@ public static class ImportSchemaDefinition
                 new("Customer ID", "string", "Customer identifier", JsonName: "customerId"),
                 new("Product", "string", "Product or description of sale", JsonName: "description"),
                 new("Description", "string", "Description (alternative to Product)", JsonName: "description"),
-                new("Unit Price", "decimal", "Amount before tax", JsonName: "unitPrice"),
+                new("Quantity", "decimal", "Number of units. Map a separate quantity/qty column when present; leave unmapped (defaults to 1) when each row is a single line amount", JsonName: "quantity"),
+                new("Unit Price", "decimal", "Price per unit before tax. When there is no quantity column, this is the row's amount before tax", JsonName: "unitPrice"),
                 new("Tax", "decimal", "Tax amount", JsonName: "taxAmount"),
                 new("Total", "decimal", "Total amount including tax", JsonName: "total"),
                 new("Reference", "string", "External reference number", JsonName: "referenceNumber"),
                 new("Payment Status", "enum:Paid,Unpaid,Partial,Pending,Overdue", "Status of the payment", JsonName: "paymentStatus"),
                 new("Shipping", "decimal", "Cost of shipping", JsonName: "shippingCost"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Inventory] =
@@ -229,6 +234,7 @@ public static class ImportSchemaDefinition
                 new("Payment Method", "enum:Cash,CreditCard,DebitCard,BankTransfer,Check,PayPal,Other", "How payment was made", JsonName: "paymentMethod"),
                 new("Reference", "string", "Payment reference number", JsonName: "referenceNumber"),
                 new("Notes", "string", "Additional notes", JsonName: "notes"),
+                new("Currency", "string", "ISO currency code the amount is in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when the amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.Locations] =
@@ -330,6 +336,7 @@ public static class ImportSchemaDefinition
                 new("Expected Date", "datetime", "Expected delivery date", JsonName: "expectedDeliveryDate"),
                 new("Total", "decimal", "Order total", JsonName: "total"),
                 new("Status", "enum:Draft,Submitted,Approved,Received,Cancelled", "Order status", JsonName: "status"),
+                new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
             [SpreadsheetSheetType.PurchaseOrderLineItems] =

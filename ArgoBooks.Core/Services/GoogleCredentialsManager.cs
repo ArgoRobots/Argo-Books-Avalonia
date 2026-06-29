@@ -106,42 +106,55 @@ public static class GoogleCredentialsManager
     /// </summary>
     public static async Task<bool> EnsureAuthenticatedAsync(CancellationToken cancellationToken = default)
     {
-        // Already authenticated?
-        if (await CheckAuthStatusAsync(cancellationToken))
-            return true;
-
-        // Initiate OAuth flow
-        var authUrl = await InitiateAuthAsync(cancellationToken);
-        if (string.IsNullOrEmpty(authUrl))
-            return false;
-
-        // Validate and open browser for user to authorize
         try
         {
-            if (!Uri.TryCreate(authUrl, UriKind.Absolute, out var uri) ||
-                (uri.Scheme != "https" && uri.Scheme != "http"))
-                return false;
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = authUrl,
-                UseShellExecute = true
-            });
-        }
-        catch
-        {
-            return false;
-        }
-
-        // Poll for completion (up to 2 minutes, checking every 5 seconds)
-        for (var i = 0; i < 24; i++)
-        {
-            await Task.Delay(5000, cancellationToken);
+            // Already authenticated?
             if (await CheckAuthStatusAsync(cancellationToken))
                 return true;
-        }
 
-        return false;
+            // Initiate OAuth flow
+            var authUrl = await InitiateAuthAsync(cancellationToken);
+            if (string.IsNullOrEmpty(authUrl))
+                return false;
+
+            // Validate and open browser for user to authorize
+            try
+            {
+                if (!Uri.TryCreate(authUrl, UriKind.Absolute, out var uri) ||
+                    (uri.Scheme != "https" && uri.Scheme != "http"))
+                    return false;
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = authUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+                return false;
+            }
+
+            // Poll for completion (up to 2 minutes, checking every 5 seconds)
+            for (var i = 0; i < 24; i++)
+            {
+                await Task.Delay(5000, cancellationToken);
+                if (await CheckAuthStatusAsync(cancellationToken))
+                    return true;
+            }
+
+            return false;
+        }
+        catch (HttpRequestException)
+        {
+            // Offline / server unreachable: surface a clear message. Callers that catch
+            // InvalidOperationException show this directly, without a raw-exception prefix.
+            throw new InvalidOperationException(await ConnectivityMessage.ResolveAsync());
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new InvalidOperationException(await ConnectivityMessage.ResolveAsync());
+        }
     }
 
     /// <summary>

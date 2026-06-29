@@ -2,12 +2,15 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -388,6 +391,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         };
 
         companyData.RentalInventory.Add(newItem);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RentalItemCreated);
         companyData.MarkAsModified();
 
         // Resolve name for undo description
@@ -512,7 +516,6 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
 
         var itemToEdit = _editingItem;
         var itemName = ResolveRentalItemName(companyData, itemToEdit);
-        App.EventLogService?.CapturePreModificationSnapshot("RentalItem", itemToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (oldInventoryItemId != newInventoryItemId) changes["Inventory Item"] = new FieldChange { OldValue = oldInventoryItemId, NewValue = newInventoryItemId };
         if (oldDailyRate != newDailyRate) changes["Daily Rate"] = new FieldChange { OldValue = oldDailyRate.ToString("F2"), NewValue = newDailyRate.ToString("F2") };
@@ -617,7 +620,6 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
             {
                 var deletedItem = rentalItem;
                 var deletedName = item.Name;
-                App.EventLogService?.CapturePreDeletionSnapshot("RentalItem", deletedItem.Id);
                 companyData.RentalInventory.Remove(rentalItem);
                 companyData.MarkAsModified();
 
@@ -808,6 +810,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         companyData.StockAdjustments.Add(adjustment);
 
         companyData.Rentals.Add(newRental);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RentalRecordCreated);
         companyData.MarkAsModified();
 
         var rentalToUndo = newRental;
@@ -987,6 +990,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
     }
 
     #endregion
+
 }
 
 /// <summary>

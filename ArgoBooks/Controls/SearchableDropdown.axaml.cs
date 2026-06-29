@@ -71,6 +71,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string> AddNewTextProperty =
         AvaloniaProperty.Register<SearchableDropdown, string>(nameof(AddNewText), "Add new...");
 
+    public static readonly StyledProperty<ICommand?> AddNewCommandProperty =
+        AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(AddNewCommand));
+
     public static readonly StyledProperty<string?> EmptyMessageProperty =
         AvaloniaProperty.Register<SearchableDropdown, string?>(nameof(EmptyMessage));
 
@@ -278,7 +281,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets whether to show the empty create link (no items and command is set).
     /// </summary>
-    public bool ShowEmptyCreate => !HasItems && EmptyCreateCommand != null;
+    public bool ShowEmptyCreate => !HasItems && EmptyCreateCommand != null && string.IsNullOrWhiteSpace(SearchText);
 
     /// <summary>
     /// Gets the currently highlighted item for keyboard navigation.
@@ -334,9 +337,20 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public ICommand SelectItemCommand { get; }
 
     /// <summary>
+    /// Internal command bound to the "Add new" button. Closes the dropdown and
+    /// forwards the current <see cref="SearchText"/> to the consumer's
+    /// <see cref="AddNewCommand"/> as its parameter.
+    /// </summary>
+    public ICommand AddNewInternalCommand { get; }
+
+    /// <summary>
     /// Command executed when "Add new" is clicked.
     /// </summary>
-    public ICommand? AddNewCommand { get; set; }
+    public ICommand? AddNewCommand
+    {
+        get => GetValue(AddNewCommandProperty);
+        set => SetValue(AddNewCommandProperty, value);
+    }
 
     #endregion
 
@@ -344,6 +358,15 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
         SelectItemCommand = new RelayCommand<object>(SelectItem);
+        AddNewInternalCommand = new RelayCommand(() =>
+        {
+            var text = SearchText;
+            IsDropdownOpen = false;
+            AddNewCommand?.Execute(text);
+            // The consumer command may set SearchText (showing the pending new name),
+            // which re-opens the dropdown via OnSearchTextChanged. Close it again.
+            IsDropdownOpen = false;
+        });
 
         InitializeComponent();
     }
@@ -371,6 +394,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         else if (change.Property == SearchTextProperty)
         {
             OnSearchTextChanged();
+            // The empty-create link should give way to whatever the field already holds (a typed
+            // value or an AI-suggested name), so the value isn't hidden behind "Create one".
+            RaisePropertyChanged(nameof(ShowEmptyCreate));
         }
         else if (change.Property == SelectedItemProperty)
         {
@@ -595,8 +621,10 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         UpdateFilteredItems();
 
-        // Open dropdown when typing (but not when setting from SelectedItem programmatically)
-        if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen)
+        // Open dropdown only when the user is actually typing (search box focused), not when the
+        // text is set programmatically / via binding (e.g. pre-filled rows in the bank importer).
+        if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen
+            && _searchTextBox?.IsFocused == true)
         {
             IsDropdownOpen = true;
         }

@@ -3,10 +3,13 @@ using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -514,6 +517,7 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         }
 
         companyData.Rentals.Add(newRecord);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RentalRecordCreated);
         companyData.MarkAsModified();
 
         var recordToUndo = newRecord;
@@ -766,7 +770,6 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var totalDeposit = newLineItems.Sum(li => li.SecurityDeposit * li.Quantity);
         var totalQty = newLineItems.Sum(li => li.Quantity);
 
-        App.EventLogService?.CapturePreModificationSnapshot("Rental", recordToEdit.Id);
         recordToEdit.RentalItemId = firstLi.RentalItemId;
         recordToEdit.CustomerId = newCustomerId!;
         recordToEdit.AccountantId = newAccountantId;
@@ -1514,6 +1517,7 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     }
 
     #endregion
+
 }
 
 /// <summary>

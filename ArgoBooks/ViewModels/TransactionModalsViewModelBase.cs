@@ -209,6 +209,10 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [ObservableProperty]
     private string _totalMismatchWarningMessage = string.Empty;
 
+    // The stored transaction total to validate the recomputed total against. Captured when the
+    // modal loads so the mismatch warning can be re-checked as the user edits quantity/price.
+    private decimal _validationStoredTotal;
+
     protected string? ReceiptFilePath;
 
     // Save error state for offline USD conversion failures
@@ -335,7 +339,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     public string SubtotalFormatted => CurrencyService.Format(Subtotal);
     public string TaxAmountFormatted => CurrencyService.Format(TaxAmount);
-    public string DiscountAmountFormatted => $"-{CurrencyService.Format(DiscountAmount)}";
+    // Only show the leading "-" (and the green "savings" colour, via HasDiscount) when there's an
+    // actual discount; a zero discount reads as a plain neutral amount like the other lines.
+    public string DiscountAmountFormatted => DiscountAmount > 0
+        ? $"-{CurrencyService.Format(DiscountAmount)}"
+        : CurrencyService.Format(DiscountAmount);
+
+    /// <summary>True when a discount is applied, used to colour the discount amount green.</summary>
+    public bool HasDiscount => DiscountAmount > 0;
     public string ShippingAmountFormatted => CurrencyService.Format(ShippingAmount);
     public string FeeAmountFormatted => CurrencyService.Format(FeeAmount);
     public string TotalFormatted => CurrencyService.Format(Total);
@@ -360,9 +371,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         OnPropertyChanged(nameof(SubtotalFormatted));
         OnPropertyChanged(nameof(TaxAmountFormatted));
         OnPropertyChanged(nameof(DiscountAmountFormatted));
+        OnPropertyChanged(nameof(HasDiscount));
         OnPropertyChanged(nameof(ShippingAmountFormatted));
         OnPropertyChanged(nameof(FeeAmountFormatted));
         OnPropertyChanged(nameof(TotalFormatted));
+
+        // Re-check the stored-total mismatch so the warning clears (or appears) live as the
+        // user edits quantity, unit price, tax, etc. instead of staying stuck from load time.
+        ValidateTotalMismatch(_validationStoredTotal);
     }
 
     /// <summary>
@@ -371,6 +387,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     /// </summary>
     protected void ValidateTotalMismatch(decimal storedTotal)
     {
+        _validationStoredTotal = storedTotal;
         HasTotalMismatchWarning = false;
         TotalMismatchWarningMessage = string.Empty;
 

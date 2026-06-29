@@ -38,12 +38,6 @@ public class AuditEvent
     public string EntityType { get; set; } = string.Empty;
 
     /// <summary>
-    /// The ID of the affected entity (e.g., "CUS-001", "PUR-2026-00042").
-    /// </summary>
-    [JsonPropertyName("entityId")]
-    public string EntityId { get; set; } = string.Empty;
-
-    /// <summary>
     /// Human-readable display name of the affected entity.
     /// </summary>
     [JsonPropertyName("entityName")]
@@ -60,23 +54,6 @@ public class AuditEvent
     /// </summary>
     [JsonPropertyName("changes")]
     public Dictionary<string, FieldChange>? Changes { get; set; }
-
-    /// <summary>
-    /// Whether this event has been undone via selective undo.
-    /// </summary>
-    [JsonPropertyName("isUndone")]
-    public bool IsUndone { get; set; }
-
-    /// <summary>
-    /// JSON-serialized snapshot of the affected entity at the time of the event.
-    /// Used to reconstruct undo/redo actions when loading events from a saved file.
-    /// For Added events: the entity as it was when added.
-    /// For Deleted events: the entity as it was before deletion.
-    /// For Modified events: the entity as it was before modification.
-    /// </summary>
-    [JsonPropertyName("entitySnapshot")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? EntitySnapshot { get; set; }
 
     /// <summary>
     /// If this event is itself an undo/redo of another event, the ID of that original event.

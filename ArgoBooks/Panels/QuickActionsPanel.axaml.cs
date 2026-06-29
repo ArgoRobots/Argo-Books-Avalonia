@@ -87,8 +87,9 @@ public partial class QuickActionsPanel : UserControl
                 }
                 else if (args.PropertyName == nameof(QuickActionsViewModel.SelectedIndex))
                 {
-                    // Focus the selected action item
-                    Dispatcher.UIThread.Post(() => FocusSelectedItem(vm.SelectedIndex), DispatcherPriority.Background);
+                    // Scroll the selected item into view without focusing it, so the searchbox
+                    // keeps focus and typing/backspace keep working while navigating.
+                    Dispatcher.UIThread.Post(() => ScrollSelectedItemIntoView(vm.SelectedIndex), DispatcherPriority.Background);
                 }
             };
             vm.PropertyChanged += _propertyChangedHandler;
@@ -101,9 +102,9 @@ public partial class QuickActionsPanel : UserControl
     }
 
     /// <summary>
-    /// Focuses the button at the specified index.
+    /// Scrolls the result row at the specified index into view (without moving keyboard focus).
     /// </summary>
-    private void FocusSelectedItem(int index)
+    private void ScrollSelectedItemIntoView(int index)
     {
         if (index < 0) return;
 
@@ -114,7 +115,7 @@ public partial class QuickActionsPanel : UserControl
 
         if (index < buttons.Count)
         {
-            buttons[index].Focus();
+            buttons[index].BringIntoView();
         }
     }
 

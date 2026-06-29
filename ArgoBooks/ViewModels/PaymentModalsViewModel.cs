@@ -8,6 +8,8 @@ using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -406,6 +408,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
         };
 
         companyData.Payments.Add(newPayment);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PaymentRecorded);
         // Recalc the affected invoice's totals + status. Without this the
         // invoice's AmountPaid / Balance / Status drift out of sync with
         // the Payment list. See docs/Calculations.md §5.
@@ -524,7 +527,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             }
 
             var paymentToEdit = _editingPayment;
-            App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit.Id);
             var changes = new Dictionary<string, FieldChange>
             {
                 ["Notes"] = new FieldChange { OldValue = oldNotes, NewValue = newNotes }
@@ -610,7 +612,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         }
 
         var paymentToEdit2 = _editingPayment;
-        App.EventLogService?.CapturePreModificationSnapshot("Payment", paymentToEdit2.Id);
         var changes2 = new Dictionary<string, FieldChange>();
         if (oldDate != newDate) changes2["Date"] = new FieldChange { OldValue = oldDate.ToString("d"), NewValue = newDate.ToString("d") };
         if (oldAmount != newAmount) changes2["Amount"] = new FieldChange { OldValue = oldAmount.ToString("F2"), NewValue = newAmount.ToString("F2") };
@@ -718,7 +719,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             {
                 var deletedPayment = payment;
                 var invoiceIdForRecalc = deletedPayment.InvoiceId;
-                App.EventLogService?.CapturePreDeletionSnapshot("Payment", deletedPayment.Id);
                 companyData.Payments.Remove(payment);
                 RecalcInvoiceTotals(companyData, invoiceIdForRecalc);
                 companyData.MarkAsModified();

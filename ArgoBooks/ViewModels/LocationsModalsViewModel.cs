@@ -392,7 +392,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
         // Update the location
         var locationToEdit = _editingLocation;
-        App.EventLogService?.CapturePreModificationSnapshot("Location", locationToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
         var oldAddr = $"{oldAddress.Street}, {oldAddress.City}, {oldAddress.State} {oldAddress.ZipCode}".Trim(' ', ',');
@@ -479,7 +478,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
             if (location != null)
             {
                 var deletedLocation = location;
-                App.EventLogService?.CapturePreDeletionSnapshot("Location", deletedLocation.Id);
                 companyData.Locations.Remove(location);
                 companyData.MarkAsModified();
 

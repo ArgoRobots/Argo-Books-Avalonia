@@ -10,13 +10,13 @@ namespace ArgoBooks.Core.Services;
 public class AiImportUsageService : IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/ai-import/usage.php";
-    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
     private readonly LicenseService? _licenseService;
     private readonly IConnectivityService _connectivityService;
     private readonly IErrorLogger? _errorLogger;
+    private readonly string _importType;
     private bool _disposed;
 
     // Cache the last known usage to reduce API calls
@@ -27,33 +27,37 @@ public class AiImportUsageService : IDisposable
     /// <summary>
     /// Creates a new instance of the AiImportUsageService.
     /// </summary>
-    public AiImportUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null)
+    /// <param name="importType">"spreadsheet" (default) or "bank" - selects which monthly counter to use.</param>
+    public AiImportUsageService(LicenseService? licenseService = null, IErrorLogger? errorLogger = null, string importType = "spreadsheet")
         : this(licenseService, new HttpClient { Timeout = TimeSpan.FromSeconds(15) }, new ConnectivityService(), errorLogger)
     {
         _ownsHttpClient = true;
+        _importType = importType;
     }
 
     /// <summary>
     /// Creates a new instance with custom dependencies (for testing).
     /// </summary>
-    public AiImportUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService, IErrorLogger? errorLogger = null)
+    public AiImportUsageService(LicenseService? licenseService, HttpClient httpClient, IConnectivityService connectivityService, IErrorLogger? errorLogger = null, string importType = "spreadsheet")
     {
         _licenseService = licenseService;
         _httpClient = httpClient;
         _connectivityService = connectivityService;
         _errorLogger = errorLogger;
+        _importType = importType;
     }
 
     /// <inheritdoc />
     public async Task<AiImportCheckResult> CheckUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new AiImportCheckResult
             {
                 CanImport = false,
-                ErrorMessage = "No license key found. Please activate your license.",
+                ErrorMessage = "No license key or device ID found.",
                 ImportCount = 0,
                 MonthlyLimit = 0,
                 Remaining = 0
@@ -129,9 +133,11 @@ public class AiImportUsageService : IDisposable
         }
         catch (HttpRequestException)
         {
-            // Network error, allow import if we have non-expired cached data showing capacity.
-            // Without the expiry check a stale cache could permit imports past the server-side quota.
-            if (_cachedUsage != null && _cachedUsage.CanImport && DateTime.UtcNow < _cacheExpiry)
+            // Allow the import only if the usage server hiccuped but we still have internet
+            // (a fresh cache shows capacity). When fully offline the AI call can't run, so
+            // report the connectivity problem now instead of letting it fail mid-import.
+            if (_cachedUsage != null && _cachedUsage.CanImport && DateTime.UtcNow < _cacheExpiry
+                && await _connectivityService.IsInternetAvailableAsync(cancellationToken))
             {
                 return new AiImportCheckResult
                 {
@@ -145,7 +151,7 @@ public class AiImportUsageService : IDisposable
                 };
             }
 
-            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            var errorMessage = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken);
             return new AiImportCheckResult
             {
                 CanImport = false,
@@ -154,7 +160,7 @@ public class AiImportUsageService : IDisposable
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
         {
-            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            var errorMessage = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken);
             return new AiImportCheckResult
             {
                 CanImport = false,
@@ -183,13 +189,14 @@ public class AiImportUsageService : IDisposable
     /// <inheritdoc />
     public async Task<AiImportIncrementResult> IncrementUsageAsync(CancellationToken cancellationToken = default)
     {
-        var licenseKey = _licenseService?.GetLicenseKey();
-        if (string.IsNullOrEmpty(licenseKey))
+        var licenseKey = _licenseService?.GetLicenseKey() ?? "";
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
+        if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
         {
             return new AiImportIncrementResult
             {
                 Success = false,
-                ErrorMessage = "No license key found"
+                ErrorMessage = "No license key or device ID found"
             };
         }
 
@@ -272,38 +279,15 @@ public class AiImportUsageService : IDisposable
         _disposed = true;
     }
 
-    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
-
-            if (!hasInternet)
-            {
-                return "No internet connection. Please check your network and try again.";
-            }
-
-            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
-
-            if (!isApiReachable)
-            {
-                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
-            }
-
-            return "Unable to verify usage. Please try again.";
-        }
-        catch
-        {
-            return "Unable to verify usage. Please check your internet connection.";
-        }
-    }
-
     private async Task<AiImportApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)
     {
+        var deviceId = _licenseService?.GetDeviceId() ?? "";
         var requestBody = new
         {
             license_key = licenseKey,
-            action
+            device_id = deviceId,
+            action,
+            type = _importType
         };
 
         var json = JsonSerializer.Serialize(requestBody);

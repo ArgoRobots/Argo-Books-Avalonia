@@ -581,11 +581,11 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
     private static string GetStatusColor(InventoryStatus status) => status switch
     {
-        InventoryStatus.InStock => AppColors.Success,
-        InventoryStatus.LowStock => AppColors.Warning,
-        InventoryStatus.OutOfStock => AppColors.ExpenseRed,
-        InventoryStatus.Overstock => AppColors.Violet,
-        _ => AppColors.GrayMedium
+        InventoryStatus.InStock => AppColors.SuccessText,
+        InventoryStatus.LowStock => AppColors.WarningText,
+        InventoryStatus.OutOfStock => AppColors.Error,
+        InventoryStatus.Overstock => AppColors.VioletHover,
+        _ => AppColors.GrayText
     };
 
     private static string GetStatusBackground(InventoryStatus status) => status switch

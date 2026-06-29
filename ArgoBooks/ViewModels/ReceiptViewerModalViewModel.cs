@@ -147,8 +147,6 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
 
             if (result != ConfirmationResult.Primary) return;
 
-            App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
-
             // Unlink from transaction if linked
             string? linkedTransactionId = null;
             string? linkedTransactionType = null;

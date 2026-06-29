@@ -25,6 +25,7 @@
 
             <!-- Text -->
             <TextBlock Grid.Column="1"
+                       Classes="label"
                        Text="{Binding TranslatedText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
                        VerticalAlignment="Center"
                        Margin="8,0,0,0"
@@ -75,7 +76,10 @@
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextMutedBrush}" />
         </Style>
 
-        <Style Selector="Button.sidebar-item TextBlock">
+        <!-- Scoped to the label class so these don't leak into the item's ToolTip popup,
+             whose text is a logical descendant of this button (a bare "TextBlock" selector
+             would recolor the tooltip text too, e.g. white on the active item). -->
+        <Style Selector="Button.sidebar-item TextBlock.label">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
         </Style>
@@ -93,7 +97,7 @@
             <Setter Property="Foreground" Value="White" />
         </Style>
 
-        <Style Selector="Button.sidebar-item.active TextBlock">
+        <Style Selector="Button.sidebar-item.active TextBlock.label">
             <Setter Property="Foreground" Value="White" />
         </Style>
 

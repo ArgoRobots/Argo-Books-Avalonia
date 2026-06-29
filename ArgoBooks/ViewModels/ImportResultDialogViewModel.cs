@@ -1,6 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -15,6 +20,7 @@ public class SheetResultItem
     public int Inserted { get; init; }
     public int Updated { get; init; }
     public int Skipped { get; init; }
+    public int Imported { get; init; }
 
     public string Summary
     {
@@ -23,6 +29,7 @@ public class SheetResultItem
             var parts = new List<string>();
             if (Inserted > 0) parts.Add($"{Inserted:N0} {"new".Translate()}");
             if (Updated > 0) parts.Add($"{Updated:N0} {"updated".Translate()}");
+            if (Imported > 0) parts.Add($"{Imported:N0} {"imported".Translate()}");
             if (Skipped > 0) parts.Add($"{Skipped:N0} {"skipped".Translate()}");
             return string.Join(", ", parts);
         }
@@ -70,9 +77,13 @@ public partial class ImportResultDialogViewModel : ViewModelBase
     [ObservableProperty]
     private bool _needsSave;
 
+    [ObservableProperty]
+    private bool _hasUnimportedRows;
+
     public ObservableCollection<SheetResultItem> SheetResults { get; } = [];
     public ObservableCollection<string> SkipReasons { get; } = [];
     public ObservableCollection<string> Warnings { get; } = [];
+    public ObservableCollection<UnimportedRow> UnimportedRows { get; } = [];
 
     private TaskCompletionSource? _completionSource;
 
@@ -84,12 +95,14 @@ public partial class ImportResultDialogViewModel : ViewModelBase
         int totalSkipped,
         List<string> skipReasons,
         List<string> warnings,
-        bool needsSave)
+        bool needsSave,
+        List<UnimportedRow>? unimportedRows = null)
     {
         // Clear previous state
         SheetResults.Clear();
         SkipReasons.Clear();
         Warnings.Clear();
+        UnimportedRows.Clear();
 
         FileName = fileName;
         TotalNew = totalNew;
@@ -103,7 +116,7 @@ public partial class ImportResultDialogViewModel : ViewModelBase
         // Build per-sheet results
         foreach (var sr in sheetResults)
         {
-            if (sr.Inserted == 0 && sr.Updated == 0 && sr.Skipped == 0) continue;
+            if (sr.Inserted == 0 && sr.Updated == 0 && sr.Skipped == 0 && sr.BankMatchingImported == 0) continue;
 
             var label = string.Equals(sr.SheetName, sr.EntityType, StringComparison.OrdinalIgnoreCase)
                 ? sr.SheetName
@@ -114,7 +127,8 @@ public partial class ImportResultDialogViewModel : ViewModelBase
                 DisplayLabel = label,
                 Inserted = sr.Inserted,
                 Updated = sr.Updated,
-                Skipped = sr.Skipped
+                Skipped = sr.Skipped,
+                Imported = sr.BankMatchingImported
             });
         }
         HasMultipleSheets = SheetResults.Count > 1;
@@ -131,9 +145,69 @@ public partial class ImportResultDialogViewModel : ViewModelBase
             Warnings.Add(warning);
         HasWarnings = Warnings.Count > 0;
 
+        // Unimported rows
+        if (unimportedRows != null)
+        {
+            foreach (var row in unimportedRows)
+                UnimportedRows.Add(row);
+        }
+        HasUnimportedRows = UnimportedRows.Count > 0;
+
         IsOpen = true;
         _completionSource = new TaskCompletionSource();
         return _completionSource.Task;
+    }
+
+    /// <summary>
+    /// Builds CSV text for all unimported rows with header Sheet,Row,Reason,Value.
+    /// Fields are RFC-4180 quoted when they contain commas, double-quotes, or newlines.
+    /// </summary>
+    public string BuildUnimportedCsv()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Sheet,Row,Reason,Value");
+        foreach (var row in UnimportedRows)
+        {
+            sb.Append(CsvQuote(row.Sheet));
+            sb.Append(',');
+            sb.Append(row.RowNumber == 0 ? "" : row.RowNumber.ToString());
+            sb.Append(',');
+            sb.Append(CsvQuote(row.Reason));
+            sb.Append(',');
+            sb.AppendLine(CsvQuote(row.RawValue ?? ""));
+        }
+        return sb.ToString();
+
+        static string CsvQuote(string field) => Core.Services.CsvWriter.QuoteField(field);
+    }
+
+    [RelayCommand]
+    private async Task ExportUnimported()
+    {
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+            if (topLevel?.StorageProvider == null) return;
+
+            var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Rows That Could Not Be Imported",
+                SuggestedFileName = "unimported-rows.csv",
+                DefaultExtension = "csv",
+                FileTypeChoices = [new FilePickerFileType("CSV file") { Patterns = ["*.csv"] }]
+            });
+
+            if (file == null) return;
+
+            var csv = BuildUnimportedCsv();
+            await File.WriteAllTextAsync(file.Path.LocalPath, csv, Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "ExportUnimported");
+        }
     }
 
     [RelayCommand]

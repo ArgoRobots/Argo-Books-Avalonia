@@ -23,6 +23,15 @@ public interface IGeminiService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Categorizes a batch of bank statement lines in a single call: picks an existing product
+    /// (which carries the category) or proposes a new product with a category, plus a
+    /// supplier/customer, for each line.
+    /// </summary>
+    Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+        BankLineCategorizationRequest request,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Sends a generic chat completion request to the Gemini API.
     /// </summary>
     /// <param name="systemPrompt">The system prompt.</param>
@@ -36,7 +45,9 @@ public interface IGeminiService
         string userPrompt,
         int maxTokens = 4000,
         double temperature = 0.1,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.Completion,
+        long? sizeFeature = null);
 
     /// <summary>
     /// Sends a vision chat completion request with a base64-encoded image.
@@ -57,5 +68,6 @@ public interface IGeminiService
         int maxTokens = 4000,
         double temperature = 0.1,
         string? model = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        OperationKind operation = OperationKind.ReceiptScan);
 }

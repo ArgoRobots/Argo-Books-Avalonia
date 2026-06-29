@@ -13,6 +13,8 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -657,6 +659,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         };
 
         companyData.Suppliers.Add(newSupplier);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.SupplierCreated);
         companyData.MarkAsModified();
 
         // Record undo action
@@ -754,7 +757,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
         // Update the supplier
         var supplierToEdit = _editingSupplier;
-        App.EventLogService?.CapturePreModificationSnapshot("Supplier", supplierToEdit.Id);
         supplierToEdit.Name = newName;
         supplierToEdit.ContactPerson = newContactPerson;
         supplierToEdit.Email = newEmail;

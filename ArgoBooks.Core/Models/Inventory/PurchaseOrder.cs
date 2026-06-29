@@ -149,17 +149,27 @@ public class PurchaseOrder
     public decimal TotalUSD { get; set; }
 
     /// <summary>
+    /// True when this PO was imported without a USD conversion because its exact-date rate was
+    /// unavailable (future-dated, or a gate miss). While pending, <see cref="EffectiveTotalUSD"/>
+    /// reports 0 (Calculations.md §3) and <c>PendingConversionService</c> fills in <see cref="TotalUSD"/>
+    /// once that date's rate is fetchable. Defaults to false for backward compatibility.
+    /// </summary>
+    [JsonPropertyName("isPendingConversion")]
+    public bool IsPendingConversion { get; set; }
+
+    /// <summary>
     /// Whether this PO's original currency is USD (including legacy data which defaults to USD).
     /// </summary>
     [JsonIgnore]
     private bool IsUSD => string.Equals(OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Gets the effective total in USD. For USD POs (including legacy data), returns Total directly.
-    /// For non-USD POs, returns TotalUSD (or 0 if conversion data is missing).
+    /// Gets the effective total in USD. Returns 0 while the conversion is pending (per Calculations.md
+    /// §3). For USD POs (including legacy data), returns Total directly; for non-USD POs, returns TotalUSD
+    /// (or 0 if conversion data is missing).
     /// </summary>
     [JsonIgnore]
-    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : IsUSD ? Total : 0;
+    public decimal EffectiveTotalUSD => IsPendingConversion ? 0m : TotalUSD > 0 ? TotalUSD : IsUSD ? Total : 0;
 
     #endregion
 }

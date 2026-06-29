@@ -139,22 +139,44 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Synchronously converts a USD amount to the target currency using only cached rates.
-    /// Returns the amount unchanged if the target is USD or no cached rate is available.
-    /// Shared by the report renderer and accounting data service so the same-currency,
-    /// rate-availability, and rounding rules live in one place.
+    /// Converts an amount between currencies using ONLY the exact-date cached rate. Returns
+    /// <see langword="true"/> with the converted, 2dp-rounded amount when the rate is available
+    /// (or when <paramref name="from"/> == <paramref name="to"/>); otherwise returns
+    /// <see langword="false"/> and <paramref name="result"/> = 0. This is the strict chokepoint for
+    /// all money conversion: it never substitutes a different date's rate, so a caller treats a
+    /// false result as "pending", not as a number. See docs/Calculations.md (Rule 3a).
+    /// </summary>
+    public bool TryConvertExact(decimal amount, string from, string to, DateTime date, out decimal result)
+    {
+        if (string.Equals(from, to, StringComparison.OrdinalIgnoreCase))
+        {
+            result = amount;
+            return true;
+        }
+
+        var rate = GetExchangeRate(from, to, date); // cache-only, exact-date
+        if (rate <= 0)
+        {
+            result = 0m;
+            return false;
+        }
+
+        result = Math.Round(amount * rate, 2);
+        return true;
+    }
+
+    /// <summary>Exact-date USD-&gt;target conversion. See <see cref="TryConvertExact"/>.</summary>
+    public bool TryConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date, out decimal result)
+        => TryConvertExact(amountUSD, BaseCurrency, toCurrency, date, out result);
+
+    /// <summary>
+    /// Converts a USD amount to the target currency at the exact <paramref name="date"/>. Returns
+    /// the converted amount on an exact-date hit, or the USD amount unchanged on a miss. No
+    /// wrong-date fallback. Retained only for the report/accounting callers that cannot yet show a
+    /// pending state; prefer <see cref="TryConvertFromUSD"/> at any call site that can.
     /// </summary>
     public decimal ConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date)
-    {
-        if (string.Equals(toCurrency, BaseCurrency, StringComparison.OrdinalIgnoreCase))
-            return amountUSD;
-
-        var rate = GetExchangeRate(BaseCurrency, toCurrency, date);
-        if (rate <= 0)
-            return amountUSD;
-
-        return Math.Round(amountUSD * rate, 2);
-    }
+        => TryConvertFromUSD(amountUSD, toCurrency, date, out var converted) ? converted : amountUSD;
 
     /// <summary>
     /// Converts an amount from one currency to another.
@@ -229,8 +251,14 @@ public class ExchangeRateService
             return;
         }
 
+        _errorLogger?.LogInfo($"[RatePreload] {total} dates needed, {datesToFetch.Count} to fetch ({cached} already cached).");
+
         // Try batch endpoint first (one POST for all dates)
         var fetched = await FetchBatchRatesAsync(datesToFetch, cancellationToken);
+        if (fetched == null)
+            _errorLogger?.LogWarning(
+                $"Batch rate fetch returned nothing for {datesToFetch.Count} dates; falling back to slow per-date requests.",
+                "ExchangeRate");
         var failedDates = new List<DateTime>();
 
         foreach (var date in datesToFetch)
@@ -249,7 +277,10 @@ public class ExchangeRateService
             }
         }
 
-        // Fall back to single-date requests for any dates the batch missed
+        // Fall back to single-date requests for any dates the batch missed. Only advance progress on
+        // a successful fetch, so the bar never reaches 100% while dates are still unpriced (which
+        // would let the "could not get rates" prompt appear right after a misleading full bar).
+        var stillFailed = new List<DateTime>();
         foreach (var date in failedDates)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -257,13 +288,29 @@ public class ExchangeRateService
             if (rates != null)
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                cached++;
+                progress?.Report(cached * 100 / total);
             }
-            cached++;
-            progress?.Report(cached * 100 / total);
+            else
+            {
+                stillFailed.Add(date);
+            }
         }
+
+        if (stillFailed.Count > 0)
+            _errorLogger?.LogError(
+                $"Rate fetch incomplete: {stillFailed.Count}/{datesToFetch.Count} dates unpriced after batch + per-date fallback: " +
+                $"{string.Join(", ", stillFailed.OrderBy(d => d).Take(40).Select(d => d.ToString("yyyy-MM-dd")))}",
+                ErrorCategory.Api, "ExchangeRate");
+        else if (failedDates.Count > 0)
+            _errorLogger?.LogWarning(
+                $"Batch missed {failedDates.Count} dates; per-date fallback recovered all of them.", "ExchangeRate");
 
         await _cache.SaveAsync();
     }
+
+    /// <summary>A short, log-safe prefix of a response body for diagnostics.</summary>
+    private static string Snippet(string s) => string.IsNullOrEmpty(s) ? "(empty)" : s.Length <= 300 ? s : s[..300] + "…";
 
     /// <summary>
     /// Fetches exchange rates for multiple dates in a single batch request.
@@ -283,24 +330,55 @@ public class ExchangeRateService
             using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(BatchUrl, content, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                _errorLogger?.LogError($"Batch exchange rate API returned {response.StatusCode}", ErrorCategory.Api);
+                _errorLogger?.LogError(
+                    $"Batch exchange rate API returned {(int)response.StatusCode} for {dates.Count} dates. Body[{body.Length}]: {Snippet(body)}",
+                    ErrorCategory.Api);
+                // 429 = the server's rate limiter. Surface it so the caller backs off instead of
+                // fanning out to one request per date (which only digs the rate-limit hole deeper).
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                    throw new RateLimitedException();
                 return null;
             }
 
-            var result = await response.Content.ReadFromJsonAsync<BatchExchangeRatesResponse>(cancellationToken: cancellationToken);
+            BatchExchangeRatesResponse? result;
+            try
+            {
+                result = JsonSerializer.Deserialize<BatchExchangeRatesResponse>(body);
+            }
+            catch (Exception parseEx)
+            {
+                // A parse failure here is the prime suspect for "could not get rates": log the actual
+                // status + body length + snippet so a truncated/malformed batch response is visible.
+                _errorLogger?.LogError(parseEx, ErrorCategory.Api,
+                    $"Batch exchange rate response failed to parse for {dates.Count} dates. Body[{body.Length}]: {Snippet(body)}");
+                return null;
+            }
+
             if (result?.Success == true && result.Results != null)
             {
                 success = true;
+                if (result.Failed is { Count: > 0 } serverFailed)
+                    _errorLogger?.LogWarning(
+                        $"Batch priced {result.Results.Count}/{dates.Count} dates; server reported {serverFailed.Count} unavailable: {string.Join(", ", serverFailed.Take(20))}",
+                        "ExchangeRate");
                 return result.Results;
             }
 
+            _errorLogger?.LogError(
+                $"Batch exchange rate response unusable for {dates.Count} dates (success={result?.Success}, results={(result?.Results == null ? "null" : result.Results.Count.ToString())}). Body[{body.Length}]: {Snippet(body)}",
+                ErrorCategory.Api);
             return null;
         }
         catch (OperationCanceledException)
         {
             throw;
+        }
+        catch (RateLimitedException)
+        {
+            throw; // propagate so PreloadRatesAsync skips the per-date fanout
         }
         catch (Exception ex)
         {
@@ -351,7 +429,11 @@ public class ExchangeRateService
                 if (!response.IsSuccessStatusCode)
                 {
                     _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
-                    continue; // retry
+                    // Don't retry a rate-limit: hammering it 3x per date is exactly what causes the
+                    // lockout. Surface it so the whole preload backs off.
+                    if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                        throw new RateLimitedException();
+                    continue; // retry other transient errors
                 }
 
                 var result = await response.Content.ReadFromJsonAsync<ProxyExchangeRatesResponse>();
@@ -362,6 +444,10 @@ public class ExchangeRateService
                 }
 
                 _errorLogger?.LogError($"Exchange rate API returned invalid data (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
+            }
+            catch (RateLimitedException)
+            {
+                throw; // propagate so the preload backs off instead of retrying
             }
             catch (Exception ex)
             {
@@ -422,3 +508,10 @@ public class ExchangeRateService
         public List<string>? Failed { get; init; }
     }
 }
+
+/// <summary>
+/// Thrown when the exchange-rate proxy responds with HTTP 429 (its rate limiter). Callers stop and
+/// back off rather than retrying or fanning out to per-date requests, which would only make the
+/// rate-limit worse. See <see cref="RateReadinessService"/> for how this maps to a user message.
+/// </summary>
+internal sealed class RateLimitedException : Exception;

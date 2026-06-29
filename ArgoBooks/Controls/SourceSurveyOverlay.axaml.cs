@@ -192,6 +192,17 @@ public partial class SourceSurveyOverlayViewModel : ObservableObject
         SubmitError = null;
     }
 
+    /// <summary>
+    /// Closes the overlay without recording an answer. Only surfaced after a submit
+    /// failure so the user isn't trapped; the dashboard banner keeps prompting until
+    /// they successfully answer.
+    /// </summary>
+    [RelayCommand]
+    private void Cancel()
+    {
+        TutorialService.Instance.CloseSourceSurveyOverlay();
+    }
+
     [RelayCommand]
     private async Task SubmitAsync()
     {

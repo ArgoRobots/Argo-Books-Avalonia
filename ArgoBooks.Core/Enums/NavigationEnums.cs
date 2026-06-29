@@ -11,6 +11,7 @@ public enum QuickActionName
     OpenExport,
     OpenImport,
     OpenScanModal,
+    OpenBankImport,
     OpenEditCompany,
     OpenCheckForUpdates
 }
@@ -33,6 +34,7 @@ public static class QuickActionNameExtensions
             "OpenExport" => QuickActionName.OpenExport,
             "OpenImport" => QuickActionName.OpenImport,
             "OpenScanModal" => QuickActionName.OpenScanModal,
+            "OpenBankImport" => QuickActionName.OpenBankImport,
             "OpenEditCompany" => QuickActionName.OpenEditCompany,
             "OpenCheckForUpdates" => QuickActionName.OpenCheckForUpdates,
             _ => null
@@ -56,7 +58,9 @@ public enum NavigationTarget
     Payments,
     Categories,
     StockLevels,
-    PurchaseOrders
+    PurchaseOrders,
+    Locations,
+    Adjustments
 }
 
 /// <summary>
@@ -83,6 +87,8 @@ public static class NavigationTargetExtensions
             "Categories" => NavigationTarget.Categories,
             "StockLevels" => NavigationTarget.StockLevels,
             "PurchaseOrders" => NavigationTarget.PurchaseOrders,
+            "Locations" => NavigationTarget.Locations,
+            "Adjustments" => NavigationTarget.Adjustments,
             _ => null
         };
     }

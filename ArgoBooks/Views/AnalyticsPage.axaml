@@ -56,6 +56,7 @@
                     <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                                 Classes="page-tabs">
                         <TabItem Header="{loc:Loc Dashboard}" />
+                        <TabItem Header="{loc:Loc Products}" />
                         <TabItem Header="{loc:Loc Geographic}" />
                         <TabItem Header="{loc:Loc Operational}" IsVisible="False" />
                         <TabItem Header="{loc:Loc Performance}" />
@@ -69,10 +70,11 @@
             </Grid>
         </Border>
 
-        <!-- Main Content Area -->
+        <!-- Main Content Area (all tabs except Products, which has its own bounded layout) -->
         <ScrollViewer Grid.Row="1"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
+                      IsVisible="{Binding !IsProductsTabSelected}"
                       Background="{DynamicResource BackgroundSecondaryBrush}">
             <Panel>
                 <!-- Dashboard Tab Content -->
@@ -518,13 +520,19 @@
                                             Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="6"
                                             Padding="4">
+                                        <!-- No GroupName: these two radios share this StackPanel parent, so
+                                             Avalonia groups them by container. Their IsChecked is two-way bound to
+                                             IsMapModeOrigin/IsMapModeDestination (strict inverses in the VM), which
+                                             already enforces mutual exclusion. Setting GroupName routes them through
+                                             Avalonia's RadioButtonGroupManager, which never releases detached radios;
+                                             because this page is rebuilt on every theme change (RefreshCurrentPage),
+                                             that leaked hundreds of thousands of entries and froze the UI for ~20s
+                                             when the group was next iterated. -->
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <RadioButton Content="{loc:Loc Origin}"
-                                                         GroupName="MapMode"
                                                          IsChecked="{Binding IsMapModeOrigin}"
                                                          Classes="segmented-button" />
                                             <RadioButton Content="{loc:Loc Destination}"
-                                                         GroupName="MapMode"
                                                          IsChecked="{Binding IsMapModeDestination}"
                                                          Classes="segmented-button" />
                                         </StackPanel>
@@ -1963,6 +1971,115 @@
 
             </Panel>
         </ScrollViewer>
+
+        <!-- Products Tab Content: bounded; table fills the left half, chart sits on the right -->
+        <Panel Grid.Row="1"
+               Background="{DynamicResource BackgroundSecondaryBrush}"
+               IsVisible="{Binding IsProductsTabSelected}">
+            <Grid Margin="24" RowDefinitions="Auto,Auto,*">
+                    <!-- Statistics Cards Row -->
+                    <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                        <controls:StatCard Label="{loc:Loc 'Product Revenue'}"
+                                           Value="{Binding TotalProductRevenue}"
+                                           Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                           IconColor="Success" />
+                        <controls:StatCard Label="{loc:Loc 'Units Sold'}"
+                                           Value="{Binding TotalProductUnits}"
+                                           Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
+                                           IconColor="Primary" />
+                        <controls:StatCard Label="{loc:Loc 'Avg Sale Price'}"
+                                           Value="{Binding AvgProductSalePrice}"
+                                           Icon="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
+                                           IconColor="Info" />
+                        <controls:StatCard Label="{loc:Loc 'Products Sold'}"
+                                           Value="{Binding ProductsSoldCount}"
+                                           Icon="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"
+                                           IconColor="Warning" />
+                    </controls:StatCardsRow>
+
+                    <!-- Product picker: searchable dropdown with prev/next steppers -->
+                    <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Margin="0,0,0,16">
+                        <Button Grid.Column="0"
+                                Classes="pagination-button"
+                                VerticalAlignment="Center"
+                                Command="{Binding SelectPreviousProductCommand}"
+                                ToolTip.Tip="{loc:Loc 'Previous product'}">
+                            <PathIcon Data="{x:Static icons:Icons.ChevronLeft}" Width="16" Height="16" />
+                        </Button>
+
+                        <controls:SearchableDropdown Grid.Column="1"
+                                                     ItemsSource="{Binding Products}"
+                                                     SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                     DisplayMemberPath="DisplayLabel"
+                                                     Placeholder="{loc:Loc 'Search products...'}" />
+
+                        <Button Grid.Column="2"
+                                Classes="pagination-button"
+                                VerticalAlignment="Center"
+                                Command="{Binding SelectNextProductCommand}"
+                                ToolTip.Tip="{loc:Loc 'Next product'}">
+                            <PathIcon Data="{x:Static icons:Icons.ChevronRightNav}" Width="16" Height="16" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Hero chart card: selected product's revenue trend + metrics -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="20">
+                        <Grid RowDefinitions="*,Auto">
+                            <!-- Trend chart fills the card; product name/SKU float over its top-left -->
+                            <Panel Grid.Row="0" MinHeight="220">
+                                <lvc:CartesianChart Tag="{x:Static enums:ChartDataType.ProductRevenueTrend}"
+                                                    Title="{Binding ProductRevenueTrendTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    PointerReleased="OnChartPointerReleased"
+                                                    Series="{Binding ProductRevenueTrendSeries}"
+                                                    XAxes="{Binding ProductRevenueTrendXAxes}"
+                                                    YAxes="{Binding ProductRevenueTrendYAxes}"
+                                                    ZoomMode="Both"
+                                                    IsVisible="{Binding HasProductTrendData}" />
+                                <controls:ChartEmptyState
+                                    IsVisible="{Binding !HasProductTrendData}"
+                                    DefaultMessage="{loc:Loc 'No revenue data for this product in the selected period'}"
+                                    ShowDateRangeMessage="{Binding ShowFinancialDateRangeMessage}" />
+
+                                <!-- Product name + SKU overlaid on the chart's top-left -->
+                                <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top"
+                                            Spacing="2" IsHitTestVisible="False">
+                                    <TextBlock Text="{Binding SelectedProduct.ProductName, FallbackValue=''}"
+                                               FontSize="16" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding SelectedProduct.Sku}"
+                                               IsVisible="{Binding SelectedProduct.HasSku, FallbackValue=False}"
+                                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Panel>
+
+                            <!-- Mini KPIs row -->
+                            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                                <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,16" />
+                                <Grid ColumnDefinitions="*,*,*">
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBlock Text="{loc:Loc 'Units sold'}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding SelectedProduct.UnitsDisplay}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:Loc Revenue}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding SelectedProduct.RevenueDisplay}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="2">
+                                        <TextBlock Text="{loc:Loc 'Avg sale price'}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding SelectedProduct.AvgSalePriceDisplay}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+            </Grid>
+        </Panel>
     </Grid>
 
     <!-- Customer Activity Info Modal -->

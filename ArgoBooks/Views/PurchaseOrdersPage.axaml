@@ -197,11 +197,20 @@
                                             <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
                                                                      IsColumnVisible="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ShowTotalColumn}">
                                                 <table:ArgoTableCell.CellContent>
-                                                    <TextBlock Text="{Binding TotalDisplay}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding TotalDisplay}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center" />
+                                                        <!-- Explains why the total shows "Pending" (awaiting the exact-date rate) -->
+                                                        <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                                                  Width="13" Height="13"
+                                                                  VerticalAlignment="Center"
+                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                  IsVisible="{Binding IsTotalPending}"
+                                                                  ToolTip.Tip="{Binding PendingConversionHint}" />
+                                                    </StackPanel>
                                                 </table:ArgoTableCell.CellContent>
                                             </table:ArgoTableCell>
 

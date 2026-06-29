@@ -1180,10 +1180,29 @@ public class ReportRenderer : IDisposable
     /// <summary>
     /// Gets chart data points for a specific chart type.
     /// </summary>
+    /// <summary>
+    /// Chart types whose data method converts each transaction at its OWN date when handed a converter.
+    /// For these, a non-USD report passes the converter and does NOT re-convert the bucket afterwards,
+    /// so a month bucket is never converted at the month-start date (whose rate is usually uncached,
+    /// which falls back to the raw USD figure). Calculations.md Rule 3a Phase 2.
+    /// </summary>
+    private static bool ConvertsPerTransaction(ChartDataType chartType) => chartType is
+        ChartDataType.AverageTransactionValue
+        or ChartDataType.AverageShippingCosts
+        or ChartDataType.TaxCollectedVsPaid
+        or ChartDataType.ExpenseVsRevenueTax;
+
     private List<ChartDataPoint>? GetChartDataPoints(ChartDataType chartType)
     {
         if (_chartDataService == null)
             return null;
+
+        if (ConvertsPerTransaction(chartType)
+            && !string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartDataService.GetChartData(
+                chartType, (usd, date) => (decimal)ConvertFromUSD((double)usd, date)) as List<ChartDataPoint>;
+        }
 
         var data = _chartDataService.GetChartData(chartType);
 
@@ -1208,6 +1227,26 @@ public class ReportRenderer : IDisposable
     {
         if (_chartDataService == null)
             return null;
+
+        // Revenue vs Expenses for a non-USD display currency: convert each day's value at that day's
+        // OWN rate before bucketing, so a wide range doesn't convert a month total at the month-start
+        // date (whose rate is usually uncached) and fall back to showing the raw USD figure. Matches
+        // the dashboard / analytics path (Calculations.md Rule 3a Phase 2).
+        if (chartType == ChartDataType.RevenueVsExpenses
+            && !string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartDataService.GetRevenueVsExpensesConverted(
+                (usd, date) => (decimal)ConvertFromUSD((double)usd, date));
+        }
+
+        // Other monthly monetary multi-series charts convert each transaction at its own date inside
+        // the data service (same reason as above), so pass the converter and don't re-convert here.
+        if (ConvertsPerTransaction(chartType)
+            && !string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartDataService.GetChartData(
+                chartType, (usd, date) => (decimal)ConvertFromUSD((double)usd, date)) as List<ChartSeriesData>;
+        }
 
         var data = _chartDataService.GetChartData(chartType);
 
@@ -1234,21 +1273,17 @@ public class ReportRenderer : IDisposable
         if (_chartDataService == null)
             return null;
 
-        var data = _chartDataService.GetChartData(ChartDataType.WorldMap);
+        // Convert each country's revenue at each transaction's OWN date during aggregation
+        // (docs/Calculations.md §3a Phase 2) instead of converting the country total at today's
+        // rate. Null for a USD report (identity).
+        var converter = string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase)
+            ? (Func<decimal, DateTime, decimal>?)null
+            : (usd, date) => (decimal)ConvertFromUSD((double)usd, date);
 
-        if (data is Dictionary<string, double> mapData)
-        {
-            // World map data is computed in USD, convert to display currency
-            if (!string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
-            {
-                var keys = mapData.Keys.ToList();
-                foreach (var key in keys)
-                    mapData[key] = ConvertFromUSD(mapData[key]);
-            }
-            return mapData;
-        }
+        var data = _chartDataService.GetChartData(ChartDataType.WorldMap, converter);
 
-        return null;
+        // Values are already in the display currency (or USD); do not re-convert.
+        return data as Dictionary<string, double>;
     }
 
     /// <summary>
@@ -3130,7 +3165,7 @@ public class ReportRenderer : IDisposable
 
                 if (File.Exists(resolvedPath))
                 {
-                    using var stream = File.OpenRead(resolvedPath);
+                    using var stream = SharedFileReader.OpenRead(resolvedPath);
                     using var bitmap = SKBitmap.Decode(stream);
 
                     if (bitmap != null)
@@ -3748,7 +3783,7 @@ public class ReportRenderer : IDisposable
         {
             try
             {
-                using var stream = File.OpenRead(logoPath!);
+                using var stream = SharedFileReader.OpenRead(logoPath!);
                 using var bitmap = SKBitmap.Decode(stream);
                 if (bitmap != null)
                 {

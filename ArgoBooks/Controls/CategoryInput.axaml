@@ -96,10 +96,33 @@
                     Margin="0,4,0,0"
                     BoxShadow="0 4 12 0 #20000000">
 
-                <Grid RowDefinitions="Auto,*">
+                <DockPanel>
+                    <!-- Create New Category Button (bottom, always visible when command is set) -->
+                    <Button DockPanel.Dock="Bottom"
+                            Classes="ghost"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Padding="12,10"
+                            IsVisible="{Binding #Root.OpenCategoriesPageCommand, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Click="OnCreateCategoryClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="{x:Static icons:Icons.Add}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource PrimaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Create new category'}"
+                                       Foreground="{DynamicResource PrimaryBrush}"
+                                       FontWeight="Medium" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Separator above Create button (visible when command is set) -->
+                    <Border DockPanel.Dock="Bottom"
+                            Height="1"
+                            Background="{DynamicResource BorderLightBrush}"
+                            IsVisible="{Binding #Root.OpenCategoriesPageCommand, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
                     <!-- No Results Message -->
-                    <TextBlock Grid.Row="0"
-                               Text="{loc:Loc 'No categories found'}"
+                    <TextBlock Text="{loc:Loc 'No categories found'}"
                                FontSize="13"
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                Padding="12,16"
@@ -107,8 +130,7 @@
                                IsVisible="{Binding #Root.HasFilteredCategories, Converter={x:Static BoolConverters.Not}}" />
 
                     <!-- Filtered Items -->
-                    <ListBox Grid.Row="1"
-                             x:Name="CategoryListBox"
+                    <ListBox x:Name="CategoryListBox"
                              ItemsSource="{Binding #Root.FilteredCategories}"
                              SelectedIndex="{Binding #Root.SelectedIndex, Mode=TwoWay}"
                              Background="Transparent"
@@ -138,7 +160,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                </Grid>
+                </DockPanel>
             </Border>
         </Popup>
     </Grid>

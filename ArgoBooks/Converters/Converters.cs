@@ -1,7 +1,4 @@
-using ArgoBooks.Core;
-using ArgoBooks.Core.Models.AI;
 using Avalonia.Data.Converters;
-using Avalonia.Media;
 
 namespace ArgoBooks.Converters;
 
@@ -21,26 +18,8 @@ public static class Converters
     /// </summary>
     public static readonly IValueConverter BoolToFinishNext = new BoolToFixedStringConverter("Finish", "Next");
 
-    /// <summary>
-    /// Converts a ProcessingTier enum to a color for tier badge display.
-    /// </summary>
-    public static readonly IValueConverter TierToColor =
-        new FuncValueConverter<ProcessingTier, Color>(tier => tier switch
-        {
-            ProcessingTier.Tier1_Mapping => Color.Parse(AppColors.Primary),
-            ProcessingTier.Tier2_LlmProcessing => Color.Parse("#7C3AED"),
-            _ => Color.Parse(AppColors.GrayText)
-        });
-
-    /// <summary>
-    /// Converts a confidence level string ("High", "Medium", "Low") to a color.
-    /// </summary>
-    public static readonly IValueConverter ConfidenceLevelToColor =
-        new FuncValueConverter<string, Color>(level => level switch
-        {
-            "High" => Color.Parse(AppColors.SuccessDark),
-            "Medium" => Color.Parse(AppColors.WarningDark),
-            "Low" => Color.Parse(AppColors.Error),
-            _ => Color.Parse(AppColors.GrayText)
-        });
+    // Note: the AI-import tier/confidence badge colors are no longer computed here. They come
+    // from per-theme DynamicResource brushes (Confidence*/Tier* in DarkTheme.axaml / LightTheme.axaml)
+    // applied via style classes in ImportMappingDialog.axaml, so they are always correct for the
+    // active theme without any runtime theme detection.
 }

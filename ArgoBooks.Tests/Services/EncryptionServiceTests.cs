@@ -84,26 +84,6 @@ public class EncryptionServiceTests
         Assert.NotEqual(hash1, hash2);
     }
 
-    [Fact]
-    public void ValidatePassword_ReturnsTrueForCorrectPassword()
-    {
-        var password = "TestPassword123";
-        var salt = _encryptionService.GenerateSalt();
-        var hash = _encryptionService.HashPassword(password, salt);
-
-        Assert.True(_encryptionService.ValidatePassword(password, hash, salt));
-    }
-
-    [Fact]
-    public void ValidatePassword_ReturnsFalseForIncorrectPassword()
-    {
-        var password = "TestPassword123";
-        var salt = _encryptionService.GenerateSalt();
-        var hash = _encryptionService.HashPassword(password, salt);
-
-        Assert.False(_encryptionService.ValidatePassword("WrongPassword", hash, salt));
-    }
-
     #endregion
 
     #region Encryption/Decryption Tests (Byte Arrays)
@@ -255,7 +235,7 @@ public class EncryptionServiceTests
     #region Async Encryption/Decryption Tests
 
     [Fact]
-    public async Task EncryptAsync_DecryptAsync_RoundTrip_RestoresOriginalData()
+    public async Task EncryptAsync_RoundTrip_RestoresOriginalData()
     {
         var originalData = "Hello, Async World!"u8.ToArray();
         var password = "TestPassword123";
@@ -264,9 +244,8 @@ public class EncryptionServiceTests
 
         using var inputStream = new MemoryStream(originalData);
         using var encryptedStream = await _encryptionService.EncryptAsync(inputStream, password, salt, iv);
-        using var decryptedStream = await _encryptionService.DecryptAsync(encryptedStream, password, salt, iv);
+        var decryptedData = _encryptionService.Decrypt(encryptedStream.ToArray(), password, salt, iv);
 
-        var decryptedData = decryptedStream.ToArray();
         Assert.True(originalData.SequenceEqual(decryptedData));
     }
 
@@ -328,7 +307,7 @@ public class EncryptionServiceTests
     #region Integration Tests
 
     [Fact]
-    public void FullWorkflow_CreateHashValidateEncryptDecrypt()
+    public void FullWorkflow_CreateHashEncryptDecryptWithVerification()
     {
         // Simulate a full file encryption workflow
         var password = "SecurePassword123!";
@@ -338,15 +317,13 @@ public class EncryptionServiceTests
         var salt = _encryptionService.GenerateSalt();
         var passwordHash = _encryptionService.HashPassword(password, salt);
 
-        // Step 2: Validate password (simulating login)
-        Assert.True(_encryptionService.ValidatePassword(password, passwordHash, salt));
-
-        // Step 3: Generate IV and encrypt file
+        // Step 2: Generate IV and encrypt file
         var iv = _encryptionService.GenerateIv();
         var encryptedContent = _encryptionService.Encrypt(fileContent, password, salt, iv);
 
-        // Step 4: Later, decrypt file with same password
-        var decryptedContent = _encryptionService.Decrypt(encryptedContent, password, salt, iv);
+        // Step 3: Later, verify the password and decrypt in one pass
+        var decryptedContent = _encryptionService.DecryptWithVerification(
+            encryptedContent, password, salt, iv, passwordHash);
 
         Assert.True(fileContent.SequenceEqual(decryptedContent));
     }
@@ -367,6 +344,69 @@ public class EncryptionServiceTests
         // Should fail authentication
         Assert.ThrowsAny<CryptographicException>(() =>
             _encryptionService.Decrypt(encrypted, password, salt, iv));
+    }
+
+    #endregion
+
+    #region DecryptWithVerification Tests
+
+    [Fact]
+    public void DecryptWithVerification_CorrectPassword_RoundTrips()
+    {
+        var salt = _encryptionService.GenerateSalt();
+        var iv = _encryptionService.GenerateIv();
+        var hash = _encryptionService.HashPassword("pw-correct", salt);
+        var plaintext = "hello argo"u8.ToArray();
+        var encrypted = _encryptionService.Encrypt(plaintext, "pw-correct", salt, iv);
+
+        var result = _encryptionService.DecryptWithVerification(
+            encrypted, "pw-correct", salt, iv, hash);
+
+        Assert.Equal(plaintext, result);
+    }
+
+    [Fact]
+    public void DecryptWithVerification_MatchesPlainDecrypt()
+    {
+        var salt = _encryptionService.GenerateSalt();
+        var iv = _encryptionService.GenerateIv();
+        var hash = _encryptionService.HashPassword("pw", salt);
+        var plaintext = "some longer confidential content for the file"u8.ToArray();
+        var encrypted = _encryptionService.Encrypt(plaintext, "pw", salt, iv);
+
+        var viaSeparate = _encryptionService.Decrypt(encrypted, "pw", salt, iv);
+        var viaCombined = _encryptionService.DecryptWithVerification(encrypted, "pw", salt, iv, hash);
+
+        Assert.Equal(viaSeparate, viaCombined);
+    }
+
+    [Fact]
+    public void DecryptWithVerification_WrongPassword_ThrowsUnauthorized()
+    {
+        var salt = _encryptionService.GenerateSalt();
+        var iv = _encryptionService.GenerateIv();
+        var hash = _encryptionService.HashPassword("pw-correct", salt);
+        var encrypted = _encryptionService.Encrypt("hello"u8.ToArray(), "pw-correct", salt, iv);
+
+        Assert.Throws<UnauthorizedAccessException>(() =>
+            _encryptionService.DecryptWithVerification(encrypted, "pw-wrong", salt, iv, hash));
+    }
+
+    [Fact]
+    public async Task DecryptWithVerificationAsync_CorrectPassword_RoundTrips()
+    {
+        var salt = _encryptionService.GenerateSalt();
+        var iv = _encryptionService.GenerateIv();
+        var hash = _encryptionService.HashPassword("pw", salt);
+        var plaintext = "stream content"u8.ToArray();
+        var encrypted = _encryptionService.Encrypt(plaintext, "pw", salt, iv);
+
+        using var input = new MemoryStream(encrypted);
+        using var result = await _encryptionService.DecryptWithVerificationAsync(
+            input, "pw", salt, iv, hash);
+
+        Assert.Equal(plaintext, result.ToArray());
+        Assert.Equal(0, result.Position);
     }
 
     #endregion

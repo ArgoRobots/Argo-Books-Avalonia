@@ -14,6 +14,7 @@ using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Layout;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -185,6 +186,11 @@ public partial class App : Application
     public static BankMatchingModalsViewModel? BankMatchingModalsViewModel => _appShellViewModel?.BankMatchingModalsViewModel;
 
     /// <summary>
+    /// Gets the bank statement import modal view model for shared access.
+    /// </summary>
+    public static BankStatementImportModalViewModel? BankStatementImportModalViewModel => _appShellViewModel?.BankStatementImportModalViewModel;
+
+    /// <summary>
     /// Gets the purchase orders modals view model for shared access.
     /// </summary>
     public static PurchaseOrdersModalsViewModel? PurchaseOrdersModalsViewModel => _appShellViewModel?.PurchaseOrdersModalsViewModel;
@@ -274,9 +280,43 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Shows the one, consistent connectivity-error dialog (same title, body, and style)
+    /// used everywhere an online action fails because the device is offline or the server
+    /// is unreachable. Uses the neutral confirmation dialog (no alarming red error styling)
+    /// since being offline is a normal, recoverable situation.
+    /// </summary>
+    public static async Task ShowConnectivityErrorAsync(string? message = null)
+    {
+        var dialog = ConfirmationDialog;
+        if (dialog == null) return;
+
+        await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = ConnectivityMessage.Title.Translate(),
+            // Localize the known connectivity constants (they're translation keys) instead of showing
+            // them verbatim; leave any other caller-supplied message untouched.
+            Message = string.IsNullOrWhiteSpace(message)
+                ? ConnectivityMessage.NoInternet.Translate()
+                : (ConnectivityMessage.IsConnectivityMessage(message) ? message.Translate() : message),
+            PrimaryButtonText = "OK".Translate(),
+            CancelButtonText = null,
+            SecondaryButtonText = null
+        });
+    }
+
+    /// <summary>
+    /// Shows the global indeterminate loading overlay. Exposed so view models that can't reach the
+    /// main window view model directly (e.g. modal VMs) can give instant feedback during slow work.
+    /// </summary>
+    internal static void ShowBusyOverlay(string message) => _mainWindowViewModel?.ShowLoading(message);
+
+    /// <summary>Hides the global loading overlay shown by <see cref="ShowBusyOverlay"/>.</summary>
+    internal static void HideBusyOverlay() => _mainWindowViewModel?.HideLoading();
+
+    /// <summary>
     /// Shows a modal info message box.
     /// </summary>
-    private static async Task ShowInfoMessageBoxAsync(string title, string message)
+    internal static async Task ShowInfoMessageBoxAsync(string title, string message)
     {
         if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is MainWindow mainWindow
@@ -707,6 +747,20 @@ public partial class App : Application
     /// </summary>
     private static void ClearPageCaches()
     {
+        // Tear down each cached page VM's event subscriptions (the static LanguageChanged and
+        // CurrencyChanged events, modal events, etc.) before dropping it. Without this, a company
+        // switch leaves the orphaned VMs rooted by those static events and still reacting to them.
+        foreach (var vm in new object?[]
+        {
+            _dashboardPageViewModel, _analyticsPageViewModel, _insightsPageViewModel, _reportsPageViewModel,
+            _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel, _paymentsPageViewModel,
+            _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
+            _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
+            _customersPageViewModel, _suppliersPageViewModel, _departmentsPageViewModel, _rentalInventoryPageViewModel,
+            _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
+        })
+            (vm as SortablePageViewModelBase)?.Cleanup();
+
         _dashboardPageViewModel = null;
         _analyticsPageViewModel = null;
         _insightsPageViewModel = null;
@@ -738,6 +792,11 @@ public partial class App : Application
     // When true, the CompanySaved event handler skips showing the "Saved" indicator
     private static bool _suppressSavedFeedback;
     private static bool _isOpeningCompany;
+
+    // When true, a new company is being created. Like _isOpeningCompany, this keeps the loading
+    // overlay up across the close-then-open transition so the welcome screen doesn't flash between
+    // closing the current company and opening the new one.
+    private static bool _isCreatingCompany;
 
     /// <summary>
     /// Suppresses the "Saved" feedback label for the next save operation.
@@ -786,6 +845,11 @@ public partial class App : Application
     /// Gets the pending conversion service for processing offline transactions.
     /// </summary>
     public static PendingConversionService? PendingConversionService { get; private set; }
+
+    /// <summary>
+    /// Gets the PDF bank statement extractor (premium-gated AI service).
+    /// </summary>
+    public static IPdfStatementExtractor? PdfStatementExtractor { get; private set; }
 
     public override void Initialize()
     {
@@ -852,6 +916,7 @@ public partial class App : Application
             ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
             PendingConversionService = new PendingConversionService(errorLogger);
+            PdfStatementExtractor = new PdfStatementExtractor(LicenseService, ErrorLogger);
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service and optional update service
@@ -1004,7 +1069,7 @@ public partial class App : Application
                     {
                         _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                         ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company on close");
-                        await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
+                        await ShowErrorMessageBoxAsync("Error".Translate(), GetFriendlySaveErrorMessage(ex));
                     }
                 }
             };
@@ -1123,7 +1188,7 @@ public partial class App : Application
                 _welcomeScreenViewModel?.InitializeTutorialMode();
             }
 
-            // Initialize telemetry session (respects user consent)
+            // Initialize telemetry session
             if (TelemetryManager != null)
             {
                 await TelemetryManager.InitializeAsync();
@@ -1235,6 +1300,11 @@ public partial class App : Application
 
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
+
+            // Initialize AI operation timing (pooled duration priors that drive accurate
+            // progress bars). Non-blocking: loads the disk cache, refreshes priors in the
+            // background, and falls back to seed priors when offline.
+            InitializeOperationTimingService();
 
             // Load pending conversion queue from disk
             if (PendingConversionService != null)
@@ -1420,12 +1490,27 @@ public partial class App : Application
     {
         try
         {
-            var exchangeService = new ExchangeRateService();
+            // Pass the logger/telemetry so the rate-fetch diagnostics (batch outcome, per-date
+            // fallback, unpriced dates) are actually recorded when an import can't get rates.
+            var exchangeService = new ExchangeRateService(ErrorLogger, TelemetryManager);
             await exchangeService.InitializeAsync();
         }
         catch (Exception ex)
         {
             ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize exchange rate service");
+        }
+    }
+
+    private static void InitializeOperationTimingService()
+    {
+        try
+        {
+            var timing = new OperationTimingService(ErrorLogger);
+            _ = timing.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to initialize operation timing service");
         }
     }
 
@@ -1438,7 +1523,12 @@ public partial class App : Application
         // Dispose any existing timer
         _pendingConversionTimer?.Dispose();
 
-        _pendingConversionTimer = new Timer(state => { _ = TryProcessPendingConversionsAsync(); },
+        // Run the processing on the UI thread (the network fetch is awaited, so it doesn't block):
+        // it mutates CompanyData.PendingConversions, which the save paths also mutate on the UI thread.
+        // Without this the System.Threading.Timer callback would touch that List concurrently with a
+        // save. Matches the window-Activated path, which already calls this on the UI thread.
+        _pendingConversionTimer = new Timer(
+            _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = TryProcessPendingConversionsAsync(); }),
             null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 
@@ -1681,8 +1771,11 @@ public partial class App : Application
 
                 _mainWindowViewModel.HideLoading();
 
-                // Check for issues and show validation dialog
-                if (validationResult.HasIssues)
+                // Only interrupt with the issues dialog when there's something the user must act
+                // on (errors or issues that can't be auto-fixed); when everything is auto-fixable,
+                // proceed straight to import. Mirrors the regular import path so the dialog never
+                // opens in an empty "no issues found" state.
+                if (validationResult.Errors.Count > 0 || validationResult.HasNonAutoFixableIssues)
                 {
                     var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
                     var dialogResult = await validationDialog.ShowAsync(validationResult);
@@ -1834,9 +1927,37 @@ public partial class App : Application
     {
         if (_appShellViewModel == null) return;
 
+        // The name the user actually picked. filePath may later be swapped for a temp file
+        // (legacy .xls conversion, or experimental layout normalization), so capture the
+        // display name up front and use it in all user-facing UI instead of the temp path.
+        var originalFileName = Path.GetFileName(filePath);
+
         var analysisCts = new CancellationTokenSource();
         _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), "Reading file...", 0, analysisCts, ConfirmCancelAsync);
         await Task.Yield(); // Allow UI to render the loading overlay before heavy work begins
+
+        // Legacy .xls (BIFF) is not read by the pipeline directly. Convert it to a temp
+        // .xlsx up front so the rest of the flow only ever sees .xlsx/.csv (unchanged).
+        // Note: a true .xlsx ends in ".xls" only via the longer ".xlsx" suffix, so we
+        // explicitly exclude .xlsx here. isCsv is left untouched (stays false for .xls).
+        if (!isCsv
+            && filePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase)
+            && !filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                filePath = await Task.Run(() => LegacyXlsConverter.ConvertXlsToTempXlsx(filePath));
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel?.HideLoading();
+                ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to convert legacy .xls file for import");
+                await ShowErrorMessageBoxAsync(
+                    "Import Failed".Translate(),
+                    "This .xls file could not be read. Try re-saving it as .xlsx and importing that instead.".Translate());
+                return;
+            }
+        }
 
         // Check rate limit via server-side API
         using var usageService = new AiImportUsageService(LicenseService, ErrorLogger);
@@ -1845,10 +1966,21 @@ public partial class App : Application
         if (!usageCheck.CanImport)
         {
             _mainWindowViewModel?.HideLoading();
-            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(
-                usageCheck.ImportCount,
-                usageCheck.MonthlyLimit,
-                usageCheck.ResetsAt);
+
+            // A populated ErrorMessage means the usage check couldn't complete (offline or
+            // server unreachable) rather than a real limit being hit, so show the connection
+            // error instead of a misleading "0/0" import-limit prompt.
+            if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
+            {
+                await UpgradePromptHelper.ShowUsageCheckFailedAsync(usageCheck.ErrorMessage);
+            }
+            else
+            {
+                await UpgradePromptHelper.ShowAiImportLimitPromptAsync(
+                    usageCheck.ImportCount,
+                    usageCheck.MonthlyLimit,
+                    usageCheck.ResetsAt);
+            }
             return;
         }
 
@@ -1862,20 +1994,52 @@ public partial class App : Application
             return;
         }
 
+        // AI layout interpretation for messy spreadsheets (long preambles, merged/multi-row
+        // headers, cross-tabs, stacked tables): rewrite messy sheets into clean single-header
+        // tables before analysis. The cheap, local LayoutGate inside NormalizeAsync skips clean
+        // sheets and returns the ORIGINAL path when nothing needs interpreting, so normal imports
+        // pay no extra cost. Any failure falls back to the original file, so it can never break
+        // an import. CSV files are single-table and never need layout interpretation.
+        if (!isCsv)
+        {
+            try
+            {
+                // Run off the UI thread: NormalizeAsync opens the workbook with ClosedXML
+                // synchronously (several seconds for a real file), which would otherwise block
+                // the loading overlay from even painting until it finished.
+                var normalizer = new LayoutNormalizationService(geminiService, ErrorLogger);
+                filePath = await Task.Run(() => normalizer.NormalizeAsync(filePath, analysisCts.Token), analysisCts.Token);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "AI layout interpretation failed; importing the original file unchanged");
+                // filePath is left as the original path: the import proceeds normally.
+            }
+        }
+
         var analysisService = new SpreadsheetAnalysisService(geminiService, ErrorLogger, CompanyManager!.CurrentCompanySettings?.Company.Country);
         var importService = new SpreadsheetImportService(ErrorLogger, TelemetryManager, geminiService);
 
-        var analysisProgress = new Progress<(string detail, double percent)>(p =>
-        {
-            _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), p.detail, p.percent, analysisCts, ConfirmCancelAsync);
-        });
+        // Drive the analysis bar from the learned duration estimate (smooth easing toward the pooled
+        // p50/p90, asymptoting near the ceiling and completing when the call returns) instead of the
+        // old fake timer that crawled to 95% and stalled. The service reports only the status detail.
+        var analysisDetail = "Reading file...".Translate();
+        using var analysisTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+            OperationKind.SpreadsheetAnalysis,
+            pct => _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), analysisDetail, pct, analysisCts, ConfirmCancelAsync));
+        var analysisProgress = new Progress<(string detail, double percent)>(p => analysisDetail = p.detail);
 
         try
         {
-            // Step 1: AI Analysis
+            // Step 1: AI Analysis. Run off the UI thread: the analyzer opens the workbook
+            // synchronously before its network calls, which would otherwise freeze the loading
+            // overlay. The Progress callback was created on the UI thread, so it still marshals back.
+            analysisTicker.Start();
             var analysis = isCsv
-                ? await analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress)
-                : await analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress);
+                ? await Task.Run(() => analysisService.AnalyzeCsvAsync(filePath, analysisCts.Token, analysisProgress), analysisCts.Token)
+                : await Task.Run(() => analysisService.AnalyzeAsync(filePath, analysisCts.Token, analysisProgress), analysisCts.Token);
+            analysisTicker.Stop();
 
             await Task.Yield();
             _mainWindowViewModel?.HideLoading();
@@ -1884,9 +2048,12 @@ public partial class App : Application
             {
                 await ShowErrorMessageBoxAsync(
                     "Analysis Failed".Translate(),
-                    "Could not analyze the file structure. The file may be empty or in an unsupported format.".Translate());
+                    "Could not analyze the file. The spreadsheet may be empty, or the AI response was incomplete. Please try importing again.".Translate());
                 return;
             }
+
+            // Show the file the user actually selected, not the temp file we may have analyzed.
+            analysis.FileName = originalFileName;
 
             // Step 2: Show mapping review dialog
             var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
@@ -1924,6 +2091,92 @@ public partial class App : Application
                 SkipExistingRecords = mappingDialog.SkipExistingRecords
             };
 
+            // Detect currency written into the amount cells (symbols/codes). Unambiguous cases
+            // (an explicit code, or a symbol used by one currency like £/€) resolve silently; an
+            // ambiguous symbol like "$" prompts the user once and is applied to every matching row.
+            try
+            {
+                var currencyScan = CurrencyImportPreparer.ScanWorkbook(filePath, updatedAnalysis);
+                if (currencyScan.Ambiguities.Count > 0)
+                {
+                    var companyCurrency = companyData.Settings?.Localization?.Currency ?? "USD";
+                    var currencyDialog = _appShellViewModel.CurrencyAmbiguityDialogViewModel;
+                    var currencyResult = await currencyDialog.ShowAsync(currencyScan.Ambiguities, companyCurrency);
+                    if (currencyResult == CurrencyAmbiguityDialogResult.Cancel)
+                        return;
+
+                    CurrencyImportPreparer.ApplyResolution(currencyScan, currencyDialog.Resolution);
+                    importOptions.SymbolResolution = currencyDialog.Resolution
+                        .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
+                }
+                importOptions.RowCurrencyBySheet = currencyScan.Resolved;
+
+                // If any non-USD currency was detected, fetch the EXACT-date rate for every
+                // transaction date before importing, so money never converts at a wrong-date rate
+                // (see docs/Calculations.md). If rates can't be fetched (offline or server down),
+                // pause with a connect-and-retry prompt. Best-effort: any row the scan misses still
+                // self-heals via IsPendingConversion.
+                var hasNonUsd =
+                    currencyScan.Resolved.Values.SelectMany(m => m.Values)
+                        .Concat(importOptions.SymbolResolution.Values)
+                        .Any(c => !string.IsNullOrEmpty(c) && !string.Equals(c, "USD", StringComparison.OrdinalIgnoreCase));
+                if (hasNonUsd && ExchangeRateService.Instance is { } exchangeRates)
+                {
+                    var importDates = importService.CollectTransactionDates(filePath, updatedAnalysis);
+                    var readinessSvc = new RateReadinessService(exchangeRates, new ConnectivityService(), ErrorLogger);
+
+                    // Fetching the exact-date rate for every transaction date can take seconds to
+                    // minutes, and it runs before any rows are inserted. Show it as an explicit,
+                    // cancelable phase with a determinate progress bar so the import doesn't look frozen.
+                    using var rateCts = new CancellationTokenSource();
+                    _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
+                    var rateProgress = new Progress<int>(pct =>
+                        _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, pct, rateCts, ConfirmCancelAsync));
+
+                    while (true)
+                    {
+                        RateReadiness readiness;
+                        try
+                        {
+                            readiness = await readinessSvc.EnsureRatesAsync(importDates, rateProgress, rateCts.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            _mainWindowViewModel?.HideLoading();
+                            return; // user canceled while fetching rates
+                        }
+                        catch (Exception ex)
+                        {
+                            ErrorLogger?.LogError(ex, ErrorCategory.Import, "Rate readiness check failed");
+                            readiness = new RateReadiness(RateReadinessStatus.Unavailable, RateUnavailableReason.Unknown, []);
+                        }
+
+                        if (readiness.Status == RateReadinessStatus.Ready)
+                        {
+                            if (readiness.FutureDatesDeferred.Count > 0)
+                                ErrorLogger?.LogWarning(
+                                    $"{readiness.FutureDatesDeferred.Count} future-dated rows will import as pending (no rate yet).",
+                                    "Import");
+                            break;
+                        }
+
+                        // Pause the progress overlay while the connect-and-retry prompt is up, then restore it.
+                        _mainWindowViewModel?.HideLoading();
+                        var choice = await _appShellViewModel.RateUnavailableDialogViewModel.ShowAsync(readiness.Reason);
+                        if (choice == RateRetryResult.Cancel)
+                            return; // abort: nothing imported
+                        _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
+                    }
+
+                    _mainWindowViewModel?.HideLoading();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogError(ex, ErrorCategory.Import,
+                    "In-cell currency detection failed; importing without per-row currency");
+            }
+
             // Tier 1: Validate with mappings
             SpreadsheetImportResult? tier1Result = null;
             if (tier1Sheets.Count > 0)
@@ -1939,17 +2192,29 @@ public partial class App : Application
 
                 if (validationResult.HasIssues)
                 {
-                    var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
-                    var valResult = await validationDialog.ShowAsync(validationResult);
-
-                    if (valResult == ImportValidationDialogResult.Cancel)
-                        return;
-
-                    if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
+                    // Auto-create any missing references (suppliers, customers, categories,
+                    // etc.) silently. The user shouldn't have to approve creating placeholder
+                    // records, it should "just work".
+                    if (validationResult.HasMissingReferences)
                         importOptions.AutoCreateMissingReferences = true;
 
-                    if (validationResult.Errors.Count > 0)
-                        return;
+                    // Only interrupt with the issues dialog when there's something the user
+                    // must act on: critical errors or issues that can't be auto-fixed. When
+                    // everything is auto-fixable, proceed straight to import.
+                    if (validationResult.Errors.Count > 0 || validationResult.HasNonAutoFixableIssues)
+                    {
+                        var validationDialog = _appShellViewModel.ImportValidationDialogViewModel;
+                        var valResult = await validationDialog.ShowAsync(validationResult);
+
+                        if (valResult == ImportValidationDialogResult.Cancel)
+                            return;
+
+                        if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
+                            importOptions.AutoCreateMissingReferences = true;
+
+                        if (validationResult.Errors.Count > 0)
+                            return;
+                    }
                 }
 
                 // Import Tier 1 data
@@ -2061,6 +2326,11 @@ public partial class App : Application
                 try { await timerTask; } catch (OperationCanceledException) { }
 
                 // Phase B: Import sequentially (CompanyData mutation is not thread-safe)
+                _mainWindowViewModel?.ShowLoading(
+                    "Importing data...".Translate(),
+                    progress: 90,
+                    cts: tier2Cts,
+                    cancelConfirmation: ConfirmCancelAsync);
                 for (int i = 0; i < tier2Sheets.Count; i++)
                 {
                     var tier2Result = importService.ImportProcessedEntities(
@@ -2102,11 +2372,25 @@ public partial class App : Application
             // Create snapshot for redo
             var importedSnapshot = CreateCompanyDataSnapshot(companyData);
 
-            // Record undo action
+            // Record undo action. Besides restoring the data, each direction must refresh the UI
+            // the same way the import itself does: reload the Bank Matching page (a workbook may
+            // have routed bank rows into a BankImportSession) and rebuild the current page so its
+            // charts/widgets repaint with the restored data. Without the page rebuild the charts
+            // stay stale after undo/redo until the user navigates away and back.
+            void RestoreImportSnapshotAndRefresh(string snapshotJson)
+            {
+                RestoreCompanyDataFromSnapshot(companyData, snapshotJson);
+                CompanyManager?.MarkAsChanged();
+                _bankMatchingPageViewModel?.Reload();
+                Avalonia.Threading.Dispatcher.UIThread.Post(
+                    () => NavigationService?.RefreshCurrentPage(),
+                    Avalonia.Threading.DispatcherPriority.Background);
+            }
+
             UndoRedoManager.RecordAction(new DelegateAction(
                 "AI import spreadsheet data".Translate(),
-                () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
-                () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
+                () => RestoreImportSnapshotAndRefresh(snapshot),
+                () => RestoreImportSnapshotAndRefresh(importedSnapshot)
             ));
 
             CompanyManager.MarkAsChanged();
@@ -2127,8 +2411,23 @@ public partial class App : Application
 
             var totalProcessed = totalImported + totalUpdated;
 
-            // Collect all warnings
-            var allWarnings = (tier1Result?.Warnings ?? []).ToList();
+            // Collect all warnings: the top-level tier-1 warnings plus every per-sheet warning
+            // (reference-resolution "created a new customer/supplier" and re-import notices added on
+            // the Tier 2 path), which would otherwise never reach the user. Distinct() guards against
+            // a per-sheet warning that was also surfaced at the top level.
+            var allWarnings = (tier1Result?.Warnings ?? [])
+                .Concat(allSheetResults.SelectMany(sr => sr.Warnings))
+                .Distinct()
+                .ToList();
+
+            // Report any sheets that were out of scope (detected type Unknown or confidence too low)
+            var unsupportedSheets = updatedAnalysis.Sheets.Where(s => s.UnsupportedReason != null).ToList();
+            foreach (var unsupported in unsupportedSheets)
+                allWarnings.Add($"Sheet \"{unsupported.SourceSheetName}\" was skipped: {unsupported.UnsupportedReason}");
+
+            // If part of the AI analysis failed, tell the user their import is partial.
+            if (!string.IsNullOrEmpty(updatedAnalysis.PartialAnalysisWarning))
+                allWarnings.Add(updatedAnalysis.PartialAnalysisWarning);
 
             // Collect skip reasons from all sheets
             var allSkipReasons = allSheetResults
@@ -2137,13 +2436,29 @@ public partial class App : Application
                 .Select(g => g.Count() > 1 ? $"{g.Key} (\u00d7{g.Count()})" : g.Key)
                 .ToList();
 
+            // Collect unimported rows from every sheet
+            var allUnimported = allSheetResults.SelectMany(r => r.UnimportedRows).ToList();
+
+            // Bank statement rows are routed to the Bank Matching page (their own session), not
+            // counted as new/updated book records, so factor them into "needs save" separately.
+            var totalBankRouted = allSheetResults.Sum(sr => sr.BankMatchingImported);
+
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
             await resultDialog.ShowAsync(
-                Path.GetFileName(filePath),
+                originalFileName,
                 allSheetResults,
                 totalImported, totalUpdated, totalSkipped,
-                allSkipReasons, allWarnings, totalProcessed > 0);
+                allSkipReasons, allWarnings, totalProcessed > 0 || totalBankRouted > 0,
+                allUnimported);
+
+            // Rebuild the current page so its charts/widgets show the freshly imported data.
+            // This mirrors navigating away and back, which is otherwise needed because chart
+            // widgets don't reliably repaint while hidden behind the import dialogs. Posted at
+            // Background priority so it runs after the result dialog has finished closing.
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                () => NavigationService?.RefreshCurrentPage(),
+                Avalonia.Threading.DispatcherPriority.Background);
         }
         catch (OperationCanceledException)
         {
@@ -2223,6 +2538,7 @@ public partial class App : Application
 
             // Open it as a new company (this closes the current one)
             await OpenCompanyWithRetryAsync(destPath);
+            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.BackupRestored);
         }
         catch (Exception ex)
         {
@@ -2230,6 +2546,30 @@ public partial class App : Application
             ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to restore from backup");
             await ShowErrorMessageBoxAsync("Restore Failed".Translate(), "Failed to restore from backup: {0}".TranslateFormat(ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Opens a file picker for a bank statement and passes the chosen file directly to
+    /// the BankStatementImportModal without navigating to the Bank Matching page first.
+    /// Called from the Expenses/Revenue "Import bank statement" menu item.
+    /// </summary>
+    public static async Task OpenBankStatementImportAsync()
+    {
+        if (BankStatementImportModalViewModel == null) return;
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+
+        var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Bank Statement".Translate(),
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("Bank statements") { Patterns = ["*.csv", "*.xlsx", "*.xls", "*.pdf"] }
+            ]
+        });
+        if (file.Count == 0) return;
+
+        await BankStatementImportModalViewModel.OpenAsync(file[0].Path.LocalPath);
     }
 
     /// <summary>
@@ -2251,29 +2591,40 @@ public partial class App : Application
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Spreadsheets") { Patterns = ["*.xlsx", "*.csv"] }
+                new FilePickerFileType("Bank statements") { Patterns = ["*.csv", "*.xlsx", "*.xls", "*.pdf"] }
             ]
         });
         if (file.Count == 0) return;
 
         var filePath = file[0].Path.LocalPath;
-        var isCsv = filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
         _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate());
         await Task.Yield();
 
         try
         {
-            var parser = new BankStatementImportService(ErrorLogger);
+            List<Core.Models.BankMatching.BankStatementLine> lines;
+            if (ext == ".pdf")
+            {
+                _mainWindowViewModel?.HideLoading();
+                lines = await ImportPdfStatementAsync(filePath);
+                if (lines.Count == 0) return; // gated out, cancelled, or extraction failed
+            }
+            else
+            {
+                var parser = new BankStatementImportService(ErrorLogger);
+                var isCsv = ext == ".csv";
 
-            // Try local column detection first (instant, no AI). Fall back to AI column mapping
-            // only when the headers aren't recognized locally.
-            var lines = isCsv
-                ? await parser.ParseCsvAsync(filePath)
-                : await parser.ParseExcelAsync(filePath);
+                // Try local column detection first (instant, no AI). Fall back to AI column mapping
+                // only when the headers aren't recognized locally.
+                lines = isCsv
+                    ? await parser.ParseCsvAsync(filePath)
+                    : await parser.ParseExcelAsync(filePath);
 
-            if (lines.Count == 0)
-                lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+                if (lines.Count == 0)
+                    lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+            }
 
             _mainWindowViewModel?.HideLoading();
 
@@ -2356,6 +2707,72 @@ public partial class App : Application
             await usage.IncrementUsageAsync();
 
         return lines;
+    }
+
+    /// <summary>
+    /// Premium-gated PDF bank statement import: checks the license, checks usage, calls the AI
+    /// extractor, and increments usage on a successful extraction. Returns the extracted rows
+    /// (which flow into the same review path as CSV/Excel), or an empty list if gated out or
+    /// nothing could be extracted.
+    /// </summary>
+    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
+    {
+        // Premium gate: PDF extraction is a premium-only feature.
+        if (LicenseService?.LoadLicense() != true)
+        {
+            // No bank-PDF-specific upgrade prompt exists yet; reusing the general upgrade modal.
+            // TODO: add a ShowBankPdfPremiumPromptAsync method to UpgradePromptHelper once
+            // copy is finalised.
+            App.OpenUpgradeModal();
+            return [];
+        }
+
+        // Reading the PDF is a slow network + AI round-trip; show the loading overlay for the
+        // whole wait so there's instant feedback. Hide it before any dialog.
+        ShowBusyOverlay("Reading PDF statement...".Translate());
+        try
+        {
+            // Usage gate.
+            // TODO: ReceiptUsageService is currently hard-wired to the receipt usage feature key
+            // server-side. Determine with the backend owner whether bank PDF extraction shares the
+            // receipt counter or gets its own feature key, then either keep ReceiptUsageService here
+            // or replace it with a parallel BankImportUsageService with the same shape.
+            using var usage = new ReceiptUsageService(LicenseService, ErrorLogger);
+            var check = await usage.CheckUsageAsync();
+            if (!check.CanScan)
+            {
+                HideBusyOverlay();
+                if (check.ErrorMessage != null)
+                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+                else
+                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+                return [];
+            }
+
+            if (PdfStatementExtractor == null) return [];
+
+            var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
+            var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
+            HideBusyOverlay();
+            if (extracted.Count == 0)
+            {
+                // Don't fail silently: the extractor returns nothing both when the PDF has no
+                // recognizable transactions and when the server couldn't process it.
+                await ShowInfoMessageBoxAsync(
+                    "Import Bank Statement".Translate(),
+                    "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+                return [];
+            }
+
+            // Extraction succeeded: consume one credit and return the rows, which flow into the same
+            // path CSV and Excel use (no separate PDF-only confirm step).
+            await usage.IncrementUsageAsync();
+            return extracted;
+        }
+        finally
+        {
+            HideBusyOverlay();
+        }
     }
 
     private static string CreateCompanyDataSnapshot(CompanyData data)
@@ -2496,6 +2913,48 @@ public partial class App : Application
             var filePath = files[0].Path.LocalPath;
             await OpenCompanyWithRetryAsync(filePath);
         }
+    }
+
+    /// <summary>
+    /// Handles a "New Company" request from the file menu or company switcher. If a company is
+    /// open with unsaved changes, prompts to save (mirroring Close Company) before opening the
+    /// create-company wizard, so making a new company can't silently discard pending edits.
+    /// The welcome screen's "Create New Company" path skips this (no company is open there).
+    /// </summary>
+    internal static async Task RequestCreateNewCompanyAsync()
+    {
+        if (_appShellViewModel == null) return;
+
+        // Use UndoRedoManager's saved state, which correctly accounts for undoing back to the
+        // last-saved point (matches the Close Company prompt).
+        if (CompanyManager?.IsCompanyOpen == true && UndoRedoManager.IsAtSavedState == false)
+        {
+            var result = await ShowUnsavedChangesDialogAsync();
+            switch (result)
+            {
+                case UnsavedChangesResult.Save:
+                    // Sample company cannot be saved directly - redirect to Save As.
+                    if (CompanyManager.IsSampleCompany)
+                    {
+                        var desktop = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+                        if (desktop == null) return;
+                        var saved = await SaveCompanyAsDialogAsync(desktop);
+                        if (!saved) return; // user cancelled Save As, abort the new-company action
+                    }
+                    else
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    break;
+                case UnsavedChangesResult.DontSave:
+                    break;
+                case UnsavedChangesResult.Cancel:
+                case UnsavedChangesResult.None:
+                    return; // user cancelled, don't open the wizard
+            }
+        }
+
+        _appShellViewModel.CreateCompanyViewModel.OpenCommand.Execute(null);
     }
 
     /// <summary>
@@ -2733,10 +3192,48 @@ public partial class App : Application
             {
                 _suppressSavedFeedback = false;
                 ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company as new file");
-                await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message));
+                await ShowErrorMessageBoxAsync("Error".Translate(), GetFriendlySaveErrorMessage(ex));
                 return false;
             }
         }
+    }
+
+    /// <summary>
+    /// Turns a save/file exception into a message a non-technical user can act on.
+    /// Windows surfaces cryptic text like "A device which does not exist was specified"
+    /// when the company file's drive is unplugged (USB/external) or a mapped/network
+    /// drive disconnects; this explains what happened and how to recover instead of
+    /// showing the raw OS error. Unknown failures fall back to the original message.
+    /// </summary>
+    private static string GetFriendlySaveErrorMessage(Exception ex)
+    {
+        // Win32 errors HRESULT-wrapped by .NET file APIs:
+        //   ERROR_NOT_READY     (21) -> 0x80070015: drive present but not ready (no media / spun down)
+        //   ERROR_DEV_NOT_EXIST (55) -> 0x80070037: the volume is gone (ejected, disconnected, letter changed)
+        const int errorNotReady = unchecked((int)0x80070015);
+        const int errorDevNotExist = unchecked((int)0x80070037);
+
+        var driveUnavailable =
+            ex is DriveNotFoundException ||
+            ex is DirectoryNotFoundException ||
+            (ex is IOException && (ex.HResult == errorNotReady || ex.HResult == errorDevNotExist));
+
+        if (driveUnavailable)
+        {
+            return ("The drive where this company file is stored is no longer available. "
+                + "This usually happens when a USB or external drive is unplugged, or a network drive disconnects. "
+                + "Reconnect the drive and try again, or use \"Save As\" to save the file somewhere else "
+                + "(such as your main drive). Your work is still open, so nothing has been lost yet.").Translate();
+        }
+
+        if (ex is UnauthorizedAccessException)
+        {
+            return ("Argo Books does not have permission to save to this location. "
+                + "Use \"Save As\" to save the file to a folder you own, such as your Documents folder.").Translate();
+        }
+
+        // Unknown failure: keep the raw error text so detail isn't hidden.
+        return "Failed to save: {0}".TranslateFormat(ex.Message);
     }
 
     /// <summary>
@@ -3091,7 +3588,10 @@ public partial class App : Application
                     else if (!string.IsNullOrEmpty(args.ErrorMessage))
                     {
                         _mainWindowViewModel?.HideLoading();
-                        await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
+                        if (ConnectivityMessage.IsConnectivityMessage(args.ErrorMessage))
+                            await ShowConnectivityErrorAsync(args.ErrorMessage);
+                        else
+                            await ShowErrorMessageBoxAsync("Export Failed".Translate(), args.ErrorMessage);
                     }
                     else
                     {
@@ -3307,7 +3807,6 @@ public partial class App : Application
         });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
         navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
-        navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
 
         // Rentals Section
         navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = _rentalInventoryPageViewModel ??= new RentalInventoryPageViewModel() });

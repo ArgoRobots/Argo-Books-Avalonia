@@ -37,6 +37,16 @@ public static class UpgradePromptHelper
     }
 
     /// <summary>
+    /// Shows a plain error dialog when a usage check could not be completed, e.g. the
+    /// device is offline or the server was unreachable. This is shown instead of a
+    /// limit/upgrade prompt, since the user hasn't actually hit a limit (the count would
+    /// otherwise read a misleading "0/0"). The message is produced by the usage service,
+    /// which checks connectivity to tailor the wording.
+    /// </summary>
+    public static Task ShowUsageCheckFailedAsync(string? message)
+        => App.ShowConnectivityErrorAsync(message);
+
+    /// <summary>
     /// Shows a compelling upgrade prompt when the AI import limit is reached.
     /// </summary>
     /// <param name="importCount">Number of imports used this month.</param>

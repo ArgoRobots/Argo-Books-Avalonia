@@ -206,6 +206,10 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         if (App.NavigationService != null)
             App.NavigationService.Navigated += OnNavigated;
 
+        // Refresh totals + row displays when the display currency changes (mirrors the Payments page),
+        // so the currency-aware TotalDisplay/TotalValue recompute instead of showing stale amounts.
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
+
         // Subscribe to modal events to refresh when orders are saved
         if (App.PurchaseOrdersModalsViewModel != null)
         {
@@ -232,6 +236,16 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     {
         SearchQuery = null;
         CurrentPage = 1;
+        FilterOrders();
+    }
+
+    /// <summary>
+    /// Refreshes the total stat and the per-row displays when the display currency changes, so the
+    /// currency-aware TotalValue/TotalDisplay reconvert to the new currency.
+    /// </summary>
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        UpdateStatistics();
         FilterOrders();
     }
 
@@ -275,6 +289,26 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         LoadOrders();
     }
 
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch. Mirrors the Payments/Revenue/Expenses pages.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
+        if (App.PurchaseOrdersModalsViewModel != null)
+        {
+            App.PurchaseOrdersModalsViewModel.OrderSaved -= OnOrderSaved;
+            App.PurchaseOrdersModalsViewModel.OrderDeleted -= OnOrderDeleted;
+            App.PurchaseOrdersModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.PurchaseOrdersModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+    }
+
     #endregion
 
     #region Data Loading
@@ -305,7 +339,14 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         TotalOrders = _allOrders.Count;
         PendingOrders = _allOrders.Count(o => o.Status == PurchaseOrderStatus.Pending);
         OnOrderCount = _allOrders.Count(o => o.Status == PurchaseOrderStatus.OnOrder || o.Status == PurchaseOrderStatus.Sent);
-        TotalValue = $"${_allOrders.Sum(o => o.Total):N0}";
+        // Sum in USD (the normalized base) so mixed-currency POs aren't added as if same-currency,
+        // then render in the display currency at today's rate. Pending POs contribute 0 until they
+        // heal (Calculations.md §3). The old "$" + raw Total sum added EUR/GBP/USD numerals together.
+        // Convert each PO at its OWN order date before summing (Calculations.md §3a Phase 2).
+        TotalValue = CurrencyService.TrySumDisplayFromUSD(
+            _allOrders, o => o.Total, o => o.OriginalCurrency, o => o.TotalUSD, o => o.OrderDate, out var poTotalDisplay)
+            ? CurrencyService.Format(poTotalDisplay)
+            : CurrencyService.PendingMarker;
     }
 
     /// <summary>
@@ -423,7 +464,14 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 Subtotal = order.Subtotal,
                 ShippingCost = order.ShippingCost,
                 Total = order.Total,
-                TotalDisplay = CurrencyService.Format(order.Total),
+                // Currency-aware like the Payments list: convert the order's original-currency total
+                // to the display currency at its order date, and show "Pending" when that exact-date
+                // rate is unavailable (a future-dated PO whose conversion hasn't healed yet). Using
+                // the currency-blind Format(Total) here stamped the display symbol on the raw native
+                // number, so a foreign PO showed an unconverted amount and never showed pending.
+                TotalDisplay = CurrencyService.FormatWithOriginal(
+                    order.Total, order.OriginalCurrency, order.EffectiveTotalUSD, order.OrderDate),
+                OriginalCurrency = order.OriginalCurrency,
                 Status = order.Status,
                 StatusDisplay = FormatStatus(order.Status),
                 ExpectedDeliveryDate = order.ExpectedDeliveryDate,
@@ -677,6 +725,9 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     private string _totalDisplay = string.Empty;
 
     [ObservableProperty]
+    private string _originalCurrency = "USD";
+
+    [ObservableProperty]
     private PurchaseOrderStatus _status;
 
     [ObservableProperty]
@@ -698,19 +749,28 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     private DateTime _updatedAt;
 
     /// <summary>
+    /// True when the total is showing the pending-conversion marker (its display-currency value
+    /// isn't available yet). Drives the info glyph + tooltip next to the "Pending" text.
+    /// </summary>
+    public bool IsTotalPending => TotalDisplay == CurrencyService.PendingMarker;
+
+    /// <summary>Friendly explanation shown in the info tooltip when <see cref="IsTotalPending"/>.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, OrderDate);
+
+    /// <summary>
     /// Gets the status badge color based on status.
     /// </summary>
     public string StatusColor => Status switch
     {
-        PurchaseOrderStatus.Draft => AppColors.GrayMedium,
-        PurchaseOrderStatus.Pending => AppColors.Warning,
-        PurchaseOrderStatus.Approved => AppColors.Primary,
-        PurchaseOrderStatus.Sent => AppColors.Violet,
-        PurchaseOrderStatus.OnOrder => AppColors.Violet,
-        PurchaseOrderStatus.PartiallyReceived => AppColors.Warning,
-        PurchaseOrderStatus.Received => AppColors.Success,
-        PurchaseOrderStatus.Cancelled => AppColors.ExpenseRed,
-        _ => AppColors.GrayMedium
+        PurchaseOrderStatus.Draft => AppColors.GrayText,
+        PurchaseOrderStatus.Pending => AppColors.WarningText,
+        PurchaseOrderStatus.Approved => AppColors.PrimaryText,
+        PurchaseOrderStatus.Sent => AppColors.VioletHover,
+        PurchaseOrderStatus.OnOrder => AppColors.VioletHover,
+        PurchaseOrderStatus.PartiallyReceived => AppColors.WarningText,
+        PurchaseOrderStatus.Received => AppColors.SuccessText,
+        PurchaseOrderStatus.Cancelled => AppColors.Error,
+        _ => AppColors.GrayText
     };
 
     /// <summary>

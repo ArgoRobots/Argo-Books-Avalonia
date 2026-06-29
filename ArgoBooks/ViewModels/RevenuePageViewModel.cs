@@ -367,12 +367,21 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Total monthly revenue, net of refunds (cash-basis: refund counts on
         // the day it was issued). Mirrors the dashboard's stat-card semantics
         // exactly so the two never drift: paid-only, capped at end of month.
-        var monthlyGrossUSD = RevenueAggregator.SumCollectedRevenueUSD(
-            _allRevenue, startOfMonth, endOfMonth);
-        var monthlyRefundsUSD = companyData?.Payments != null
-            ? RefundAggregator.GetRefundedInDateRangeUSD(companyData.Payments, startOfMonth, endOfMonth)
-            : 0m;
-        TotalMonthlyRevenue = CurrencyService.FormatFromUSD(monthlyGrossUSD - monthlyRefundsUSD, now);
+        // Convert each row/refund at its OWN date before summing (Calculations.md §3a Phase 2).
+        var grossComplete = CurrencyService.TrySumDisplayFromUSD(
+            RevenueAggregator.OnlyCollected(
+                _allRevenue.Where(s => s.Date >= startOfMonth && s.Date <= endOfMonth)),
+            s => s.Total, s => s.OriginalCurrency, s => s.TotalUSD, s => s.Date, out var monthlyGrossDisplay);
+        var refundsComplete = true;
+        var monthlyRefundsDisplay = 0m;
+        if (companyData?.Payments != null)
+            refundsComplete = CurrencyService.TrySumDisplayFromUSD(
+                companyData.Payments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= endOfMonth),
+                p => Math.Abs(p.Amount), p => p.OriginalCurrency, p => Math.Abs(p.AmountUSD), p => p.Date, out monthlyRefundsDisplay);
+        // Pending if any component is still awaiting its rate, so the total isn't shown partial.
+        TotalMonthlyRevenue = grossComplete && refundsComplete
+            ? CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay)
+            : CurrencyService.PendingMarker;
 
         // Sales count
         SalesCount = _allRevenue.Count;
@@ -848,6 +857,9 @@ public partial class RevenueDisplayItem : ObservableObject
     public string UnitPriceFormatted => IsPendingConversion
         ? CurrencyService.Format(UnitPrice)
         : CurrencyService.FormatWithOriginal(UnitPrice, OriginalCurrency, UnitPriceUSD, Date);
+
+    /// <summary>Friendly explanation for the info tooltip next to the "Pending" status badge.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, Date);
 
     public string CustomerInitials
     {

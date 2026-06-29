@@ -68,7 +68,7 @@ public partial class App
             }
             if (CompanyManager.CompanyData != null)
             {
-                EventLogService.Initialize(CompanyManager.CompanyData.EventLog, CompanyManager.CompanyData);
+                EventLogService.Initialize(CompanyManager.CompanyData.EventLog);
 
                 _appShellViewModel.VersionHistoryModalViewModel.SetEventLogService(EventLogService);
             }
@@ -95,20 +95,8 @@ public partial class App
                 }
             }
 
-            // Reconcile and process any pending currency conversions
-            if (PendingConversionService != null && CompanyManager.CompanyData != null)
-            {
-                await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
-                await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
-            }
-
-            // Start periodic timer to process pending conversions when connectivity returns
-            StartPendingConversionTimer();
-
-            // Check for low stock and overdue invoice notifications
-            CheckAndSendNotifications();
-
             // Load company-specific chart settings (date range, chart type, etc.)
+            // before navigating so the dashboard renders with the right range.
             ChartSettingsService.Instance.LoadForCompany(args.FilePath);
 
             // Migrate: if a legacy .env API key exists but the company has no persisted key,
@@ -127,19 +115,9 @@ public partial class App
                 portalSettings.PersistedApiKey = DotEnv.Get(PortalSettings.ApiKeyEnvVar);
             }
 
-            // Load this company's portal API key into the process-level cache
+            // Load this company's portal API key into the process-level cache (cheap, so any
+            // portal-dependent UI has it on first paint; the actual sync is deferred below).
             PortalSettings.ActivateApiKey(portalSettings);
-
-            // Auto-sync online payments from the portal on company open
-            await AutoSyncPortalPaymentsAsync();
-
-            // Start periodic portal sync every 5 minutes
-            _portalSyncTimer?.Dispose();
-            _portalSyncTimer = new Timer(
-                state => { _ = AutoSyncPortalPaymentsAsync(); },
-                null,
-                TimeSpan.FromMinutes(5),
-                TimeSpan.FromMinutes(5));
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
@@ -148,6 +126,48 @@ public partial class App
             // overlay together so the user never sees a half-initialized dashboard.
             _mainWindowViewModel.OpenCompany(args.CompanyName);
             _mainWindowViewModel.HideLoading();
+
+            // Defer non-visual and network work until after the dashboard has painted,
+            // so the company opens as fast as possible. Posted on the UI thread at
+            // Background priority to keep thread affinity but yield to rendering first.
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                try
+                {
+                    // Merge the deferred receipts on the UI thread now that the dashboard
+                    // has painted, so the rest of the app sees them and any auto-save below
+                    // writes them back. Save paths also gate on this, so it's safe either way.
+                    await CompanyManager.EnsureReceiptsLoadedAsync();
+
+                    // Reconcile and process any pending currency conversions
+                    if (PendingConversionService != null && CompanyManager.CompanyData != null)
+                    {
+                        await PendingConversionService.ReconcileWithCompanyDataAsync(CompanyManager.CompanyData);
+                        await PendingConversionService.ProcessPendingConversionsAsync(CompanyManager.CompanyData);
+                    }
+
+                    // Start periodic timer to process pending conversions when connectivity returns
+                    StartPendingConversionTimer();
+
+                    // Check for low stock and overdue invoice notifications
+                    CheckAndSendNotifications();
+
+                    // Auto-sync online payments from the portal on company open
+                    await AutoSyncPortalPaymentsAsync();
+
+                    // Start periodic portal sync every 5 minutes
+                    _portalSyncTimer?.Dispose();
+                    _portalSyncTimer = new Timer(
+                        state => { _ = AutoSyncPortalPaymentsAsync(); },
+                        null,
+                        TimeSpan.FromMinutes(5),
+                        TimeSpan.FromMinutes(5));
+                }
+                catch (Exception ex)
+                {
+                    ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Deferred post-open initialization failed");
+                }
+            }, Avalonia.Threading.DispatcherPriority.Background);
         };
 
         CompanyManager.CompanyClosed += async (_, _) =>
@@ -162,7 +182,7 @@ public partial class App
             _appShellViewModel.SetCompanyInfo(null);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
-            if (!_isOpeningCompany)
+            if (!_isOpeningCompany && !_isCreatingCompany)
                 _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
@@ -178,11 +198,18 @@ public partial class App
             // Clear cached page ViewModels to ensure fresh state when opening a new company
             ClearPageCaches();
 
-            var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
-            await LanguageService.Instance.SetLanguageAsync(globalLanguage);
-
             NavigationService?.NavigateTo("Welcome");
             _welcomeScreenViewModel?.InitializeTutorialMode();
+
+            // Reset to the global language LAST. This handler is async void, and creating a new
+            // company closes the old one then immediately opens the new one, so this close handler
+            // and the open handler interleave. Keeping the only await at the very end guarantees the
+            // synchronous UI changes above (including the Welcome navigation) all run during the
+            // close, before the open navigates to the Dashboard. If the await sat earlier, this
+            // handler could resume after the open and re-navigate to "Welcome", stranding the
+            // welcome screen inside the freshly opened company's shell.
+            var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
+            await LanguageService.Instance.SetLanguageAsync(globalLanguage);
         };
 
         CompanyManager.CompanySaved += (_, _) =>
@@ -399,7 +426,7 @@ public partial class App
                 {
                     _appShellViewModel.HeaderViewModel.ShowSavingIndicator = false;
                     ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save company");
-                    await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message));
+                    await ShowErrorMessageBoxAsync("Error".Translate(), GetFriendlySaveErrorMessage(ex));
                 }
             }
         };
@@ -498,6 +525,11 @@ public partial class App
                 Address = args.Address
             };
 
+            // Keep the loading overlay up across the close-then-open transition inside
+            // CreateCompanyAsync so the welcome screen doesn't flash; reset on every exit path.
+            _isCreatingCompany = true;
+            try
+            {
             // Retry loop so a save blocked by security software (antivirus / ransomware
             // protection) can offer Retry / Save to a different folder instead of failing.
             while (true)
@@ -559,6 +591,11 @@ public partial class App
                     await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message));
                     return;
                 }
+            }
+            }
+            finally
+            {
+                _isCreatingCompany = false;
             }
         };
 
@@ -742,7 +779,7 @@ public partial class App
                     var oldLogoFilePath = CompanyManager.CurrentCompanyLogoPath;
                     if (!string.IsNullOrEmpty(oldLogoFilePath) && File.Exists(oldLogoFilePath))
                     {
-                        oldLogoBytes = await Task.Run(() => File.ReadAllBytes(oldLogoFilePath));
+                        oldLogoBytes = await Task.Run(() => SharedFileReader.ReadAllBytes(oldLogoFilePath));
                     }
 
                     var nameChanged = oldName != args.CompanyName;
@@ -775,7 +812,7 @@ public partial class App
                     var newLogoFilePath = CompanyManager.CurrentCompanyLogoPath;
                     if (!string.IsNullOrEmpty(newLogoFilePath) && File.Exists(newLogoFilePath))
                     {
-                        newLogoBytes = await Task.Run(() => File.ReadAllBytes(newLogoFilePath));
+                        newLogoBytes = await Task.Run(() => SharedFileReader.ReadAllBytes(newLogoFilePath));
                     }
 
                     // Derive temp directory for logo file operations during undo/redo
@@ -1322,7 +1359,10 @@ public partial class App
                     // Track telemetry
                     var fileSize = new FileInfo(backupPath).Length;
                     if (TelemetryManager != null)
+                    {
                         await TelemetryManager.TrackExportAsync(ExportType.Backup, backupStopwatch.ElapsedMilliseconds, fileSize);
+                        _ = TelemetryManager.TrackFeatureAsync(FeatureName.BackupCreated);
+                    }
 
                     // Open the containing folder
                     try
@@ -1511,6 +1551,12 @@ public partial class App
                 return;
             }
 
+            if (format.ToUpperInvariant() == "BANKSTATEMENT")
+            {
+                await OpenBankStatementImportAsync();
+                return;
+            }
+
             // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {
@@ -1527,11 +1573,11 @@ public partial class App
                 [
                     new FilePickerFileType("Spreadsheets")
                     {
-                        Patterns = ["*.xlsx", "*.csv"]
+                        Patterns = ["*.xlsx", "*.xls", "*.csv"]
                     },
                     new FilePickerFileType("Excel Workbook")
                     {
-                        Patterns = ["*.xlsx"]
+                        Patterns = ["*.xlsx", "*.xls"]
                     },
                     new FilePickerFileType("CSV File")
                     {

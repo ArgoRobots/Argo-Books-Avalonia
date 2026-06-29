@@ -616,7 +616,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         {
             try
             {
-                using var stream = File.OpenRead(logoPath!);
+                using var stream = SharedFileReader.OpenRead(logoPath!);
                 using var bitmap = SKBitmap.Decode(stream);
                 if (bitmap != null)
                 {

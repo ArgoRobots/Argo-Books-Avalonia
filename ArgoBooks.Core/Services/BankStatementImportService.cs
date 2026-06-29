@@ -94,7 +94,16 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
     {
         try
         {
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
+            // FileShare.ReadWrite so a statement still imports while it's open in Excel/LibreOffice.
+            var collected = new List<string>();
+            await using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true))
+            {
+                string? line;
+                while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+                    collected.Add(line);
+            }
+            var lines = collected.ToArray();
             if (lines.Length < 2) return [];
 
             var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);

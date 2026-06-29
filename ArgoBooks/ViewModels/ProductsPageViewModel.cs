@@ -11,6 +11,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ArgoBooks.Helpers;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -739,6 +741,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         };
 
         companyData.Products.Add(newProduct);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ProductCreated);
         companyData.MarkAsModified();
 
         // Record undo action
@@ -826,7 +829,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Update the product
         var productToEdit = _editingProduct;
-        App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
         productToEdit.Name = newName;
         productToEdit.Description = newDescription;
         productToEdit.Sku = newSku;

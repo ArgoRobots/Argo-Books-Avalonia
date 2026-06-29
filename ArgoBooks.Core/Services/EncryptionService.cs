@@ -32,12 +32,6 @@ public class EncryptionService : IEncryptionService
         return KeyDerivation.ComputePasswordHashBase64(password, salt);
     }
 
-    /// <inheritdoc />
-    public bool ValidatePassword(string password, string storedHash, string salt)
-    {
-        return KeyDerivation.VerifyPasswordBase64(password, storedHash, salt);
-    }
-
     #endregion
 
     #region Encryption (Byte Arrays)
@@ -147,7 +141,55 @@ public class EncryptionService : IEncryptionService
     }
 
     /// <inheritdoc />
-    public async Task<MemoryStream> DecryptAsync(Stream encryptedStream, string password, string salt, string iv)
+    public byte[] DecryptWithVerification(
+        byte[] encryptedData, string password, string salt, string iv, string expectedPasswordHash)
+    {
+        ArgumentNullException.ThrowIfNull(encryptedData);
+        ArgumentException.ThrowIfNullOrEmpty(password);
+        ArgumentException.ThrowIfNullOrEmpty(salt);
+        ArgumentException.ThrowIfNullOrEmpty(iv);
+        ArgumentException.ThrowIfNullOrEmpty(expectedPasswordHash);
+
+        if (encryptedData.Length < KeyDerivation.TagSize)
+            throw new CryptographicException("Invalid encrypted data.");
+
+        var saltBytes = Convert.FromBase64String(salt);
+
+        // Single PBKDF2 pass yields both the AES key and the verification hash.
+        KeyDerivation.DeriveKeyAndHash(password, saltBytes, out var key, out var hash);
+        try
+        {
+            var expected = Convert.FromBase64String(expectedPasswordHash);
+            if (!CryptographicOperations.FixedTimeEquals(hash, expected))
+                throw new UnauthorizedAccessException("Invalid password.");
+
+            var nonce = Convert.FromBase64String(iv);
+
+            // Split ciphertext and tag
+            var ciphertextLength = encryptedData.Length - KeyDerivation.TagSize;
+            var ciphertext = new byte[ciphertextLength];
+            var tag = new byte[KeyDerivation.TagSize];
+
+            Buffer.BlockCopy(encryptedData, 0, ciphertext, 0, ciphertextLength);
+            Buffer.BlockCopy(encryptedData, ciphertextLength, tag, 0, KeyDerivation.TagSize);
+
+            // Decrypt using AES-GCM
+            var plaintext = new byte[ciphertextLength];
+            using var aesGcm = new AesGcm(key, KeyDerivation.TagSize);
+            aesGcm.Decrypt(nonce, ciphertext, tag, plaintext);
+
+            return plaintext;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+            CryptographicOperations.ZeroMemory(hash);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<MemoryStream> DecryptWithVerificationAsync(
+        Stream encryptedStream, string password, string salt, string iv, string expectedPasswordHash)
     {
         ArgumentNullException.ThrowIfNull(encryptedStream);
 
@@ -164,8 +206,7 @@ public class EncryptionService : IEncryptionService
             encryptedData = memStream.ToArray();
         }
 
-        // Decrypt
-        var decryptedData = Decrypt(encryptedData, password, salt, iv);
+        var decryptedData = DecryptWithVerification(encryptedData, password, salt, iv, expectedPasswordHash);
 
         // Return as memory stream
         var result = new MemoryStream(decryptedData);

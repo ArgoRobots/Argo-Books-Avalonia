@@ -129,6 +129,20 @@
                     </StackPanel>
                 </Button>
 
+                <!-- Import Bank Statement -->
+                <Button Classes="quick-action-compact" Margin="6" Width="165"
+                        Command="{Binding ImportBankStatementCommand}"
+                        IsVisible="{Binding ShowImportBankStatement}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource PrimaryIconBgBrush}">
+                            <PathIcon Data="{x:Static local:Icons.Bank}"
+                                      Width="16" Height="16" Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <TextBlock Text="{loc:Loc 'Bank Statement'}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
                 <!-- New Customer -->
                 <Button Classes="quick-action-compact" Margin="6" Width="165"
                         Command="{Binding NewCustomerCommand}"

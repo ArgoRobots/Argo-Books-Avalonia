@@ -73,19 +73,52 @@
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
-                <!-- Extra Buttons Content (AI Scan Receipt) -->
+                <!-- Extra Buttons Content (Import menu) -->
                 <table:ArgoTable.ExtraButtonsContent>
-                    <Button x:Name="AiScanButton"
+                    <Button x:Name="ImportMenuButton"
                             Classes="primary-button"
                             Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                             Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
-                            Click="OnAiScanButtonClick"
-                            ToolTip.Tip="{loc:Loc 'AI Scan Receipt'}">
+                            ToolTip.Tip="{loc:Loc 'Import'}">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Click="OnAiScanButtonClick">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                    </MenuItem.Icon>
+                                    <MenuItem.Header>
+                                        <StackPanel Spacing="1" Margin="2,2,12,2">
+                                            <TextBlock Text="{loc:Loc 'Scan a receipt'}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{loc:Loc 'Snap a photo or PDF'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </MenuItem.Header>
+                                </MenuItem>
+                                <MenuItem Click="OnImportBankStatementClick">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{x:Static icons:Icons.Bank}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                    </MenuItem.Icon>
+                                    <MenuItem.Header>
+                                        <StackPanel Spacing="1" Margin="2,2,12,2">
+                                            <TextBlock Text="{loc:Loc 'Import bank statement'}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{loc:Loc 'CSV, Excel, or PDF'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </MenuItem.Header>
+                                </MenuItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
+                            <PathIcon Data="{x:Static icons:Icons.ImportData}"
                                       Width="16" Height="16"
                                       Foreground="White" />
-                            <TextBlock Text="{loc:Loc 'AI Scan Receipt'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                            <TextBlock Text="{loc:Loc 'Import'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
                         </StackPanel>
                     </Button>
                 </table:ArgoTable.ExtraButtonsContent>
@@ -287,12 +320,22 @@
                                                         Margin="8,0,8,0"
                                                         Padding="8,4"
                                                         CornerRadius="4"
+                                                        ClipToBounds="True"
                                                         Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusBackground}}">
-                                                    <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
-                                                               FontSize="12"
-                                                               FontWeight="Medium"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
+                                                                   FontSize="12"
+                                                                   FontWeight="Medium"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
+                                                        <!-- Explains the "Pending" conversion status (awaiting the exact-date rate) -->
+                                                        <PathIcon Data="{x:Static icons:Icons.InfoOutline}"
+                                                                  Width="12" Height="12"
+                                                                  VerticalAlignment="Center"
+                                                                  Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}"
+                                                                  IsVisible="{Binding IsPendingConversion}"
+                                                                  ToolTip.Tip="{Binding PendingConversionHint}" />
+                                                    </StackPanel>
                                                 </Border>
                                             </table:ArgoTableCell.CellContent>
                                         </table:ArgoTableCell>

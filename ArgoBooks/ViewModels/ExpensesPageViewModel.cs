@@ -365,11 +365,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Total monthly expenses (in USD, then convert to display currency)
-        var monthlyTotalUSD = _allExpenses
-            .Where(p => p.Date >= startOfMonth)
-            .Sum(p => p.EffectiveTotalUSD);
-        TotalMonthlyExpenses = CurrencyService.FormatFromUSD(monthlyTotalUSD, now);
+        // Total monthly expenses: convert each at its OWN date before summing (Calculations.md
+        // §3a Phase 2), so a non-USD display total isn't re-priced at today's rate.
+        TotalMonthlyExpenses = CurrencyService.FormatSumDisplayFromUSD(
+            _allExpenses.Where(p => p.Date >= startOfMonth),
+            p => p.Total, p => p.OriginalCurrency, p => p.TotalUSD, p => p.Date);
 
         // Transaction count
         TransactionCount = _allExpenses.Count;
@@ -814,6 +814,9 @@ public partial class ExpenseDisplayItem : ObservableObject
         ? CurrencyService.Format(UnitPrice)
         : CurrencyService.FormatWithOriginal(UnitPrice, OriginalCurrency, UnitPriceUSD, Date);
     public string ReceiptIcon => HasReceipt ? "✓" : "✗";
+
+    /// <summary>Friendly explanation for the info tooltip next to the "Pending" status badge.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, Date);
 
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";

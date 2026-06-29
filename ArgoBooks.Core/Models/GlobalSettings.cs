@@ -113,6 +113,7 @@ public class QuickActionsSettings
     public bool ShowNewExpense { get; set; } = true;
     public bool ShowNewRevenue { get; set; } = true;
     public bool ShowScanReceipt { get; set; } = true;
+    public bool ShowImportBankStatement { get; set; } = false;
 
     // Contact actions
     public bool ShowNewCustomer { get; set; } = false;

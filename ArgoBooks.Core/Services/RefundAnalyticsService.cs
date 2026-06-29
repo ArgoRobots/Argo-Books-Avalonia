@@ -9,17 +9,35 @@ namespace ArgoBooks.Core.Services;
 /// Refund Payments are identified by IsRefund==true and have negative Amount;
 /// the absolute value of EffectiveAmountUSD is the refund amount.
 ///
-/// All sums are USD-normalized (Payment.EffectiveAmountUSD) so multi-currency
-/// portals roll up consistently. Callers must format with
-/// <c>CurrencyService.FormatFromUSD</c> for display. See docs/Calculations.md §3.
+/// Sums are USD-normalized (Payment.EffectiveAmountUSD) by default so multi-currency
+/// portals roll up consistently. Money methods accept an optional
+/// <c>Func&lt;decimal,DateTime,decimal&gt; toDisplay</c>; when supplied, each refund is
+/// converted to the display currency at its OWN date (Calculations.md §3a) and callers
+/// format the result directly with <c>CurrencyService.Format</c> (no second conversion).
+/// When omitted the result stays in USD. See docs/Calculations.md §3.
 /// </summary>
 public static class RefundAnalyticsService
 {
+    /// <summary>
+    /// Identity USD "conversion" used when no per-date display converter is supplied,
+    /// so existing USD callers and tests keep their exact behavior.
+    /// </summary>
+    private static decimal IdentityUSD(decimal usd, DateTime _) => usd;
+
     /// <summary>Total refunded over a window, in USD.</summary>
     public static decimal TotalRefundedUSD(CompanyData company, DateTime since)
         => company.Payments
             .Where(p => p.IsRefund && p.Date >= since)
             .Sum(p => Math.Abs(p.EffectiveAmountUSD));
+
+    /// <summary>
+    /// Total refunded over a window, converted to display currency per
+    /// Calculations.md §3a: each refund is converted at its OWN date before summing.
+    /// </summary>
+    public static decimal TotalRefundedDisplay(CompanyData company, DateTime since, Func<decimal, DateTime, decimal> toDisplay)
+        => company.Payments
+            .Where(p => p.IsRefund && p.Date >= since)
+            .Sum(p => toDisplay(Math.Abs(p.EffectiveAmountUSD), p.Date));
 
     /// <summary>Refund rate = sum(refunds) / sum(positive payments) over the window. 0 if no payments.</summary>
     public static decimal RefundRate(CompanyData company, DateTime since)
@@ -31,8 +49,13 @@ public static class RefundAnalyticsService
         return positive > 0 ? refunds / positive : 0m;
     }
 
-    /// <summary>Monthly buckets of refund totals (USD) for the last <paramref name="months"/> months.</summary>
-    public static IReadOnlyList<MonthlyRefundTotal> MonthlyTotals(CompanyData company, int months)
+    /// <summary>
+    /// Monthly buckets of refund totals for the last <paramref name="months"/> months. With a
+    /// <paramref name="toDisplay"/> converter, each refund is converted to the display currency at
+    /// its OWN date before bucketing (Calculations.md §3a Phase 2); null keeps USD (tests/callers).
+    /// </summary>
+    public static IReadOnlyList<MonthlyRefundTotal> MonthlyTotals(
+        CompanyData company, int months, Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         var firstMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-(months - 1));
         var buckets = new Dictionary<DateTime, decimal>();
@@ -41,7 +64,9 @@ public static class RefundAnalyticsService
         foreach (var p in company.Payments.Where(p => p.IsRefund && p.Date >= firstMonth))
         {
             var key = new DateTime(p.Date.Year, p.Date.Month, 1);
-            if (buckets.ContainsKey(key)) buckets[key] += Math.Abs(p.EffectiveAmountUSD);
+            if (!buckets.ContainsKey(key)) continue;
+            var amount = Math.Abs(p.EffectiveAmountUSD);
+            buckets[key] += toDisplay != null ? toDisplay(amount, p.Date) : amount;
         }
         return buckets
             .OrderBy(kv => kv.Key)
@@ -49,16 +74,22 @@ public static class RefundAnalyticsService
             .ToList();
     }
 
-    /// <summary>Top customers by absolute refund total (USD) since <paramref name="since"/>.</summary>
-    public static IReadOnlyList<CustomerRefundTotal> TopRefundedCustomers(CompanyData company, DateTime since, int top)
+    /// <summary>
+    /// Top customers by absolute refund total since <paramref name="since"/>. Amounts are
+    /// USD by default; pass <paramref name="toDisplay"/> to convert each refund at its OWN
+    /// date (Calculations.md §3a) and return display-currency totals.
+    /// </summary>
+    public static IReadOnlyList<CustomerRefundTotal> TopRefundedCustomers(
+        CompanyData company, DateTime since, int top, Func<decimal, DateTime, decimal>? toDisplay = null)
     {
+        var convert = toDisplay ?? IdentityUSD;
         var byCustomer = company.Payments
             .Where(p => p.IsRefund && p.Date >= since)
             .GroupBy(p => p.CustomerId)
             .Select(g => new
             {
                 CustomerId = g.Key,
-                Total = g.Sum(p => Math.Abs(p.EffectiveAmountUSD)),
+                Total = g.Sum(p => convert(Math.Abs(p.EffectiveAmountUSD), p.Date)),
                 Count = g.Count(),
             })
             .OrderByDescending(x => x.Total)
@@ -72,18 +103,25 @@ public static class RefundAnalyticsService
             x.Count)).ToList();
     }
 
-    /// <summary>Top product/line items by refund total (USD), derived from refunded invoices' line items.</summary>
-    public static IReadOnlyList<ProductRefundTotal> TopRefundedProducts(CompanyData company, DateTime since, int top)
+    /// <summary>
+    /// Top product/line items by refund total, derived from refunded invoices' line items.
+    /// Amounts are USD by default; pass <paramref name="toDisplay"/> to convert each refund
+    /// at its OWN date (Calculations.md §3a) and return display-currency totals.
+    /// </summary>
+    public static IReadOnlyList<ProductRefundTotal> TopRefundedProducts(
+        CompanyData company, DateTime since, int top, Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         // Sum refund amounts per invoice, then attribute proportionally across the
         // invoice's line items by their share of the original total. This is an
         // approximation: the true refunded line items are stored in the server's
         // line_items_json snapshot but not surfaced to the desktop.
+        var convert = toDisplay ?? IdentityUSD;
         var byProduct = new Dictionary<string, decimal>();
         var refundsByInvoice = company.Payments
             .Where(p => p.IsRefund && p.Date >= since)
             .GroupBy(p => p.InvoiceId)
-            .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.EffectiveAmountUSD)));
+            // Convert each refund at its own date before summing per invoice.
+            .ToDictionary(g => g.Key, g => g.Sum(p => convert(Math.Abs(p.EffectiveAmountUSD), p.Date)));
 
         foreach (var (invoiceId, refundAmt) in refundsByInvoice)
         {
@@ -91,8 +129,8 @@ public static class RefundAnalyticsService
             if (invoice?.LineItems == null || invoice.Total <= 0) continue;
             var totalLines = invoice.LineItems.Sum(li => li.Amount);
             if (totalLines <= 0) continue;
-            // refundAmt is USD; (li.Amount / totalLines) is a dimensionless
-            // share. Product attribution stays in USD.
+            // refundAmt is in the target currency; (li.Amount / totalLines) is a
+            // dimensionless share, so product attribution stays in that currency.
             foreach (var li in invoice.LineItems)
             {
                 var share = (li.Amount / totalLines) * refundAmt;
@@ -108,22 +146,38 @@ public static class RefundAnalyticsService
             .ToList();
     }
 
-    /// <summary>Top reasons by occurrence count (filtered to non-empty reasons since the window). Totals in USD.</summary>
-    public static IReadOnlyList<RefundReasonCount> TopReasons(CompanyData company, DateTime since, int top)
-        => company.Payments
+    /// <summary>
+    /// Top reasons by occurrence count (filtered to non-empty reasons since the window).
+    /// Totals are USD by default; pass <paramref name="toDisplay"/> to convert each refund
+    /// at its OWN date (Calculations.md §3a) and return display-currency totals.
+    /// </summary>
+    public static IReadOnlyList<RefundReasonCount> TopReasons(
+        CompanyData company, DateTime since, int top, Func<decimal, DateTime, decimal>? toDisplay = null)
+    {
+        var convert = toDisplay ?? IdentityUSD;
+        return company.Payments
             .Where(p => p.IsRefund && p.Date >= since && !string.IsNullOrWhiteSpace(p.RefundReason))
             .GroupBy(p => p.RefundReason!.Trim(), StringComparer.OrdinalIgnoreCase)
-            .Select(g => new RefundReasonCount(g.Key, g.Count(), g.Sum(p => Math.Abs(p.EffectiveAmountUSD))))
+            .Select(g => new RefundReasonCount(g.Key, g.Count(), g.Sum(p => convert(Math.Abs(p.EffectiveAmountUSD), p.Date))))
             .OrderByDescending(r => r.Count)
             .Take(top)
             .ToList();
+    }
 
-    /// <summary>Channel breakdown by total refunded amount (USD).</summary>
-    public static IReadOnlyDictionary<string, decimal> ChannelBreakdown(CompanyData company, DateTime since)
-        => company.Payments
+    /// <summary>
+    /// Channel breakdown by total refunded amount. Amounts are USD by default; pass
+    /// <paramref name="toDisplay"/> to convert each refund at its OWN date
+    /// (Calculations.md §3a) and return display-currency totals.
+    /// </summary>
+    public static IReadOnlyDictionary<string, decimal> ChannelBreakdown(
+        CompanyData company, DateTime since, Func<decimal, DateTime, decimal>? toDisplay = null)
+    {
+        var convert = toDisplay ?? IdentityUSD;
+        return company.Payments
             .Where(p => p.IsRefund && p.Date >= since)
             .GroupBy(p => p.PaymentMethod.ToString())
-            .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.EffectiveAmountUSD)));
+            .ToDictionary(g => g.Key, g => g.Sum(p => convert(Math.Abs(p.EffectiveAmountUSD), p.Date)));
+    }
 
     /// <summary>Average days between original payment and its refund (for refunds that link to a known source).</summary>
     public static double AverageRefundLatencyDays(CompanyData company, DateTime since)

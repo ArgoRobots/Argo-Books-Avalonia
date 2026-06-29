@@ -277,6 +277,26 @@ public partial class PastPredictionsModal : UserControl
                 }
             }
         }
+        catch (InvalidOperationException ex) when (ConnectivityMessage.IsConnectivityMessage(ex.Message))
+        {
+            await App.ShowConnectivityErrorAsync(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Non-connectivity service error (e.g. the server rejected the request).
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Export Failed",
+                    Message = ex.Message,
+                    PrimaryButtonText = "OK",
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
+        }
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Export, "Failed to export to Google Sheets");

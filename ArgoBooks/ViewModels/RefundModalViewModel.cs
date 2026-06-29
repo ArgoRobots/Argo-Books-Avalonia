@@ -490,6 +490,14 @@ public partial class RefundModalViewModel : ObservableObject
             var result = await _refundService.RequestRefundAsync(draft);
             if (!result.Ok)
             {
+                // A connectivity failure already carries a clear, user-friendly message,
+                // so show it on its own without the HTTP/code diagnostics.
+                if (result.ErrorCode is "NETWORK_ERROR" or "TIMEOUT" && !string.IsNullOrEmpty(result.Message))
+                {
+                    ErrorMessage = result.Message;
+                    return;
+                }
+
                 // Build a diagnostic-friendly message: include HTTP status and
                 // ErrorCode so it's clear when the failure is server-side
                 // (e.g. 404 = endpoints not deployed yet, 401 = bad API key,

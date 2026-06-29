@@ -61,6 +61,19 @@ public static class RefundAggregator
     }
 
     /// <summary>
+    /// Display-currency variant of <see cref="GetRefundedInDateRangeUSD"/>: converts each refund at
+    /// its OWN date via <paramref name="toDisplay"/> before summing (docs/Calculations.md §3a Phase 2).
+    /// Pass <c>CurrencyService.GetDisplayAmount</c>. Equals the USD sum for a USD display currency.
+    /// </summary>
+    public static decimal GetRefundedInDateRangeDisplay(
+        IEnumerable<Payment> allPayments, DateTime start, DateTime end, Func<decimal, DateTime, decimal> toDisplay)
+    {
+        return allPayments
+            .Where(p => p.IsRefund && p.Date >= start && p.Date <= end)
+            .Sum(p => toDisplay(Math.Abs(p.EffectiveAmountUSD), p.Date));
+    }
+
+    /// <summary>
     /// Group refund amounts (absolute USD) by the day the refund was issued.
     /// Used by per-day charts that subtract refunds from revenue/profit so
     /// the deduction lands on the refund's own day, not the original payment's.
@@ -101,6 +114,36 @@ public static class RefundAggregator
             {
                 sum += refundTotalUSD;
             }
+        }
+        return sum;
+    }
+
+    /// <summary>
+    /// Display-currency variant of <see cref="GetRefundedPreTaxInDateRangeUSD"/>: converts each
+    /// refund's pre-tax USD portion at its OWN date via <paramref name="toDisplay"/> before summing
+    /// (docs/Calculations.md §3a Phase 2). Equals the USD sum for a USD display currency.
+    /// </summary>
+    public static decimal GetRefundedPreTaxInDateRangeDisplay(
+        IEnumerable<Payment> allPayments,
+        IReadOnlyDictionary<string, Invoice> invoicesById,
+        DateTime start, DateTime end, Func<decimal, DateTime, decimal> toDisplay)
+    {
+        decimal sum = 0m;
+        foreach (var p in allPayments.Where(x => x.IsRefund && x.Date >= start && x.Date <= end))
+        {
+            var refundTotalUSD = Math.Abs(p.EffectiveAmountUSD);
+            decimal preTaxUSD;
+            if (!string.IsNullOrEmpty(p.InvoiceId)
+                && invoicesById.TryGetValue(p.InvoiceId, out var invoice)
+                && invoice.Total > 0)
+            {
+                preTaxUSD = refundTotalUSD * (invoice.Subtotal / invoice.Total);
+            }
+            else
+            {
+                preTaxUSD = refundTotalUSD;
+            }
+            sum += toDisplay(preTaxUSD, p.Date);
         }
         return sum;
     }

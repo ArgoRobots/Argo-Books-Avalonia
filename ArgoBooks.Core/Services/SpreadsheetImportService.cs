@@ -1,7 +1,10 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
+using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -39,6 +42,51 @@ public class ImportOptions
     /// Reset before each sheet import. Used internally by import methods.
     /// </summary>
     internal int SkippedCount { get; set; }
+
+    /// <summary>
+    /// Tracks the number of existing records updated in place during import (matched by id
+    /// and not skipped). Reset before each sheet import. Used internally by import methods so
+    /// the per-sheet result can report updates instead of misattributing them to dropped rows.
+    /// </summary>
+    internal int UpdatedCount { get; set; }
+
+    /// <summary>
+    /// Tracks rows inserted for grouped sheet types whose entities are not added 1:1 to a
+    /// collection (purchase-order line items, which are merged onto their parent order). Reset
+    /// before each sheet import. Used internally so the count cannot be inferred from a
+    /// collection-size delta.
+    /// </summary>
+    internal int InsertedCount { get; set; }
+
+    /// <summary>
+    /// Per-row currency resolved deterministically from the amount cells before import
+    /// (see <see cref="CurrencyImportPreparer"/>): sheet name -> (0-based data-row ordinal -> ISO code).
+    /// When a row has an entry, financial builders set <c>OriginalCurrency</c> to that code and
+    /// convert amounts to USD. Rows without an entry keep the existing company-currency behavior.
+    /// Applies to deterministic (Tier 1) imports.
+    /// </summary>
+    public Dictionary<string, Dictionary<int, string>> RowCurrencyBySheet { get; set; }
+        = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Global resolution of ambiguous currency symbols chosen by the user (e.g. "$" -> "CAD").
+    /// Used to normalize a symbol the LLM emits into <c>originalCurrency</c> on the Tier 2 path,
+    /// where per-row ordinals are not available.
+    /// </summary>
+    public Dictionary<string, string> SymbolResolution { get; set; }
+        = new(StringComparer.Ordinal);
+}
+
+/// <summary>
+/// Represents a single entity that could not be imported, with the reason and identifying
+/// information for later reporting or export.
+/// </summary>
+public sealed class UnimportedRow
+{
+    public required string Sheet { get; init; }
+    public required string Reason { get; init; }
+    public int RowNumber { get; init; }     // 0 when not known (Tier 1 aggregate)
+    public string? RawValue { get; init; }   // e.g. the entity id or json snippet
 }
 
 /// <summary>
@@ -51,7 +99,21 @@ public class SheetImportResult
     public int Inserted { get; set; }
     public int Updated { get; set; }
     public int Skipped { get; set; }
+
+    /// <summary>
+    /// Rows routed to the Bank Matching feature (added as a <see cref="Models.BankMatching.BankImportSession"/>)
+    /// rather than committed as book records. Reported on its own line so it is clear they went elsewhere.
+    /// </summary>
+    public int BankMatchingImported { get; set; }
     public List<string> SkipReasons { get; } = [];
+    public List<UnimportedRow> UnimportedRows { get; } = [];
+
+    /// <summary>
+    /// Non-fatal warnings surfaced during import (e.g. a referenced customer/supplier name
+    /// could not be confidently matched and a placeholder was created instead of a link).
+    /// The row IS still imported, so these are warnings rather than <see cref="UnimportedRows"/>.
+    /// </summary>
+    public List<string> Warnings { get; } = [];
 }
 
 /// <summary>
@@ -85,15 +147,50 @@ public class SpreadsheetImportService
     private readonly IErrorLogger? _errorLogger;
     private readonly ITelemetryManager? _telemetryManager;
     private readonly IGeminiService? _geminiService;
+    private readonly ExchangeRateService? _exchangeRateService;
 
     /// <summary>
     /// Creates a new SpreadsheetImportService.
     /// </summary>
-    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IGeminiService? geminiService = null)
+    /// <param name="exchangeRateService">
+    /// Optional exchange-rate service used for per-row currency conversion when a Currency
+    /// column is mapped. Defaults to <see cref="ExchangeRateService.Instance"/> so production
+    /// reuses the same singleton (and cached rates) as manual entry; tests can inject a seeded
+    /// instance for determinism.
+    /// </param>
+    public SpreadsheetImportService(IErrorLogger? errorLogger = null, ITelemetryManager? telemetryManager = null, IGeminiService? geminiService = null, ExchangeRateService? exchangeRateService = null)
     {
         _errorLogger = errorLogger;
         _telemetryManager = telemetryManager;
         _geminiService = geminiService;
+        _exchangeRateService = exchangeRateService;
+    }
+
+    /// <summary>
+    /// The exchange-rate service to use for per-row currency conversion. Falls back to the
+    /// shared singleton when one was not explicitly injected.
+    /// </summary>
+    private ExchangeRateService? ExchangeRates => _exchangeRateService ?? ExchangeRateService.Instance;
+
+    /// <summary>
+    /// Per-import context carrying the name-to-id indexes used to resolve references by NAME
+    /// before falling back to creating placeholder stubs, plus a sink for any warnings raised
+    /// when a reference could not be confidently matched.
+    ///
+    /// Built once per import and threaded through the call chain (never stored on the service)
+    /// so that concurrent imports on a shared service instance cannot interfere with each other.
+    /// </summary>
+    private sealed class ReferenceResolutionContext
+    {
+        public required Dictionary<string, string> CustomerIndex { get; init; }
+        public required Dictionary<string, string> SupplierIndex { get; init; }
+        public List<string> Warnings { get; } = [];
+
+        public static ReferenceResolutionContext Build(CompanyData data) => new()
+        {
+            CustomerIndex = ReferenceResolver.BuildIndex(data.Customers.Select(c => (c.Id, c.Name))),
+            SupplierIndex = ReferenceResolver.BuildIndex(data.Suppliers.Select(s => (s.Id, s.Name)))
+        };
     }
     /// <summary>
     /// Validates an Excel file before importing, checking for missing references.
@@ -203,6 +300,10 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(analysis);
 
+        // Route CSV files through the RFC-4180-compliant importer
+        if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            return await ImportCsvWithMappingsAsync(filePath, companyData, analysis, options, cancellationToken, progress);
+
         options ??= new ImportOptions();
         var result = new SpreadsheetImportResult();
 
@@ -265,44 +366,44 @@ public class SpreadsheetImportService
             await Task.Run(() =>
             {
                 progress?.Report(("Reading CSV file...", 0));
-                var lines = File.ReadAllLines(filePath);
-                if (lines.Length < 2)
-                {
-                    result.Warnings.Add("CSV file has no data rows.");
-                    return;
-                }
-
-                var delimiter = SpreadsheetAnalysisService.DetectCsvDelimiter(lines[0]);
-                var headers = SpreadsheetAnalysisService.ParseCsvLine(lines[0], delimiter);
+                var dataRows = CsvReader.ReadAllRows(filePath, out var headers);
                 if (headers.Count == 0)
                 {
                     result.Warnings.Add("CSV file has no headers.");
                     return;
                 }
-
-                progress?.Report(($"Processing {lines.Length - 1:N0} rows...", 20));
-                var rows = new List<List<object?>>();
-                for (int i = 1; i < lines.Length; i++)
-                {
-                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                    var fields = SpreadsheetAnalysisService.ParseCsvLine(lines[i], delimiter);
-                    rows.Add(fields.Cast<object?>().ToList());
-                }
-
-                if (rows.Count == 0)
+                if (dataRows.Count == 0)
                 {
                     result.Warnings.Add("CSV file has no data rows.");
                     return;
                 }
 
+                progress?.Report(($"Processing {dataRows.Count:N0} rows...", 20));
+                var rows = dataRows.Select(r => r.Cast<object?>().ToList()).ToList();
+
                 var sheetAnalysis = analysis.Sheets.FirstOrDefault();
 
                 if (sheetAnalysis != null)
                 {
+                    // Ensure a non-null options so per-sheet insert/update/skip counts are tracked
+                    // (the counters live on ImportOptions); otherwise updates would be misreported.
+                    options ??= new ImportOptions();
                     progress?.Report(($"Importing {rows.Count:N0} records...", 50));
                     ApplyColumnMapping(headers, sheetAnalysis);
                     var sheetType = sheetAnalysis.DetectedType;
                     var csvSheetName = Path.GetFileNameWithoutExtension(filePath);
+
+                    // The xlsx workbook scan doesn't cover CSV, so detect per-row currency here (an
+                    // in-cell symbol/code or a "Currency" column) and feed it to the importer keyed by
+                    // the same row index, so CSV imports honor per-row currency like Excel does.
+                    var csvCurrency = CurrencyImportPreparer.ScanRows(headers, rows);
+                    if (csvCurrency.Count > 0)
+                    {
+                        options ??= new ImportOptions();
+                        options.RowCurrencyBySheet ??= new Dictionary<string, Dictionary<int, string>>(StringComparer.OrdinalIgnoreCase);
+                        options.RowCurrencyBySheet[csvSheetName] = csvCurrency;
+                    }
+
                     var sheetResult = ImportBySheetTypeWithCount(sheetType, companyData, headers, rows, csvSheetName, options);
                     result.TotalImported += sheetResult.Inserted;
                     result.TotalUpdated += sheetResult.Updated;
@@ -417,12 +518,67 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(companyData);
         ArgumentNullException.ThrowIfNull(processedData);
 
-        var entityType = processedData.FirstOrDefault()?.EntityType.ToString() ?? "Unknown";
+        var firstType = processedData.FirstOrDefault()?.EntityType;
+        var entityType = firstType == SpreadsheetSheetType.BankStatement
+            ? "Bank Matching"
+            : firstType?.ToString() ?? "Unknown";
         var sheetResult = new SheetImportResult
         {
             SheetName = sheetName,
             EntityType = entityType
         };
+
+        // Bank statement rows are reference data for the Bank Matching feature, never committed as
+        // book transactions. The normal importer hands them to the dedicated bank importer, but this
+        // AI path has no per-entity bank importer (they would fall through ImportSingleEntity to
+        // Failed). Build the bank lines here and add them as a single import session, exactly the
+        // shape the Bank Matching page reads. Reported on their own line (not as new/updated book
+        // records) so it is clear they landed on a different page.
+        if (firstType == SpreadsheetSheetType.BankStatement)
+        {
+            var lines = new List<BankStatementLine>();
+            foreach (var chunk in processedData)
+            {
+                foreach (var entityJson in chunk.Entities)
+                {
+                    BankStatementLine? line;
+                    try
+                    {
+                        line = JsonSerializer.Deserialize<BankStatementLine>(entityJson.GetRawText(), ImportJsonOptions);
+                    }
+                    catch (JsonException)
+                    {
+                        line = null;
+                    }
+                    if (line == null) continue;
+
+                    line.Id = Guid.NewGuid().ToString("N");
+                    // Fall back to Credit - Debit when the AI mapped separate columns instead of a
+                    // single signed amount (matches BankStatementImportService: in is positive, out negative).
+                    if (line.Amount == 0 && (line.Debit.HasValue || line.Credit.HasValue))
+                        line.Amount = (line.Credit ?? 0) - (line.Debit ?? 0);
+                    lines.Add(line);
+                }
+            }
+
+            if (lines.Count > 0)
+            {
+                companyData.BankImportSessions.Add(new BankImportSession
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    ImportedAt = DateTime.UtcNow,
+                    SourceFileName = sheetName,
+                    Lines = lines
+                });
+                sheetResult.BankMatchingImported = lines.Count;
+                companyData.MarkAsModified();
+            }
+            return sheetResult;
+        }
+
+        // Build the name->id indexes once for this import so reference resolution can link a
+        // by-name reference to an existing customer/supplier instead of creating a placeholder.
+        var refContext = ReferenceResolutionContext.Build(companyData);
 
         // Deduplicate entities across chunks by ID, later chunks win on conflict.
         // The LLM processes chunks independently and may produce duplicate IDs,
@@ -454,34 +610,153 @@ public class SpreadsheetImportService
                 $"Removed {duplicatesRemoved} duplicate entities (by ID) across AI chunks for sheet '{sheetName}'");
         }
 
+        // ---------------------------------------------------------------------------------
+        // Task 2C: deterministic natural-key ids for id-less Tier 2 rows + re-import detection.
+        //
+        // For every entity that arrives WITHOUT an id we derive a deterministic id from a
+        // small set of identifying fields (the "natural key"). This makes such rows importable
+        // (today they are dropped) AND idempotent: re-importing the same file reproduces the
+        // same ids, so the existing merge-by-id logic UPDATES the prior row instead of
+        // duplicating it.
+        //
+        // Safety invariant ("no silent drops / never collapse distinct rows"): two genuinely
+        // identical rows in the SAME import share a natural key but MUST both survive. We keep
+        // them apart by appending an ordinal (-2, -3, ...) to the 2nd, 3rd ... occurrence in
+        // order of appearance. The natural key is NEVER used to merge two same-import rows; it
+        // only seeds the deterministic id. Cross-import updates are governed solely by the
+        // existing merge-by-id path.
+        // ---------------------------------------------------------------------------------
+        var entitiesToImport = new List<(SpreadsheetSheetType EntityType, JsonElement Entity, bool SkipImport)>();
+        var naturalKeyOrdinals = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        // Snapshot the ids that already exist for each entity type BEFORE we import, so we can
+        // count how many incoming rows land on a pre-existing record (a re-import).
+        var existingIdSnapshots = new Dictionary<SpreadsheetSheetType, HashSet<string>>();
+        HashSet<string> ExistingIdsFor(SpreadsheetSheetType type)
+        {
+            if (!existingIdSnapshots.TryGetValue(type, out var set))
+            {
+                set = new HashSet<string>(GetExistingEntityIds(companyData, type), StringComparer.OrdinalIgnoreCase);
+                existingIdSnapshots[type] = set;
+            }
+            return set;
+        }
+
+        int reimportMatches = 0;
+
         foreach (var (chunkEntityType, entityJson) in deduplicatedEntities)
+        {
+            var existingId = ExtractEntityId(entityJson);
+            if (!string.IsNullOrEmpty(existingId))
+            {
+                // Real id (the common case): flow through unchanged. Count a re-import match if
+                // it lands on a record that already existed before this import.
+                if (ExistingIdsFor(chunkEntityType).Contains(existingId))
+                    reimportMatches++;
+                entitiesToImport.Add((chunkEntityType, entityJson, false));
+                continue;
+            }
+
+            // Id-less row: try to derive a deterministic id from its natural key.
+            var naturalKey = NaturalKey(chunkEntityType, entityJson);
+            if (naturalKey == null)
+            {
+                // Not enough fields to form a meaningful key. Keep TODAY's behavior: do not
+                // invent an opaque id that could collide arbitrarily. The row is recorded as
+                // unimported below (never silently dropped) by passing it through with the
+                // SkipImport flag so the existing "missing/empty ID" reporting path fires.
+                entitiesToImport.Add((chunkEntityType, entityJson, true));
+                continue;
+            }
+
+            // Disambiguate same-import rows that share a natural key with an ordinal so all of
+            // them survive. The 1st occurrence keeps the base id; the Nth gets "-N".
+            var ordinal = naturalKeyOrdinals.TryGetValue(naturalKey, out var seen) ? seen + 1 : 1;
+            naturalKeyOrdinals[naturalKey] = ordinal;
+
+            var baseId = $"{TypePrefix(chunkEntityType)}-{StableHash(naturalKey)}";
+            var derivedId = ordinal == 1 ? baseId : $"{baseId}-{ordinal}";
+
+            if (ExistingIdsFor(chunkEntityType).Contains(derivedId))
+                reimportMatches++;
+
+            var withId = WithId(entityJson, derivedId);
+            entitiesToImport.Add((chunkEntityType, withId, false));
+        }
+
+        // Only claim "updated" when existing records are actually overwritten. With
+        // SkipExistingRecords on (the default), these rows are skipped instead, and that is
+        // already reported via the per-row skipped/unimported path, so the warning would be
+        // both wrong ("updated") and a duplicate.
+        if (reimportMatches > 0 && options?.SkipExistingRecords != true)
+            sheetResult.Warnings.Add($"{reimportMatches} row(s) look like a re-import and were updated.");
+
+        foreach (var (chunkEntityType, entityJson, skipImport) in entitiesToImport)
         {
             try
             {
-                var singleResult = ImportSingleEntity(companyData, chunkEntityType, entityJson, options);
+                if (skipImport)
+                {
+                    var missingReason = $"Row had missing id and insufficient fields to form a key ({chunkEntityType})";
+                    sheetResult.Skipped++;
+                    sheetResult.SkipReasons.Add(missingReason);
+                    sheetResult.UnimportedRows.Add(new UnimportedRow
+                    {
+                        Sheet = sheetName,
+                        Reason = missingReason,
+                        RawValue = entityJson.GetRawText()
+                    });
+                    continue;
+                }
+
+                var singleResult = ImportSingleEntity(companyData, chunkEntityType, entityJson, options, refContext);
                 if (singleResult == ImportEntityResult.Inserted)
                     sheetResult.Inserted++;
                 else if (singleResult == ImportEntityResult.Updated)
                     sheetResult.Updated++;
                 else if (singleResult == ImportEntityResult.SkippedExisting)
                 {
+                    var skipReason = $"Existing {chunkEntityType} record skipped";
                     sheetResult.Skipped++;
-                    sheetResult.SkipReasons.Add($"Existing {chunkEntityType} record skipped");
+                    sheetResult.SkipReasons.Add(skipReason);
+                    sheetResult.UnimportedRows.Add(new UnimportedRow
+                    {
+                        Sheet = sheetName,
+                        Reason = skipReason,
+                        RawValue = ExtractEntityId(entityJson) ?? entityJson.GetRawText()
+                    });
                 }
                 else
                 {
+                    var failReason = $"Row had missing or empty ID ({chunkEntityType})";
                     sheetResult.Skipped++;
-                    sheetResult.SkipReasons.Add($"Row had missing or empty ID ({chunkEntityType})");
+                    sheetResult.SkipReasons.Add(failReason);
+                    sheetResult.UnimportedRows.Add(new UnimportedRow
+                    {
+                        Sheet = sheetName,
+                        Reason = failReason,
+                        RawValue = ExtractEntityId(entityJson) ?? entityJson.GetRawText()
+                    });
                 }
             }
             catch (Exception ex)
             {
+                var errorReason = $"Error importing {chunkEntityType}: {ex.Message}";
                 sheetResult.Skipped++;
-                sheetResult.SkipReasons.Add($"Error importing {chunkEntityType}: {ex.Message}");
+                sheetResult.SkipReasons.Add(errorReason);
+                sheetResult.UnimportedRows.Add(new UnimportedRow
+                {
+                    Sheet = sheetName,
+                    Reason = errorReason,
+                    RawValue = ExtractEntityId(entityJson) ?? entityJson.GetRawText()
+                });
                 _errorLogger?.LogError(ex, ErrorCategory.Import,
                     $"Failed to import {chunkEntityType} entity from AI processing");
             }
         }
+
+        // Surface any reference-resolution warnings (unmatched/ambiguous names) for reporting.
+        sheetResult.Warnings.AddRange(refContext.Warnings);
 
         UpdateIdCounters(companyData);
         companyData.MarkAsModified();
@@ -633,16 +908,41 @@ public class SpreadsheetImportService
     {
         var countBefore = GetEntityCount(data, sheetType);
         if (options != null)
+        {
             options.SkippedCount = 0;
-        ImportBySheetType(sheetType, data, headers, rows, options);
+            options.UpdatedCount = 0;
+            options.InsertedCount = 0;
+        }
+
+        // Make this sheet's per-row currency (resolved by CurrencyImportPreparer) available to the
+        // financial builders for the duration of this sheet import, then clear it.
+        _currentSheetRowCurrency = options?.RowCurrencyBySheet is { } bySheet
+            && bySheet.TryGetValue(sheetName, out var rowMap) ? rowMap : null;
+        try
+        {
+            ImportBySheetType(sheetType, data, headers, rows, options);
+        }
+        finally
+        {
+            _currentSheetRowCurrency = null;
+        }
         var countAfter = GetEntityCount(data, sheetType);
-        var inserted = Math.Max(0, countAfter - countBefore);
+
+        // Purchase-order line items are merged onto their parent order rather than added as
+        // first-class entities, so the collection-count delta doesn't reflect the rows processed.
+        // Use the explicit per-row count the importer recorded instead.
+        var inserted = sheetType == SpreadsheetSheetType.PurchaseOrderLineItems && options != null
+            ? options.InsertedCount
+            : Math.Max(0, countAfter - countBefore);
 
         var result = new SheetImportResult
         {
             SheetName = sheetName,
             EntityType = sheetType.ToString(),
-            Inserted = inserted
+            Inserted = inserted,
+            // Updates mutate an existing record in place (no collection growth), so they have to be
+            // counted explicitly; otherwise they'd be misreported as dropped "missing field" rows.
+            Updated = options?.UpdatedCount ?? 0
         };
 
         if (options?.SkipExistingRecords == true)
@@ -652,16 +952,72 @@ public class SpreadsheetImportService
                 result.SkipReasons.Add($"{result.Skipped} {sheetType} records skipped (already exist)");
         }
 
-        // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows)
-        var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
-        var unaccounted = rows.Count - totalAccountedFor;
-        if (unaccounted > 0)
+        // Detect rows that were silently dropped (e.g., title rows, blank rows, summary rows).
+        // Only meaningful where one row maps to one entity. Grouped sheet types (rental records
+        // span several rows; purchase-order line items merge onto a parent) legitimately have
+        // more rows than entities, so the difference there is expected, not a dropped row.
+        bool rowMapsToEntity = sheetType is not (
+            SpreadsheetSheetType.RentalRecords or SpreadsheetSheetType.PurchaseOrderLineItems);
+        if (rowMapsToEntity)
         {
-            result.Skipped += unaccounted;
-            result.SkipReasons.Add($"{unaccounted} rows with missing or empty required fields");
+            var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
+            var unaccounted = rows.Count - totalAccountedFor;
+            if (unaccounted > 0)
+            {
+                result.Skipped += unaccounted;
+                result.SkipReasons.Add($"{unaccounted} rows with missing or empty required fields");
+            }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Collects every transaction date in the included Tier 1 financial sheets, using the SAME
+    /// parser the import uses (so it cannot diverge from how dates are read) and the correct mapped
+    /// date-column name per sheet type. Lets the import rate gate pre-fetch each date's exact rate.
+    /// Best-effort: CSV and unparseable dates are skipped; any row the gate misses still self-heals
+    /// via <see cref="Transaction.IsPendingConversion"/> + <see cref="PendingConversionService"/>.
+    /// </summary>
+    public List<DateTime> CollectTransactionDates(string filePath, SpreadsheetAnalysisResult analysis)
+    {
+        var dates = new List<DateTime>();
+        if (analysis is null || filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            return dates;
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var wb = new XLWorkbook(stream);
+            foreach (var sheet in analysis.Sheets)
+            {
+                if (!sheet.IsIncluded || sheet.Tier != ProcessingTier.Tier1_Mapping)
+                    continue;
+                var dateColumn = sheet.DetectedType switch
+                {
+                    SpreadsheetSheetType.Revenue or SpreadsheetSheetType.Expenses
+                        or SpreadsheetSheetType.Payments => "Date",
+                    SpreadsheetSheetType.Invoices => "Issue Date",
+                    SpreadsheetSheetType.PurchaseOrders => "Order Date",
+                    _ => null
+                };
+                if (dateColumn is null) continue;
+                if (!wb.TryGetWorksheet(sheet.SourceSheetName, out var ws)) continue;
+
+                var headers = SpreadsheetRowReader.GetHeaders(ws);
+                ApplyColumnMapping(headers, sheet); // source -> target names, in place
+                var rows = SpreadsheetRowReader.GetDataRows(ws, headers.Count);
+                foreach (var row in rows)
+                {
+                    var d = SpreadsheetRowReader.GetNullableDateTime(row, headers, dateColumn);
+                    if (d.HasValue) dates.Add(d.Value.Date);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorLogger?.LogWarning($"Could not pre-scan import dates: {ex.Message}", "Import");
+        }
+        return dates;
     }
 
     internal static void ApplyColumnMapping(List<string> headers, SheetAnalysis sheetAnalysis)
@@ -691,7 +1047,569 @@ public class SpreadsheetImportService
         return null;
     }
 
-    private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null)
+    /// <summary>
+    /// Reads a per-row currency from the entity JSON's <c>originalCurrency</c> (mapped from a
+    /// currency column, or emitted by the LLM from an in-cell symbol/code) and normalizes it to
+    /// an ISO code. Returns <c>null</c> when no currency is present or it cannot be resolved, so
+    /// the importer keeps its existing company-currency behavior.
+    /// </summary>
+    private static string? ExtractRowCurrency(JsonElement entityJson, ImportOptions? options = null)
+    {
+        if (entityJson.ValueKind == JsonValueKind.Object
+            && entityJson.TryGetProperty("originalCurrency", out var curProp)
+            && curProp.ValueKind == JsonValueKind.String)
+        {
+            return NormalizeCurrencyToken(curProp.GetString(), options);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Normalizes a raw currency token into an ISO code: a known code is used as-is; an
+    /// unambiguous symbol resolves to its code; an ambiguous symbol resolves via the user's
+    /// choice (<see cref="ImportOptions.SymbolResolution"/>). Blank/unknown returns <c>null</c>.
+    /// </summary>
+    internal static string? NormalizeCurrencyToken(string? raw, ImportOptions? options)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var token = raw.Trim();
+
+        if (CurrencyInfo.All.ContainsKey(token))
+            return token.ToUpperInvariant();
+        if (CurrencyInfo.TryResolveSymbol(token, out var code))
+            return code;
+        if (options?.SymbolResolution is { } map && map.TryGetValue(token, out var chosen))
+            return chosen;
+        return null;
+    }
+
+    /// <summary>
+    /// The current Tier 1 sheet's per-row currency (data-row ordinal -> ISO code), set for the
+    /// duration of one sheet import so deterministic builders can resolve currency by row order
+    /// without threading the sheet name through every builder. <c>null</c> when no currency was
+    /// detected for the sheet.
+    /// </summary>
+    private Dictionary<int, string>? _currentSheetRowCurrency;
+
+    /// <summary>The ISO code detected for the given Tier 1 data-row ordinal, or <c>null</c>.</summary>
+    private string? Tier1RowCurrency(int rowIndex)
+        => _currentSheetRowCurrency is { } map && map.TryGetValue(rowIndex, out var code) ? code : null;
+
+    /// <summary>
+    /// Sets <c>OriginalCurrency</c> and the USD fields on a Revenue/Expense from the per-row
+    /// detected currency, or the company currency (raw passthrough) when none was detected.
+    /// </summary>
+    private void ApplyTransactionCurrency(Transaction txn, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+        {
+            ApplyTransactionCurrencyCode(txn, code, data);
+        }
+        else
+        {
+            txn.OriginalCurrency = data.Settings.Localization.Currency;
+            txn.TotalUSD = txn.Total;
+            txn.TaxAmountUSD = txn.TaxAmount;
+            txn.ShippingCostUSD = txn.ShippingCost;
+        }
+    }
+
+    /// <summary>
+    /// True when an exact-date original-&gt;USD rate is available (or the row is already USD), so the
+    /// row can be priced now rather than deferred. Used to gate the pending decision independently of
+    /// the amount, so a row whose primary amount is 0 but which has non-zero secondary amounts (tax,
+    /// shipping) is still deferred when its rate is missing, instead of being silently zeroed.
+    /// </summary>
+    private bool HasExactRate(string code, DateTime date)
+    {
+        if (string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
+            return true;
+        return ExchangeRates is { } rates && rates.GetExchangeRate(code, "USD", date) > 0;
+    }
+
+    /// <summary>Per-row currency for a Payment (or company currency when none detected).</summary>
+    private void ApplyPaymentCurrency(Payment payment, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+            ApplyPaymentCurrencyCode(payment, code, data);
+        else
+        {
+            payment.OriginalCurrency = data.Settings.Localization.Currency;
+            payment.AmountUSD = payment.Amount;
+        }
+    }
+
+    /// <summary>
+    /// Converts a Payment's amount to USD at its exact date for <paramref name="code"/>; on an
+    /// unpriceable (future-dated, or gate miss) row, defers the USD value and enqueues it so
+    /// PendingConversionService converts it later instead of leaving a permanent 0. Shared by the
+    /// Tier 1 and Tier 2 import paths.
+    /// </summary>
+    private void ApplyPaymentCurrencyCode(Payment payment, string code, CompanyData data)
+    {
+        payment.OriginalCurrency = code;
+        if (HasExactRate(code, payment.Date))
+        {
+            TryConvertRowAmountToUSD(payment.Amount, code, payment.Date, out var amtUsd);
+            payment.AmountUSD = amtUsd;
+            payment.IsPendingConversion = false;
+        }
+        else
+        {
+            payment.AmountUSD = 0m;
+            payment.IsPendingConversion = true;
+            EnqueueImportPendingPayment(data, payment);
+        }
+    }
+
+    /// <summary>Per-row currency for an Invoice (or company currency when none detected).</summary>
+    private void ApplyInvoiceCurrency(Invoice invoice, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+            ApplyInvoiceCurrencyCode(invoice, code, data);
+        else
+        {
+            invoice.OriginalCurrency = data.Settings.Localization.Currency;
+            invoice.TotalUSD = invoice.Total;
+            invoice.BalanceUSD = invoice.Balance;
+        }
+    }
+
+    /// <summary>
+    /// Converts an Invoice's Total and Balance to USD at its exact issue date; on an unpriceable row,
+    /// defers both USD values and enqueues it so PendingConversionService converts it later. Shared by
+    /// the Tier 1 and Tier 2 import paths.
+    /// </summary>
+    private void ApplyInvoiceCurrencyCode(Invoice invoice, string code, CompanyData data)
+    {
+        invoice.OriginalCurrency = code;
+        if (HasExactRate(code, invoice.IssueDate))
+        {
+            TryConvertRowAmountToUSD(invoice.Total, code, invoice.IssueDate, out var totalUsd);
+            invoice.TotalUSD = totalUsd;
+            TryConvertRowAmountToUSD(invoice.Balance, code, invoice.IssueDate, out var balUsd);
+            invoice.BalanceUSD = balUsd;
+            invoice.IsPendingConversion = false;
+        }
+        else
+        {
+            invoice.TotalUSD = 0m;
+            invoice.BalanceUSD = 0m;
+            invoice.IsPendingConversion = true;
+            EnqueueImportPendingInvoice(data, invoice);
+        }
+    }
+
+    /// <summary>Per-row currency for a PurchaseOrder (or company currency when none detected).</summary>
+    private void ApplyPurchaseOrderCurrency(PurchaseOrder po, int rowIndex, CompanyData data)
+    {
+        var code = Tier1RowCurrency(rowIndex);
+        if (code != null)
+            ApplyPurchaseOrderCurrencyCode(po, code, data);
+        else
+        {
+            po.OriginalCurrency = data.Settings.Localization.Currency;
+            po.TotalUSD = po.Total;
+        }
+    }
+
+    /// <summary>
+    /// Converts a PurchaseOrder's Total to USD at its exact order date; on an unpriceable row, defers
+    /// the USD value and enqueues it so PendingConversionService converts it later. Shared by the
+    /// Tier 1 and Tier 2 import paths.
+    /// </summary>
+    private void ApplyPurchaseOrderCurrencyCode(PurchaseOrder po, string code, CompanyData data)
+    {
+        po.OriginalCurrency = code;
+        if (HasExactRate(code, po.OrderDate))
+        {
+            TryConvertRowAmountToUSD(po.Total, code, po.OrderDate, out var poUsd);
+            po.TotalUSD = poUsd;
+            po.IsPendingConversion = false;
+        }
+        else
+        {
+            po.TotalUSD = 0m;
+            po.IsPendingConversion = true;
+            EnqueueImportPendingPurchaseOrder(data, po);
+        }
+    }
+
+    /// <summary>
+    /// Converts a row amount from its original currency to USD at the row's EXACT date. Returns
+    /// <see langword="false"/> when no exact-date rate is cached (e.g. a future-dated row, or a date
+    /// the import gate missed); the caller then marks the row pending instead of storing a
+    /// wrong-date value. The import rate gate fetches every past/today date before import runs, so a
+    /// false result means the date is genuinely unpriceable (future). See docs/Calculations.md.
+    /// </summary>
+    private bool TryConvertRowAmountToUSD(decimal amount, string originalCurrency, DateTime date, out decimal usd)
+    {
+        if (amount == 0m || string.Equals(originalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            usd = amount;
+            return true;
+        }
+        var rates = ExchangeRates;
+        if (rates == null)
+        {
+            usd = 0m;
+            return false;
+        }
+        return rates.TryConvertExact(amount, originalCurrency, "USD", date, out usd);
+    }
+
+    /// <summary>
+    /// Applies a detected per-row currency to a Revenue/Expense: converts its amounts to USD at the
+    /// exact transaction date. When the exact-date rate is unavailable (future-dated, or a gate
+    /// miss), the native amounts are kept, the USD fields are zeroed, the row is flagged
+    /// <see cref="Transaction.IsPendingConversion"/>, and it is enqueued so the background
+    /// <see cref="PendingConversionService"/> converts it at its exact date once that rate exists.
+    /// </summary>
+    private void ApplyTransactionCurrencyCode(Transaction txn, string code, CompanyData data)
+    {
+        txn.OriginalCurrency = code;
+        // Gate on rate availability, not on Total, so a row with Total == 0 but non-zero tax/shipping
+        // is still deferred (and healed later) when its exact-date rate is missing, instead of being
+        // marked converted with those secondary USD fields silently zeroed.
+        if (HasExactRate(code, txn.Date))
+        {
+            // Convert every money field at the exact date, matching PendingConversionService's
+            // heal path so an immediately-converted row and a later-healed row are identical.
+            TryConvertRowAmountToUSD(txn.Total, code, txn.Date, out var totalUsd);
+            txn.TotalUSD = totalUsd;
+            TryConvertRowAmountToUSD(txn.TaxAmount, code, txn.Date, out var taxUsd);
+            txn.TaxAmountUSD = taxUsd;
+            TryConvertRowAmountToUSD(txn.ShippingCost, code, txn.Date, out var shipUsd);
+            txn.ShippingCostUSD = shipUsd;
+            TryConvertRowAmountToUSD(txn.Discount, code, txn.Date, out var discUsd);
+            txn.DiscountUSD = discUsd;
+            TryConvertRowAmountToUSD(txn.Fee, code, txn.Date, out var feeUsd);
+            txn.FeeUSD = feeUsd;
+            TryConvertRowAmountToUSD(txn.UnitPrice, code, txn.Date, out var unitUsd);
+            txn.UnitPriceUSD = unitUsd;
+            txn.IsPendingConversion = false;
+        }
+        else
+        {
+            txn.TotalUSD = 0m;
+            txn.TaxAmountUSD = 0m;
+            txn.ShippingCostUSD = 0m;
+            txn.DiscountUSD = 0m;
+            txn.FeeUSD = 0m;
+            txn.UnitPriceUSD = 0m;
+            txn.IsPendingConversion = true;
+            EnqueueImportPending(data, txn);
+        }
+    }
+
+    /// <summary>
+    /// Enqueues an import row that could not be converted (future-dated or a gate miss) so the
+    /// background <see cref="PendingConversionService"/> converts it at its exact date later. Only
+    /// Revenue/Expense are supported by the pending queue. Mirrors the manual-entry enqueue.
+    /// </summary>
+    private static void EnqueueImportPending(CompanyData data, Transaction txn)
+    {
+        var type = txn is Revenue ? "Revenue" : "Expense";
+        if (data.PendingConversions.Any(p => p.TransactionId == txn.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = txn.Id,
+            TransactionType = type,
+            OriginalCurrency = txn.OriginalCurrency,
+            TransactionDate = txn.Date,
+            Total = txn.Total,
+            TaxAmount = txn.TaxAmount,
+            ShippingCost = txn.ShippingCost,
+            Discount = txn.Discount,
+            Fee = txn.Fee,
+            UnitPrice = txn.UnitPrice
+        });
+    }
+
+    /// <summary>
+    /// Enqueues an unpriceable imported Payment so the background <see cref="PendingConversionService"/>
+    /// converts its amount at the exact payment date later. Only the single amount is carried.
+    /// </summary>
+    private static void EnqueueImportPendingPayment(CompanyData data, Payment payment)
+    {
+        if (data.PendingConversions.Any(p => p.TransactionId == payment.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = payment.Id,
+            TransactionType = "Payment",
+            OriginalCurrency = payment.OriginalCurrency,
+            TransactionDate = payment.Date,
+            Total = payment.Amount
+        });
+    }
+
+    /// <summary>
+    /// Enqueues an unpriceable imported PurchaseOrder so the background <see cref="PendingConversionService"/>
+    /// converts its total at the exact order date later. Only the single amount is carried.
+    /// </summary>
+    private static void EnqueueImportPendingPurchaseOrder(CompanyData data, PurchaseOrder po)
+    {
+        if (data.PendingConversions.Any(p => p.TransactionId == po.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = po.Id,
+            TransactionType = "PurchaseOrder",
+            OriginalCurrency = po.OriginalCurrency,
+            TransactionDate = po.OrderDate,
+            Total = po.Total
+        });
+    }
+
+    /// <summary>
+    /// Enqueues an unpriceable imported Invoice so the background <see cref="PendingConversionService"/>
+    /// converts its Total and Balance at the exact issue date later, instead of leaving the invoice's
+    /// USD value (and the Outstanding/Overdue aggregates that depend on it) permanently at 0.
+    /// </summary>
+    private static void EnqueueImportPendingInvoice(CompanyData data, Invoice invoice)
+    {
+        if (data.PendingConversions.Any(p => p.TransactionId == invoice.Id))
+            return;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = invoice.Id,
+            TransactionType = "Invoice",
+            OriginalCurrency = invoice.OriginalCurrency,
+            TransactionDate = invoice.IssueDate,
+            Total = invoice.Total,
+            Balance = invoice.Balance
+        });
+    }
+
+    /// <summary>
+    /// Creates the linked Revenue for a paid/partially-paid imported invoice (so it shows on the
+    /// dashboard and analytics). When the invoice's USD value is not yet known (future-dated, or a
+    /// rate the gate missed), the Revenue is created pending and enqueued so it converts at the
+    /// exact date later, instead of storing the native amount as if it were USD.
+    /// </summary>
+    private static void AddAutoRevenueForInvoice(CompanyData data, Invoice invoice)
+    {
+        if (invoice.AmountPaid <= 0 || data.Revenues.Any(r => r.InvoiceId == invoice.Id))
+            return;
+
+        data.IdCounters.Revenue++;
+        var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
+        var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
+
+        var revenue = new Revenue
+        {
+            Id = revenueId,
+            Date = invoice.IssueDate,
+            CustomerId = invoice.CustomerId,
+            Description = $"Invoice {invoice.InvoiceNumber}",
+            Quantity = 1,
+            UnitPrice = invoice.Subtotal,
+            Subtotal = invoice.Subtotal,
+            Amount = invoice.Subtotal,
+            TaxAmount = invoice.TaxAmount,
+            Total = invoice.Total,
+            PaymentMethod = PaymentMethod.Other,
+            PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
+            Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
+            InvoiceId = invoice.Id,
+            ReferenceNumber = invoice.InvoiceNumber,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            OriginalCurrency = invoice.OriginalCurrency,
+            IsPendingConversion = invoice.IsPendingConversion,
+            TotalUSD = invoice.IsPendingConversion ? 0m : (invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total)
+        };
+        data.Revenues.Add(revenue);
+
+        if (invoice.IsPendingConversion)
+            EnqueueImportPending(data, revenue);
+    }
+
+    #region Task 2C: natural-key identity for id-less rows
+
+    /// <summary>
+    /// Builds a stable, normalized natural key from a small set of identifying fields for the
+    /// given entity type. Used ONLY to derive a deterministic id for an id-less row so that
+    /// re-importing the same file is idempotent. Returns <c>null</c> when there are not enough
+    /// fields to form a meaningful key (caller then keeps today's behavior and records the row
+    /// as unimported rather than inventing an arbitrary id).
+    ///
+    /// This is deliberately NOT used to merge two rows arriving in the same import: identical
+    /// rows share a key but are kept distinct by the caller's ordinal scheme.
+    /// </summary>
+    internal static string? NaturalKey(SpreadsheetSheetType type, JsonElement json)
+    {
+        // Each entity type contributes a small, stable set of identifying fields. A field only
+        // "counts" toward the key when it carries a non-empty value; we require at least two
+        // present fields (checked below) so a near-empty row does not get a meaningless (and
+        // collision-prone) key.
+        string[] fields = type switch
+        {
+            SpreadsheetSheetType.Expenses or SpreadsheetSheetType.Revenue =>
+                ["date", "amount", "total", "description"],
+            SpreadsheetSheetType.Invoices =>
+                ["invoiceNumber", "issueDate", "total"],
+            SpreadsheetSheetType.Payments =>
+                ["date", "amount", "customerId", "invoiceId"],
+            _ =>
+                ["date", "amount", "total", "description", "name", "customerId", "supplierId"]
+        };
+
+        var parts = new List<string>();
+        int present = 0;
+        foreach (var field in fields)
+        {
+            var value = NormalizeKeyField(json, field);
+            if (!string.IsNullOrEmpty(value))
+                present++;
+            // Include the field (even if empty) positionally so the key stays stable and two
+            // rows that differ only in one field produce different keys.
+            parts.Add($"{field}={value}");
+        }
+
+        // Need at least two populated identifying fields for a meaningful key. A single value
+        // (e.g. just an amount, or just a date) is too weak to safely deduplicate on.
+        if (present < 2)
+            return null;
+
+        return string.Join("|", parts);
+    }
+
+    /// <summary>
+    /// Reads a field from the raw JSON and normalizes it for keying: numbers use the invariant
+    /// round-trip form (so "10" and "10.0" key the same), dates use the date component, strings
+    /// are trimmed and lowercased. Missing/null returns an empty string.
+    /// </summary>
+    private static string NormalizeKeyField(JsonElement json, string field)
+    {
+        // Property lookup is case-insensitive to mirror the deserializer (camelCase tolerance).
+        JsonElement prop = default;
+        bool found = false;
+        foreach (var p in json.EnumerateObject())
+        {
+            if (string.Equals(p.Name, field, StringComparison.OrdinalIgnoreCase))
+            {
+                prop = p.Value;
+                found = true;
+                break;
+            }
+        }
+        if (!found) return string.Empty;
+
+        switch (prop.ValueKind)
+        {
+            case JsonValueKind.Null or JsonValueKind.Undefined:
+                return string.Empty;
+            case JsonValueKind.Number:
+                return prop.TryGetDecimal(out var dec)
+                    ? dec.ToString(CultureInfo.InvariantCulture)
+                    : prop.GetRawText();
+            case JsonValueKind.True:
+                return "true";
+            case JsonValueKind.False:
+                return "false";
+            case JsonValueKind.String:
+                var s = prop.GetString() ?? string.Empty;
+                s = s.Trim();
+                // Normalize numeric strings so "10" and "10.00" collapse, and dates to date-only
+                // so a time component or format drift does not split the same logical row.
+                if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var sdec))
+                    return sdec.ToString(CultureInfo.InvariantCulture);
+                if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out var sdate))
+                    return sdate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                return s.ToLowerInvariant();
+            default:
+                return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Stable hash of a natural key: SHA-256, hex, truncated to 16 chars. Deliberately NOT
+    /// <see cref="object.GetHashCode"/> / <see cref="string.GetHashCode()"/>, which are not
+    /// stable across runs/platforms and would break idempotent re-import.
+    /// </summary>
+    private static string StableHash(string input)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+        return Convert.ToHexString(bytes, 0, 8); // 8 bytes -> 16 hex chars
+    }
+
+    /// <summary>Short id prefix per entity type for derived natural-key ids.</summary>
+    private static string TypePrefix(SpreadsheetSheetType type) => type switch
+    {
+        SpreadsheetSheetType.Expenses => "EXP",
+        SpreadsheetSheetType.Revenue => "REV",
+        SpreadsheetSheetType.Invoices => "INV",
+        SpreadsheetSheetType.Payments => "PAY",
+        SpreadsheetSheetType.Customers => "CUS",
+        SpreadsheetSheetType.Suppliers => "SUP",
+        SpreadsheetSheetType.Products => "PRD",
+        _ => type.ToString().ToUpperInvariant()
+    };
+
+    /// <summary>
+    /// Returns a new <see cref="JsonElement"/> equal to <paramref name="source"/> but with an
+    /// "id" property set to <paramref name="id"/> (added or overwritten). Used to stamp the
+    /// derived deterministic id onto an id-less row before it flows through the normal importer.
+    /// </summary>
+    private static JsonElement WithId(JsonElement source, string id)
+    {
+        using var buffer = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("id", id);
+            if (source.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in source.EnumerateObject())
+                {
+                    if (string.Equals(prop.Name, "id", StringComparison.OrdinalIgnoreCase))
+                        continue; // replaced above
+                    prop.WriteTo(writer);
+                }
+            }
+            writer.WriteEndObject();
+        }
+        using var doc = JsonDocument.Parse(buffer.ToArray());
+        return doc.RootElement.Clone();
+    }
+
+    /// <summary>
+    /// Snapshot of the ids currently present for a given entity type. Used to count how many
+    /// incoming rows land on a pre-existing record (re-import detection).
+    /// </summary>
+    private static IEnumerable<string> GetExistingEntityIds(CompanyData data, SpreadsheetSheetType type) => type switch
+    {
+        SpreadsheetSheetType.Customers => data.Customers.Select(c => c.Id),
+        SpreadsheetSheetType.Suppliers => data.Suppliers.Select(s => s.Id),
+        SpreadsheetSheetType.Products => data.Products.Select(p => p.Id),
+        SpreadsheetSheetType.Invoices => data.Invoices.Select(i => i.Id),
+        SpreadsheetSheetType.Expenses => data.Expenses.Select(e => e.Id),
+        SpreadsheetSheetType.Revenue => data.Revenues.Select(r => r.Id),
+        SpreadsheetSheetType.Payments => data.Payments.Select(p => p.Id),
+        SpreadsheetSheetType.Categories => data.Categories.Select(c => c.Id),
+        SpreadsheetSheetType.Employees => data.Employees.Select(e => e.Id),
+        SpreadsheetSheetType.Locations => data.Locations.Select(l => l.Id),
+        SpreadsheetSheetType.Departments => data.Departments.Select(d => d.Id),
+        SpreadsheetSheetType.Inventory => data.Inventory.Select(i => i.Id),
+        SpreadsheetSheetType.RentalInventory => data.RentalInventory.Select(r => r.Id),
+        SpreadsheetSheetType.RentalRecords => data.Rentals.Select(r => r.Id),
+        SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Select(r => r.Id),
+        SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Select(s => s.Id),
+        SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Select(p => p.Id),
+        SpreadsheetSheetType.Returns => data.Returns.Select(r => r.Id),
+        SpreadsheetSheetType.LostDamaged => data.LostDamaged.Select(l => l.Id),
+        _ => []
+    };
+
+    #endregion
+
+    private ImportEntityResult ImportSingleEntity(CompanyData data, SpreadsheetSheetType entityType, JsonElement entityJson, ImportOptions? options = null, ReferenceResolutionContext? refContext = null)
     {
         var jsonStr = entityJson.GetRawText();
         var opts = ImportJsonOptions;
@@ -703,6 +1621,7 @@ public class SpreadsheetImportService
                 var customer = JsonSerializer.Deserialize<Customer>(jsonStr, opts);
                 if (customer != null && !string.IsNullOrEmpty(customer.Id))
                 {
+                    customer.Name = NameOrUnknown(customer.Name);
                     var existing = data.Customers.FirstOrDefault(c => c.Id == customer.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Customers.Remove(existing);
@@ -743,50 +1662,33 @@ public class SpreadsheetImportService
                     if (string.IsNullOrEmpty(invoice.InvoiceNumber))
                         invoice.InvoiceNumber = invoice.Id;
 
-                    var currency = data.Settings.Localization.Currency;
-                    invoice.OriginalCurrency = currency;
-                    invoice.TotalUSD = invoice.Total;
-                    invoice.BalanceUSD = invoice.Balance;
+                    var invoiceCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(invoiceCurrency))
+                    {
+                        // A per-row currency column was mapped: convert Total/Balance at the exact
+                        // issue date, deferring (pending + enqueue) when unpriceable. Shared with Tier 1.
+                        ApplyInvoiceCurrencyCode(invoice, invoiceCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: amounts are already in the company currency.
+                        invoice.OriginalCurrency = data.Settings.Localization.Currency;
+                        invoice.TotalUSD = invoice.Total;
+                        invoice.BalanceUSD = invoice.Balance;
+                    }
 
-                    // Auto-create missing customer reference
-                    EnsureCustomerExists(data, invoice.CustomerId);
+                    // Resolve customer reference by name, else create a placeholder
+                    invoice.CustomerId = EnsureCustomerExists(data, invoice.CustomerId, refContext) ?? invoice.CustomerId;
 
                     var existing = data.Invoices.FirstOrDefault(i => i.Id == invoice.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Invoices.Remove(existing);
                     data.Invoices.Add(invoice);
 
-                    // Create a linked Revenue entry for paid/partially paid invoices
-                    // so they appear on the dashboard and analytics pages
-                    if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
-                    {
-                        data.IdCounters.Revenue++;
-                        var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
-                        var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
-
-                        data.Revenues.Add(new Revenue
-                        {
-                            Id = revenueId,
-                            Date = invoice.IssueDate,
-                            CustomerId = invoice.CustomerId,
-                            Description = $"Invoice {invoice.InvoiceNumber}",
-                            Quantity = 1,
-                            UnitPrice = invoice.Subtotal,
-                            Subtotal = invoice.Subtotal,
-                            Amount = invoice.Subtotal,
-                            TaxAmount = invoice.TaxAmount,
-                            Total = invoice.Total,
-                            PaymentMethod = PaymentMethod.Other,
-                            PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
-                            Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
-                            InvoiceId = invoice.Id,
-                            ReferenceNumber = invoice.InvoiceNumber,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow,
-                            OriginalCurrency = invoice.OriginalCurrency,
-                            TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
-                        });
-                    }
+                    // Create a linked Revenue entry for paid/partially paid invoices so they appear
+                    // on the dashboard and analytics pages (pending when the invoice's USD value is
+                    // not yet known).
+                    AddAutoRevenueForInvoice(data, invoice);
 
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
@@ -795,21 +1697,38 @@ public class SpreadsheetImportService
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
                 {
-                    expense.OriginalCurrency = data.Settings.Localization.Currency;
-                    expense.TotalUSD = expense.Total;
-                    expense.TaxAmountUSD = expense.TaxAmount;
-                    expense.ShippingCostUSD = expense.ShippingCost;
+                    var expenseCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(expenseCurrency))
+                    {
+                        // A per-row currency column was mapped: convert each amount to USD at the
+                        // transaction's EXACT date. Future-dated/unpriceable rows become pending.
+                        ApplyTransactionCurrencyCode(expense, expenseCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: amounts are already in the company currency.
+                        expense.OriginalCurrency = data.Settings.Localization.Currency;
+                        expense.TotalUSD = expense.Total;
+                        expense.TaxAmountUSD = expense.TaxAmount;
+                        expense.ShippingCostUSD = expense.ShippingCost;
+                    }
 
-                    // Auto-create missing supplier reference
+                    // Resolve supplier reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(expense.SupplierId))
-                        EnsureSupplierExists(data, expense.SupplierId);
+                        expense.SupplierId = EnsureSupplierExists(data, expense.SupplierId, refContext);
+
+                    // The AI emits quantity + unit price but not the pre-tax Amount, so derive it
+                    // (Quantity defaults to 1) before building the line item, so the line-item
+                    // subtotal reconciles with the stored Total.
+                    if (expense.Amount == 0)
+                        expense.Amount = expense.Quantity * expense.UnitPrice;
 
                     // Link product by name and auto-create if missing
                     var expProductName = expense.Description;
                     if (!string.IsNullOrEmpty(expProductName))
                     {
                         var expProduct = FindProductByName(data, expProductName, CategoryType.Expense)
-                                         ?? AutoCreateProduct(data, expProductName, expense.Amount, CategoryType.Expense);
+                                         ?? AutoCreateProduct(data, expProductName, expense.UnitPrice, CategoryType.Expense);
 
                         if (expense.LineItems.Count == 0)
                         {
@@ -819,8 +1738,8 @@ public class SpreadsheetImportService
                                 {
                                     ProductId = expProduct.Id,
                                     Description = expProductName,
-                                    Quantity = 1,
-                                    UnitPrice = expense.Amount,
+                                    Quantity = expense.Quantity,
+                                    UnitPrice = expense.UnitPrice,
                                     TaxRate = expense.Amount > 0 ? expense.TaxAmount / expense.Amount : 0
                                 }
                             ];
@@ -847,21 +1766,37 @@ public class SpreadsheetImportService
                 {
                     // PaymentStatus is already normalized by the enum's JSON
                     // converter (legacy typos → Paid fallback), no separate call.
-                    revenue.OriginalCurrency = data.Settings.Localization.Currency;
-                    revenue.TotalUSD = revenue.Total;
-                    revenue.TaxAmountUSD = revenue.TaxAmount;
-                    revenue.ShippingCostUSD = revenue.ShippingCost;
+                    var revenueCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(revenueCurrency))
+                    {
+                        // A per-row currency column was mapped: convert each amount to USD at the
+                        // transaction's EXACT date. Future-dated/unpriceable rows become pending.
+                        ApplyTransactionCurrencyCode(revenue, revenueCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: amounts are already in the company currency.
+                        revenue.OriginalCurrency = data.Settings.Localization.Currency;
+                        revenue.TotalUSD = revenue.Total;
+                        revenue.TaxAmountUSD = revenue.TaxAmount;
+                        revenue.ShippingCostUSD = revenue.ShippingCost;
+                    }
 
-                    // Auto-create missing customer reference
+                    // Resolve customer reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(revenue.CustomerId))
-                        EnsureCustomerExists(data, revenue.CustomerId);
+                        revenue.CustomerId = EnsureCustomerExists(data, revenue.CustomerId, refContext) ?? revenue.CustomerId;
+
+                    // The AI emits quantity + unit price but not the pre-tax Amount, so derive it
+                    // (Quantity defaults to 1) before building the line item.
+                    if (revenue.Amount == 0)
+                        revenue.Amount = revenue.Quantity * revenue.UnitPrice;
 
                     // Link product by name and auto-create if missing
                     var productName = revenue.Description;
                     if (!string.IsNullOrEmpty(productName))
                     {
                         var revenueProduct = FindProductByName(data, productName, CategoryType.Revenue)
-                                             ?? AutoCreateProduct(data, productName, revenue.Amount, CategoryType.Revenue);
+                                             ?? AutoCreateProduct(data, productName, revenue.UnitPrice, CategoryType.Revenue);
 
                         // Ensure line items reference the product
                         if (revenue.LineItems.Count == 0)
@@ -872,8 +1807,8 @@ public class SpreadsheetImportService
                                 {
                                     ProductId = revenueProduct.Id,
                                     Description = productName,
-                                    Quantity = 1,
-                                    UnitPrice = revenue.Amount,
+                                    Quantity = revenue.Quantity,
+                                    UnitPrice = revenue.UnitPrice,
                                     TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
                                 }
                             ];
@@ -898,11 +1833,23 @@ public class SpreadsheetImportService
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
-                    payment.OriginalCurrency = data.Settings.Localization.Currency;
-                    payment.AmountUSD = payment.Amount;
+                    var paymentCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(paymentCurrency))
+                    {
+                        // A per-row currency column was mapped: convert at the exact payment date,
+                        // deferring (pending + enqueue) when unpriceable so it self-heals later rather
+                        // than being stuck at 0. Shared with the Tier 1 path.
+                        ApplyPaymentCurrencyCode(payment, paymentCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: amount is already in the company currency.
+                        payment.OriginalCurrency = data.Settings.Localization.Currency;
+                        payment.AmountUSD = payment.Amount;
+                    }
 
-                    // Auto-create missing customer and invoice references
-                    EnsureCustomerExists(data, payment.CustomerId);
+                    // Resolve customer reference by name, else create a placeholder
+                    payment.CustomerId = EnsureCustomerExists(data, payment.CustomerId, refContext) ?? payment.CustomerId;
                     EnsureInvoiceExists(data, payment.InvoiceId, payment.CustomerId);
 
                     var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
@@ -985,7 +1932,7 @@ public class SpreadsheetImportService
                 if (rental != null && !string.IsNullOrEmpty(rental.Id))
                 {
                     if (!string.IsNullOrEmpty(rental.CustomerId))
-                        EnsureCustomerExists(data, rental.CustomerId);
+                        rental.CustomerId = EnsureCustomerExists(data, rental.CustomerId, refContext) ?? rental.CustomerId;
                     var existing = data.Rentals.FirstOrDefault(r => r.Id == rental.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Rentals.Remove(existing);
@@ -998,7 +1945,7 @@ public class SpreadsheetImportService
                 if (recurring != null && !string.IsNullOrEmpty(recurring.Id))
                 {
                     if (!string.IsNullOrEmpty(recurring.CustomerId))
-                        EnsureCustomerExists(data, recurring.CustomerId);
+                        recurring.CustomerId = EnsureCustomerExists(data, recurring.CustomerId, refContext) ?? recurring.CustomerId;
                     if (recurring.Status == default)
                         recurring.Status = RecurringInvoiceStatus.Active;
                     var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == recurring.Id);
@@ -1023,8 +1970,23 @@ public class SpreadsheetImportService
                 var po = JsonSerializer.Deserialize<PurchaseOrder>(jsonStr, opts);
                 if (po != null && !string.IsNullOrEmpty(po.Id))
                 {
+                    var poCurrency = ExtractRowCurrency(entityJson, options);
+                    if (!string.IsNullOrEmpty(poCurrency))
+                    {
+                        // A per-row currency column was mapped: convert at the exact order date,
+                        // deferring (pending + enqueue) when unpriceable. Shared with the Tier 1 path.
+                        ApplyPurchaseOrderCurrencyCode(po, poCurrency, data);
+                    }
+                    else
+                    {
+                        // No currency column: the total is already in the company currency.
+                        po.OriginalCurrency = data.Settings.Localization.Currency;
+                        po.TotalUSD = po.Total;
+                    }
+
                     if (!string.IsNullOrEmpty(po.SupplierId))
-                        EnsureSupplierExists(data, po.SupplierId);
+                        po.SupplierId = EnsureSupplierExists(data, po.SupplierId, refContext) ?? po.SupplierId;
+
                     var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == po.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.PurchaseOrders.Remove(existing);
@@ -1055,9 +2017,9 @@ public class SpreadsheetImportService
                 if (returnRecord != null && !string.IsNullOrEmpty(returnRecord.Id))
                 {
                     if (!string.IsNullOrEmpty(returnRecord.CustomerId))
-                        EnsureCustomerExists(data, returnRecord.CustomerId);
+                        returnRecord.CustomerId = EnsureCustomerExists(data, returnRecord.CustomerId, refContext) ?? returnRecord.CustomerId;
                     if (!string.IsNullOrEmpty(returnRecord.SupplierId))
-                        EnsureSupplierExists(data, returnRecord.SupplierId);
+                        returnRecord.SupplierId = EnsureSupplierExists(data, returnRecord.SupplierId, refContext) ?? returnRecord.SupplierId;
                     var existing = data.Returns.FirstOrDefault(r => r.Id == returnRecord.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Returns.Remove(existing);
@@ -2390,6 +3352,12 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     #region Import Methods (Merge Logic)
 
+    /// <summary>
+    /// A blank imported name falls back to "Unknown" so a record that has other data (e.g. a customer
+    /// with only an email) is never shown nameless.
+    /// </summary>
+    private static string NameOrUnknown(string? name) => string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
+
     private void ImportCustomers(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
@@ -2400,7 +3368,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             var customer = existing ?? new Customer();
             customer.Id = id;
-            customer.Name = GetString(row, headers, "Name");
+            customer.Name = NameOrUnknown(GetString(row, headers, "Name"));
             customer.CompanyName = GetNullableString(row, headers, "Company");
             customer.Email = GetString(row, headers, "Email");
             customer.Phone = GetString(row, headers, "Phone");
@@ -2418,13 +3386,16 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Customers.Add(customer);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
     private void ImportInvoices(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var invoiceNumber = GetString(row, headers, "Invoice #");
             var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -2451,78 +3422,76 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             }
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
-            // Set currency values from company settings
-            invoice.OriginalCurrency = data.Settings.Localization.Currency;
-            invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyInvoiceCurrency(invoice, rowIndex, data);
 
             if (existing == null)
                 data.Invoices.Add(invoice);
+            else if (options != null)
+                options.UpdatedCount++;
 
-            // Create a linked Revenue entry for paid/partially paid invoices
-            // so they appear on the dashboard and analytics pages
-            if (invoice.AmountPaid > 0 && data.Revenues.All(r => r.InvoiceId != invoice.Id))
-            {
-                data.IdCounters.Revenue++;
-                var revenueId = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
-                var isPaid = invoice.Status == InvoiceStatus.Paid || invoice.Balance <= 0;
-
-                data.Revenues.Add(new Revenue
-                {
-                    Id = revenueId,
-                    Date = invoice.IssueDate,
-                    CustomerId = invoice.CustomerId,
-                    Description = $"Invoice {invoice.InvoiceNumber}",
-                    Quantity = 1,
-                    UnitPrice = invoice.Subtotal,
-                    Subtotal = invoice.Subtotal,
-                    Amount = invoice.Subtotal,
-                    TaxAmount = invoice.TaxAmount,
-                    Total = invoice.Total,
-                    PaymentMethod = PaymentMethod.Other,
-                    PaymentStatus = isPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Partial,
-                    Notes = $"Auto-created from imported invoice {invoice.InvoiceNumber}",
-                    InvoiceId = invoice.Id,
-                    ReferenceNumber = invoice.InvoiceNumber,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    OriginalCurrency = invoice.OriginalCurrency,
-                    TotalUSD = invoice.TotalUSD > 0 ? invoice.TotalUSD : invoice.Total
-                });
-            }
+            // Create a linked Revenue entry for paid/partially paid invoices so they appear on the
+            // dashboard and analytics pages (pending when the invoice's USD value is not yet known).
+            AddAutoRevenueForInvoice(data, invoice);
         }
     }
 
     private void ImportPurchases(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
-            var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
+            var date = GetDateTime(row, headers, "Date");
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+
+            // Skip summary/blank rows (e.g. "Subtotal", "Grand Total") that carry an amount but no
+            // real expense content, so they aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && date == DateTime.MinValue
+                && string.IsNullOrWhiteSpace(description) && string.IsNullOrWhiteSpace(supplierId))
+                continue;
+
+            // No ID column (or a blank ID): mint a unique one so distinct rows aren't collapsed into a
+            // single record (or skipped as "already exists") when the sheet has no identifier. Without
+            // this, an ID-less sheet imports only its first row.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Expense++;
+                id = $"PUR-{DateTime.UtcNow:yyyy}-{data.IdCounters.Expense:D5}";
+            }
+
+            var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
+
+            // Quantity is optional: sheets that list a single amount per row have no quantity
+            // column, so default to 1. When a quantity column IS present, the pre-tax Amount is
+            // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
+            var quantity = GetDecimal(row, headers, "Quantity");
+            if (quantity <= 0) quantity = 1;
+            var unitPrice = GetDecimal(row, headers, "Unit Price");
+
             var purchase = existing ?? new Expense();
             purchase.Id = id;
-            purchase.Date = GetDateTime(row, headers, "Date");
-            purchase.SupplierId = GetNullableString(row, headers, "Supplier ID");
+            purchase.Date = date;
+            purchase.SupplierId = supplierId;
             purchase.Description = description;
-            purchase.Amount = GetDecimal(row, headers, "Unit Price");
+            purchase.Quantity = quantity;
+            purchase.UnitPrice = unitPrice;
+            purchase.Amount = quantity * unitPrice;
             purchase.TaxAmount = GetDecimal(row, headers, "Tax");
             purchase.Total = GetDecimal(row, headers, "Total");
             purchase.ReferenceNumber = GetString(row, headers, "Reference");
             purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
             purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            // Set currency values from company settings
-            purchase.OriginalCurrency = data.Settings.Localization.Currency;
-            purchase.TotalUSD = purchase.Total;
-            purchase.TaxAmountUSD = purchase.TaxAmount;
-            purchase.ShippingCostUSD = purchase.ShippingCost;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyTransactionCurrency(purchase, rowIndex, data);
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Expense-type categories when there are duplicate names
@@ -2530,14 +3499,14 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (!string.IsNullOrEmpty(description))
             {
                 var product = FindProductByName(data, description, CategoryType.Expense)
-                              ?? AutoCreateProduct(data, description, purchase.Amount, CategoryType.Expense);
+                              ?? AutoCreateProduct(data, description, unitPrice, CategoryType.Expense);
 
                 var lineItem = new LineItem
                 {
                     ProductId = product.Id,
                     Description = description,
-                    Quantity = 1,
-                    UnitPrice = purchase.Amount,
+                    Quantity = quantity,
+                    UnitPrice = unitPrice,
                     TaxRate = purchase.Amount > 0 ? purchase.TaxAmount / purchase.Amount : 0
                 };
                 purchase.LineItems = [lineItem];
@@ -2545,6 +3514,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Expenses.Add(purchase);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -2568,11 +3539,15 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Check for existing product by ID first
             productsById.TryGetValue(id, out var existing);
 
-            // Match by name for auto-created placeholder products (created from foreign key references)
+            // Match by name only to adopt an auto-created placeholder product (created from a
+            // foreign key reference; these always carry a "PRD-IMP-" id). Two real products that
+            // share a name but have their own explicit ids must stay distinct, otherwise the second
+            // row would overwrite the first one's id below and orphan anything referencing it
+            // (e.g. a sellable product vs its purchase-side twin both named "ProBook 5500 Laptop").
             if (existing == null && !string.IsNullOrEmpty(name))
             {
                 productsByName.TryGetValue(name, out var placeholder);
-                if (placeholder != null)
+                if (placeholder != null && placeholder.Id.StartsWith("PRD-IMP-", StringComparison.OrdinalIgnoreCase))
                     existing = placeholder;
             }
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -2658,6 +3633,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 if (!string.IsNullOrEmpty(product.Name))
                     productsByName.TryAdd(product.Name, product);
             }
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -2684,35 +3661,58 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Inventory.Add(item);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
     private void ImportPayments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
+
+            var date = GetDateTime(row, headers, "Date");
+            var amount = GetDecimal(row, headers, "Amount");
+            var customerId = GetString(row, headers, "Customer ID");
+            var invoiceId = GetString(row, headers, "Invoice ID");
+
+            // Skip summary/blank rows that carry no real payment content.
+            if (string.IsNullOrWhiteSpace(id) && date == DateTime.MinValue && amount == 0
+                && string.IsNullOrWhiteSpace(customerId) && string.IsNullOrWhiteSpace(invoiceId))
+                continue;
+
+            // No ID column (or a blank ID): mint a unique one so distinct rows aren't collapsed into a
+            // single record (or skipped as "already exists") when the sheet has no identifier. Without
+            // this, an ID-less sheet imports only its first row. (Mirrors ImportPurchases.)
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Payment++;
+                id = $"PAY-{DateTime.UtcNow:yyyy}-{data.IdCounters.Payment:D5}";
+            }
+
             var existing = data.Payments.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var payment = existing ?? new Payment();
             payment.Id = id;
-            var invoiceId = GetString(row, headers, "Invoice ID");
             payment.InvoiceId = !string.IsNullOrEmpty(invoiceId) && data.Invoices.Any(inv => inv.Id == invoiceId)
                 ? invoiceId : "";
-            payment.CustomerId = GetString(row, headers, "Customer ID");
-            payment.Date = GetDateTime(row, headers, "Date");
-            payment.Amount = GetDecimal(row, headers, "Amount");
+            payment.CustomerId = customerId;
+            payment.Date = date;
+            payment.Amount = amount;
             payment.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
             payment.ReferenceNumber = GetNullableString(row, headers, "Reference");
             payment.Notes = GetString(row, headers, "Notes");
 
-            // Set currency values from company settings
-            payment.OriginalCurrency = data.Settings.Localization.Currency;
-            payment.AmountUSD = payment.Amount;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyPaymentCurrency(payment, rowIndex, data);
 
             if (existing == null)
                 data.Payments.Add(payment);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -2742,54 +3742,81 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Suppliers.Add(supplier);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
     private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
-            var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             // Support both "Product" (new) and "Description" (legacy) column names
             var description = GetString(row, headers, "Product");
             if (string.IsNullOrEmpty(description))
                 description = GetString(row, headers, "Description");
 
+            var date = GetDateTime(row, headers, "Date");
+            var customerId = GetNullableString(row, headers, "Customer ID");
+
+            // Skip summary/blank rows (e.g. "Subtotal", "Grand Total") that carry an amount but no
+            // real revenue content, so they aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && date == DateTime.MinValue
+                && string.IsNullOrWhiteSpace(description) && string.IsNullOrWhiteSpace(customerId))
+                continue;
+
+            // No ID column (or a blank ID): mint a unique one so distinct rows aren't collapsed into a
+            // single record (or skipped as "already exists") when the sheet has no identifier. Without
+            // this, an ID-less sheet imports only its first row. (Mirrors ImportPurchases.)
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Revenue++;
+                id = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
+            }
+
+            var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
+
+            // Quantity is optional (see ImportPurchases): default 1, and the pre-tax Amount is
+            // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
+            var quantity = GetDecimal(row, headers, "Quantity");
+            if (quantity <= 0) quantity = 1;
+            var unitPrice = GetDecimal(row, headers, "Unit Price");
+
             var revenue = existing ?? new Revenue();
             revenue.Id = id;
-            revenue.Date = GetDateTime(row, headers, "Date");
-            revenue.CustomerId = GetNullableString(row, headers, "Customer ID");
+            revenue.Date = date;
+            revenue.CustomerId = customerId;
             revenue.Description = description;
-            revenue.Amount = GetDecimal(row, headers, "Unit Price");
+            revenue.Quantity = quantity;
+            revenue.UnitPrice = unitPrice;
+            revenue.Amount = quantity * unitPrice;
             revenue.TaxAmount = GetDecimal(row, headers, "Tax");
             revenue.Total = GetDecimal(row, headers, "Total");
             revenue.ReferenceNumber = GetString(row, headers, "Reference");
             revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
             revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            // Set currency values from company settings
-            revenue.OriginalCurrency = data.Settings.Localization.Currency;
-            revenue.TotalUSD = revenue.Total;
-            revenue.TaxAmountUSD = revenue.TaxAmount;
-            revenue.ShippingCostUSD = revenue.ShippingCost;
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyTransactionCurrency(revenue, rowIndex, data);
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Revenue-type categories when there are duplicate names
             // Auto-create the product if it doesn't exist
             if (!string.IsNullOrEmpty(description))
             {
-                var product = FindProductByName(data, description, CategoryType.Revenue) 
-                              ?? AutoCreateProduct(data, description, revenue.Amount, CategoryType.Revenue);
+                var product = FindProductByName(data, description, CategoryType.Revenue)
+                              ?? AutoCreateProduct(data, description, unitPrice, CategoryType.Revenue);
 
                 var lineItem = new LineItem
                 {
                     ProductId = product.Id,
                     Description = description,
-                    Quantity = 1,
-                    UnitPrice = revenue.Amount,
+                    Quantity = quantity,
+                    UnitPrice = unitPrice,
                     TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
                 };
                 revenue.LineItems = [lineItem];
@@ -2797,21 +3824,66 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Revenues.Add(revenue);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
-    private static void EnsureCustomerExists(CompanyData data, string? customerId)
+    /// <summary>
+    /// Resolves a customer reference, returning the id the foreign key should point at.
+    ///
+    /// Behavior:
+    /// - Empty reference: returned unchanged.
+    /// - Reference is already an existing customer id: returned unchanged (the common re-import case).
+    /// - Reference is NOT an existing id: consult the name index. On a confident match the
+    ///   reference is REWRITTEN to the matched id (links to the existing record, nothing created).
+    ///   On no match a new record is created, named after the reference. On an ambiguous match a new
+    ///   record is likewise created and a warning is recorded; an ambiguous match is NEVER
+    ///   auto-linked to a guess.
+    /// </summary>
+    private static string? EnsureCustomerExists(CompanyData data, string? customerId, ReferenceResolutionContext? ctx)
     {
-        if (string.IsNullOrEmpty(customerId)) return;
-        if (data.Customers.Any(c => c.Id == customerId)) return;
-        data.Customers.Add(new Customer { Id = customerId, Name = $"Customer ({customerId})" });
+        if (string.IsNullOrEmpty(customerId)) return customerId;
+        if (data.Customers.Any(c => c.Id == customerId)) return customerId;
+
+        if (ctx != null)
+        {
+            var (matchedId, isAmbiguous) = ReferenceResolver.Resolve(customerId, ctx.CustomerIndex);
+            if (matchedId != null)
+                return matchedId; // link to the existing record; no placeholder
+
+            if (isAmbiguous)
+                ctx.Warnings.Add($"Referenced customer '{customerId}' matched more than one existing customer; created a new customer instead of guessing.");
+            else
+                ctx.Warnings.Add($"Referenced customer '{customerId}' was not found; created a new customer.");
+        }
+
+        data.Customers.Add(new Customer { Id = customerId, Name = customerId });
+        return customerId;
     }
 
-    private static void EnsureSupplierExists(CompanyData data, string? supplierId)
+    /// <summary>
+    /// Resolves a supplier reference. See <see cref="EnsureCustomerExists"/> for the resolution rules.
+    /// </summary>
+    private static string? EnsureSupplierExists(CompanyData data, string? supplierId, ReferenceResolutionContext? ctx)
     {
-        if (string.IsNullOrEmpty(supplierId)) return;
-        if (data.Suppliers.Any(s => s.Id == supplierId)) return;
-        data.Suppliers.Add(new Supplier { Id = supplierId, Name = $"Supplier ({supplierId})" });
+        if (string.IsNullOrEmpty(supplierId)) return supplierId;
+        if (data.Suppliers.Any(s => s.Id == supplierId)) return supplierId;
+
+        if (ctx != null)
+        {
+            var (matchedId, isAmbiguous) = ReferenceResolver.Resolve(supplierId, ctx.SupplierIndex);
+            if (matchedId != null)
+                return matchedId; // link to the existing record; no placeholder
+
+            if (isAmbiguous)
+                ctx.Warnings.Add($"Referenced supplier '{supplierId}' matched more than one existing supplier; created a new supplier instead of guessing.");
+            else
+                ctx.Warnings.Add($"Referenced supplier '{supplierId}' was not found; created a new supplier.");
+        }
+
+        data.Suppliers.Add(new Supplier { Id = supplierId, Name = supplierId });
+        return supplierId;
     }
 
     private static void EnsureInvoiceExists(CompanyData data, string? invoiceId, string? customerId)
@@ -2922,6 +3994,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.RentalInventory.Add(item);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -2984,6 +4058,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Rentals.Add(record);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3016,6 +4092,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Categories.Add(category);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3034,6 +4112,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Departments.Add(department);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3070,6 +4150,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Employees.Add(employee);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3099,6 +4181,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Locations.Add(location);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3124,6 +4208,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.RecurringInvoices.Add(recurring);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3157,13 +4243,16 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.StockAdjustments.Add(adjustment);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
     private void ImportPurchaseOrders(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
-        foreach (var row in rows)
+        for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
+            var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
             var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3176,8 +4265,13 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             po.Total = GetDecimal(row, headers, "Total");
             po.Status = ParseEnum(GetString(row, headers, "Status"), PurchaseOrderStatus.Draft);
 
+            // Per-row currency detected from the amount cells, else the company currency.
+            ApplyPurchaseOrderCurrency(po, rowIndex, data);
+
             if (existing == null)
                 data.PurchaseOrders.Add(po);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3209,12 +4303,27 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var (poId, lineItems) in lineItemsByPo)
         {
             var po = data.PurchaseOrders.FirstOrDefault(p => p.Id == poId);
-            if (po != null)
+            // No matching order: leave these rows unassigned (counted as unimported by the caller).
+            if (po == null) continue;
+
+            if (options?.SkipExistingRecords == true && po.LineItems.Count > 0)
             {
-                if (options?.SkipExistingRecords == true && po.LineItems.Count > 0) continue;
-                po.LineItems = lineItems;
-                // Calculate subtotal from line items
-                po.Subtotal = lineItems.Sum(li => li.Total);
+                options.SkippedCount += lineItems.Count;
+                continue;
+            }
+
+            // An order that already had line items is being replaced (an update); one that had
+            // none is a fresh insert. Count per line-item row so the per-sheet result is accurate,
+            // because line items don't grow a top-level collection the way other entities do.
+            bool hadLineItems = po.LineItems.Count > 0;
+            po.LineItems = lineItems;
+            // Calculate subtotal from line items
+            po.Subtotal = lineItems.Sum(li => li.Total);
+
+            if (options != null)
+            {
+                if (hadLineItems) options.UpdatedCount += lineItems.Count;
+                else options.InsertedCount += lineItems.Count;
             }
         }
     }
@@ -3271,6 +4380,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.Returns.Add(returnRecord);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3316,6 +4427,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             if (existing == null)
                 data.LostDamaged.Add(lostDamaged);
+            else if (options != null)
+                options.UpdatedCount++;
         }
     }
 
@@ -3389,15 +4502,27 @@ internal class LenientEnumConverterFactory : JsonConverterFactory
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var enumType = Nullable.GetUnderlyingType(typeToConvert) ?? typeToConvert;
-        var converterType = typeof(LenientEnumConverter<>).MakeGenericType(enumType);
+        // For a nullable enum (e.g. BookRecordType?) the converter MUST handle the exact
+        // Nullable<T> type, not the underlying enum, otherwise System.Text.Json throws a
+        // "handles type X but asked to convert Y" mismatch.
+        var underlying = Nullable.GetUnderlyingType(typeToConvert);
+        if (underlying != null)
+        {
+            var nullableType = typeof(LenientNullableEnumConverter<>).MakeGenericType(underlying);
+            return (JsonConverter)Activator.CreateInstance(nullableType)!;
+        }
+
+        var converterType = typeof(LenientEnumConverter<>).MakeGenericType(typeToConvert);
         return (JsonConverter)Activator.CreateInstance(converterType)!;
     }
 }
 
-internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+/// <summary>
+/// Shared lenient enum parsing used by both the value and nullable converters.
+/// </summary>
+internal static class LenientEnumParser
 {
-    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public static T Parse<T>(ref Utf8JsonReader reader) where T : struct, Enum
     {
         if (reader.TokenType == JsonTokenType.Number)
         {
@@ -3423,7 +4548,31 @@ internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
         // Fall back to default enum value
         return default;
     }
+}
+
+internal class LenientEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => LenientEnumParser.Parse<T>(ref reader);
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) =>
         writer.WriteStringValue(value.ToString());
+}
+
+internal class LenientNullableEnumConverter<T> : JsonConverter<T?> where T : struct, Enum
+{
+    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+        return LenientEnumParser.Parse<T>(ref reader);
+    }
+
+    public override void Write(Utf8JsonWriter writer, T? value, JsonSerializerOptions options)
+    {
+        if (value.HasValue)
+            writer.WriteStringValue(value.Value.ToString());
+        else
+            writer.WriteNullValue();
+    }
 }

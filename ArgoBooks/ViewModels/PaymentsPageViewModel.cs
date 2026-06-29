@@ -200,11 +200,10 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        var onlineReceivedUSD = _allPayments
-            .Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0)
-            .Sum(p => p.EffectiveAmountUSD);
-
-        OnlineReceivedThisMonth = CurrencyService.FormatFromUSD(onlineReceivedUSD, now);
+        // Convert each payment at its OWN date before summing (Calculations.md §3a Phase 2).
+        OnlineReceivedThisMonth = CurrencyService.FormatSumDisplayFromUSD(
+            _allPayments.Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0),
+            p => p.Amount, p => p.OriginalCurrency, p => p.AmountUSD, p => p.Date);
     }
 
     private static string FormatTimeSince(DateTime utcTime)
@@ -556,11 +555,17 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
         // Received this month, net of refunds in the same window, same
         // cash-basis logic the dashboard uses.
-        var monthlyReceivedUSD = _allPayments
-            .Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed")
-            .Sum(p => p.EffectiveAmountUSD);
-        var monthlyRefundsUSD = RefundAggregator.GetRefundedInDateRangeUSD(_allPayments, startOfMonth, now);
-        ReceivedThisMonth = CurrencyService.FormatFromUSD(monthlyReceivedUSD - monthlyRefundsUSD, now);
+        // Convert each payment/refund at its OWN date before summing (Calculations.md §3a Phase 2).
+        var receivedComplete = CurrencyService.TrySumDisplayFromUSD(
+            _allPayments.Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed"),
+            p => p.Amount, p => p.OriginalCurrency, p => p.AmountUSD, p => p.Date, out var monthlyReceivedDisplay);
+        var refundsComplete = CurrencyService.TrySumDisplayFromUSD(
+            _allPayments.Where(p => p.IsRefund && p.Date >= startOfMonth && p.Date <= now),
+            p => Math.Abs(p.Amount), p => p.OriginalCurrency, p => Math.Abs(p.AmountUSD), p => p.Date, out var monthlyRefundsDisplay);
+        // Pending if any component is still awaiting its rate, so the total isn't shown partial.
+        ReceivedThisMonth = receivedComplete && refundsComplete
+            ? CurrencyService.Format(monthlyReceivedDisplay - monthlyRefundsDisplay)
+            : CurrencyService.PendingMarker;
 
         // Total transactions: counts only the user-facing rows (refund records
         // are collapsed into their parent so they don't double-count here).
@@ -919,6 +924,15 @@ public partial class PaymentDisplayItem : ObservableObject
     public string AmountFormatted => AmountUSD < 0
         ? $"-{CurrencyService.FormatWithOriginal(Math.Abs(Amount), OriginalCurrency, Math.Abs(AmountUSD), Date)}"
         : CurrencyService.FormatWithOriginal(Amount, OriginalCurrency, AmountUSD, Date);
+
+    /// <summary>
+    /// True when the amount is showing the pending-conversion marker (its display-currency value
+    /// isn't available yet). Drives the info glyph + tooltip next to the "Pending" text.
+    /// </summary>
+    public bool IsAmountPending => AmountFormatted == CurrencyService.PendingMarker;
+
+    /// <summary>Friendly explanation shown in the info tooltip when <see cref="IsAmountPending"/>.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Amount, OriginalCurrency, Date);
 
     /// <summary>
     /// Gets whether the amount is negative (refund).

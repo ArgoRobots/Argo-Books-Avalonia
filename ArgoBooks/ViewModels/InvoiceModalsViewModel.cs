@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Models.Portal;
@@ -12,6 +13,8 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -1315,6 +1318,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 var usage = await usageService.CheckUsageAsync();
                 if (!usage.CanSend)
                 {
+                    // A failed check (offline / server unreachable) reports an ErrorMessage
+                    // rather than a real limit. Show that inline instead of falsely claiming
+                    // the monthly send limit was reached.
+                    if (!usage.Success && !string.IsNullOrEmpty(usage.ErrorMessage))
+                    {
+                        await ShowSendErrorAsync(usage.ErrorMessage);
+                        return;
+                    }
+
                     var limit = usage.MonthlyLimit > 0 ? usage.MonthlyLimit : InvoicesPageViewModel.DefaultFreeInvoiceLimit;
                     await UpgradePromptHelper.ShowInvoiceLimitPromptAsync(limit);
                     return;
@@ -1584,6 +1596,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             // Add the new invoice to the collection and link to rentals/revenue
             companyData.Invoices.Add(invoice);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
             LinkInvoiceToRentals(invoice, companyData);
             LinkInvoiceToRevenue(invoice, companyData);
         }
@@ -1801,6 +1814,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Add the invoice and link to rentals
         companyData.Invoices.Add(invoice);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
         LinkInvoiceToRentals(invoice, companyData);
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);

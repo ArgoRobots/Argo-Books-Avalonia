@@ -4,11 +4,14 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -258,7 +261,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             }
 
             var deletedRevenue = revenue;
-            App.EventLogService?.CapturePreDeletionSnapshot("Revenue", deletedRevenue.Id);
             var capturedReceipt = deletedReceipt;
             var action = new DelegateAction(
                 $"Delete revenue {revenue.Id}",
@@ -588,6 +590,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         }
 
         companyData.Revenues.Add(revenue);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RevenueCreated);
 
         // Adjust inventory for tracked products
         var inventoryResults = AdjustInventoryForLineItems(companyData, modelLineItems, revenueId, isExpense: false);
@@ -634,7 +637,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var modelLineItems = CreateModelLineItems();
 
         // Apply changes
-        App.EventLogService?.CapturePreModificationSnapshot("Revenue", revenue.Id);
         revenue.Date = ModalDate?.DateTime ?? DateTime.Now;
         revenue.CustomerId = SelectedCustomer?.Id;
         revenue.Description = description;
@@ -763,7 +765,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         {
             try
             {
-                var bytes = File.ReadAllBytes(ReceiptFilePath);
+                var bytes = SharedFileReader.ReadAllBytes(ReceiptFilePath);
                 fileData = Convert.ToBase64String(bytes);
             }
             catch (Exception ex)
@@ -862,6 +864,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     private void OpenCreateCustomer() => OpenCreateCounterparty();
 
     #endregion
+
 }
 
 /// <summary>

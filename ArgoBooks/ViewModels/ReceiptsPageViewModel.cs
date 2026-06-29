@@ -372,6 +372,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     public ReceiptsPageViewModel()
     {
+        Helpers.ColumnVisibilityHelper.SyncToManager(this);
         LoadReceipts();
         CheckScannerConfiguration();
 
@@ -426,12 +427,22 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #region Data Loading
 
-    private void LoadReceipts()
+    private async void LoadReceipts()
     {
+        // Receipts load in the background after a company opens; make sure they're
+        // merged before reading them. EnsureReceiptsLoadedAsync completes synchronously
+        // once merged, so this only actually waits on the first call right after open.
+        var manager = App.CompanyManager;
+        if (manager != null)
+        {
+            try { await manager.EnsureReceiptsLoadedAsync(); }
+            catch { /* fall through and show whatever is available */ }
+        }
+
         _allReceipts.Clear();
         Receipts.Clear();
 
-        var companyData = App.CompanyManager?.CompanyData;
+        var companyData = manager?.CompanyData;
         if (companyData?.Receipts == null)
             return;
 
@@ -945,8 +956,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (result != ConfirmationResult.Primary) return;
 
-            App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
-
             string? linkedTransactionId = null;
             string? linkedTransactionType = null;
             if (isLinked)
@@ -1075,7 +1084,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                 var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == displayItem.Id);
                 if (receipt == null) continue;
 
-                App.EventLogService?.CapturePreDeletionSnapshot("Receipt", receipt.Id);
                 receiptsToDelete.Add(receipt);
 
                 // Unlink from transaction

@@ -77,6 +77,7 @@ public class CurrencyInfo
         ["EUR"] = new("EUR", "€", "Euro"),
         ["GBP"] = new("GBP", "£", "British Pound"),
         ["HUF"] = new("HUF", "Ft", "Hungarian Forint", 0),
+        ["INR"] = new("INR", "₹", "Indian Rupee"),
         ["ISK"] = new("ISK", "kr", "Icelandic Króna", 0),
         ["JPY"] = new("JPY", "¥", "Japanese Yen", 0),
         ["KRW"] = new("KRW", "₩", "South Korean Won", 0),
@@ -97,6 +98,61 @@ public class CurrencyInfo
     /// Priority/common currencies shown at the top of dropdowns.
     /// </summary>
     public static readonly IReadOnlyList<string> PriorityCodes = ["USD", "EUR", "CAD", "AUD", "GBP"];
+
+    /// <summary>
+    /// Reverse index of <see cref="All"/>: a currency symbol mapped to every ISO code that uses it.
+    /// Built by inverting <see cref="All"/>, so ambiguity is data-driven rather than hardcoded
+    /// (e.g. "$" -> [USD, CAD, AUD], "¥" -> [JPY, CNY], "kr" -> [DKK, ISK, NOK, SEK], "£" -> [GBP]).
+    /// Within each symbol the codes are ordered by <see cref="PriorityCodes"/> first, then
+    /// alphabetically, so callers can treat the first entry as the sensible default.
+    /// Keyed case-insensitively to match <see cref="All"/>.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> CodesBySymbol = BuildSymbolIndex();
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> BuildSymbolIndex()
+    {
+        int PriorityRank(string code)
+        {
+            for (int i = 0; i < PriorityCodes.Count; i++)
+                if (string.Equals(PriorityCodes[i], code, StringComparison.OrdinalIgnoreCase))
+                    return i;
+            return int.MaxValue;
+        }
+
+        var map = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var group in All.Values.GroupBy(c => c.Symbol, StringComparer.Ordinal))
+        {
+            var codes = group
+                .Select(c => c.Code)
+                .OrderBy(PriorityRank)
+                .ThenBy(c => c, StringComparer.Ordinal)
+                .ToList();
+            map[group.Key] = codes;
+        }
+        return map;
+    }
+
+    /// <summary>
+    /// When the symbol maps to exactly one currency, returns that code via <paramref name="code"/>
+    /// and <see langword="true"/>. Otherwise returns <see langword="false"/> (unknown or ambiguous).
+    /// </summary>
+    public static bool TryResolveSymbol(string symbol, out string code)
+    {
+        if (CodesBySymbol.TryGetValue(symbol, out var codes) && codes.Count == 1)
+        {
+            code = codes[0];
+            return true;
+        }
+        code = string.Empty;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns every ISO code that uses the given symbol (priority-ordered), or an empty list
+    /// when the symbol is not recognized.
+    /// </summary>
+    public static IReadOnlyList<string> CandidatesForSymbol(string symbol) =>
+        CodesBySymbol.TryGetValue(symbol, out var codes) ? codes : [];
 
     /// <summary>
     /// Gets currency info by code, or USD as fallback.
@@ -150,14 +206,5 @@ public class CurrencyInfo
     public static string FormatAmount(decimal amount, string currencyCode)
     {
         return GetByCode(currencyCode).Format(amount);
-    }
-
-    /// <summary>
-    /// Formats an amount as a whole number using the specified currency code.
-    /// </summary>
-    public static string FormatWholeAmount(decimal amount, string currencyCode)
-    {
-        var info = GetByCode(currencyCode);
-        return $"{info.Symbol}{amount:N0}";
     }
 }

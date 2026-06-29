@@ -7,6 +7,7 @@
              xmlns:icons="using:ArgoBooks"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:entities="using:ArgoBooks.Core.Models.Entities"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -1027,6 +1028,120 @@
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
+                    <!-- Bank Import Rules Tab -->
+                    <TabItem Header="{loc:Loc 'Bank import rules'}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                            <StackPanel Spacing="16">
+
+                                <!-- Header row: description + Add rule button -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{loc:Loc 'Automatically assign categories to imported bank transactions based on matching patterns.'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Center" />
+                                    <Button Grid.Column="1"
+                                            Classes="primary-button"
+                                            Content="{loc:Loc 'Add rule'}"
+                                            Command="{Binding AddBankRuleCommand}"
+                                            Padding="12,6"
+                                            MinHeight="0"
+                                            VerticalAlignment="Center" />
+                                </Grid>
+
+                                <!-- Column headers -->
+                                <Grid ColumnDefinitions="*,180,40" Margin="0,0,0,-8">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{loc:Loc Pattern}"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{loc:Loc Category}"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </Grid>
+
+                                <!-- Rules list -->
+                                <ItemsControl ItemsSource="{Binding BankCategoryRules}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:BankCategoryRuleRow">
+                                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                    CornerRadius="8"
+                                                    Padding="12,10"
+                                                    Margin="0,0,0,4">
+                                                <Grid ColumnDefinitions="*,12,180,8,40" RowDefinitions="Auto,Auto" VerticalAlignment="Center">
+                                                    <!-- Pattern TextBox -->
+                                                    <TextBox Grid.Row="0" Grid.Column="0"
+                                                             Text="{Binding Pattern, Mode=TwoWay}"
+                                                             PlaceholderText="{loc:Loc 'e.g. AMAZON, UBER, NETFLIX'}"
+                                                             Classes="form-input"
+                                                             VerticalAlignment="Center" />
+
+                                                    <!-- Category picker with inline create -->
+                                                    <controls:SearchableDropdown Grid.Row="0" Grid.Column="2"
+                                                        ItemsSource="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).AvailableBankCategories}"
+                                                        SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                                        SearchText="{Binding CategorySearchText, Mode=TwoWay}"
+                                                        DisplayMemberPath="Name"
+                                                        Placeholder="{loc:Loc 'Category...'}"
+                                                        ShowAddNew="True"
+                                                        AddNewText="{loc:Loc 'Create one'}"
+                                                        AddNewCommand="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).OpenCreateCategoryCommand}"
+                                                        Classes="compact"
+                                                        VerticalAlignment="Center" />
+
+                                                    <!-- Delete button -->
+                                                    <Button Grid.Row="0" Grid.Column="4" Grid.RowSpan="2"
+                                                            Classes="icon-button"
+                                                            Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).DeleteBankRuleCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            VerticalAlignment="Center">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
+                                                                  Width="16" Height="16"
+                                                                  Foreground="{DynamicResource ErrorBrush}" />
+                                                    </Button>
+
+                                                    <!-- Pattern validation error -->
+                                                    <TextBlock Grid.Row="1" Grid.Column="0"
+                                                               Text="{Binding PatternError}"
+                                                               IsVisible="{Binding HasPatternError}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               FontSize="11"
+                                                               Margin="2,4,0,0"
+                                                               TextWrapping="Wrap" />
+
+                                                    <!-- Category validation error -->
+                                                    <TextBlock Grid.Row="1" Grid.Column="2"
+                                                               Text="{Binding CategoryError}"
+                                                               IsVisible="{Binding HasCategoryError}"
+                                                               Foreground="{DynamicResource ErrorBrush}"
+                                                               FontSize="11"
+                                                               Margin="2,4,0,0"
+                                                               TextWrapping="Wrap" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty state -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        IsVisible="{Binding BankCategoryRules.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                    <TextBlock Text="{loc:Loc 'No rules yet. Click ''Add rule'' to create one.'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
                 </TabControl>
 
                 <!-- Footer -->

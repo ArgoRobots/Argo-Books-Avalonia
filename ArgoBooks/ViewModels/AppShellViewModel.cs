@@ -37,6 +37,7 @@ public partial class AppShellViewModel : ViewModelBase
     private LocationsModalsViewModel? _locationsModalsViewModel;
     private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
     private BankMatchingModalsViewModel? _bankMatchingModalsViewModel;
+    private BankStatementImportModalViewModel? _bankStatementImportModalViewModel;
     private PurchaseOrdersModalsViewModel? _purchaseOrdersModalsViewModel;
     private ReceiptsModalsViewModel? _receiptsModalsViewModel;
     private LostDamagedModalsViewModel? _lostDamagedModalsViewModel;
@@ -153,6 +154,18 @@ public partial class AppShellViewModel : ViewModelBase
     /// Gets the import mapping dialog view model.
     /// </summary>
     public ImportMappingDialogViewModel ImportMappingDialogViewModel { get; }
+
+    /// <summary>
+    /// Gets the currency-ambiguity resolution dialog view model (shown during import when an
+    /// ambiguous currency symbol like "$" is found in the amount cells).
+    /// </summary>
+    public CurrencyAmbiguityDialogViewModel CurrencyAmbiguityDialogViewModel { get; }
+
+    /// <summary>
+    /// Gets the rate-unavailable dialog view model (shown during import when the exact-date
+    /// exchange rates cannot be fetched, offering connect-and-retry).
+    /// </summary>
+    public RateUnavailableDialogViewModel RateUnavailableDialogViewModel { get; }
 
     /// <summary>
     /// Gets the export as modal view model.
@@ -486,6 +499,22 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Gets the bank statement import modal view model.
+    /// </summary>
+    public BankStatementImportModalViewModel BankStatementImportModalViewModel
+    {
+        get
+        {
+            if (_bankStatementImportModalViewModel == null)
+            {
+                _bankStatementImportModalViewModel = new BankStatementImportModalViewModel();
+                OnPropertyChanged();
+            }
+            return _bankStatementImportModalViewModel;
+        }
+    }
+
+    /// <summary>
     /// Gets the purchase orders modals view model.
     /// </summary>
     public PurchaseOrdersModalsViewModel PurchaseOrdersModalsViewModel
@@ -717,6 +746,8 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create import mapping dialog
         ImportMappingDialogViewModel = new ImportMappingDialogViewModel();
+        CurrencyAmbiguityDialogViewModel = new CurrencyAmbiguityDialogViewModel();
+        RateUnavailableDialogViewModel = new RateUnavailableDialogViewModel();
 
         // Create export as modal
         ExportAsModalViewModel = new ExportAsModalViewModel();
@@ -751,8 +782,15 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
-        // Wire up header's quick actions button to open the panel in dropdown mode
-        HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenDropdownCommand.Execute(null);
+        // Wire up header's quick actions button to open the panel in dropdown mode. Re-sync the
+        // query from the header searchbox first: closing the panel clears the panel's own
+        // SearchQuery, but the textbox keeps its text, so without this the reopened panel would
+        // show unfiltered results while the textbox still displays the search text.
+        HeaderViewModel.OpenQuickActionsRequested += (_, _) =>
+        {
+            QuickActionsViewModel.SearchQuery = HeaderViewModel.SearchQuery;
+            QuickActionsViewModel.OpenDropdownCommand.Execute(null);
+        };
 
         // Wire up header's notification button to toggle the notification panel
         HeaderViewModel.OpenNotificationsRequested += (_, _) => NotificationPanelViewModel.ToggleCommand.Execute(null);
@@ -778,8 +816,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up header's history button to open version history modal
         HeaderViewModel.OpenHistoryRequested += (_, _) => VersionHistoryModalViewModel.OpenCommand.Execute(null);
 
-        // Wire up file menu's create new company to open the wizard
-        FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+        // Wire up file menu's create new company to open the wizard (prompts to save first if
+        // the current company has unsaved changes).
+        FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => _ = App.RequestCreateNewCompanyAsync();
 
         // Wire up sidebar's company header click to open the company switcher
         SidebarViewModel.OpenCompanySwitcherRequested += (_, _) => CompanySwitcherPanelViewModel.ToggleCommand.Execute(null);
@@ -787,8 +826,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up sidebar navigation to close all panels
         SidebarViewModel.NavigationRequested += (_, _) => CloseAllPanels();
 
-        // Wire up company switcher's create new company to open the wizard
-        CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+        // Wire up company switcher's create new company to open the wizard (prompts to save first
+        // if the current company has unsaved changes).
+        CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => _ = App.RequestCreateNewCompanyAsync();
 
         // Wire up help panel's check for updates to open the check for update modal
         HelpPanelViewModel.CheckForUpdatesRequested += (_, _) => CheckForUpdateModalViewModel.OpenCommand.Execute(null);
@@ -871,6 +911,15 @@ public partial class AppShellViewModel : ViewModelBase
                         case NavigationTarget.Categories:
                             CategoryModalsViewModel.OpenAddModalCommand.Execute(null);
                             break;
+                        case NavigationTarget.Locations:
+                            LocationsModalsViewModel.OpenAddModal();
+                            break;
+                        case NavigationTarget.PurchaseOrders:
+                            PurchaseOrdersModalsViewModel.OpenAddModal();
+                            break;
+                        case NavigationTarget.Adjustments:
+                            StockAdjustmentsModalsViewModel.OpenAddModal();
+                            break;
                     }
                     break;
                 case QuickActionName.OpenSettings:
@@ -887,6 +936,9 @@ public partial class AppShellViewModel : ViewModelBase
                     break;
                 case QuickActionName.OpenScanModal:
                     OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
+                    break;
+                case QuickActionName.OpenBankImport:
+                    _ = App.OpenBankStatementImportAsync();
                     break;
                 case QuickActionName.OpenEditCompany:
                     EditCompanyRequested?.Invoke(this, EventArgs.Empty);

@@ -216,6 +216,12 @@
         <!-- Import Mapping Dialog -->
         <modals:ImportMappingDialog DataContext="{Binding ImportMappingDialogViewModel}" />
 
+        <!-- Currency Ambiguity Dialog -->
+        <modals:CurrencyAmbiguityDialog DataContext="{Binding CurrencyAmbiguityDialogViewModel}" />
+
+        <!-- Rate Unavailable (connect-and-retry) Dialog -->
+        <modals:RateUnavailableDialog DataContext="{Binding RateUnavailableDialogViewModel}" />
+
         <!-- Export As Modal -->
         <modals:ExportAsModal DataContext="{Binding ExportAsModalViewModel}" />
 
@@ -231,6 +237,7 @@
         <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
         <modals:StockAdjustmentsModals DataContext="{Binding StockAdjustmentsModalsViewModel}" />
         <modals:BankMatchingModals DataContext="{Binding BankMatchingModalsViewModel}" />
+        <modals:BankStatementImportModal DataContext="{Binding BankStatementImportModalViewModel}" />
         <modals:ReceiptsModals DataContext="{Binding ReceiptsModalsViewModel}" />
         <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
         <modals:LostDamagedModals DataContext="{Binding LostDamagedModalsViewModel}" />

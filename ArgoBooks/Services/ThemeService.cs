@@ -279,9 +279,15 @@ public class ThemeService : IThemeService
 
     private void OnSystemThemeChanged(object? sender, EventArgs e)
     {
-        // Only notify if we're following system theme
+        // Only react if we're following the system theme
         if (CurrentTheme == ThemeMode.System)
         {
+            // Icon-background brushes are theme-dependent and get baked into
+            // application resources by ApplyAccentColor using IsDarkTheme. When
+            // following the system theme, the actual light/dark variant can
+            // resolve or flip after startup, so recompute them here. Without this
+            // they keep a stale value until an explicit theme toggle corrects it.
+            ApplyAccentColor();
             ThemeChanged?.Invoke(this, CurrentTheme);
         }
     }

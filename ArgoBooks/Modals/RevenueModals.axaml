@@ -95,7 +95,9 @@
                                                             Placeholder="{loc:Loc 'Search for a customer...'}"
                                                             HasError="{Binding HasCustomerError}"
                                                             ErrorMessage="{loc:Loc 'Please select a customer.'}"
-                                                            ShowAddNew="False"
+                                                            ShowAddNew="True"
+                                                            AddNewText="{loc:Loc 'Create new customer'}"
+                                                            AddNewCommand="{Binding OpenCreateCustomerCommand}"
                                                             EmptyMessage="{loc:Loc 'No customers found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
@@ -161,7 +163,9 @@
                                                              SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                              DisplayMemberPath="Name"
                                                              Placeholder="{loc:Loc 'Search for a product...'}"
-                                                             ShowAddNew="False"
+                                                             ShowAddNew="True"
+                                                             AddNewText="{loc:Loc 'Create new product'}"
+                                                             AddNewCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
@@ -327,8 +331,15 @@
                                         <TextBlock Grid.Column="1" Text="{Binding ShippingAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
+                                        <Grid.Styles>
+                                            <Style Selector="TextBlock.discount-applied">
+                                                <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                            </Style>
+                                        </Grid.Styles>
                                         <TextBlock Grid.Column="0" Text="{loc:Loc 'Discount'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13" Foreground="{DynamicResource ErrorBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   Classes.discount-applied="{Binding HasDiscount}" />
                                     </Grid>
                                     <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
                                     <Grid ColumnDefinitions="*,Auto">

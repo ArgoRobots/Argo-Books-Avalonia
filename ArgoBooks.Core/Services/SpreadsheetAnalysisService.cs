@@ -22,6 +22,22 @@ public class SpreadsheetAnalysisService(
     private const int Tier2ChunkSize = 100;
     private const int MaxConcurrentChunks = 10;
 
+    /// <summary>
+    /// Minimum confidence score for a sheet to be considered a supported entity type.
+    /// Sheets below this threshold are marked unsupported and excluded from import.
+    /// </summary>
+    private const double MinTypeConfidence = 0.5;
+
+    // Cap the columns analyzed per LLM call so its JSON response can never exceed the
+    // model's output token budget and get truncated (which fails to parse).
+    private const int MaxColumnsPerAnalysisBatch = 40;
+    private const int MaxConcurrentAnalysisBatches = 5;
+
+    // How many times to attempt a batch's classification. Classification can wobble run-to-run
+    // for structurally ambiguous sheets (e.g. cross-tabs) whose confidence lands near the
+    // threshold; a bounded retry re-rolls that wobble instead of rejecting the sheet outright.
+    private const int MaxAnalysisAttempts = 2;
+
     #region Analysis Phase
 
     /// <summary>
@@ -83,21 +99,13 @@ public class SpreadsheetAnalysisService(
             progress?.Report(("Reading file...", 0));
             await Task.Yield();
 
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            if (lines.Length < 2)
-                return null;
-
-            var delimiter = DetectCsvDelimiter(lines[0]);
-            var headers = ParseCsvLine(lines[0], delimiter);
+            var allDataRows = CsvReader.ReadAllRows(filePath, out var headers);
             if (headers.Count == 0)
                 return null;
 
-            var allDataRows = new List<List<string>>();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                allDataRows.Add(ParseCsvLine(lines[i], delimiter));
-            }
+            // Require at least one data row (equivalent to the old lines.Length < 2 guard)
+            if (allDataRows.Count == 0)
+                return null;
 
             var totalRows = allDataRows.Count;
             var sampleRows = GetSampleFromList(allDataRows, totalRows);
@@ -124,65 +132,174 @@ public class SpreadsheetAnalysisService(
         CancellationToken cancellationToken,
         IProgress<(string detail, double percent)>? progress = null)
     {
-        var systemPrompt = BuildAnalysisSystemPrompt();
-        var userPrompt = BuildAnalysisUserPrompt(sheetsData);
+        // Split sheets into batches so a single LLM call never has to map so many columns
+        // that its JSON response exceeds the model's output token budget and gets truncated.
+        // A truncated response fails to parse and would otherwise look like an unreadable file.
+        var batches = SplitIntoAnalysisBatches(sheetsData);
 
-        // Scale max tokens based on number of sheets, each sheet needs ~300-500 tokens for mappings
-        var maxTokens = Math.Max(4000, sheetsData.Count * 500);
+        // The visible progress bar is driven by the UI layer from the learned duration estimate
+        // (see EstimatedProgressTicker), so this no longer fakes a timer. We just report the status
+        // text; percent -1 signals "no real fraction here" so nothing shows a misleading number.
+        progress?.Report(("Analyzing...", -1));
 
-        // Estimate LLM duration based on prompt size (more sheets → longer)
-        var estimatedSeconds = Math.Max(6, sheetsData.Count * 3);
-        var intervalMs = (int)(estimatedSeconds * 1000.0 / 95);
-
-        var currentProgress = 0.0;
-        progress?.Report(("Analyzing with AI...", currentProgress));
-
-        using var progressTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(intervalMs));
-        var timerTask = Task.Run(async () =>
+        // Analyze batches concurrently; each batch is an independent LLM call.
+        using var semaphore = new SemaphoreSlim(MaxConcurrentAnalysisBatches);
+        var tasks = batches.Select(batch => Task.Run(async () =>
         {
-            while (await progressTimer.WaitForNextTickAsync(cancellationToken))
+            await semaphore.WaitAsync(cancellationToken);
+            try
             {
-                if (currentProgress < 95)
-                {
-                    currentProgress = Math.Min(currentProgress + 1, 95);
-                }
-                else
-                {
-                    // Slow asymptotic approach toward 99 so it never looks stuck
-                    currentProgress += (99 - currentProgress) * 0.05;
-                }
-                progress?.Report(("Analyzing with AI...", currentProgress));
+                return await AnalyzeBatchWithRetryAsync(batch, cancellationToken);
             }
-        }, cancellationToken);
+            finally
+            {
+                semaphore.Release();
+            }
+        }, cancellationToken)).ToArray();
 
-        string? response;
-        try
-        {
-            response = await geminiService.SendChatAsync(
-                systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.1, cancellationToken);
-        }
-        finally
-        {
-            progressTimer.Dispose(); // stops the timer, timerTask will complete
-        }
+        var batchResults = await Task.WhenAll(tasks);
 
-        progress?.Report(("Analyzing with AI...", 100));
-
-        if (string.IsNullOrEmpty(response))
+        // Merge successful batches. A batch is null only when its LLM call failed or its
+        // response could not be parsed (both already logged inside AnalyzeBatchAsync).
+        var succeeded = batchResults.Where(r => r != null).ToList();
+        if (succeeded.Count == 0)
             return null;
 
-        var result = ParseAnalysisResponse(response);
-        if (result != null)
-        {
-            result.FileName = fileName;
+        var merged = new SpreadsheetAnalysisResult { FileName = fileName };
+        foreach (var batchResult in succeeded)
+            merged.Sheets.AddRange(batchResult!.Sheets);
 
-            // Populate row counts from our data
-            foreach (var sheet in result.Sheets)
+        // If some batches failed, flag the import as partial so the user is told some sheets
+        // were skipped instead of silently importing only a subset.
+        var failedBatches = batchResults.Length - succeeded.Count;
+        if (failedBatches > 0)
+            merged.PartialAnalysisWarning =
+                $"{failedBatches} of {batchResults.Length} sheet group(s) could not be analyzed and were skipped, so those sheets were not imported.";
+
+        // Populate row counts from our data
+        foreach (var sheet in merged.Sheets)
+        {
+            var data = sheetsData.FirstOrDefault(s => s.Name == sheet.SourceSheetName);
+            if (data != default)
+                sheet.RowCount = data.TotalRows;
+        }
+
+        return merged;
+    }
+
+    /// <summary>
+    /// Splits sheets into batches whose combined column count stays within
+    /// <see cref="MaxColumnsPerAnalysisBatch"/>, so each analysis call produces a response
+    /// that fits comfortably inside the model's output token budget. A single sheet wider
+    /// than the limit gets its own batch.
+    /// </summary>
+    private static List<List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>>
+        SplitIntoAnalysisBatches(
+            List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> sheetsData)
+    {
+        var batches = new List<List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>>();
+        var current = new List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)>();
+        var currentColumns = 0;
+
+        foreach (var sheet in sheetsData)
+        {
+            var columns = sheet.Headers.Count;
+            if (current.Count > 0 && currentColumns + columns > MaxColumnsPerAnalysisBatch)
             {
-                var data = sheetsData.FirstOrDefault(s => s.Name == sheet.SourceSheetName);
-                if (data != default)
-                    sheet.RowCount = data.TotalRows;
+                batches.Add(current);
+                current = [];
+                currentColumns = 0;
             }
+
+            current.Add(sheet);
+            currentColumns += columns;
+        }
+
+        if (current.Count > 0)
+            batches.Add(current);
+
+        return batches;
+    }
+
+    /// <summary>
+    /// Runs <see cref="AnalyzeBatchAsync"/> with a bounded retry. A retry is attempted only when
+    /// the call/parse failed, or a sheet was classified as a known type but landed just under the
+    /// confidence threshold (the wobble that makes an ambiguous sheet flip between importable and
+    /// "cannot import" across runs). A confident "Unknown" is NOT retried, so genuinely
+    /// unsupported sheets (notes, summaries) don't cost extra calls. The attempt with the fewest
+    /// unsupported sheets wins.
+    /// </summary>
+    private async Task<SpreadsheetAnalysisResult?> AnalyzeBatchWithRetryAsync(
+        List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> batch,
+        CancellationToken cancellationToken)
+    {
+        SpreadsheetAnalysisResult? best = null;
+        var bestUnsupported = int.MaxValue;
+
+        for (int attempt = 1; attempt <= MaxAnalysisAttempts; attempt++)
+        {
+            var result = await AnalyzeBatchAsync(batch, cancellationToken);
+
+            if (result != null)
+            {
+                var unsupported = result.Sheets.Count(s => s.UnsupportedReason != null);
+                if (unsupported < bestUnsupported)
+                {
+                    best = result;
+                    bestUnsupported = unsupported;
+                }
+
+                // Only a known-type-but-low-confidence sheet is worth re-rolling. If none remain,
+                // this result is as good as it gets (any leftover unsupported sheets are confidently
+                // Unknown), so stop.
+                var hasBorderlineKnown = result.Sheets.Any(s =>
+                    s.DetectedType != SpreadsheetSheetType.Unknown && s.Confidence < MinTypeConfidence);
+                if (!hasBorderlineKnown)
+                    break;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// Runs one batch of sheets through the LLM and parses the response.
+    /// Returns null if the call failed or the response could not be parsed.
+    /// </summary>
+    private async Task<SpreadsheetAnalysisResult?> AnalyzeBatchAsync(
+        List<(string Name, List<string> Headers, List<List<string>> SampleRows, int TotalRows)> batch,
+        CancellationToken cancellationToken)
+    {
+        var systemPrompt = BuildAnalysisSystemPrompt();
+        var userPrompt = BuildAnalysisUserPrompt(batch);
+
+        // The response needs one mapping object per source column, so scale the token budget
+        // by total columns rather than sheet count. gemini-2.5-flash also spends part of this
+        // budget on thinking tokens, so keep generous headroom above the raw mapping size.
+        var totalColumns = batch.Sum(s => s.Headers.Count);
+        var maxTokens = Math.Max(4000, totalColumns * 200 + batch.Count * 400);
+
+        var response = await geminiService.SendChatAsync(
+            systemPrompt, userPrompt, maxTokens: maxTokens, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: totalColumns);
+
+        if (string.IsNullOrEmpty(response))
+        {
+            errorLogger?.LogWarning(
+                $"AI analysis returned an empty response for a batch of {batch.Count} sheet(s).",
+                "Spreadsheet analysis");
+            return null;
+        }
+
+        var result = ParseAnalysisResponse(response);
+        if (result == null)
+        {
+            // A non-empty response that fails to parse is almost always truncated JSON:
+            // the response ran past the model's output token budget mid-object.
+            errorLogger?.LogError(
+                $"AI analysis response could not be parsed (length {response.Length}, " +
+                $"{batch.Count} sheet(s), {totalColumns} columns, maxTokens {maxTokens}); response likely truncated.",
+                ErrorCategory.Parsing, "Spreadsheet analysis");
         }
 
         return result;
@@ -210,7 +327,8 @@ public class SpreadsheetAnalysisService(
 
 
         var response = await geminiService.SendChatAsync(
-            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken);
+            systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetProcess, sizeFeature: rows.Count);
 
         if (string.IsNullOrEmpty(response))
         {
@@ -234,15 +352,7 @@ public class SpreadsheetAnalysisService(
 
         if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            var delimiter = DetectCsvDelimiter(lines[0]);
-            headers = ParseCsvLine(lines[0], delimiter);
-            allRows = [];
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(lines[i]))
-                    allRows.Add(ParseCsvLine(lines[i], delimiter));
-            }
+            allRows = CsvReader.ReadAllRows(filePath, out headers);
         }
         else
         {
@@ -272,16 +382,8 @@ public class SpreadsheetAnalysisService(
 
         if (filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            if (lines.Length < 2) return result;
-            var delimiter = DetectCsvDelimiter(lines[0]);
-            var headers = ParseCsvLine(lines[0], delimiter);
-            var rows = new List<List<string>>();
-            for (int i = 1; i < lines.Length; i++)
-            {
-                if (!string.IsNullOrWhiteSpace(lines[i]))
-                    rows.Add(ParseCsvLine(lines[i], delimiter));
-            }
+            var rows = CsvReader.ReadAllRows(filePath, out var headers);
+            if (headers.Count == 0) return result;
             foreach (var sheet in sheets)
                 result[sheet.SourceSheetName] = (headers, rows);
         }
@@ -321,7 +423,7 @@ public class SpreadsheetAnalysisService(
             chunks.Add((i, allRows.Skip(i).Take(Tier2ChunkSize).ToList()));
 
         // Process chunks in parallel with concurrency limit
-        var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
+        using var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
         var processedCount = 0;
         var chunkResults = new LlmProcessedData?[chunks.Count];
 
@@ -421,6 +523,31 @@ Respond with valid JSON only, no markdown code blocks.";
                 sb.AppendLine(" |");
             }
             sb.AppendLine();
+
+            // Column profiles: inferred types + basic stats computed from the sample rows.
+            // These give the model stronger signal for classification and column mapping.
+            if (sampleRows.Count > 0)
+            {
+                var profiles = ColumnProfiler.Profile(headers, sampleRows);
+                sb.AppendLine("#### Column profiles");
+                foreach (var p in profiles)
+                {
+                    var examples = p.Examples.Count > 0
+                        ? $", examples: {string.Join(", ", p.Examples)}"
+                        : "";
+                    sb.AppendLine($"- {p.Header} ({p.InferredType}, distinct={p.DistinctCount}, empty={p.EmptyCount}{examples})");
+                }
+                sb.AppendLine();
+
+                var relationships = ColumnProfiler.DetectRelationships(headers, sampleRows);
+                if (relationships.Count > 0)
+                {
+                    sb.AppendLine("#### Detected relationships");
+                    foreach (var rel in relationships)
+                        sb.AppendLine($"- {rel.Description}");
+                    sb.AppendLine();
+                }
+            }
         }
 
         sb.AppendLine(@"## Response Format
@@ -438,8 +565,7 @@ Respond with valid JSON only, no markdown code blocks.";
       ""unmappedSourceColumns"": [""<columns that don't map to any target>""],
       ""unmappedTargetColumns"": [""<target columns with no source match>""]
     }
-  ],
-  ""warnings"": [""<any general warnings>""]
+  ]
 }
 
 IMPORTANT:
@@ -597,14 +723,15 @@ IMPORTANT:
                             sheet.UnmappedTargetColumns.Add(col.GetString() ?? "");
                     }
 
+                    // Mark sheets that cannot be imported: Unknown type or below the confidence threshold.
+                    if (sheet.DetectedType == SpreadsheetSheetType.Unknown || sheet.Confidence < MinTypeConfidence)
+                    {
+                        sheet.UnsupportedReason = $"This sheet ('{sheet.SourceSheetName}') does not match a data type Argo Books can import.";
+                        sheet.IsIncluded = false;
+                    }
+
                     result.Sheets.Add(sheet);
                 }
-            }
-
-            if (root.TryGetProperty("warnings", out var warningsArray))
-            {
-                foreach (var warning in warningsArray.EnumerateArray())
-                    result.Warnings.Add(warning.GetString() ?? "");
             }
 
             return result;

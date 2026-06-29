@@ -1,3 +1,5 @@
+using ArgoBooks.Controls.ColumnWidths;
+
 namespace ArgoBooks.Helpers;
 
 /// <summary>
@@ -5,6 +7,42 @@ namespace ArgoBooks.Helpers;
 /// </summary>
 public static class ColumnVisibilityHelper
 {
+    /// <summary>
+    /// Pushes a page view model's current column visibility into its column-width manager.
+    /// Reflects over every <c>Show{Column}Column</c> boolean property on the view model and
+    /// reports its value to the manager found on the view model's <c>ColumnWidths</c> property.
+    /// </summary>
+    /// <remarks>
+    /// This is required because the <c>[ObservableProperty]</c> field initializers that load
+    /// persisted visibility (e.g. <c>_showFooColumn = Load("Page", "Foo", false)</c>) do NOT
+    /// fire the generated <c>On...Changed</c> partials. Without this, a column that is hidden by
+    /// default - or that the user has previously hidden - is never reported to the manager, so the
+    /// manager keeps reserving proportional width for it and renders an empty gap. Call once from
+    /// the page view model's constructor.
+    /// </remarks>
+    public static void SyncToManager(object viewModel)
+    {
+        var type = viewModel.GetType();
+        if (type.GetProperty("ColumnWidths")?.GetValue(viewModel) is not ITableColumnWidths widths)
+            return;
+
+        foreach (var prop in type.GetProperties())
+        {
+            if (prop.PropertyType != typeof(bool) || !prop.CanRead)
+                continue;
+
+            var name = prop.Name;
+            // Match the Show{Column}Column convention; the middle is the manager's column key.
+            if (name.Length <= 10 ||
+                !name.StartsWith("Show", System.StringComparison.Ordinal) ||
+                !name.EndsWith("Column", System.StringComparison.Ordinal))
+                continue;
+
+            if (prop.GetValue(viewModel) is bool isVisible)
+                widths.SetColumnVisibility(name[4..^6], isVisible);
+        }
+    }
+
     /// <summary>
     /// Loads a saved column visibility value, or returns the default if not found.
     /// </summary>

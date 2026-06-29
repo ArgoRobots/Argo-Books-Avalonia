@@ -62,7 +62,10 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
             Id = s.Id,
             Type = "Revenue",
             Description = string.IsNullOrEmpty(s.Description) ? "Revenue Transaction" : s.Description,
-            Amount = CurrencyService.FormatFromUSD(s.EffectiveTotalUSD, s.Date),
+            // Currency-aware (matches the Revenue/Expense pages): shows the amount directly when the
+            // transaction is already in the display currency, so it doesn't show "Pending" trying to
+            // convert a value that needs no conversion (e.g. bank-imported company-currency rows).
+            Amount = CurrencyService.FormatWithOriginal(s.Total, s.OriginalCurrency, s.TotalUSD, s.Date),
             AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveTotalUSD, s.Date),
             Date = s.Date,
             DateFormatted = FormatDate(s.Date),
@@ -77,7 +80,8 @@ public partial class RecentTransactionsWidgetViewModel : WidgetViewModelBase
             Id = p.Id,
             Type = "Expense",
             Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
-            Amount = CurrencyService.FormatFromUSD(p.EffectiveTotalUSD, p.Date),
+            // Currency-aware (see the revenue branch above).
+            Amount = CurrencyService.FormatWithOriginal(p.Total, p.OriginalCurrency, p.TotalUSD, p.Date),
             AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveTotalUSD, p.Date),
             Date = p.Date,
             DateFormatted = FormatDate(p.Date),

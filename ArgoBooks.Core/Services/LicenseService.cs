@@ -13,7 +13,6 @@ public class LicenseService
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
     private static readonly string LicenseValidateUrl = $"{ApiConfig.BaseUrl}/api/license/validate.php";
-    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly IEncryptionService _encryptionService;
     private readonly IGlobalSettingsService _settingsService;
@@ -268,7 +267,7 @@ public class LicenseService
             return new LicenseValidationResult
             {
                 Status = LicenseValidationStatus.NetworkError,
-                Message = await GetConnectivityErrorMessageAsync(cancellationToken)
+                Message = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken)
             };
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
@@ -277,7 +276,7 @@ public class LicenseService
             return new LicenseValidationResult
             {
                 Status = LicenseValidationStatus.NetworkError,
-                Message = await GetConnectivityErrorMessageAsync(cancellationToken)
+                Message = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken)
             };
         }
         catch (TaskCanceledException)
@@ -299,25 +298,6 @@ public class LicenseService
         }
     }
 
-    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
-            if (!hasInternet)
-                return "No internet connection. Please check your network and try again.";
-
-            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
-            if (!isApiReachable)
-                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
-
-            return "Unable to validate license. Please try again.";
-        }
-        catch
-        {
-            return "Unable to validate license. Please check your internet connection.";
-        }
-    }
 
     /// <summary>
     /// Gets a machine-specific key for encryption using stable platform identifiers.

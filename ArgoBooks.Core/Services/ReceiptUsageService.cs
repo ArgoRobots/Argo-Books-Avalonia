@@ -10,7 +10,6 @@ namespace ArgoBooks.Core.Services;
 public class ReceiptUsageService : IReceiptUsageService, IDisposable
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/receipt/usage.php";
-    private static readonly string ApiHostUrl = ApiConfig.BaseUrl;
 
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
@@ -112,9 +111,11 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
         }
         catch (HttpRequestException)
         {
-            // Network error, allow scan if we have non-expired cached data showing capacity.
-            // Without the expiry check a stale cache could permit scans past the server-side quota.
-            if (_cachedUsage != null && _cachedUsage.CanScan && DateTime.UtcNow < _cacheExpiry)
+            // Allow the scan only if the usage server hiccuped but we still have internet
+            // (a fresh cache shows capacity). When fully offline the scan API can't run, so
+            // report the connectivity problem now instead of letting it fail mid-scan.
+            if (_cachedUsage != null && _cachedUsage.CanScan && DateTime.UtcNow < _cacheExpiry
+                && await _connectivityService.IsInternetAvailableAsync(cancellationToken))
             {
                 return new UsageCheckResult
                 {
@@ -129,7 +130,7 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
             }
 
             // Check if it's a connectivity issue or server issue
-            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            var errorMessage = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken);
             return new UsageCheckResult
             {
                 CanScan = false,
@@ -139,7 +140,7 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
         {
             // Timeout - check connectivity to give better error message
-            var errorMessage = await GetConnectivityErrorMessageAsync(cancellationToken);
+            var errorMessage = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken);
             return new UsageCheckResult
             {
                 CanScan = false,
@@ -258,39 +259,6 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
             _httpClient.Dispose();
         }
         _disposed = true;
-    }
-
-    /// <summary>
-    /// Determines whether the error is due to no internet or API being down.
-    /// </summary>
-    private async Task<string> GetConnectivityErrorMessageAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            // First check if we have internet at all
-            var hasInternet = await _connectivityService.IsInternetAvailableAsync(cancellationToken);
-
-            if (!hasInternet)
-            {
-                return "No internet connection. Please check your network and try again.";
-            }
-
-            // We have internet, so check if the API host is reachable
-            var isApiReachable = await _connectivityService.IsHostReachableAsync(ApiHostUrl, cancellationToken);
-
-            if (!isApiReachable)
-            {
-                return "Unable to reach Argo Books servers. The service may be temporarily unavailable. Please try again later.";
-            }
-
-            // API is reachable but something else went wrong
-            return "Unable to verify usage. Please try again.";
-        }
-        catch
-        {
-            // If connectivity check itself fails, assume no internet
-            return "Unable to verify usage. Please check your internet connection.";
-        }
     }
 
     private async Task<UsageApiResponse> CallApiAsync(string action, string licenseKey, CancellationToken cancellationToken)

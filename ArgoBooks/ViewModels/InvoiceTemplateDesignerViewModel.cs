@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Models.Invoices;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
@@ -705,7 +706,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         try
         {
-            var bytes = File.ReadAllBytes(filePath);
+            var bytes = SharedFileReader.ReadAllBytes(filePath);
             var newBase64 = Convert.ToBase64String(bytes);
 
             var oldBase64 = LogoBase64;

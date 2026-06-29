@@ -2,7 +2,9 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
@@ -10,6 +12,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
+using LiveChartsCore.Kernel;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using OfficeOpenXml.Drawing.Chart;
 using LiveChartsCore.SkiaSharpView.VisualElements;
@@ -82,6 +85,47 @@ public partial class AnalyticsPage : UserControl
             OnChartPointerPressedTunnel,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);
+
+        // LiveCharts pie charts that load while their tab is collapsed (every tab except
+        // Dashboard is IsVisible=false at startup) sometimes never paint their first frame
+        // when the tab is later shown, leaving a blank circle next to a populated legend.
+        // Watch each pie's effective viewport and force a redraw the moment it actually
+        // becomes visible, which fills in the slices reliably.
+        foreach (var pie in this.GetVisualDescendants().OfType<PieChart>())
+        {
+            pie.EffectiveViewportChanged -= OnPieChartViewportChanged;
+            pie.EffectiveViewportChanged += OnPieChartViewportChanged;
+        }
+    }
+
+    /// <summary>
+    /// Pie charts that have already been forced to redraw since becoming visible, so the
+    /// kick fires once per collapsed-to-visible transition rather than on every scroll.
+    /// </summary>
+    private readonly HashSet<PieChart> _renderedPieCharts = new();
+
+    /// <summary>
+    /// Forces a LiveCharts pie chart to redraw when it transitions from collapsed (empty
+    /// viewport) to visible, working around blank pies after a tab switch.
+    /// </summary>
+    private void OnPieChartViewportChanged(object? sender, EffectiveViewportChangedEventArgs e)
+    {
+        if (sender is not PieChart pie)
+            return;
+
+        var isVisible = e.EffectiveViewport.Width > 0 && e.EffectiveViewport.Height > 0;
+        if (!isVisible)
+        {
+            // Left the tab (or scrolled out of view): allow the kick to fire again next time.
+            _renderedPieCharts.Remove(pie);
+            return;
+        }
+
+        // Only kick once per visible transition, and after layout settles, so the chart
+        // has a real size before LiveCharts recomputes its geometry.
+        if (_renderedPieCharts.Add(pie))
+            Dispatcher.UIThread.Post(() => pie.CoreChart.Update(new ChartUpdateParams()),
+                DispatcherPriority.Background);
     }
 
     /// <summary>
@@ -139,6 +183,10 @@ public partial class AnalyticsPage : UserControl
         base.OnUnloaded(e);
 
         PointerPressed -= OnPagePointerPressed;
+
+        foreach (var pie in this.GetVisualDescendants().OfType<PieChart>())
+            pie.EffectiveViewportChanged -= OnPieChartViewportChanged;
+        _renderedPieCharts.Clear();
 
         if (_previousViewModel != null)
         {

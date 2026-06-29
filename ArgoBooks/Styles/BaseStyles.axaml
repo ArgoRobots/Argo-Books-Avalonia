@@ -64,6 +64,16 @@
     </Styles.Resources>
 
 
+    <!-- ToolTip: force theme-aware colors so tooltip text/surface track the active theme.
+         Foreground cascades to the tooltip's text, so the inner TextBlock needs no separate
+         setter. (Sidebar tooltips also need SidebarItem's text styles scoped to .label so
+         they don't leak into the tooltip popup.) -->
+    <Style Selector="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
     <!-- Scrollbar Styling -->
     <Style Selector="ScrollViewer">
         <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />

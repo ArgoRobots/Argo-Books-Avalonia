@@ -80,34 +80,6 @@ public class CurrencyServiceTests
 
     #endregion
 
-    #region FormatWholeNumber Tests
-
-    [Fact]
-    public void FormatWholeAmount_LargeNumber_ReturnsNoDecimals()
-    {
-        var result = CurrencyInfo.FormatWholeAmount(1234567m, "USD");
-
-        Assert.Equal("$1,234,567", result);
-    }
-
-    [Fact]
-    public void FormatWholeAmount_Zero_ReturnsSymbolAndZero()
-    {
-        var result = CurrencyInfo.FormatWholeAmount(0m, "USD");
-
-        Assert.Equal("$0", result);
-    }
-
-    [Fact]
-    public void FormatWholeAmount_DecimalValue_TruncatesToWholeNumber()
-    {
-        var result = CurrencyInfo.FormatWholeAmount(999.99m, "USD");
-
-        Assert.Equal("$1,000", result);
-    }
-
-    #endregion
-
     #region ParseCurrencyCode Tests
 
     [Fact]
@@ -220,36 +192,6 @@ public class CurrencyServiceTests
         Assert.Equal("CAD", value.OriginalCurrency);
         Assert.Equal(112.50m, value.AmountUSD);
         Assert.Equal(date, value.RateDate);
-    }
-
-    [Fact]
-    public void MonetaryValue_GetDisplayAmount_OriginalCurrency_ReturnsOriginalAmount()
-    {
-        var value = new MonetaryValue(150m, "CAD", 112.50m, DateTime.UtcNow);
-
-        var displayAmount = value.GetDisplayAmount("CAD");
-
-        Assert.Equal(150m, displayAmount);
-    }
-
-    [Fact]
-    public void MonetaryValue_GetDisplayAmount_USD_ReturnsAmountUSD()
-    {
-        var value = new MonetaryValue(150m, "CAD", 112.50m, DateTime.UtcNow);
-
-        var displayAmount = value.GetDisplayAmount("USD");
-
-        Assert.Equal(112.50m, displayAmount);
-    }
-
-    [Fact]
-    public void MonetaryValue_GetDisplayAmount_DifferentCurrencyNoRate_FallsBackToUSD()
-    {
-        var value = new MonetaryValue(150m, "CAD", 112.50m, DateTime.UtcNow);
-
-        var displayAmount = value.GetDisplayAmount("EUR");
-
-        Assert.Equal(112.50m, displayAmount);
     }
 
     #endregion

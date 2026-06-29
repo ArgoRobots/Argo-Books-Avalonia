@@ -12,6 +12,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -62,7 +64,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(ReportTemplateFactory.TemplateNames.ARaging, "AR Aging", "Who owes you and for how long",
             Icons.DollarCircleAlt, AppColors.FlatTeal, AppColors.FlatTealLight),
         new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax you collected vs. tax you paid",
-            Icons.BarChart, AppColors.FlatOrange, AppColors.FlatOrangeLight)
+            Icons.BarChart, AppColors.FlatOrange, AppColors.FlatOrangeLight),
+        new(ReportTemplateFactory.TemplateNames.ProductSales, "Sales by Product", "Units and revenue per product",
+            Icons.Products, AppColors.FlatIndigo, AppColors.FlatIndigoLight)
     ];
 
     #endregion
@@ -1704,6 +1708,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             if (success)
             {
+                _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReportGenerated);
                 ExportMessage = "Export completed successfully!";
 
                 // Auto-dismiss success message after 5 seconds

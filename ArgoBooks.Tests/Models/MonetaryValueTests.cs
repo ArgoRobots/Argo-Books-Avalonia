@@ -67,67 +67,50 @@ public class MonetaryValueTests
 
     #endregion
 
-    #region GetDisplayAmount Tests
+    #region TryGetDisplayAmount (exact-date) Tests
 
     [Fact]
-    public void GetDisplayAmount_SameCurrency_ReturnsOriginalAmount()
+    public void TryGetDisplayAmount_NoExactRate_ReturnsFalse()
     {
-        var mv = new MonetaryValue(130m, "CAD", 100m, DateTime.UtcNow);
+        var mv = new MonetaryValue(1200m, "GBP", 1611.40m, new DateTime(2026, 1, 5));
 
-        var result = mv.GetDisplayAmount("CAD");
+        var ok = mv.TryGetDisplayAmount("CAD", (_, _, _) => (false, 0m), out var result);
 
-        Assert.Equal(130m, result);
+        Assert.False(ok);
+        Assert.Equal(0m, result);
     }
 
     [Fact]
-    public void GetDisplayAmount_SameCurrency_CaseInsensitive()
+    public void TryGetDisplayAmount_OriginalCurrency_ReturnsExactOriginal()
     {
-        var mv = new MonetaryValue(130m, "CAD", 100m, DateTime.UtcNow);
+        var mv = new MonetaryValue(1200m, "GBP", 1611.40m, new DateTime(2026, 1, 5));
 
-        var result = mv.GetDisplayAmount("cad");
+        var ok = mv.TryGetDisplayAmount("GBP", (_, _, _) => (false, 0m), out var result);
 
-        Assert.Equal(130m, result);
+        Assert.True(ok);
+        Assert.Equal(1200m, result);
     }
 
     [Fact]
-    public void GetDisplayAmount_USD_ReturnsAmountUSD()
+    public void TryGetDisplayAmount_Usd_ReturnsAmountUsd()
     {
-        var mv = new MonetaryValue(130m, "CAD", 100m, DateTime.UtcNow);
+        var mv = new MonetaryValue(1200m, "GBP", 1611.40m, new DateTime(2026, 1, 5));
 
-        var result = mv.GetDisplayAmount("USD");
+        var ok = mv.TryGetDisplayAmount("USD", (_, _, _) => (false, 0m), out var result);
 
-        Assert.Equal(100m, result);
+        Assert.True(ok);
+        Assert.Equal(1611.40m, result);
     }
 
     [Fact]
-    public void GetDisplayAmount_DifferentCurrency_UsesExchangeRateFunction()
+    public void TryGetDisplayAmount_ExactRate_Converts()
     {
-        var mv = new MonetaryValue(100m);
+        var mv = new MonetaryValue(1200m, "GBP", 1611.40m, new DateTime(2026, 1, 5));
 
-        // Exchange rate: 1 USD = 1.35 CAD
-        var result = mv.GetDisplayAmount("EUR", (_, _, _) => 0.90m);
+        var ok = mv.TryGetDisplayAmount("CAD", (_, _, _) => (true, 2255.96m), out var result);
 
-        Assert.Equal(90.00m, result);
-    }
-
-    [Fact]
-    public void GetDisplayAmount_DifferentCurrency_NoRateFunction_FallsBackToUSD()
-    {
-        var mv = new MonetaryValue(100m);
-
-        var result = mv.GetDisplayAmount("EUR");
-
-        Assert.Equal(100m, result);
-    }
-
-    [Fact]
-    public void GetDisplayAmount_DifferentCurrency_ZeroRate_FallsBackToUSD()
-    {
-        var mv = new MonetaryValue(100m);
-
-        var result = mv.GetDisplayAmount("EUR", (_, _, _) => 0m);
-
-        Assert.Equal(100m, result);
+        Assert.True(ok);
+        Assert.Equal(2255.96m, result);
     }
 
     #endregion

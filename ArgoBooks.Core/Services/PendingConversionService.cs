@@ -15,6 +15,7 @@ public class PendingConversionService
 
     private readonly IPlatformService _platformService;
     private readonly IErrorLogger? _errorLogger;
+    private readonly ExchangeRateService? _exchangeRateService;
     private readonly List<PendingConversion> _queue = [];
     private readonly Lock _lock = new();
 
@@ -40,10 +41,11 @@ public class PendingConversionService
     {
     }
 
-    public PendingConversionService(IPlatformService platformService, IErrorLogger? errorLogger = null)
+    public PendingConversionService(IPlatformService platformService, IErrorLogger? errorLogger = null, ExchangeRateService? exchangeRateService = null)
     {
         _platformService = platformService;
         _errorLogger = errorLogger;
+        _exchangeRateService = exchangeRateService;
         Instance ??= this;
     }
 
@@ -78,9 +80,11 @@ public class PendingConversionService
     {
         lock (_lock)
         {
-            // Avoid duplicates
-            if (_queue.Any(p => p.TransactionId == entry.TransactionId))
-                return;
+            // Replace any existing entry for this record so a later edit's amounts win. ApplyConversion
+            // converts from this snapshot, not the live row, and the self-heal is the guarantee that an
+            // offline row eventually gets its correct exact-date USD (Calculations.md Rule 3a) - so the
+            // snapshot must reflect the row's CURRENT amounts, not the ones from its first save.
+            _queue.RemoveAll(p => p.TransactionId == entry.TransactionId);
             _queue.Add(entry);
         }
 
@@ -139,12 +143,8 @@ public class PendingConversionService
                 }
             }
 
-            // Remove entries for transactions that have already been converted
-            _queue.RemoveAll(p =>
-            {
-                var transaction = FindTransaction(companyData, p.TransactionId, p.TransactionType);
-                return transaction != null && !transaction.IsPendingConversion;
-            });
+            // Remove entries for records that have already been converted
+            _queue.RemoveAll(p => IsConverted(companyData, p));
 
             // Sync back to CompanyData
             companyData.PendingConversions.Clear();
@@ -160,7 +160,7 @@ public class PendingConversionService
     /// </summary>
     public async Task ProcessPendingConversionsAsync(CompanyData companyData)
     {
-        var exchangeService = ExchangeRateService.Instance;
+        var exchangeService = _exchangeRateService ?? ExchangeRateService.Instance;
         if (exchangeService == null)
             return;
 
@@ -179,40 +179,18 @@ public class PendingConversionService
         {
             try
             {
-                // Try to get the exchange rate (will fetch from API if missing)
+                // Convert ONLY at the exact transaction-date rate (fetching it if missing). Never
+                // fall back to today's or any other date's rate: a row stays pending until its own
+                // date's rate is available. See docs/Calculations.md (Rule 3a).
                 var rate = await exchangeService.GetExchangeRateAsync(
                     entry.OriginalCurrency, "USD", entry.TransactionDate, fetchIfMissing: true);
 
-                // If the specific date's rate is unavailable and the date is not in the future,
-                // try today's rate as a fallback. Future-dated transactions must wait until
-                // their date arrives so they get the correct historical rate.
-                if (rate <= 0 && entry.TransactionDate.Date != DateTime.Today && entry.TransactionDate.Date < DateTime.Today)
-                {
-                    rate = await exchangeService.GetExchangeRateAsync(
-                        entry.OriginalCurrency, "USD", DateTime.Today, fetchIfMissing: true);
-                }
-
                 if (rate <= 0)
-                    continue; // Still offline or rate unavailable, skip
+                    continue; // Exact-date rate unavailable (offline, or future-dated); stay pending
 
-                // Find the transaction and apply the conversion
-                var transaction = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);
-                if (transaction == null)
-                {
-                    // Transaction was deleted, remove from queue
-                    processed.Add(entry);
-                    continue;
-                }
-
-                // Apply USD conversion
-                transaction.TotalUSD = Math.Round(entry.Total * rate, 2);
-                transaction.TaxAmountUSD = Math.Round(entry.TaxAmount * rate, 2);
-                transaction.ShippingCostUSD = Math.Round(entry.ShippingCost * rate, 2);
-                transaction.DiscountUSD = Math.Round(entry.Discount * rate, 2);
-                transaction.FeeUSD = Math.Round(entry.Fee * rate, 2);
-                transaction.UnitPriceUSD = Math.Round(entry.UnitPrice * rate, 2);
-                transaction.IsPendingConversion = false;
-
+                // Apply the conversion to the matching record (a no-op if it was deleted since it
+                // was enqueued); either way the entry is done and leaves the queue.
+                ApplyConversion(companyData, entry, rate);
                 processed.Add(entry);
             }
             catch (Exception ex)
@@ -235,6 +213,22 @@ public class PendingConversionService
                 companyData.PendingConversions.AddRange(_queue);
             }
 
+            // A healed Payment's EffectiveAmountUSD changes from 0 to a real value, which shifts the
+            // owning invoice's USD balance. Recalculate those invoices so cross-currency outstanding
+            // aggregates aren't left stale until the next company open.
+            var healedInvoiceIds = processed
+                .Where(e => e.TransactionType == "Payment")
+                .Select(e => companyData.Payments.FirstOrDefault(p => p.Id == e.TransactionId)?.InvoiceId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+            foreach (var invoiceId in healedInvoiceIds)
+            {
+                var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == invoiceId);
+                if (invoice != null)
+                    InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
+            }
+
             await SaveToDiskAsync();
 
             // Mark company data as changed so the next save includes the updated USD values
@@ -253,6 +247,69 @@ public class PendingConversionService
             _ => null
         };
     }
+
+    /// <summary>
+    /// Applies the exact-date conversion to the record named by <paramref name="entry"/>, at the
+    /// supplied <paramref name="rate"/> (original currency -> USD). Handles Revenue/Expense (every
+    /// money field) and Payment/PurchaseOrder (the single amount). No-ops when the record was deleted
+    /// since it was enqueued. Rounding matches the import-time conversion so an immediately-converted
+    /// row and a later-healed row are identical.
+    /// </summary>
+    private static void ApplyConversion(CompanyData companyData, PendingConversion entry, decimal rate)
+    {
+        switch (entry.TransactionType)
+        {
+            case "Revenue":
+            case "Expense":
+                var txn = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);
+                if (txn == null) return;
+                txn.TotalUSD = Math.Round(entry.Total * rate, 2);
+                txn.TaxAmountUSD = Math.Round(entry.TaxAmount * rate, 2);
+                txn.ShippingCostUSD = Math.Round(entry.ShippingCost * rate, 2);
+                txn.DiscountUSD = Math.Round(entry.Discount * rate, 2);
+                txn.FeeUSD = Math.Round(entry.Fee * rate, 2);
+                txn.UnitPriceUSD = Math.Round(entry.UnitPrice * rate, 2);
+                txn.IsPendingConversion = false;
+                return;
+
+            case "Payment":
+                var payment = companyData.Payments.FirstOrDefault(p => p.Id == entry.TransactionId);
+                if (payment == null) return;
+                payment.AmountUSD = Math.Round(entry.Total * rate, 2);
+                payment.IsPendingConversion = false;
+                return;
+
+            case "PurchaseOrder":
+                var po = companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entry.TransactionId);
+                if (po == null) return;
+                po.TotalUSD = Math.Round(entry.Total * rate, 2);
+                po.IsPendingConversion = false;
+                return;
+
+            case "Invoice":
+                var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == entry.TransactionId);
+                if (invoice == null) return;
+                invoice.TotalUSD = Math.Round(entry.Total * rate, 2);
+                invoice.BalanceUSD = Math.Round(entry.Balance * rate, 2);
+                invoice.IsPendingConversion = false;
+                return;
+        }
+    }
+
+    /// <summary>
+    /// True when the record named by <paramref name="entry"/> still exists and is no longer pending,
+    /// so its queue entry can be dropped. A deleted record returns false (kept; the process pass
+    /// removes it). Mirrors the type set handled by <see cref="ApplyConversion"/>.
+    /// </summary>
+    private static bool IsConverted(CompanyData companyData, PendingConversion entry) => entry.TransactionType switch
+    {
+        "Revenue" => companyData.Revenues.FirstOrDefault(r => r.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "Expense" => companyData.Expenses.FirstOrDefault(e => e.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "Payment" => companyData.Payments.FirstOrDefault(p => p.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "PurchaseOrder" => companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entry.TransactionId) is { IsPendingConversion: false },
+        "Invoice" => companyData.Invoices.FirstOrDefault(i => i.Id == entry.TransactionId) is { IsPendingConversion: false },
+        _ => false
+    };
 
     private async Task SaveToDiskAsync()
     {

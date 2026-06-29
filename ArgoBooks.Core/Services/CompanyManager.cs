@@ -25,6 +25,15 @@ public class CompanyManager : IDisposable
     private FileStream? _fileLock;
     private bool _isDisposed;
 
+    // Receipts are loaded off the critical open path (they carry base64 image data).
+    // _receiptsLoadTask reads receipts.json in the background; EnsureReceiptsLoadedAsync
+    // merges them into CompanyData.Receipts exactly once, before any save that writes
+    // receipts.json and before the receipts UI reads them. _receiptsLock guards the
+    // merge-once flag and the task reference.
+    private readonly object _receiptsLock = new();
+    private Task<List<Models.Tracking.Receipt>>? _receiptsLoadTask;
+    private bool _receiptsMerged;
+
     /// <summary>
     /// Gets whether a company is currently open.
     /// </summary>
@@ -579,28 +588,16 @@ public class CompanyManager : IDisposable
             // Open the file
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
-            // Load company data
-            CompanyData = await _fileService.LoadCompanyDataAsync(_currentTempDirectory, cancellationToken);
+            // Load company data, but defer receipts (they carry base64 image data and
+            // aren't needed to show the dashboard). They load in the background and are
+            // merged in by EnsureReceiptsLoadedAsync before any save or receipts UI read.
+            CompanyData = await _fileService.LoadCompanyDataAsync(
+                _currentTempDirectory, cancellationToken, loadReceipts: false);
+            StartReceiptsBackgroundLoad(_currentTempDirectory);
 
             // One-time recalc: heal any historic drift between Invoice
-            // totals and the Payment rows that drive them. Only runs for
-            // invoices that actually have Payment rows. Spreadsheet
-            // imports without payments record AmountPaid directly on the
-            // invoice and would otherwise be wiped to zero here.
-            // Recalculate (not just RecalculateFromPayments) so stored
-            // Status is also healed, e.g. Paid → PartiallyRefunded for
-            // historic invoices saved before the refund-status rules.
-            var invoicesWithPayments = CompanyData.Payments
-                .Select(p => p.InvoiceId)
-                .Where(id => !string.IsNullOrEmpty(id))
-                .ToHashSet();
-            foreach (var invoice in CompanyData.Invoices)
-            {
-                if (invoicesWithPayments.Contains(invoice.Id))
-                {
-                    InvoiceTotalsService.Recalculate(invoice, CompanyData.Payments);
-                }
-            }
+            // totals and the Payment rows that drive them.
+            HealInvoiceTotalsIfNeeded(CompanyData);
 
             CurrentFilePath = filePath;
             _currentPassword = password;
@@ -649,6 +646,109 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Current version of the invoice-totals healing logic. Bump this when the
+    /// healing rules change so the pass re-runs once on the next open.
+    /// </summary>
+    public const string InvoiceTotalsHealVersion = "1";
+
+    /// <summary>
+    /// One-time recalc that heals any historic drift between Invoice totals and
+    /// the Payment rows that drive them. Only runs for invoices that actually
+    /// have Payment rows; spreadsheet imports without payments record AmountPaid
+    /// directly on the invoice and would otherwise be wiped to zero here. Uses
+    /// Recalculate (not just RecalculateFromPayments) so stored Status is also
+    /// healed, e.g. Paid to PartiallyRefunded for historic invoices saved before
+    /// the refund-status rules.
+    ///
+    /// Skipped once <see cref="CompanySettings.InvoiceTotalsHealedVersion"/>
+    /// matches <see cref="InvoiceTotalsHealVersion"/>. The marker persists on the
+    /// next save; the pass is idempotent, so re-running it before then is harmless.
+    /// </summary>
+    public static void HealInvoiceTotalsIfNeeded(CompanyData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        if (data.Settings.InvoiceTotalsHealedVersion == InvoiceTotalsHealVersion)
+            return;
+
+        var invoicesWithPayments = data.Payments
+            .Select(p => p.InvoiceId)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .ToHashSet();
+
+        // Track whether the heal actually changed anything. The version marker lives in
+        // appSettings.json, but the corrected totals live in invoices.json; a settings-only
+        // save would otherwise persist the marker without the healed invoices, permanently
+        // skipping the heal on the next open. Flagging ChangesMade ensures a full/auto save
+        // writes both. Files with no drift don't set the flag, so they get no spurious asterisk.
+        var healed = false;
+        foreach (var invoice in data.Invoices)
+        {
+            if (invoicesWithPayments.Contains(invoice.Id))
+            {
+                var before = (invoice.AmountPaid, invoice.AmountRefunded, invoice.Balance,
+                    invoice.BalanceUSD, invoice.Status);
+                InvoiceTotalsService.Recalculate(invoice, data.Payments);
+                var after = (invoice.AmountPaid, invoice.AmountRefunded, invoice.Balance,
+                    invoice.BalanceUSD, invoice.Status);
+                if (!before.Equals(after))
+                    healed = true;
+            }
+        }
+
+        data.Settings.InvoiceTotalsHealedVersion = InvoiceTotalsHealVersion;
+        if (healed)
+            data.ChangesMade = true;
+    }
+
+    /// <summary>
+    /// Starts reading receipts.json on a background thread. The read does no shared-state
+    /// mutation; the merge into CompanyData.Receipts happens in EnsureReceiptsLoadedAsync.
+    /// </summary>
+    private void StartReceiptsBackgroundLoad(string tempDirectory)
+    {
+        lock (_receiptsLock)
+        {
+            _receiptsMerged = false;
+            _receiptsLoadTask = Task.Run(() => _fileService.LoadReceiptsAsync(tempDirectory));
+        }
+    }
+
+    /// <summary>
+    /// Awaits the background receipts load started on open and merges the persisted
+    /// receipts into <see cref="CompanyData"/> exactly once. Must be awaited before any
+    /// save that writes receipts.json and before the receipts UI reads attachments, so
+    /// the deferred load can never drop receipt data.
+    ///
+    /// The continuation (the merge) runs on the caller's context. All real callers are on
+    /// the UI thread, so this preserves the app-wide invariant that CompanyData.Receipts
+    /// is only mutated on the UI thread. Receipts added by the user during the load window
+    /// are already in the list and are preserved (the persisted ones are appended).
+    /// </summary>
+    public async Task EnsureReceiptsLoadedAsync()
+    {
+        Task<List<Models.Tracking.Receipt>>? task;
+        lock (_receiptsLock)
+        {
+            if (_receiptsMerged)
+                return;
+            task = _receiptsLoadTask;
+        }
+        if (task == null)
+            return;
+
+        var loaded = await task;
+
+        lock (_receiptsLock)
+        {
+            if (_receiptsMerged)
+                return;
+            CompanyData?.Receipts.AddRange(loaded);
+            _receiptsMerged = true;
+        }
+    }
+
+    /// <summary>
     /// Saves the current company to its file.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -661,6 +761,10 @@ public class CompanyManager : IDisposable
             {
                 throw new InvalidOperationException("No company is currently open.");
             }
+
+            // Make sure the deferred receipts have been merged before we write
+            // receipts.json, otherwise the save would drop them.
+            await EnsureReceiptsLoadedAsync();
 
             // Notify listeners to sync in-memory state before saving
             CompanySaving?.Invoke(this, EventArgs.Empty);
@@ -756,6 +860,9 @@ public class CompanyManager : IDisposable
 
             ArgumentException.ThrowIfNullOrEmpty(newFilePath);
 
+            // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
+            await EnsureReceiptsLoadedAsync();
+
             // Notify listeners to sync in-memory state before saving
             CompanySaving?.Invoke(this, EventArgs.Empty);
 
@@ -826,6 +933,13 @@ public class CompanyManager : IDisposable
         CurrentFilePath = null;
         _currentPassword = null;
         PendingRenamePath = null;
+
+        // Drop any in-flight receipts load so it can't merge into the next company.
+        lock (_receiptsLock)
+        {
+            _receiptsLoadTask = null;
+            _receiptsMerged = false;
+        }
 
         // Raise event
         CompanyClosed?.Invoke(this, EventArgs.Empty);
@@ -1206,6 +1320,9 @@ public class CompanyManager : IDisposable
 
             ArgumentException.ThrowIfNullOrEmpty(backupPath);
 
+            // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
+            await EnsureReceiptsLoadedAsync();
+
             // Sync in-memory state before exporting (e.g., event log)
             CompanySaving?.Invoke(this, EventArgs.Empty);
 
@@ -1240,6 +1357,11 @@ public class CompanyManager : IDisposable
         {
             if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
                 return;
+
+            // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
+            // This save path is auto-triggered by portal sync shortly after open, so the
+            // gate here is what prevents an early sync from dropping receipts.
+            await EnsureReceiptsLoadedAsync();
 
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);

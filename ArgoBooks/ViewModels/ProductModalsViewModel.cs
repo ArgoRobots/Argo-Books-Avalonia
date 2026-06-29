@@ -8,6 +8,8 @@ using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -19,6 +21,15 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isAddModalOpen;
+
+    /// <summary>Title of the Add modal. Reset to the default on each open; callers can override it
+    /// (e.g. the bank importer customizing an AI-proposed product) after calling OpenAddModal.</summary>
+    [ObservableProperty]
+    private string _addModalTitle = "Add Product/Service";
+
+    /// <summary>Text of the Add modal's primary button. Reset to the default on each open.</summary>
+    [ObservableProperty]
+    private string _addModalSaveText = "Add Product/Service";
 
     [ObservableProperty]
     private bool _isEditModalOpen;
@@ -247,6 +258,8 @@ public partial class ProductModalsViewModel : ViewModelBase
         _editingProduct = null;
         ClearModalFields();
         UpdateDropdownOptions();
+        AddModalTitle = "Add Product/Service".Translate();
+        AddModalSaveText = "Add Product/Service".Translate();
         IsAddModalOpen = true;
     }
 
@@ -353,6 +366,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         };
 
         companyData.Products.Add(newProduct);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ProductCreated);
         companyData.MarkAsModified();
 
         var productToUndo = newProduct;
@@ -530,7 +544,6 @@ public partial class ProductModalsViewModel : ViewModelBase
         }
 
         var productToEdit = _editingProduct;
-        App.EventLogService?.CapturePreModificationSnapshot("Product", productToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
@@ -680,7 +693,6 @@ public partial class ProductModalsViewModel : ViewModelBase
             if (product != null)
             {
                 var deletedProduct = product;
-                App.EventLogService?.CapturePreDeletionSnapshot("Product", deletedProduct.Id);
                 companyData.Products.Remove(product);
                 companyData.MarkAsModified();
 

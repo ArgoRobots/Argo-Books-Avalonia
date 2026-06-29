@@ -564,22 +564,20 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var endOfWeek = now.AddDays(7);
 
         // Total outstanding (unpaid invoices) - calculate in USD, convert for display
-        var outstandingUSD = _allInvoices
-            .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
-            .Sum(i => i.EffectiveBalanceUSD);
-        TotalOutstanding = CurrencyService.FormatFromUSD(outstandingUSD, now);
+        // Convert each invoice at its OWN issue date before summing (Calculations.md §3a Phase 2).
+        TotalOutstanding = CurrencyService.FormatSumDisplayFromUSD(
+            _allInvoices.Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled),
+            i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
         // Paid this month
-        var paidThisMonthUSD = _allInvoices
-            .Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth)
-            .Sum(i => i.EffectiveTotalUSD);
-        PaidThisMonth = CurrencyService.FormatFromUSD(paidThisMonthUSD, now);
+        PaidThisMonth = CurrencyService.FormatSumDisplayFromUSD(
+            _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
+            i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
 
         // Overdue amount
-        var overdueUSD = _allInvoices
-            .Where(i => i.IsOverdue || i.Status == InvoiceStatus.Overdue)
-            .Sum(i => i.EffectiveBalanceUSD);
-        OverdueAmount = CurrencyService.FormatFromUSD(overdueUSD, now);
+        OverdueAmount = CurrencyService.FormatSumDisplayFromUSD(
+            _allInvoices.Where(i => i.IsOverdue || i.Status == InvoiceStatus.Overdue),
+            i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
         // Due this week
         DueThisWeekCount = _allInvoices

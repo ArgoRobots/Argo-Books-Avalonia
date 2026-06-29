@@ -12,6 +12,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -446,6 +448,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         };
 
         companyData.Suppliers.Add(newSupplier);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.SupplierCreated);
         companyData.MarkAsModified();
 
         // Persist the avatar (manual pick or auto-fetched favicon) into the company
@@ -698,7 +701,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
         }
 
         var supplierToEdit = _editingSupplier;
-        App.EventLogService?.CapturePreModificationSnapshot("Supplier", supplierToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
@@ -810,7 +812,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
             if (supplier == null) return;
 
             var deletedSupplier = supplier;
-            App.EventLogService?.CapturePreDeletionSnapshot("Supplier", deletedSupplier.Id);
 
             // Snapshot the avatar bytes BEFORE deleting so undo can restore the
             // file alongside the supplier record.

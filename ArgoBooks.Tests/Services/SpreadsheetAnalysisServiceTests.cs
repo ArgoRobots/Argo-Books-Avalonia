@@ -22,10 +22,16 @@ public class SpreadsheetAnalysisServiceTests
             ReceiptAnalysisRequest request, CancellationToken cancellationToken = default)
             => Task.FromResult<SupplierCategorySuggestion?>(null);
 
+        public Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+            BankLineCategorizationRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult<List<BankLineSuggestion>?>(null);
+
         public Task<string?> SendChatAsync(
             string systemPrompt, string userPrompt,
             int maxTokens = 4000, double temperature = 0.1,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.Completion,
+            long? sizeFeature = null)
         {
             LastSystemPrompt = systemPrompt;
             LastUserPrompt = userPrompt;
@@ -37,7 +43,8 @@ public class SpreadsheetAnalysisServiceTests
             string base64Image, string mimeType,
             int maxTokens = 4000, double temperature = 0.1,
             string? model = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.ReceiptScan)
             => Task.FromResult<string?>(null);
     }
 
@@ -144,7 +151,6 @@ public class SpreadsheetAnalysisServiceTests
     {
         var result = new SpreadsheetAnalysisResult();
         Assert.Empty(result.Sheets);
-        Assert.Empty(result.Warnings);
         Assert.Equal(string.Empty, result.FileName);
     }
 
@@ -191,5 +197,41 @@ public class SpreadsheetAnalysisServiceTests
     {
         Assert.Equal(0, (int)ProcessingTier.Tier1_Mapping);
         Assert.Equal(1, (int)ProcessingTier.Tier2_LlmProcessing);
+    }
+
+    [Fact]
+    public void ParseAnalysisResponse_UnknownType_MarksUnsupported()
+    {
+        var json = "{\"sheets\":[{\"sourceSheetName\":\"Appointments\",\"detectedType\":\"Unknown\",\"confidence\":0.2,\"tier\":\"Tier1_Mapping\"}]}";
+        var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var result = (SpreadsheetAnalysisResult)method!.Invoke(null, [json])!;
+        var sheet = result.Sheets.Single();
+        Assert.False(sheet.IsIncluded);
+        Assert.False(string.IsNullOrEmpty(sheet.UnsupportedReason));
+    }
+
+    [Fact]
+    public void ParseAnalysisResponse_LowConfidence_MarksUnsupported()
+    {
+        var json = "{\"sheets\":[{\"sourceSheetName\":\"Misc\",\"detectedType\":\"Customers\",\"confidence\":0.3,\"tier\":\"Tier1_Mapping\"}]}";
+        var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var result = (SpreadsheetAnalysisResult)method!.Invoke(null, [json])!;
+        var sheet = result.Sheets.Single();
+        Assert.False(sheet.IsIncluded);
+        Assert.False(string.IsNullOrEmpty(sheet.UnsupportedReason));
+    }
+
+    [Fact]
+    public void ParseAnalysisResponse_HighConfidenceKnownType_NotMarkedUnsupported()
+    {
+        var json = "{\"sheets\":[{\"sourceSheetName\":\"Customers\",\"detectedType\":\"Customers\",\"confidence\":0.98,\"tier\":\"Tier1_Mapping\",\"columnMappings\":[],\"unmappedSourceColumns\":[],\"unmappedTargetColumns\":[]}]}";
+        var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var result = (SpreadsheetAnalysisResult)method!.Invoke(null, [json])!;
+        var sheet = result.Sheets.Single();
+        Assert.True(sheet.IsIncluded);
+        Assert.Null(sheet.UnsupportedReason);
     }
 }

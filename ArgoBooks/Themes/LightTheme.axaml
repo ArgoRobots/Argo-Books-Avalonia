@@ -131,4 +131,21 @@
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
+    <!-- AI Accent (used by AI import badges) -->
+    <Color x:Key="AiAccentColor">#7C3AED</Color>
+    <SolidColorBrush x:Key="AiAccentBrush" Color="{StaticResource AiAccentColor}" />
+    <SolidColorBrush x:Key="AiAccentSoftBrush" Color="#1A7C3AED" />
+
+    <!-- AI import confidence + tier badges - darker, saturated tones that read on light surfaces. -->
+    <SolidColorBrush x:Key="ConfidenceHighBrush" Color="#16A34A" />
+    <SolidColorBrush x:Key="ConfidenceHighSoftBrush" Color="#1A16A34A" />
+    <SolidColorBrush x:Key="ConfidenceMediumBrush" Color="#D97706" />
+    <SolidColorBrush x:Key="ConfidenceMediumSoftBrush" Color="#1AD97706" />
+    <SolidColorBrush x:Key="ConfidenceLowBrush" Color="#DC2626" />
+    <SolidColorBrush x:Key="ConfidenceLowSoftBrush" Color="#1ADC2626" />
+    <SolidColorBrush x:Key="TierMappingBrush" Color="#3B82F6" />
+    <SolidColorBrush x:Key="TierMappingSoftBrush" Color="#1A3B82F6" />
+    <SolidColorBrush x:Key="TierLlmBrush" Color="#7C3AED" />
+    <SolidColorBrush x:Key="TierLlmSoftBrush" Color="#1A7C3AED" />
+
 </ResourceDictionary>

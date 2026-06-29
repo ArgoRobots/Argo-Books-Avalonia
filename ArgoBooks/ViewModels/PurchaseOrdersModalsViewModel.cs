@@ -14,6 +14,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -401,9 +403,9 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Saves the purchase order.
     /// </summary>
     [RelayCommand]
-    private void SaveOrder()
+    private async Task SaveOrder()
     {
-        var savedOrderId = TrySaveOrder();
+        var savedOrderId = await TrySaveOrder();
         if (savedOrderId == null) return;
 
         OrderSaved?.Invoke(this, EventArgs.Empty);
@@ -415,9 +417,9 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// the PDF and review the email before actually sending.
     /// </summary>
     [RelayCommand]
-    private void SaveAndPreviewOrder()
+    private async Task SaveAndPreviewOrder()
     {
-        var savedOrderId = TrySaveOrder();
+        var savedOrderId = await TrySaveOrder();
         if (savedOrderId == null) return;
 
         OrderSaved?.Invoke(this, EventArgs.Empty);
@@ -438,7 +440,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Validates the Add/Edit form and persists the order. Returns the saved order ID on success,
     /// or null if validation failed (errors are already surfaced on the form).
     /// </summary>
-    private string? TrySaveOrder()
+    private async Task<string?> TrySaveOrder()
     {
         AddModalError = null;
         HasSupplierError = false;
@@ -494,6 +496,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return null;
 
+        // Fetch the order-date rate up front (like manual entry) so the saved order shows its amount
+        // immediately instead of a momentary "Pending".
+        await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(OrderDate?.DateTime ?? DateTime.Today);
+
         return IsEditMode && !string.IsNullOrEmpty(EditingOrderId)
             ? SaveEditedOrder(companyData, shipping)
             : SaveNewOrder(companyData, shipping);
@@ -535,7 +541,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             UpdatedAt = DateTime.UtcNow
         };
 
+        ApplyDisplayCurrency(companyData, order);
+
         companyData.PurchaseOrders.Add(order);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PurchaseOrderCreated);
         companyData.MarkAsModified();
 
         // Record undo action
@@ -557,6 +566,50 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         return order.Id;
     }
 
+    /// <summary>
+    /// Tags a purchase order with the company's display currency and its USD total, so a non-USD
+    /// company's PO rows show the amount instead of "Pending". Converts at the order date when the
+    /// exact-date rate is cached; otherwise marks it pending and queues it for the self-heal. The
+    /// display is correct immediately because the original currency matches the display currency.
+    /// </summary>
+    private static void ApplyDisplayCurrency(CompanyData companyData, PurchaseOrder order)
+    {
+        var currency = ArgoBooks.Services.CurrencyService.CurrentCurrencyCode;
+        order.OriginalCurrency = currency;
+
+        if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            order.TotalUSD = order.Total;
+            order.IsPendingConversion = false;
+            return;
+        }
+
+        var rates = Core.Services.ExchangeRateService.Instance;
+        if (rates != null && rates.TryConvertExact(order.Total, currency, "USD", order.OrderDate, out var usd))
+        {
+            order.TotalUSD = usd;
+            order.IsPendingConversion = false;
+            return;
+        }
+
+        // Exact-date rate not cached: the display is already correct (original currency == display
+        // currency); defer the USD total to the self-heal queue.
+        order.IsPendingConversion = true;
+        var entry = new Core.Models.Common.PendingConversion
+        {
+            TransactionId = order.Id,
+            TransactionType = "PurchaseOrder",
+            OriginalCurrency = currency,
+            TransactionDate = order.OrderDate,
+            Total = order.Total
+        };
+        // Drop any earlier pending entry for this order first, so re-editing an offline/future-dated
+        // PO doesn't accumulate duplicates in the saved file (matches the manual edit path).
+        companyData.PendingConversions.RemoveAll(p => p.TransactionId == order.Id);
+        companyData.PendingConversions.Add(entry);
+        _ = Core.Services.PendingConversionService.Instance?.AddPendingConversionAsync(entry);
+    }
+
     private string? SaveEditedOrder(CompanyData companyData, decimal shipping)
     {
         var order = companyData.PurchaseOrders.FirstOrDefault(o => o.Id == EditingOrderId);
@@ -573,7 +626,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var oldNotes = order.Notes;
 
         // Update order
-        App.EventLogService?.CapturePreModificationSnapshot("PurchaseOrder", order.Id);
         order.SupplierId = SelectedSupplier!.Id;
         order.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
         order.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
@@ -589,6 +641,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         order.Total = order.Subtotal + shipping;
         order.Notes = Notes;
         order.UpdatedAt = DateTime.UtcNow;
+        ApplyDisplayCurrency(companyData, order);
         companyData.MarkAsModified();
 
         // Record undo action

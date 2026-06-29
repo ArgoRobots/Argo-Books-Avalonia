@@ -10,6 +10,8 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ArgoBooks.Core.Models.Telemetry;
+
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
@@ -453,6 +455,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         };
 
         companyData.Customers.Add(newCustomer);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.CustomerCreated);
         companyData.MarkAsModified();
 
         // Persist the avatar image (if one was picked) into the company temp directory
@@ -729,7 +732,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
         }
 
         var customerToEdit = _editingCustomer;
-        App.EventLogService?.CapturePreModificationSnapshot("Customer", customerToEdit.Id);
         var changes = new Dictionary<string, FieldChange>();
         if (hasIdChange) changes["ID"] = new FieldChange { OldValue = oldId, NewValue = newId };
         if (oldName != newName) changes["Name"] = new FieldChange { OldValue = oldName, NewValue = newName };
@@ -872,7 +874,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             if (customer != null)
             {
                 var deletedCustomer = customer;
-                App.EventLogService?.CapturePreDeletionSnapshot("Customer", deletedCustomer.Id);
 
                 // Snapshot the avatar bytes BEFORE deleting so undo can restore the
                 // file alongside the customer record. The customer's AvatarFileName is
