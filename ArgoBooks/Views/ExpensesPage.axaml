@@ -82,10 +82,36 @@
                             ToolTip.Tip="{loc:Loc 'Import'}">
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                <MenuItem Header="{loc:Loc 'Scan a receipt'}"
-                                          Click="OnAiScanButtonClick" />
-                                <MenuItem Header="{loc:Loc 'Import bank statement'}"
-                                          Click="OnImportBankStatementClick" />
+                                <MenuItem Click="OnAiScanButtonClick">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{x:Static icons:Icons.ScanReceipt}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                    </MenuItem.Icon>
+                                    <MenuItem.Header>
+                                        <StackPanel Spacing="1" Margin="2,2,12,2">
+                                            <TextBlock Text="{loc:Loc 'Scan a receipt'}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{loc:Loc 'Snap a photo or PDF'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </MenuItem.Header>
+                                </MenuItem>
+                                <MenuItem Click="OnImportBankStatementClick">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{x:Static icons:Icons.Bank}"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                    </MenuItem.Icon>
+                                    <MenuItem.Header>
+                                        <StackPanel Spacing="1" Margin="2,2,12,2">
+                                            <TextBlock Text="{loc:Loc 'Import bank statement'}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{loc:Loc 'CSV, Excel, or PDF'}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </MenuItem.Header>
+                                </MenuItem>
                             </MenuFlyout>
                         </Button.Flyout>
                         <StackPanel Orientation="Horizontal" Spacing="8">

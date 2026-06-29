@@ -128,7 +128,7 @@
                                         CornerRadius="8"
                                         Background="{DynamicResource PrimaryIconBgBrush}"
                                         Margin="0,0,16,0">
-                                    <PathIcon Data="{x:Static icons:Icons.ImportData}"
+                                    <PathIcon Data="{x:Static icons:Icons.Bank}"
                                               Width="20" Height="20"
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
