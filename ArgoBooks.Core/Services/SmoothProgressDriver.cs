@@ -68,7 +68,7 @@ public sealed class SmoothProgressDriver
     }
 
     /// <summary>
-    /// Spread-aware ease: 0 at t=0, 0.5 at p50, 0.9 at p90, then asymptotic toward the ceiling.
+    /// Spread-aware ease: 0 at t=0, ~0.85 at p50, ~0.95 at p90, then asymptotic toward the ceiling.
     /// </summary>
     private double TimeFraction(double t)
     {

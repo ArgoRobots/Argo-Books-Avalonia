@@ -10,10 +10,10 @@ public sealed class OperationPrior
 {
     public required OperationKind Operation { get; init; }
 
-    /// <summary>Median server-compute time (ms). The bar reads ~50% here.</summary>
+    /// <summary>Median server-compute time (ms). The bar reads ~85% here.</summary>
     public double P50Ms { get; init; }
 
-    /// <summary>90th-percentile server-compute time (ms). The bar reads ~90% here.</summary>
+    /// <summary>90th-percentile server-compute time (ms). The bar reads ~95% here.</summary>
     public double P90Ms { get; init; }
 
     /// <summary>Number of samples behind this prior (0 for bundled seeds).</summary>
