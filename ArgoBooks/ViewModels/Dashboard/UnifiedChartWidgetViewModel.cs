@@ -138,6 +138,16 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
             return;
         }
 
+        // Revenue vs Expenses uses the same analytics-page loader, which converts each day's value at
+        // that day's OWN rate before bucketing (Calculations.md §3a Phase 2). The generic multi-series
+        // path below converts pre-bucketed monthly totals at the month-start date, whose rate is usually
+        // uncached, so it fell back to showing the raw USD amount instead of the display currency.
+        if (ChartDataType == ChartDataType.RevenueVsExpenses)
+        {
+            LoadRevenueVsExpensesComparisonChart(data, chartSettings.StartDate, chartSettings.EndDate);
+            return;
+        }
+
         var service = new ReportChartDataService(data, filters);
 
         if (IsDistribution)
@@ -171,6 +181,15 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
         // (Calculations.md §3a Phase 2), so the title matches the bars and needs no today's-rate step.
         ChartTitle = $"{localizedName}: {CurrencyService.Format(totalProfit)}";
 
+        XAxes = ChartLoaderService.CreateDateXAxes(dates);
+        YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
+        Series = series;
+        HasData = dates.Length > 0;
+    }
+
+    private void LoadRevenueVsExpensesComparisonChart(CompanyData data, DateTime startDate, DateTime endDate)
+    {
+        var (series, dates) = ChartLoaderService.LoadRevenueVsExpensesChart(data, startDate, endDate);
         XAxes = ChartLoaderService.CreateDateXAxes(dates);
         YAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         Series = series;
