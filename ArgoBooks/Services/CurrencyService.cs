@@ -116,16 +116,6 @@ public static class CurrencyService
     }
 
     /// <summary>
-    /// Formats an amount with no decimal places (for large numbers).
-    /// </summary>
-    /// <param name="amount">The amount to format.</param>
-    /// <returns>The formatted currency string.</returns>
-    public static string FormatWholeNumber(decimal amount)
-    {
-        return $"{CurrentSymbol}{amount:N0}";
-    }
-
-    /// <summary>
     /// Formats an amount from a MonetaryValue, converting to the current display currency.
     /// </summary>
     /// <param name="value">The monetary value to format.</param>
@@ -136,17 +126,6 @@ public static class CurrencyService
             return Format(0m);
 
         return TryDisplay(value, out var amount) ? Format(amount) : PendingMarker;
-    }
-
-    /// <summary>
-    /// Formats an amount from a MonetaryValue as a whole number.
-    /// </summary>
-    public static string FormatWholeNumber(MonetaryValue? value)
-    {
-        if (value == null)
-            return FormatWholeNumber(0m);
-
-        return TryDisplay(value, out var amount) ? FormatWholeNumber(amount) : PendingMarker;
     }
 
     /// <summary>
@@ -323,14 +302,6 @@ public static class CurrencyService
 
         // Otherwise convert from USD to the target currency
         return FormatFromUSD(amountUSD, date);
-    }
-
-    /// <summary>
-    /// Formats a legacy decimal value (assumes USD) as a whole number in the current display currency.
-    /// </summary>
-    public static string FormatWholeNumberFromUSD(decimal amountUSD, DateTime date)
-    {
-        return TryDisplayFromUSD(amountUSD, date, out var amount) ? FormatWholeNumber(amount) : PendingMarker;
     }
 
     /// <summary>

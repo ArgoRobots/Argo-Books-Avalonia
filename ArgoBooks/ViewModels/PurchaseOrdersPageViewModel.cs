@@ -345,7 +345,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // Convert each PO at its OWN order date before summing (Calculations.md §3a Phase 2).
         TotalValue = CurrencyService.TrySumDisplayFromUSD(
             _allOrders, o => o.Total, o => o.OriginalCurrency, o => o.TotalUSD, o => o.OrderDate, out var poTotalDisplay)
-            ? CurrencyService.FormatWholeNumber(poTotalDisplay)
+            ? CurrencyService.Format(poTotalDisplay)
             : CurrencyService.PendingMarker;
     }
 

@@ -80,34 +80,6 @@ public class CurrencyServiceTests
 
     #endregion
 
-    #region FormatWholeNumber Tests
-
-    [Fact]
-    public void FormatWholeAmount_LargeNumber_ReturnsNoDecimals()
-    {
-        var result = CurrencyInfo.FormatWholeAmount(1234567m, "USD");
-
-        Assert.Equal("$1,234,567", result);
-    }
-
-    [Fact]
-    public void FormatWholeAmount_Zero_ReturnsSymbolAndZero()
-    {
-        var result = CurrencyInfo.FormatWholeAmount(0m, "USD");
-
-        Assert.Equal("$0", result);
-    }
-
-    [Fact]
-    public void FormatWholeAmount_DecimalValue_TruncatesToWholeNumber()
-    {
-        var result = CurrencyInfo.FormatWholeAmount(999.99m, "USD");
-
-        Assert.Equal("$1,000", result);
-    }
-
-    #endregion
-
     #region ParseCurrencyCode Tests
 
     [Fact]

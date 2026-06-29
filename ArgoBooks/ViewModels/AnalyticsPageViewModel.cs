@@ -2293,15 +2293,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             - RefundAggregator.GetRefundedInDateRangeDisplay(data.Payments, StartDate, EndDate, CurrencyService.GetDisplayAmount);
         var netProfitDisplay = ProfitCalculator.CalculateNetProfitDisplay(data, StartDate, EndDate, CurrencyService.GetDisplayAmount);
 
-        TotalPurchases = CurrencyService.FormatWholeNumber(totalPurchasesDisplay);
+        TotalPurchases = CurrencyService.Format(totalPurchasesDisplay);
         PurchasesChangeValue = hasPrevPeriodData && prevPurchasesUSD > 0 ? (double)purchasesChange : null;
         PurchasesChangeText = hasPrevPeriodData && prevPurchasesUSD > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
 
-        TotalRevenue = CurrencyService.FormatWholeNumber(totalRevenueDisplay);
+        TotalRevenue = CurrencyService.Format(totalRevenueDisplay);
         RevenueChangeValue = hasPrevPeriodData && prevSalesUSD > 0 ? (double)revenueChange : null;
         RevenueChangeText = hasPrevPeriodData && prevSalesUSD > 0 ? $"{Math.Abs(revenueChange):F1}%" : null;
 
-        NetProfit = CurrencyService.FormatWholeNumber(netProfitDisplay);
+        NetProfit = CurrencyService.Format(netProfitDisplay);
         ProfitChangeValue = hasPrevPeriodData && prevNetProfit != 0 ? (double)profitChange : null;
         ProfitChangeText = hasPrevPeriodData && prevNetProfit != 0 ? $"{Math.Abs(profitChange):F1}%" : null;
 
@@ -2412,7 +2412,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         TotalTransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
         TotalTransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
-        AvgTransactionValue = transactionsComplete ? CurrencyService.FormatWholeNumber(avgTransactionValueDisplay) : CurrencyService.PendingMarker;
+        AvgTransactionValue = transactionsComplete ? CurrencyService.Format(avgTransactionValueDisplay) : CurrencyService.PendingMarker;
         AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
         AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
@@ -2465,7 +2465,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         RetentionChangeValue = null;
         RetentionChangeText = null;
 
-        AvgCustomerValue = custSalesComplete ? CurrencyService.FormatWholeNumber(avgValueDisplay) : CurrencyService.PendingMarker;
+        AvgCustomerValue = custSalesComplete ? CurrencyService.Format(avgValueDisplay) : CurrencyService.PendingMarker;
         AvgCustomerValueChangeValue = null;
         AvgCustomerValueChangeText = null;
     }
@@ -2510,7 +2510,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         ReturnRateChangeValue = hasPrevPeriodData && prevSalesTransactions > 0 ? returnRateChange : null;
         ReturnRateChangeText = hasPrevPeriodData && prevSalesTransactions > 0 ? $"{(returnRateChange >= 0 ? "+" : "")}{returnRateChange:F1}%" : null;
 
-        ReturnsFinancialImpact = CurrencyService.FormatWholeNumber(financialImpact);
+        ReturnsFinancialImpact = CurrencyService.Format(financialImpact);
         ReturnsImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
         ReturnsImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 
@@ -2567,7 +2567,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LossRateChangeValue = hasPrevPeriodData && prevTotalTransactions > 0 ? lossRateChange : null;
         LossRateChangeText = hasPrevPeriodData && prevTotalTransactions > 0 ? $"{(lossRateChange >= 0 ? "+" : "")}{lossRateChange:F1}%" : null;
 
-        LossesFinancialImpact = CurrencyService.FormatWholeNumber(financialImpact);
+        LossesFinancialImpact = CurrencyService.Format(financialImpact);
         LossesImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
         LossesImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 
@@ -2624,15 +2624,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var netLiabilityDisplay = taxCollectedDisplay - taxPaidDisplay;
 
         // Show Pending while any component is still awaiting its exact-date rate.
-        TotalTaxCollected = collectedComplete ? CurrencyService.FormatWholeNumber(taxCollectedDisplay) : CurrencyService.PendingMarker;
+        TotalTaxCollected = collectedComplete ? CurrencyService.Format(taxCollectedDisplay) : CurrencyService.PendingMarker;
         TaxCollectedChangeValue = hasPrevPeriodData && prevTaxCollected > 0 ? (double)collectedChange : null;
         TaxCollectedChangeText = hasPrevPeriodData && prevTaxCollected > 0 ? $"{Math.Abs(collectedChange):F1}%" : null;
 
-        TotalTaxPaid = paidComplete ? CurrencyService.FormatWholeNumber(taxPaidDisplay) : CurrencyService.PendingMarker;
+        TotalTaxPaid = paidComplete ? CurrencyService.Format(taxPaidDisplay) : CurrencyService.PendingMarker;
         TaxPaidChangeValue = hasPrevPeriodData && prevTaxPaid > 0 ? (double)paidChange : null;
         TaxPaidChangeText = hasPrevPeriodData && prevTaxPaid > 0 ? $"{Math.Abs(paidChange):F1}%" : null;
 
-        NetTaxLiability = collectedComplete && paidComplete ? CurrencyService.FormatWholeNumber(netLiabilityDisplay) : CurrencyService.PendingMarker;
+        NetTaxLiability = collectedComplete && paidComplete ? CurrencyService.Format(netLiabilityDisplay) : CurrencyService.PendingMarker;
         TaxLiabilityChangeValue = hasPrevPeriodData && prevNetLiability != 0 ? (double)liabilityChange : null;
         TaxLiabilityChangeText = hasPrevPeriodData && prevNetLiability != 0 ? $"{Math.Abs(liabilityChange):F1}%" : null;
 

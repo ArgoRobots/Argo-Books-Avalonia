@@ -207,13 +207,4 @@ public class CurrencyInfo
     {
         return GetByCode(currencyCode).Format(amount);
     }
-
-    /// <summary>
-    /// Formats an amount as a whole number using the specified currency code.
-    /// </summary>
-    public static string FormatWholeAmount(decimal amount, string currencyCode)
-    {
-        var info = GetByCode(currencyCode);
-        return $"{info.Symbol}{amount:N0}";
-    }
 }
