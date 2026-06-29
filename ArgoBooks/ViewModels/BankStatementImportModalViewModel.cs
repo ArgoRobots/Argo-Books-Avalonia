@@ -913,23 +913,30 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         }
         _categorizeProgressFloor = 60;
 
-        // User closed the modal during the read: abort without reopening or charging a credit.
-        if (!IsOpen) return [];
-
         if (extracted.Count == 0)
         {
-            // Close the modal again and explain: the extractor returns nothing both when the PDF has
-            // no recognizable transactions and when the server couldn't process it.
-            IsOpen = false;
-            IsLoading = false;
-            await App.ShowInfoMessageBoxAsync(
-                "Import Bank Statement".Translate(),
-                "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+            // The extractor returns nothing both when the PDF has no recognizable transactions and when
+            // the server couldn't process it. Don't charge a credit for a no-result extraction; only
+            // surface the message if the modal is still open.
+            if (IsOpen)
+            {
+                IsOpen = false;
+                IsLoading = false;
+                await App.ShowInfoMessageBoxAsync(
+                    "Import Bank Statement".Translate(),
+                    "We couldn't read any transactions from that PDF. It may not be a recognizable bank statement, or the server couldn't process it. Try again, or import a CSV or Excel export instead.".Translate());
+            }
             return [];
         }
 
-        // Extraction succeeded: consume one credit and hand the rows to the review/categorize UI.
+        // Extraction succeeded and cost a credit, so consume it even if the user has since closed the
+        // modal. Skipping it on close would let a start/cancel loop extract PDFs without ever consuming
+        // quota. (The server's per-identity rate limit still caps the absolute number of calls.)
         await usage.IncrementUsageAsync();
+
+        // Closed during the read: the credit is counted, but don't hand rows to a modal nobody's viewing.
+        if (!IsOpen) return [];
+
         return extracted;
     }
 
