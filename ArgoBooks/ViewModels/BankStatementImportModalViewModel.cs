@@ -331,18 +331,22 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             });
             ticker.Complete();
 
-            // User closed the modal while the AI was running: don't charge a credit or touch the rows
-            // (mirrors the PDF read path's cancel guard).
-            if (!IsOpen)
-                return;
-
             if (suggestions == null || suggestions.Count == 0)
             {
                 SetAiUnavailable("AI couldn't categorize this statement. Select products manually.".Translate());
                 return;
             }
 
+            // The Gemini call already ran and cost a credit, so record usage even if the user has since
+            // closed the modal. Skipping it on close would let a start/cancel loop make real AI calls
+            // without ever consuming quota. (The server's own per-identity rate limit still caps the
+            // absolute number of calls, so this is about quota fairness, not an unbounded bill.)
             await usage.IncrementUsageAsync();
+
+            // Closed during the call: the credit is counted, but don't bother writing suggestions back
+            // to rows nobody is viewing.
+            if (!IsOpen)
+                return;
 
             ApplySuggestions(data, pending, suggestions);
         }
