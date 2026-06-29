@@ -339,7 +339,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     public string SubtotalFormatted => CurrencyService.Format(Subtotal);
     public string TaxAmountFormatted => CurrencyService.Format(TaxAmount);
-    public string DiscountAmountFormatted => $"-{CurrencyService.Format(DiscountAmount)}";
+    // Only show the leading "-" (and the green "savings" colour, via HasDiscount) when there's an
+    // actual discount; a zero discount reads as a plain neutral amount like the other lines.
+    public string DiscountAmountFormatted => DiscountAmount > 0
+        ? $"-{CurrencyService.Format(DiscountAmount)}"
+        : CurrencyService.Format(DiscountAmount);
+
+    /// <summary>True when a discount is applied, used to colour the discount amount green.</summary>
+    public bool HasDiscount => DiscountAmount > 0;
     public string ShippingAmountFormatted => CurrencyService.Format(ShippingAmount);
     public string FeeAmountFormatted => CurrencyService.Format(FeeAmount);
     public string TotalFormatted => CurrencyService.Format(Total);
@@ -364,6 +371,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         OnPropertyChanged(nameof(SubtotalFormatted));
         OnPropertyChanged(nameof(TaxAmountFormatted));
         OnPropertyChanged(nameof(DiscountAmountFormatted));
+        OnPropertyChanged(nameof(HasDiscount));
         OnPropertyChanged(nameof(ShippingAmountFormatted));
         OnPropertyChanged(nameof(FeeAmountFormatted));
         OnPropertyChanged(nameof(TotalFormatted));

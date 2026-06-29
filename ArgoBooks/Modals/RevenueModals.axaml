@@ -331,8 +331,15 @@
                                         <TextBlock Grid.Column="1" Text="{Binding ShippingAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
+                                        <Grid.Styles>
+                                            <Style Selector="TextBlock.discount-applied">
+                                                <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                            </Style>
+                                        </Grid.Styles>
                                         <TextBlock Grid.Column="0" Text="{loc:Loc 'Discount'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13" Foreground="{DynamicResource ErrorBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   Classes.discount-applied="{Binding HasDiscount}" />
                                     </Grid>
                                     <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
                                     <Grid ColumnDefinitions="*,Auto">
