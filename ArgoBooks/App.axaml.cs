@@ -1398,9 +1398,10 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Performs a silent background check for updates.
-    /// If an update is found, notifies the CheckForUpdateModal ViewModel so the user
-    /// can be informed the next time they open the modal. Does not show UI automatically.
+    /// Performs a background check for updates on startup. If a newer version is
+    /// available, shows the update banner at the top of the app shell ("A new
+    /// version is available" with a Download now button) and primes the
+    /// CheckForUpdate modal so the banner's button can start the download right away.
     /// </summary>
     private static async Task CheckForUpdatesInBackgroundAsync()
     {
