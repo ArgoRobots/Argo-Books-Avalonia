@@ -471,7 +471,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets average transaction value over time with separate series for revenue and expense transactions.
     /// </summary>
-    public List<ChartSeriesData> GetAverageTransactionValueBySeries()
+    public List<ChartSeriesData> GetAverageTransactionValueBySeries(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData == null)
             return [];
@@ -507,7 +507,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var transactions = companyData.Revenues
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
                 .Where(RevenueAggregator.IsCollected)
-                .Select(s => s.EffectiveTotalUSD)
+                .Select(s => toDisplay != null ? toDisplay(s.EffectiveTotalUSD, s.Date) : s.EffectiveTotalUSD)
                 .ToList();
 
             return new ChartDataPoint
@@ -525,7 +525,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
             var transactions = companyData.Expenses
                 .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.EffectiveTotalUSD)
+                .Select(p => toDisplay != null ? toDisplay(p.EffectiveTotalUSD, p.Date) : p.EffectiveTotalUSD)
                 .ToList();
 
             return new ChartDataPoint
@@ -941,7 +941,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// <summary>
     /// Gets average shipping costs over time.
     /// </summary>
-    public List<ChartDataPoint> GetAverageShippingCosts()
+    public List<ChartDataPoint> GetAverageShippingCosts(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData == null)
             return [];
@@ -976,11 +976,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             shippingCosts.AddRange(companyData.Revenues
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
                 .Where(RevenueAggregator.IsCollected)
-                .Select(s => s.EffectiveShippingCostUSD));
+                .Select(s => toDisplay != null ? toDisplay(s.EffectiveShippingCostUSD, s.Date) : s.EffectiveShippingCostUSD));
 
             shippingCosts.AddRange(companyData.Expenses
                 .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.EffectiveShippingCostUSD));
+                .Select(p => toDisplay != null ? toDisplay(p.EffectiveShippingCostUSD, p.Date) : p.EffectiveShippingCostUSD));
 
             return new ChartDataPoint
             {
@@ -1682,7 +1682,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// Gets tax collected (from revenues) and tax paid (from expenses) over time.
     /// Returns two series: "Tax Collected" and "Tax Paid".
     /// </summary>
-    public List<ChartSeriesData> GetTaxCollectedVsPaid()
+    public List<ChartSeriesData> GetTaxCollectedVsPaid(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData == null)
             return [];
@@ -1713,7 +1713,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
                     .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
-                    .Sum(r => r.EffectiveTaxAmountUSD),
+                    .Sum(r => toDisplay != null ? toDisplay(r.EffectiveTaxAmountUSD, r.Date) : r.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -1728,7 +1728,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
                     .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
-                    .Sum(e => e.EffectiveTaxAmountUSD),
+                    .Sum(e => toDisplay != null ? toDisplay(e.EffectiveTaxAmountUSD, e.Date) : e.EffectiveTaxAmountUSD),
                 Date = month
             };
         }).ToList();
@@ -2146,9 +2146,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.RevenueVsExpenses => GetRevenueVsExpenses(),
 
             // Transaction charts
-            ChartDataType.AverageTransactionValue => GetAverageTransactionValueBySeries(),
+            ChartDataType.AverageTransactionValue => GetAverageTransactionValueBySeries(toDisplay),
             ChartDataType.TotalTransactions => GetTransactionCountBySeries(),
-            ChartDataType.AverageShippingCosts => GetAverageShippingCosts(),
+            ChartDataType.AverageShippingCosts => GetAverageShippingCosts(toDisplay),
 
             // Geographic charts
             ChartDataType.WorldMap => GetWorldMapData(toDisplay),
@@ -2185,7 +2185,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             ChartDataType.ExpenseVsRevenueLosses => GetExpenseVsRevenueLosses(),
 
             // Taxes charts
-            ChartDataType.TaxCollectedVsPaid => GetTaxCollectedVsPaid(),
+            ChartDataType.TaxCollectedVsPaid => GetTaxCollectedVsPaid(toDisplay),
             ChartDataType.TaxLiabilityTrend => GetTaxLiabilityOverTime(),
             ChartDataType.TaxByCategory => GetTaxByCategory(toDisplay),
             ChartDataType.TaxRateDistribution => GetTaxRateDistribution(),

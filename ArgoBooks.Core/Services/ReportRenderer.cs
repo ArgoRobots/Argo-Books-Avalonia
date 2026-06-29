@@ -1180,10 +1180,28 @@ public class ReportRenderer : IDisposable
     /// <summary>
     /// Gets chart data points for a specific chart type.
     /// </summary>
+    /// <summary>
+    /// Chart types whose data method converts each transaction at its OWN date when handed a converter.
+    /// For these, a non-USD report passes the converter and does NOT re-convert the bucket afterwards,
+    /// so a month bucket is never converted at the month-start date (whose rate is usually uncached,
+    /// which falls back to the raw USD figure). Calculations.md Rule 3a Phase 2.
+    /// </summary>
+    private static bool ConvertsPerTransaction(ChartDataType chartType) => chartType is
+        ChartDataType.AverageTransactionValue
+        or ChartDataType.AverageShippingCosts
+        or ChartDataType.TaxCollectedVsPaid;
+
     private List<ChartDataPoint>? GetChartDataPoints(ChartDataType chartType)
     {
         if (_chartDataService == null)
             return null;
+
+        if (ConvertsPerTransaction(chartType)
+            && !string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartDataService.GetChartData(
+                chartType, (usd, date) => (decimal)ConvertFromUSD((double)usd, date)) as List<ChartDataPoint>;
+        }
 
         var data = _chartDataService.GetChartData(chartType);
 
@@ -1218,6 +1236,15 @@ public class ReportRenderer : IDisposable
         {
             return _chartDataService.GetRevenueVsExpensesConverted(
                 (usd, date) => (decimal)ConvertFromUSD((double)usd, date));
+        }
+
+        // Other monthly monetary multi-series charts convert each transaction at its own date inside
+        // the data service (same reason as above), so pass the converter and don't re-convert here.
+        if (ConvertsPerTransaction(chartType)
+            && !string.Equals(_currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartDataService.GetChartData(
+                chartType, (usd, date) => (decimal)ConvertFromUSD((double)usd, date)) as List<ChartSeriesData>;
         }
 
         var data = _chartDataService.GetChartData(chartType);
