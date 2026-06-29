@@ -2120,6 +2120,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             txn.TotalUSD = txn.Total;
             txn.TaxAmountUSD = txn.TaxAmount;
+            txn.ShippingCostUSD = txn.ShippingCost;
+            txn.DiscountUSD = txn.Discount;
+            txn.FeeUSD = txn.Fee;
+            txn.UnitPriceUSD = txn.UnitPrice;
             txn.IsPendingConversion = false;
             return;
         }
@@ -2127,15 +2131,25 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var rates = Core.Services.ExchangeRateService.Instance;
         if (rates != null && rates.TryConvertExact(txn.Total, currency, "USD", txn.Date, out var totalUsd))
         {
+            // Convert every amount, not just the total: UnitPriceUSD/DiscountUSD/etc. feed USD-based
+            // reports, COGS, and cross-currency edits, so leaving them at 0 would undercount.
             txn.TotalUSD = totalUsd;
             rates.TryConvertExact(txn.TaxAmount, currency, "USD", txn.Date, out var taxUsd);
             txn.TaxAmountUSD = taxUsd;
+            rates.TryConvertExact(txn.ShippingCost, currency, "USD", txn.Date, out var shipUsd);
+            txn.ShippingCostUSD = shipUsd;
+            rates.TryConvertExact(txn.Discount, currency, "USD", txn.Date, out var discUsd);
+            txn.DiscountUSD = discUsd;
+            rates.TryConvertExact(txn.Fee, currency, "USD", txn.Date, out var feeUsd);
+            txn.FeeUSD = feeUsd;
+            rates.TryConvertExact(txn.UnitPrice, currency, "USD", txn.Date, out var unitUsd);
+            txn.UnitPriceUSD = unitUsd;
             txn.IsPendingConversion = false;
             return;
         }
 
         // Exact-date rate not cached: the display is already correct (original currency == display
-        // currency); defer the USD totals to the self-heal queue, exactly like the normal save.
+        // currency); defer all the USD amounts to the self-heal queue, exactly like the normal save.
         txn.IsPendingConversion = true;
         var entry = new Core.Models.Common.PendingConversion
         {
@@ -2144,7 +2158,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             OriginalCurrency = currency,
             TransactionDate = txn.Date,
             Total = txn.Total,
-            TaxAmount = txn.TaxAmount
+            TaxAmount = txn.TaxAmount,
+            ShippingCost = txn.ShippingCost,
+            Discount = txn.Discount,
+            Fee = txn.Fee,
+            UnitPrice = txn.UnitPrice
         };
         companyData.PendingConversions.Add(entry);
         _ = Core.Services.PendingConversionService.Instance?.AddPendingConversionAsync(entry);

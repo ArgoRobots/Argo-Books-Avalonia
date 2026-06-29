@@ -603,6 +603,9 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             TransactionDate = order.OrderDate,
             Total = order.Total
         };
+        // Drop any earlier pending entry for this order first, so re-editing an offline/future-dated
+        // PO doesn't accumulate duplicates in the saved file (matches the manual edit path).
+        companyData.PendingConversions.RemoveAll(p => p.TransactionId == order.Id);
         companyData.PendingConversions.Add(entry);
         _ = Core.Services.PendingConversionService.Instance?.AddPendingConversionAsync(entry);
     }
