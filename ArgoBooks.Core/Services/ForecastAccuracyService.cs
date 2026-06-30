@@ -67,13 +67,18 @@ public class ForecastAccuracyService : IForecastAccuracyService
         foreach (var record in unvalidatedRecords)
         {
             // Calculate actual values for the forecast period
+            // Measure "actual" the same way InsightsService generates the forecast: gross
+            // (EffectiveTotalUSD), and collected-only for revenue (RevenueAggregator.IsCollected).
+            // Using pre-tax amounts or counting uncollected revenue made the accuracy score compare
+            // two different yardsticks.
             var actualRevenue = companyData.Revenues
                 .Where(s => s.Date >= record.PeriodStartDate && s.Date <= record.PeriodEndDate)
-                .Sum(s => s.EffectiveSubtotalUSD);
+                .Where(RevenueAggregator.IsCollected)
+                .Sum(s => s.EffectiveTotalUSD);
 
             var actualExpenses = companyData.Expenses
                 .Where(p => p.Date >= record.PeriodStartDate && p.Date <= record.PeriodEndDate)
-                .Sum(p => p.EffectiveSubtotalUSD);
+                .Sum(p => p.EffectiveTotalUSD);
 
             var actualProfit = actualRevenue - actualExpenses;
 
