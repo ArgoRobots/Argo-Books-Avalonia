@@ -1268,7 +1268,11 @@ public class InsightsService(
 
     private static int GetWeekNumber(DateTime date)
     {
-        return date.Year * 100 + (date.DayOfYear / 7);
+        // ISO 8601 weeks are always a full 7 days. The previous date.DayOfYear / 7 produced uneven
+        // buckets (a 1-6 day "week 0" at the start of each year and a short final bucket), which
+        // skewed the weekly anomaly baseline near year boundaries. GetYear is the ISO week-year so the
+        // key stays consistent for dates that ISO-belong to an adjacent calendar year.
+        return System.Globalization.ISOWeek.GetYear(date) * 100 + System.Globalization.ISOWeek.GetWeekOfYear(date);
     }
 
     private static string FormatCurrency(decimal amount)
