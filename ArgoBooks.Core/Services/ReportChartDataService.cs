@@ -499,13 +499,17 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var revenueData = monthsWithData.Select(month =>
         {
+            // Clamp month bounds to the filter window so a partial month only averages data inside
+            // the user's selection (matches GetRevenueVsExpenses).
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             // Paid-only: average should reflect typical collected revenue,
             // not paddled by unpaid invoices that may never come in.
             var transactions = companyData.Revenues
-                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
+                .Where(s => s.Date >= clampedStart && s.Date <= clampedEnd)
                 .Where(RevenueAggregator.IsCollected)
                 .Select(s => toDisplay != null ? toDisplay(s.EffectiveTotalUSD, s.Date) : s.EffectiveTotalUSD)
                 .ToList();
@@ -522,9 +526,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             var transactions = companyData.Expenses
-                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
+                .Where(p => p.Date >= clampedStart && p.Date <= clampedEnd)
                 .Select(p => toDisplay != null ? toDisplay(p.EffectiveTotalUSD, p.Date) : p.EffectiveTotalUSD)
                 .ToList();
 
@@ -576,6 +582,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
@@ -585,7 +593,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 // here would make Count * Avg disagree with Total Revenue.
                 Value = companyData.Revenues
                     .Where(RevenueAggregator.IsCollected)
-                    .Count(s => s.Date >= monthStart && s.Date <= monthEnd),
+                    .Count(s => s.Date >= clampedStart && s.Date <= clampedEnd),
                 Date = month
             };
         }).ToList();
@@ -594,11 +602,13 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = companyData.Expenses.Count(p => p.Date >= monthStart && p.Date <= monthEnd),
+                Value = companyData.Expenses.Count(p => p.Date >= clampedStart && p.Date <= clampedEnd),
                 Date = month
             };
         }).ToList();
@@ -970,16 +980,18 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             var shippingCosts = new List<decimal>();
 
             shippingCosts.AddRange(companyData.Revenues
-                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
+                .Where(s => s.Date >= clampedStart && s.Date <= clampedEnd)
                 .Where(RevenueAggregator.IsCollected)
                 .Select(s => toDisplay != null ? toDisplay(s.EffectiveShippingCostUSD, s.Date) : s.EffectiveShippingCostUSD));
 
             shippingCosts.AddRange(companyData.Expenses
-                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
+                .Where(p => p.Date >= clampedStart && p.Date <= clampedEnd)
                 .Select(p => toDisplay != null ? toDisplay(p.EffectiveShippingCostUSD, p.Date) : p.EffectiveShippingCostUSD));
 
             return new ChartDataPoint
