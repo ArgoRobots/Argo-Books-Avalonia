@@ -1277,7 +1277,10 @@ public class InsightsService(
 
     private static string FormatCurrency(decimal amount)
     {
-        return amount.ToString("C0");
+        // Insight amounts are USD (EffectiveTotalUSD). Format invariantly so the output doesn't depend
+        // on the machine locale; the old "C0" used CurrentCulture, so a German machine rendered euros
+        // with dot-grouping (e.g. "1.234 €") regardless of the company.
+        return "$" + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>
