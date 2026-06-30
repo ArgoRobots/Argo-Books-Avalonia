@@ -455,7 +455,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // order date.
         var accountsPayable = companyData.PurchaseOrders
             .Where(po => po.Status != PurchaseOrderStatus.Received
-                         && po.Status != PurchaseOrderStatus.Cancelled)
+                         && po.Status != PurchaseOrderStatus.Cancelled
+                         && IsOnOrBeforeEndDate(po.OrderDate))
             .Sum(po => ToDisplay(po.EffectiveTotalUSD, po.OrderDate));
 
         // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses.
