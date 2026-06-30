@@ -707,6 +707,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, revenue.Id, isExpense: false);
 
         var capturedNewReceipt = newReceipt;
+        // Snapshot the NEW state so redo restores the edit itself. The old redo re-read live ViewModel
+        // fields (amount, notes, paid status), so once the modal had been reused or cleared, redo
+        // wrote zeros/blank values and could flip the paid status.
+        var edited = CaptureTransactionState(revenue);
         var action = new DelegateAction(
             $"Edit revenue {EditingTransactionId}",
             () =>
@@ -719,27 +723,9 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             },
             () =>
             {
-                revenue.Date = ModalDate?.DateTime ?? DateTime.Now;
-                revenue.CustomerId = SelectedCustomer?.Id;
-                revenue.Description = description;
-                revenue.LineItems = modelLineItems;
-                revenue.Quantity = totalQuantity;
-                revenue.UnitPrice = averageUnitPrice;
-                revenue.Amount = Subtotal;
-                revenue.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;
-                revenue.TaxAmount = TaxAmount;
-                revenue.ShippingCost = ModalShipping;
-                revenue.Discount = ModalDiscount;
-                revenue.Fee = ModalFee;
-                revenue.Total = Total;
-                revenue.PaymentMethod = pm;
-                revenue.PaymentStatus = ModalPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid;
-                revenue.Notes = ModalNotes;
-                if (capturedNewReceipt != null)
-                {
-                    revenue.ReceiptId = capturedNewReceipt.Id;
+                RestoreTransactionState(revenue, edited);
+                if (capturedNewReceipt != null && !companyData.Receipts.Contains(capturedNewReceipt))
                     companyData.Receipts.Add(capturedNewReceipt);
-                }
                 editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, revenue.Id, isExpense: false);
                 RaiseTransactionSaved();
             });
