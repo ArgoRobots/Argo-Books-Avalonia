@@ -14,6 +14,11 @@ namespace ArgoBooks.Core.Services.InvoiceTemplates;
 /// </summary>
 public partial class InvoiceHtmlRenderer
 {
+    // All money amounts on an invoice are formatted with InvariantCulture so a non-US machine locale
+    // can't render a hybrid like "$1.234,56" on a customer-facing document.
+    private static string Money(decimal amount) =>
+        amount.ToString("N2", System.Globalization.CultureInfo.InvariantCulture);
+
     /// <summary>
     /// Renders an invoice to HTML using the specified template.
     /// </summary>
@@ -158,33 +163,33 @@ public partial class InvoiceHtmlRenderer
         {
             var amount = item.Quantity * item.UnitPrice;
             sb.AppendLine($"{item.Description}");
-            sb.AppendLine($"  {item.Quantity} x {currencySymbol}{item.UnitPrice:N2} = {currencySymbol}{amount:N2}");
+            sb.AppendLine($"  {item.Quantity} x {currencySymbol}{Money(item.UnitPrice)} = {currencySymbol}{Money(amount)}");
         }
 
         sb.AppendLine(new string('-', 50));
 
         // Totals
-        sb.AppendLine($"Subtotal: {currencySymbol}{invoice.Subtotal:N2}");
+        sb.AppendLine($"Subtotal: {currencySymbol}{Money(invoice.Subtotal)}");
         if (invoice.TaxRate > 0)
         {
             var taxLabel = GetTaxLabel(companySettings.Company.Country);
-            sb.AppendLine($"{taxLabel} ({invoice.TaxRate}%): {currencySymbol}{invoice.TaxAmount:N2}");
+            sb.AppendLine($"{taxLabel} ({invoice.TaxRate}%): {currencySymbol}{Money(invoice.TaxAmount)}");
         }
         if (invoice.SecurityDeposit > 0)
-            sb.AppendLine($"Security Deposit: {currencySymbol}{invoice.SecurityDeposit:N2}");
+            sb.AppendLine($"Security Deposit: {currencySymbol}{Money(invoice.SecurityDeposit)}");
         if (invoice.CustomFeeAmount > 0)
-            sb.AppendLine($"{BuildFeeLabel(invoice)}: {currencySymbol}{CalculateCustomFee(invoice):N2}");
+            sb.AppendLine($"{BuildFeeLabel(invoice)}: {currencySymbol}{Money(CalculateCustomFee(invoice))}");
         if (invoice.DiscountAmount > 0)
         {
             var discountLabel = invoice.DiscountIsPercent ? $"Discount ({invoice.DiscountAmount}%)" : "Discount";
-            sb.AppendLine($"{discountLabel}: -{currencySymbol}{CalculateDiscount(invoice):N2}");
+            sb.AppendLine($"{discountLabel}: -{currencySymbol}{Money(CalculateDiscount(invoice))}");
         }
-        sb.AppendLine($"TOTAL: {currencySymbol}{invoice.Total:N2}");
+        sb.AppendLine($"TOTAL: {currencySymbol}{Money(invoice.Total)}");
 
         if (invoice.AmountPaid > 0)
         {
-            sb.AppendLine($"Amount Paid: -{currencySymbol}{invoice.AmountPaid:N2}");
-            sb.AppendLine($"Balance Due: {currencySymbol}{invoice.Balance:N2}");
+            sb.AppendLine($"Amount Paid: -{currencySymbol}{Money(invoice.AmountPaid)}");
+            sb.AppendLine($"Balance Due: {currencySymbol}{Money(invoice.Balance)}");
         }
 
         sb.AppendLine();
@@ -310,25 +315,25 @@ public partial class InvoiceHtmlRenderer
             ["IsOverdue"] = isOverdue,
 
             // Financial
-            ["Subtotal"] = $"{currencySymbol}{invoice.Subtotal:N2}",
+            ["Subtotal"] = $"{currencySymbol}{Money(invoice.Subtotal)}",
             ["TaxRate"] = invoice.TaxRate.ToString("0.##"),
             ["TaxLabel"] = GetTaxLabel(companySettings.Company.Country),
-            ["TaxAmount"] = $"{currencySymbol}{invoice.TaxAmount:N2}",
+            ["TaxAmount"] = $"{currencySymbol}{Money(invoice.TaxAmount)}",
             ["ShowSecurityDeposit"] = invoice.SecurityDeposit > 0,
-            ["SecurityDeposit"] = $"{currencySymbol}{invoice.SecurityDeposit:N2}",
+            ["SecurityDeposit"] = $"{currencySymbol}{Money(invoice.SecurityDeposit)}",
             ["ShowCustomFee"] = invoice.CustomFeeAmount > 0,
             ["CustomFeeLabel"] = BuildFeeLabel(invoice),
-            ["CustomFeeAmount"] = $"{currencySymbol}{CalculateCustomFee(invoice):N2}",
+            ["CustomFeeAmount"] = $"{currencySymbol}{Money(CalculateCustomFee(invoice))}",
             ["ShowDiscount"] = invoice.DiscountAmount > 0,
-            ["DiscountAmount"] = $"-{currencySymbol}{CalculateDiscount(invoice):N2}",
+            ["DiscountAmount"] = $"-{currencySymbol}{Money(CalculateDiscount(invoice))}",
             // Total includes any actual processing fee the customer paid
             // on top of the invoice, so the row reconciles cleanly with
             // Amount Paid (Total − Amount Paid = Balance Due). The bare
             // invoice subtotal/tax/etc. roll-up is already shown by the
             // Subtotal/Tax rows above; this Total row is the gross.
-            ["Total"] = $"{currencySymbol}{(invoice.Total + actualProcessingFee):N2}",
-            ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{invoice.AmountPaid:N2}" : null,
-            ["Balance"] = $"{currencySymbol}{invoice.Balance:N2}",
+            ["Total"] = $"{currencySymbol}{Money(invoice.Total + actualProcessingFee)}",
+            ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{Money(invoice.AmountPaid)}" : null,
+            ["Balance"] = $"{currencySymbol}{Money(invoice.Balance)}",
 
             // Processing fee, see invoiceCurrency / actualProcessingFee
             // block above for the row-visibility rules. ShowProcessingFee
@@ -339,11 +344,11 @@ public partial class InvoiceHtmlRenderer
             ["ShowProcessingFee"] = showProcessingFeeRow,
             ["ProcessingFeeLabel"] = BuildProcessingFeeLabel(companySettings),
             ["ProcessingFeeAmount"] = showProcessingFeeRow
-                ? $"{currencySymbol}{displayProcessingFee:N2}"
+                ? $"{currencySymbol}{Money(displayProcessingFee)}"
                 : "",
             ["ShowAmountToPay"] = showAmountToPay,
             ["AmountToPay"] = showAmountToPay
-                ? $"{currencySymbol}{invoice.Balance + estimatedProcessingFee:N2}"
+                ? $"{currencySymbol}{Money(invoice.Balance + estimatedProcessingFee)}"
                 : "",
 
             // Notes
@@ -355,8 +360,8 @@ public partial class InvoiceHtmlRenderer
                 ["Description"] = item.Description,
                 ["ItemDescription"] = null, // Can be extended for product descriptions
                 ["Quantity"] = item.Quantity.ToString("0.##"),
-                ["UnitPrice"] = $"{currencySymbol}{item.UnitPrice:N2}",
-                ["Amount"] = $"{currencySymbol}{(item.Quantity * item.UnitPrice):N2}"
+                ["UnitPrice"] = $"{currencySymbol}{Money(item.UnitPrice)}",
+                ["Amount"] = $"{currencySymbol}{Money(item.Quantity * item.UnitPrice)}"
             }).ToList()
         };
 

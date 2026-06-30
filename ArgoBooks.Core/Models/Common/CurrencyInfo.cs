@@ -49,9 +49,12 @@ public class CurrencyInfo
     /// <returns>Formatted string like "$1,234.56" or "$1,234.56 USD".</returns>
     public string Format(decimal amount, bool includeCode = false)
     {
+        // InvariantCulture so grouping/decimal separators are consistent ("$1,234.56") regardless of
+        // the machine locale. With CurrentCulture a German machine would render "$1.234,56", a hybrid
+        // that is wrong everywhere and would also appear on customer-facing invoices.
         var formatted = DecimalPlaces == 0
-            ? $"{Symbol}{amount:N0}"
-            : $"{Symbol}{amount:N2}";
+            ? $"{Symbol}{amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)}"
+            : $"{Symbol}{amount.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}";
 
         return includeCode ? $"{formatted} {Code}" : formatted;
     }
