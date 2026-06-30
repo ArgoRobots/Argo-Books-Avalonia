@@ -57,6 +57,62 @@ public class PendingConversionServiceTests
         Assert.Equal(0m, expense.TotalUSD);
     }
 
+    [Fact]
+    public async Task Process_PendingInvoice_RecomputesBalanceUsdFromPayments_NotImportSnapshot()
+    {
+        // A foreign-currency invoice imported without a rate stores a snapshot of its balance. If a
+        // payment is recorded before the rate heals, ApplyConversion converts the STALE snapshot
+        // balance instead of recomputing from the live payments, overstating USD outstanding.
+        var date = new DateTime(2024, 6, 1);
+        var ex = new ExchangeRateService(new MockPlatform(), new HttpClient(new AlwaysEurHandler(1.0m)));
+
+        var data = new CompanyData();
+        var invoice = new Invoice
+        {
+            Id = "INV-1",
+            OriginalCurrency = "EUR",
+            Total = 100m,
+            AmountPaid = 100m,
+            Balance = 0m,            // fully paid in its own currency
+            IsPendingConversion = true,
+            TotalUSD = 0m,
+            BalanceUSD = 0m
+        };
+        data.Invoices.Add(invoice);
+        // A USD payment that fully covers the invoice in USD terms.
+        data.Payments.Add(new Payment { Id = "P1", InvoiceId = "INV-1", Amount = 100m, OriginalCurrency = "USD" });
+
+        var svc = new PendingConversionService(new MockPlatform(), exchangeRateService: ex);
+        await svc.AddPendingConversionAsync(new PendingConversion
+        {
+            TransactionId = "INV-1",
+            TransactionType = "Invoice",
+            Total = 100m,
+            Balance = 100m,          // snapshot captured at import, BEFORE the payment
+            OriginalCurrency = "EUR",
+            TransactionDate = date
+        });
+
+        await svc.ProcessPendingConversionsAsync(data);
+
+        Assert.False(invoice.IsPendingConversion);
+        Assert.Equal(100m, invoice.TotalUSD);
+        // Buggy: BalanceUSD = snapshot(100) * rate(1.0) = 100. Correct: fully paid -> 0.
+        Assert.Equal(0m, invoice.BalanceUSD);
+    }
+
+    private sealed class AlwaysEurHandler(decimal usdToEur) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var payload = $$"""{ "success": true, "base": "USD", "rates": { "EUR": {{usdToEur}} } }""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            });
+        }
+    }
+
     private sealed class TodayOnlyEurHandler(decimal usdToEur) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

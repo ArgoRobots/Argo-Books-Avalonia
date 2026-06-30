@@ -290,8 +290,15 @@ public class PendingConversionService
                 var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == entry.TransactionId);
                 if (invoice == null) return;
                 invoice.TotalUSD = Math.Round(entry.Total * rate, 2);
-                invoice.BalanceUSD = Math.Round(entry.Balance * rate, 2);
                 invoice.IsPendingConversion = false;
+                // If payments were recorded against this invoice, recompute BalanceUSD from them: the
+                // import-time snapshot (entry.Balance) is stale once a payment lands after import. With
+                // no payment rows (e.g. an imported invoice whose paid amount is baked into Balance),
+                // keep the snapshot so imported partial payments aren't lost.
+                if (companyData.Payments.Any(p => p.InvoiceId == invoice.Id))
+                    InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
+                else
+                    invoice.BalanceUSD = Math.Round(entry.Balance * rate, 2);
                 return;
         }
     }
