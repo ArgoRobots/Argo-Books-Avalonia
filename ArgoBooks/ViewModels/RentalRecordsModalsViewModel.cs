@@ -724,6 +724,22 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var oldInStockSnapshot = new Dictionary<string, int>();
         var editAdjustments = new List<StockAdjustment>();
 
+        // Guard before mutating anything: raising a rental's quantity must not drive an inventory item
+        // negative. ValidateModal only runs the availability check for NEW records, so edits would
+        // otherwise subtract past zero. Aborting here (no mutation has happened yet) is clean.
+        foreach (var invItemId in allInvItemIds)
+        {
+            var invItem = companyData.Inventory.FirstOrDefault(inv => inv.Id == invItemId);
+            if (invItem == null) continue;
+
+            var requiredExtra = newQtyByInvItem.GetValueOrDefault(invItemId) - oldQtyByInvItem.GetValueOrDefault(invItemId);
+            if (requiredExtra > 0 && invItem.InStock < requiredExtra)
+            {
+                ModalLineItemsError = $"Only {invItem.InStock} more available to add to this rental.";
+                return;
+            }
+        }
+
         foreach (var invItemId in allInvItemIds)
         {
             var invItem = companyData.Inventory.FirstOrDefault(inv => inv.Id == invItemId);
