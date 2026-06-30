@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -132,6 +133,35 @@ public class FileServiceTests
         {
             CleanupTemp(temp);
             if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
+
+    #endregion
+
+    #region Save State Tests
+
+    [Fact]
+    public async Task SaveCompanyDataAsync_StagesToTemp_DoesNotMarkSaved()
+    {
+        // Regression: SaveCompanyDataAsync only stages JSON into the temp directory; the data isn't
+        // durable until the caller commits the .argo file via SaveCompanyAsync. Marking saved here
+        // would hide a failed commit and risk silent data loss, so the dirty flag must survive.
+        var service = CreateService();
+        var data = new CompanyData();
+        data.MarkAsModified();
+        Assert.True(data.ChangesMade);
+
+        var temp = Path.Combine(Path.GetTempPath(), $"argo-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(temp);
+        try
+        {
+            await service.SaveCompanyDataAsync(temp, data);
+
+            Assert.True(data.ChangesMade);
+        }
+        finally
+        {
+            CleanupTemp(temp);
         }
     }
 

@@ -473,7 +473,12 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "forecastRecords.json", data.ForecastRecords, cancellationToken);
         await WriteJsonAsync(companyDirectory, "bankImportSessions.json", data.BankImportSessions, cancellationToken);
 
-        data.MarkAsSaved();
+        // Deliberately does NOT call data.MarkAsSaved() here: this only stages JSON into the temp
+        // directory, and the data isn't durable until the caller commits the .argo file via
+        // SaveCompanyAsync. Marking saved before that commit means a failed commit (AV quarantine,
+        // full disk, IO error) would leave HasUnsavedChanges false and silently risk data loss.
+        // Callers mark saved only after the commit succeeds; backup/payment-sync paths intentionally
+        // never mark saved.
     }
 
     /// <inheritdoc />

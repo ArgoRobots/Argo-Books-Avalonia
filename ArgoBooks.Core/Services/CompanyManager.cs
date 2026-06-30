@@ -503,6 +503,9 @@ public class CompanyManager : IDisposable
             // Save to file
             await _fileService.SaveCompanyAsync(filePath, _currentTempDirectory, password, cancellationToken);
 
+            // The new company is now durably on disk, so it starts with no unsaved changes.
+            CompanyData.MarkAsSaved();
+
             CurrentFilePath = filePath;
             _currentPassword = password;
 
