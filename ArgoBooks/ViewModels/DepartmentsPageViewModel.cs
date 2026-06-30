@@ -246,6 +246,23 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.DepartmentModalsViewModel != null)
+        {
+            App.DepartmentModalsViewModel.DepartmentSaved -= OnDepartmentModalClosed;
+            App.DepartmentModalsViewModel.DepartmentDeleted -= OnDepartmentModalClosed;
+        }
+    }
+
+    /// <summary>
     /// Handles department modal closed events by refreshing the departments.
     /// </summary>
     private void OnDepartmentModalClosed(object? sender, EventArgs e)

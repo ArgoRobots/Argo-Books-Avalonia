@@ -251,6 +251,16 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     public override void Cleanup()
     {
         base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ExpenseModalsViewModel != null)
+        {
+            App.ExpenseModalsViewModel.ExpenseSaved -= OnExpenseSaved;
+            App.ExpenseModalsViewModel.ExpenseDeleted -= OnExpenseDeleted;
+            App.ExpenseModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ExpenseModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
         DateFormatService.DateFormatChanged -= OnDateFormatChanged;
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
     }

@@ -365,6 +365,26 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ProductModalsViewModel != null)
+        {
+            App.ProductModalsViewModel.ProductSaved -= OnProductSaved;
+            App.ProductModalsViewModel.ProductDeleted -= OnProductDeleted;
+            App.ProductModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ProductModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+        App.PlanStatusChanged -= OnPlanStatusChanged;
+    }
+
+    /// <summary>
     /// Handles plan status changes by updating HasPremium.
     /// </summary>
     private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)

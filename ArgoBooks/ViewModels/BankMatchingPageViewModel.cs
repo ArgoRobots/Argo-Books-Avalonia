@@ -48,6 +48,23 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
         }
     }
 
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.BankMatchingModalsViewModel != null)
+        {
+            App.BankMatchingModalsViewModel.CandidateChosen -= OnCandidateChosen;
+            App.BankMatchingModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.BankMatchingModalsViewModel.MissingFiltersApplied -= OnMissingFiltersApplied;
+        }
+    }
+
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
         if (e.PageName == PageNames.BankMatching)

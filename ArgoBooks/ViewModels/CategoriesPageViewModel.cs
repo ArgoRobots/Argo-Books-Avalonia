@@ -311,6 +311,23 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.CategoryModalsViewModel != null)
+        {
+            App.CategoryModalsViewModel.CategorySaved -= OnCategoryModalClosed;
+            App.CategoryModalsViewModel.CategoryDeleted -= OnCategoryModalClosed;
+        }
+    }
+
+    /// <summary>
     /// Handles category modal closed events by refreshing the categories.
     /// </summary>
     private void OnCategoryModalClosed(object? sender, EventArgs e)

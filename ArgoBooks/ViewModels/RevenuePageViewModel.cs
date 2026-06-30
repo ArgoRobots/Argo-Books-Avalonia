@@ -246,6 +246,18 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     public override void Cleanup()
     {
         base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.RevenueModalsViewModel != null)
+        {
+            App.RevenueModalsViewModel.RevenueSaved -= OnRevenueSaved;
+            App.RevenueModalsViewModel.RevenueDeleted -= OnRevenueDeleted;
+            App.RevenueModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.RevenueModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+        if (App.InvoiceModalsViewModel != null)
+            App.InvoiceModalsViewModel.InvoiceSaved -= OnInvoiceSaved;
         DateFormatService.DateFormatChanged -= OnDateFormatChanged;
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
     }

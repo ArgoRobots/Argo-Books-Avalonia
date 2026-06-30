@@ -276,6 +276,25 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.CustomerModalsViewModel != null)
+        {
+            App.CustomerModalsViewModel.CustomerSaved -= OnCustomerSaved;
+            App.CustomerModalsViewModel.CustomerDeleted -= OnCustomerDeleted;
+            App.CustomerModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.CustomerModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+    }
+
+    /// <summary>
     /// Handles undo/redo state changes by refreshing the customers.
     /// </summary>
     private bool _needsRefresh;

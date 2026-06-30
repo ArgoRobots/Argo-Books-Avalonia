@@ -424,6 +424,13 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
+        if (App.PaymentModalsViewModel != null)
+        {
+            App.PaymentModalsViewModel.PaymentSaved -= OnPaymentSaved;
+            App.PaymentModalsViewModel.PaymentDeleted -= OnPaymentDeleted;
+            App.PaymentModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.PaymentModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
         PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
     }

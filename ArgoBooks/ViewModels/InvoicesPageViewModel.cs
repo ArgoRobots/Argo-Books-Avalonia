@@ -451,6 +451,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
+        if (App.InvoiceModalsViewModel != null)
+        {
+            App.InvoiceModalsViewModel.InvoiceSaved -= OnInvoiceSaved;
+            App.InvoiceModalsViewModel.InvoiceDeleted -= OnInvoiceDeleted;
+            App.InvoiceModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.InvoiceModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
         PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
         if (App.CompanyManager != null)

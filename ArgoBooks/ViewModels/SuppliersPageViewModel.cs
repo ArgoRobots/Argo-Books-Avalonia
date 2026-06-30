@@ -308,6 +308,25 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.SupplierModalsViewModel != null)
+        {
+            App.SupplierModalsViewModel.SupplierSaved -= OnSupplierModalClosed;
+            App.SupplierModalsViewModel.SupplierDeleted -= OnSupplierModalClosed;
+            App.SupplierModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.SupplierModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+    }
+
+    /// <summary>
     /// Handles supplier modal closed events by refreshing the suppliers.
     /// </summary>
     private void OnSupplierModalClosed(object? sender, EventArgs e)

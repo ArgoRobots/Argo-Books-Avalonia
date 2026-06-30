@@ -223,6 +223,30 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         }
     }
 
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.RentalRecordsModalsViewModel != null)
+        {
+            App.RentalRecordsModalsViewModel.RecordSaved -= OnRecordSaved;
+            App.RentalRecordsModalsViewModel.RecordDeleted -= OnRecordDeleted;
+            App.RentalRecordsModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.RentalRecordsModalsViewModel.FiltersCleared -= OnFiltersCleared;
+            App.RentalRecordsModalsViewModel.RecordReturned -= OnRecordReturned;
+        }
+        if (App.RentalInventoryModalsViewModel != null)
+            App.RentalInventoryModalsViewModel.RentalCreated -= OnRentalCreated;
+        if (App.InvoiceModalsViewModel != null)
+            App.InvoiceModalsViewModel.InvoiceSaved -= OnInvoiceSaved;
+    }
+
     private bool _needsRefresh;
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
