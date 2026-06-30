@@ -37,6 +37,13 @@ public partial class InfoBanner : UserControl
     public static readonly StyledProperty<bool> ShowBannerProperty =
         AvaloniaProperty.Register<InfoBanner, bool>(nameof(ShowBanner));
 
+    /// <summary>
+    /// Outer margin of the banner. Defaults to a small top gap suited to floating/overlay use (e.g.
+    /// the update banner). Inline hosts that already provide their own spacing can set this to 0.
+    /// </summary>
+    public static readonly StyledProperty<Thickness> BannerMarginProperty =
+        AvaloniaProperty.Register<InfoBanner, Thickness>(nameof(BannerMargin), new Thickness(0, 10, 0, 0));
+
     #endregion
 
     #region Properties
@@ -87,6 +94,12 @@ public partial class InfoBanner : UserControl
     {
         get => GetValue(ShowBannerProperty);
         set => SetValue(ShowBannerProperty, value);
+    }
+
+    public Thickness BannerMargin
+    {
+        get => GetValue(BannerMarginProperty);
+        set => SetValue(BannerMarginProperty, value);
     }
 
     #endregion
