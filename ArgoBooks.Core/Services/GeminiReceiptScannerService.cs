@@ -344,7 +344,9 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
             if (root.TryGetProperty("transactionDate", out var date) && date.ValueKind != JsonValueKind.Null)
             {
-                if (DateTime.TryParse(date.GetString(), out var parsedDate))
+                // InvariantCulture (like every other date parse in the codebase) so an ambiguous date
+                // from the scan doesn't read as the wrong day on a non-US machine locale.
+                if (DateTime.TryParse(date.GetString(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate))
                     result.TransactionDate = parsedDate;
             }
 

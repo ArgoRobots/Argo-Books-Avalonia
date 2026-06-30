@@ -400,4 +400,27 @@ public class GeminiReceiptScannerServiceTests
     }
 
     #endregion
+
+    #region ParseResponse date culture
+
+    [Fact]
+    public void ParseResponse_AmbiguousDate_UsesInvariantCultureRegardlessOfLocale()
+    {
+        // The receipt date must be culture-independent. "02/03/2023" is February 3 under
+        // InvariantCulture (month-first) but March 2 under a day-first locale like en-GB.
+        const string json = """{"transactionDate":"02/03/2023"}""";
+
+        ReceiptScanResult result = null!;
+        var thread = new System.Threading.Thread(() =>
+        {
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-GB");
+            result = GeminiReceiptScannerService.ParseResponse(json);
+        });
+        thread.Start();
+        thread.Join();
+
+        Assert.Equal(new DateTime(2023, 2, 3), result.TransactionDate);
+    }
+
+    #endregion
 }
