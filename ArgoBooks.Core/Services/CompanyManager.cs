@@ -1523,7 +1523,7 @@ public class CompanyManager : IDisposable
         // Multiple subdirectories: pick the one that contains company data files
         // (exclude known non-company directories like "receipts")
         var companyDir = subdirs.FirstOrDefault(d =>
-            File.Exists(Path.Combine(d, "settings.json")) ||
+            File.Exists(Path.Combine(d, "appSettings.json")) ||
             File.Exists(Path.Combine(d, "revenues.json")) ||
             File.Exists(Path.Combine(d, "expenses.json")));
 
