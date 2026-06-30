@@ -273,7 +273,11 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
                     "Set" => Core.Enums.AdjustmentType.Set,
                     _ => Core.Enums.AdjustmentType.Add
                 },
-                Quantity = quantity,
+                // Store the quantity that was actually applied. A "Remove" clamps NewStock at 0, so the
+                // user-entered amount can exceed what was removed. InventoryValuationService.SignedDelta
+                // rolls back a Remove by -Quantity, so an unclamped Quantity would corrupt every
+                // historical valuation before this adjustment.
+                Quantity = AdjustmentType == "Remove" ? oldInStock - newStock : quantity,
                 PreviousStock = oldInStock,
                 NewStock = newStock,
                 Reason = AdjustmentReason,
