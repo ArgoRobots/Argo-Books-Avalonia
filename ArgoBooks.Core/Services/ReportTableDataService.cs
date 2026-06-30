@@ -934,16 +934,19 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             stats.SmallestRevenue = sales.Count > 0 ? sales.Min(s => s.EffectiveSubtotalUSD) : 0;
         }
 
-        // Calculate expense statistics (using USD-converted pre-tax amounts)
+        // Calculate expense statistics (using USD-converted gross amounts, including tax paid to
+        // suppliers). This matches ExpenseAggregator/ProfitCalculator and the Dashboard, which treat
+        // the gross amount as the cash that left the business; using the pre-tax subtotal here made
+        // the report's Net Profit disagree with the Dashboard by the supplier tax.
         if (companyData?.Expenses != null &&
             filters.TransactionType is TransactionType.Expenses)
         {
             var purchases = companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
-            stats.TotalExpenses = purchases.Sum(p => p.EffectiveSubtotalUSD);
+            stats.TotalExpenses = purchases.Sum(p => p.EffectiveTotalUSD);
             stats.ExpenseTransactionCount = purchases.Count;
             stats.AverageExpenseTransaction = purchases.Count > 0 ? stats.TotalExpenses / purchases.Count : 0;
-            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.EffectiveSubtotalUSD) : 0;
-            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.EffectiveSubtotalUSD) : 0;
+            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.EffectiveTotalUSD) : 0;
+            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.EffectiveTotalUSD) : 0;
         }
 
         // Calculate profit
