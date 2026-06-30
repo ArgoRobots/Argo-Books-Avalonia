@@ -234,4 +234,39 @@ public class SpreadsheetAnalysisServiceTests
         Assert.True(sheet.IsIncluded);
         Assert.Null(sheet.UnsupportedReason);
     }
+
+    [Fact]
+    public void ParseTier2Response_UnrecognizedWrapperKey_ReturnsNull()
+    {
+        // The AI wrapped its array under "records" instead of a bare array or an "entities" key.
+        // This unrecognized structure must be treated as a failure (null) so the caller counts it,
+        // rather than returning an empty result that silently imports zero rows with no warning.
+        var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseTier2Response",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        const string json = """{"records":[{"name":"Acme"}]}""";
+
+        var result = method.Invoke(null, [json, SpreadsheetSheetType.Customers, 1]);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void ParseAnalysisResponse_OneMalformedSheetElement_KeepsValidSheets()
+    {
+        // One element is missing "sourceSheetName". The throwing GetProperty discarded the WHOLE
+        // batch (including the valid sheet before it); the valid sheet must survive.
+        const string json = """
+        {"sheets":[
+          {"sourceSheetName":"Good","detectedType":"Revenue","confidence":0.9},
+          {"detectedType":"Expenses","confidence":0.5}
+        ]}
+        """;
+        var method = typeof(SpreadsheetAnalysisService).GetMethod("ParseAnalysisResponse",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+
+        var result = (SpreadsheetAnalysisResult?)method.Invoke(null, [json]);
+
+        Assert.NotNull(result);
+        Assert.Contains(result!.Sheets, s => s.SourceSheetName == "Good");
+    }
 }

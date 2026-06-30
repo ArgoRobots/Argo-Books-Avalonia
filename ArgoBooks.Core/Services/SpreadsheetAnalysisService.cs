@@ -677,12 +677,15 @@ IMPORTANT:
                 {
                     var sheet = new SheetAnalysis
                     {
-                        SourceSheetName = sheetEl.GetProperty("sourceSheetName").GetString() ?? "",
+                        // Safe TryGetProperty-based helpers, not the throwing GetProperty: one element
+                        // missing sourceSheetName/detectedType must not throw and discard the WHOLE
+                        // batch (every other field already uses these helpers).
+                        SourceSheetName = GetString(sheetEl, "sourceSheetName"),
                         Confidence = GetDouble(sheetEl, "confidence"),
                     };
 
                     // Parse detected type
-                    var typeStr = sheetEl.GetProperty("detectedType").GetString() ?? "Unknown";
+                    var typeStr = GetString(sheetEl, "detectedType");
                     sheet.DetectedType = Enum.TryParse<SpreadsheetSheetType>(typeStr, ignoreCase: true, out var parsed)
                         ? parsed
                         : SpreadsheetSheetType.Unknown;
@@ -755,7 +758,9 @@ IMPORTANT:
                 SourceRowsProcessed = sourceRowCount,
             };
 
-            // Response should be an array of entity objects
+            // Response should be an array of entity objects, or an object wrapping one under
+            // "entities". Any other shape is unrecognized: return null so the caller counts the chunk
+            // as failed instead of silently importing zero rows with no warning.
             if (doc.RootElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var entity in doc.RootElement.EnumerateArray())
@@ -763,12 +768,17 @@ IMPORTANT:
                     result.Entities.Add(entity.Clone());
                 }
             }
-            else if (doc.RootElement.TryGetProperty("entities", out var entitiesArray))
+            else if (doc.RootElement.TryGetProperty("entities", out var entitiesArray)
+                     && entitiesArray.ValueKind == JsonValueKind.Array)
             {
                 foreach (var entity in entitiesArray.EnumerateArray())
                 {
                     result.Entities.Add(entity.Clone());
                 }
+            }
+            else
+            {
+                return null;
             }
 
             return result;
