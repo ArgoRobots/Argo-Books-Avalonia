@@ -200,11 +200,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     private readonly List<InventoryItem> _allItems = [];
 
     /// <summary>
-    /// Gets whether there are any inventory items.
-    /// </summary>
-    public bool HasInventoryItems => _allItems.Count > 0;
-
-    /// <summary>
     /// Filtered display items for the current view.
     /// </summary>
     public BatchObservableCollection<StockLevelDisplayItem> DisplayItems { get; } = [];
@@ -325,10 +320,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         UpdateStatistics();
         UpdateDropdownOptions();
         FilterItems();
-
-        // Notify that HasInventoryItems may have changed
-        OnPropertyChanged(nameof(HasInventoryItems));
-        OpenBulkAdjustModalCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -640,24 +631,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     private void OpenAddItemModal()
     {
         App.StockLevelsModalsViewModel?.OpenAddItemModalCommand.Execute(null);
-    }
-
-    #endregion
-
-    #region Bulk Adjust Modal
-
-    /// <summary>
-    /// Opens a bulk adjust stock modal (placeholder - uses first selected item for now).
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(HasInventoryItems))]
-    private void OpenBulkAdjustModal()
-    {
-        // For now, open adjust for first item
-        var firstItem = DisplayItems.FirstOrDefault();
-        if (firstItem != null)
-        {
-            App.StockLevelsModalsViewModel?.OpenAdjustStockModal(firstItem.Id, firstItem.ProductName, firstItem.InStock);
-        }
     }
 
     #endregion

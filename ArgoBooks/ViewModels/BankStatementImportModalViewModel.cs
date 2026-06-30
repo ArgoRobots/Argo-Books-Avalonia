@@ -46,6 +46,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     // (parsing is instant), where categorize fills the whole bar.
     private double _categorizeProgressFloor;
 
+    // True once a PDF import has charged its single "bank" AI import at extraction, so the follow-up
+    // categorization pass neither re-checks the limit nor charges again. Stays false for CSV/Excel,
+    // which pay their one credit at the categorization step instead.
+    private bool _pdfExtractionCharged;
+
     /// <summary>True when the AI categorization pass was skipped, so the rows were left for the user.</summary>
     [ObservableProperty] private bool _aiUnavailable;
 
@@ -97,6 +102,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         AiUnavailable = false;
         AiUnavailableMessage = null;
         _categorizeProgressFloor = 0;
+        _pdfExtractionCharged = false;
 
         List<BankStatementLine> lines;
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -294,16 +300,22 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         try
         {
             using var usage = new AiImportUsageService(App.LicenseService, App.ErrorLogger, importType: "bank");
-            var check = await usage.CheckUsageAsync();
-            // No AI imports available (or offline): leave blanks for the user. The import still works.
-            if (!check.CanImport)
+            // PDF imports already paid their single bank-import credit at extraction, so they neither
+            // re-check the limit nor charge again here. CSV/Excel imports pay their one credit at this
+            // step, so they check availability first.
+            if (!_pdfExtractionCharged)
             {
-                SetAiUnavailable(!string.IsNullOrEmpty(check.ErrorMessage)
-                    ? "AI categorization is unavailable: couldn't reach the server.".Translate()
-                    : check.MonthlyLimit > 0
-                        ? "AI categorization is off: you've used all {0} AI imports this month.".TranslateFormat(check.MonthlyLimit)
-                        : "AI categorization needs a registered company.".Translate());
-                return;
+                var check = await usage.CheckUsageAsync();
+                // No AI imports available (or offline): leave blanks for the user. The import still works.
+                if (!check.CanImport)
+                {
+                    SetAiUnavailable(!string.IsNullOrEmpty(check.ErrorMessage)
+                        ? "AI categorization is unavailable: couldn't reach the server.".Translate()
+                        : check.MonthlyLimit > 0
+                            ? "AI categorization is off: you've used all {0} AI imports this month.".TranslateFormat(check.MonthlyLimit)
+                            : "AI categorization needs a registered company.".Translate());
+                    return;
+                }
             }
 
             using var gemini = new GeminiService(App.ErrorLogger);
@@ -341,7 +353,9 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             // closed the modal. Skipping it on close would let a start/cancel loop make real AI calls
             // without ever consuming quota. (The server's own per-identity rate limit still caps the
             // absolute number of calls, so this is about quota fairness, not an unbounded bill.)
-            await usage.IncrementUsageAsync();
+            // PDF imports are exempt: they already charged their single bank-import credit at extraction.
+            if (!_pdfExtractionCharged)
+                await usage.IncrementUsageAsync();
 
             // Closed during the call: the credit is counted, but don't bother writing suggestions back
             // to rows nobody is viewing.
@@ -877,19 +891,21 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         // prompt without briefly flashing the import modal.
         if (App.LicenseService?.LoadLicense() != true)
         {
-            App.OpenUpgradeModal();
+            await UpgradePromptHelper.ShowBankStatementImportPremiumPromptAsync();
             return [];
         }
         if (App.PdfStatementExtractor == null) return [];
 
-        using var usage = new ReceiptUsageService(App.LicenseService, App.ErrorLogger);
+        // A PDF bank statement consumes one "bank" AI import, charged at extraction (below). The
+        // follow-up AI categorization skips its own charge for PDFs (see _pdfExtractionCharged).
+        using var usage = new AiImportUsageService(App.LicenseService, App.ErrorLogger, importType: "bank");
         var check = await usage.CheckUsageAsync();
-        if (!check.CanScan)
+        if (!check.CanImport)
         {
             if (check.ErrorMessage != null)
                 await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
             else
-                await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+                await UpgradePromptHelper.ShowAiImportLimitPromptAsync(check.ImportCount, check.MonthlyLimit, check.ResetsAt);
             return [];
         }
 
@@ -933,6 +949,10 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         // modal. Skipping it on close would let a start/cancel loop extract PDFs without ever consuming
         // quota. (The server's per-identity rate limit still caps the absolute number of calls.)
         await usage.IncrementUsageAsync();
+
+        // This PDF import has now paid its single bank-import credit, so the AI categorization pass
+        // that runs next must not charge again.
+        _pdfExtractionCharged = true;
 
         // Closed during the read: the credit is counted, but don't hand rows to a modal nobody's viewing.
         if (!IsOpen) return [];

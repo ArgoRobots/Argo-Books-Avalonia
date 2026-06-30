@@ -2721,10 +2721,7 @@ public partial class App : Application
         // Premium gate: PDF extraction is a premium-only feature.
         if (LicenseService?.LoadLicense() != true)
         {
-            // No bank-PDF-specific upgrade prompt exists yet; reusing the general upgrade modal.
-            // TODO: add a ShowBankPdfPremiumPromptAsync method to UpgradePromptHelper once
-            // copy is finalised.
-            App.OpenUpgradeModal();
+            await UpgradePromptHelper.ShowBankStatementImportPremiumPromptAsync();
             return [];
         }
 
@@ -2733,20 +2730,18 @@ public partial class App : Application
         ShowBusyOverlay("Reading PDF statement...".Translate());
         try
         {
-            // Usage gate.
-            // TODO: ReceiptUsageService is currently hard-wired to the receipt usage feature key
-            // server-side. Determine with the backend owner whether bank PDF extraction shares the
-            // receipt counter or gets its own feature key, then either keep ReceiptUsageService here
-            // or replace it with a parallel BankImportUsageService with the same shape.
-            using var usage = new ReceiptUsageService(LicenseService, ErrorLogger);
+            // Usage gate: a bank-statement PDF import consumes one "bank" AI import. (This path
+            // shows the imported rows on the Bank Matching page with no follow-up AI categorization,
+            // so the single charge is the extraction itself, below.)
+            using var usage = new AiImportUsageService(LicenseService, ErrorLogger, importType: "bank");
             var check = await usage.CheckUsageAsync();
-            if (!check.CanScan)
+            if (!check.CanImport)
             {
                 HideBusyOverlay();
                 if (check.ErrorMessage != null)
                     await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
                 else
-                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
+                    await UpgradePromptHelper.ShowAiImportLimitPromptAsync(check.ImportCount, check.MonthlyLimit, check.ResetsAt);
                 return [];
             }
 
@@ -2765,8 +2760,7 @@ public partial class App : Application
                 return [];
             }
 
-            // Extraction succeeded: consume one credit and return the rows, which flow into the same
-            // path CSV and Excel use (no separate PDF-only confirm step).
+            // Extraction succeeded: consume the single bank-import credit and return the rows.
             await usage.IncrementUsageAsync();
             return extracted;
         }
