@@ -40,7 +40,7 @@ public partial class InsightItemViewModel : ObservableObject
 /// ViewModel for the Insights page displaying AI-powered business insights.
 /// Uses the InsightsService for real statistical analysis of business data.
 /// </summary>
-public partial class InsightsPageViewModel : ViewModelBase
+public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
 {
     #region Services
 
@@ -679,6 +679,15 @@ public partial class InsightsPageViewModel : ViewModelBase
     private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
     {
         HasPremium = e.HasPremium;
+    }
+
+    /// <summary>
+    /// Unsubscribes from the app-level plan-status event so this page VM can be garbage collected
+    /// when the company is switched, instead of leaking and reacting to plan changes forever.
+    /// </summary>
+    public void Cleanup()
+    {
+        App.PlanStatusChanged -= OnPlanStatusChanged;
     }
 
     /// <summary>

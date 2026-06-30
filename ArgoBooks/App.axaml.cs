@@ -750,6 +750,9 @@ public partial class App : Application
         // Tear down each cached page VM's event subscriptions (the static LanguageChanged and
         // CurrencyChanged events, modal events, etc.) before dropping it. Without this, a company
         // switch leaves the orphaned VMs rooted by those static events and still reacting to them.
+        // Cast to ICleanupViewModel rather than SortablePageViewModelBase: the Dashboard, Analytics,
+        // and Reports VMs have Cleanup() but extend a different base, so a SortablePageViewModelBase
+        // cast silently skipped them and leaked their subscriptions on every company switch.
         foreach (var vm in new object?[]
         {
             _dashboardPageViewModel, _analyticsPageViewModel, _insightsPageViewModel, _reportsPageViewModel,
@@ -759,7 +762,7 @@ public partial class App : Application
             _customersPageViewModel, _suppliersPageViewModel, _departmentsPageViewModel, _rentalInventoryPageViewModel,
             _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
         })
-            (vm as SortablePageViewModelBase)?.Cleanup();
+            (vm as ICleanupViewModel)?.Cleanup();
 
         _dashboardPageViewModel = null;
         _analyticsPageViewModel = null;

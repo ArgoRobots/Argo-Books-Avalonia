@@ -13,7 +13,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Returns page displaying expense and customer returns.
 /// </summary>
-public partial class ReturnsPageViewModel : ViewModelBase
+public partial class ReturnsPageViewModel : ViewModelBase, ICleanupViewModel
 {
     #region Responsive Header
 
@@ -217,6 +217,24 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Subscribe to language changes to refresh translated content
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Unsubscribes from app-level and singleton events so this page VM can be garbage collected when
+    /// the company is switched. Called by ClearPageCaches via <see cref="ICleanupViewModel"/>.
+    /// </summary>
+    public void Cleanup()
+    {
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ReturnsModalsViewModel != null)
+        {
+            App.ReturnsModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ReturnsModalsViewModel.FiltersCleared -= OnFiltersCleared;
+            App.ReturnsModalsViewModel.ReturnUndone -= OnReturnUndone;
+        }
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)

@@ -17,7 +17,7 @@ namespace ArgoBooks.ViewModels;
 /// Provides an overview of key business metrics, recent transactions, and quick actions.
 /// Widget data loading is delegated to <see cref="DashboardLayoutViewModel"/>.
 /// </summary>
-public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
+public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICleanupViewModel
 {
     [ObservableProperty]
     private bool _hasPremium;

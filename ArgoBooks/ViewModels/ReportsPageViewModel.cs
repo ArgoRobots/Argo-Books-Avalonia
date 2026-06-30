@@ -19,7 +19,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Reports page with 3-step wizard navigation.
 /// </summary>
-public partial class ReportsPageViewModel : ViewModelBase
+public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 {
     #region Report Template Options for Step 1
 

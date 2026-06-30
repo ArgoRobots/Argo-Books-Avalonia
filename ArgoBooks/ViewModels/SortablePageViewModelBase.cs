@@ -11,7 +11,7 @@ namespace ArgoBooks.ViewModels;
 /// Base class for page ViewModels that support sorting and pagination.
 /// Provides common sorting, pagination properties and navigation commands.
 /// </summary>
-public abstract partial class SortablePageViewModelBase : ViewModelBase
+public abstract partial class SortablePageViewModelBase : ViewModelBase, ICleanupViewModel
 {
     protected SortablePageViewModelBase()
     {
