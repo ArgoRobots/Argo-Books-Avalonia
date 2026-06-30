@@ -644,9 +644,19 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ApplyDisplayCurrency(companyData, order);
         companyData.MarkAsModified();
 
-        // Record undo action
+        // Record undo action. Capture the NEW values as locals so redo restores the edit itself.
+        // The previous redo read live ViewModel fields (SelectedSupplier!.Id threw a NullReference and
+        // crashed the app once the modal was reset) and read order.Subtotal/order.Total back from the
+        // same object undo had just reverted (self-referential), so the new totals were lost.
         var editedOrder = order;
         var newLineItems = order.LineItems.ToList();
+        var newSupplierId = order.SupplierId;
+        var newOrderDate = order.OrderDate;
+        var newExpectedDate = order.ExpectedDeliveryDate;
+        var newSubtotal = order.Subtotal;
+        var newShipping = order.ShippingCost;
+        var newTotal = order.Total;
+        var newNotes = order.Notes;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit order '{order.PoNumber}'",
             () =>
@@ -664,14 +674,14 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             },
             () =>
             {
-                editedOrder.SupplierId = SelectedSupplier!.Id;
-                editedOrder.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
-                editedOrder.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
+                editedOrder.SupplierId = newSupplierId;
+                editedOrder.OrderDate = newOrderDate;
+                editedOrder.ExpectedDeliveryDate = newExpectedDate;
                 editedOrder.LineItems = newLineItems;
-                editedOrder.Subtotal = order.Subtotal;
-                editedOrder.ShippingCost = shipping;
-                editedOrder.Total = order.Total;
-                editedOrder.Notes = Notes;
+                editedOrder.Subtotal = newSubtotal;
+                editedOrder.ShippingCost = newShipping;
+                editedOrder.Total = newTotal;
+                editedOrder.Notes = newNotes;
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));
