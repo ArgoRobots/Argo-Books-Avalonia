@@ -1361,8 +1361,10 @@ public class CompanyManager : IDisposable
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
 
-            // Export the entire temp directory as-is (includes receipts/)
-            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
+            // Export the entire temp directory as-is (includes receipts/). Use the working file's
+            // password so a backup of an encrypted company is itself encrypted; passing null wrote
+            // the backup in plaintext, letting anyone restore it without the password.
+            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, _currentPassword, cancellationToken);
 
             // Note: We intentionally do NOT:
             // - Change _currentFilePath (backup is a separate file)
