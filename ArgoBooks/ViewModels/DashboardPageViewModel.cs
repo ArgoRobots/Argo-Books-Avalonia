@@ -341,7 +341,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
         // Re-evaluate the source-survey banner whenever the user answers,
         // dismisses, or the tutorial state changes.
         TutorialService.Instance.SourceSurveyVisibilityChanged += OnSourceSurveyVisibilityChanged;
-        TutorialService.Instance.TutorialStateChanged += (_, _) => RefreshSourceSurveyBanner();
+        TutorialService.Instance.TutorialStateChanged += OnTutorialStateChanged;
         RefreshSourceSurveyBanner();
     }
 
@@ -364,6 +364,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
         // Once the user answers or dismisses, ShouldShowSourceSurvey() returns false.
         RefreshSourceSurveyBanner();
     }
+
+    // Named handler (not a lambda) so Cleanup can unsubscribe it; an anonymous delegate would leave
+    // this VM rooted on TutorialService for the rest of the app's lifetime.
+    private void OnTutorialStateChanged(object? sender, EventArgs e) => RefreshSourceSurveyBanner();
 
     [RelayCommand]
     private void OpenSourceSurvey()
@@ -474,6 +478,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
 
         // Unsubscribe from language changes
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+
+        // Unsubscribe from tutorial / source-survey events
+        TutorialService.Instance.SourceSurveyVisibilityChanged -= OnSourceSurveyVisibilityChanged;
+        TutorialService.Instance.TutorialStateChanged -= OnTutorialStateChanged;
 
         // Cleanup widget layout
         LayoutViewModel.Cleanup();
