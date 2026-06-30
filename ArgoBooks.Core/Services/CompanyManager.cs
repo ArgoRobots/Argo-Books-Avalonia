@@ -32,6 +32,9 @@ public class CompanyManager : IDisposable
     // merge-once flag and the task reference.
     private readonly object _receiptsLock = new();
     private Task<List<Models.Tracking.Receipt>>? _receiptsLoadTask;
+    // The CompanyData the in-flight load belongs to. The merge only proceeds if this is still the
+    // current company, so a company switch during the load can't merge old receipts into the new one.
+    private CompanyData? _receiptsLoadTarget;
     private bool _receiptsMerged;
 
     /// <summary>
@@ -596,7 +599,7 @@ public class CompanyManager : IDisposable
             // merged in by EnsureReceiptsLoadedAsync before any save or receipts UI read.
             CompanyData = await _fileService.LoadCompanyDataAsync(
                 _currentTempDirectory, cancellationToken, loadReceipts: false);
-            StartReceiptsBackgroundLoad(_currentTempDirectory);
+            StartReceiptsBackgroundLoad(_currentTempDirectory, CompanyData);
 
             // One-time recalc: heal any historic drift between Invoice
             // totals and the Payment rows that drive them.
@@ -708,11 +711,12 @@ public class CompanyManager : IDisposable
     /// Starts reading receipts.json on a background thread. The read does no shared-state
     /// mutation; the merge into CompanyData.Receipts happens in EnsureReceiptsLoadedAsync.
     /// </summary>
-    private void StartReceiptsBackgroundLoad(string tempDirectory)
+    private void StartReceiptsBackgroundLoad(string tempDirectory, CompanyData target)
     {
         lock (_receiptsLock)
         {
             _receiptsMerged = false;
+            _receiptsLoadTarget = target;
             _receiptsLoadTask = Task.Run(() => _fileService.LoadReceiptsAsync(tempDirectory));
         }
     }
@@ -731,20 +735,43 @@ public class CompanyManager : IDisposable
     public async Task EnsureReceiptsLoadedAsync()
     {
         Task<List<Models.Tracking.Receipt>>? task;
+        CompanyData? target;
         lock (_receiptsLock)
         {
             if (_receiptsMerged)
                 return;
             task = _receiptsLoadTask;
+            target = _receiptsLoadTarget;
         }
         if (task == null)
             return;
 
-        var loaded = await task;
+        List<Models.Tracking.Receipt> loaded;
+        try
+        {
+            loaded = await task;
+        }
+        catch
+        {
+            // A company switch can delete the temp directory mid-read, faulting the load. That's
+            // expected and harmless because we'd skip the merge anyway (different company). But if
+            // we're still on the same company the failure is real - rethrow so a save doesn't
+            // silently proceed without the persisted receipts and overwrite them.
+            lock (_receiptsLock)
+            {
+                if (_receiptsMerged || !ReferenceEquals(CompanyData, target))
+                    return;
+            }
+            throw;
+        }
 
         lock (_receiptsLock)
         {
             if (_receiptsMerged)
+                return;
+            // Only merge if the company hasn't changed since the load started; otherwise these
+            // receipts belong to a company that is no longer open.
+            if (!ReferenceEquals(CompanyData, target))
                 return;
             CompanyData?.Receipts.AddRange(loaded);
             _receiptsMerged = true;
@@ -941,6 +968,7 @@ public class CompanyManager : IDisposable
         lock (_receiptsLock)
         {
             _receiptsLoadTask = null;
+            _receiptsLoadTarget = null;
             _receiptsMerged = false;
         }
 
