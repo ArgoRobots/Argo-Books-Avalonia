@@ -3409,17 +3409,17 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             invoice.Subtotal = GetDecimal(row, headers, "Subtotal");
             invoice.TaxAmount = GetDecimal(row, headers, "Tax");
             invoice.Total = GetDecimal(row, headers, "Total");
-            invoice.AmountPaid = GetDecimal(row, headers, "Paid");
-            var importedBalance = GetDecimal(row, headers, "Balance");
-            // Validate balance consistency: if Total and AmountPaid are set, compute balance
-            if (invoice.Total > 0 && invoice.AmountPaid >= 0)
-            {
-                invoice.Balance = invoice.Total - invoice.AmountPaid;
-            }
+            // Detect whether a "Paid" amount was actually supplied (GetNullableDecimal returns null for
+            // an absent column, vs 0 for a genuine zero). When it is, derive the balance from it;
+            // otherwise trust the imported "Balance" column. The old guard "AmountPaid >= 0" is always
+            // true for a decimal, so it discarded the Balance column and assumed nothing was paid.
+            // Clamp so an over-payment (Paid > Total) can never persist a negative balance.
+            var paid = SpreadsheetRowReader.GetNullableDecimal(row, headers, "Paid");
+            invoice.AmountPaid = paid ?? 0m;
+            if (paid.HasValue)
+                invoice.Balance = Math.Max(0m, invoice.Total - paid.Value);
             else
-            {
-                invoice.Balance = importedBalance;
-            }
+                invoice.Balance = Math.Max(0m, GetDecimal(row, headers, "Balance"));
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
             // Per-row currency detected from the amount cells, else the company currency.
