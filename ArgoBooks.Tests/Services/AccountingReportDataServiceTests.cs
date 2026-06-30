@@ -1,7 +1,9 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -170,6 +172,52 @@ public class AccountingReportDataServiceTests
         var result = service.GetReportData(AccountingReportType.TaxSummary);
 
         Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void GetReportData_TaxSummary_CountsTransactionLevelTaxWhenLineItemsHaveNoRate()
+    {
+        // Regression: manually-entered transactions always carry a line item with TaxRate 0 but
+        // record their tax at the transaction level. The Tax Summary used to read tax only off line
+        // items whenever any existed, so it reported $0 for every UI-entered sale and expense.
+        var data = new CompanyData();
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-2024-00001",
+            Date = new DateTime(2024, 6, 1),
+            OriginalCurrency = "USD",
+            Amount = 100m,
+            TaxRate = 8m,        // stored as a percentage (8%)
+            TaxAmount = 8m,
+            TaxAmountUSD = 8m,
+            Total = 108m,
+            TotalUSD = 108m,
+            LineItems = [new LineItem { Description = "Sale", Quantity = 1, UnitPrice = 100m, TaxRate = 0 }]
+        });
+        data.Expenses.Add(new Expense
+        {
+            Id = "EXP-2024-00001",
+            Date = new DateTime(2024, 6, 1),
+            OriginalCurrency = "USD",
+            Amount = 50m,
+            TaxRate = 10m,
+            TaxAmount = 5m,
+            TaxAmountUSD = 5m,
+            Total = 55m,
+            TotalUSD = 55m,
+            LineItems = [new LineItem { Description = "Supplies", Quantity = 1, UnitPrice = 50m, TaxRate = 0 }]
+        });
+
+        var service = new AccountingReportDataService(data, CreateDefaultFilters());
+
+        var result = service.GetReportData(AccountingReportType.TaxSummary);
+
+        // The two subtotal rows are "Total Tax Collected" then "Total Tax Paid". Before the fix both
+        // formatted as $0.00 because the per-line-item tax is always 0 for manual entries.
+        var subtotals = result.Rows.FindAll(r => r.RowType == AccountingRowType.SubtotalRow);
+        Assert.Equal(2, subtotals.Count);
+        Assert.Contains("8", subtotals[0].Values[0]);   // tax collected = $8
+        Assert.Contains("5", subtotals[1].Values[0]);   // tax paid = $5
     }
 
     #endregion
