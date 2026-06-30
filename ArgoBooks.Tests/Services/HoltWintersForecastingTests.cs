@@ -67,6 +67,34 @@ public class HoltWintersForecastingTests
         Assert.All(result.ForecastedValues, v => Assert.True(v >= 0));
     }
 
+    [Fact]
+    public void ForecastAdditive_NonMultipleOfSeasonLength_UsesCorrectSeasonForForecast()
+    {
+        // Regression: the seasonal index for the forecast was computed as n + (n + h - 1) % m, which
+        // only equals the correct n + (h - 1) % m when the data length n is an exact multiple of the
+        // season length m. For other lengths the forecast borrowed the WRONG season's factor.
+        //
+        // A strongly periodic, no-trend series with season length 3: high, low, mid (120, 0, 60),
+        // repeated. n = 10 (not a multiple of 3), so the next value is at season position 1 ("low"),
+        // whose true value is 0. The buggy index instead reads season position 2 ("mid" = 60).
+        var data = new List<decimal>
+        {
+            120m, 0m, 60m,
+            120m, 0m, 60m,
+            120m, 0m, 60m,
+            120m
+        };
+
+        var result = _forecasting.ForecastAdditive(data, seasonLength: 3, periodsToForecast: 1);
+
+        // A correct forecast lands near the "low" season (0); the bug lands near the "mid" season
+        // (60). Assert it is closer to the low value than to the mid value.
+        Assert.True(
+            result.ForecastedValues[0] < 30m,
+            $"Expected forecast near the low season (~0) but got {result.ForecastedValues[0]}, " +
+            "which means the wrong season's factor was used.");
+    }
+
     #endregion
 
     #region ForecastMultiplicative Tests

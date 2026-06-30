@@ -78,8 +78,12 @@ public class HoltWintersForecasting
         var forecasts = new List<double>();
         for (int h = 1; h <= periodsToForecast; h++)
         {
-            int seasonIndex = (n + h - 1) % seasonLength;
-            double seasonalFactor = smoothedSeasonals[n - seasonLength + seasonIndex + seasonLength];
+            // The seasonal estimate for horizon h lives at smoothedSeasonals[n + (h - 1) % seasonLength]
+            // (the current season block occupies indices [n, n + seasonLength), same as finalSeasonals
+            // below). The previous form, n + (n + h - 1) % seasonLength, only matched this when n was an
+            // exact multiple of seasonLength and otherwise borrowed the wrong season's factor.
+            int seasonIndex = (h - 1) % seasonLength;
+            double seasonalFactor = smoothedSeasonals[n + seasonIndex];
             // Damped trend: phi + phi^2 + ... + phi^h
             double dampedTrendSum = DampedTrendSum(p, h);
             double forecast = lastLevel + dampedTrendSum * lastTrend + seasonalFactor;
@@ -179,8 +183,10 @@ public class HoltWintersForecasting
         var forecasts = new List<double>();
         for (int h = 1; h <= periodsToForecast; h++)
         {
-            int seasonIndex = (n + h - 1) % seasonLength;
-            double seasonalFactor = smoothedSeasonals[n - seasonLength + seasonIndex + seasonLength];
+            // See ForecastAdditive: the seasonal estimate for horizon h is at
+            // smoothedSeasonals[n + (h - 1) % seasonLength], not n + (n + h - 1) % seasonLength.
+            int seasonIndex = (h - 1) % seasonLength;
+            double seasonalFactor = smoothedSeasonals[n + seasonIndex];
             double dampedTrendSum = DampedTrendSum(p, h);
             double forecast = (lastLevel + dampedTrendSum * lastTrend) * seasonalFactor;
             forecasts.Add(Math.Max(0, forecast));
