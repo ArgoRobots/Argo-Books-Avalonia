@@ -2691,9 +2691,16 @@ public class ReportRenderer : IDisposable
                 if (colIndex < row.Count)
                 {
                     var text = row[colIndex];
-                    // Parse currency or number - remove currency symbols and commas
-                    var cleanText = text.Replace("$", "").Replace(",", "").Replace("€", "").Replace("£", "").Trim();
-                    if (decimal.TryParse(cleanText, out var value))
+                    // Strip the company's actual currency symbol (plus the common ones) and grouping
+                    // separators, then parse invariantly. The old code only stripped $, €, and £, so a
+                    // company on any other currency (¥, ₹, CHF, ...) produced an unparseable string and
+                    // every total showed 0.
+                    var cleanText = text
+                        .Replace(_currencySymbol, "")
+                        .Replace("$", "").Replace("€", "").Replace("£", "")
+                        .Replace(",", "")
+                        .Trim();
+                    if (decimal.TryParse(cleanText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value))
                         sum += value;
                 }
             }
@@ -4250,7 +4257,10 @@ public class ReportRenderer : IDisposable
         if (!startDate.HasValue || !endDate.HasValue)
             return 0;
 
-        var periodLength = (endDate.Value - startDate.Value).Days;
+        // +1 so the period is inclusive of both endpoints (Jan 1-31 is 31 days, not 30). Without it
+        // the previous comparison window was one day shorter than the current one, biasing growth
+        // positive (a flat business showed a few percent "growth").
+        var periodLength = (endDate.Value - startDate.Value).Days + 1;
         if (periodLength <= 0) return 0;
 
         var previousStart = startDate.Value.AddDays(-periodLength);
