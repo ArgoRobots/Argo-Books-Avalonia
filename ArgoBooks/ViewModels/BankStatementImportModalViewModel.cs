@@ -888,26 +888,12 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     private async Task<List<BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {
         // Premium gate + usage check run before the modal opens, so a gate or limit failure shows its
-        // prompt without briefly flashing the import modal.
-        if (App.LicenseService?.LoadLicense() != true)
-        {
-            await UpgradePromptHelper.ShowBankStatementImportPremiumPromptAsync();
-            return [];
-        }
+        // prompt without briefly flashing the import modal. A PDF consumes one "bank" AI import,
+        // charged at extraction (below); the follow-up AI categorization skips its own charge for
+        // PDFs (see _pdfExtractionCharged).
+        using var usage = await App.TryBeginBankPdfImportAsync();
+        if (usage == null) return [];
         if (App.PdfStatementExtractor == null) return [];
-
-        // A PDF bank statement consumes one "bank" AI import, charged at extraction (below). The
-        // follow-up AI categorization skips its own charge for PDFs (see _pdfExtractionCharged).
-        using var usage = new AiImportUsageService(App.LicenseService, App.ErrorLogger, importType: "bank");
-        var check = await usage.CheckUsageAsync();
-        if (!check.CanImport)
-        {
-            if (check.ErrorMessage != null)
-                await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
-            else
-                await UpgradePromptHelper.ShowAiImportLimitPromptAsync(check.ImportCount, check.MonthlyLimit, check.ResetsAt);
-            return [];
-        }
 
         // Open the import modal and read the PDF inside it (driving the modal's progress bar).
         LoadingMessage = "Reading PDF statement...".Translate();

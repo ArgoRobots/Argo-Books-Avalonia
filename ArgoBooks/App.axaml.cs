@@ -2711,42 +2711,50 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Premium-gated PDF bank statement import: checks the license, checks usage, calls the AI
-    /// extractor, and increments usage on a successful extraction. Returns the extracted rows
-    /// (which flow into the same review path as CSV/Excel), or an empty list if gated out or
-    /// nothing could be extracted.
+    /// Shared premium + usage gate for importing a PDF bank statement (one "bank" AI import). Shows
+    /// the appropriate premium-upgrade or usage-limit prompt and returns null when the user is gated
+    /// out. On success returns a live bank-import usage service the CALLER owns: dispose it (with
+    /// <c>using</c>) and call IncrementUsageAsync once extraction succeeds. Shared by the Bank
+    /// Matching page import and the review-modal import so the gate lives in one place.
     /// </summary>
-    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
+    internal static async Task<AiImportUsageService?> TryBeginBankPdfImportAsync()
     {
-        // Premium gate: PDF extraction is a premium-only feature.
         if (LicenseService?.LoadLicense() != true)
         {
             await UpgradePromptHelper.ShowBankStatementImportPremiumPromptAsync();
-            return [];
+            return null;
         }
+
+        var usage = new AiImportUsageService(LicenseService, ErrorLogger, importType: "bank");
+        var check = await usage.CheckUsageAsync();
+        if (check.CanImport) return usage;
+
+        usage.Dispose();
+        if (check.ErrorMessage != null)
+            await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+        else
+            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(check.ImportCount, check.MonthlyLimit, check.ResetsAt);
+        return null;
+    }
+
+    /// <summary>
+    /// Premium-gated PDF bank statement import for the Bank Matching page: gates, calls the AI
+    /// extractor, and consumes the single bank-import credit on success. Returns the extracted rows,
+    /// or an empty list if gated out or nothing could be extracted.
+    /// </summary>
+    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
+    {
+        // This path shows the rows on the Bank Matching page with no follow-up categorization, so the
+        // extraction below is the single charge.
+        using var usage = await TryBeginBankPdfImportAsync();
+        if (usage == null) return [];
+        if (PdfStatementExtractor == null) return [];
 
         // Reading the PDF is a slow network + AI round-trip; show the loading overlay for the
         // whole wait so there's instant feedback. Hide it before any dialog.
         ShowBusyOverlay("Reading PDF statement...".Translate());
         try
         {
-            // Usage gate: a bank-statement PDF import consumes one "bank" AI import. (This path
-            // shows the imported rows on the Bank Matching page with no follow-up AI categorization,
-            // so the single charge is the extraction itself, below.)
-            using var usage = new AiImportUsageService(LicenseService, ErrorLogger, importType: "bank");
-            var check = await usage.CheckUsageAsync();
-            if (!check.CanImport)
-            {
-                HideBusyOverlay();
-                if (check.ErrorMessage != null)
-                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
-                else
-                    await UpgradePromptHelper.ShowAiImportLimitPromptAsync(check.ImportCount, check.MonthlyLimit, check.ResetsAt);
-                return [];
-            }
-
-            if (PdfStatementExtractor == null) return [];
-
             var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
             var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
             HideBusyOverlay();

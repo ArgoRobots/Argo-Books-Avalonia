@@ -315,17 +315,6 @@ public partial class DashboardLayoutViewModel : ObservableObject
         OnPropertyChanged(nameof(HasNoWidgets));
     }
 
-    private static void RecalculateRowOffsets(DashboardRowViewModel row)
-    {
-        double offset = 0;
-        foreach (var w in row.Widgets)
-        {
-            w.StartOffset = offset;
-            offset += w.Size.ToFraction();
-        }
-    }
-
-
     public bool MoveWidgetToRow(DashboardRowViewModel sourceRow, int widgetIndex,
         DashboardRowViewModel targetRow, int insertIndex = -1)
     {
