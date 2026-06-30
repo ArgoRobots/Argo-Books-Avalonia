@@ -234,10 +234,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         foreach (var txn in transactions)
         {
-            if (txn.LineItems.Count > 0)
+            var lineItemsTotal = txn.LineItems.Sum(li => li.Subtotal);
+
+            // Proportional allocation needs a non-zero line-item subtotal to divide by.
+            if (txn.LineItems.Count > 0 && lineItemsTotal != 0)
             {
                 // Convert line item amounts to USD using the transaction's conversion ratio
-                var lineItemsTotal = txn.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = txn.EffectiveSubtotalUSD;
 
                 foreach (var lineItem in txn.LineItems)
@@ -246,15 +248,14 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     result.TryAdd(categoryName, 0);
                     // Proportionally allocate USD subtotal across line items, then convert at the
                     // transaction's own date.
-                    var lineItemUSD = lineItemsTotal != 0
-                        ? Math.Round(lineItem.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    var lineItemUSD = Math.Round(lineItem.Subtotal / lineItemsTotal * subtotalUSD, 2);
                     result[categoryName] += ToDisplay(lineItemUSD, txn.Date);
                 }
             }
             else
             {
-                // No line items, use the pre-tax amount converted at the transaction's own date.
+                // No line items, or every line item nets to a zero subtotal (e.g. a 100% discount):
+                // post the transaction-level pre-tax amount so the transaction is not dropped.
                 var categoryName = "Uncategorized";
                 result.TryAdd(categoryName, 0);
                 result[categoryName] += ToDisplay(txn.EffectiveSubtotalUSD, txn.Date);
@@ -772,17 +773,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Revenue transactions (credits), all amounts in USD
         foreach (var rev in companyData.Revenues.Where(r => IsInDateRange(r.Date)))
         {
-            if (rev.LineItems.Count > 0)
+            var lineItemsTotal = rev.LineItems.Sum(li => li.Subtotal);
+            if (rev.LineItems.Count > 0 && lineItemsTotal != 0)
             {
-                var lineItemsTotal = rev.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = rev.EffectiveSubtotalUSD;
 
                 foreach (var li in rev.LineItems)
                 {
                     var catName = GetCategoryNameForProduct(li.ProductId);
-                    var lineItemUSD = lineItemsTotal != 0
-                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    var lineItemUSD = Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2);
                     AddLedgerEntry(entries, catName, new LedgerEntry
                     {
                         Date = rev.Date,
@@ -795,6 +794,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else
             {
+                // No line items, or every line item nets to a zero subtotal (e.g. a 100% discount):
+                // post the transaction-level amount so the entry is not dropped from the ledger.
                 AddLedgerEntry(entries, t.RevenueCategory, new LedgerEntry
                 {
                     Date = rev.Date,
@@ -809,17 +810,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Expense transactions (debits), all amounts in USD
         foreach (var exp in companyData.Expenses.Where(e => IsInDateRange(e.Date)))
         {
-            if (exp.LineItems.Count > 0)
+            var lineItemsTotal = exp.LineItems.Sum(li => li.Subtotal);
+            if (exp.LineItems.Count > 0 && lineItemsTotal != 0)
             {
-                var lineItemsTotal = exp.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = exp.EffectiveSubtotalUSD;
 
                 foreach (var li in exp.LineItems)
                 {
                     var catName = GetCategoryNameForProduct(li.ProductId);
-                    var lineItemUSD = lineItemsTotal != 0
-                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    var lineItemUSD = Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2);
                     AddLedgerEntry(entries, catName, new LedgerEntry
                     {
                         Date = exp.Date,
