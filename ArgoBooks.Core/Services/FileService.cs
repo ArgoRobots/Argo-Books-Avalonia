@@ -506,6 +506,13 @@ public class FileService(
     {
         var tempPath = Path.Combine(Path.GetTempPath(), "ArgoBooks", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempPath);
+        // On Unix this directory holds the company's decrypted files; restrict it to the owner so
+        // other local users on a shared machine can't read them. No-op on Windows (per-user temp).
+        if (!OperatingSystem.IsWindows())
+        {
+            try { File.SetUnixFileMode(tempPath, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute); }
+            catch { /* best effort; permissions hardening only */ }
+        }
         return tempPath;
     }
 
