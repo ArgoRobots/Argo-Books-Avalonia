@@ -437,7 +437,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         var accountsReceivable = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft)
+                        && i.Status != InvoiceStatus.Draft
+                        && IsOnOrBeforeEndDate(i.IssueDate))
             .Sum(i => ToDisplay(i.EffectiveBalanceUSD, i.IssueDate));
 
         // Inventory valued at current unit cost, using stock levels

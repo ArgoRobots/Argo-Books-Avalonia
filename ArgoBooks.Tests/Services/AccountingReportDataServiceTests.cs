@@ -262,4 +262,108 @@ public class AccountingReportDataServiceTests
     }
 
     #endregion
+
+    #region Date-Filtering Regressions
+
+    [Fact]
+    public void GetReportData_BalanceSheet_ExcludesInvoicesIssuedAfterEndDate()
+    {
+        // AR on the Balance Sheet is an "as of the end date" balance, so an open invoice issued AFTER
+        // the report end date must not be counted. Every other current-asset/liability line is date
+        // gated via IsOnOrBeforeEndDate; AR was the one that wasn't, so a future-dated open invoice
+        // inflated AR (and, since Retained Earnings is the balancing figure, equity too).
+        static Invoice MakeInvoice(string id, DateTime issue, decimal amount) => new()
+        {
+            Id = id,
+            IssueDate = issue,
+            Total = amount,
+            Balance = amount,
+            Status = InvoiceStatus.Sent,
+            OriginalCurrency = "USD"
+        };
+
+        static string TotalCurrentAssets(AccountingTableData r) =>
+            r.Rows.Find(x => x.Label == "Total Current Assets")!.Values[0];
+
+        // Only the in-period invoice (issued mid-2024, within the 2024 report window).
+        var dataInPeriodOnly = new CompanyData();
+        dataInPeriodOnly.Invoices.Add(MakeInvoice("INV-IN", new DateTime(2024, 6, 1), 1000m));
+
+        // Same invoice plus one issued in 2025, after the 2024-12-31 end date.
+        var dataWithFuture = new CompanyData();
+        dataWithFuture.Invoices.Add(MakeInvoice("INV-IN", new DateTime(2024, 6, 1), 1000m));
+        dataWithFuture.Invoices.Add(MakeInvoice("INV-FUTURE", new DateTime(2025, 3, 1), 5000m));
+
+        var without = new AccountingReportDataService(dataInPeriodOnly, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.BalanceSheet);
+        var with = new AccountingReportDataService(dataWithFuture, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.BalanceSheet);
+
+        // The future invoice is outside the report window, so AR (and thus Total Current Assets,
+        // with cash and inventory both zero) must be identical with or without it.
+        Assert.Equal(TotalCurrentAssets(without), TotalCurrentAssets(with));
+    }
+
+    [Fact]
+    public void GetReportData_BalanceSheet_ExcludesPurchaseOrdersOrderedAfterEndDate()
+    {
+        // AP mirrors AR: an open purchase order placed AFTER the report end date must not count toward
+        // "as of" Accounts Payable. The AP line lacked the IsOnOrBeforeEndDate gate its neighbors have.
+        static PurchaseOrder MakePO(string id, DateTime order, decimal amount) => new()
+        {
+            Id = id,
+            OrderDate = order,
+            Total = amount,
+            Status = PurchaseOrderStatus.Sent,
+            OriginalCurrency = "USD"
+        };
+
+        static string TotalLiabilities(AccountingTableData r) =>
+            r.Rows.Find(x => x.Label == "TOTAL LIABILITIES")!.Values[0];
+
+        var dataInPeriodOnly = new CompanyData();
+        dataInPeriodOnly.PurchaseOrders.Add(MakePO("PO-IN", new DateTime(2024, 6, 1), 1000m));
+
+        var dataWithFuture = new CompanyData();
+        dataWithFuture.PurchaseOrders.Add(MakePO("PO-IN", new DateTime(2024, 6, 1), 1000m));
+        dataWithFuture.PurchaseOrders.Add(MakePO("PO-FUTURE", new DateTime(2025, 1, 5), 3000m));
+
+        var without = new AccountingReportDataService(dataInPeriodOnly, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.BalanceSheet);
+        var with = new AccountingReportDataService(dataWithFuture, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.BalanceSheet);
+
+        // No revenue/expense => sales tax payable is zero, so Total Liabilities equals AP. The future
+        // PO is outside the window and must not change it.
+        Assert.Equal(TotalLiabilities(without), TotalLiabilities(with));
+    }
+
+    [Fact]
+    public void GetReportData_IncomeStatement_CountsTransactionWhenAllLineItemsNetToZero()
+    {
+        // A fully-discounted sale has line items that net to a $0 subtotal but still carries a
+        // transaction-level Total. The category allocator divides each line item's share by the sum
+        // of line-item subtotals; when that sum is 0 it returned $0 for the whole sale, dropping it
+        // from Total Revenue (and the General Ledger) entirely.
+        var data = new CompanyData();
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-DISC",
+            Date = new DateTime(2024, 6, 1),
+            OriginalCurrency = "USD",
+            Total = 4321m,
+            TaxAmount = 0m,
+            LineItems = [new LineItem { Description = "Item", Quantity = 1, UnitPrice = 4321m, Discount = 4321m }]
+        });
+
+        var result = new AccountingReportDataService(data, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.IncomeStatement);
+
+        // The first subtotal row is "Total Revenue". Strip formatting to compare digits only.
+        var totalRevenue = result.Rows.Find(r => r.RowType == AccountingRowType.SubtotalRow)!.Values[0];
+        var digits = new string(totalRevenue.Where(char.IsDigit).ToArray());
+        Assert.Contains("4321", digits);
+    }
+
+    #endregion
 }
