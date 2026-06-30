@@ -76,31 +76,6 @@ public static class UpgradePromptHelper
     }
 
     /// <summary>
-    /// Shows a compelling upgrade prompt when a free-tier user tries to import a PDF bank
-    /// statement, which uses premium AI extraction. Shown instead of the bare upgrade modal so
-    /// the user understands why they're being asked to upgrade.
-    /// </summary>
-    public static async Task ShowBankStatementImportPremiumPromptAsync()
-    {
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-        {
-            Title = "Premium Feature".Translate(),
-            Message = "Importing PDF bank statements uses AI to read your transactions automatically, so it's a Premium feature.\n\nUpgrade to Premium to import PDF statements, plus unlimited invoices, AI receipt scanning, predictive analytics, and more.".Translate(),
-            PrimaryButtonText = "Upgrade Now".Translate(),
-            CancelButtonText = "Maybe Later".Translate(),
-            SecondaryButtonText = null
-        });
-
-        if (result == ConfirmationResult.Primary)
-        {
-            App.OpenUpgradeModal();
-        }
-    }
-
-    /// <summary>
     /// Shows a compelling upgrade prompt when the receipt scan limit is reached.
     /// </summary>
     /// <param name="scanCount">Number of scans used this month.</param>

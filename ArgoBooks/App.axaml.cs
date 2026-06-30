@@ -2711,20 +2711,15 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Shared premium + usage gate for importing a PDF bank statement (one "bank" AI import). Shows
-    /// the appropriate premium-upgrade or usage-limit prompt and returns null when the user is gated
-    /// out. On success returns a live bank-import usage service the CALLER owns: dispose it (with
-    /// <c>using</c>) and call IncrementUsageAsync once extraction succeeds. Shared by the Bank
-    /// Matching page import and the review-modal import so the gate lives in one place.
+    /// Shared usage gate for importing a PDF bank statement (one "bank" AI import). Available on the
+    /// free tier within the monthly limit, like the other AI imports. Shows the usage-limit prompt and
+    /// returns null when the user is out of imports. On success returns a live bank-import usage
+    /// service the CALLER owns: dispose it (with <c>using</c>) and call IncrementUsageAsync once
+    /// extraction succeeds. Shared by the Bank Matching page import and the review-modal import so the
+    /// gate lives in one place.
     /// </summary>
     internal static async Task<AiImportUsageService?> TryBeginBankPdfImportAsync()
     {
-        if (LicenseService?.LoadLicense() != true)
-        {
-            await UpgradePromptHelper.ShowBankStatementImportPremiumPromptAsync();
-            return null;
-        }
-
         var usage = new AiImportUsageService(LicenseService, ErrorLogger, importType: "bank");
         var check = await usage.CheckUsageAsync();
         if (check.CanImport) return usage;
@@ -2738,9 +2733,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Premium-gated PDF bank statement import for the Bank Matching page: gates, calls the AI
+    /// PDF bank statement import for the Bank Matching page: checks the usage limit, calls the AI
     /// extractor, and consumes the single bank-import credit on success. Returns the extracted rows,
-    /// or an empty list if gated out or nothing could be extracted.
+    /// or an empty list if out of imports or nothing could be extracted.
     /// </summary>
     private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {

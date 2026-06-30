@@ -110,7 +110,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         if (ext == ".pdf")
         {
             lines = await ImportPdfStatementAsync(filePath);
-            // The PDF path shows its own messaging (premium gate, cancel, extraction failure),
+            // The PDF path shows its own messaging (usage limit, cancel, extraction failure),
             // so just bail quietly when it returns nothing.
             if (lines.Count == 0) return;
         }
@@ -881,16 +881,16 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Premium-gated PDF bank statement import. The premium gate and usage check run first (as
-    /// dialogs); on success the import modal opens and the PDF is read INSIDE it, driving the modal's
-    /// progress bar, so the whole import uses one consistent UI rather than a separate floating overlay.
+    /// PDF bank statement import. The usage check runs first (as a dialog); on success the import
+    /// modal opens and the PDF is read INSIDE it, driving the modal's progress bar, so the whole
+    /// import uses one consistent UI rather than a separate floating overlay.
     /// </summary>
     private async Task<List<BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {
-        // Premium gate + usage check run before the modal opens, so a gate or limit failure shows its
-        // prompt without briefly flashing the import modal. A PDF consumes one "bank" AI import,
-        // charged at extraction (below); the follow-up AI categorization skips its own charge for
-        // PDFs (see _pdfExtractionCharged).
+        // Usage check runs before the modal opens, so a limit failure shows its prompt without
+        // briefly flashing the import modal. A PDF consumes one "bank" AI import, charged at
+        // extraction (below); the follow-up AI categorization skips its own charge for PDFs
+        // (see _pdfExtractionCharged).
         using var usage = await App.TryBeginBankPdfImportAsync();
         if (usage == null) return [];
         if (App.PdfStatementExtractor == null) return [];

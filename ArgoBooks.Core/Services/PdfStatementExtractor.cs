@@ -8,7 +8,7 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Sends a PDF bank statement to the AI proxy and returns parsed rows. Mirrors the receipt
-/// proxy's auth/multipart contract. Premium-gated and usage-counted by the caller.
+/// proxy's auth/multipart contract. Usage-counted by the caller.
 /// </summary>
 public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger? errorLogger = null) : IPdfStatementExtractor
 {
