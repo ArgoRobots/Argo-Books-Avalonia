@@ -55,8 +55,10 @@ internal static class SpreadsheetRowReader
     }
 
     public static List<List<object?>> GetDataRows(IXLWorksheet worksheet, int columnCount)
+        => GetDataRows(worksheet, columnCount, FindHeaderRow(worksheet));
+
+    public static List<List<object?>> GetDataRows(IXLWorksheet worksheet, int columnCount, int headerRow)
     {
-        var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<object?>>();
         var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 1;
 

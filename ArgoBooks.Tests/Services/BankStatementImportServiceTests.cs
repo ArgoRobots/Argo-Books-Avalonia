@@ -22,6 +22,47 @@ public class BankStatementImportServiceTests
         return path;
     }
 
+    private static string WriteTempXlsxWithPreamble()
+    {
+        var path = Path.GetTempFileName() + ".xlsx";
+        using var wb = new ClosedXML.Excel.XLWorkbook();
+        var ws = wb.AddWorksheet("Statement");
+        // Two metadata rows many banks put above the real header (each has >= 2 non-empty cells).
+        ws.Cell(1, 1).Value = "Account:";
+        ws.Cell(1, 2).Value = "Checking ****5678";
+        ws.Cell(2, 1).Value = "Statement Period:";
+        ws.Cell(2, 2).Value = "01/01 - 01/31";
+        // The real header and data.
+        ws.Cell(4, 1).Value = "Date";
+        ws.Cell(4, 2).Value = "Description";
+        ws.Cell(4, 3).Value = "Amount";
+        ws.Cell(5, 1).Value = "2025-01-05";
+        ws.Cell(5, 2).Value = "Coffee shop";
+        ws.Cell(5, 3).Value = -12.50;
+        ws.Cell(6, 1).Value = "2025-01-06";
+        ws.Cell(6, 2).Value = "Client deposit";
+        ws.Cell(6, 3).Value = 250.00;
+        wb.SaveAs(path);
+        return path;
+    }
+
+    [Fact]
+    public async Task ParseExcelAsync_StatementWithPreambleRows_FindsHeaderAndImportsLines()
+    {
+        // Many banks export Excel statements with a couple of metadata rows before the column
+        // header. The Excel path picks the first row with >= 2 cells as the header (the preamble),
+        // fails to find Date/Amount, and silently imports nothing. The CSV path scans for the real
+        // header; the Excel path should too.
+        var path = WriteTempXlsxWithPreamble();
+        try
+        {
+            var lines = await new BankStatementImportService().ParseExcelAsync(path);
+
+            Assert.Equal(2, lines.Count);
+        }
+        finally { File.Delete(path); }
+    }
+
     [Fact]
     public async Task ParseCsvAsync_SignedAmountColumn_KeepsSignAndParses()
     {
