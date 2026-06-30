@@ -146,6 +146,47 @@ public class AccountingReportDataServiceTests
         Assert.NotNull(result);
     }
 
+    [Fact]
+    public void GetReportData_GeneralLedger_RefundPayment_ShowsAmountInLedgerRow()
+    {
+        // A refund is stored as a Payment with a negative Amount. The ledger records every payment as
+        // a Debit and only renders a column when its value is > 0, so a refund's negative debit shows
+        // blank in BOTH columns even though the running balance still drops. The amount should be
+        // visible (it belongs in the Credit column).
+        var data = new CompanyData();
+        data.Payments.Add(new Payment
+        {
+            Id = "PMT-1",
+            CustomerId = "CUST-1",
+            Date = new DateTime(2024, 6, 1),
+            Amount = 250m,
+            OriginalCurrency = "USD"
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PMT-2",
+            CustomerId = "CUST-1",
+            Date = new DateTime(2024, 6, 15),
+            Amount = -50m,        // refunds are stored negative
+            OriginalCurrency = "USD",
+            IsRefund = true,
+            RefundedFromPaymentId = "PMT-1"
+        });
+
+        var service = new AccountingReportDataService(data, CreateDefaultFilters());
+
+        var result = service.GetReportData(AccountingReportType.GeneralLedger);
+
+        // The refund's ledger row is keyed by its payment id in the Reference column (Values[1]).
+        var refundRow = result.Rows.Find(r => r.Values.Count >= 4 && r.Values[1] == "PMT-2");
+        Assert.NotNull(refundRow);
+        var debit = refundRow!.Values[2];
+        var credit = refundRow.Values[3];
+        Assert.True(
+            debit.Contains("50") || credit.Contains("50"),
+            $"Refund amount missing from the ledger row. Debit='{debit}', Credit='{credit}'.");
+    }
+
     #endregion
 
     #region AR/AP Aging Tests

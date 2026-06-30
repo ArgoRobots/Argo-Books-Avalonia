@@ -841,17 +841,20 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
         }
 
-        // Payments (credits to AR / debits to cash)
+        // Payments (credits to AR / debits to cash). Refunds are stored as negative payments; route
+        // them to the Credit column as a positive value so the amount is visible (a negative Debit
+        // renders blank), while the running balance (Debit - Credit) stays identical.
         foreach (var pmt in companyData.Payments.Where(p => IsInDateRange(p.Date)))
         {
             var customerName = companyData.GetCustomer(pmt.CustomerId)?.Name ?? "Unknown";
+            var amount = ToDisplay(pmt.EffectiveAmountUSD, pmt.Date);
             AddLedgerEntry(entries, t.PaymentsReceivedCategory, new LedgerEntry
             {
                 Date = pmt.Date,
                 Description = $"Payment from {customerName}",
                 Reference = pmt.Id,
-                Debit = ToDisplay(pmt.EffectiveAmountUSD, pmt.Date),
-                Credit = 0
+                Debit = pmt.IsRefund ? 0 : amount,
+                Credit = pmt.IsRefund ? -amount : 0
             });
         }
 
