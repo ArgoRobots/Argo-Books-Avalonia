@@ -211,16 +211,6 @@ public class CompanyData
 
     #endregion
 
-    #region Reports
-
-    /// <summary>
-    /// All custom report templates.
-    /// </summary>
-    [JsonPropertyName("reportTemplates")]
-    public List<ReportTemplate> ReportTemplates { get; init; } = [];
-
-    #endregion
-
     #region Invoice Templates
 
     /// <summary>
@@ -604,9 +594,6 @@ public class IdCounters
 
     [JsonPropertyName("receipt")]
     public int Receipt { get; set; }
-
-    [JsonPropertyName("reportTemplate")]
-    public int ReportTemplate { get; set; }
 
     [JsonPropertyName("invoiceTemplate")]
     public int InvoiceTemplate { get; set; }

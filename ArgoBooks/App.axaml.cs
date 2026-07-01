@@ -2811,7 +2811,6 @@ public partial class App : Application
             data.Returns,
             data.LostDamaged,
             data.Receipts,
-            data.ReportTemplates,
             data.EventLog,
             data.BankImportSessions
         };
@@ -2891,7 +2890,6 @@ public partial class App : Application
         RestoreList(data.Returns, "Returns");
         RestoreList(data.LostDamaged, "LostDamaged");
         RestoreList(data.Receipts, "Receipts");
-        RestoreList(data.ReportTemplates, "ReportTemplates");
         RestoreList(data.EventLog, "EventLog");
         RestoreList(data.BankImportSessions, "BankImportSessions");
     }

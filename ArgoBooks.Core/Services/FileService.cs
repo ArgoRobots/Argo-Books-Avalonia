@@ -68,7 +68,6 @@ public class FileService(
             await WriteJsonAsync(companyDir, "returns.json", companyData.Returns, cancellationToken);
             await WriteJsonAsync(companyDir, "lostDamaged.json", companyData.LostDamaged, cancellationToken);
             await WriteJsonAsync(companyDir, "receipts.json", companyData.Receipts, cancellationToken);
-            await WriteJsonAsync(companyDir, "reportTemplates.json", companyData.ReportTemplates, cancellationToken);
             await WriteJsonAsync(companyDir, "idCounters.json", companyData.IdCounters, cancellationToken);
             await WriteJsonAsync(companyDir, "eventLog.json", companyData.EventLog, cancellationToken);
             await WriteJsonAsync(companyDir, "pendingConversions.json", companyData.PendingConversions, cancellationToken);
@@ -341,7 +340,6 @@ public class FileService(
         var receiptsTask          = loadReceipts
             ? ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken)
             : Task.FromResult<List<Models.Tracking.Receipt>?>([]);
-        var reportTemplatesTask   = ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken);
         var invoiceTemplatesTask  = ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken);
         var eventLogTask          = ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken);
         var pendingConversionsTask = ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken);
@@ -359,7 +357,7 @@ public class FileService(
             revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
-            reportTemplatesTask, invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
+            invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
             forecastRecordsTask, bankImportSessionsTask
         ];
 
@@ -404,7 +402,6 @@ public class FileService(
             Returns = returnsTask.Result ?? [],
             LostDamaged = lostDamagedTask.Result ?? [],
             Receipts = receiptsTask.Result ?? [],
-            ReportTemplates = reportTemplatesTask.Result ?? [],
             InvoiceTemplates = invoiceTemplatesTask.Result ?? [],
             EventLog = eventLogTask.Result ?? [],
             PendingConversions = pendingConversionsTask.Result ?? [],
@@ -466,7 +463,6 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "returns.json", data.Returns, cancellationToken);
         await WriteJsonAsync(companyDirectory, "lostDamaged.json", data.LostDamaged, cancellationToken);
         await WriteJsonAsync(companyDirectory, "receipts.json", data.Receipts, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "invoiceTemplates.json", data.InvoiceTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
         await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
