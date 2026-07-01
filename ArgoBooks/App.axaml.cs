@@ -358,6 +358,12 @@ public partial class App : Application
 
             var portalSettings = companyData.Settings.PaymentPortal;
 
+            // Capture the user's saved state BEFORE the sync runs. We only auto-persist below when
+            // they had nothing unsaved; otherwise a background sync would also commit their
+            // in-progress edits to disk, defeating "Don't Save". The sync flow itself never flags the
+            // company dirty, so this stays accurate across repeated syncs.
+            var hadUnsavedChanges = CompanyManager!.HasUnsavedChanges;
+
             // Use force sync to also recover any payments that were previously
             // confirmed on the server but never saved locally (e.g. due to app crash).
             // Duplicate prevention in ProcessSyncedPayments handles efficiency.
@@ -394,10 +400,17 @@ public partial class App : Application
             // lost on next app launch and the fee disappears again.
             if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
             {
-                try { await CompanyManager!.SavePaymentSyncAsync(); }
-                catch (Exception ex)
+                // Only auto-persist when the user had no unsaved edits before the sync (see above).
+                // Otherwise the synced payments stay in memory and persist on the next explicit save,
+                // or are re-fetched next open via the force sync, so a background sync can't quietly
+                // commit the user's in-progress edits.
+                if (!hadUnsavedChanges)
                 {
-                    ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
+                    try { await CompanyManager!.SavePaymentSyncAsync(); }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
+                    }
                 }
 
                 // Refresh any already-instantiated page ViewModels so the UI reflects the new data
