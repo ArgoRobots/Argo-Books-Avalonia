@@ -28,7 +28,7 @@ public class FileService(
         CancellationToken cancellationToken = default)
     {
         // Create temp directory
-        var tempDirectory = CreateTempDirectory();
+        var tempDirectory = SecureTempDirectory.Create();
 
         try
         {
@@ -126,7 +126,7 @@ public class FileService(
         await using var decompressedStream = await compressionService.DecompressGZipAsync(dataStream, cancellationToken);
 
         // Extract TAR to temp directory
-        var tempDirectory = CreateTempDirectory();
+        var tempDirectory = SecureTempDirectory.Create();
         await compressionService.ExtractTarArchiveAsync(decompressedStream, tempDirectory, cancellationToken);
 
         return tempDirectory;
@@ -501,20 +501,6 @@ public class FileService(
     }
 
     #region Helper Methods
-
-    private static string CreateTempDirectory()
-    {
-        var tempPath = Path.Combine(Path.GetTempPath(), "ArgoBooks", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
-        // On Unix this directory holds the company's decrypted files; restrict it to the owner so
-        // other local users on a shared machine can't read them. No-op on Windows (per-user temp).
-        if (!OperatingSystem.IsWindows())
-        {
-            try { File.SetUnixFileMode(tempPath, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute); }
-            catch { /* best effort; permissions hardening only */ }
-        }
-        return tempPath;
-    }
 
     /// <summary>
     /// Reads and deserializes appSettings.json once from the given directory.
