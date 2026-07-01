@@ -125,10 +125,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         {
             var portalSettings = companyData.Settings.PaymentPortal;
 
-            // Capture the user's saved state BEFORE the sync runs; we only auto-persist below when
-            // they had nothing unsaved, so a sync can't quietly commit their in-progress edits.
-            var hadUnsavedChanges = App.CompanyManager?.HasUnsavedChanges ?? false;
-
             // Pull new payments from the server (force=true recovers any payments that
             // were confirmed server-side but not saved locally)
             var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
@@ -162,10 +158,12 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
                 // Also save when only existing rows were backfilled, without
                 // this the in-memory ProcessingFee update is lost on restart.
-                // Only auto-persist when the user had no unsaved edits before the sync; otherwise the
-                // payments stay in memory and persist on the next explicit save (or are re-fetched
-                // next open), so a sync can't quietly commit the user's in-progress edits.
-                if ((newPayments.Count > 0 || syncResult.BackfilledRows > 0) && !hadUnsavedChanges)
+                // Only auto-persist when the user has no unsaved edits. The sync never flags the
+                // company dirty, so this reflects only the user's own edits (including any made while
+                // the sync was in flight); otherwise the payments stay in memory and persist on the
+                // next explicit save (or are re-fetched next open), so a sync can't quietly commit the
+                // user's in-progress edits.
+                if ((newPayments.Count > 0 || syncResult.BackfilledRows > 0) && !(App.CompanyManager?.HasUnsavedChanges ?? false))
                 {
                     try { await App.CompanyManager!.SavePaymentSyncAsync(); }
                     catch { /* non-fatal */ }

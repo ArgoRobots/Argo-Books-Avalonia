@@ -358,12 +358,6 @@ public partial class App : Application
 
             var portalSettings = companyData.Settings.PaymentPortal;
 
-            // Capture the user's saved state BEFORE the sync runs. We only auto-persist below when
-            // they had nothing unsaved; otherwise a background sync would also commit their
-            // in-progress edits to disk, defeating "Don't Save". The sync flow itself never flags the
-            // company dirty, so this stays accurate across repeated syncs.
-            var hadUnsavedChanges = CompanyManager!.HasUnsavedChanges;
-
             // Use force sync to also recover any payments that were previously
             // confirmed on the server but never saved locally (e.g. due to app crash).
             // Duplicate prevention in ProcessSyncedPayments handles efficiency.
@@ -400,11 +394,13 @@ public partial class App : Application
             // lost on next app launch and the fee disappears again.
             if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
             {
-                // Only auto-persist when the user had no unsaved edits before the sync (see above).
-                // Otherwise the synced payments stay in memory and persist on the next explicit save,
-                // or are re-fetched next open via the force sync, so a background sync can't quietly
-                // commit the user's in-progress edits.
-                if (!hadUnsavedChanges)
+                // Only auto-persist when the user has no unsaved edits. The sync flow never flags the
+                // company dirty (adding payments and setting LastSyncTime don't call MarkAsModified),
+                // so this reflects ONLY the user's own edits - including any made while the sync was in
+                // flight. If they have edits, the synced payments stay in memory and persist on the
+                // next explicit save (or are re-fetched next open via the force sync), so a background
+                // sync can't quietly commit the user's in-progress edits.
+                if (!CompanyManager!.HasUnsavedChanges)
                 {
                     try { await CompanyManager!.SavePaymentSyncAsync(); }
                     catch (Exception ex)
