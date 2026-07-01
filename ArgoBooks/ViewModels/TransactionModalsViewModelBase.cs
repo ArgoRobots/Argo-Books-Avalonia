@@ -209,10 +209,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [ObservableProperty]
     private string _totalMismatchWarningMessage = string.Empty;
 
-    // The stored transaction total to validate the recomputed total against. Captured when the
-    // modal loads so the mismatch warning can be re-checked as the user edits quantity/price.
-    private decimal _validationStoredTotal;
-
     protected string? ReceiptFilePath;
 
     // Save error state for offline USD conversion failures
@@ -376,9 +372,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         OnPropertyChanged(nameof(FeeAmountFormatted));
         OnPropertyChanged(nameof(TotalFormatted));
 
-        // Re-check the stored-total mismatch so the warning clears (or appears) live as the
-        // user edits quantity, unit price, tax, etc. instead of staying stuck from load time.
-        ValidateTotalMismatch(_validationStoredTotal);
+        // The stored-total mismatch is a load-time data-integrity check (it flags AI-scanned or
+        // imported transactions whose stored total didn't match their line items - see the call in
+        // the edit-load path). Once the user edits, they are defining the values themselves, so
+        // re-checking the new total against the now-stale stored total just produces a false warning
+        // (e.g. changing an expense from $10 to $100 warned that $100 != the stored $10). Clear it.
+        HasTotalMismatchWarning = false;
+        TotalMismatchWarningMessage = string.Empty;
     }
 
     /// <summary>
@@ -387,7 +387,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     /// </summary>
     protected void ValidateTotalMismatch(decimal storedTotal)
     {
-        _validationStoredTotal = storedTotal;
         HasTotalMismatchWarning = false;
         TotalMismatchWarningMessage = string.Empty;
 
