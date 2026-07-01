@@ -83,16 +83,6 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase, ICleanu
         OnSortOrPageChanged();
     }
 
-    /// <summary>
-    /// Gets whether the specified column is sorted ascending.
-    /// </summary>
-    public bool IsSortedAscending(string column) => SortColumn == column && SortDirection == SortDirection.Ascending;
-
-    /// <summary>
-    /// Gets whether the specified column is sorted descending.
-    /// </summary>
-    public bool IsSortedDescending(string column) => SortColumn == column && SortDirection == SortDirection.Descending;
-
     #endregion
 
     #region Pagination

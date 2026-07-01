@@ -67,26 +67,6 @@ public static class StatusConverters
 
     #endregion
 
-    #region Payment Status
-
-    public static readonly IValueConverter PaymentStatusBackground = new StatusToBrushConverter(
-        new Dictionary<string, string>
-        {
-            ["Current"] = GreenBg,
-            ["Overdue"] = YellowBg,
-            ["Delinquent"] = RedBg
-        });
-
-    public static readonly IValueConverter PaymentStatusForeground = new StatusToBrushConverter(
-        new Dictionary<string, string>
-        {
-            ["Current"] = GreenFg,
-            ["Overdue"] = YellowFg,
-            ["Delinquent"] = RedFg
-        }, GrayFg);
-
-    #endregion
-
     #region Transaction Status (Expense/Revenue)
 
     public static readonly IValueConverter TransactionStatusBackground = new StatusToBrushConverter(

@@ -273,51 +273,6 @@ public class NotificationPanelViewModelTests
 
     #endregion
 
-    #region GetRelativeTime Tests
-
-    [Fact]
-    public void GetRelativeTime_JustNow_ReturnsJustNow()
-    {
-        var result = NotificationPanelViewModel.GetRelativeTime(DateTime.Now);
-
-        Assert.Equal("Just now", result);
-    }
-
-    [Fact]
-    public void GetRelativeTime_MinutesAgo_ReturnsMinuteFormat()
-    {
-        var result = NotificationPanelViewModel.GetRelativeTime(DateTime.Now.AddMinutes(-15));
-
-        Assert.Equal("15m ago", result);
-    }
-
-    [Fact]
-    public void GetRelativeTime_HoursAgo_ReturnsHourFormat()
-    {
-        var result = NotificationPanelViewModel.GetRelativeTime(DateTime.Now.AddHours(-3));
-
-        Assert.Equal("3h ago", result);
-    }
-
-    [Fact]
-    public void GetRelativeTime_DaysAgo_ReturnsDayFormat()
-    {
-        var result = NotificationPanelViewModel.GetRelativeTime(DateTime.Now.AddDays(-2));
-
-        Assert.Equal("2d ago", result);
-    }
-
-    [Fact]
-    public void GetRelativeTime_OverAWeekAgo_ReturnsDateFormat()
-    {
-        var date = DateTime.Now.AddDays(-10);
-        var result = NotificationPanelViewModel.GetRelativeTime(date);
-
-        Assert.Equal(date.ToString("MMM d"), result);
-    }
-
-    #endregion
-
     #region NotificationClicked Tests
 
     [Fact]

@@ -1106,22 +1106,6 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Sets the user information on the header.
-    /// </summary>
-    public void SetUserInfo(string? displayName, string? email = null, string? role = null, int userId = 0)
-    {
-        HeaderViewModel.SetUserInfo(displayName, email, role, userId: userId);
-    }
-
-    /// <summary>
-    /// Updates feature visibility based on settings.
-    /// </summary>
-    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals, bool showPayroll)
-    {
-        SidebarViewModel.UpdateFeatureVisibility(showTransactions, showInventory, showRentals, showPayroll);
-    }
-
-    /// <summary>
     /// Sets the premium status to show or hide premium features.
     /// </summary>
     public void SetPremiumStatus(bool hasPremium)
@@ -1144,14 +1128,6 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Sets the enterprise plan status to show or hide enterprise features.
-    /// </summary>
-    public void SetEnterpriseStatus(bool hasEnterprise)
-    {
-        SidebarViewModel.HasEnterprise = hasEnterprise;
-    }
-
-    /// <summary>
     /// Sets all plan statuses at once.
     /// </summary>
     public void SetPlanStatus(bool hasPremium, bool hasEnterprise = false)
@@ -1165,17 +1141,6 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Notify any subscribers (e.g., ProductsPageViewModel) of plan status change
         App.RaisePlanStatusChanged(hasPremium);
-    }
-
-    /// <summary>
-    /// Navigates to a page programmatically.
-    /// </summary>
-    public void NavigateTo(string pageName)
-    {
-        SidebarViewModel.SetActivePage(pageName);
-        HeaderViewModel.SetPageTitle(pageName);
-        CurrentPageName = pageName;
-        _navigationService?.NavigateTo(pageName);
     }
 
     /// <summary>

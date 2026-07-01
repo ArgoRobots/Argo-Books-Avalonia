@@ -219,21 +219,4 @@ public partial class NotificationPanelViewModel : ViewModelBase
         Close();
     }
 
-    /// <summary>
-    /// Gets a relative time string for display.
-    /// </summary>
-    public static string GetRelativeTime(DateTime timestamp)
-    {
-        var span = DateTime.Now - timestamp;
-
-        if (span.TotalMinutes < 1)
-            return "Just now";
-        if (span.TotalMinutes < 60)
-            return $"{(int)span.TotalMinutes}m ago";
-        if (span.TotalHours < 24)
-            return $"{(int)span.TotalHours}h ago";
-        if (span.TotalDays < 7)
-            return $"{(int)span.TotalDays}d ago";
-        return timestamp.ToString("MMM d");
-    }
 }

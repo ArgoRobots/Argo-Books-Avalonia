@@ -396,11 +396,6 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Gets the number of cached exchange rates.
-    /// </summary>
-    public int CachedRatesCount => _cache.Count;
-
-    /// <summary>
     /// Fetches exchange rates for a specific date from the API.
     /// </summary>
     private async Task<Dictionary<string, decimal>?> FetchRatesForDateAsync(DateTime date, int maxRetries = 2, CancellationToken cancellationToken = default)
