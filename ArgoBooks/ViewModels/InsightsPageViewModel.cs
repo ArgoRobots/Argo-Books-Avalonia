@@ -157,13 +157,13 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             CustomerGrowthPercentUpper = 28.7m
         };
         _latestForecast = sampleForecast;
-        ApplyForecastToCards(sampleForecast);
+        ApplyForecastToCards(sampleForecast, convertFromUsd: false);
 
         PredictionConfidence = "82% High";
         DataMonthsNote = "Based on 14 months of data using Linear Regression";
         ForecastMethod = "Linear Regression";
-        RevenueRange = "Range: $21,400 - $28,200";
-        ExpensesRange = "Range: $17,200 - $19,000";
+        RevenueRange = $"Range: {CurrencyService.CurrentSymbol}21,400 - {CurrencyService.CurrentSymbol}28,200";
+        ExpensesRange = $"Range: {CurrencyService.CurrentSymbol}17,200 - {CurrencyService.CurrentSymbol}19,000";
         HasAccuracyData = true;
         HistoricalAccuracy = "79%";
         AccuracyDescription = string.Empty;
@@ -647,6 +647,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
         _mlForecastingService = new LocalMLForecastingService();
 
         App.PlanStatusChanged += OnPlanStatusChanged;
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
         UpdateDateRangeFromSelection();
 
         if (HasPremium)
@@ -668,6 +669,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
         _mlForecastingService = mlForecastingService ?? new LocalMLForecastingService();
 
         App.PlanStatusChanged += OnPlanStatusChanged;
+        CurrencyService.CurrencyChanged += OnCurrencyChanged;
         UpdateDateRangeFromSelection();
 
         if (HasPremium)
@@ -681,13 +683,24 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
         HasPremium = e.HasPremium;
     }
 
+    // The displayed amounts are baked into the generated insight strings and forecast cards, so a
+    // currency switch needs a full regenerate (like the other money pages), not just a rebind.
+    private void OnCurrencyChanged(object? sender, EventArgs e)
+    {
+        if (HasPremium)
+            _ = RefreshInsightsAsync();
+        else
+            PopulateSampleData();
+    }
+
     /// <summary>
-    /// Unsubscribes from the app-level plan-status event so this page VM can be garbage collected
-    /// when the company is switched, instead of leaking and reacting to plan changes forever.
+    /// Unsubscribes from the app-level events so this page VM can be garbage collected when the
+    /// company is switched, instead of leaking and reacting forever.
     /// </summary>
     public void Cleanup()
     {
         App.PlanStatusChanged -= OnPlanStatusChanged;
+        CurrencyService.CurrencyChanged -= OnCurrencyChanged;
     }
 
     /// <summary>
@@ -710,6 +723,10 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
 
             // Generate forecast only
             var forecast = await _insightsService.GenerateForecastAsync(companyData, dateRange);
+
+            // Warm today's rate so a non-USD company's forecast cards convert (they're "as of now"
+            // projections, converted at today's rate) instead of briefly showing "Pending".
+            await CurrencyService.TryWarmTodayRateAsync();
 
             // Update forecast display
             UpdateForecastDisplay(forecast);
@@ -743,6 +760,11 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
 
         try
         {
+            // Ensure today's rate is cached: a couple of "as of now" figures (the overdue-invoice
+            // total, the forecast cards) convert at today's rate, and it isn't in the transaction-date
+            // set that a currency switch preloads.
+            await CurrencyService.TryWarmTodayRateAsync();
+
             // Check if we should run backtesting first
             await RunBacktestIfNeededAsync(companyData, companySettings);
 
@@ -782,6 +804,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             // Now update forecast based on selected date range
             var forecastDateRange = AnalysisDateRange.Custom(StartDate, EndDate);
             var forecast = await _insightsService.GenerateForecastAsync(companyData, forecastDateRange);
+            await CurrencyService.TryWarmTodayRateAsync();
             UpdateForecastDisplay(forecast);
 
             LastUpdated = TimeZoneService.FormatTime(DateTime.Now);
@@ -869,7 +892,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
         // Confidence bounds/ranges (always show the full envelope, independent of selected scenario)
         if (forecast.ForecastedRevenueLower > 0 || forecast.ForecastedRevenueUpper > 0)
         {
-            RevenueRange = $"Range: {forecast.ForecastedRevenueLower:C0} - {forecast.ForecastedRevenueUpper:C0}";
+            RevenueRange = $"Range: {FormatForecastAmount(forecast.ForecastedRevenueLower)} - {FormatForecastAmount(forecast.ForecastedRevenueUpper)}";
         }
         else
         {
@@ -878,7 +901,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
 
         if (forecast.ForecastedExpensesLower > 0 || forecast.ForecastedExpensesUpper > 0)
         {
-            ExpensesRange = $"Range: {forecast.ForecastedExpensesLower:C0} - {forecast.ForecastedExpensesUpper:C0}";
+            ExpensesRange = $"Range: {FormatForecastAmount(forecast.ForecastedExpensesLower)} - {FormatForecastAmount(forecast.ForecastedExpensesUpper)}";
         }
         else
         {
@@ -917,13 +940,31 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
     }
 
     /// <summary>
+    /// Formats a USD forecast amount in the display currency as whole units (cents would be false
+    /// precision on a projection). Forecasts are "as of now", so they convert at today's rate (warmed
+    /// by the caller); shows the pending marker if that rate isn't cached yet.
+    /// </summary>
+    private static string FormatForecastAmount(decimal amountUSD) =>
+        CurrencyService.TryGetDisplayFromUSD(amountUSD, DateTime.Today, out var amount)
+            ? CurrencyService.CurrentSymbol + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)
+            : CurrencyService.PendingMarker;
+
+    /// <summary>
     /// Renders the four forecast cards (revenue, expenses, profit, customers) using the
     /// currently selected scenario mode. Conservative shows lower bounds for revenue/profit/customers
     /// and the upper bound for expenses (since high expenses are the conservative case); Optimistic
     /// is the inverse; Baseline shows the point forecast.
     /// </summary>
-    private void ApplyForecastToCards(ForecastData forecast)
+    private void ApplyForecastToCards(ForecastData forecast, bool convertFromUsd = true)
     {
+        // Real forecast values are USD projections, so convert them to the display currency at today's
+        // rate ("as of now"; warmed by the caller). The sample teaser passes convertFromUsd: false
+        // because its numbers are illustrative, already in the display currency: format the symbol only,
+        // never convert or show "Pending".
+        string Card(decimal amount) => convertFromUsd
+            ? FormatForecastAmount(amount)
+            : CurrencyService.CurrentSymbol + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
         ScenarioToggleEnabled = forecast.ForecastedRevenueUpper > forecast.ForecastedRevenueLower
                              || forecast.ForecastedExpensesUpper > forecast.ForecastedExpensesLower
                              || forecast.ExpectedNewCustomersUpper > forecast.ExpectedNewCustomersLower;
@@ -944,7 +985,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             ForecastScenario.Optimistic => (forecast.ForecastedRevenueUpper, forecast.RevenueGrowthPercentUpper),
             _ => (forecast.ForecastedRevenue, forecast.RevenueGrowthPercent)
         };
-        ForecastedRevenue = revenue.ToString("C0");
+        ForecastedRevenue = Card(revenue);
         RevenueGrowthValue = (double)revenueGrowth;
         RevenueGrowth = $"{Math.Abs(revenueGrowth):F1}%";
 
@@ -955,7 +996,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             ForecastScenario.Optimistic => (forecast.ForecastedExpensesLower, forecast.ExpenseGrowthPercentLower),
             _ => (forecast.ForecastedExpenses, forecast.ExpenseGrowthPercent)
         };
-        ForecastedExpenses = expenses.ToString("C0");
+        ForecastedExpenses = Card(expenses);
         ExpenseGrowthValue = -(double)expenseGrowth;
         ExpenseGrowth = $"{Math.Abs(expenseGrowth):F1}%";
 
@@ -965,7 +1006,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             ForecastScenario.Optimistic => (forecast.ForecastedProfitUpper, forecast.ProfitGrowthPercentUpper),
             _ => (forecast.ForecastedProfit, forecast.ProfitGrowthPercent)
         };
-        ForecastedProfit = profit.ToString("C0");
+        ForecastedProfit = Card(profit);
         // Red for a projected loss, green for a projected profit.
         ProfitValueColor = profit < 0 ? StatCardColor.Danger : StatCardColor.Success;
         ProfitGrowthValue = (double)profitGrowth;

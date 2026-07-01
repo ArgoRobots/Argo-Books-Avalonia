@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Transactions;
 
@@ -26,6 +27,99 @@ public class InsightsService(
     // Anomaly detection thresholds
     private const double ZScoreThreshold = 2.0; // Standard deviations for anomaly
     private const decimal SignificantChangePercent = 15.0m; // % change to flag as significant
+
+    #region Display Currency
+
+    // The currency the displayed insight amounts are shown in, resolved once per analysis run at the
+    // top of each worker (AnalyzeTrends/DetectAnomalies/GenerateRecommendations). "USD" means show the
+    // stored USD figures unchanged. Analytics (percentages, z-scores, forecasting) always run in USD;
+    // only the amounts that appear in a sentence are converted, via ToDisplay/SumDisplay below.
+    private string _displayCode = "USD";
+
+    /// <summary>
+    /// Resolves the single currency insight amounts are shown in, mirroring the report rule
+    /// (see AccountingReportDataService.ResolveDisplayCode): the company currency only when an
+    /// exact-date USD-&gt;currency rate is available for every date we might convert; otherwise "USD"
+    /// for the whole run, so a sentence never mixes currencies or shows a partial value.
+    /// </summary>
+    private void ResolveDisplayCode(CompanyData companyData)
+    {
+        var code = companyData.Settings.Localization.Currency;
+        if (string.IsNullOrEmpty(code) || string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            _displayCode = "USD";
+            return;
+        }
+
+        var rates = ExchangeRateService.Instance;
+        if (rates == null)
+        {
+            _displayCode = "USD";
+            return;
+        }
+
+        foreach (var date in GetConversionDates(companyData))
+        {
+            if (!rates.TryConvertFromUSD(1m, code, date, out _))
+            {
+                _displayCode = "USD";
+                return;
+            }
+        }
+
+        _displayCode = code;
+    }
+
+    /// <summary>
+    /// The dates an insight amount is converted at: revenue and expense dates. This deliberately
+    /// mirrors exactly the set the currency-change flow preloads (see EditCompanyModalViewModel:
+    /// today + every revenue and expense date), so whenever a switch to a non-USD currency succeeded,
+    /// this resolves to that currency instead of falling back to USD. It excludes today (usually no
+    /// transaction is dated today, so its rate is often uncached) and payment/invoice dates (payments
+    /// are never shown; the one invoice-based figure converts at today's warmed rate). Displayed
+    /// averages convert at real transaction dates, so no extra dates are needed.
+    /// </summary>
+    private static IEnumerable<DateTime> GetConversionDates(CompanyData companyData)
+    {
+        var dates = new HashSet<DateTime>();
+        foreach (var r in companyData.Revenues) dates.Add(r.Date.Date);
+        foreach (var e in companyData.Expenses) dates.Add(e.Date.Date);
+        return dates;
+    }
+
+    /// <summary>
+    /// Converts a USD amount to <see cref="_displayCode"/> at the given date. Returns the USD amount
+    /// unchanged when the run is in USD; falls back to USD defensively if the exact-date rate is
+    /// unavailable (ResolveDisplayCode already guarantees it isn't for the dates we convert).
+    /// </summary>
+    private decimal ToDisplay(decimal amountUSD, DateTime date)
+    {
+        if (string.Equals(_displayCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return amountUSD;
+
+        return ExchangeRateService.Instance != null
+               && ExchangeRateService.Instance.TryConvertFromUSD(amountUSD, _displayCode, date, out var converted)
+            ? converted
+            : amountUSD;
+    }
+
+    /// <summary>
+    /// Sums per-item USD amounts after converting EACH at that item's OWN date, per the Phase 2
+    /// aggregate rule in docs/Calculations.md §3a (never convert a pre-summed total at one date).
+    /// Identical to summing the USD amounts directly for a USD run.
+    /// </summary>
+    private decimal SumDisplay<T>(IEnumerable<T> items, Func<T, decimal> amountUSD, Func<T, DateTime> date)
+    {
+        if (string.Equals(_displayCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return items.Sum(amountUSD);
+
+        decimal total = 0m;
+        foreach (var item in items)
+            total += ToDisplay(amountUSD(item), date(item));
+        return total;
+    }
+
+    #endregion
 
     /// <inheritdoc />
     public async Task<InsightsData> GenerateInsightsAsync(CompanyData companyData, AnalysisDateRange dateRange)
@@ -136,6 +230,7 @@ public class InsightsService(
     private List<InsightItem> AnalyzeTrends(CompanyData companyData, AnalysisDateRange dateRange)
     {
         var insights = new List<InsightItem>();
+        ResolveDisplayCode(companyData);
 
         // For forecasting, use historical periods for trend analysis
         // Map future date ranges to equivalent historical periods
@@ -173,10 +268,14 @@ public class InsightsService(
             if (Math.Abs(revenueChange) >= SignificantChangePercent)
             {
                 var isGrowth = revenueChange > 0;
+                // Convert each sale at its own date for the displayed figures; the percentage above
+                // stays USD-based (currency-invariant).
+                var previousRevenueDisplay = SumDisplay(previousSales, s => s.EffectiveTotalUSD, s => s.Date);
+                var currentRevenueDisplay = SumDisplay(currentSales, s => s.EffectiveTotalUSD, s => s.Date);
                 insights.Add(new InsightItem
                 {
                     Title = isGrowth ? "Revenue Growth Detected" : "Revenue Decline Detected",
-                    Description = $"Your revenue has {(isGrowth ? "increased" : "decreased")} by {Math.Abs(revenueChange):F1}% compared to the previous period ({FormatCurrency(previousRevenue)} → {FormatCurrency(currentRevenue)}).",
+                    Description = $"Your revenue has {(isGrowth ? "increased" : "decreased")} by {Math.Abs(revenueChange):F1}% compared to the previous period ({FormatCurrency(previousRevenueDisplay)} → {FormatCurrency(currentRevenueDisplay)}).",
                     Recommendation = isGrowth
                         ? "Consider analyzing which products or services drove this growth to replicate success."
                         : "Review recent changes that may have impacted revenue and consider promotional strategies.",
@@ -199,10 +298,12 @@ public class InsightsService(
             if (Math.Abs(expenseChange) >= SignificantChangePercent)
             {
                 var isIncrease = expenseChange > 0;
+                var previousExpensesDisplay = SumDisplay(previousPurchases, p => p.EffectiveTotalUSD, p => p.Date);
+                var currentExpensesDisplay = SumDisplay(currentPurchases, p => p.EffectiveTotalUSD, p => p.Date);
                 insights.Add(new InsightItem
                 {
                     Title = isIncrease ? "Expense Increase Detected" : "Expense Reduction Achieved",
-                    Description = $"Your expenses have {(isIncrease ? "increased" : "decreased")} by {Math.Abs(expenseChange):F1}% compared to the previous period ({FormatCurrency(previousExpenses)} → {FormatCurrency(currentExpenses)}).",
+                    Description = $"Your expenses have {(isIncrease ? "increased" : "decreased")} by {Math.Abs(expenseChange):F1}% compared to the previous period ({FormatCurrency(previousExpensesDisplay)} → {FormatCurrency(currentExpensesDisplay)}).",
                     Recommendation = isIncrease
                         ? "Review expense categories to identify areas where costs can be optimized."
                         : "Good job on cost management! Document what strategies worked for future reference.",
@@ -245,7 +346,13 @@ public class InsightsService(
         var salesByDay = sales
             .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => s.Date.DayOfWeek)
-            .Select(g => new { Day = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD), Count = g.Count() })
+            .Select(g => new
+            {
+                Day = g.Key,
+                Total = g.Sum(s => s.EffectiveTotalUSD),
+                DisplayTotal = SumDisplay(g, s => s.EffectiveTotalUSD, s => s.Date),
+                Count = g.Count()
+            })
             .OrderByDescending(x => x.Total)
             .ToList();
 
@@ -257,10 +364,12 @@ public class InsightsService(
         if (bestDay.Total > averageDaily * 1.3m) // 30% above average
         {
             var percentAbove = ((bestDay.Total / averageDaily) - 1) * 100;
+            // Displayed amounts in the display currency; the percentage stays USD-based.
+            var averageDailyDisplay = salesByDay.Average(x => x.DisplayTotal);
             return new InsightItem
             {
                 Title = $"{bestDay.Day} Sales Performance",
-                Description = $"{bestDay.Day}s generate {percentAbove:F0}% more revenue than average daily sales ({FormatCurrency(bestDay.Total)} vs {FormatCurrency(averageDaily)} average).",
+                Description = $"{bestDay.Day}s generate {percentAbove:F0}% more revenue than average daily sales ({FormatCurrency(bestDay.DisplayTotal)} vs {FormatCurrency(averageDailyDisplay)} average).",
                 Recommendation = $"Consider running promotions or increasing staffing on {bestDay.Day}s to maximize this opportunity.",
                 Severity = InsightSeverity.Info,
                 Category = InsightCategory.RevenueTrend,
@@ -383,6 +492,7 @@ public class InsightsService(
     private List<InsightItem> DetectAnomalies(CompanyData companyData, AnalysisDateRange dateRange)
     {
         var anomalies = new List<InsightItem>();
+        ResolveDisplayCode(companyData);
 
         // Use historical date range for anomaly detection
         var historicalRange = GetHistoricalDateRange(dateRange);
@@ -420,17 +530,18 @@ public class InsightsService(
         // Get weekly expense data for the past 12 weeks (gross, to match the
         // Expenses stat card the user sees).
         var twelveWeeksAgo = dateRange.EndDate.AddDays(-84);
-        var weeklyExpenses = companyData.Expenses
+        var weeklyGroups = companyData.Expenses
             .Where(p => p.Date >= twelveWeeksAgo && p.Date <= dateRange.EndDate)
             .GroupBy(p => GetWeekNumber(p.Date))
-            .Select(g => g.Sum(p => p.EffectiveTotalUSD))
             .ToList();
+        var weeklyExpenses = weeklyGroups.Select(g => g.Sum(p => p.EffectiveTotalUSD)).ToList();
 
         if (weeklyExpenses.Count < 4) return null;
 
-        var currentWeekExpenses = companyData.Expenses
+        var currentWeekList = companyData.Expenses
             .Where(p => p.Date >= dateRange.EndDate.AddDays(-7) && p.Date <= dateRange.EndDate)
-            .Sum(p => p.EffectiveTotalUSD);
+            .ToList();
+        var currentWeekExpenses = currentWeekList.Sum(p => p.EffectiveTotalUSD);
 
         var stats = CalculateStatistics(weeklyExpenses.Select(x => (double)x).ToList());
 
@@ -441,10 +552,14 @@ public class InsightsService(
             if (zScore > ZScoreThreshold)
             {
                 var percentAbove = ((currentWeekExpenses / (decimal)stats.Mean) - 1) * 100;
+                // Both figures convert each expense at its own (cached) date: this week's total, and
+                // the typical-week average taken over the same weekly buckets in display currency.
+                var currentWeekDisplay = SumDisplay(currentWeekList, p => p.EffectiveTotalUSD, p => p.Date);
+                var meanDisplay = weeklyGroups.Average(g => SumDisplay(g, p => p.EffectiveTotalUSD, p => p.Date));
                 return new InsightItem
                 {
                     Title = "Unusual Expense Spike Detected",
-                    Description = $"This week's expenses ({FormatCurrency(currentWeekExpenses)}) are {percentAbove:F0}% above your typical weekly average ({FormatCurrency((decimal)stats.Mean)}).",
+                    Description = $"This week's expenses ({FormatCurrency(currentWeekDisplay)}) are {percentAbove:F0}% above your typical weekly average ({FormatCurrency(meanDisplay)}).",
                     Recommendation = "Review recent expense entries for any errors, unexpected costs, or one-time purchases.",
                     Severity = InsightSeverity.Warning,
                     Category = InsightCategory.Anomaly,
@@ -546,7 +661,12 @@ public class InsightsService(
             .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
             .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => groupByWeek ? GetWeekNumber(s.Date) : s.Date.Year * 1000 + s.Date.DayOfYear)
-            .Select(g => new { Period = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
+            .Select(g => new
+            {
+                Period = g.Key,
+                Total = g.Sum(s => s.EffectiveTotalUSD),
+                DisplayTotal = SumDisplay(g, s => s.EffectiveTotalUSD, s => s.Date)
+            })
             .ToList();
 
         foreach (var period in currentData)
@@ -561,7 +681,7 @@ public class InsightsService(
                     anomalies.Add(new InsightItem
                     {
                         Title = "Unusual Revenue Drop",
-                        Description = $"Revenue for a recent period ({FormatCurrency(period.Total)}) was {percentBelow:F0}% below typical levels.",
+                        Description = $"Revenue for a recent period ({FormatCurrency(period.DisplayTotal)}) was {percentBelow:F0}% below typical levels.",
                         Recommendation = "Check for any operational issues, competitor activity, or external factors that may have affected sales.",
                         Severity = InsightSeverity.Critical,
                         Category = InsightCategory.Anomaly,
@@ -600,10 +720,14 @@ public class InsightsService(
                 var customer = companyData.GetCustomer(largestRevenue.CustomerId ?? "");
                 var customerName = customer?.Name ?? "a customer";
 
+                // Both convert at real (cached) sale dates: the largest sale at its own date, and the
+                // typical-size mean as the average of the sales converted at their own dates.
+                var largestDisplay = ToDisplay(largestRevenue.EffectiveTotalUSD, largestRevenue.Date);
+                var meanDisplay = currentSales.Average(s => ToDisplay(s.EffectiveTotalUSD, s.Date));
                 return new InsightItem
                 {
                     Title = "Unusually Large Transaction",
-                    Description = $"A revenue transaction of {FormatCurrency(largestRevenue.EffectiveTotalUSD)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency((decimal)stats.Mean)}).",
+                    Description = $"A revenue transaction of {FormatCurrency(largestDisplay)} to {customerName} on {largestRevenue.Date:MMM d} is significantly larger than your typical transaction size ({FormatCurrency(meanDisplay)}).",
                     Recommendation = "Verify this transaction is correct and consider nurturing this high-value customer relationship.",
                     Severity = InsightSeverity.Info,
                     Category = InsightCategory.Anomaly,
@@ -883,6 +1007,7 @@ public class InsightsService(
     private List<InsightItem> GenerateRecommendations(CompanyData companyData, AnalysisDateRange dateRange)
     {
         var recommendations = new List<InsightItem>();
+        ResolveDisplayCode(companyData);
 
         // Use historical date range for recommendations
         var historicalRange = GetHistoricalDateRange(dateRange);
@@ -927,8 +1052,11 @@ public class InsightsService(
 
     private InsightItem? AnalyzeTopProducts(CompanyData companyData, AnalysisDateRange dateRange)
     {
-        // Use USD-converted amounts by applying each transaction's conversion ratio to its line items
-        var productSalesData = new Dictionary<string, (decimal Revenue, decimal Cost, decimal Quantity)>();
+        // Use USD-converted amounts by applying each transaction's conversion ratio to its line items.
+        // RevenueDisplay accumulates the same allocation converted to the display currency at each
+        // transaction's own date, so the shown figure is display-currency without disturbing the
+        // USD-based margin ordering.
+        var productSalesData = new Dictionary<string, (decimal Revenue, decimal RevenueDisplay, decimal Cost, decimal Quantity)>();
 
         // Cash-basis: only collected revenue contributes to top-product analysis.
         foreach (var s in companyData.Revenues
@@ -946,26 +1074,27 @@ public class InsightsService(
                 var revenueUSD = lineItemsTotal != 0
                     ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
                     : 0;
+                var revenueDisplay = ToDisplay(revenueUSD, s.Date);
                 // CostPrice is already in the company's base currency (USD), no conversion needed
                 var costUSD = li.Quantity * (companyData.GetProduct(li.ProductId ?? "")?.CostPrice ?? 0);
 
                 var pid = li.ProductId ?? "";
                 if (!productSalesData.ContainsKey(pid))
-                    productSalesData[pid] = (0, 0, 0);
+                    productSalesData[pid] = (0, 0, 0, 0);
                 var current = productSalesData[pid];
-                productSalesData[pid] = (current.Revenue + revenueUSD, current.Cost + costUSD, current.Quantity + li.Quantity);
+                productSalesData[pid] = (current.Revenue + revenueUSD, current.RevenueDisplay + revenueDisplay, current.Cost + costUSD, current.Quantity + li.Quantity);
             }
         }
 
         var productSales = productSalesData
-            .Select(kvp => new { ProductId = kvp.Key, Revenue = kvp.Value.Revenue, Cost = kvp.Value.Cost, Quantity = kvp.Value.Quantity })
+            .Select(kvp => new { ProductId = kvp.Key, Revenue = kvp.Value.Revenue, RevenueDisplay = kvp.Value.RevenueDisplay, Cost = kvp.Value.Cost, Quantity = kvp.Value.Quantity })
             .ToList();
 
         if (!productSales.Any()) return null;
 
         var topProduct = productSales
             .Where(p => p.Cost > 0 && p.Revenue > 0)
-            .Select(p => new { p.ProductId, p.Revenue, Margin = (p.Revenue - p.Cost) / p.Revenue * 100 })
+            .Select(p => new { p.ProductId, p.Revenue, p.RevenueDisplay, Margin = (p.Revenue - p.Cost) / p.Revenue * 100 })
             .OrderByDescending(p => p.Margin)
             .FirstOrDefault();
 
@@ -977,7 +1106,7 @@ public class InsightsService(
         return new InsightItem
         {
             Title = "Top Performing Product",
-            Description = $"\"{product.Name}\" has the highest profit margin at {topProduct.Margin:F0}%. Revenue this period: {FormatCurrency(topProduct.Revenue)}.",
+            Description = $"\"{product.Name}\" has the highest profit margin at {topProduct.Margin:F0}%. Revenue this period: {FormatCurrency(topProduct.RevenueDisplay)}.",
             Recommendation = "Consider featuring this product more prominently in marketing or bundling it with other items.",
             Severity = InsightSeverity.Info,
             Category = InsightCategory.Product,
@@ -1035,10 +1164,15 @@ public class InsightsService(
         var totalOverdue = overdueInvoices.Sum(i => i.EffectiveBalanceUSD);
         var oldestDaysOverdue = (int)(DateTime.Today - overdueInvoices.First().DueDate).TotalDays;
 
+        // Outstanding balance is an "as of now" figure, so convert the total at today's rate (warmed
+        // before generation). Invoice issue dates aren't in the preloaded rate set, so converting
+        // per-issue-date could silently fall back to USD; today's rate is reliably cached.
+        var totalOverdueDisplay = ToDisplay(totalOverdue, DateTime.Today);
+
         return new InsightItem
         {
             Title = "Payment Collection Needed",
-            Description = $"{overdueInvoices.Count} {(overdueInvoices.Count == 1 ? "invoice" : "invoices")} totaling {FormatCurrency(totalOverdue)} {(overdueInvoices.Count == 1 ? "is" : "are")} overdue. Oldest is {oldestDaysOverdue} days past due.",
+            Description = $"{overdueInvoices.Count} {(overdueInvoices.Count == 1 ? "invoice" : "invoices")} totaling {FormatCurrency(totalOverdueDisplay)} {(overdueInvoices.Count == 1 ? "is" : "are")} overdue. Oldest is {oldestDaysOverdue} days past due.",
             Recommendation = "Send payment reminders and follow up with these customers to improve cash flow.",
             Severity = oldestDaysOverdue > 30 ? InsightSeverity.Warning : InsightSeverity.Info,
             Category = InsightCategory.Payment,
@@ -1057,6 +1191,7 @@ public class InsightsService(
             {
                 SupplierId = g.Key,
                 TotalSpent = g.Sum(p => p.EffectiveTotalUSD),
+                TotalSpentDisplay = SumDisplay(g, p => p.EffectiveTotalUSD, p => p.Date),
                 Count = g.Count(),
                 AvgPerPurchase = g.Average(p => p.EffectiveTotalUSD)
             })
@@ -1079,7 +1214,7 @@ public class InsightsService(
             return new InsightItem
             {
                 Title = "Supplier Concentration Risk",
-                Description = $"{concentrationPercent:F0}% of your purchases ({FormatCurrency(topSupplier.TotalSpent)}) are from {supplier.Name}.",
+                Description = $"{concentrationPercent:F0}% of your purchases ({FormatCurrency(topSupplier.TotalSpentDisplay)}) are from {supplier.Name}.",
                 Recommendation = "Consider diversifying suppliers to reduce risk and potentially negotiate better terms.",
                 Severity = InsightSeverity.Info,
                 Category = InsightCategory.Recommendation,
@@ -1275,12 +1410,13 @@ public class InsightsService(
         return System.Globalization.ISOWeek.GetYear(date) * 100 + System.Globalization.ISOWeek.GetWeekOfYear(date);
     }
 
-    private static string FormatCurrency(decimal amount)
+    private string FormatCurrency(decimal amount)
     {
-        // Insight amounts are USD (EffectiveTotalUSD). Format invariantly so the output doesn't depend
-        // on the machine locale; the old "C0" used CurrentCulture, so a German machine rendered euros
-        // with dot-grouping (e.g. "1.234 €") regardless of the company.
-        return "$" + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+        // The amount is already in _displayCode (converted at production via ToDisplay/SumDisplay).
+        // Whole units (N0) to keep the narrative style these sentences have always used, with the
+        // display currency's own symbol, invariantly so the output doesn't depend on the machine locale.
+        return CurrencyInfo.GetByCode(_displayCode).Symbol
+             + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>

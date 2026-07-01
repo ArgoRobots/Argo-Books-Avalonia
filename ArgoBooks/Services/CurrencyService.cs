@@ -92,6 +92,15 @@ public static class CurrencyService
         return svc.TryConvertFromUSD(amountUSD, CurrentCurrencyCode, date, out amount);
     }
 
+    /// <summary>
+    /// Exact-date USD-&gt;display-currency conversion. Returns <see langword="false"/> when the rate for
+    /// <paramref name="date"/> is unavailable, so a caller can show <see cref="PendingMarker"/> (or its
+    /// own whole-unit format) instead of a wrong number. Public wrapper over
+    /// <see cref="TryDisplayFromUSD"/> for callers that format the converted amount themselves.
+    /// </summary>
+    public static bool TryGetDisplayFromUSD(decimal amountUSD, DateTime date, out decimal amount)
+        => TryDisplayFromUSD(amountUSD, date, out amount);
+
     /// <summary>Exact-date display amount for a MonetaryValue. See <see cref="TryDisplayFromUSD"/>.</summary>
     private static bool TryDisplay(MonetaryValue value, out decimal amount)
     {
