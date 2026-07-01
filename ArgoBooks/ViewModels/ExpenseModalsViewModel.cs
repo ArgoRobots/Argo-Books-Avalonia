@@ -530,7 +530,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount,
             FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0 && Total != 0
-                ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+                ? ConvertedTotal.AmountUSD / Total * averageUnitPrice
                 : averageUnitPrice,
             IsPendingConversion = IsPendingConversion
         };
@@ -639,7 +639,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount;
         expense.FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee;
         expense.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0 && Total != 0
-            ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+            ? ConvertedTotal.AmountUSD / Total * averageUnitPrice
             : averageUnitPrice;
         expense.IsPendingConversion = IsPendingConversion;
 

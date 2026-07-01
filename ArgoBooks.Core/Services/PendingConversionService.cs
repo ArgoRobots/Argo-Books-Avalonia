@@ -252,8 +252,9 @@ public class PendingConversionService
     /// Applies the exact-date conversion to the record named by <paramref name="entry"/>, at the
     /// supplied <paramref name="rate"/> (original currency -> USD). Handles Revenue/Expense (every
     /// money field) and Payment/PurchaseOrder (the single amount). No-ops when the record was deleted
-    /// since it was enqueued. Rounding matches the import-time conversion so an immediately-converted
-    /// row and a later-healed row are identical.
+    /// since it was enqueued. The USD base is stored full-precision (no 2dp round) and matches the
+    /// import-time conversion, so an immediately-converted row and a later-healed row are identical;
+    /// display rounds at the boundary. See docs/Calculations.md Rule 3.
     /// </summary>
     private static void ApplyConversion(CompanyData companyData, PendingConversion entry, decimal rate)
     {
@@ -263,33 +264,33 @@ public class PendingConversionService
             case "Expense":
                 var txn = FindTransaction(companyData, entry.TransactionId, entry.TransactionType);
                 if (txn == null) return;
-                txn.TotalUSD = Math.Round(entry.Total * rate, 2);
-                txn.TaxAmountUSD = Math.Round(entry.TaxAmount * rate, 2);
-                txn.ShippingCostUSD = Math.Round(entry.ShippingCost * rate, 2);
-                txn.DiscountUSD = Math.Round(entry.Discount * rate, 2);
-                txn.FeeUSD = Math.Round(entry.Fee * rate, 2);
-                txn.UnitPriceUSD = Math.Round(entry.UnitPrice * rate, 2);
+                txn.TotalUSD = entry.Total * rate;
+                txn.TaxAmountUSD = entry.TaxAmount * rate;
+                txn.ShippingCostUSD = entry.ShippingCost * rate;
+                txn.DiscountUSD = entry.Discount * rate;
+                txn.FeeUSD = entry.Fee * rate;
+                txn.UnitPriceUSD = entry.UnitPrice * rate;
                 txn.IsPendingConversion = false;
                 return;
 
             case "Payment":
                 var payment = companyData.Payments.FirstOrDefault(p => p.Id == entry.TransactionId);
                 if (payment == null) return;
-                payment.AmountUSD = Math.Round(entry.Total * rate, 2);
+                payment.AmountUSD = entry.Total * rate;
                 payment.IsPendingConversion = false;
                 return;
 
             case "PurchaseOrder":
                 var po = companyData.PurchaseOrders.FirstOrDefault(p => p.Id == entry.TransactionId);
                 if (po == null) return;
-                po.TotalUSD = Math.Round(entry.Total * rate, 2);
+                po.TotalUSD = entry.Total * rate;
                 po.IsPendingConversion = false;
                 return;
 
             case "Invoice":
                 var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == entry.TransactionId);
                 if (invoice == null) return;
-                invoice.TotalUSD = Math.Round(entry.Total * rate, 2);
+                invoice.TotalUSD = entry.Total * rate;
                 invoice.IsPendingConversion = false;
                 // If payments were recorded against this invoice, recompute BalanceUSD from them: the
                 // import-time snapshot (entry.Balance) is stale once a payment lands after import. With
@@ -298,7 +299,7 @@ public class PendingConversionService
                 if (companyData.Payments.Any(p => p.InvoiceId == invoice.Id))
                     InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
                 else
-                    invoice.BalanceUSD = Math.Round(entry.Balance * rate, 2);
+                    invoice.BalanceUSD = entry.Balance * rate;
                 return;
         }
     }

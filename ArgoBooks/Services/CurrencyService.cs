@@ -355,13 +355,11 @@ public static class CurrencyService
         var exchangeService = ExchangeRateService.Instance;
         decimal amountUSD = amount;
 
-        if (exchangeService != null)
+        // Store the USD base at full precision (no 2dp round) so same-currency round-trips don't drift
+        // a cent; display rounds at the boundary. See docs/Calculations.md Rule 3.
+        if (exchangeService != null && exchangeService.TryConvertToUsdBase(amount, currentCurrency, date, out var converted))
         {
-            var rate = exchangeService.GetExchangeRate(currentCurrency, "USD", date);
-            if (rate > 0)
-            {
-                amountUSD = Math.Round(amount * rate, 2);
-            }
+            amountUSD = converted;
         }
 
         return new MonetaryValue(amount, currentCurrency, amountUSD, date);

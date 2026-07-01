@@ -1258,7 +1258,10 @@ public class SpreadsheetImportService
             usd = 0m;
             return false;
         }
-        return rates.TryConvertExact(amount, originalCurrency, "USD", date, out usd);
+        // Store the USD base at full precision (no 2dp round); display rounds at the boundary. Must
+        // match PendingConversionService's heal path so an imported and a healed row are identical.
+        // See docs/Calculations.md Rule 3.
+        return rates.TryConvertToUsdBase(amount, originalCurrency, date, out usd);
     }
 
     /// <summary>

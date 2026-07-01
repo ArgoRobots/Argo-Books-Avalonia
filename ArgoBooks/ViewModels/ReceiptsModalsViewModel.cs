@@ -2129,20 +2129,21 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         var rates = Core.Services.ExchangeRateService.Instance;
-        if (rates != null && rates.TryConvertExact(txn.Total, currency, "USD", txn.Date, out var totalUsd))
+        if (rates != null && rates.TryConvertToUsdBase(txn.Total, currency, txn.Date, out var totalUsd))
         {
             // Convert every amount, not just the total: UnitPriceUSD/DiscountUSD/etc. feed USD-based
-            // reports, COGS, and cross-currency edits, so leaving them at 0 would undercount.
+            // reports, COGS, and cross-currency edits, so leaving them at 0 would undercount. The USD
+            // base is stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
             txn.TotalUSD = totalUsd;
-            rates.TryConvertExact(txn.TaxAmount, currency, "USD", txn.Date, out var taxUsd);
+            rates.TryConvertToUsdBase(txn.TaxAmount, currency, txn.Date, out var taxUsd);
             txn.TaxAmountUSD = taxUsd;
-            rates.TryConvertExact(txn.ShippingCost, currency, "USD", txn.Date, out var shipUsd);
+            rates.TryConvertToUsdBase(txn.ShippingCost, currency, txn.Date, out var shipUsd);
             txn.ShippingCostUSD = shipUsd;
-            rates.TryConvertExact(txn.Discount, currency, "USD", txn.Date, out var discUsd);
+            rates.TryConvertToUsdBase(txn.Discount, currency, txn.Date, out var discUsd);
             txn.DiscountUSD = discUsd;
-            rates.TryConvertExact(txn.Fee, currency, "USD", txn.Date, out var feeUsd);
+            rates.TryConvertToUsdBase(txn.Fee, currency, txn.Date, out var feeUsd);
             txn.FeeUSD = feeUsd;
-            rates.TryConvertExact(txn.UnitPrice, currency, "USD", txn.Date, out var unitUsd);
+            rates.TryConvertToUsdBase(txn.UnitPrice, currency, txn.Date, out var unitUsd);
             txn.UnitPriceUSD = unitUsd;
             txn.IsPendingConversion = false;
             return;

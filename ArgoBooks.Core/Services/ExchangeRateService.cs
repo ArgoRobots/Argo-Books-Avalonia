@@ -165,6 +165,35 @@ public class ExchangeRateService
         return true;
     }
 
+    /// <summary>
+    /// Converts a native amount to the USD storage base at the exact <paramref name="date"/>,
+    /// WITHOUT the 2-decimal rounding that <see cref="TryConvertExact"/> applies for display. The USD
+    /// base is the aggregation currency; rounding it to cents makes a same-currency round-trip
+    /// (native -&gt; USD base -&gt; native) drift by a cent, so a $10 CAD expense can read $9.99 on a
+    /// chart that re-derives from the base. Use this at every point that STORES a <c>*USD</c> field;
+    /// display still rounds at the boundary via <see cref="TryConvertExact"/>. Returns
+    /// <see langword="false"/> on a rate miss (caller marks the row pending), mirroring
+    /// <see cref="TryConvertExact"/>. See docs/Calculations.md Rule 3.
+    /// </summary>
+    public bool TryConvertToUsdBase(decimal amount, string fromCurrency, DateTime date, out decimal usd)
+    {
+        if (string.Equals(fromCurrency, BaseCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            usd = amount;
+            return true;
+        }
+
+        var rate = GetExchangeRate(fromCurrency, BaseCurrency, date); // cache-only, exact-date
+        if (rate <= 0)
+        {
+            usd = 0m;
+            return false;
+        }
+
+        usd = amount * rate; // full precision: the USD base is never rounded to cents
+        return true;
+    }
+
     /// <summary>Exact-date USD-&gt;target conversion. See <see cref="TryConvertExact"/>.</summary>
     public bool TryConvertFromUSD(decimal amountUSD, string toCurrency, DateTime date, out decimal result)
         => TryConvertExact(amountUSD, BaseCurrency, toCurrency, date, out result);
@@ -206,7 +235,20 @@ public class ExchangeRateService
     /// <returns>The amount in USD.</returns>
     public async Task<decimal> ConvertToUSDAsync(decimal amount, string fromCurrency, DateTime date)
     {
-        return await ConvertAsync(amount, fromCurrency, BaseCurrency, date);
+        if (string.Equals(fromCurrency, BaseCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            return amount;
+        }
+
+        var rate = await GetExchangeRateAsync(fromCurrency, BaseCurrency, date);
+        if (rate <= 0)
+        {
+            return amount; // conversion unavailable; the caller handles the pending state
+        }
+
+        // The USD base is stored at full precision (no 2dp round), unlike display conversion. See
+        // TryConvertToUsdBase and docs/Calculations.md Rule 3.
+        return amount * rate;
     }
 
     /// <summary>

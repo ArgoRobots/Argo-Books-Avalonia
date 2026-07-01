@@ -78,6 +78,15 @@ The app never substitutes a different date's rate or shows a raw cross-currency 
 
 - The single chokepoint is `ExchangeRateService.TryConvertExact`; it succeeds only on an exact-date
   cache hit (or same-currency). There is no "nearest cached rate" fallback for money.
+- **Storage vs display precision.** `TryConvertExact` rounds to 2 decimals because it produces a
+  number the user sees. The stored USD base is different: every `*USD` field is written at FULL
+  precision (never rounded to cents) via `ExchangeRateService.TryConvertToUsdBase` (cache-only) and
+  `ConvertToUSDAsync` (the async manual-entry path). USD is the aggregation currency; rounding the
+  base to cents made a same-currency round-trip (native -> USD base -> native) drift by a cent, so a
+  $10 CAD expense read $9.99 on a chart that re-derives its value from the USD base while the stat
+  card (which short-circuits to the original amount, §3) still read $10.00. Only the presentation
+  boundary rounds; the base does not. This is why import and the pending self-heal must both use the
+  unrounded path, so an immediately-converted row and a later-healed row store identical USD.
 - **Import** runs `RateReadinessService.EnsureRatesAsync` first and PAUSES with a connect-and-retry
   prompt (offline vs server-unreachable) until the needed rates are cached. Any row still
   unpriceable (future-dated, or a date the pre-scan missed) imports as `IsPendingConversion` and is

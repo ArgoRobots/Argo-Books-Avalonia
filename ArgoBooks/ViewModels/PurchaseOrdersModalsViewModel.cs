@@ -585,7 +585,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
 
         var rates = Core.Services.ExchangeRateService.Instance;
-        if (rates != null && rates.TryConvertExact(order.Total, currency, "USD", order.OrderDate, out var usd))
+        if (rates != null && rates.TryConvertToUsdBase(order.Total, currency, order.OrderDate, out var usd))
         {
             order.TotalUSD = usd;
             order.IsPendingConversion = false;

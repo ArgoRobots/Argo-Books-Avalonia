@@ -23,9 +23,10 @@ namespace ArgoBooks.Tests.Services;
 /// </summary>
 public class PaymentPurchaseOrderPendingConversionTests
 {
-    // USD->EUR = 0.90, so EUR->USD = 1/0.90 and 100 EUR -> 111.11 USD.
+    // USD->EUR = 0.90, so EUR->USD = 1/0.90 and 100 EUR -> 111.11... USD. The USD base is stored at
+    // full precision (no 2dp round); display rounds at the boundary. See Calculations.md Rule 3.
     private const decimal UsdToEur = 0.90m;
-    private static decimal EurToUsd(decimal eur) => Math.Round(eur * (1m / UsdToEur), 2);
+    private static decimal EurToUsd(decimal eur) => eur * (1m / UsdToEur);
 
     [Fact]
     public async Task Process_PendingPayment_ExactRateAvailable_ConvertsAndClears()

@@ -82,8 +82,9 @@ public class PerRowCurrencyTests
         Assert.Equal(usd.Total, usd.TotalUSD);
 
         // EUR row: converted, so TotalUSD differs from the raw total and equals total * (1/0.90).
+        // The USD base is stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
         Assert.NotEqual(eur.Total, eur.TotalUSD);
-        Assert.Equal(Math.Round(100.00m * (1m / 0.90m), 2), eur.TotalUSD);
+        Assert.Equal(100.00m * (1m / 0.90m), eur.TotalUSD);
 
         // The company currency setting is untouched.
         Assert.Equal("USD", data.Settings.Localization.Currency);
@@ -129,7 +130,7 @@ public class PerRowCurrencyTests
 
         var exp = data.Expenses.Single(e => e.Id == "EXP-PAST");
         Assert.False(exp.IsPendingConversion);
-        Assert.Equal(Math.Round(100.00m * (1m / 0.90m), 2), exp.TotalUSD);
+        Assert.Equal(100.00m * (1m / 0.90m), exp.TotalUSD);
     }
 
     [Fact]

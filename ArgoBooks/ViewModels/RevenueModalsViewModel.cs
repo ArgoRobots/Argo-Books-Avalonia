@@ -552,7 +552,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount,
             FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0 && Total != 0
-                ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+                ? ConvertedTotal.AmountUSD / Total * averageUnitPrice
                 : averageUnitPrice,
             IsPendingConversion = IsPendingConversion
         };
@@ -662,7 +662,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount;
         revenue.FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee;
         revenue.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0 && Total != 0
-            ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+            ? ConvertedTotal.AmountUSD / Total * averageUnitPrice
             : averageUnitPrice;
         revenue.IsPendingConversion = IsPendingConversion;
 

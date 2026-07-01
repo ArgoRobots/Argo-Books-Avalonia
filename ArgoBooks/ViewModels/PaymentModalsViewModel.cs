@@ -386,7 +386,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", paymentDate);
                 if (rate > 0)
                 {
-                    amountUSD = Math.Round(parsedAmount * rate, 2);
+                    // USD base stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
+                    amountUSD = parsedAmount * rate;
                 }
             }
         }
@@ -585,7 +586,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 var rate = await exchangeService.GetExchangeRateAsync(editCurrentCurrency, "USD", newDate);
                 if (rate > 0)
                 {
-                    newAmountUSD = Math.Round(newAmount * rate, 2);
+                    // USD base stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
+                    newAmountUSD = newAmount * rate;
                 }
             }
         }

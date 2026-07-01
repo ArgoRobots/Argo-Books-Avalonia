@@ -1491,7 +1491,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 var rate = await exchangeService.GetExchangeRateAsync(invoiceCurrency, "USD", invoice.IssueDate);
                 if (rate > 0)
                 {
-                    invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
+                    // USD base stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
+                    invoice.TotalUSD = invoice.Total * rate;
                 }
             }
         }
@@ -1801,7 +1802,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 var rate = await exchangeService.GetExchangeRateAsync(draftCurrency, "USD", invoice.IssueDate);
                 if (rate > 0)
                 {
-                    invoice.TotalUSD = Math.Round(invoice.Total * rate, 2);
+                    // USD base stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
+                    invoice.TotalUSD = invoice.Total * rate;
                 }
             }
         }
@@ -1940,15 +1942,17 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             // Currency fields: use EffectiveTotalUSD to avoid mixing currencies
             // (returns 0 for pending-conversion invoices, correct USD for others)
             OriginalCurrency = invoice.OriginalCurrency,
+            // USD base fields stored full-precision (no 2dp round) so they stay consistent with the
+            // unrounded TotalUSD above; display rounds at the boundary. See docs/Calculations.md Rule 3.
             TotalUSD = invoice.EffectiveTotalUSD,
             TaxAmountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
-                ? Math.Round(invoice.TaxAmount * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                ? invoice.TaxAmount * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? invoice.TaxAmount : 0,
             FeeUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
-                ? Math.Round((feeAmount + invoice.SecurityDeposit) * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                ? (feeAmount + invoice.SecurityDeposit) * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.SecurityDeposit : 0,
             DiscountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
-                ? Math.Round(discountAmount * (invoice.EffectiveTotalUSD / invoice.Total), 2)
+                ? discountAmount * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? discountAmount : 0
         };
 
