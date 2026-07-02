@@ -87,6 +87,14 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// A single USD amount converted to the report's display currency at its own date
+    /// (docs/Calculations.md §3/§3a). Aggregate <c>Effective*USD</c> through this; never sum the
+    /// native <c>Total</c> field, which silently mixes dollars and euros.
+    /// </summary>
+    private decimal ToDisplayCurrency(decimal amountUSD, DateTime date)
+        => (decimal)ConvertFromUSD((double)amountUSD, date);
+
+    /// <summary>
     /// Resolves the best available default typeface for the current platform.
     /// Tries platform-specific fonts before falling back to SKTypeface.Default.
     /// </summary>
@@ -4191,16 +4199,16 @@ public class ReportRenderer : IDisposable
         {
             TransactionType.Revenue => _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total),
+                .Sum(s => ToDisplayCurrency(s.EffectiveTotalUSD, s.Date)),
             TransactionType.Expenses => _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) ,
-            _ => (_companyData.Revenues
+                .Sum(p => ToDisplayCurrency(p.EffectiveTotalUSD, p.Date)),
+            _ => _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total) ) -
-                 (_companyData.Expenses
+                .Sum(s => ToDisplayCurrency(s.EffectiveTotalUSD, s.Date)) -
+                 _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) )
+                .Sum(p => ToDisplayCurrency(p.EffectiveTotalUSD, p.Date))
         };
     }
 
@@ -4233,7 +4241,7 @@ public class ReportRenderer : IDisposable
         {
             var sales = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Select(s => s.Total);
+                .Select(s => ToDisplayCurrency(s.EffectiveTotalUSD, s.Date));
             totals.AddRange(sales);
         }
 
@@ -4241,7 +4249,7 @@ public class ReportRenderer : IDisposable
         {
             var purchases = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Select(p => p.Total);
+                .Select(p => ToDisplayCurrency(p.EffectiveTotalUSD, p.Date));
             totals.AddRange(purchases);
         }
 
@@ -4268,38 +4276,40 @@ public class ReportRenderer : IDisposable
 
         decimal currentPeriod, previousPeriod;
 
+        // Growth is a ratio, so aggregate in USD (EffectiveTotalUSD): the percentage is
+        // currency-agnostic and summing native Total would mix currencies (Calculations.md §3).
         if (summary.TransactionType == TransactionType.Revenue)
         {
             currentPeriod = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total);
+                .Sum(s => s.EffectiveTotalUSD);
             previousPeriod = _companyData.Revenues
                 .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
-                .Sum(s => s.Total);
+                .Sum(s => s.EffectiveTotalUSD);
         }
         else if (summary.TransactionType == TransactionType.Expenses)
         {
             currentPeriod = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total);
+                .Sum(p => p.EffectiveTotalUSD);
             previousPeriod = _companyData.Expenses
                 .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
-                .Sum(p => p.Total);
+                .Sum(p => p.EffectiveTotalUSD);
         }
         else
         {
             currentPeriod = _companyData.Revenues
                     .Where(s => s.Date >= startDate && s.Date <= endDate)
-                    .Sum(s => s.Total) -
+                    .Sum(s => s.EffectiveTotalUSD) -
                 _companyData.Expenses
                     .Where(p => p.Date >= startDate && p.Date <= endDate)
-                    .Sum(p => p.Total);
+                    .Sum(p => p.EffectiveTotalUSD);
             previousPeriod = _companyData.Revenues
                      .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
-                     .Sum(s => s.Total) -
+                     .Sum(s => s.EffectiveTotalUSD) -
                  _companyData.Expenses
                      .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
-                     .Sum(p => p.Total);
+                     .Sum(p => p.EffectiveTotalUSD);
         }
 
         if (previousPeriod == 0)
