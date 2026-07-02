@@ -1065,14 +1065,15 @@ public class InsightsService(
         {
             if (s.LineItems.Count == 0) continue;
             var lineItemsTotal = s.LineItems.Sum(li => li.Subtotal);
-            // Allocation uses Subtotal proportions (line items are pre-tax),
-            // which is correct for splitting revenue across products.
-            var subtotalUSD = s.EffectiveSubtotalUSD;
+            // Weight by each line's pre-tax subtotal, but distribute the GROSS (tax-inclusive) USD
+            // total, matching docs/Calculations.md §13 and ProductSalesService so per-product revenue
+            // agrees across the Insights, Analytics, and Report surfaces.
+            var grossUSD = s.EffectiveTotalUSD;
 
             foreach (var li in s.LineItems)
             {
                 var revenueUSD = lineItemsTotal != 0
-                    ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
+                    ? Math.Round(li.Subtotal / lineItemsTotal * grossUSD, 2)
                     : 0;
                 var revenueDisplay = ToDisplay(revenueUSD, s.Date);
                 // CostPrice is already in the company's base currency (USD), no conversion needed
