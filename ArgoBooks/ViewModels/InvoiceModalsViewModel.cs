@@ -334,12 +334,15 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// </summary>
     public string SelectedCurrencyCode => CurrencyService.ParseCurrencyCode(SelectedCurrency);
 
-    // Computed totals
+    // Computed totals. Subtotal is the raw line-items sum (the base for a percentage discount/fee and
+    // the displayed Subtotal line). Tax applies to the subtotal AFTER the invoice-level discount and
+    // taxable custom fee, per industry standard and docs/Calculations.md §4.
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
-    public decimal TaxAmount => Subtotal * (TaxRate / 100m);
     public decimal CustomFeeCalculated => CustomFeeIsPercent ? Subtotal * (CustomFeeAmount / 100m) : CustomFeeAmount;
     public decimal DiscountCalculated => DiscountIsPercent ? Subtotal * (DiscountAmount / 100m) : DiscountAmount;
-    public decimal Total => Subtotal + TaxAmount + SecurityDeposit + CustomFeeCalculated - DiscountCalculated;
+    public decimal TaxableBase => Subtotal - DiscountCalculated + CustomFeeCalculated;
+    public decimal TaxAmount => TaxableBase * (TaxRate / 100m);
+    public decimal Total => TaxableBase + TaxAmount + SecurityDeposit;
 
     // Format using the invoice's selected currency so modal totals match the picker.
     private CurrencyInfo InvoiceCurrencyInfo => CurrencyInfo.GetByCode(SelectedCurrencyCode);
@@ -1195,9 +1198,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Calculate totals
         previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
-        previewInvoice.TaxAmount = previewInvoice.Subtotal * (TaxRate / 100m);
         previewInvoice.SecurityDeposit = SecurityDeposit;
-        previewInvoice.Total = previewInvoice.Subtotal + previewInvoice.TaxAmount + SecurityDeposit + CustomFeeCalculated - DiscountCalculated;
+        // Tax applies to the subtotal AFTER discount and the taxable fee (docs/Calculations.md §4).
+        var previewTaxableBase = previewInvoice.Subtotal - DiscountCalculated + CustomFeeCalculated;
+        previewInvoice.TaxAmount = previewTaxableBase * (TaxRate / 100m);
+        previewInvoice.Total = previewTaxableBase + previewInvoice.TaxAmount + SecurityDeposit;
         previewInvoice.Balance = previewInvoice.Total;
 
         // Render HTML using the same renderer as the template designer
@@ -1475,10 +1480,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Calculate invoice totals (Subtotal / TaxAmount / Total, these are
         // invoice-level math, not Payment-derived).
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
-        invoice.TaxAmount = invoice.Subtotal * (invoice.TaxRate / 100m);
         var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
         var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
-        invoice.Total = invoice.Subtotal + invoice.TaxAmount + invoice.SecurityDeposit + feeCalc - discCalc;
+        // Tax applies to the subtotal AFTER discount and the taxable fee (docs/Calculations.md §4).
+        var taxableBase = invoice.Subtotal - discCalc + feeCalc;
+        invoice.TaxAmount = taxableBase * (invoice.TaxRate / 100m);
+        invoice.Total = taxableBase + invoice.TaxAmount + invoice.SecurityDeposit;
 
         // Set currency fields for multi-currency support
         var invoiceCurrency = SelectedCurrencyCode;
