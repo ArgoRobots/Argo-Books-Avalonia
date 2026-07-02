@@ -415,12 +415,12 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         {
             var row = pending[i];
 
-            // Prefer the AI's explicit index; fall back to positional order if it omitted/duplicated indices.
+            // Match strictly by the AI's explicit line index (the prompt requires the model to echo
+            // it for every line). Positional fallback was unsafe: when a batch fails its lines are
+            // omitted from the merged list, so this row would borrow a different line's suggestion.
+            // An unmatched row is left blank for the user to fill in.
             if (!byIndex.TryGetValue(row.Index, out var s))
-            {
-                if (i < suggestions.Count) s = suggestions[i];
-                else continue;
-            }
+                continue;
 
             // Product (only fill if the user / rules didn't already set one).
             if (!row.HasProduct)
