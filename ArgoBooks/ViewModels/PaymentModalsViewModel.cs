@@ -357,6 +357,30 @@ public partial class PaymentModalsViewModel : ViewModelBase
         invoiceModals.OpenCreateModal();
     }
 
+    /// <summary>
+    /// The currency a payment must be tagged with. A payment settles the invoice (or revenue) it is
+    /// linked to, in THAT record's currency: <see cref="InvoiceTotalsService"/> only counts a payment
+    /// toward an invoice when their currencies match (docs/Calculations.md §5), so stamping the
+    /// company's display currency instead silently drops payments on any invoice not in that currency.
+    /// Unlinked payments fall back to the company display currency.
+    /// </summary>
+    private string ResolvePaymentCurrency(Core.Data.CompanyData companyData)
+    {
+        if (!string.IsNullOrEmpty(ModalInvoiceId))
+        {
+            var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == ModalInvoiceId);
+            if (invoice != null && !string.IsNullOrEmpty(invoice.OriginalCurrency))
+                return invoice.OriginalCurrency;
+        }
+        if (!string.IsNullOrEmpty(ModalRevenueId))
+        {
+            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == ModalRevenueId);
+            if (revenue != null && !string.IsNullOrEmpty(revenue.OriginalCurrency))
+                return revenue.OriginalCurrency;
+        }
+        return CurrencyService.CurrentCurrencyCode;
+    }
+
     [RelayCommand]
     public async Task SaveNewPayment()
     {
@@ -373,7 +397,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var paymentMethod = PaymentMethodExtensions.ParseDisplayName(ModalPaymentMethod);
 
         var parsedAmount = decimal.Parse(ModalAmount);
-        var currentCurrency = CurrencyService.CurrentCurrencyCode;
+        // Tag the payment with the linked invoice's/revenue's currency, not the company display
+        // currency, so it counts toward that invoice's totals (docs/Calculations.md §5).
+        var currentCurrency = ResolvePaymentCurrency(companyData);
         var paymentDate = ModalDate?.DateTime ?? DateTime.Today;
 
         // Convert payment amount to USD for consistent reporting
@@ -575,8 +601,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var newDate = ModalDate?.DateTime ?? DateTime.Today;
         var newAmount = decimal.Parse(ModalAmount);
 
-        // Convert to USD for consistent reporting
-        var editCurrentCurrency = CurrencyService.CurrentCurrencyCode;
+        // Convert to USD for consistent reporting. Tag the payment with the linked invoice's/revenue's
+        // currency, not the company display currency, so it counts toward that invoice's totals (§5).
+        var editCurrentCurrency = ResolvePaymentCurrency(companyData);
         decimal newAmountUSD = newAmount;
         if (!string.Equals(editCurrentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
