@@ -3285,12 +3285,26 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var name = GetString(row, headers, "Name");
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record
+            // (or skipped as "already exists"). Mirrors ImportPurchases/ImportPayments/ImportSales.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Customer++;
+                id = $"CUS-{data.IdCounters.Customer:D3}";
+            }
+
             var existing = data.Customers.FirstOrDefault(c => c.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var customer = existing ?? new Customer();
             customer.Id = id;
-            customer.Name = NameOrUnknown(GetString(row, headers, "Name"));
+            customer.Name = NameOrUnknown(name);
             customer.CompanyName = GetNullableString(row, headers, "Company");
             customer.Email = GetString(row, headers, "Email");
             customer.Phone = GetString(row, headers, "Phone");
@@ -3319,18 +3333,34 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var row = rows[rowIndex];
             var invoiceNumber = GetString(row, headers, "Invoice #");
+            var customerId = GetString(row, headers, "Customer ID");
+            var issueDate = GetDateTime(row, headers, "Issue Date");
+            var total = GetDecimal(row, headers, "Total");
+
+            // Skip fully-empty rows (no number, customer, date, or amount).
+            if (string.IsNullOrWhiteSpace(invoiceNumber) && string.IsNullOrWhiteSpace(customerId)
+                && issueDate == DateTime.MinValue && total == 0)
+                continue;
+
+            // Blank invoice #: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(invoiceNumber))
+            {
+                data.IdCounters.Invoice++;
+                invoiceNumber = $"INV-{data.IdCounters.Invoice:D3}";
+            }
+
             var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var invoice = existing ?? new Invoice();
             invoice.Id = invoiceNumber;
             invoice.InvoiceNumber = invoiceNumber;
-            invoice.CustomerId = GetString(row, headers, "Customer ID");
-            invoice.IssueDate = GetDateTime(row, headers, "Issue Date");
+            invoice.CustomerId = customerId;
+            invoice.IssueDate = issueDate;
             invoice.DueDate = GetDateTime(row, headers, "Due Date");
             invoice.Subtotal = GetDecimal(row, headers, "Subtotal");
             invoice.TaxAmount = GetDecimal(row, headers, "Tax");
-            invoice.Total = GetDecimal(row, headers, "Total");
+            invoice.Total = total;
             // Detect whether a "Paid" amount was actually supplied (GetNullableDecimal returns null for
             // an absent column, vs 0 for a genuine zero). When it is, derive the balance from it;
             // otherwise trust the imported "Balance" column. The old guard "AmountPaid >= 0" is always
@@ -3458,6 +3488,17 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             var id = GetString(row, headers, "ID");
             var name = GetString(row, headers, "Name");
 
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Product++;
+                id = $"PRD-{data.IdCounters.Product:D3}";
+            }
+
             // Check for existing product by ID first
             productsById.TryGetValue(id, out var existing);
 
@@ -3565,13 +3606,27 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var productId = GetString(row, headers, "Product ID");
+            var locationId = GetString(row, headers, "Location ID");
+
+            // Skip fully-empty rows (no id and no product/location reference).
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(productId) && string.IsNullOrWhiteSpace(locationId))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.InventoryItem++;
+                id = $"INV-ITM-{data.IdCounters.InventoryItem:D3}";
+            }
+
             var existing = data.Inventory.FirstOrDefault(i => i.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var item = existing ?? new InventoryItem();
             item.Id = id;
-            item.ProductId = GetString(row, headers, "Product ID");
-            item.LocationId = GetString(row, headers, "Location ID");
+            item.ProductId = productId;
+            item.LocationId = locationId;
             item.InStock = GetInt(row, headers, "In Stock");
             item.Reserved = GetInt(row, headers, "Reserved");
             item.ReorderPoint = GetInt(row, headers, "Reorder Point");
@@ -3643,12 +3698,25 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var name = GetString(row, headers, "Name");
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Supplier++;
+                id = $"SUP-{data.IdCounters.Supplier:D3}";
+            }
+
             var existing = data.Suppliers.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var supplier = existing ?? new Supplier();
             supplier.Id = id;
-            supplier.Name = GetString(row, headers, "Name");
+            supplier.Name = name;
             supplier.Email = GetString(row, headers, "Email");
             supplier.Phone = GetString(row, headers, "Phone");
             supplier.Website = GetNullableString(row, headers, "Website") ?? "";
@@ -3871,6 +3939,20 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+
+            // Skip fully-empty rows (no id and no inventory-item/product reference).
+            if (string.IsNullOrWhiteSpace(id)
+                && string.IsNullOrWhiteSpace(GetString(row, headers, "Inventory Item ID"))
+                && string.IsNullOrWhiteSpace(GetString(row, headers, "Product ID")))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.RentalItem++;
+                id = $"RNT-ITM-{data.IdCounters.RentalItem:D3}";
+            }
+
             var existing = data.RentalInventory.FirstOrDefault(r => r.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
@@ -3990,6 +4072,19 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var name = GetString(row, headers, "Name");
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Category++;
+                id = $"CAT-{data.IdCounters.Category:D3}";
+            }
+
             var existing = data.Categories.FirstOrDefault(c => c.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
@@ -4024,12 +4119,25 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var name = GetString(row, headers, "Name");
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Location++;
+                id = $"LOC-{data.IdCounters.Location:D3}";
+            }
+
             var existing = data.Locations.FirstOrDefault(l => l.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var location = existing ?? new Location();
             location.Id = id;
-            location.Name = GetString(row, headers, "Name");
+            location.Name = name;
             location.ContactPerson = GetString(row, headers, "Contact Person");
             location.Phone = GetString(row, headers, "Phone");
             location.Address = new Address
@@ -4055,14 +4163,30 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var customerId = GetString(row, headers, "Customer ID");
+            var amount = GetDecimal(row, headers, "Amount");
+            var description = GetString(row, headers, "Description");
+
+            // Skip fully-empty rows (no id, customer, amount, or description).
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(customerId)
+                && amount == 0 && string.IsNullOrWhiteSpace(description))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.RecurringInvoice++;
+                id = $"REC-INV-{data.IdCounters.RecurringInvoice:D3}";
+            }
+
             var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var recurring = existing ?? new RecurringInvoice();
             recurring.Id = id;
-            recurring.CustomerId = GetString(row, headers, "Customer ID");
-            recurring.Amount = GetDecimal(row, headers, "Amount");
-            recurring.Description = GetString(row, headers, "Description");
+            recurring.CustomerId = customerId;
+            recurring.Amount = amount;
+            recurring.Description = description;
             recurring.Frequency = ParseEnum(GetString(row, headers, "Frequency"), Frequency.Monthly);
             recurring.NextInvoiceDate = GetDateTime(row, headers, "Next Date");
             recurring.Status = ParseEnum(GetString(row, headers, "Status"), RecurringInvoiceStatus.Active);
@@ -4082,12 +4206,25 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var inventoryItemId = GetString(row, headers, "Inventory Item ID");
+
+            // Skip fully-empty rows (no id and no inventory item reference).
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(inventoryItemId))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.StockAdjustment++;
+                id = $"ADJ-{data.IdCounters.StockAdjustment:D3}";
+            }
+
             var existing = data.StockAdjustments.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var adjustment = existing ?? new StockAdjustment();
             adjustment.Id = id;
-            adjustment.InventoryItemId = GetString(row, headers, "Inventory Item ID");
+            adjustment.InventoryItemId = inventoryItemId;
             adjustment.AdjustmentType = ParseEnum(GetString(row, headers, "Type"), AdjustmentType.Set);
             adjustment.Quantity = GetInt(row, headers, "Quantity");
             adjustment.PreviousStock = GetInt(row, headers, "Previous Stock");
@@ -4118,15 +4255,31 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         {
             var row = rows[rowIndex];
             var id = GetString(row, headers, "ID");
+            var supplierId = GetString(row, headers, "Supplier ID");
+            var orderDate = GetDateTime(row, headers, "Order Date");
+            var total = GetDecimal(row, headers, "Total");
+
+            // Skip fully-empty rows (no id, supplier, date, or amount).
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(supplierId)
+                && orderDate == DateTime.MinValue && total == 0)
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.PurchaseOrder++;
+                id = $"PO-{data.IdCounters.PurchaseOrder:D3}";
+            }
+
             var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var po = existing ?? new PurchaseOrder();
             po.Id = id;
-            po.SupplierId = GetString(row, headers, "Supplier ID");
-            po.OrderDate = GetDateTime(row, headers, "Order Date");
+            po.SupplierId = supplierId;
+            po.OrderDate = orderDate;
             po.ExpectedDeliveryDate = GetDateTime(row, headers, "Expected Date");
-            po.Total = GetDecimal(row, headers, "Total");
+            po.Total = total;
             po.Status = ParseEnum(GetString(row, headers, "Status"), PurchaseOrderStatus.Draft);
 
             // Per-row currency detected from the amount cells, else the company currency.
@@ -4197,19 +4350,33 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+            var originalTransactionId = GetString(row, headers, "Original Transaction ID");
+            var refundAmount = GetDecimal(row, headers, "Refund Amount");
+
+            // Skip fully-empty rows (no id, original transaction, or refund).
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(originalTransactionId) && refundAmount == 0)
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.Return++;
+                id = $"RET-{data.IdCounters.Return:D3}";
+            }
+
             var existing = data.Returns.FirstOrDefault(r => r.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var returnRecord = existing ?? new Return();
             returnRecord.Id = id;
-            returnRecord.OriginalTransactionId = GetString(row, headers, "Original Transaction ID");
+            returnRecord.OriginalTransactionId = originalTransactionId;
             returnRecord.ReturnType = GetString(row, headers, "Return Type");
             if (string.IsNullOrEmpty(returnRecord.ReturnType))
                 returnRecord.ReturnType = "Customer";
             returnRecord.CustomerId = GetString(row, headers, "Customer ID");
             returnRecord.SupplierId = GetString(row, headers, "Supplier ID");
             returnRecord.ReturnDate = GetDateTime(row, headers, "Return Date");
-            returnRecord.RefundAmount = GetDecimal(row, headers, "Refund Amount");
+            returnRecord.RefundAmount = refundAmount;
             returnRecord.RestockingFee = GetDecimal(row, headers, "Restocking Fee");
             returnRecord.Status = ParseEnum(GetString(row, headers, "Status"), ReturnStatus.Pending);
             returnRecord.Notes = GetString(row, headers, "Notes");
@@ -4254,6 +4421,21 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
+
+            // Skip fully-empty rows (no id and no product/inventory reference).
+            if (string.IsNullOrWhiteSpace(id)
+                && string.IsNullOrEmpty(GetNullableString(row, headers, "Product ID"))
+                && string.IsNullOrEmpty(GetNullableString(row, headers, "Product"))
+                && string.IsNullOrEmpty(GetNullableString(row, headers, "Inventory Item ID")))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                data.IdCounters.LostDamaged++;
+                id = $"LOST-{data.IdCounters.LostDamaged:D3}";
+            }
+
             var existing = data.LostDamaged.FirstOrDefault(ld => ld.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
