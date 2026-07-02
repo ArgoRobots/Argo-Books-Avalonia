@@ -1675,7 +1675,12 @@ public partial class App
             if (companySettings != null)
             {
                 var security = companySettings.Security;
-                _idleDetectionService.Configure(security.AutoLockEnabled, security.AutoLockMinutes);
+                // The timeout is authoritative: "Never" (0) is off, any positive value is on, and it
+                // requires a password. The separate AutoLockEnabled flag defaults to false while the
+                // default AutoLockMinutes is 5, so trusting it left auto-lock disabled even though the
+                // settings dropdown showed "5 minutes". Derive enablement from the timeout instead.
+                var autoLockOn = security.AutoLockMinutes > 0 && CompanyManager.IsEncrypted;
+                _idleDetectionService.Configure(autoLockOn, security.AutoLockMinutes);
 
                 // Sync the UI with company settings
                 var timeoutString = security.AutoLockMinutes switch
