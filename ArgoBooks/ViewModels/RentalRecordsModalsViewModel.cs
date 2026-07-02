@@ -1141,6 +1141,14 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var savedReturnInvSnapshot = returnInvSnapshot;
         var savedReturnAdjustments = returnAdjustments;
         var newNotes = _returningRecord.Notes;
+        // Capture the applied return values as locals so redo restores exactly what was confirmed.
+        // The live ReturnDate/ReturnTotalCost/ReturnRefundDeposit/ReturnMarkAsPaid properties get reset
+        // every time the Return modal is reopened, so reading them in the redo lambda would re-apply
+        // stale/reset values (or another record's values).
+        var newReturnDate = _returningRecord.ReturnDate;
+        var newTotalCost = _returningRecord.TotalCost;
+        var newDepositRefunded = _returningRecord.DepositRefunded;
+        var newPaid = _returningRecord.Paid;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Return rental '{recordToReturn.Id}'",
             () =>
@@ -1169,10 +1177,10 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
             () =>
             {
                 recordToReturn.Status = RentalStatus.Returned;
-                recordToReturn.ReturnDate = ReturnDate?.DateTime;
-                recordToReturn.TotalCost = ReturnTotalCost;
-                recordToReturn.DepositRefunded = ReturnRefundDeposit ? recordToReturn.SecurityDeposit : 0;
-                recordToReturn.Paid = ReturnMarkAsPaid;
+                recordToReturn.ReturnDate = newReturnDate;
+                recordToReturn.TotalCost = newTotalCost;
+                recordToReturn.DepositRefunded = newDepositRefunded;
+                recordToReturn.Paid = newPaid;
                 recordToReturn.Notes = newNotes;
                 var returnItems = GetEffectiveLineItems(recordToReturn);
                 foreach (var li in returnItems)
