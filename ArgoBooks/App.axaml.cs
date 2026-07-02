@@ -41,6 +41,12 @@ public partial class App : Application
     public static CompanyManager? CompanyManager { get; private set; }
 
     /// <summary>
+    /// Test-only hook to inject an in-memory <see cref="Core.Services.CompanyManager"/> so unit tests
+    /// can drive ViewModels that read <c>App.CompanyManager.CompanyData</c>. Not used in production.
+    /// </summary>
+    internal static void SetCompanyManagerForTesting(CompanyManager? manager) => CompanyManager = manager;
+
+    /// <summary>
     /// Gets the global settings service instance.
     /// </summary>
     public static GlobalSettingsService? SettingsService { get; private set; }

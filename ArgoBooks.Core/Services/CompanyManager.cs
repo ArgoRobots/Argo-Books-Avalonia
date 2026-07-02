@@ -449,6 +449,27 @@ public class CompanyManager : IDisposable
         _errorLogger = errorLogger;
     }
 
+    // Test-only constructor: leaves the file-system services unset. Only the in-memory surface
+    // (CompanyData, MarkAsChanged/NotifyDataChanged, HasUnsavedChanges) is usable; any file
+    // operation will NRE by design. Paired with CreateForTesting below.
+    private CompanyManager()
+    {
+        _fileService = null!;
+        _settingsService = null!;
+        _footerService = null!;
+        _errorLogger = null;
+    }
+
+    /// <summary>
+    /// Creates a CompanyManager wrapping an existing in-memory <see cref="CompanyData"/> for unit
+    /// tests, with no file-system dependencies. Lets tests drive ViewModels that read
+    /// <c>App.CompanyManager.CompanyData</c> without opening a real company file.
+    /// </summary>
+    internal static CompanyManager CreateForTesting(CompanyData data)
+    {
+        return new CompanyManager { CompanyData = data };
+    }
+
     /// <summary>
     /// Creates a new company file.
     /// </summary>

@@ -13,6 +13,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="ArgoBooks.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
         <!-- MVVM -->
