@@ -37,6 +37,22 @@ public static class ChartImageExportService
         => ThemeService.Instance.IsDarkTheme ? SKColor.Parse("#1F2937") : SKColors.White;
 
     /// <summary>
+    /// Encodes a rendered chart image onto a solid, theme-matching background and writes it to disk.
+    /// LiveCharts' <c>SKChart.Background</c> is not reliably honored by <c>SaveImage</c> (it produced a
+    /// transparent PNG that looked dark in image viewers), so we composite the chart onto an explicit
+    /// background canvas to guarantee the backdrop matches the app.
+    /// </summary>
+    private static void SaveOnSolidBackground(SKImage chartImage, int width, int height, string filePath, SKEncodedImageFormat format)
+    {
+        using var surface = SKSurface.Create(new SKImageInfo(width, height));
+        surface.Canvas.Clear(GetExportBackground());
+        surface.Canvas.DrawImage(chartImage, 0, 0);
+        using var snapshot = surface.Snapshot();
+        using var data = snapshot.Encode(format, 100);
+        File.WriteAllBytes(filePath, data.ToArray());
+    }
+
+    /// <summary>
     /// Saves a CartesianChart as an image file with a file picker dialog.
     /// </summary>
     /// <param name="topLevel">The top-level control for the file picker.</param>
@@ -56,9 +72,10 @@ public static class ChartImageExportService
             {
                 Width = width,
                 Height = height,
-                Background = GetExportBackground()
+                Background = SKColors.Transparent
             };
-            skChart.SaveImage(filePath, format, 100);
+            using var chartImage = skChart.GetImage();
+            SaveOnSolidBackground(chartImage, width, height, filePath, format);
             return true;
         }
         catch (Exception ex)
@@ -86,21 +103,22 @@ public static class ChartImageExportService
             {
                 Width = chartWidth,
                 Height = chartHeight,
-                Background = GetExportBackground()
+                Background = SKColors.Transparent
             };
+
+            using var chartImage = skChart.GetImage();
 
             // Include the sibling PieChartLegend when present
             var legend = FindSiblingLegend(chart);
             if (legend?.Items is { Count: > 0 } legendItems)
             {
-                using var chartImage = skChart.GetImage();
                 using var composited = ComposePieChartWithLegend(chartImage, legendItems, chartWidth, chartHeight);
                 using var data = composited.Encode(format, 100);
                 File.WriteAllBytes(filePath, data.ToArray());
             }
             else
             {
-                skChart.SaveImage(filePath, format, 100);
+                SaveOnSolidBackground(chartImage, chartWidth, chartHeight, filePath, format);
             }
 
             return true;
@@ -132,11 +150,12 @@ public static class ChartImageExportService
             {
                 Width = width,
                 Height = height,
-                Background = GetExportBackground(),
+                Background = SKColors.Transparent,
                 Series = chart.Series ?? [],
                 MapProjection = chart.MapProjection
             };
-            skChart.SaveImage(filePath, format, 100);
+            using var chartImage = skChart.GetImage();
+            SaveOnSolidBackground(chartImage, width, height, filePath, format);
             return true;
         }
         catch (Exception ex)
