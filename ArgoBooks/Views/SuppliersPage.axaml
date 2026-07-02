@@ -112,13 +112,6 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc Status}" ColumnName="Status" SortProperty="Status"
-                                                   ColumnWidth="{Binding ColumnWidths.StatusColumnWidth}"
-                                                   IsColumnVisible="{Binding ShowStatusColumn}"
-                                                   InfoTooltip="{loc:Loc 'Active means the supplier has at least one product assigned to it. Inactive means it has none yet. This updates automatically as you assign products to suppliers.'}"
-                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
-                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
-
                         <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
                                                    ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
                                                    IsSortable="False" IsResizable="False" ShowSeparator="False" />
@@ -184,23 +177,6 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ProductsColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowProductsColumn}" />
 
-                                        <!-- Status Badge - Custom content required -->
-                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ShowStatusColumn}">
-                                            <table:ArgoTableCell.CellContent>
-                                                <Border VerticalAlignment="Center"
-                                                        HorizontalAlignment="Left"
-                                                        Padding="8,4"
-                                                        CornerRadius="4"
-                                                        Background="{Binding IsActive, Converter={x:Static local:BoolConverters.ToStatusBackground}}">
-                                                    <TextBlock Text="{Binding StatusText, Converter={StaticResource TranslateConverter}}"
-                                                               FontSize="12"
-                                                               FontWeight="Medium"
-                                                               Foreground="{Binding IsActive, Converter={x:Static local:BoolConverters.ToStatusForeground}}" />
-                                                </Border>
-                                            </table:ArgoTableCell.CellContent>
-                                        </table:ArgoTableCell>
-
                                         <!-- Actions - Custom content required -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
                                                                  ShowSeparator="False">
@@ -244,7 +220,6 @@
                 <CheckBox IsChecked="{Binding ShowAddressColumn}" Content="{loc:Loc Address}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCountryColumn}" Content="{loc:Loc Country}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowProductsColumn}" Content="{loc:Loc Products}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

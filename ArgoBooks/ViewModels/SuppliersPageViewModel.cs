@@ -60,16 +60,12 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _showProductsColumn = ColumnVisibilityHelper.Load("Suppliers", "Products", true);
 
-    [ObservableProperty]
-    private bool _showStatusColumn = ColumnVisibilityHelper.Load("Suppliers", "Status", true);
-
     partial void OnShowSupplierColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Supplier", value); ColumnVisibilityHelper.Save("Suppliers", "Supplier", value); }
     partial void OnShowEmailColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Email", value); ColumnVisibilityHelper.Save("Suppliers", "Email", value); }
     partial void OnShowPhoneColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Phone", value); ColumnVisibilityHelper.Save("Suppliers", "Phone", value); }
     partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Suppliers", "Address", value); }
     partial void OnShowCountryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Country", value); ColumnVisibilityHelper.Save("Suppliers", "Country", value); }
     partial void OnShowProductsColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Products", value); ColumnVisibilityHelper.Save("Suppliers", "Products", value); }
-    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Suppliers", "Status", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -94,7 +90,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         ShowAddressColumn = true;
         ShowCountryColumn = true;
         ShowProductsColumn = true;
-        ShowStatusColumn = true;
     }
 
     #endregion
@@ -523,7 +518,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         var displayItems = filtered.Select(supplier =>
         {
             var productCount = productCountBySupplier.GetValueOrDefault(supplier.Id);
-            var isActive = productCount > 0;
 
             // Format address as comma-separated parts
             var addressParts = new List<string>();
@@ -547,7 +541,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 Address = addressString,
                 Country = string.IsNullOrWhiteSpace(supplier.Address.Country) ? "-" : supplier.Address.Country,
                 ProductCount = productCount,
-                IsActive = isActive,
                 Initials = GetInitials(supplier.Name),
                 AvatarBitmap = avatarBitmap,
                 HasAvatar = avatarBitmap != null,
@@ -568,8 +561,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                     ["Phone"] = s => s.Phone,
                     ["Address"] = s => s.Address,
                     ["Country"] = s => s.Country,
-                    ["Products"] = s => s.ProductCount,
-                    ["Status"] = s => s.IsActive
+                    ["Products"] = s => s.ProductCount
                 },
                 s => s.Name);
         }
@@ -1076,9 +1068,6 @@ public partial class SupplierDisplayItem : ObservableObject
     private int _productCount;
 
     [ObservableProperty]
-    private bool _isActive;
-
-    [ObservableProperty]
     private string _initials = string.Empty;
 
     [ObservableProperty]
@@ -1086,11 +1075,6 @@ public partial class SupplierDisplayItem : ObservableObject
 
     [ObservableProperty]
     private bool _hasAvatar;
-
-    /// <summary>
-    /// Status text for display.
-    /// </summary>
-    public string StatusText => IsActive ? "Active" : "Inactive";
 
     [ObservableProperty]
     private bool _isHighlighted;
