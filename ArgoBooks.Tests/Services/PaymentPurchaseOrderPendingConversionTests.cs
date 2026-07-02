@@ -249,6 +249,37 @@ public class PaymentPurchaseOrderPendingConversionTests
         Assert.Equal(88.89m, inv.EffectiveBalanceUSD);
     }
 
+    [Fact]
+    public async Task ImportTimeConversion_EqualsHealTimeConversion_ToTheCent()
+    {
+        // A foreign row can be converted immediately at import, or imported pending and healed later.
+        // Both paths must store IDENTICAL USD (full precision, no rounding) so the value never shifts
+        // when a pending row heals. See docs/Calculations.md Rule 3.
+        var date = DateTime.Today.AddMonths(-1);
+        var ex = new ExchangeRateService(new MockPlatform(), new HttpClient(new AlwaysEurHandler(UsdToEur)));
+        await ex.GetExchangeRateAsync("USD", "EUR", date);
+
+        // Import-time primitive (SpreadsheetImportService.TryConvertRowAmountToUSD delegates to this).
+        Assert.True(ex.TryConvertToUsdBase(250m, "EUR", date, out var importUsd));
+
+        // Heal-time path: a row imported pending, then converted by PendingConversionService.
+        var data = new CompanyData();
+        data.PurchaseOrders.Add(new PurchaseOrder
+        {
+            Id = "PO-1", Total = 250m, OriginalCurrency = "EUR", OrderDate = date,
+            IsPendingConversion = true, TotalUSD = 0m
+        });
+        var svc = new PendingConversionService(new MockPlatform(), exchangeRateService: ex);
+        await svc.AddPendingConversionAsync(new PendingConversion
+        {
+            TransactionId = "PO-1", TransactionType = "PurchaseOrder",
+            Total = 250m, OriginalCurrency = "EUR", TransactionDate = date
+        });
+        await svc.ProcessPendingConversionsAsync(data);
+
+        Assert.Equal(importUsd, data.PurchaseOrders[0].TotalUSD);
+    }
+
     #region Stubs
 
     private sealed class AlwaysEurHandler(decimal usdToEur) : HttpMessageHandler
