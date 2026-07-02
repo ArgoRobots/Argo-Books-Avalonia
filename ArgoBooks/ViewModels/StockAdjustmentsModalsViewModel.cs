@@ -193,23 +193,29 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create inventory item modal on top of the current modal.
     /// </summary>
+    // One-shot handler for the "create entity from this modal" flow. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _itemSavedHandler;
+
     [RelayCommand]
     private void OpenCreateInventoryItem()
     {
         var stockLevelsModals = App.StockLevelsModalsViewModel;
         if (stockLevelsModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            stockLevelsModals.ItemSaved -= OnSaved;
-            LoadInventoryItems();
+        CreateModalSubscription.RearmOnce(ref _itemSavedHandler,
+            h => stockLevelsModals.ItemSaved += h,
+            h => stockLevelsModals.ItemSaved -= h,
+            () =>
+            {
+                LoadInventoryItems();
 
-            // Auto-select the inventory item the user just created.
-            var newItem = AvailableInventoryItems.FirstOrDefault(o => o.InventoryItem?.Id == stockLevelsModals.LastSavedItemId);
-            if (newItem != null)
-                SelectedInventoryOption = newItem;
-        }
-        stockLevelsModals.ItemSaved += OnSaved;
+                // Auto-select the inventory item the user just created.
+                var newItem = AvailableInventoryItems.FirstOrDefault(o => o.InventoryItem?.Id == stockLevelsModals.LastSavedItemId);
+                if (newItem != null)
+                    SelectedInventoryOption = newItem;
+            });
         stockLevelsModals.OpenAddItemModal();
     }
 

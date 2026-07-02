@@ -1103,6 +1103,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     #region Navigation Commands
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _customerSavedHandler;
+    private EventHandler? _categorySavedHandler;
+    private EventHandler? _productSavedHandler;
+
     [RelayCommand]
     protected void OpenCreateCounterparty()
     {
@@ -1111,13 +1119,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var supplierModals = App.SupplierModalsViewModel;
             if (supplierModals == null) return;
 
-            void OnSaved(object? s, EventArgs e)
-            {
-                supplierModals.SupplierSaved -= OnSaved;
-                LoadCounterpartyOptions();
-                SelectCounterparty(supplierModals.LastSavedSupplierId);
-            }
-            supplierModals.SupplierSaved += OnSaved;
+            CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+                h => supplierModals.SupplierSaved += h,
+                h => supplierModals.SupplierSaved -= h,
+                () =>
+                {
+                    LoadCounterpartyOptions();
+                    SelectCounterparty(supplierModals.LastSavedSupplierId);
+                });
             supplierModals.OpenAddModal();
         }
         else
@@ -1125,13 +1134,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var customerModals = App.CustomerModalsViewModel;
             if (customerModals == null) return;
 
-            void OnSaved(object? s, EventArgs e)
-            {
-                customerModals.CustomerSaved -= OnSaved;
-                LoadCounterpartyOptions();
-                SelectCounterparty(customerModals.LastSavedCustomerId);
-            }
-            customerModals.CustomerSaved += OnSaved;
+            CreateModalSubscription.RearmOnce(ref _customerSavedHandler,
+                h => customerModals.CustomerSaved += h,
+                h => customerModals.CustomerSaved -= h,
+                () =>
+                {
+                    LoadCounterpartyOptions();
+                    SelectCounterparty(customerModals.LastSavedCustomerId);
+                });
             customerModals.OpenAddModal();
         }
     }
@@ -1154,17 +1164,18 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         if (categoryModals == null) return;
 
         var isExpense = CategoryTypeFilter == CategoryType.Expense;
-        void OnSaved(object? s, EventArgs e)
-        {
-            categoryModals.CategorySaved -= OnSaved;
-            LoadCategoryOptions();
+        CreateModalSubscription.RearmOnce(ref _categorySavedHandler,
+            h => categoryModals.CategorySaved += h,
+            h => categoryModals.CategorySaved -= h,
+            () =>
+            {
+                LoadCategoryOptions();
 
-            // Auto-select the category the user just created.
-            var newCategory = CategoryOptions.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
-            if (newCategory != null)
-                SelectedCategory = newCategory;
-        }
-        categoryModals.CategorySaved += OnSaved;
+                // Auto-select the category the user just created.
+                var newCategory = CategoryOptions.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
+                if (newCategory != null)
+                    SelectedCategory = newCategory;
+            });
         categoryModals.OpenAddModal(isExpense);
     }
 
@@ -1175,20 +1186,21 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         if (productModals == null) return;
 
         var isExpense = CategoryTypeFilter == CategoryType.Expense;
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            LoadProductOptions();
-
-            // Auto-select the new product into the line item whose dropdown launched the create.
-            if (lineItem != null)
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
             {
-                var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
-                if (newProduct != null)
-                    lineItem.SelectedProduct = newProduct;
-            }
-        }
-        productModals.ProductSaved += OnSaved;
+                LoadProductOptions();
+
+                // Auto-select the new product into the line item whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                    if (newProduct != null)
+                        lineItem.SelectedProduct = newProduct;
+                }
+            });
         productModals.OpenAddModal(isExpense);
     }
 

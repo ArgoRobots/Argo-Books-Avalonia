@@ -297,6 +297,12 @@ public partial class ProductModalsViewModel : ViewModelBase
         CloseAddModal();
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _categorySavedHandler;
+    private EventHandler? _supplierSavedHandler;
+
     [RelayCommand]
     public void OpenCategoriesWithAddModal()
     {
@@ -304,20 +310,21 @@ public partial class ProductModalsViewModel : ViewModelBase
         if (categoryModals == null) return;
 
         var isExpense = IsExpensesTab;
-        void OnSaved(object? s, EventArgs e)
-        {
-            categoryModals.CategorySaved -= OnSaved;
-            UpdateDropdownOptions();
-
-            // Auto-select the category the user just created.
-            var newCategory = AvailableCategories.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
-            if (newCategory != null)
+        CreateModalSubscription.RearmOnce(ref _categorySavedHandler,
+            h => categoryModals.CategorySaved += h,
+            h => categoryModals.CategorySaved -= h,
+            () =>
             {
-                ModalCategory = newCategory;
-                ModalCategoryId = newCategory.Id;
-            }
-        }
-        categoryModals.CategorySaved += OnSaved;
+                UpdateDropdownOptions();
+
+                // Auto-select the category the user just created.
+                var newCategory = AvailableCategories.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
+                if (newCategory != null)
+                {
+                    ModalCategory = newCategory;
+                    ModalCategoryId = newCategory.Id;
+                }
+            });
         categoryModals.OpenAddModal(isExpense);
     }
 
@@ -327,17 +334,18 @@ public partial class ProductModalsViewModel : ViewModelBase
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            UpdateDropdownOptions();
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
 
-            // Auto-select the supplier the user just created.
-            var newSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == supplierModals.LastSavedSupplierId);
-            if (newSupplier != null)
-                ModalSupplier = newSupplier;
-        }
-        supplierModals.SupplierSaved += OnSaved;
+                // Auto-select the supplier the user just created.
+                var newSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == supplierModals.LastSavedSupplierId);
+                if (newSupplier != null)
+                    ModalSupplier = newSupplier;
+            });
         supplierModals.OpenAddModal();
     }
 

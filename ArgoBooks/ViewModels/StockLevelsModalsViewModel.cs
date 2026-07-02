@@ -340,23 +340,30 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create location modal on top of the current modal.
     /// </summary>
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _locationSavedHandler;
+    private EventHandler? _productSavedHandler;
+
     [RelayCommand]
     private void OpenCreateLocation()
     {
         var locationModals = App.LocationsModalsViewModel;
         if (locationModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            locationModals.LocationSaved -= OnSaved;
-            ReloadAvailableLocations();
+        CreateModalSubscription.RearmOnce(ref _locationSavedHandler,
+            h => locationModals.LocationSaved += h,
+            h => locationModals.LocationSaved -= h,
+            () =>
+            {
+                ReloadAvailableLocations();
 
-            // Auto-select the location the user just created.
-            var newLocation = AvailableLocations.FirstOrDefault(l => l.Id == locationModals.LastSavedLocationId);
-            if (newLocation != null)
-                SelectedLocation = newLocation;
-        }
-        locationModals.LocationSaved += OnSaved;
+                // Auto-select the location the user just created.
+                var newLocation = AvailableLocations.FirstOrDefault(l => l.Id == locationModals.LastSavedLocationId);
+                if (newLocation != null)
+                    SelectedLocation = newLocation;
+            });
         locationModals.OpenAddModal();
     }
 
@@ -369,17 +376,18 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            ReloadAvailableProducts();
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
+            {
+                ReloadAvailableProducts();
 
-            // Auto-select the product the user just created.
-            var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
-            if (newProduct != null)
-                SelectedProduct = newProduct;
-        }
-        productModals.ProductSaved += OnSaved;
+                // Auto-select the product the user just created.
+                var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                if (newProduct != null)
+                    SelectedProduct = newProduct;
+            });
         productModals.OpenAddModal();
     }
 

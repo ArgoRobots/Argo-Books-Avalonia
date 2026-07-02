@@ -342,23 +342,29 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create invoice modal on top of the current modal.
     /// </summary>
+    // One-shot handler for the "create entity from this modal" flow. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _invoiceSavedHandler;
+
     [RelayCommand]
     private void OpenCreateInvoice()
     {
         var invoiceModals = App.InvoiceModalsViewModel;
         if (invoiceModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            invoiceModals.InvoiceSaved -= OnSaved;
-            LoadInvoiceOptions();
+        CreateModalSubscription.RearmOnce(ref _invoiceSavedHandler,
+            h => invoiceModals.InvoiceSaved += h,
+            h => invoiceModals.InvoiceSaved -= h,
+            () =>
+            {
+                LoadInvoiceOptions();
 
-            // Auto-select the invoice the user just created.
-            var newInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == invoiceModals.LastSavedInvoiceId);
-            if (newInvoice != null)
-                SelectedInvoice = newInvoice;
-        }
-        invoiceModals.InvoiceSaved += OnSaved;
+                // Auto-select the invoice the user just created.
+                var newInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == invoiceModals.LastSavedInvoiceId);
+                if (newInvoice != null)
+                    SelectedInvoice = newInvoice;
+            });
         invoiceModals.OpenCreateModal();
     }
 

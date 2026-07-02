@@ -571,6 +571,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private SupplierCategorySuggestion? _aiSuggestion;
 
+    // Bumped whenever the scan modal resets (close or a new scan starts). An in-flight AI suggestion
+    // call captures the current value and discards its result if the generation has moved on, so a
+    // late suggestion for a previous receipt can't land on the receipt now on screen (single-scan flow).
+    private int _scanGeneration;
+
     [ObservableProperty]
     private bool _showCreateSupplierSuggestion;
 
@@ -2343,23 +2348,30 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         App.UndoRedoManager.RecordAction(action);
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _productSavedHandler;
+
     [RelayCommand]
     private void OpenCreateSupplier()
     {
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            LoadSupplierOptions();
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                LoadSupplierOptions();
 
-            // Auto-select the supplier the user just created.
-            var newSupplier = SupplierOptions.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
-            if (newSupplier != null)
-                SelectedSupplier = newSupplier;
-        }
-        supplierModals.SupplierSaved += OnSaved;
+                // Auto-select the supplier the user just created.
+                var newSupplier = SupplierOptions.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
+                if (newSupplier != null)
+                    SelectedSupplier = newSupplier;
+            });
         supplierModals.OpenAddModal();
     }
 
@@ -2369,20 +2381,21 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            LoadProductOptions();
-
-            // Auto-select the new product into the line item whose dropdown launched the create.
-            if (lineItem != null)
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
             {
-                var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
-                if (newProduct != null)
-                    lineItem.SelectedProduct = newProduct;
-            }
-        }
-        productModals.ProductSaved += OnSaved;
+                LoadProductOptions();
+
+                // Auto-select the new product into the line item whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                    if (newProduct != null)
+                        lineItem.SelectedProduct = newProduct;
+                }
+            });
         productModals.OpenAddModal();
     }
 
@@ -2508,6 +2521,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         // Capture the bulk item (if any) so we can discard results if the user navigated away
         var bulkItemAtStart = CurrentBulkItem;
+        // Capture the scan generation so we can discard results if the modal was reset / a new scan
+        // started while this AI call was in flight (single-scan flow).
+        var scanGenerationAtStart = _scanGeneration;
 
         var geminiService = new GeminiService(App.ErrorLogger, App.TelemetryManager);
 
@@ -2553,7 +2569,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             var suggestion = await geminiService.GetSupplierCategorySuggestionAsync(request);
 
-            // If in bulk review and user navigated to a different item, discard stale results
+            // Discard stale results: either the modal was reset / a new scan started (single-scan
+            // flow), or in bulk review the user navigated to a different item.
+            if (_scanGeneration != scanGenerationAtStart)
+                return;
             if (IsBulkReviewOpen && CurrentBulkItem != bulkItemAtStart)
                 return;
 
@@ -2984,7 +3003,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _currentImageData = null;
         _currentFileName = null;
 
-        // Reset AI suggestion state
+        // Reset AI suggestion state. Bump the generation so any in-flight suggestion call for the
+        // previous receipt discards its result instead of applying it to the next receipt.
+        _scanGeneration++;
         IsLoadingAiSuggestions = false;
         _aiSuggestion = null;
         ShowCreateSupplierSuggestion = false;

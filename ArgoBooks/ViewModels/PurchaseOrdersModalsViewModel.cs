@@ -339,6 +339,12 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         CloseAddModal();
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _productSavedHandler;
+
     /// <summary>
     /// Opens the create supplier modal on top of the current modal.
     /// </summary>
@@ -348,17 +354,18 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            LoadSuppliers();
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                LoadSuppliers();
 
-            // Auto-select the supplier the user just created.
-            var newSupplier = AvailableSuppliers.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
-            if (newSupplier != null)
-                SelectedSupplier = newSupplier;
-        }
-        supplierModals.SupplierSaved += OnSaved;
+                // Auto-select the supplier the user just created.
+                var newSupplier = AvailableSuppliers.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
+                if (newSupplier != null)
+                    SelectedSupplier = newSupplier;
+            });
         supplierModals.OpenAddModal();
     }
 
@@ -371,20 +378,21 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            LoadProducts();
-
-            // Auto-select the new product into the line item whose dropdown launched the create.
-            if (lineItem != null)
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
             {
-                var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
-                if (newProduct != null)
-                    lineItem.SelectedProduct = newProduct;
-            }
-        }
-        productModals.ProductSaved += OnSaved;
+                LoadProducts();
+
+                // Auto-select the new product into the line item whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                    if (newProduct != null)
+                        lineItem.SelectedProduct = newProduct;
+                }
+            });
         productModals.OpenAddModal();
     }
 
