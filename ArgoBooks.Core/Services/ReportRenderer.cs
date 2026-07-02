@@ -3059,7 +3059,10 @@ public class ReportRenderer : IDisposable
             "Product" => r.ProductName,
             "Qty" => r.Quantity.ToString("N0"),
             "Unit Price" => FormatCurrency(r.UnitPrice),
-            "Total" => FormatCurrency(r.Total),
+            // r.Total is USD-normalized (see ReportTableDataService); convert it to the display
+            // currency at the row's date instead of stamping the symbol on a raw dollar figure. The
+            // footer re-parses these rendered cells, so its total follows automatically.
+            "Total" => FormatCurrency(ToDisplayCurrency(r.Total, r.Date)),
             "Status" => r.Status,
             "Accountant" => r.AccountantName,
             "Shipping" => FormatCurrency(r.ShippingCost),
