@@ -791,8 +791,11 @@ public class InsightsService(
             forecast.ForecastedRevenueLower = Math.Max(0, revenueForecast.LowerBounds.Sum() * scaleFactor);
             forecast.ForecastedRevenueUpper = revenueForecast.UpperBounds.Sum() * scaleFactor;
 
-            // Store seasonal pattern info
-            if (revenueForecast.SeasonalPattern.SeasonalStrength > 0.1)
+            // Store seasonal pattern info. Require a full year of history (matching DetectSeasonality's
+            // MinimumDataPointsForHoltWinters) before surfacing a seasonal narrative: with fewer points
+            // Holt-Winters fits a 2-3 month "season" to month-to-month noise, so the Forecast card would
+            // claim a pattern the trend-insight path (correctly) stays silent about.
+            if (monthlyRevenue.Count >= 12 && revenueForecast.SeasonalPattern.SeasonalStrength > 0.1)
             {
                 forecast.SeasonalInfo = new SeasonalPatternInfo
                 {
