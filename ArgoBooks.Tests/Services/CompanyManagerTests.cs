@@ -178,6 +178,33 @@ public class CompanyManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveCompanyAs_ClearsPendingRename()
+    {
+        // A rename queued (deferred) before a Save As must not survive it: the rename target applied
+        // to the OLD file path, so leaving it set makes a later normal Save move the just-saved-as
+        // file to the rename target (or fail "file exists").
+        var originalPath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        var renameTarget = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        var saveAsPath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(originalPath, "Acme");
+            _manager.SetPendingRename(renameTarget); // deferred rename, no save yet
+            Assert.Equal(renameTarget, _manager.PendingRenamePath);
+
+            await _manager.SaveCompanyAsAsync(saveAsPath);
+
+            Assert.Null(_manager.PendingRenamePath);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            foreach (var p in new[] { originalPath, renameTarget, saveAsPath })
+                if (File.Exists(p)) File.Delete(p);
+        }
+    }
+
+    [Fact]
     public async Task Save_ImmediatelyAfterOpen_DoesNotDropDeferredReceipts()
     {
         // The critical data-safety case: a save that runs before receipts finish loading

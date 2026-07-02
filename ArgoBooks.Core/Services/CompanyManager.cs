@@ -944,6 +944,9 @@ public class CompanyManager : IDisposable
                 // Update current file path and password
                 CurrentFilePath = newFilePath;
                 _currentPassword = passwordToUse;
+                // A deferred rename targeted the OLD path; once the working file has moved to a new
+                // path via Save As it no longer applies, so a later normal Save must not act on it.
+                PendingRenamePath = null;
             }
             finally
             {
