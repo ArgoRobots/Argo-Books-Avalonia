@@ -2,8 +2,18 @@ using System;
 using ArgoBooks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Services;
+using Xunit;
 
 namespace ArgoBooks.Tests.ViewModels;
+
+/// <summary>
+/// xUnit collection that forces all modal-ViewModel test classes to run sequentially. They mutate
+/// PROCESS-WIDE static state (<c>App.CompanyManager</c> and the shared <c>App.UndoRedoManager</c>), so
+/// running two of them in parallel lets one test's setup clobber another's company/undo stack
+/// mid-run. DisableParallelization also keeps this collection from overlapping any other collection.
+/// </summary>
+[CollectionDefinition("ModalViewModels", DisableParallelization = true)]
+public class ModalViewModelsCollection;
 
 /// <summary>
 /// Test harness for the transaction modal ViewModels (expenses, revenues, invoices, payments,
@@ -16,6 +26,7 @@ namespace ArgoBooks.Tests.ViewModels;
 /// xUnit constructs a new instance of the test class per test method, so the ctor/Dispose here act
 /// as per-test setup/teardown.
 /// </summary>
+[Collection("ModalViewModels")]
 public abstract class ModalViewModelTestBase : IDisposable
 {
     protected CompanyData Company { get; }
