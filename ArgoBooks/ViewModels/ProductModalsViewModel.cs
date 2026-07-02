@@ -244,6 +244,12 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     public event EventHandler? ProductSaved;
     public event EventHandler? ProductDeleted;
+
+    /// <summary>
+    /// The Id of the product most recently created via the Add modal. Lets a caller that
+    /// opened "create product" from another modal auto-select the new product after save.
+    /// </summary>
+    public string? LastSavedProductId { get; private set; }
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
 
@@ -302,6 +308,14 @@ public partial class ProductModalsViewModel : ViewModelBase
         {
             categoryModals.CategorySaved -= OnSaved;
             UpdateDropdownOptions();
+
+            // Auto-select the category the user just created.
+            var newCategory = AvailableCategories.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
+            if (newCategory != null)
+            {
+                ModalCategory = newCategory;
+                ModalCategoryId = newCategory.Id;
+            }
         }
         categoryModals.CategorySaved += OnSaved;
         categoryModals.OpenAddModal(isExpense);
@@ -317,6 +331,11 @@ public partial class ProductModalsViewModel : ViewModelBase
         {
             supplierModals.SupplierSaved -= OnSaved;
             UpdateDropdownOptions();
+
+            // Auto-select the supplier the user just created.
+            var newSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == supplierModals.LastSavedSupplierId);
+            if (newSupplier != null)
+                ModalSupplier = newSupplier;
         }
         supplierModals.SupplierSaved += OnSaved;
         supplierModals.OpenAddModal();
@@ -385,6 +404,7 @@ public partial class ProductModalsViewModel : ViewModelBase
                 ProductSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedProductId = newProduct.Id;
         ProductSaved?.Invoke(this, EventArgs.Empty);
 
         // Mark the setup checklist item as complete

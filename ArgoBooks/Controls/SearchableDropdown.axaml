@@ -70,6 +70,7 @@
                 <Button Classes="link-button"
                         Content="{Binding EmptyCreateLinkText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                         Command="{Binding EmptyCreateCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                        CommandParameter="{Binding EmptyCreateCommandParameter, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                         VerticalAlignment="Center" />
             </StackPanel>
         </Border>

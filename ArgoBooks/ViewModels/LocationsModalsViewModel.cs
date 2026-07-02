@@ -23,6 +23,12 @@ public partial class LocationsModalsViewModel : ViewModelBase
     public event EventHandler? LocationSaved;
 
     /// <summary>
+    /// The Id of the location most recently created via the Add modal. Lets a caller that
+    /// opened "create location" from another modal auto-select the new location after save.
+    /// </summary>
+    public string? LastSavedLocationId { get; private set; }
+
+    /// <summary>
     /// Raised when a location is deleted.
     /// </summary>
     public event EventHandler? LocationDeleted;
@@ -283,6 +289,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
                 LocationSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedLocationId = newLocation.Id;
         LocationSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
     }

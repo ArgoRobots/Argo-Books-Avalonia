@@ -627,6 +627,7 @@
                                                                     ShowAddNew="True"
                                                                     AddNewText="{loc:Loc 'Create new product'}"
                                                                     AddNewCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).OpenCreateProductCommand}"
+                                                                    AddNewCommandParameter="{Binding}"
                                                                     EmptyMessage="{loc:Loc 'No products found.'}"
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />
@@ -1905,6 +1906,7 @@
                                                                     ShowAddNew="True"
                                                                     AddNewText="{loc:Loc 'Create new product'}"
                                                                     AddNewCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).OpenCreateProductCommand}"
+                                                                    AddNewCommandParameter="{Binding}"
                                                                     EmptyMessage="No products found."
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />

@@ -374,7 +374,7 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     /// Opens the create rental item modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void OpenCreateRentalItem()
+    private void OpenCreateRentalItem(RentalModalLineItem? lineItem)
     {
         var rentalInventoryModals = App.RentalInventoryModalsViewModel;
         if (rentalInventoryModals == null) return;
@@ -383,6 +383,14 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         {
             rentalInventoryModals.ItemSaved -= OnSaved;
             UpdateDropdownOptions();
+
+            // Auto-select the new rental item into the line whose dropdown launched the create.
+            if (lineItem != null)
+            {
+                var newItem = AvailableItems.FirstOrDefault(i => i.Id == rentalInventoryModals.LastSavedItemId);
+                if (newItem != null)
+                    lineItem.SelectedItem = newItem;
+            }
         }
         rentalInventoryModals.ItemSaved += OnSaved;
         rentalInventoryModals.OpenAddModal();
@@ -401,6 +409,11 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         {
             customerModals.CustomerSaved -= OnSaved;
             UpdateDropdownOptions();
+
+            // Auto-select the customer the user just created.
+            var newCustomer = AvailableCustomers.FirstOrDefault(c => c.Id == customerModals.LastSavedCustomerId);
+            if (newCustomer != null)
+                ModalCustomer = newCustomer;
         }
         customerModals.CustomerSaved += OnSaved;
         customerModals.OpenAddModal();

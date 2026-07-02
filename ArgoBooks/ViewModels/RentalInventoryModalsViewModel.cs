@@ -296,6 +296,12 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
     #region Events
 
     public event EventHandler? ItemSaved;
+
+    /// <summary>
+    /// The Id of the rental item most recently created via the Add modal. Lets a caller that
+    /// opened "create rental item" from another modal auto-select the new item after save.
+    /// </summary>
+    public string? LastSavedItemId { get; private set; }
     public event EventHandler? ItemDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
@@ -358,6 +364,11 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         {
             customerModals.CustomerSaved -= OnSaved;
             UpdateDropdownOptions();
+
+            // Auto-select the customer the user just created.
+            var newCustomer = AvailableCustomers.FirstOrDefault(c => c.Id == customerModals.LastSavedCustomerId);
+            if (newCustomer != null)
+                RentOutCustomer = newCustomer;
         }
         customerModals.CustomerSaved += OnSaved;
         customerModals.OpenAddModal();
@@ -413,6 +424,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedItemId = newItem.Id;
         ItemSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
     }

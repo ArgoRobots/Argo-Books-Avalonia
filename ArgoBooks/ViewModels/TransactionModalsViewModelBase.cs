@@ -1115,6 +1115,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             {
                 supplierModals.SupplierSaved -= OnSaved;
                 LoadCounterpartyOptions();
+                SelectCounterparty(supplierModals.LastSavedSupplierId);
             }
             supplierModals.SupplierSaved += OnSaved;
             supplierModals.OpenAddModal();
@@ -1128,10 +1129,22 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             {
                 customerModals.CustomerSaved -= OnSaved;
                 LoadCounterpartyOptions();
+                SelectCounterparty(customerModals.LastSavedCustomerId);
             }
             customerModals.CustomerSaved += OnSaved;
             customerModals.OpenAddModal();
         }
+    }
+
+    /// <summary>
+    /// Selects the counterparty option with the given id, if present, after the options reload.
+    /// </summary>
+    private void SelectCounterparty(string? counterpartyId)
+    {
+        if (string.IsNullOrEmpty(counterpartyId)) return;
+        var option = CounterpartyOptions.FirstOrDefault(c => c.Id == counterpartyId);
+        if (option != null)
+            SelectedCounterparty = option;
     }
 
     [RelayCommand]
@@ -1145,13 +1158,18 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             categoryModals.CategorySaved -= OnSaved;
             LoadCategoryOptions();
+
+            // Auto-select the category the user just created.
+            var newCategory = CategoryOptions.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
+            if (newCategory != null)
+                SelectedCategory = newCategory;
         }
         categoryModals.CategorySaved += OnSaved;
         categoryModals.OpenAddModal(isExpense);
     }
 
     [RelayCommand]
-    protected void OpenCreateProduct()
+    protected void OpenCreateProduct(TLineItem? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
@@ -1161,6 +1179,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             productModals.ProductSaved -= OnSaved;
             LoadProductOptions();
+
+            // Auto-select the new product into the line item whose dropdown launched the create.
+            if (lineItem != null)
+            {
+                var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                if (newProduct != null)
+                    lineItem.SelectedProduct = newProduct;
+            }
         }
         productModals.ProductSaved += OnSaved;
         productModals.OpenAddModal(isExpense);

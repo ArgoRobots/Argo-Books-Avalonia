@@ -83,6 +83,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<ICommand?> EmptyCreateCommandProperty =
         AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(EmptyCreateCommand));
 
+    public static readonly StyledProperty<object?> AddNewCommandParameterProperty =
+        AvaloniaProperty.Register<SearchableDropdown, object?>(nameof(AddNewCommandParameter));
+
+    public static readonly StyledProperty<object?> EmptyCreateCommandParameterProperty =
+        AvaloniaProperty.Register<SearchableDropdown, object?>(nameof(EmptyCreateCommandParameter));
+
     public static readonly StyledProperty<IEnumerable?> PriorityItemsProperty =
         AvaloniaProperty.Register<SearchableDropdown, IEnumerable?>(nameof(PriorityItems));
 
@@ -235,6 +241,27 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Optional parameter passed to <see cref="AddNewCommand"/>. When set (e.g. the owning
+    /// line-item object in a repeated row), it is forwarded instead of the typed search text so
+    /// the consumer can auto-select the newly created entity into the row that launched the create.
+    /// </summary>
+    public object? AddNewCommandParameter
+    {
+        get => GetValue(AddNewCommandParameterProperty);
+        set => SetValue(AddNewCommandParameterProperty, value);
+    }
+
+    /// <summary>
+    /// Optional parameter passed to <see cref="EmptyCreateCommand"/> (the empty-state "create"
+    /// link). Mirrors <see cref="AddNewCommandParameter"/> for the no-items case.
+    /// </summary>
+    public object? EmptyCreateCommandParameter
+    {
+        get => GetValue(EmptyCreateCommandParameterProperty);
+        set => SetValue(EmptyCreateCommandParameterProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets the priority items shown at the top of the dropdown.
     /// </summary>
     public IEnumerable? PriorityItems
@@ -360,9 +387,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         SelectItemCommand = new RelayCommand<object>(SelectItem);
         AddNewInternalCommand = new RelayCommand(() =>
         {
-            var text = SearchText;
+            // Forward the explicit parameter (e.g. the owning line item) when the consumer set one;
+            // otherwise fall back to the typed search text, which some consumers use as the new name.
+            var parameter = AddNewCommandParameter ?? SearchText;
             IsDropdownOpen = false;
-            AddNewCommand?.Execute(text);
+            AddNewCommand?.Execute(parameter);
             // The consumer command may set SearchText (showing the pending new name),
             // which re-opens the dropdown via OnSearchTextChanged. Close it again.
             IsDropdownOpen = false;

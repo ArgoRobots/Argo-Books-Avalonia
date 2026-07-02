@@ -203,6 +203,11 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         {
             stockLevelsModals.ItemSaved -= OnSaved;
             LoadInventoryItems();
+
+            // Auto-select the inventory item the user just created.
+            var newItem = AvailableInventoryItems.FirstOrDefault(o => o.InventoryItem?.Id == stockLevelsModals.LastSavedItemId);
+            if (newItem != null)
+                SelectedInventoryOption = newItem;
         }
         stockLevelsModals.ItemSaved += OnSaved;
         stockLevelsModals.OpenAddItemModal();

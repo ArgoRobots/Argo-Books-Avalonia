@@ -26,6 +26,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     #region Events
 
     public event EventHandler? InvoiceSaved;
+
+    /// <summary>
+    /// The Id of the invoice most recently created via the create modal. Lets a caller that
+    /// opened "create invoice" from another modal (e.g. Payments) auto-select it after save.
+    /// </summary>
+    public string? LastSavedInvoiceId { get; private set; }
     public event EventHandler? InvoiceDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
@@ -486,6 +492,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             customerModals.CustomerSaved -= OnCustomerSaved;
             LoadCustomerOptions(includeAllOption: false);
+
+            // Auto-select the customer the user just created.
+            var newCustomer = CustomerOptions.FirstOrDefault(c => c.Id == customerModals.LastSavedCustomerId);
+            if (newCustomer != null)
+                SelectedCustomer = newCustomer;
         }
         customerModals.CustomerSaved += OnCustomerSaved;
         customerModals.OpenAddModal();
@@ -495,7 +506,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void OpenCreateProduct()
+    private void OpenCreateProduct(LineItemDisplayModel? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
@@ -504,6 +515,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             productModals.ProductSaved -= OnProductSaved;
             LoadProductOptions();
+
+            // Auto-select the new product into the line item whose dropdown launched the create.
+            if (lineItem != null)
+            {
+                var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                if (newProduct != null)
+                    lineItem.SelectedProduct = newProduct;
+            }
         }
         productModals.ProductSaved += OnProductSaved;
         productModals.OpenAddModal();
@@ -1630,6 +1649,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             _ = App.InvoiceUsageService?.IncrementUsageAsync();
         }
 
+        LastSavedInvoiceId = invoice.Id;
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
 
         // Auto-save immediately so the asterisk doesn't linger
@@ -1826,6 +1846,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
         LinkInvoiceToRentals(invoice, companyData);
 
+        LastSavedInvoiceId = invoice.Id;
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         CloseCreateEditModal();
 

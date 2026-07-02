@@ -2353,13 +2353,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             supplierModals.SupplierSaved -= OnSaved;
             LoadSupplierOptions();
+
+            // Auto-select the supplier the user just created.
+            var newSupplier = SupplierOptions.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
+            if (newSupplier != null)
+                SelectedSupplier = newSupplier;
         }
         supplierModals.SupplierSaved += OnSaved;
         supplierModals.OpenAddModal();
     }
 
     [RelayCommand]
-    private void OpenCreateProduct()
+    private void OpenCreateProduct(ScannedLineItemViewModel? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
@@ -2368,6 +2373,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             productModals.ProductSaved -= OnSaved;
             LoadProductOptions();
+
+            // Auto-select the new product into the line item whose dropdown launched the create.
+            if (lineItem != null)
+            {
+                var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                if (newProduct != null)
+                    lineItem.SelectedProduct = newProduct;
+            }
         }
         productModals.ProductSaved += OnSaved;
         productModals.OpenAddModal();

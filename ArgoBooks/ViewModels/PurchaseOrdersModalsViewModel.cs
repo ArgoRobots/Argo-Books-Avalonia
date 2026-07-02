@@ -352,6 +352,11 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         {
             supplierModals.SupplierSaved -= OnSaved;
             LoadSuppliers();
+
+            // Auto-select the supplier the user just created.
+            var newSupplier = AvailableSuppliers.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
+            if (newSupplier != null)
+                SelectedSupplier = newSupplier;
         }
         supplierModals.SupplierSaved += OnSaved;
         supplierModals.OpenAddModal();
@@ -361,7 +366,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void OpenCreateProduct()
+    private void OpenCreateProduct(OrderLineItemViewModel? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
@@ -370,6 +375,14 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         {
             productModals.ProductSaved -= OnSaved;
             LoadProducts();
+
+            // Auto-select the new product into the line item whose dropdown launched the create.
+            if (lineItem != null)
+            {
+                var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                if (newProduct != null)
+                    lineItem.SelectedProduct = newProduct;
+            }
         }
         productModals.ProductSaved += OnSaved;
         productModals.OpenAddModal();

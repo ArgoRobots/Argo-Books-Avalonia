@@ -23,6 +23,12 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? ItemSaved;
 
+    /// <summary>
+    /// The Id of the inventory item most recently created via the Add-item modal. Lets a caller
+    /// that opened "create inventory item" from another modal auto-select the new item after save.
+    /// </summary>
+    public string? LastSavedItemId { get; private set; }
+
     #endregion
 
     #region Adjust Stock Modal State
@@ -344,6 +350,11 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         {
             locationModals.LocationSaved -= OnSaved;
             ReloadAvailableLocations();
+
+            // Auto-select the location the user just created.
+            var newLocation = AvailableLocations.FirstOrDefault(l => l.Id == locationModals.LastSavedLocationId);
+            if (newLocation != null)
+                SelectedLocation = newLocation;
         }
         locationModals.LocationSaved += OnSaved;
         locationModals.OpenAddModal();
@@ -362,6 +373,11 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         {
             productModals.ProductSaved -= OnSaved;
             ReloadAvailableProducts();
+
+            // Auto-select the product the user just created.
+            var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+            if (newProduct != null)
+                SelectedProduct = newProduct;
         }
         productModals.ProductSaved += OnSaved;
         productModals.OpenAddModal();
@@ -544,6 +560,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
             }));
 
         // Notify and close
+        LastSavedItemId = newItem.Id;
         ItemSaved?.Invoke(this, EventArgs.Empty);
         CloseAddItemModal();
     }

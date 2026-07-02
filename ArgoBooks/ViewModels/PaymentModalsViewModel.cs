@@ -352,6 +352,11 @@ public partial class PaymentModalsViewModel : ViewModelBase
         {
             invoiceModals.InvoiceSaved -= OnSaved;
             LoadInvoiceOptions();
+
+            // Auto-select the invoice the user just created.
+            var newInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == invoiceModals.LastSavedInvoiceId);
+            if (newInvoice != null)
+                SelectedInvoice = newInvoice;
         }
         invoiceModals.InvoiceSaved += OnSaved;
         invoiceModals.OpenCreateModal();

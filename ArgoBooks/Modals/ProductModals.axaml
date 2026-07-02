@@ -104,7 +104,7 @@
                                                                 ShowAddNew="True"
                                                                 AddNewText="{loc:Loc 'Create new supplier'}"
                                                                 AddNewCommand="{Binding OpenSuppliersWithAddModalCommand}"
-                                                                EmptyMessage="{loc:Loc 'No suppliers available.'}"
+                                                                EmptyMessage="{loc:Loc 'No suppliers.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create'}"
                                                                 EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                                 </StackPanel>
@@ -242,7 +242,7 @@
                                                                 ShowAddNew="True"
                                                                 AddNewText="{loc:Loc 'Create new supplier'}"
                                                                 AddNewCommand="{Binding OpenSuppliersWithAddModalCommand}"
-                                                                EmptyMessage="{loc:Loc 'No suppliers available.'}"
+                                                                EmptyMessage="{loc:Loc 'No suppliers.'}"
                                                                 EmptyCreateLinkText="{loc:Loc 'Create'}"
                                                                 EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                                 </StackPanel>

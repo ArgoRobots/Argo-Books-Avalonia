@@ -166,9 +166,11 @@
                                                              ShowAddNew="True"
                                                              AddNewText="{loc:Loc 'Create new product'}"
                                                              AddNewCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
+                                                             AddNewCommandParameter="{Binding}"
                                                              EmptyMessage="{loc:Loc 'No products found.'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
+                                                             EmptyCreateCommandParameter="{Binding}"
                                                              HasError="{Binding HasProductError}"
                                                              ErrorMessage="{loc:Loc 'Please select a product.'}" />
                                                     <NumericUpDown Grid.Column="1"
