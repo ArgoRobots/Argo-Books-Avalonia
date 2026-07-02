@@ -730,8 +730,23 @@ public partial class App
             {
                 if (!CompanyManager.IsSampleCompany)
                 {
-                    try { await CompanyManager.SaveCompanyAsync(); }
-                    catch { /* Continue even if save fails */ }
+                    try
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Don't close on a failed save: CloseCompanyAsync discards unsaved edits.
+                        // Abort the restart and keep the company open to protect the user's data.
+                        ErrorLogger?.LogWarning($"Save before tutorial restart failed: {ex.Message}", "AutoSave");
+                        if (_welcomeScreenViewModel != null)
+                            _welcomeScreenViewModel.IsTutorialMode = false;
+                        _appShellViewModel.AddNotification(
+                            "Could not restart tutorial",
+                            "Your company could not be saved, so it was left open to protect unsaved changes. Please save manually and try again.",
+                            NotificationType.Warning);
+                        return;
+                    }
                 }
                 await CompanyManager.CloseCompanyAsync();
             }
@@ -1627,7 +1642,15 @@ public partial class App
                     {
                         _mainWindowViewModel?.HideLoading();
                         ErrorLogger?.LogWarning($"Auto-save before lock failed: {ex.Message}", "AutoSave");
-                        // Continue to close even if save fails - user can reopen
+                        // Do NOT close on a failed save: CloseCompanyAsync discards the working copy and
+                        // every unsaved edit. Abort the lock and keep the session open so the user can
+                        // save manually, matching the window-close path which also refuses to discard.
+                        _appShellViewModel.AddNotification(
+                            "Auto-lock postponed",
+                            "Could not auto-save before locking, so your session stays open to protect unsaved changes. Please save manually.",
+                            NotificationType.Warning);
+                        _idleDetectionService.ResetIdleTimer();
+                        return;
                     }
                 }
 
