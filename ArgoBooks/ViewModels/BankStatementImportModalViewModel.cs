@@ -230,8 +230,11 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task Cancel()
     {
-        // Confirm discard like other modals (including while AI categorization is still running).
-        if (Rows.Count > 0 && !await ConfirmDiscardNewAsync())
+        // Confirm discard like other modals whenever an import is in flight: either rows are already
+        // parsed (spreadsheet, and the AI-categorization phase), or an import is still loading with no
+        // rows yet (a PDF extraction reads "Reading PDF statement..." before any rows exist). Checking
+        // Rows.Count alone silently closed the modal mid-PDF-extraction with no prompt.
+        if ((Rows.Count > 0 || IsLoading) && !await ConfirmDiscardNewAsync())
             return;
         IsOpen = false;
     }
