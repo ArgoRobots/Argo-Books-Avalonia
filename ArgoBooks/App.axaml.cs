@@ -2855,6 +2855,14 @@ public partial class App : Application
                 data.IdCounters.PurchaseOrder = restoredCounters.PurchaseOrder;
                 data.IdCounters.RentalItem = restoredCounters.RentalItem;
                 data.IdCounters.Rental = restoredCounters.Rental;
+                // Restore the remaining counters too, so a snapshot restore is faithful and later
+                // IDs don't drift/gap for these entity types.
+                data.IdCounters.Accountant = restoredCounters.Accountant;
+                data.IdCounters.StockTransfer = restoredCounters.StockTransfer;
+                data.IdCounters.Return = restoredCounters.Return;
+                data.IdCounters.LostDamaged = restoredCounters.LostDamaged;
+                data.IdCounters.Receipt = restoredCounters.Receipt;
+                data.IdCounters.InvoiceTemplate = restoredCounters.InvoiceTemplate;
             }
         }
 
