@@ -42,4 +42,39 @@ public class InvoiceTotalsCalculationTests
         Assert.Equal(13m, vm.TaxAmount);
         Assert.Equal(143m, vm.Total);
     }
+
+    [Fact]
+    public void PercentageDiscountWithTax_TaxesThePostDiscountSubtotal()
+    {
+        var vm = new InvoiceModalsViewModel();
+        vm.LineItems.Add(new LineItemDisplayModel { Quantity = 1, UnitPrice = 100m });
+        vm.TaxRate = 10m;
+        vm.DiscountIsPercent = true;
+        vm.DiscountAmount = 25m;     // 25% of the raw subtotal
+        vm.SecurityDeposit = 0m;
+
+        // §4: discount = 25; taxable base 100 - 25 = 75; tax = 7.5; total = 82.5. Subtotal stays raw.
+        Assert.Equal(100m, vm.Subtotal);
+        Assert.Equal(7.5m, vm.TaxAmount);
+        Assert.Equal(82.5m, vm.Total);
+    }
+
+    [Fact]
+    public void DiscountFeeTaxAndDeposit_Combine_PerSpec()
+    {
+        var vm = new InvoiceModalsViewModel();
+        vm.LineItems.Add(new LineItemDisplayModel { Quantity = 1, UnitPrice = 100m });
+        vm.LineItems.Add(new LineItemDisplayModel { Quantity = 1, UnitPrice = 50m });
+        vm.TaxRate = 10m;
+        vm.DiscountIsPercent = false;
+        vm.DiscountAmount = 30m;     // flat discount
+        vm.CustomFeeIsPercent = false;
+        vm.CustomFeeAmount = 20m;    // taxable fee
+        vm.SecurityDeposit = 40m;    // added to total, NOT taxed
+
+        // taxable base = 150 - 30 + 20 = 140; tax = 14; total = 140 + 14 + 40 = 194.
+        Assert.Equal(150m, vm.Subtotal);
+        Assert.Equal(14m, vm.TaxAmount);
+        Assert.Equal(194m, vm.Total);
+    }
 }
