@@ -28,6 +28,15 @@ public static class ChartImageExportService
     private const int DefaultExportHeight = 400;
 
     /// <summary>
+    /// The background to paint behind an exported chart, matching the app's chart card for the
+    /// current theme (Themes/LightTheme.axaml and DarkTheme.axaml SurfaceColor). Exporting a
+    /// transparent background made a light-theme chart look like a broken dark one, because image
+    /// viewers render the transparent area as a dark canvas; a solid surface color matches the app.
+    /// </summary>
+    private static SKColor GetExportBackground()
+        => ThemeService.Instance.IsDarkTheme ? SKColor.Parse("#1F2937") : SKColors.White;
+
+    /// <summary>
     /// Saves a CartesianChart as an image file with a file picker dialog.
     /// </summary>
     /// <param name="topLevel">The top-level control for the file picker.</param>
@@ -47,7 +56,7 @@ public static class ChartImageExportService
             {
                 Width = width,
                 Height = height,
-                Background = SKColors.Transparent
+                Background = GetExportBackground()
             };
             skChart.SaveImage(filePath, format, 100);
             return true;
@@ -77,7 +86,7 @@ public static class ChartImageExportService
             {
                 Width = chartWidth,
                 Height = chartHeight,
-                Background = SKColors.Transparent
+                Background = GetExportBackground()
             };
 
             // Include the sibling PieChartLegend when present
@@ -123,7 +132,7 @@ public static class ChartImageExportService
             {
                 Width = width,
                 Height = height,
-                Background = SKColors.Transparent,
+                Background = GetExportBackground(),
                 Series = chart.Series ?? [],
                 MapProjection = chart.MapProjection
             };
@@ -250,8 +259,10 @@ public static class ChartImageExportService
 
         using var typeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
         using var font = new SKFont(typeface, fontSize);
-        using var labelPaint = new SKPaint { Color = new SKColor(0x33, 0x33, 0x33), IsAntialias = true };
-        using var percentPaint = new SKPaint { Color = new SKColor(0x88, 0x88, 0x88), IsAntialias = true };
+        // Legend text follows the theme so it stays readable on the solid export background.
+        var isDark = ThemeService.Instance.IsDarkTheme;
+        using var labelPaint = new SKPaint { Color = isDark ? new SKColor(0xF9, 0xFA, 0xFB) : new SKColor(0x33, 0x33, 0x33), IsAntialias = true };
+        using var percentPaint = new SKPaint { Color = isDark ? new SKColor(0x9C, 0xA3, 0xAF) : new SKColor(0x88, 0x88, 0x88), IsAntialias = true };
 
         // Measure text to calculate legend width
         float maxLabelWidth = 0;
@@ -270,7 +281,7 @@ public static class ChartImageExportService
 
         using var surface = SKSurface.Create(new SKImageInfo(totalWidth, totalHeight));
         var canvas = surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
+        canvas.Clear(GetExportBackground());
 
         // Draw chart on the left, centered vertically
         var chartY = (totalHeight - chartHeight) / 2f;
