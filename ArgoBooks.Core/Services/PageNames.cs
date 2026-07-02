@@ -23,7 +23,6 @@ public static class PageNames
     public const string Categories = "Categories";
     public const string Customers = "Customers";
     public const string Suppliers = "Suppliers";
-    public const string Employees = "Employees";
     public const string RentalInventory = "RentalInventory";
     public const string RentalRecords = "RentalRecords";
     public const string Returns = "Returns";

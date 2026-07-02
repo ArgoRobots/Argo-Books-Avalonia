@@ -64,12 +64,6 @@ public class CompanyData
     public List<Supplier> Suppliers { get; init; } = [];
 
     /// <summary>
-    /// All employees.
-    /// </summary>
-    [JsonPropertyName("employees")]
-    public List<Employee> Employees { get; init; } = [];
-
-    /// <summary>
     /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]
@@ -311,8 +305,6 @@ public class CompanyData
     [JsonIgnore] private int _productLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Supplier>? _supplierLookup;
     [JsonIgnore] private int _supplierLookupCount = -1;
-    [JsonIgnore] private Dictionary<string, Employee>? _employeeLookup;
-    [JsonIgnore] private int _employeeLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Category>? _categoryLookup;
     [JsonIgnore] private int _categoryLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Accountant>? _accountantLookup;
@@ -343,7 +335,6 @@ public class CompanyData
         _customerLookup = null;
         _productLookup = null;
         _supplierLookup = null;
-        _employeeLookup = null;
         _categoryLookup = null;
         _accountantLookup = null;
         _locationLookup = null;
@@ -392,20 +383,6 @@ public class CompanyData
             _supplierLookupCount = Suppliers.Count;
         }
         return _supplierLookup.GetValueOrDefault(id);
-    }
-
-    /// <summary>
-    /// Gets an employee by ID.
-    /// </summary>
-    public Employee? GetEmployee(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return null;
-        if (_employeeLookup == null || _employeeLookupCount != Employees.Count)
-        {
-            _employeeLookup = BuildLookup(Employees, e => e.Id);
-            _employeeLookupCount = Employees.Count;
-        }
-        return _employeeLookup.GetValueOrDefault(id);
     }
 
     /// <summary>
@@ -514,9 +491,6 @@ public class IdCounters
 
     [JsonPropertyName("supplier")]
     public int Supplier { get; set; }
-
-    [JsonPropertyName("employee")]
-    public int Employee { get; set; }
 
     [JsonPropertyName("category")]
     public int Category { get; set; }

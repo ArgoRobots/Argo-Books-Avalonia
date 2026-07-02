@@ -89,7 +89,6 @@ public enum TransactionType
     Customers,
     Suppliers,
     Products,
-    Employees,
     Categories,
     Locations,
     Accountants
@@ -295,7 +294,6 @@ public static class ReportEnumExtensions
             TransactionType.Customers => "Customers",
             TransactionType.Suppliers => "Suppliers",
             TransactionType.Products => "Products",
-            TransactionType.Employees => "Employees",
             TransactionType.Categories => "Categories",
             TransactionType.Locations => "Locations",
             TransactionType.Accountants => "Accountants",

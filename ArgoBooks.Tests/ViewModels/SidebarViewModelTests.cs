@@ -395,12 +395,6 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void Constructor_InitializesTeamItems()
-    {
-        Assert.True(_viewModel.TeamItems.Count > 0);
-    }
-
-    [Fact]
     public void Constructor_InitializesTrackingItems()
     {
         Assert.True(_viewModel.TrackingItems.Count > 0);

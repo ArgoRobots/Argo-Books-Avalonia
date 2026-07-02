@@ -278,7 +278,6 @@ public class SpreadsheetExportService
             "Rental Inventory" => GetRentalInventoryData(data),
             "Rental Records" => GetRentalRecordsData(data, startDate, endDate),
             "Categories" => GetCategoriesData(data),
-            "Employees" => GetEmployeesData(data),
             "Locations" => GetLocationsData(data),
             "Recurring Invoices" => GetRecurringInvoicesData(data),
             "Stock Adjustments" => GetStockAdjustmentsData(data, startDate, endDate),
@@ -522,28 +521,6 @@ public class SpreadsheetExportService
             c.ParentId ?? "",
             c.Description ?? "",
             c.Icon
-        }).ToList();
-        return (headers, rows);
-    }
-
-    private (string[] Headers, List<object[]> Rows) GetEmployeesData(CompanyData data)
-    {
-        var headers = new[] { "ID", "First Name", "Last Name", "Email", "Phone", "Date of Birth", "Position", "Hire Date", "Employment Type", "Salary Type", "Salary Amount", "Pay Frequency", "Status" };
-        var rows = data.Employees.Select(e => new object[]
-        {
-            e.Id,
-            e.FirstName,
-            e.LastName,
-            e.Email,
-            e.Phone,
-            e.DateOfBirth ?? DateTime.MinValue,
-            e.Position,
-            e.HireDate,
-            e.EmploymentType,
-            e.SalaryType,
-            e.SalaryAmount,
-            e.PayFrequency,
-            e.Status.ToString()
         }).ToList();
         return (headers, rows);
     }

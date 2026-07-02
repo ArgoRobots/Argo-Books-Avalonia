@@ -584,7 +584,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     #endregion
 
-    #region Entity Data (Customers, Suppliers, Products, Employees, Categories, Locations, Accountants)
+    #region Entity Data (Customers, Suppliers, Products, Categories, Locations, Accountants)
 
     public List<CustomerTableRow> GetCustomersTableData(TableReportElement tableConfig)
     {
@@ -663,40 +663,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 UnitPrice = p.UnitPrice,
                 CostPrice = p.CostPrice,
                 Status = p.Status.ToString()
-            };
-        }).ToList();
-    }
-
-    public List<EmployeeTableRow> GetEmployeesTableData(TableReportElement tableConfig)
-    {
-        if (companyData?.Employees == null)
-            return [];
-
-        var query = companyData.Employees.AsEnumerable();
-
-        query = tableConfig.SortOrder switch
-        {
-            TableSortOrder.DateAscending => query.OrderBy(e => e.HireDate),
-            TableSortOrder.DateDescending => query.OrderByDescending(e => e.HireDate),
-            TableSortOrder.AmountAscending => query.OrderBy(e => e.SalaryAmount),
-            TableSortOrder.AmountDescending => query.OrderByDescending(e => e.SalaryAmount),
-            _ => query.OrderBy(e => e.LastName)
-        };
-
-        if (tableConfig.MaxRows > 0)
-            query = query.Take(tableConfig.MaxRows);
-
-        return query.Select(e =>
-        {
-            return new EmployeeTableRow
-            {
-                Id = e.Id,
-                FullName = e.FullName,
-                Position = e.Position,
-                HireDate = e.HireDate,
-                EmploymentType = e.EmploymentType,
-                SalaryAmount = e.SalaryAmount,
-                Status = e.Status.ToString()
             };
         }).ToList();
     }
@@ -1387,20 +1353,6 @@ public class ProductTableRow
     public string CategoryName { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
     public decimal CostPrice { get; set; }
-    public string Status { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Represents an employee row in a table.
-/// </summary>
-public class EmployeeTableRow
-{
-    public string Id { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
-    public string Position { get; set; } = string.Empty;
-    public DateTime HireDate { get; set; }
-    public string EmploymentType { get; set; } = string.Empty;
-    public decimal SalaryAmount { get; set; }
     public string Status { get; set; } = string.Empty;
 }
 

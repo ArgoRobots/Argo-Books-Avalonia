@@ -449,18 +449,8 @@ public partial class ReturnsPageViewModel : ViewModelBase, ICleanupViewModel
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return "Unknown";
 
-        if (returnRecord.ReturnType == "Expense")
-        {
-            // For expense returns, the ProcessedBy is typically an employee
-            var employee = companyData.GetEmployee(returnRecord.ProcessedBy ?? "");
-            return employee?.FullName ?? returnRecord.ProcessedBy ?? "Unknown";
-        }
-        else
-        {
-            // For customer returns, the ProcessedBy is typically an accountant
-            var accountant = companyData.GetAccountant(returnRecord.ProcessedBy ?? "");
-            return accountant?.Name ?? returnRecord.ProcessedBy ?? "Unknown";
-        }
+        var accountant = companyData.GetAccountant(returnRecord.ProcessedBy ?? "");
+        return accountant?.Name ?? returnRecord.ProcessedBy ?? "Unknown";
     }
 
     private void UpdatePageNumbers()

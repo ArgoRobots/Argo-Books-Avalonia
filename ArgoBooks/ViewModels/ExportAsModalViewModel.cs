@@ -109,7 +109,6 @@ public partial class ExportAsModalViewModel : ViewModelBase
         AddDataItem(new ExportDataItem { Name = "Suppliers", Key = "Suppliers", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Products", Key = "Products", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Categories", Key = "Categories", RecordCount = 0, IsSelected = true });
-        AddDataItem(new ExportDataItem { Name = "Employees", Key = "Employees", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Locations", Key = "Locations", RecordCount = 0, IsSelected = true });
 
         // Transactions
@@ -170,7 +169,6 @@ public partial class ExportAsModalViewModel : ViewModelBase
                 "Suppliers" => companyData.Suppliers.Count,
                 "Products" => companyData.Products.Count,
                 "Categories" => companyData.Categories.Count,
-                "Employees" => companyData.Employees.Count,
                 "Locations" => companyData.Locations.Count,
                 "Revenue" => companyData.Revenues.Count,
                 "Expenses" => companyData.Expenses.Count,

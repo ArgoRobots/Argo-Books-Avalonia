@@ -96,28 +96,6 @@ public partial class DataValidator(CompanyData companyData)
     }
 
     /// <summary>
-    /// Validates an employee.
-    /// </summary>
-    public ValidationResult ValidateEmployee(Employee employee)
-    {
-        var result = new ValidationResult();
-
-        if (string.IsNullOrWhiteSpace(employee.FirstName))
-            result.AddError(nameof(employee.FirstName), "First name is required.");
-
-        if (string.IsNullOrWhiteSpace(employee.LastName))
-            result.AddError(nameof(employee.LastName), "Last name is required.");
-
-        if (!string.IsNullOrWhiteSpace(employee.Email) && !IsValidEmail(employee.Email))
-            result.AddError(nameof(employee.Email), "Invalid email address format.");
-
-        if (employee.SalaryAmount < 0)
-            result.AddError(nameof(employee.SalaryAmount), "Salary cannot be negative.");
-
-        return result;
-    }
-
-    /// <summary>
     /// Validates a category.
     /// </summary>
     public ValidationResult ValidateCategory(Category category)

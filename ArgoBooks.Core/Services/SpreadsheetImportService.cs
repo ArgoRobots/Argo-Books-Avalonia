@@ -839,9 +839,6 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.Categories:
                 ImportCategories(data, headers, rows, options);
                 break;
-            case SpreadsheetSheetType.Employees:
-                ImportEmployees(data, headers, rows, options);
-                break;
             case SpreadsheetSheetType.Locations:
                 ImportLocations(data, headers, rows, options);
                 break;
@@ -887,7 +884,6 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.RentalInventory => data.RentalInventory.Count,
         SpreadsheetSheetType.RentalRecords => data.Rentals.Count,
         SpreadsheetSheetType.Categories => data.Categories.Count,
-        SpreadsheetSheetType.Employees => data.Employees.Count,
         SpreadsheetSheetType.Locations => data.Locations.Count,
         SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
         SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Count,
@@ -1592,7 +1588,6 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.Revenue => data.Revenues.Select(r => r.Id),
         SpreadsheetSheetType.Payments => data.Payments.Select(p => p.Id),
         SpreadsheetSheetType.Categories => data.Categories.Select(c => c.Id),
-        SpreadsheetSheetType.Employees => data.Employees.Select(e => e.Id),
         SpreadsheetSheetType.Locations => data.Locations.Select(l => l.Id),
         SpreadsheetSheetType.Inventory => data.Inventory.Select(i => i.Id),
         SpreadsheetSheetType.RentalInventory => data.RentalInventory.Select(r => r.Id),
@@ -1865,17 +1860,6 @@ public class SpreadsheetImportService
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
                     if (existing != null) data.Categories.Remove(existing);
                     data.Categories.Add(category);
-                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
-                }
-                return ImportEntityResult.Failed;
-            case SpreadsheetSheetType.Employees:
-                var employee = JsonSerializer.Deserialize<Employee>(jsonStr, opts);
-                if (employee != null && !string.IsNullOrEmpty(employee.Id))
-                {
-                    var existing = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
-                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
-                    if (existing != null) data.Employees.Remove(existing);
-                    data.Employees.Add(employee);
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
                 return ImportEntityResult.Failed;
@@ -2214,7 +2198,6 @@ public class SpreadsheetImportService
             SpreadsheetSheetType.Revenue => data.Revenues.Select(s => s.Id).ToHashSet(),
             SpreadsheetSheetType.RentalInventory => data.RentalInventory.Select(r => r.Id).ToHashSet(),
             SpreadsheetSheetType.RentalRecords => data.Rentals.Select(r => r.Id).ToHashSet(),
-            SpreadsheetSheetType.Employees => data.Employees.Select(e => e.Id).ToHashSet(),
             SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Select(r => r.Id).ToHashSet(),
             SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Select(s => s.Id).ToHashSet(),
             SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Select(p => p.Id).ToHashSet(),
@@ -2931,9 +2914,6 @@ public class SpreadsheetImportService
                 break;
             case SpreadsheetSheetType.Categories:
                 ImportCategories(data, headers, rows, options);
-                break;
-            case SpreadsheetSheetType.Employees:
-                ImportEmployees(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Locations:
                 ImportLocations(data, headers, rows, options);
@@ -4039,43 +4019,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
-    {
-        foreach (var row in rows)
-        {
-            var id = GetString(row, headers, "ID");
-            var existing = data.Employees.FirstOrDefault(e => e.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
-
-            var employee = existing ?? new Employee();
-            employee.Id = id;
-            employee.FirstName = GetString(row, headers, "First Name");
-            employee.LastName = GetString(row, headers, "Last Name");
-            employee.Email = GetString(row, headers, "Email");
-            employee.Phone = GetString(row, headers, "Phone");
-            employee.DateOfBirth = GetNullableDateTime(row, headers, "Date of Birth");
-            employee.Position = GetString(row, headers, "Position");
-            employee.HireDate = GetDateTime(row, headers, "Hire Date");
-            employee.EmploymentType = GetString(row, headers, "Employment Type");
-            employee.SalaryType = GetString(row, headers, "Salary Type");
-            employee.SalaryAmount = GetDecimal(row, headers, "Salary Amount");
-            employee.PayFrequency = GetString(row, headers, "Pay Frequency");
-            employee.Status = ParseEnum(GetString(row, headers, "Status"), EmployeeStatus.Active);
-
-            if (string.IsNullOrEmpty(employee.EmploymentType))
-                employee.EmploymentType = "Full-time";
-            if (string.IsNullOrEmpty(employee.SalaryType))
-                employee.SalaryType = "Annual";
-            if (string.IsNullOrEmpty(employee.PayFrequency))
-                employee.PayFrequency = "Bi-weekly";
-
-            if (existing == null)
-                data.Employees.Add(employee);
-            else if (options != null)
-                options.UpdatedCount++;
-        }
-    }
-
     private void ImportLocations(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
@@ -4362,7 +4305,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         data.IdCounters.Customer = GetMaxIdNumber(data.Customers.Select(c => c.Id), "CUS-");
         data.IdCounters.Product = GetMaxIdNumber(data.Products.Select(p => p.Id), "PRD-");
         data.IdCounters.Supplier = GetMaxIdNumber(data.Suppliers.Select(s => s.Id), "SUP-");
-        data.IdCounters.Employee = GetMaxIdNumber(data.Employees.Select(e => e.Id), "EMP-");
         data.IdCounters.Category = GetMaxIdNumber(data.Categories.Select(c => c.Id), "CAT-");
         data.IdCounters.Location = GetMaxIdNumber(data.Locations.Select(l => l.Id), "LOC-");
         data.IdCounters.Revenue = Math.Max(

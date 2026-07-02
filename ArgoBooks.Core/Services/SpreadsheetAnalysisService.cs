@@ -555,7 +555,7 @@ Respond with valid JSON only, no markdown code blocks.";
   ""sheets"": [
     {
       ""sourceSheetName"": ""<exact sheet name>"",
-      ""detectedType"": ""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, Employees, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged, Unknown>"",
+      ""detectedType"": ""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged, Unknown>"",
       ""confidence"": 0.95,
       ""tier"": ""Tier1_Mapping"",
       ""tierReason"": """",

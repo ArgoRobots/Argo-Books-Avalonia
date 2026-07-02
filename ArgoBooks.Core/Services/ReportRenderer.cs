@@ -2606,7 +2606,6 @@ public class ReportRenderer : IDisposable
             TransactionType.Customers => Tr("Customers"),
             TransactionType.Suppliers => Tr("Suppliers"),
             TransactionType.Products => Tr("Products"),
-            TransactionType.Employees => Tr("Employees"),
             TransactionType.Categories => Tr("Categories"),
             TransactionType.Locations => Tr("Locations"),
             TransactionType.Accountants => Tr("Accountants"),
@@ -2682,7 +2681,7 @@ public class ReportRenderer : IDisposable
             "Unit Cost", "In Stock", "Reserved", "Available",
             "Total Qty", "Rented", "Previous", "New",
             "Capacity", "In Use", "Budget", "Salary", "Price", "Cost",
-            "Employees", "Transactions"
+            "Transactions"
         };
 
         for (int colIndex = 0; colIndex < columns.Count; colIndex++)
@@ -2982,19 +2981,6 @@ public class ReportRenderer : IDisposable
                         "Category" => r.CategoryName,
                         "Price" => FormatCurrency(r.UnitPrice),
                         "Cost" => FormatCurrency(r.CostPrice),
-                        "Status" => r.Status,
-                        _ => ""
-                    }).ToList());
-                break;
-            case TransactionType.Employees:
-                foreach (var r in tableDataService.GetEmployeesTableData(table))
-                    result.Add(columns.Select(col => col switch
-                    {
-                        "Name" => r.FullName,
-                        "Position" => r.Position,
-                        "Date" => r.HireDate.ToString("MM/dd/yyyy"),
-                        "Type" => r.EmploymentType,
-                        "Salary" => FormatCurrency(r.SalaryAmount),
                         "Status" => r.Status,
                         _ => ""
                     }).ToList());
@@ -4067,7 +4053,6 @@ public class ReportRenderer : IDisposable
             TransactionType.Customers => ["Name", "Company", "Country", "Total", "Status"],
             TransactionType.Suppliers => ["Name", "Contact", "Country", "Terms"],
             TransactionType.Products => ["Name", "SKU", "Category", "Price", "Cost", "Status"],
-            TransactionType.Employees => ["Name", "Position", "Date", "Salary", "Status"],
             TransactionType.Categories => ["Name", "Type"],
             TransactionType.Locations => ["Name", "Contact", "Capacity", "In Use", "Utilization"],
             TransactionType.Accountants => ["Name", "Email", "Phone", "Transactions"],
