@@ -105,12 +105,6 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Last Rental'}" ColumnName="LastRental" SortProperty="LastRental"
-                                                   ColumnWidth="{Binding ColumnWidths.LastRentalColumnWidth}"
-                                                   IsColumnVisible="{Binding ShowLastRentalColumn}"
-                                                   SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
-                                                   SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
-
                         <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
                                                    ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
                                                    IsSortable="False" IsResizable="False" ShowSeparator="False" />
@@ -172,10 +166,6 @@
                                                                  ColumnWidth="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.CountryColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowCountryColumn}" />
 
-                                        <table:ArgoTableCell Text="{Binding LastRentalFormatted}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.LastRentalColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ShowLastRentalColumn}" />
-
                                         <!-- Actions - Custom content required -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
                                                                  ShowSeparator="False">
@@ -222,7 +212,6 @@
                 <CheckBox IsChecked="{Binding ShowPhoneColumn}" Content="{loc:Loc Phone}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowAddressColumn}" Content="{loc:Loc Address}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCountryColumn}" Content="{loc:Loc Country}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowLastRentalColumn}" Content="{loc:Loc 'Last Rental'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

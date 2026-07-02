@@ -114,32 +114,6 @@ public partial class DataValidator(CompanyData companyData)
         if (employee.SalaryAmount < 0)
             result.AddError(nameof(employee.SalaryAmount), "Salary cannot be negative.");
 
-        // Validate department exists
-        if (!string.IsNullOrWhiteSpace(employee.DepartmentId) &&
-            companyData.GetDepartment(employee.DepartmentId) == null)
-            result.AddError(nameof(employee.DepartmentId), "Department not found.");
-
-        return result;
-    }
-
-    /// <summary>
-    /// Validates a department.
-    /// </summary>
-    public ValidationResult ValidateDepartment(Department department)
-    {
-        var result = new ValidationResult();
-
-        if (string.IsNullOrWhiteSpace(department.Name))
-            result.AddError(nameof(department.Name), "Department name is required.");
-
-        if (department.Budget < 0)
-            result.AddError(nameof(department.Budget), "Budget cannot be negative.");
-
-        // Check for duplicate name (excluding self)
-        if (companyData.Departments.Any(d => d.Id != department.Id &&
-            d.Name.Equals(department.Name, StringComparison.OrdinalIgnoreCase)))
-            result.AddError(nameof(department.Name), "A department with this name already exists.");
-
         return result;
     }
 

@@ -23,7 +23,6 @@ public class DataValidatorTests
 
         companyData.Customers.Add(new Customer { Id = "CUS-001", Name = "Existing Customer" });
         companyData.Suppliers.Add(new Supplier { Id = "SUP-001", Name = "Existing Supplier" });
-        companyData.Departments.Add(new Department { Id = "DEP-001", Name = "Engineering", Budget = 100000 });
         companyData.Categories.Add(new Category { Id = "CAT-001", Name = "Electronics", Type = CategoryType.Revenue });
         companyData.Categories.Add(new Category { Id = "CAT-002", Name = "Office Supplies", Type = CategoryType.Expense });
         companyData.Locations.Add(new Location { Id = "LOC-001", Name = "Main Warehouse", Capacity = 1000 });
@@ -742,8 +741,7 @@ public class DataValidatorTests
             FirstName = "Jane",
             LastName = "Smith",
             Email = "jane@company.com",
-            SalaryAmount = 75000,
-            DepartmentId = "DEP-001"
+            SalaryAmount = 75000
         };
 
         var result = validator.ValidateEmployee(employee);
@@ -903,226 +901,6 @@ public class DataValidatorTests
         var result = validator.ValidateEmployee(employee);
 
         Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateEmployee_NonExistentDepartment_ReturnsError()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var employee = new Employee
-        {
-            Id = "EMP-001",
-            FirstName = "John",
-            LastName = "Doe",
-            DepartmentId = "DEP-999"
-        };
-
-        var result = validator.ValidateEmployee(employee);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "DepartmentId" && e.Message.Contains("not found"));
-    }
-
-    [Fact]
-    public void ValidateEmployee_ValidDepartment_ReturnsSuccess()
-    {
-        var (_, validator) = CreateValidatorWithSeedData();
-        var employee = new Employee
-        {
-            Id = "EMP-001",
-            FirstName = "John",
-            LastName = "Doe",
-            DepartmentId = "DEP-001"
-        };
-
-        var result = validator.ValidateEmployee(employee);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateEmployee_EmptyDepartmentId_IsAllowed()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var employee = new Employee
-        {
-            Id = "EMP-001",
-            FirstName = "John",
-            LastName = "Doe",
-            DepartmentId = ""
-        };
-
-        var result = validator.ValidateEmployee(employee);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateEmployee_NullDepartmentId_IsAllowed()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var employee = new Employee
-        {
-            Id = "EMP-001",
-            FirstName = "John",
-            LastName = "Doe",
-            DepartmentId = null
-        };
-
-        var result = validator.ValidateEmployee(employee);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateEmployee_MultipleErrors_ReturnsAllErrors()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var employee = new Employee
-        {
-            Id = "EMP-001",
-            FirstName = "",
-            LastName = "",
-            Email = "invalid",
-            SalaryAmount = -5000,
-            DepartmentId = "DEP-NONEXISTENT"
-        };
-
-        var result = validator.ValidateEmployee(employee);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "FirstName");
-        Assert.Contains(result.Errors, e => e.PropertyName == "LastName");
-        Assert.Contains(result.Errors, e => e.PropertyName == "Email");
-        Assert.Contains(result.Errors, e => e.PropertyName == "SalaryAmount");
-        Assert.Contains(result.Errors, e => e.PropertyName == "DepartmentId");
-    }
-
-    #endregion
-
-    #region Department Validation Tests
-
-    [Fact]
-    public void ValidateDepartment_ValidDepartment_ReturnsSuccess()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var department = new Department { Id = "DEP-001", Name = "Engineering", Budget = 100000 };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.True(result.IsValid);
-        Assert.Empty(result.Errors);
-    }
-
-    [Fact]
-    public void ValidateDepartment_EmptyName_ReturnsError()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var department = new Department { Id = "DEP-001", Name = "" };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Name");
-    }
-
-    [Fact]
-    public void ValidateDepartment_WhitespaceName_ReturnsError()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var department = new Department { Id = "DEP-001", Name = "   " };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Name");
-    }
-
-    [Fact]
-    public void ValidateDepartment_NegativeBudget_ReturnsError()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var department = new Department { Id = "DEP-001", Name = "Engineering", Budget = -5000 };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Budget");
-    }
-
-    [Fact]
-    public void ValidateDepartment_ZeroBudget_IsAllowed()
-    {
-        var (_, validator) = CreateEmptyValidator();
-        var department = new Department { Id = "DEP-001", Name = "Engineering", Budget = 0 };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateDepartment_DuplicateName_ReturnsError()
-    {
-        var (data, validator) = CreateEmptyValidator();
-        data.Departments.Add(new Department { Id = "DEP-001", Name = "Engineering" });
-        var department = new Department { Id = "DEP-002", Name = "Engineering" };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Name" && e.Message.Contains("already exists"));
-    }
-
-    [Fact]
-    public void ValidateDepartment_DuplicateNameCaseInsensitive_ReturnsError()
-    {
-        var (data, validator) = CreateEmptyValidator();
-        data.Departments.Add(new Department { Id = "DEP-001", Name = "Engineering" });
-        var department = new Department { Id = "DEP-002", Name = "ENGINEERING" };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Name");
-    }
-
-    [Fact]
-    public void ValidateDepartment_SameDepartmentSameName_IsAllowed()
-    {
-        var (data, validator) = CreateEmptyValidator();
-        var department = new Department { Id = "DEP-001", Name = "Engineering" };
-        data.Departments.Add(department);
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateDepartment_DifferentNameNoConflict_ReturnsSuccess()
-    {
-        var (data, validator) = CreateEmptyValidator();
-        data.Departments.Add(new Department { Id = "DEP-001", Name = "Engineering" });
-        var department = new Department { Id = "DEP-002", Name = "Marketing" };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void ValidateDepartment_MultipleErrors_ReturnsAllErrors()
-    {
-        var (data, validator) = CreateEmptyValidator();
-        data.Departments.Add(new Department { Id = "DEP-001", Name = "" });
-        var department = new Department { Id = "DEP-002", Name = "", Budget = -1000 };
-
-        var result = validator.ValidateDepartment(department);
-
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "Name");
-        Assert.Contains(result.Errors, e => e.PropertyName == "Budget");
     }
 
     #endregion
@@ -1691,23 +1469,6 @@ public class DataValidatorTests
         };
 
         var result = validator.ValidateProduct(product);
-
-        Assert.True(result.IsValid);
-    }
-
-    [Fact]
-    public void Validator_EmployeeReferencingExistingDepartment_ReturnsSuccess()
-    {
-        var (_, validator) = CreateValidatorWithSeedData();
-        var employee = new Employee
-        {
-            Id = "EMP-001",
-            FirstName = "Test",
-            LastName = "Employee",
-            DepartmentId = "DEP-001"
-        };
-
-        var result = validator.ValidateEmployee(employee);
 
         Assert.True(result.IsValid);
     }

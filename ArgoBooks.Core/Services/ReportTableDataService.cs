@@ -584,7 +584,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     #endregion
 
-    #region Entity Data (Customers, Suppliers, Products, Employees, Departments, Categories, Locations, Accountants)
+    #region Entity Data (Customers, Suppliers, Products, Employees, Categories, Locations, Accountants)
 
     public List<CustomerTableRow> GetCustomersTableData(TableReportElement tableConfig)
     {
@@ -688,44 +688,15 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         return query.Select(e =>
         {
-            var dept = companyData?.GetDepartment(e.DepartmentId ?? "");
             return new EmployeeTableRow
             {
                 Id = e.Id,
                 FullName = e.FullName,
                 Position = e.Position,
-                DepartmentName = dept?.Name ?? "",
                 HireDate = e.HireDate,
                 EmploymentType = e.EmploymentType,
                 SalaryAmount = e.SalaryAmount,
                 Status = e.Status.ToString()
-            };
-        }).ToList();
-    }
-
-    public List<DepartmentTableRow> GetDepartmentsTableData(TableReportElement tableConfig)
-    {
-        if (companyData?.Departments == null)
-            return [];
-
-        var query = companyData.Departments.AsEnumerable();
-
-        if (tableConfig.MaxRows > 0)
-            query = query.Take(tableConfig.MaxRows);
-
-        return query.Select(d =>
-        {
-            var headEmployee = !string.IsNullOrEmpty(d.HeadEmployeeId)
-                ? companyData?.GetEmployee(d.HeadEmployeeId)
-                : null;
-            var employeeCount = companyData?.Employees.Count(e => e.DepartmentId == d.Id) ?? 0;
-            return new DepartmentTableRow
-            {
-                Id = d.Id,
-                Name = d.Name,
-                HeadName = headEmployee?.FullName ?? "",
-                EmployeeCount = employeeCount,
-                Budget = d.Budget
             };
         }).ToList();
     }
@@ -1427,23 +1398,10 @@ public class EmployeeTableRow
     public string Id { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Position { get; set; } = string.Empty;
-    public string DepartmentName { get; set; } = string.Empty;
     public DateTime HireDate { get; set; }
     public string EmploymentType { get; set; } = string.Empty;
     public decimal SalaryAmount { get; set; }
     public string Status { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Represents a department row in a table.
-/// </summary>
-public class DepartmentTableRow
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string HeadName { get; set; } = string.Empty;
-    public int EmployeeCount { get; set; }
-    public decimal Budget { get; set; }
 }
 
 /// <summary>

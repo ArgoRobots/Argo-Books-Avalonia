@@ -115,6 +115,7 @@
                         <table:ArgoTableHeader Header="{loc:Loc Status}" ColumnName="Status" SortProperty="Status"
                                                    ColumnWidth="{Binding ColumnWidths.StatusColumnWidth}"
                                                    IsColumnVisible="{Binding ShowStatusColumn}"
+                                                   InfoTooltip="{loc:Loc 'Active means the supplier has at least one product assigned to it. Inactive means it has none yet. This updates automatically as you assign products to suppliers.'}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 

@@ -129,7 +129,6 @@ public class QuickActionsSettings
 
     // Organization actions
     public bool ShowNewCategory { get; set; } = false;
-    public bool ShowNewDepartment { get; set; } = false;
     public bool ShowNewLocation { get; set; } = false;
 
     // Order & Stock actions

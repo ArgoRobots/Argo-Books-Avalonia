@@ -70,12 +70,6 @@ public class CompanyData
     public List<Employee> Employees { get; init; } = [];
 
     /// <summary>
-    /// All departments.
-    /// </summary>
-    [JsonPropertyName("departments")]
-    public List<Department> Departments { get; init; } = [];
-
-    /// <summary>
     /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]
@@ -319,8 +313,6 @@ public class CompanyData
     [JsonIgnore] private int _supplierLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Employee>? _employeeLookup;
     [JsonIgnore] private int _employeeLookupCount = -1;
-    [JsonIgnore] private Dictionary<string, Department>? _departmentLookup;
-    [JsonIgnore] private int _departmentLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Category>? _categoryLookup;
     [JsonIgnore] private int _categoryLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Accountant>? _accountantLookup;
@@ -352,7 +344,6 @@ public class CompanyData
         _productLookup = null;
         _supplierLookup = null;
         _employeeLookup = null;
-        _departmentLookup = null;
         _categoryLookup = null;
         _accountantLookup = null;
         _locationLookup = null;
@@ -415,20 +406,6 @@ public class CompanyData
             _employeeLookupCount = Employees.Count;
         }
         return _employeeLookup.GetValueOrDefault(id);
-    }
-
-    /// <summary>
-    /// Gets a department by ID.
-    /// </summary>
-    public Department? GetDepartment(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return null;
-        if (_departmentLookup == null || _departmentLookupCount != Departments.Count)
-        {
-            _departmentLookup = BuildLookup(Departments, d => d.Id);
-            _departmentLookupCount = Departments.Count;
-        }
-        return _departmentLookup.GetValueOrDefault(id);
     }
 
     /// <summary>
@@ -540,9 +517,6 @@ public class IdCounters
 
     [JsonPropertyName("employee")]
     public int Employee { get; set; }
-
-    [JsonPropertyName("department")]
-    public int Department { get; set; }
 
     [JsonPropertyName("category")]
     public int Category { get; set; }

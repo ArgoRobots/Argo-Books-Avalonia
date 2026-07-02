@@ -27,12 +27,6 @@ public class Employee : BaseEntity
     public DateTime? DateOfBirth { get; set; }
 
     /// <summary>
-    /// Department ID.
-    /// </summary>
-    [JsonPropertyName("departmentId")]
-    public string? DepartmentId { get; set; }
-
-    /// <summary>
     /// Job position/title.
     /// </summary>
     [JsonPropertyName("position")]

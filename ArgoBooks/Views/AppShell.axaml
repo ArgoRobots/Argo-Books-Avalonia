@@ -260,7 +260,6 @@
         <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
         <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
         <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
-        <modals:DepartmentModals DataContext="{Binding DepartmentModalsViewModel}" />
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
 
         <!-- Unsaved Changes Dialog -->

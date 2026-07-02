@@ -125,11 +125,6 @@ public partial class App : Application
     public static CategoryModalsViewModel? CategoryModalsViewModel => _appShellViewModel?.CategoryModalsViewModel;
 
     /// <summary>
-    /// Gets the department modals view model for shared access.
-    /// </summary>
-    public static DepartmentModalsViewModel? DepartmentModalsViewModel => _appShellViewModel?.DepartmentModalsViewModel;
-
-    /// <summary>
     /// Gets the supplier modals view model for shared access.
     /// </summary>
     public static SupplierModalsViewModel? SupplierModalsViewModel => _appShellViewModel?.SupplierModalsViewModel;
@@ -674,11 +669,6 @@ public partial class App : Application
     public static Controls.ColumnWidths.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
 
     /// <summary>
-    /// Gets the shared column widths for the Departments table.
-    /// </summary>
-    public static Controls.ColumnWidths.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
-
-    /// <summary>
     /// Gets the shared column widths for the Payments table.
     /// </summary>
     public static Controls.ColumnWidths.PaymentsTableColumnWidths PaymentsColumnWidths { get; } = new();
@@ -750,7 +740,6 @@ public partial class App : Application
     private static CategoriesPageViewModel? _categoriesPageViewModel;
     private static CustomersPageViewModel? _customersPageViewModel;
     private static SuppliersPageViewModel? _suppliersPageViewModel;
-    private static DepartmentsPageViewModel? _departmentsPageViewModel;
     private static RentalInventoryPageViewModel? _rentalInventoryPageViewModel;
     private static RentalRecordsPageViewModel? _rentalRecordsPageViewModel;
     private static ReturnsPageViewModel? _returnsPageViewModel;
@@ -774,7 +763,7 @@ public partial class App : Application
             _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel, _paymentsPageViewModel,
             _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
             _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
-            _customersPageViewModel, _suppliersPageViewModel, _departmentsPageViewModel, _rentalInventoryPageViewModel,
+            _customersPageViewModel, _suppliersPageViewModel, _rentalInventoryPageViewModel,
             _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
         })
             (vm as ICleanupViewModel)?.Cleanup();
@@ -796,7 +785,6 @@ public partial class App : Application
         _categoriesPageViewModel = null;
         _customersPageViewModel = null;
         _suppliersPageViewModel = null;
-        _departmentsPageViewModel = null;
         _rentalInventoryPageViewModel = null;
         _rentalRecordsPageViewModel = null;
         _returnsPageViewModel = null;
@@ -2800,7 +2788,6 @@ public partial class App : Application
             data.Products,
             data.Suppliers,
             data.Employees,
-            data.Departments,
             data.Categories,
             data.Locations,
             data.Revenues,
@@ -2858,7 +2845,6 @@ public partial class App : Application
                 data.IdCounters.Product = restoredCounters.Product;
                 data.IdCounters.Supplier = restoredCounters.Supplier;
                 data.IdCounters.Employee = restoredCounters.Employee;
-                data.IdCounters.Department = restoredCounters.Department;
                 data.IdCounters.Category = restoredCounters.Category;
                 data.IdCounters.Location = restoredCounters.Location;
                 data.IdCounters.Revenue = restoredCounters.Revenue;
@@ -2879,7 +2865,6 @@ public partial class App : Application
         RestoreList(data.Products, "Products");
         RestoreList(data.Suppliers, "Suppliers");
         RestoreList(data.Employees, "Employees");
-        RestoreList(data.Departments, "Departments");
         RestoreList(data.Categories, "Categories");
         RestoreList(data.Locations, "Locations");
         RestoreList(data.Revenues, "Revenues");
@@ -3820,7 +3805,6 @@ public partial class App : Application
             return new SuppliersPage { DataContext = _suppliersPageViewModel };
         });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
-        navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
 
         // Rentals Section
         navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = _rentalInventoryPageViewModel ??= new RentalInventoryPageViewModel() });

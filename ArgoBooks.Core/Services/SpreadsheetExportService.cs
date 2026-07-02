@@ -278,7 +278,6 @@ public class SpreadsheetExportService
             "Rental Inventory" => GetRentalInventoryData(data),
             "Rental Records" => GetRentalRecordsData(data, startDate, endDate),
             "Categories" => GetCategoriesData(data),
-            "Departments" => GetDepartmentsData(data),
             "Employees" => GetEmployeesData(data),
             "Locations" => GetLocationsData(data),
             "Recurring Invoices" => GetRecurringInvoicesData(data),
@@ -527,21 +526,9 @@ public class SpreadsheetExportService
         return (headers, rows);
     }
 
-    private (string[] Headers, List<object[]> Rows) GetDepartmentsData(CompanyData data)
-    {
-        var headers = new[] { "ID", "Name", "Description" };
-        var rows = data.Departments.Select(d => new object[]
-        {
-            d.Id,
-            d.Name,
-            d.Description ?? ""
-        }).ToList();
-        return (headers, rows);
-    }
-
     private (string[] Headers, List<object[]> Rows) GetEmployeesData(CompanyData data)
     {
-        var headers = new[] { "ID", "First Name", "Last Name", "Email", "Phone", "Date of Birth", "Department ID", "Position", "Hire Date", "Employment Type", "Salary Type", "Salary Amount", "Pay Frequency", "Status" };
+        var headers = new[] { "ID", "First Name", "Last Name", "Email", "Phone", "Date of Birth", "Position", "Hire Date", "Employment Type", "Salary Type", "Salary Amount", "Pay Frequency", "Status" };
         var rows = data.Employees.Select(e => new object[]
         {
             e.Id,
@@ -550,7 +537,6 @@ public class SpreadsheetExportService
             e.Email,
             e.Phone,
             e.DateOfBirth ?? DateTime.MinValue,
-            e.DepartmentId ?? "",
             e.Position,
             e.HireDate,
             e.EmploymentType,

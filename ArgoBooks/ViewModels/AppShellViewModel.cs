@@ -22,7 +22,6 @@ public partial class AppShellViewModel : ViewModelBase
     private CustomerModalsViewModel? _customerModalsViewModel;
     private ProductModalsViewModel? _productModalsViewModel;
     private CategoryModalsViewModel? _categoryModalsViewModel;
-    private DepartmentModalsViewModel? _departmentModalsViewModel;
     private SupplierModalsViewModel? _supplierModalsViewModel;
     private RentalInventoryModalsViewModel? _rentalInventoryModalsViewModel;
     private RentalAvailabilityModalViewModel? _rentalAvailabilityModalViewModel;
@@ -238,24 +237,6 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _categoryModalsViewModel;
-        }
-    }
-
-    /// <summary>
-    /// Gets the department modals view model.
-    /// </summary>
-    public DepartmentModalsViewModel DepartmentModalsViewModel
-    {
-        get
-        {
-            if (_departmentModalsViewModel == null)
-            {
-                _departmentModalsViewModel = new DepartmentModalsViewModel();
-                _departmentModalsViewModel.DepartmentSaved += RaiseUnsavedChanges;
-                _departmentModalsViewModel.DepartmentDeleted += RaiseUnsavedChanges;
-                OnPropertyChanged();
-            }
-            return _departmentModalsViewModel;
         }
     }
 

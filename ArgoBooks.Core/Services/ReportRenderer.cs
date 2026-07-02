@@ -2607,7 +2607,6 @@ public class ReportRenderer : IDisposable
             TransactionType.Suppliers => Tr("Suppliers"),
             TransactionType.Products => Tr("Products"),
             TransactionType.Employees => Tr("Employees"),
-            TransactionType.Departments => Tr("Departments"),
             TransactionType.Categories => Tr("Categories"),
             TransactionType.Locations => Tr("Locations"),
             TransactionType.Accountants => Tr("Accountants"),
@@ -2993,22 +2992,10 @@ public class ReportRenderer : IDisposable
                     {
                         "Name" => r.FullName,
                         "Position" => r.Position,
-                        "Department" => r.DepartmentName,
                         "Date" => r.HireDate.ToString("MM/dd/yyyy"),
                         "Type" => r.EmploymentType,
                         "Salary" => FormatCurrency(r.SalaryAmount),
                         "Status" => r.Status,
-                        _ => ""
-                    }).ToList());
-                break;
-            case TransactionType.Departments:
-                foreach (var r in tableDataService.GetDepartmentsTableData(table))
-                    result.Add(columns.Select(col => col switch
-                    {
-                        "Name" => r.Name,
-                        "Head" => r.HeadName,
-                        "Employees" => r.EmployeeCount.ToString("N0"),
-                        "Budget" => FormatCurrency(r.Budget),
                         _ => ""
                     }).ToList());
                 break;
@@ -4080,8 +4067,7 @@ public class ReportRenderer : IDisposable
             TransactionType.Customers => ["Name", "Company", "Country", "Total", "Status"],
             TransactionType.Suppliers => ["Name", "Contact", "Country", "Terms"],
             TransactionType.Products => ["Name", "SKU", "Category", "Price", "Cost", "Status"],
-            TransactionType.Employees => ["Name", "Position", "Department", "Date", "Salary", "Status"],
-            TransactionType.Departments => ["Name", "Head", "Employees", "Budget"],
+            TransactionType.Employees => ["Name", "Position", "Date", "Salary", "Status"],
             TransactionType.Categories => ["Name", "Type"],
             TransactionType.Locations => ["Name", "Contact", "Capacity", "In Use", "Utilization"],
             TransactionType.Accountants => ["Name", "Email", "Phone", "Transactions"],

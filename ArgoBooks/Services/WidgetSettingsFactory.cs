@@ -33,7 +33,7 @@ public static class WidgetSettingsFactory
             "Scan Receipt:ShowScanReceipt", "Import Bank Statement:ShowImportBankStatement",
             "New Customer:ShowNewCustomer", "New Supplier:ShowNewSupplier",
             "New Product:ShowNewProduct", "Record Payment:ShowRecordPayment", "New Rental Item:ShowNewRentalItem",
-            "New Rental Record:ShowNewRentalRecord", "New Category:ShowNewCategory", "New Department:ShowNewDepartment",
+            "New Rental Record:ShowNewRentalRecord", "New Category:ShowNewCategory",
             "New Location:ShowNewLocation", "New Purchase Order:ShowNewPurchaseOrder", "New Stock Adjustment:ShowNewStockAdjustment"
         ];
         foreach (var action in actions)

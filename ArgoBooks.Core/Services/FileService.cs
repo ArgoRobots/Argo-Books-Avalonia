@@ -50,7 +50,6 @@ public class FileService(
             await WriteJsonAsync(companyDir, "products.json", companyData.Products, cancellationToken);
             await WriteJsonAsync(companyDir, "suppliers.json", companyData.Suppliers, cancellationToken);
             await WriteJsonAsync(companyDir, "employees.json", companyData.Employees, cancellationToken);
-            await WriteJsonAsync(companyDir, "departments.json", companyData.Departments, cancellationToken);
             await WriteJsonAsync(companyDir, "categories.json", companyData.Categories, cancellationToken);
             await WriteJsonAsync(companyDir, "accountants.json", companyData.Accountants, cancellationToken);
             await WriteJsonAsync(companyDir, "locations.json", companyData.Locations, cancellationToken);
@@ -317,7 +316,6 @@ public class FileService(
         var productsTask          = ReadJsonAsync<List<Models.Entities.Product>>(tempDirectory, "products.json", cancellationToken);
         var suppliersTask         = ReadJsonAsync<List<Models.Entities.Supplier>>(tempDirectory, "suppliers.json", cancellationToken);
         var employeesTask         = ReadJsonAsync<List<Models.Entities.Employee>>(tempDirectory, "employees.json", cancellationToken);
-        var departmentsTask       = ReadJsonAsync<List<Models.Entities.Department>>(tempDirectory, "departments.json", cancellationToken);
         var categoriesTask        = ReadJsonAsync<List<Models.Entities.Category>>(tempDirectory, "categories.json", cancellationToken);
         var accountantsTask       = ReadJsonAsync<List<Models.Entities.Accountant>>(tempDirectory, "accountants.json", cancellationToken);
         var locationsTask         = ReadJsonAsync<List<Models.Entities.Location>>(tempDirectory, "locations.json", cancellationToken);
@@ -353,7 +351,7 @@ public class FileService(
         Task[] otherReads =
         [
             idCountersTask, customersTask, productsTask, suppliersTask,
-            employeesTask, departmentsTask, categoriesTask, accountantsTask, locationsTask,
+            employeesTask, categoriesTask, accountantsTask, locationsTask,
             revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
@@ -384,7 +382,6 @@ public class FileService(
             Products = productsTask.Result ?? [],
             Suppliers = suppliersTask.Result ?? [],
             Employees = employeesTask.Result ?? [],
-            Departments = departmentsTask.Result ?? [],
             Categories = categoriesTask.Result ?? [],
             Accountants = accountantsTask.Result ?? [],
             Locations = locationsTask.Result ?? [],
@@ -445,7 +442,6 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "products.json", data.Products, cancellationToken);
         await WriteJsonAsync(companyDirectory, "suppliers.json", data.Suppliers, cancellationToken);
         await WriteJsonAsync(companyDirectory, "employees.json", data.Employees, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "departments.json", data.Departments, cancellationToken);
         await WriteJsonAsync(companyDirectory, "categories.json", data.Categories, cancellationToken);
         await WriteJsonAsync(companyDirectory, "accountants.json", data.Accountants, cancellationToken);
         await WriteJsonAsync(companyDirectory, "locations.json", data.Locations, cancellationToken);

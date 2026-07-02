@@ -28,7 +28,7 @@ public class ImportOptions
 
     /// <summary>
     /// Specific reference types to auto-create (if AutoCreateMissingReferences is false).
-    /// Keys: "Products", "Categories", "Customers", "Suppliers", "Locations", "Departments", etc.
+    /// Keys: "Products", "Categories", "Customers", "Suppliers", "Locations", etc.
     /// </summary>
     public HashSet<string> AutoCreateTypes { get; set; } = [];
 
@@ -839,9 +839,6 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.Categories:
                 ImportCategories(data, headers, rows, options);
                 break;
-            case SpreadsheetSheetType.Departments:
-                ImportDepartments(data, headers, rows, options);
-                break;
             case SpreadsheetSheetType.Employees:
                 ImportEmployees(data, headers, rows, options);
                 break;
@@ -890,7 +887,6 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.RentalInventory => data.RentalInventory.Count,
         SpreadsheetSheetType.RentalRecords => data.Rentals.Count,
         SpreadsheetSheetType.Categories => data.Categories.Count,
-        SpreadsheetSheetType.Departments => data.Departments.Count,
         SpreadsheetSheetType.Employees => data.Employees.Count,
         SpreadsheetSheetType.Locations => data.Locations.Count,
         SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
@@ -1598,7 +1594,6 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.Categories => data.Categories.Select(c => c.Id),
         SpreadsheetSheetType.Employees => data.Employees.Select(e => e.Id),
         SpreadsheetSheetType.Locations => data.Locations.Select(l => l.Id),
-        SpreadsheetSheetType.Departments => data.Departments.Select(d => d.Id),
         SpreadsheetSheetType.Inventory => data.Inventory.Select(i => i.Id),
         SpreadsheetSheetType.RentalInventory => data.RentalInventory.Select(r => r.Id),
         SpreadsheetSheetType.RentalRecords => data.Rentals.Select(r => r.Id),
@@ -1895,17 +1890,6 @@ public class SpreadsheetImportService
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
                 return ImportEntityResult.Failed;
-            case SpreadsheetSheetType.Departments:
-                var dept = JsonSerializer.Deserialize<Department>(jsonStr, opts);
-                if (dept != null && !string.IsNullOrEmpty(dept.Id))
-                {
-                    var existing = data.Departments.FirstOrDefault(d => d.Id == dept.Id);
-                    if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
-                    if (existing != null) data.Departments.Remove(existing);
-                    data.Departments.Add(dept);
-                    return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
-                }
-                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Inventory:
                 var invItem = JsonSerializer.Deserialize<InventoryItem>(jsonStr, opts);
                 if (invItem != null && !string.IsNullOrEmpty(invItem.Id))
@@ -2110,7 +2094,6 @@ public class SpreadsheetImportService
             "Products" => "Products",
             "Categories" => "Categories",
             "Locations" => "Locations",
-            "Departments" => "Departments",
             "Invoices" => "Invoices",
             "Inventory" => "Inventory",
             "Rental Inventory" => "RentalInventory",
@@ -2194,9 +2177,6 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.Categories:
                 ValidateCategoryReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
-            case SpreadsheetSheetType.Employees:
-                ValidateEmployeeReferences(sheetName, rows, headers, data, importedIds, result);
-                break;
             case SpreadsheetSheetType.RecurringInvoices:
                 ValidateRecurringInvoiceReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
@@ -2227,7 +2207,6 @@ public class SpreadsheetImportService
             SpreadsheetSheetType.Products => data.Products.Select(p => p.Id).ToHashSet(),
             SpreadsheetSheetType.Categories => data.Categories.Select(c => c.Id).ToHashSet(),
             SpreadsheetSheetType.Locations => data.Locations.Select(l => l.Id).ToHashSet(),
-            SpreadsheetSheetType.Departments => data.Departments.Select(d => d.Id).ToHashSet(),
             SpreadsheetSheetType.Invoices => data.Invoices.Select(i => i.Id).ToHashSet(),
             SpreadsheetSheetType.Expenses => data.Expenses.Select(p => p.Id).ToHashSet(),
             SpreadsheetSheetType.Inventory => data.Inventory.Select(i => i.Id).ToHashSet(),
@@ -2529,32 +2508,6 @@ public class SpreadsheetImportService
             {
                 result.AddIssue(sheetName, rowNumber, "Parent ID", parentId, "Categories (parent)",
                     $"Parent category '{parentId}' not found", isAutoFixable: false, rowId: id);
-            }
-        }
-    }
-
-    private void ValidateEmployeeReferences(
-        string sheetName,
-        List<List<object?>> rows, List<string> headers,
-        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
-        ImportValidationResult result)
-    {
-        var existingDepartments = data.Departments.Select(d => d.Id).ToHashSet();
-        var importedDepartments = importedIds.GetValueOrDefault("Departments") ?? [];
-
-        for (int i = 0; i < rows.Count; i++)
-        {
-            var row = rows[i];
-            var rowNumber = i + 2;
-            var id = GetString(row, headers, "ID");
-            var departmentId = GetNullableString(row, headers, "Department ID");
-
-            if (!string.IsNullOrEmpty(departmentId) &&
-                !existingDepartments.Contains(departmentId) &&
-                !importedDepartments.Contains(departmentId))
-            {
-                result.AddIssue(sheetName, rowNumber, "Department ID", departmentId, "Departments",
-                    $"Department '{departmentId}' not found", isAutoFixable: true, rowId: id);
             }
         }
     }
@@ -2914,17 +2867,6 @@ public class SpreadsheetImportService
                 }
                 break;
 
-            case "Departments":
-                if (data.Departments.All(d => d.Id != id))
-                {
-                    data.Departments.Add(new Department
-                    {
-                        Id = id,
-                        Name = id
-                    });
-                }
-                break;
-
             case "Rental Items":
                 if (data.RentalInventory.All(r => r.Id != id))
                 {
@@ -2989,9 +2931,6 @@ public class SpreadsheetImportService
                 break;
             case SpreadsheetSheetType.Categories:
                 ImportCategories(data, headers, rows, options);
-                break;
-            case SpreadsheetSheetType.Departments:
-                ImportDepartments(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.Employees:
                 ImportEmployees(data, headers, rows, options);
@@ -4100,26 +4039,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private void ImportDepartments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
-    {
-        foreach (var row in rows)
-        {
-            var id = GetString(row, headers, "ID");
-            var existing = data.Departments.FirstOrDefault(d => d.Id == id);
-            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
-
-            var department = existing ?? new Department();
-            department.Id = id;
-            department.Name = GetString(row, headers, "Name");
-            department.Description = GetNullableString(row, headers, "Description");
-
-            if (existing == null)
-                data.Departments.Add(department);
-            else if (options != null)
-                options.UpdatedCount++;
-        }
-    }
-
     private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
         foreach (var row in rows)
@@ -4135,7 +4054,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             employee.Email = GetString(row, headers, "Email");
             employee.Phone = GetString(row, headers, "Phone");
             employee.DateOfBirth = GetNullableDateTime(row, headers, "Date of Birth");
-            employee.DepartmentId = GetNullableString(row, headers, "Department ID");
             employee.Position = GetString(row, headers, "Position");
             employee.HireDate = GetDateTime(row, headers, "Hire Date");
             employee.EmploymentType = GetString(row, headers, "Employment Type");
@@ -4445,7 +4363,6 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         data.IdCounters.Product = GetMaxIdNumber(data.Products.Select(p => p.Id), "PRD-");
         data.IdCounters.Supplier = GetMaxIdNumber(data.Suppliers.Select(s => s.Id), "SUP-");
         data.IdCounters.Employee = GetMaxIdNumber(data.Employees.Select(e => e.Id), "EMP-");
-        data.IdCounters.Department = GetMaxIdNumber(data.Departments.Select(d => d.Id), "DEP-");
         data.IdCounters.Category = GetMaxIdNumber(data.Categories.Select(c => c.Id), "CAT-");
         data.IdCounters.Location = GetMaxIdNumber(data.Locations.Select(l => l.Id), "LOC-");
         data.IdCounters.Revenue = Math.Max(

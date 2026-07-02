@@ -48,6 +48,9 @@ public partial class ArgoTableHeader : UserControl
     public static readonly StyledProperty<ITableColumnWidths?> ColumnWidthsProperty =
         AvaloniaProperty.Register<ArgoTableHeader, ITableColumnWidths?>(nameof(ColumnWidths));
 
+    public static readonly StyledProperty<string?> InfoTooltipProperty =
+        AvaloniaProperty.Register<ArgoTableHeader, string?>(nameof(InfoTooltip));
+
     #endregion
 
     #region Properties
@@ -158,6 +161,16 @@ public partial class ArgoTableHeader : UserControl
     {
         get => GetValue(ColumnWidthsProperty);
         set => SetValue(ColumnWidthsProperty, value);
+    }
+
+    /// <summary>
+    /// Optional explanatory text. When set, an info icon appears next to the header and shows
+    /// this text on hover. Used to explain columns whose values are derived rather than entered.
+    /// </summary>
+    public string? InfoTooltip
+    {
+        get => GetValue(InfoTooltipProperty);
+        set => SetValue(InfoTooltipProperty, value);
     }
 
     #endregion

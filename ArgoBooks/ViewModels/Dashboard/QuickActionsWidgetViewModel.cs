@@ -74,11 +74,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
     [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
-    private bool _showNewDepartment;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewLocation;
 
     [ObservableProperty]
@@ -96,7 +91,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         ShowImportBankStatement ||
         ShowNewCustomer || ShowNewSupplier || ShowNewProduct || ShowRecordPayment ||
         ShowNewRentalItem || ShowNewRentalRecord ||
-        ShowNewCategory || ShowNewDepartment || ShowNewLocation ||
+        ShowNewCategory || ShowNewLocation ||
         ShowNewPurchaseOrder || ShowNewStockAdjustment;
 
     public bool HasNoVisibleQuickActions => !HasVisibleQuickActions;
@@ -144,7 +139,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             ShowNewRentalItem = qa.ShowNewRentalItem;
             ShowNewRentalRecord = qa.ShowNewRentalRecord;
             ShowNewCategory = qa.ShowNewCategory;
-            ShowNewDepartment = qa.ShowNewDepartment;
             ShowNewLocation = qa.ShowNewLocation;
             ShowNewPurchaseOrder = qa.ShowNewPurchaseOrder;
             ShowNewStockAdjustment = qa.ShowNewStockAdjustment;
@@ -167,7 +161,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             ["ShowNewRentalItem"] = ShowNewRentalItem.ToString(),
             ["ShowNewRentalRecord"] = ShowNewRentalRecord.ToString(),
             ["ShowNewCategory"] = ShowNewCategory.ToString(),
-            ["ShowNewDepartment"] = ShowNewDepartment.ToString(),
             ["ShowNewLocation"] = ShowNewLocation.ToString(),
             ["ShowNewPurchaseOrder"] = ShowNewPurchaseOrder.ToString(),
             ["ShowNewStockAdjustment"] = ShowNewStockAdjustment.ToString()
@@ -188,7 +181,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         if (config.TryGetValue("ShowNewRentalItem", out v)) ShowNewRentalItem = v == "True";
         if (config.TryGetValue("ShowNewRentalRecord", out v)) ShowNewRentalRecord = v == "True";
         if (config.TryGetValue("ShowNewCategory", out v)) ShowNewCategory = v == "True";
-        if (config.TryGetValue("ShowNewDepartment", out v)) ShowNewDepartment = v == "True";
         if (config.TryGetValue("ShowNewLocation", out v)) ShowNewLocation = v == "True";
         if (config.TryGetValue("ShowNewPurchaseOrder", out v)) ShowNewPurchaseOrder = v == "True";
         if (config.TryGetValue("ShowNewStockAdjustment", out v)) ShowNewStockAdjustment = v == "True";
@@ -282,13 +274,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     {
         App.NavigationService?.NavigateTo("Categories");
         App.CategoryModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void NewDepartment()
-    {
-        App.NavigationService?.NavigateTo("Departments");
-        App.DepartmentModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
