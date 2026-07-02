@@ -455,6 +455,13 @@ public class ChartLoaderService
     /// Creates X-axis configuration for a cartesian chart with proportional date spacing.
     /// Uses LiveCharts' native label stepping for smooth resize behavior.
     /// </summary>
+    /// <summary>
+    /// Creates the date X-axis for a time-series chart. For 2+ points the axis is left to AUTO-FIT
+    /// (null limits): pinning explicit MinLimit/MaxLimit made LiveCharts (with ZoomMode enabled)
+    /// render a stale/wrong visible range on load that only "Reset Zoom" (which nulls the limits)
+    /// corrected, and it never rescaled when data was added. A single point has no range to fit, so it
+    /// keeps padded limits or the axis would be zero-width.
+    /// </summary>
     public Axis[] CreateDateXAxes(DateTime[]? dates = null)
     {
         if (dates == null || dates.Length == 0)
@@ -465,7 +472,6 @@ public class ChartLoaderService
         var sortedOADates = dates.Select(d => d.ToOADate()).OrderBy(d => d).ToArray();
         var minDate = sortedOADates[0];
         var maxDate = sortedOADates[^1];
-        var padding = Math.Max(0.5, (maxDate - minDate) * 0.05);
 
         // Calculate UnitWidth based on minimum gap between consecutive dates.
         // This tells LiveCharts how wide each data point "slot" is, so column bars
@@ -487,8 +493,6 @@ public class ChartLoaderService
             TextSize = AxisTextSize,
             LabelsPaint = new SolidColorPaint(_textColor),
             LabelsRotation = 0,
-            MinLimit = minDate - padding,
-            MaxLimit = maxDate + padding,
             UnitWidth = unitWidth,
             MinStep = unitWidth,
             Labeler = value =>
@@ -508,6 +512,14 @@ public class ChartLoaderService
                 }
             }
         };
+
+        // A single point has no min..max range for LiveCharts to auto-fit, so give it a padded
+        // window; for 2+ points leave the limits null so the chart auto-fits and rescales on reload.
+        if (sortedOADates.Length == 1)
+        {
+            axis.MinLimit = minDate - 0.5;
+            axis.MaxLimit = maxDate + 0.5;
+        }
 
         return [axis];
     }
