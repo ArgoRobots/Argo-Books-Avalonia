@@ -624,6 +624,13 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var oldShipping = order.ShippingCost;
         var oldTotal = order.Total;
         var oldNotes = order.Notes;
+        // Currency-conversion fields are mutated by ApplyDisplayCurrency below (and it may add a
+        // PendingConversions entry). Capture them so undo/redo restore them symmetrically instead of
+        // leaving a stale USD total / pending flag and an orphaned self-heal entry.
+        var oldOriginalCurrency = order.OriginalCurrency;
+        var oldTotalUSD = order.TotalUSD;
+        var oldIsPendingConversion = order.IsPendingConversion;
+        var oldPending = companyData.PendingConversions.Where(p => p.TransactionId == order.Id).ToList();
 
         // Update order
         order.SupplierId = SelectedSupplier!.Id;
@@ -657,6 +664,11 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var newShipping = order.ShippingCost;
         var newTotal = order.Total;
         var newNotes = order.Notes;
+        // Post-ApplyDisplayCurrency currency state, captured so redo restores the edited conversion.
+        var newOriginalCurrency = order.OriginalCurrency;
+        var newTotalUSD = order.TotalUSD;
+        var newIsPendingConversion = order.IsPendingConversion;
+        var newPending = companyData.PendingConversions.Where(p => p.TransactionId == order.Id).ToList();
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit order '{order.PoNumber}'",
             () =>
@@ -669,6 +681,11 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 editedOrder.ShippingCost = oldShipping;
                 editedOrder.Total = oldTotal;
                 editedOrder.Notes = oldNotes;
+                editedOrder.OriginalCurrency = oldOriginalCurrency;
+                editedOrder.TotalUSD = oldTotalUSD;
+                editedOrder.IsPendingConversion = oldIsPendingConversion;
+                companyData.PendingConversions.RemoveAll(p => p.TransactionId == editedOrder.Id);
+                companyData.PendingConversions.AddRange(oldPending);
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -682,6 +699,11 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 editedOrder.ShippingCost = newShipping;
                 editedOrder.Total = newTotal;
                 editedOrder.Notes = newNotes;
+                editedOrder.OriginalCurrency = newOriginalCurrency;
+                editedOrder.TotalUSD = newTotalUSD;
+                editedOrder.IsPendingConversion = newIsPendingConversion;
+                companyData.PendingConversions.RemoveAll(p => p.TransactionId == editedOrder.Id);
+                companyData.PendingConversions.AddRange(newPending);
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));
