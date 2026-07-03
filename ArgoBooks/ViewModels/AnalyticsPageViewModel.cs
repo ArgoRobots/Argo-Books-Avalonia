@@ -6,6 +6,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -126,7 +127,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
     /// All products sold in the period, ordered by revenue (highest first).
     /// Backs the product picker; the first entry is the default selection.
     /// </summary>
-    public ObservableCollection<ProductSalesRow> Products { get; } = [];
+    public BatchObservableCollection<ProductSalesRow> Products { get; } = [];
 
     [ObservableProperty]
     private string _totalProductRevenue = string.Empty;
@@ -188,9 +189,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         AvgProductSalePrice = CurrencyService.Format(avgPrice);
         ProductsSoldCount = rows.Count.ToString();
 
-        Products.Clear();
-        foreach (var row in rows)
-            Products.Add(row);
+        Products.ReplaceAll(rows);
 
         // Keep the current selection if its product still exists; otherwise
         // auto-select the highest-revenue product so the chart is never empty.
