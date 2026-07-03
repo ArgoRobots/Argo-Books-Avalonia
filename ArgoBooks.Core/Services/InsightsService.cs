@@ -983,9 +983,17 @@ public class InsightsService(
             .Select(g => new { ProductId = g.Key, DailyVelocity = g.Sum(li => li.Quantity) / 30m })
             .ToList();
 
+        // First inventory row per product, computed once, so the velocity loop below doesn't
+        // rescan all Inventory for each product (matches the previous FirstOrDefault semantics).
+        var inventoryByProductId = companyData.Inventory
+            .Where(i => !string.IsNullOrEmpty(i.ProductId))
+            .GroupBy(i => i.ProductId!)
+            .ToDictionary(g => g.Key, g => g.First());
+
         foreach (var item in recentSales.Where(x => x.DailyVelocity > 0))
         {
-            var inventory = companyData.Inventory.FirstOrDefault(i => i.ProductId == item.ProductId);
+            var inventory = !string.IsNullOrEmpty(item.ProductId)
+                && inventoryByProductId.TryGetValue(item.ProductId, out var inv) ? inv : null;
             if (inventory != null && inventory.InStock > 0)
             {
                 var daysUntilEmpty = inventory.InStock / item.DailyVelocity;
@@ -1123,25 +1131,18 @@ public class InsightsService(
     {
         var inactivityThreshold = 60; // days
 
-        var lastPurchaseByCustomer = companyData.Revenues
+        // Group Revenues by customer once, capturing both the last purchase date and the
+        // purchase count, so the "previously active" check below is a filter on this list
+        // instead of re-scanning all Revenues per inactive customer.
+        var purchasesByCustomer = companyData.Revenues
             .GroupBy(s => s.CustomerId)
-            .Select(g => new { CustomerId = g.Key, LastPurchase = g.Max(s => s.Date) })
+            .Select(g => new { LastPurchase = g.Max(s => s.Date), PurchaseCount = g.Count() })
             .ToList();
 
-        var inactiveCustomers = lastPurchaseByCustomer
-            .Where(c => (dateRange.EndDate - c.LastPurchase).TotalDays > inactivityThreshold)
-            .ToList();
-
-        // Only flag if they were previously active (had at least 2 purchases in the past)
-        var previouslyActiveCount = 0;
-        foreach (var inactive in inactiveCustomers)
-        {
-            var purchaseCount = companyData.Revenues.Count(s => s.CustomerId == inactive.CustomerId);
-            if (purchaseCount >= 2)
-            {
-                previouslyActiveCount++;
-            }
-        }
+        // Only flag customers who were previously active (at least 2 purchases in the past)
+        // and haven't purchased within the inactivity threshold.
+        var previouslyActiveCount = purchasesByCustomer.Count(c =>
+            (dateRange.EndDate - c.LastPurchase).TotalDays > inactivityThreshold && c.PurchaseCount >= 2);
 
         if (previouslyActiveCount == 0) return null;
 
