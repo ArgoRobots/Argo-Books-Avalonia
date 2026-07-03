@@ -204,6 +204,25 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public IReadOnlyList<Frequency> FrequencyOptions { get; } = Enum.GetValues<Frequency>();
 
+    /// <summary>Company name shown on the editor paper header.</summary>
+    public string CompanyName => App.CompanyManager?.CompanyData?.Settings.Company.Name ?? string.Empty;
+
+    /// <summary>Invoice number for the paper: the existing one when continuing a draft, else the next.</summary>
+    public string InvoiceNumberDisplay
+    {
+        get
+        {
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null) return string.Empty;
+            if (!string.IsNullOrEmpty(_editingInvoiceId))
+            {
+                var existing = companyData.GetInvoice(_editingInvoiceId);
+                if (existing != null) return existing.InvoiceNumber;
+            }
+            return new IdGenerator(companyData).PeekNextInvoice().Number;
+        }
+    }
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
@@ -1050,6 +1069,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // happens between those calls and here (all synchronous), so there is no flash.
         IsCreateEditModalOpen = false;
         IsShowingPreview = mode == EditorMode.ViewOnly;
+
+        OnPropertyChanged(nameof(CompanyName));
+        OnPropertyChanged(nameof(InvoiceNumberDisplay));
     }
 
     #endregion

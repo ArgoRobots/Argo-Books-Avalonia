@@ -3,10 +3,41 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InvoiceEditorPage"
              x:DataType="vm:InvoiceModalsViewModel">
+
+    <UserControl.Styles>
+        <!-- Borderless "invoice text" inputs on the white paper -->
+        <Style Selector="TextBox.paper">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#1A1F2B" />
+            <Setter Property="CaretBrush" Value="#1A1F2B" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="3,2" />
+        </Style>
+        <Style Selector="NumericUpDown.paper">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#1A1F2B" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.paper-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#8A94A3" />
+        </Style>
+        <Style Selector="TextBlock.sidebar-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+    </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*" Background="{DynamicResource BackgroundBrush}">
 
@@ -17,22 +48,208 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <Button Classes="secondary-button"
-                        Content="Back"
-                        Click="OnBackClick" />
+                <Button Classes="secondary-button" Content="Back" Click="OnBackClick" />
                 <TextBlock Text="{Binding ModalTitle}"
-                           FontSize="18"
-                           FontWeight="SemiBold"
+                           FontSize="18" FontWeight="SemiBold"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextPrimaryBrush}" />
             </StackPanel>
         </Border>
 
-        <!-- Body (paper + sidebar arrive in Phase 2) -->
-        <TextBlock Grid.Row="1"
-                   Text="Invoice editor"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Foreground="{DynamicResource TextTertiaryBrush}" />
+        <!-- Body: paper (left) + sidebar (right) -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,300">
+
+            <!-- PAPER -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="24">
+                <Border Background="#FFFFFF"
+                        CornerRadius="6"
+                        Padding="36,34"
+                        MaxWidth="680"
+                        HorizontalAlignment="Center"
+                        BoxShadow="0 6 24 0 #33000000">
+                    <StackPanel Spacing="0">
+
+                        <!-- Header -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <Border BorderBrush="#C4CCD6" BorderThickness="1" CornerRadius="6"
+                                        Padding="14,12" HorizontalAlignment="Left">
+                                    <TextBlock Text="+ Add your logo" Foreground="#8A94A3" FontSize="12" />
+                                </Border>
+                                <TextBlock Text="{Binding CompanyName}" FontSize="17" FontWeight="Bold" Foreground="#1A1F2B" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                <TextBlock Text="INVOICE" FontSize="22" FontWeight="Bold" Foreground="#2F3A4D" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding InvoiceNumberDisplay}" FontSize="13" Foreground="#5A6473" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Meta: Bill To + dates -->
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,26,0,0">
+                            <StackPanel Grid.Column="0" Spacing="3">
+                                <TextBlock Text="BILL TO" Classes="paper-label" />
+                                <TextBlock Text="{Binding SelectedCustomer.Name}" FontWeight="SemiBold" Foreground="#1A1F2B"
+                                           IsVisible="{Binding SelectedCustomer, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <TextBlock Text="Pick a customer in the sidebar"
+                                           Foreground="#B4BCC7" FontStyle="Italic"
+                                           IsVisible="{Binding SelectedCustomer, Converter={x:Static ObjectConverters.IsNull}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Issue date" Classes="paper-label" VerticalAlignment="Center" Width="70" TextAlignment="Right" />
+                                    <DatePicker SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Due date" Classes="paper-label" VerticalAlignment="Center" Width="70" TextAlignment="Right" />
+                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Line items -->
+                        <Grid ColumnDefinitions="*,70,90,90,28" Margin="0,26,0,0">
+                            <TextBlock Grid.Column="0" Text="DESCRIPTION" Classes="paper-label" />
+                            <TextBlock Grid.Column="1" Text="QTY" Classes="paper-label" TextAlignment="Right" />
+                            <TextBlock Grid.Column="2" Text="RATE" Classes="paper-label" TextAlignment="Right" />
+                            <TextBlock Grid.Column="3" Text="AMOUNT" Classes="paper-label" TextAlignment="Right" />
+                            <TextBlock Grid.Column="4" Text="" />
+                        </Grid>
+                        <Rectangle Height="1" Fill="#ECEFF3" Margin="0,4,0,0" />
+
+                        <ItemsControl ItemsSource="{Binding LineItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LineItemDisplayModel">
+                                    <Grid ColumnDefinitions="*,70,90,90,28" Margin="0,2">
+                                        <TextBox Grid.Column="0" Classes="paper" Text="{Binding Description}" Watermark="Item description" />
+                                        <NumericUpDown Grid.Column="1" Classes="paper" Value="{Binding Quantity}" ShowButtonSpinner="False" Minimum="0" HorizontalContentAlignment="Right" />
+                                        <NumericUpDown Grid.Column="2" Classes="paper" Value="{Binding UnitPrice}" ShowButtonSpinner="False" Minimum="0" FormatString="0.00" HorizontalContentAlignment="Right" />
+                                        <TextBlock Grid.Column="3" Text="{Binding AmountFormatted}" Foreground="#1A1F2B" FontWeight="SemiBold" TextAlignment="Right" VerticalAlignment="Center" />
+                                        <Button Grid.Column="4" Classes="icon-button" Padding="2" VerticalAlignment="Center"
+                                                Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
+                                                CommandParameter="{Binding}">
+                                            <TextBlock Text="&#215;" Foreground="#B4BCC7" FontSize="16" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button Classes="link-button" Content="+ Add line item" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                Foreground="#2F6BFF" Command="{Binding AddLineItemCommand}" />
+
+                        <!-- Totals + notes -->
+                        <Grid ColumnDefinitions="*,230" Margin="0,18,0,0">
+                            <StackPanel Grid.Column="0" Spacing="3">
+                                <TextBlock Text="NOTES" Classes="paper-label" />
+                                <TextBox Classes="paper" Text="{Binding ModalNotes}" AcceptsReturn="True" TextWrapping="Wrap" Watermark="Notes for this invoice..." MaxLength="500" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="Subtotal" Foreground="#5A6473" />
+                                    <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" Foreground="#1A1F2B" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <TextBlock Grid.Column="0" Text="Tax" Foreground="#5A6473" VerticalAlignment="Center" />
+                                    <NumericUpDown Grid.Column="1" Classes="paper" Value="{Binding TaxRate}" ShowButtonSpinner="False" Minimum="0" Maximum="100" FormatString="0.##" Width="56" HorizontalAlignment="Left" Margin="6,0,0,0" />
+                                    <TextBlock Grid.Column="2" Text="{Binding TaxAmountFormatted}" Foreground="#1A1F2B" VerticalAlignment="Center" />
+                                </Grid>
+                                <Rectangle Height="1" Fill="#ECEFF3" Margin="0,6" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="Total" FontWeight="Bold" FontSize="15" Foreground="#1A1F2B" />
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontWeight="Bold" FontSize="15" Foreground="#1A1F2B" />
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+
+            <!-- SIDEBAR -->
+            <Border Grid.Column="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16" Spacing="16">
+
+                        <StackPanel>
+                            <TextBlock Text="CUSTOMER" Classes="sidebar-label" />
+                            <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                         SelectedItem="{Binding SelectedCustomer}"
+                                                         DisplayMemberPath="Name"
+                                                         Placeholder="Search for a customer..."
+                                                         HasError="{Binding HasCustomerError}"
+                                                         ShowAddNew="True"
+                                                         AddNewText="Create new customer"
+                                                         AddNewCommand="{Binding OpenCreateCustomerCommand}"
+                                                         EmptyMessage="No customers found."
+                                                         EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock Text="TEMPLATE" Classes="sidebar-label" />
+                            <ComboBox ItemsSource="{Binding TemplateOptions}"
+                                      SelectedItem="{Binding SelectedTemplate}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel IsVisible="{Binding !IsFromExternalSource}">
+                            <TextBlock Text="CURRENCY" Classes="sidebar-label" />
+                            <ComboBox ItemsSource="{Binding AvailableCurrencies}"
+                                      SelectedItem="{Binding SelectedCurrency}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Recurring -->
+                        <StackPanel Spacing="10">
+                            <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" />
+                            <Border IsVisible="{Binding IsRecurring}"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="8" Padding="12">
+                                <StackPanel Spacing="10">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Frequency" Classes="sidebar-label" Margin="0" />
+                                        <ComboBox ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding RecurringFrequency}" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Start date" Classes="sidebar-label" Margin="0" />
+                                        <DatePicker SelectedDate="{Binding RecurringStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="End date (optional)" Classes="sidebar-label" Margin="0" />
+                                        <DatePicker SelectedDate="{Binding RecurringEndDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <CheckBox Grid.Column="0" IsChecked="{Binding RecurringAutoSend}" Content="Auto-send each time" IsEnabled="{Binding HasPremium}" />
+                                            <Border Grid.Column="2" Background="#3A2E12" CornerRadius="8" Padding="6,1" IsVisible="{Binding !HasPremium}" VerticalAlignment="Center">
+                                                <TextBlock Text="PREMIUM" FontSize="10" Foreground="#F0B24A" />
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Text="Upgrade to send automatically while the app is closed."
+                                                   FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextWrapping="Wrap" IsVisible="{Binding !HasPremium}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Actions -->
+                        <StackPanel Spacing="8" Margin="0,4,0,0">
+                            <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Create &amp; send" Command="{Binding CreateAndSendInvoiceCommand}" />
+                            <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft" Command="{Binding SaveAsDraftCommand}" />
+                            <Button Classes="link-button" HorizontalAlignment="Center" Content="Preview" Command="{Binding OpenPreviewModalCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
