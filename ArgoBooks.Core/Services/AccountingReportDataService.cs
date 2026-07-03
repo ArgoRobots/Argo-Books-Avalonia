@@ -154,9 +154,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// </summary>
     private bool IsInDateRange(DateTime date)
     {
-        if (filters.StartDate.HasValue && date < filters.StartDate.Value)
+        // Compare at day granularity: a report date range selects whole days, but a transaction
+        // carries a real time-of-day (DateTimeOffset.Now) and a custom range's end date is midnight,
+        // so a raw `date > EndDate` would drop a transaction entered later on the end day itself.
+        if (filters.StartDate.HasValue && date.Date < filters.StartDate.Value.Date)
             return false;
-        if (filters.EndDate.HasValue && date > filters.EndDate.Value)
+        if (filters.EndDate.HasValue && date.Date > filters.EndDate.Value.Date)
             return false;
         return true;
     }
@@ -167,7 +170,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// </summary>
     private bool IsOnOrBeforeEndDate(DateTime date)
     {
-        if (filters.EndDate.HasValue && date > filters.EndDate.Value)
+        if (filters.EndDate.HasValue && date.Date > filters.EndDate.Value.Date)
             return false;
         return true;
     }

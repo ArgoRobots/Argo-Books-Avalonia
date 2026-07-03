@@ -64,6 +64,31 @@ public class AccountingReportDataServiceTests
         Assert.NotNull(result);
     }
 
+    [Fact]
+    public void GetReportData_IncomeStatement_IncludesEndDayTransactionEnteredWithATime()
+    {
+        var data = new CompanyData();
+        // A revenue entered at 14:30 on the last day of a custom range whose end date is stored at
+        // midnight (as the date picker does). It must still be counted, not dropped by a time compare.
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-1",
+            Date = new DateTime(2024, 6, 30, 14, 30, 0),
+            Total = 100m
+        });
+        var filters = new ReportFilters
+        {
+            StartDate = new DateTime(2024, 6, 1),
+            EndDate = new DateTime(2024, 6, 30) // midnight
+        };
+
+        var result = new AccountingReportDataService(data, filters).GetReportData(AccountingReportType.IncomeStatement);
+
+        var totalRevenue = result.Rows.Find(r => r.Label == "Total Revenue");
+        Assert.NotNull(totalRevenue);
+        Assert.Contains("100", totalRevenue!.Values[0]);
+    }
+
     #endregion
 
     #region Balance Sheet Tests
