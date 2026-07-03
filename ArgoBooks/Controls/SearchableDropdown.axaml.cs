@@ -9,6 +9,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.Input;
 
@@ -29,6 +34,14 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     private ScrollViewer? _itemsScrollViewer;
     private int _highlightedIndex = -1;
     private bool _isSettingFromSelectedItem;
+
+    // Debounce typing so the fuzzy-scoring filter over the whole source list doesn't run per keystroke.
+    private const int SearchDebounceMs = 120;
+    private CancellationTokenSource? _searchDebounceCts;
+
+    // Cache the reflected DisplayMemberPath property per (item type, path) so the filter doesn't call
+    // GetProperty for every item on every keystroke.
+    private static readonly ConcurrentDictionary<(Type, string), PropertyInfo?> DisplayPropertyCache = new();
 
     #region Styled Properties
 
@@ -273,12 +286,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets the filtered items based on search text.
     /// </summary>
-    public ObservableCollection<object> FilteredItems { get; } = [];
+    public BatchObservableCollection<object> FilteredItems { get; } = [];
 
     /// <summary>
     /// Gets the filtered priority items based on search text.
     /// </summary>
-    public ObservableCollection<object> FilteredPriorityItems { get; } = [];
+    public BatchObservableCollection<object> FilteredPriorityItems { get; } = [];
 
     /// <summary>
     /// Gets whether there are filtered priority items to display.
@@ -648,8 +661,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     private void OnSearchTextChanged()
     {
-        UpdateFilteredItems();
-
         // Open dropdown only when the user is actually typing (search box focused), not when the
         // text is set programmatically / via binding (e.g. pre-filled rows in the bank importer).
         if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen
@@ -661,15 +672,39 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         // Reset highlight when search text changes - user must press key to navigate
         _highlightedIndex = -1;
         HighlightedItem = null;
+
+        // Debounce the expensive filter (fuzzy scoring over the whole source + the collection rebuild).
+        _searchDebounceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+        _ = DebouncedUpdateFilteredItemsAsync(cts.Token);
+    }
+
+    private async Task DebouncedUpdateFilteredItemsAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(SearchDebounceMs, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return; // superseded by a newer keystroke
+        }
+
+        // Resumes on the UI thread's synchronization context, so it's safe to touch the collections.
+        if (!token.IsCancellationRequested)
+            UpdateFilteredItems();
     }
 
     private void UpdateFilteredItems()
     {
-        FilteredItems.Clear();
-        FilteredPriorityItems.Clear();
-
         if (ItemsSource == null)
+        {
+            FilteredPriorityItems.ReplaceAll([]);
+            FilteredItems.ReplaceAll([]);
+            RaiseFilteredPropertyChanges();
             return;
+        }
 
         var searchText = SearchText ?? string.Empty;
         var prioritySet = new HashSet<object>();
@@ -684,23 +719,22 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             }
         }
 
+        var priorityResult = new List<object>();
+        var itemResult = new List<object>();
+
         if (string.IsNullOrEmpty(searchText))
         {
             // No search - show priority items first, then all other items
             foreach (var item in PriorityItems ?? Enumerable.Empty<object>())
             {
                 if (item != null)
-                {
-                    FilteredPriorityItems.Add(item);
-                }
+                    priorityResult.Add(item);
             }
 
             foreach (var item in ItemsSource)
             {
                 if (item != null && !prioritySet.Contains(item))
-                {
-                    FilteredItems.Add(item);
-                }
+                    itemResult.Add(item);
             }
         }
         else
@@ -715,13 +749,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
                 if (item == null)
                     continue;
 
-                var displayText = GetDisplayText(item);
-                var score = LevenshteinDistance.ComputeSearchScore(searchText, displayText);
-
+                var score = LevenshteinDistance.ComputeSearchScore(searchText, GetDisplayText(item));
                 if (score >= 0)
-                {
                     scoredPriorityItems.Add((item, score));
-                }
             }
 
             // Score regular items (excluding priority items)
@@ -730,28 +760,23 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
                 if (item == null || prioritySet.Contains(item))
                     continue;
 
-                var displayText = GetDisplayText(item);
-                var score = LevenshteinDistance.ComputeSearchScore(searchText, displayText);
-
+                var score = LevenshteinDistance.ComputeSearchScore(searchText, GetDisplayText(item));
                 if (score >= 0)
-                {
                     scoredItems.Add((item, score));
-                }
             }
 
-            // Sort by score descending and add to filtered items
-            foreach (var (item, _) in scoredPriorityItems.OrderByDescending(x => x.Score))
-            {
-                FilteredPriorityItems.Add(item);
-            }
-
-            foreach (var (item, _) in scoredItems.OrderByDescending(x => x.Score))
-            {
-                FilteredItems.Add(item);
-            }
+            priorityResult.AddRange(scoredPriorityItems.OrderByDescending(x => x.Score).Select(x => x.Item));
+            itemResult.AddRange(scoredItems.OrderByDescending(x => x.Score).Select(x => x.Item));
         }
 
-        // Notify property changed for computed properties
+        // Swap in each result with a single Reset notification instead of clearing and adding per item.
+        FilteredPriorityItems.ReplaceAll(priorityResult);
+        FilteredItems.ReplaceAll(itemResult);
+        RaiseFilteredPropertyChanges();
+    }
+
+    private void RaiseFilteredPropertyChanges()
+    {
         RaisePropertyChanged(nameof(HasFilteredItems));
         RaisePropertyChanged(nameof(HasFilteredPriorityItems));
         RaisePropertyChanged(nameof(HasAnyFilteredItems));
@@ -765,7 +790,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         if (string.IsNullOrEmpty(DisplayMemberPath))
             return item.ToString() ?? string.Empty;
 
-        var property = item.GetType().GetProperty(DisplayMemberPath);
+        var property = DisplayPropertyCache.GetOrAdd(
+            (item.GetType(), DisplayMemberPath!),
+            static key => key.Item1.GetProperty(key.Item2));
         return property?.GetValue(item)?.ToString() ?? item.ToString() ?? string.Empty;
     }
 }
