@@ -166,8 +166,14 @@ public class SpreadsheetExportService
                 }
                 else if (value is DateTime dt)
                 {
-                    cell.Value = dt;
-                    cell.Style.NumberFormat.Format = "yyyy-MM-dd";
+                    // DateTime.MinValue is the "no date" sentinel (e.g. an un-returned rental's Return
+                    // Date is exported as `ReturnDate ?? DateTime.MinValue`). Leave the cell blank
+                    // instead of writing a bogus 0001/1899 date; mirrors FormatValue (CSV/PDF path).
+                    if (dt != DateTime.MinValue)
+                    {
+                        cell.Value = dt;
+                        cell.Style.NumberFormat.Format = "yyyy-MM-dd";
+                    }
                 }
                 else if (value is int i)
                 {
