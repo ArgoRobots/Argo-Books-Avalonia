@@ -145,4 +145,16 @@ public class RentalRecord
     /// </summary>
     [JsonIgnore]
     public int DaysOverdue => IsOverdue ? (int)(DateTime.Today - DueDate.Date).TotalDays : 0;
+
+    /// <summary>
+    /// Days a still-out rental is past its due date for DISPLAY. Unlike <see cref="DaysOverdue"/>
+    /// (which counts only Active records), this also counts records already flagged
+    /// <see cref="RentalStatus.Overdue"/> - the page marks a late rental Overdue before reading this,
+    /// which would otherwise make the day count read 0. Zero once the rental is returned/cancelled.
+    /// </summary>
+    [JsonIgnore]
+    public int EffectiveDaysOverdue =>
+        (Status == RentalStatus.Active || Status == RentalStatus.Overdue) && DateTime.Today > DueDate.Date
+            ? (int)(DateTime.Today - DueDate.Date).TotalDays
+            : 0;
 }

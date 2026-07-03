@@ -1257,7 +1257,7 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         ViewTotalCost = rentalRecord.TotalCost ?? 0;
         ViewDepositRefundedAmount = rentalRecord.DepositRefunded;
         ViewNotes = rentalRecord.Notes;
-        ViewDaysOverdue = rentalRecord.DaysOverdue;
+        ViewDaysOverdue = rentalRecord.EffectiveDaysOverdue;
 
         // Populate view line items
         ViewLineItems.Clear();

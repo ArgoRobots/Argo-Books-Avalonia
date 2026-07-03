@@ -145,6 +145,63 @@ public class RentalRecordTests
 
     #endregion
 
+    #region EffectiveDaysOverdue Tests
+
+    [Fact]
+    public void EffectiveDaysOverdue_OverdueStatusPastDue_CountsDays()
+    {
+        // The page flags a late rental Overdue before the badge is read; DaysOverdue (Active-only)
+        // would report 0 here, so the "N days overdue" badge never showed. EffectiveDaysOverdue fixes it.
+        var rental = new RentalRecord
+        {
+            Status = RentalStatus.Overdue,
+            DueDate = DateTime.Today.AddDays(-7)
+        };
+
+        Assert.Equal(0, rental.DaysOverdue);          // the gated property (unchanged)
+        Assert.Equal(7, rental.EffectiveDaysOverdue); // the display property
+    }
+
+    [Fact]
+    public void EffectiveDaysOverdue_ActivePastDue_CountsDays()
+    {
+        var rental = new RentalRecord
+        {
+            Status = RentalStatus.Active,
+            DueDate = DateTime.Today.AddDays(-3)
+        };
+
+        Assert.Equal(3, rental.EffectiveDaysOverdue);
+    }
+
+    [Theory]
+    [InlineData(RentalStatus.Returned)]
+    [InlineData(RentalStatus.Cancelled)]
+    public void EffectiveDaysOverdue_ReturnedOrCancelled_ReturnsZero(RentalStatus status)
+    {
+        var rental = new RentalRecord
+        {
+            Status = status,
+            DueDate = DateTime.Today.AddDays(-30)
+        };
+
+        Assert.Equal(0, rental.EffectiveDaysOverdue);
+    }
+
+    [Fact]
+    public void EffectiveDaysOverdue_NotYetDue_ReturnsZero()
+    {
+        var rental = new RentalRecord
+        {
+            Status = RentalStatus.Overdue,
+            DueDate = DateTime.Today.AddDays(5)
+        };
+
+        Assert.Equal(0, rental.EffectiveDaysOverdue);
+    }
+
+    #endregion
+
     #region Default Values Tests
 
     [Fact]

@@ -488,7 +488,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 ReturnDate = record.ReturnDate,
                 Status = record.Status.ToString(),
                 TotalCost = record.TotalCost ?? 0,
-                DaysOverdue = record.DaysOverdue,
+                DaysOverdue = record.EffectiveDaysOverdue,
                 IsActive = record.Status == RentalStatus.Active || record.Status == RentalStatus.Overdue,
                 Paid = record.Paid,
                 HasInvoices = record.HasInvoices,
