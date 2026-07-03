@@ -194,12 +194,14 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Date Range Message -->
+                <!-- Date Range Message. Negative top margin tightens the 24px StackPanel spacing so the
+                     banner sits closer under the header controls instead of floating in a large gap. -->
                 <Border Background="{DynamicResource InfoLightBrush}"
                         BorderBrush="{DynamicResource InfoBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="14,10"
+                        Margin="0,-16,0,0"
                         HorizontalAlignment="Center"
                         IsVisible="{Binding ShowDateRangeBanner}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
