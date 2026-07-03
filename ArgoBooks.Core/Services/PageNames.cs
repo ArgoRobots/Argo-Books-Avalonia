@@ -13,6 +13,7 @@ public static class PageNames
     public const string Revenue = "Revenue";
     public const string Expenses = "Expenses";
     public const string Invoices = "Invoices";
+    public const string InvoiceEditor = "InvoiceEditor";
     public const string Payments = "Payments";
     public const string BankMatching = "BankMatching";
     public const string Products = "Products";

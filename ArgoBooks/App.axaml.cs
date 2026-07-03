@@ -3678,6 +3678,18 @@ public partial class App : Application
             }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
+        navigationService.RegisterPage("InvoiceEditor", param =>
+        {
+            var vm = InvoiceModalsViewModel;
+            if (vm != null)
+            {
+                if (param is InvoiceEditorNavigationParameter p)
+                    vm.PrepareForEditor(p.Mode, p.InvoiceId, p.Recurring);
+                else
+                    vm.PrepareForEditor(EditorMode.Create, null);
+            }
+            return new InvoiceEditorPage { DataContext = vm };
+        });
         navigationService.RegisterPage("Payments", param =>
         {
             _paymentsPageViewModel ??= new PaymentsPageViewModel();

@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.InvoiceEditorPage"
+             x:DataType="vm:InvoiceModalsViewModel">
+
+    <Grid RowDefinitions="Auto,*" Background="{DynamicResource BackgroundBrush}">
+
+        <!-- Top bar -->
+        <Border Grid.Row="0"
+                Padding="16,12"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Button Classes="secondary-button"
+                        Content="Back"
+                        Click="OnBackClick" />
+                <TextBlock Text="{Binding ModalTitle}"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Body (paper + sidebar arrive in Phase 2) -->
+        <TextBlock Grid.Row="1"
+                   Text="Invoice editor"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextTertiaryBrush}" />
+    </Grid>
+</UserControl>
