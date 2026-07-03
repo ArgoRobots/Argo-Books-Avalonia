@@ -978,15 +978,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [RelayCommand(CanExecute = nameof(CanOpenCreateModal))]
     private void OpenCreateModal()
     {
-        _ = App.NavigationService?.NavigateToAsync(PageNames.InvoiceEditor,
-            new InvoiceEditorNavigationParameter(EditorMode.Create, null));
+        App.InvoiceModalsViewModel?.OpenCreateModal();
     }
 
     [RelayCommand(CanExecute = nameof(CanOpenCreateModal))]
     private void NewRecurringInvoice()
     {
-        _ = App.NavigationService?.NavigateToAsync(PageNames.InvoiceEditor,
-            new InvoiceEditorNavigationParameter(EditorMode.Create, null, Recurring: true));
+        App.InvoiceModalsViewModel?.OpenCreateRecurringModal();
     }
 
     /// <summary>Rebuilds the Recurring tab's schedule list from CompanyData.</summary>

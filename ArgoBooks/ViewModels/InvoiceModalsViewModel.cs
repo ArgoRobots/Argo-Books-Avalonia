@@ -764,6 +764,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         AllowPreview = true;
         ModalTitle = "Create Invoice";
         SaveButtonText = "Preview";
+        OnPropertyChanged(nameof(CompanyName));
+        OnPropertyChanged(nameof(InvoiceNumberDisplay));
         IsCreateEditModalOpen = true;
     }
 
@@ -1027,51 +1029,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Capture original values for change detection
         CaptureOriginalValues();
 
-        IsCreateEditModalOpen = true;
-    }
-
-    /// <summary>
-    /// Sets up the shared form/preview state for the full-page invoice editor, reusing the existing
-    /// Open* setup but WITHOUT showing the overlay modal (the page hosts the content instead). Called
-    /// synchronously from the InvoiceEditor page factory before the page renders.
-    /// </summary>
-    public void PrepareForEditor(EditorMode mode, string? id, bool recurring = false)
-    {
-        switch (mode)
-        {
-            case EditorMode.Create:
-                OpenCreateModal();
-                break;
-            case EditorMode.ContinueDraft:
-                if (!string.IsNullOrEmpty(id))
-                    ContinueDraftInvoice(new InvoiceDisplayItem { Id = id });
-                break;
-            case EditorMode.ViewOnly:
-                OpenViewInvoice(id);
-                break;
-            case EditorMode.FromRental:
-                if (!string.IsNullOrEmpty(id))
-                    OpenCreateFromRental(id);
-                break;
-            case EditorMode.FromRevenue:
-                if (!string.IsNullOrEmpty(id))
-                    OpenCreateFromRevenue(id);
-                break;
-        }
-
-        if (recurring)
-        {
-            IsRecurring = true;
-            ModalTitle = "New Recurring Invoice";
-        }
-
-        // The Open* helpers flip the overlay-modal flag; suppress it so only the page shows. No render
-        // happens between those calls and here (all synchronous), so there is no flash.
-        IsCreateEditModalOpen = false;
-        IsShowingPreview = mode == EditorMode.ViewOnly;
-
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
+        IsCreateEditModalOpen = true;
     }
 
     #endregion
@@ -2184,24 +2144,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #endregion
 }
-
-/// <summary>
-/// The mode the full-page invoice editor opens in.
-/// </summary>
-public enum EditorMode
-{
-    Create,
-    ContinueDraft,
-    ViewOnly,
-    FromRental,
-    FromRevenue
-}
-
-/// <summary>
-/// Navigation parameter passed to the "InvoiceEditor" page. Carried as object through
-/// NavigationService and unpacked by the page factory in App.RegisterPages.
-/// </summary>
-public record InvoiceEditorNavigationParameter(EditorMode Mode, string? InvoiceId, bool Recurring = false);
 
 /// <summary>
 /// Display model for line items in the invoice form.

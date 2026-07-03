@@ -16,594 +16,321 @@
         <vm:InvoiceModalsViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <!-- Borderless "invoice text" inputs on the white paper -->
+        <Style Selector="TextBox.paper">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#1A1F2B" />
+            <Setter Property="CaretBrush" Value="#1A1F2B" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="3,2" />
+        </Style>
+        <Style Selector="NumericUpDown.paper">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#1A1F2B" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.paper-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#8A94A3" />
+        </Style>
+        <Style Selector="TextBlock.sidebar-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
-        <!-- ======================= CREATE / EDIT INVOICE MODAL ======================= -->
+        <!-- ======================= CREATE / EDIT INVOICE EDITOR (big modal) ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}"
                                ClosingCommand="{Binding RequestCloseCreateEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
-                <Border HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="{Binding ModalWidth}"
-                    Height="{Binding ModalHeight}"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto,Auto">
-                    <!-- Header - Edit Mode -->
-                    <Border Grid.Row="0"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1"
-                            IsVisible="{Binding ShowEditContent}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="{Binding ModalTitle}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseCreateEditModalCommand}">
-                                <PathIcon Data="{x:Static icons:Icons.Close}"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
+                <Border HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Margin="32"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*">
 
-                    <!-- Header - Preview Mode -->
-                    <Border Grid.Row="0"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1"
-                            IsVisible="{Binding ShowPreviewContent}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="{loc:Loc 'Invoice Preview'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Review your invoice before sending'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsViewOnly}" />
-                            </StackPanel>
-                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
-                                <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Content - Edit Mode -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding ShowEditContent}">
-                        <StackPanel Margin="24" Spacing="20">
-                            <!-- Template and Customer Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <!-- Template Selection (left) -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Template'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TemplateOptions}"
-                                             SelectedItem="{Binding SelectedTemplate}"
-                                             PlaceholderText="{loc:Loc 'Select template'}"
-                                             Classes="form-combobox"
-                                             HorizontalAlignment="Stretch">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Name}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                </StackPanel>
-
-                                <!-- Customer Selection (right) - hidden when from rental, disabled when limited edit -->
-                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromExternalSource}">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
-                                                                SelectedItem="{Binding SelectedCustomer}"
-                                                                DisplayMemberPath="Name"
-                                                                Placeholder="{loc:Loc 'Search for a customer...'}"
-                                                                IsRequired="True"
-                                                                HasError="{Binding HasCustomerError}"
-                                                                ErrorMessage="{loc:Loc 'Please select a customer.'}"
-                                                                ShowAddNew="True"
-                                                                AddNewText="{loc:Loc 'Create new customer'}"
-                                                                AddNewCommand="{Binding OpenCreateCustomerCommand}"
-                                                                EmptyMessage="{loc:Loc 'No customers found.'}"
-                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
-                                </StackPanel>
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="20,14"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding ModalTitle}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
                             </Grid>
+                        </Border>
 
-                            <!-- Dates Row - hidden when from rental -->
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
-                                <!-- Issue Date - disabled when limited edit -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalIssueDate}"
-                                                Classes="form-datepicker"
-                                                HorizontalAlignment="Stretch" />
-                                </StackPanel>
+                        <!-- Body -->
+                        <Grid Grid.Row="1">
 
-                                <!-- Due Date -->
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalDueDate}"
-                                                Classes="form-datepicker"
-                                                HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- EDITOR: paper + sidebar (create / continue) -->
+                            <Grid ColumnDefinitions="*,320" IsVisible="{Binding !IsViewOnly}">
 
-                            <!-- Currency Row - hidden when from rental/revenue (parent transaction owns currency) -->
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Currency'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding AvailableCurrencies}"
-                                              SelectedItem="{Binding SelectedCurrency}"
-                                              Classes="form-combobox"
-                                              PlaceholderText="{loc:Loc 'Select currency'}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                                <!-- PAPER -->
+                                <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="28"
+                                              Background="{DynamicResource BackgroundBrush}">
+                                    <Border Background="#FFFFFF" CornerRadius="6" Padding="44,40"
+                                            MaxWidth="760" HorizontalAlignment="Center" VerticalAlignment="Top"
+                                            BoxShadow="0 6 24 0 #33000000">
+                                        <StackPanel Spacing="0">
 
-                            <!-- Line Items Section - hidden when from rental, disabled when limited edit -->
-                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromExternalSource}">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0"
-                                               Text="{loc:Loc 'Line Items'}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <Button Grid.Column="1"
-                                            Classes="secondary-button"
-                                            Command="{Binding AddLineItemCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                      Width="14" Height="14" />
-                                            <TextBlock Text="{loc:Loc 'Add Item'}" />
+                                            <!-- Header -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="10">
+                                                    <Border BorderBrush="#C4CCD6" BorderThickness="1" CornerRadius="6"
+                                                            Padding="14,12" HorizontalAlignment="Left">
+                                                        <TextBlock Text="+ Add your logo" Foreground="#8A94A3" FontSize="12" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding CompanyName}" FontSize="18" FontWeight="Bold" Foreground="#1A1F2B" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                                    <TextBlock Text="INVOICE" FontSize="24" FontWeight="Bold" Foreground="#2F3A4D" HorizontalAlignment="Right" />
+                                                    <TextBlock Text="{Binding InvoiceNumberDisplay}" FontSize="13" Foreground="#5A6473" HorizontalAlignment="Right" Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Bill To + dates -->
+                                            <Grid ColumnDefinitions="*,Auto" Margin="0,28,0,0">
+                                                <StackPanel Grid.Column="0" Spacing="3">
+                                                    <TextBlock Text="BILL TO" Classes="paper-label" />
+                                                    <TextBlock Text="{Binding SelectedCustomer.Name}" FontWeight="SemiBold" Foreground="#1A1F2B" FontSize="14"
+                                                               IsVisible="{Binding SelectedCustomer, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                                    <TextBlock Text="Pick a customer in the sidebar" Foreground="#B4BCC7" FontStyle="Italic"
+                                                               IsVisible="{Binding SelectedCustomer, Converter={x:Static ObjectConverters.IsNull}}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="Issue date" Classes="paper-label" VerticalAlignment="Center" Width="64" TextAlignment="Right" />
+                                                        <DatePicker SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" />
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="Due date" Classes="paper-label" VerticalAlignment="Center" Width="64" TextAlignment="Right" />
+                                                        <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Line items -->
+                                            <Grid ColumnDefinitions="*,72,96,96,28" Margin="0,28,0,0">
+                                                <TextBlock Grid.Column="0" Text="DESCRIPTION" Classes="paper-label" />
+                                                <TextBlock Grid.Column="1" Text="QTY" Classes="paper-label" TextAlignment="Right" />
+                                                <TextBlock Grid.Column="2" Text="RATE" Classes="paper-label" TextAlignment="Right" />
+                                                <TextBlock Grid.Column="3" Text="AMOUNT" Classes="paper-label" TextAlignment="Right" />
+                                            </Grid>
+                                            <Rectangle Height="1" Fill="#ECEFF3" Margin="0,5,0,0" />
+
+                                            <ItemsControl ItemsSource="{Binding LineItems}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:LineItemDisplayModel">
+                                                        <Grid ColumnDefinitions="*,72,96,96,28" Margin="0,3">
+                                                            <TextBox Grid.Column="0" Classes="paper" Text="{Binding Description}" PlaceholderText="Item description" />
+                                                            <NumericUpDown Grid.Column="1" Classes="paper" Value="{Binding Quantity}" ShowButtonSpinner="False" Minimum="0" HorizontalContentAlignment="Right" />
+                                                            <NumericUpDown Grid.Column="2" Classes="paper" Value="{Binding UnitPrice}" ShowButtonSpinner="False" Minimum="0" FormatString="0.00" HorizontalContentAlignment="Right" />
+                                                            <TextBlock Grid.Column="3" Text="{Binding AmountFormatted}" Foreground="#1A1F2B" FontWeight="SemiBold" TextAlignment="Right" VerticalAlignment="Center" />
+                                                            <Button Grid.Column="4" Classes="icon-button" Padding="2" VerticalAlignment="Center"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <TextBlock Text="&#215;" Foreground="#B4BCC7" FontSize="16" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <Button Classes="link-button" Content="+ Add line item" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                                    Foreground="#2F6BFF" Command="{Binding AddLineItemCommand}" />
+
+                                            <!-- Totals + notes -->
+                                            <Grid ColumnDefinitions="*,240" Margin="0,20,0,0">
+                                                <StackPanel Grid.Column="0" Spacing="3">
+                                                    <TextBlock Text="NOTES" Classes="paper-label" />
+                                                    <TextBox Classes="paper" Text="{Binding ModalNotes}" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="Notes for this invoice..." MaxLength="500" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0" Text="Subtotal" Foreground="#5A6473" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" Foreground="#1A1F2B" />
+                                                    </Grid>
+                                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                                        <TextBlock Grid.Column="0" Text="Tax" Foreground="#5A6473" VerticalAlignment="Center" />
+                                                        <NumericUpDown Grid.Column="1" Classes="paper" Value="{Binding TaxRate}" ShowButtonSpinner="False" Minimum="0" Maximum="100" FormatString="0.##" Width="58" HorizontalAlignment="Left" Margin="6,0,0,0" />
+                                                        <TextBlock Grid.Column="2" Text="{Binding TaxAmountFormatted}" Foreground="#1A1F2B" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSecurityDeposit}">
+                                                        <TextBlock Grid.Column="0" Text="Security deposit" Foreground="#5A6473" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding SecurityDepositFormatted}" Foreground="#1A1F2B" />
+                                                    </Grid>
+                                                    <Rectangle Height="1" Fill="#ECEFF3" Margin="0,6" />
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0" Text="Total" FontWeight="Bold" FontSize="16" Foreground="#1A1F2B" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontWeight="Bold" FontSize="16" Foreground="#1A1F2B" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
                                         </StackPanel>
-                                    </Button>
-                                </Grid>
+                                    </Border>
+                                </ScrollViewer>
 
-                                <!-- Line Items Header -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="6"
-                                        Padding="12,8"
-                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="2*,80,90,100,40">
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
-                                            <TextBlock Text="{loc:Loc 'Product / Service'}" FontSize="12" FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text=" *" FontSize="12" FontWeight="Medium"
-                                                       Foreground="{DynamicResource DangerBrush}" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{loc:Loc Qty}" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Left" />
-                                        <TextBlock Grid.Column="2" Text="{loc:Loc Price}" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Left" />
-                                        <TextBlock Grid.Column="3" Text="{loc:Loc Amount}" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Right"
-                                                   Margin="0,0,12,0" />
-                                    </Grid>
-                                </Border>
+                                <!-- SIDEBAR -->
+                                <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel Margin="16" Spacing="16">
 
-                                <!-- Line Items List -->
-                                <ItemsControl ItemsSource="{Binding LineItems}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:LineItemDisplayModel">
-                                            <Border Padding="12,8"
-                                                    BorderBrush="{DynamicResource BorderBrush}"
-                                                    BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="2*,80,90,100,40">
-                                                    <controls:SearchableDropdown Grid.Column="0"
-                                                                 Classes="compact"
-                                                                 Margin="0,0,8,0"
-                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
-                                                                 SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                                                                 DisplayMemberPath="Name"
-                                                                 Placeholder="{loc:Loc 'Search for a product...'}"
-                                                                 ShowAddNew="True"
-                                                                 AddNewText="{loc:Loc 'Create new product'}"
-                                                                 AddNewCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
-                                                                 AddNewCommandParameter="{Binding}"
-                                                                 EmptyMessage="{loc:Loc 'No products found.'}"
-                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
-                                                                 EmptyCreateCommandParameter="{Binding}"
-                                                                 HasError="{Binding HasProductError}"
-                                                                 ErrorMessage="{loc:Loc 'Please select a product.'}" />
-                                                    <NumericUpDown Grid.Column="1"
-                                                                   Value="{Binding Quantity, Mode=TwoWay}"
-                                                                   Minimum="1"
-                                                                   Maximum="999999"
-                                                                   FormatString="0"
-                                                                   Classes="line-item-input"
-                                                                   ShowButtonSpinner="False"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Top"
-                                                                   Margin="0,0,8,0" />
-                                                    <NumericUpDown Grid.Column="2"
-                                                                   Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
-                                                                   Minimum="0"
-                                                                   Maximum="999999999"
-                                                                   FormatString="N2"
-                                                                   Classes="line-item-input"
-                                                                   ShowButtonSpinner="False"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Top"
-                                                                   Margin="0,0,8,0" />
-                                                    <TextBlock Grid.Column="3"
-                                                               Text="{Binding AmountFormatted}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Top"
-                                                               HorizontalAlignment="Right"
-                                                               Margin="0,8,12,0" />
-                                                    <Button Grid.Column="4"
-                                                            Classes="icon-button danger"
-                                                            VerticalAlignment="Top"
-                                                            HorizontalAlignment="Center"
-                                                            IsVisible="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
-                                                            Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip.Tip="{loc:Loc 'Remove item'}">
-                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                  Width="14" Height="14" />
-                                                    </Button>
+                                            <StackPanel IsVisible="{Binding !IsFromExternalSource}">
+                                                <TextBlock Text="CUSTOMER" Classes="sidebar-label" />
+                                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                                             SelectedItem="{Binding SelectedCustomer}"
+                                                                             DisplayMemberPath="Name"
+                                                                             Placeholder="Search for a customer..."
+                                                                             IsRequired="True"
+                                                                             HasError="{Binding HasCustomerError}"
+                                                                             ErrorMessage="Please select a customer."
+                                                                             ShowAddNew="True"
+                                                                             AddNewText="Create new customer"
+                                                                             AddNewCommand="{Binding OpenCreateCustomerCommand}"
+                                                                             EmptyMessage="No customers found."
+                                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
+                                            </StackPanel>
+
+                                            <StackPanel>
+                                                <TextBlock Text="TEMPLATE" Classes="sidebar-label" />
+                                                <ComboBox ItemsSource="{Binding TemplateOptions}" SelectedItem="{Binding SelectedTemplate}"
+                                                          Classes="form-combobox" HorizontalAlignment="Stretch">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <StackPanel IsVisible="{Binding !IsFromExternalSource}">
+                                                <TextBlock Text="CURRENCY" Classes="sidebar-label" />
+                                                <ComboBox ItemsSource="{Binding AvailableCurrencies}" SelectedItem="{Binding SelectedCurrency}"
+                                                          Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+
+                                            <!-- Status (edit mode) -->
+                                            <StackPanel IsVisible="{Binding IsEditMode}">
+                                                <TextBlock Text="STATUS" Classes="sidebar-label" />
+                                                <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding ModalStatus}"
+                                                          Classes="form-combobox" HorizontalAlignment="Stretch">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" /></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <!-- Recurring -->
+                                            <StackPanel Spacing="10" IsVisible="{Binding !IsEditMode}">
+                                                <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" />
+                                                <Border IsVisible="{Binding IsRecurring}"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1" CornerRadius="8" Padding="12">
+                                                    <StackPanel Spacing="10">
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="Frequency" Classes="sidebar-label" Margin="0" />
+                                                            <ComboBox ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding RecurringFrequency}" HorizontalAlignment="Stretch" />
+                                                        </StackPanel>
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="Start date" Classes="sidebar-label" Margin="0" />
+                                                            <DatePicker SelectedDate="{Binding RecurringStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                        </StackPanel>
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="End date (optional)" Classes="sidebar-label" Margin="0" />
+                                                            <DatePicker SelectedDate="{Binding RecurringEndDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                        </StackPanel>
+                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <CheckBox Grid.Column="0" IsChecked="{Binding RecurringAutoSend}" Content="Auto-send each time" IsEnabled="{Binding HasPremium}" />
+                                                            <Border Grid.Column="2" Background="#3A2E12" CornerRadius="8" Padding="6,1" IsVisible="{Binding !HasPremium}" VerticalAlignment="Center">
+                                                                <TextBlock Text="PREMIUM" FontSize="10" Foreground="#F0B24A" />
+                                                            </Border>
+                                                        </Grid>
+                                                        <TextBlock Text="Upgrade to send automatically while the app is closed."
+                                                                   FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   TextWrapping="Wrap" IsVisible="{Binding !HasPremium}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Validation / send errors -->
+                                            <Border Background="{DynamicResource ErrorLightBrush}" BorderBrush="{DynamicResource ErrorBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="10,8" IsVisible="{Binding HasValidationMessage}">
+                                                <TextBlock Text="{Binding ValidationMessage}" Foreground="{DynamicResource ErrorBrush}" FontSize="12" TextWrapping="Wrap" />
+                                            </Border>
+                                            <Border Background="{DynamicResource ErrorLightBrush}" BorderBrush="{DynamicResource ErrorBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="10,8" IsVisible="{Binding HasSendError}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="{Binding SendErrorMessage}" Foreground="{DynamicResource ErrorBrush}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                    <Button Grid.Column="1" Content="✕" Command="{Binding DismissSendErrorCommand}" Background="Transparent" Foreground="{DynamicResource ErrorBrush}" BorderThickness="0" Padding="4" VerticalAlignment="Center" Cursor="Hand" />
                                                 </Grid>
                                             </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
 
-                            </StackPanel>
-
-                            <!-- Totals Section -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8"
-                                    Padding="16">
-                                <StackPanel Spacing="10">
-                                    <!-- Subtotal -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{loc:Loc Subtotal}" FontSize="14"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" FontSize="14"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-
-                                    <!-- Tax -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{loc:Loc Tax}" FontSize="14"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="%" Width="32"
-                                                       TextAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <NumericUpDown Value="{Binding TaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                           Minimum="0" Maximum="100" FormatString="0.##"
-                                                           Width="90" ShowButtonSpinner="False"
-                                                           Classes="line-item-input" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- Security Deposit (shown only when applicable) -->
-                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSecurityDeposit}">
-                                        <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="14"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SecurityDepositFormatted}" FontSize="14"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-
-                                    <!-- Custom Fee (optional) -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="+" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource SuccessBrush}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBox Text="{Binding CustomFeeLabel, Mode=TwoWay}"
-                                                     PlaceholderText="{loc:Loc 'Fee label'}"
-                                                     Classes="form-input"
-                                                     Width="140" MaxLength="50" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <ToggleButton IsChecked="{Binding CustomFeeIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding CustomFeeSymbol}"
-                                                          Width="32" Height="28" Padding="0"
-                                                          FontSize="13" FontWeight="SemiBold"
-                                                          HorizontalContentAlignment="Center"
-                                                          VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
-                                            <NumericUpDown Value="{Binding CustomFeeAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                           Minimum="0" Maximum="999999999" FormatString="N2"
-                                                           Width="90" ShowButtonSpinner="False"
-                                                           Classes="line-item-input" />
-                                            <TextBlock Text="{Binding CustomFeeCalculatedFormatted}" FontSize="13"
-                                                       Foreground="{DynamicResource SuccessBrush}"
-                                                       VerticalAlignment="Center" MinWidth="60"
-                                                       TextAlignment="Right"
-                                                       IsVisible="{Binding HasCustomFee}" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- Discount (optional) -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="−" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource DangerBrush}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Text="{loc:Loc Discount}" FontSize="14"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <ToggleButton IsChecked="{Binding DiscountIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding DiscountSymbol}"
-                                                          Width="32" Height="28" Padding="0"
-                                                          FontSize="13" FontWeight="SemiBold"
-                                                          HorizontalContentAlignment="Center"
-                                                          VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
-                                            <NumericUpDown Value="{Binding DiscountAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                           Minimum="0" Maximum="999999999" FormatString="N2"
-                                                           Width="90" ShowButtonSpinner="False"
-                                                           Classes="line-item-input" />
-                                            <TextBlock Text="{Binding DiscountCalculatedFormatted}" FontSize="13"
-                                                       Foreground="{DynamicResource DangerBrush}"
-                                                       VerticalAlignment="Center" MinWidth="60"
-                                                       TextAlignment="Right"
-                                                       IsVisible="{Binding HasDiscount}" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- Divider -->
-                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
-
-                                    <!-- Total -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{loc:Loc Total}" FontSize="16" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="16"
-                                                   FontWeight="Bold"
-                                                   Foreground="{DynamicResource PrimaryBrush}" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Status (only for Edit) -->
-                            <StackPanel Spacing="6" IsVisible="{Binding IsEditMode}">
-                                <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding StatusOptions}"
-                                          SelectedItem="{Binding ModalStatus}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <!-- Notes -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80"
-                                         MaxHeight="120"
-                                         PlaceholderText="{loc:Loc 'Additional notes for this invoice...'}"
-                                         MaxLength="500" />
-                            </StackPanel>
-
-                            <!-- Recurring schedule (create mode only) -->
-                            <StackPanel Spacing="10" IsVisible="{Binding !IsEditMode}">
-                                <CheckBox IsChecked="{Binding IsRecurring}"
-                                          Content="Repeat this invoice" />
-                                <Border IsVisible="{Binding IsRecurring}"
-                                        Background="{DynamicResource SurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <StackPanel Spacing="12">
-                                        <StackPanel Spacing="6">
-                                            <TextBlock Text="Frequency" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <ComboBox ItemsSource="{Binding FrequencyOptions}"
-                                                      SelectedItem="{Binding RecurringFrequency}"
-                                                      HorizontalAlignment="Stretch" />
-                                        </StackPanel>
-                                        <Grid ColumnDefinitions="*,*">
-                                            <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,6,0">
-                                                <TextBlock Text="Start date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <DatePicker SelectedDate="{Binding RecurringStartDate}" HorizontalAlignment="Stretch" />
+                                            <!-- Actions -->
+                                            <StackPanel Spacing="8" Margin="0,4,0,0">
+                                                <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Create &amp; send" Command="{Binding CreateAndSendInvoiceCommand}" />
+                                                <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft" Command="{Binding SaveAsDraftCommand}" IsVisible="{Binding !IsEditMode}" />
                                             </StackPanel>
-                                            <StackPanel Grid.Column="1" Spacing="6" Margin="6,0,0,0">
-                                                <TextBlock Text="End date (optional)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <DatePicker SelectedDate="{Binding RecurringEndDate}" HorizontalAlignment="Stretch" />
-                                            </StackPanel>
-                                        </Grid>
-                                        <CheckBox IsChecked="{Binding RecurringAutoSend}"
-                                                  Content="Automatically send each time it is generated" />
-                                        <TextBlock Text="New invoices are created as drafts when you open the app on or after each due date."
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
                                 </Border>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
+                            </Grid>
 
-                    <!-- Content - Preview Mode (HTML Preview) -->
-                    <controls:InvoicePreviewControl Grid.Row="1"
-                                                    Grid.RowSpan="2"
-                                                    Html="{Binding PreviewHtml}"
-                                                    OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}"
-                                                    IsVisible="{Binding ShowPreviewContent}" />
+                            <!-- VIEW-ONLY: rendered HTML preview -->
+                            <controls:InvoicePreviewControl Html="{Binding PreviewHtml}"
+                                                            OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}"
+                                                            IsVisible="{Binding IsViewOnly}" />
 
-                    <!-- Content - Success Animation -->
-                    <controls:SuccessAnimation Grid.Row="1"
-                                               Grid.RowSpan="3"
-                                               Title="{Binding SuccessTitle}"
-                                               Message="{Binding SuccessMessage}"
-                                               ShowContinueButton="True"
-                                               ContinueButtonText="{loc:Loc Done}"
-                                               ContinueButtonDelayMs="300"
-                                               ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
-                                               IsPlaying="{Binding IsShowingSuccess}"
-                                               IsVisible="{Binding IsShowingSuccess}" />
-
-                    <!-- Content - Sending Overlay (visible while the API call is in flight) -->
-                    <!-- Border (not Panel) so CornerRadius matches the parent
-                         modal shell. Panel doesn't honor a parent Border's
-                         rounded corners and renders a hard rectangle.
-                         Explicit Cursor="Arrow" guards against the embedded
-                         HTML preview occasionally suppressing the system
-                         cursor when it loses hit-testing to this overlay. -->
-                    <Border Grid.Row="0" Grid.RowSpan="4"
-                            Background="{DynamicResource SurfaceBrush}"
-                            CornerRadius="12"
-                            Cursor="Arrow"
-                            IsVisible="{Binding IsSending}">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="20">
-                            <ProgressBar IsIndeterminate="True"
-                                         Width="220"
-                                         Height="4" />
-                            <TextBlock Text="{loc:Loc 'Sending invoice...'}"
-                                       FontSize="16"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       HorizontalAlignment="Center" />
-                            <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center"
-                                       MaxWidth="320"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Footer - Edit Mode -->
-                    <Border Grid.Row="3"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0"
-                            IsVisible="{Binding ShowEditContent}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Please enter all required fields'}"
-                                       Foreground="{DynamicResource ErrorBrush}"
-                                       FontSize="13"
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding HasValidationMessage}" />
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button"
-                                        Content="{loc:Loc Cancel}"
-                                        Command="{Binding CloseCreateEditModalCommand}" />
-                                <Button Classes="secondary-button"
-                                        Content="{loc:Loc 'Save as Draft'}"
-                                        Command="{Binding SaveAsDraftCommand}"
-                                        IsVisible="{Binding !IsEditMode}" />
-                                <!-- Preview button for create/continue modes -->
-                                <Button Classes="primary-button"
-                                        Content="{loc:Loc Preview}"
-                                        Command="{Binding OpenPreviewModalCommand}"
-                                        IsVisible="{Binding AllowPreview}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Footer - View Only Mode -->
-                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                            IsVisible="{Binding IsViewOnly}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
-                                        <TextBlock Text="{loc:Loc 'Open in Browser'}" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                            <Button Grid.Column="2"
-                                    Classes="primary-button"
-                                    Content="{loc:Loc Close}"
-                                    Command="{Binding CloseCreateEditModalCommand}" />
-                        </Grid>
-                    </Border>
-
-                    <!-- Footer - Preview Send Mode -->
-                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                            IsVisible="{Binding ShowPreviewContent}">
-                        <StackPanel Spacing="12" IsVisible="{Binding !IsViewOnly}">
-                            <!-- Error Banner -->
-                            <Border Background="{DynamicResource ErrorLightBrush}"
-                                    BorderBrush="{DynamicResource ErrorBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="12,8"
-                                    IsVisible="{Binding HasSendError}">
+                            <!-- View-only bottom bar -->
+                            <Border VerticalAlignment="Bottom" Padding="20,14"
+                                    Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                    IsVisible="{Binding IsViewOnly}">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <PathIcon Grid.Column="0"
-                                              Data="{x:Static icons:Icons.WarningCircle}"
-                                              Foreground="{DynamicResource ErrorBrush}"
-                                              Width="20"
-                                              Height="20"
-                                              VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding SendErrorMessage}"
-                                               Foreground="{DynamicResource ErrorBrush}"
-                                               FontSize="13"
-                                               Margin="10,0"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap" />
-                                    <Button Grid.Column="2"
-                                            Content="✕"
-                                            Command="{Binding DismissSendErrorCommand}"
-                                            Background="Transparent"
-                                            Foreground="{DynamicResource ErrorBrush}"
-                                            BorderThickness="0"
-                                            Padding="4"
-                                            VerticalAlignment="Center"
-                                            Cursor="Hand" />
+                                    <Button Grid.Column="0" Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
+                                            <TextBlock Text="{loc:Loc 'Open in Browser'}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Grid.Column="2" Classes="primary-button" Content="{loc:Loc Close}" Command="{Binding CloseCreateEditModalCommand}" />
                                 </Grid>
                             </Border>
-                            <!-- Footer Content -->
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="{loc:Loc 'An email will be sent to the customer'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding !HasSendError}" />
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                    <Button Classes="secondary-button" Content="{loc:Loc 'Back to Edit'}" Command="{Binding ClosePreviewModalCommand}" />
-                                    <Button Classes="primary-button" Content="{loc:Loc 'Create &amp; Send'}" Command="{Binding CreateAndSendInvoiceCommand}" />
+
+                            <!-- Success overlay -->
+                            <controls:SuccessAnimation Title="{Binding SuccessTitle}"
+                                                       Message="{Binding SuccessMessage}"
+                                                       ShowContinueButton="True"
+                                                       ContinueButtonText="{loc:Loc Done}"
+                                                       ContinueButtonDelayMs="300"
+                                                       ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
+                                                       IsPlaying="{Binding IsShowingSuccess}"
+                                                       IsVisible="{Binding IsShowingSuccess}" />
+
+                            <!-- Sending overlay -->
+                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="12" Cursor="Arrow"
+                                    IsVisible="{Binding IsSending}">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20">
+                                    <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                                    <TextBlock Text="{loc:Loc 'Sending invoice...'}" FontSize="16" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
                                 </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 
