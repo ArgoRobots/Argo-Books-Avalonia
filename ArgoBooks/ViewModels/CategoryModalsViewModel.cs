@@ -518,7 +518,9 @@ public partial class CategoryModalsViewModel : ViewModelBase
     private void UpdateMoveTargetCategories()
     {
         MoveTargetCategories.Clear();
-        MoveTargetCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Make Top-Level)" });
+        // No icon on the sentinel: CategoryDisplayItem.Icon defaults to a box emoji, and the
+        // move dropdown hides the icon slot only when it's empty.
+        MoveTargetCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Make Top-Level)", Icon = string.Empty });
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
