@@ -467,3 +467,6 @@ $RECYCLE.BIN/
 
 # Superpowers brainstorm scratch files
 .superpowers/
+
+# Local planning/spec artifacts (never committed)
+docs/superpowers/
