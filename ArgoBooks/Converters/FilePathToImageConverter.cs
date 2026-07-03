@@ -16,10 +16,20 @@ public class FilePathToImageConverter : IValueConverter
 
         try
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath))
+                return null;
+
+            // Optional target width (ConverterParameter): decode a downscaled thumbnail instead of
+            // the full image. Receipt photos are often multi-MB, and decoding them at full resolution
+            // for a small card is slow and memory-heavy. With no parameter it decodes full-size (used
+            // by the full-screen receipt viewer).
+            if (parameter is not null && int.TryParse(parameter.ToString(), out var width) && width > 0)
             {
-                return new Bitmap(filePath);
+                using var stream = File.OpenRead(filePath);
+                return Bitmap.DecodeToWidth(stream, width);
             }
+
+            return new Bitmap(filePath);
         }
         catch
         {
