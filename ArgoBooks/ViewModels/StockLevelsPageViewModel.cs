@@ -421,12 +421,11 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
-            var searchProducts = companyData.Products;
             filtered = filtered
                 .Select(i => new
                 {
                     Item = i,
-                    Product = searchProducts.FirstOrDefault(p => p.Id == i.ProductId),
+                    Product = companyData.GetProduct(i.ProductId),
                     SkuScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, i.Sku)
                 })
                 .Where(x => x.Product != null)
@@ -485,16 +484,13 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Create display items
-        var products = companyData.Products;
-        var locations = companyData.Locations;
-        var categories = companyData.Categories;
-
+        // Create display items (using CompanyData's O(1) cached lookups instead of scanning the
+        // full Products/Locations/Categories lists per inventory row).
         var displayItems = filtered.Select(item =>
         {
-            var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-            var location = locations.FirstOrDefault(l => l.Id == item.LocationId);
-            var category = product != null ? categories.FirstOrDefault(c => c.Id == product.CategoryId) : null;
+            var product = companyData.GetProduct(item.ProductId);
+            var location = companyData.GetLocation(item.LocationId);
+            var category = product?.CategoryId is { Length: > 0 } categoryId ? companyData.GetCategory(categoryId) : null;
             var status = item.CalculateStatus();
 
             return new StockLevelDisplayItem
