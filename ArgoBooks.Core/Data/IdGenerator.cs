@@ -43,6 +43,15 @@ public class IdGenerator(CompanyData companyData)
     }
 
     /// <summary>
+    /// Generates a new recurring-invoice schedule ID (REC-INV-00001).
+    /// </summary>
+    public string NextRecurringInvoiceId()
+    {
+        companyData.IdCounters.RecurringInvoice++;
+        return $"REC-INV-{companyData.IdCounters.RecurringInvoice:D5}";
+    }
+
+    /// <summary>
     /// Peeks at what the next invoice ID and number would be without incrementing the counter.
     /// </summary>
     public (string Id, string Number) PeekNextInvoice()

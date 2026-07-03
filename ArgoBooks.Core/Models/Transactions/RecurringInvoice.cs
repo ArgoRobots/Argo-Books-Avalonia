@@ -92,6 +92,15 @@ public class RecurringInvoice
     public DateTime? LastGeneratedAt { get; set; }
 
     /// <summary>
+    /// Full invoice content (customer, line items, tax, discount, currency) cloned on each
+    /// generation so regenerated invoices match what the user designed in the invoice modal.
+    /// Null for legacy schedules that only carry <see cref="Amount"/>/<see cref="Description"/>;
+    /// those are skipped by the generator.
+    /// </summary>
+    [JsonPropertyName("template")]
+    public Invoice? Template { get; set; }
+
+    /// <summary>
     /// Whether the recurring schedule is active.
     /// </summary>
     [JsonIgnore]
