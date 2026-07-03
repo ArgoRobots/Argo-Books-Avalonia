@@ -704,11 +704,19 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime);
         }
 
+        // Refund totals per original payment, computed once. GetRefundedForPayment rescans the whole
+        // Payments list for each displayed row, which is O(payments^2) on refund-heavy data. Precompute
+        // the sum of refunds keyed by the payment they were issued against.
+        var refundedByOriginalPaymentId = _allPayments
+            .Where(r => r.IsRefund && !string.IsNullOrEmpty(r.RefundedFromPaymentId))
+            .GroupBy(r => r.RefundedFromPaymentId!)
+            .ToDictionary(g => g.Key, g => g.Sum(r => Math.Abs(r.Amount)));
+
         // Create display items
         var displayItems = filtered.Select(payment =>
         {
             var customer = companyData?.GetCustomer(payment.CustomerId);
-            var refunded = RefundAggregator.GetRefundedForPayment(payment, _allPayments);
+            var refunded = refundedByOriginalPaymentId.TryGetValue(payment.Id, out var refundSum) ? refundSum : 0m;
 
             string status;
             if (refunded > 0)
@@ -720,7 +728,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 // "partially refunded". Falls back to payment.Amount when
                 // there's no linked invoice (manual payments, edge cases).
                 var linkedInvoice = !string.IsNullOrEmpty(payment.InvoiceId)
-                    ? companyData?.Invoices.FirstOrDefault(i => i.Id == payment.InvoiceId)
+                    ? companyData?.GetInvoice(payment.InvoiceId)
                     : null;
                 var refundCeiling = linkedInvoice?.Total ?? payment.Amount;
                 status = refunded + 0.01m >= refundCeiling ? "Refunded" : "Partially Refunded";

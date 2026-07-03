@@ -454,13 +454,27 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
+        // Refund totals and online-payment invoice ids, computed once. Both the status filter and the
+        // display build need per-revenue refund totals and a portal-payment check; doing them per row
+        // rescans the whole Payments list each time (O(rows x payments)). Precompute keyed by invoice id.
+        var paymentsForRefunds = companyData?.Payments ?? new List<Payment>();
+        var refundedByInvoiceId = paymentsForRefunds
+            .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.InvoiceId))
+            .GroupBy(p => p.InvoiceId!)
+            .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.Amount)));
+        var onlinePaymentInvoiceIds = paymentsForRefunds
+            .Where(p => p.Source == PaymentSource.Online && !string.IsNullOrEmpty(p.InvoiceId))
+            .Select(p => p.InvoiceId!)
+            .ToHashSet();
+
+        decimal RefundedForRevenue(Revenue r) =>
+            !string.IsNullOrEmpty(r.InvoiceId) && refundedByInvoiceId.TryGetValue(r.InvoiceId, out var amt) ? amt : 0m;
+
         // Apply status filter
         if (FilterStatus != "All")
         {
-            var paymentsForFilter = companyData?.Payments ?? new List<Payment>();
             filtered = filtered.Where(s =>
-                GetStatusDisplay(s, lostDamagedIds, returnedIds,
-                    RefundAggregator.GetRefundedForRevenue(s, paymentsForFilter)) == FilterStatus);
+                GetStatusDisplay(s, lostDamagedIds, returnedIds, RefundedForRevenue(s)) == FilterStatus);
         }
 
         // Apply customer filter
@@ -504,7 +518,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var filteredList = filtered.ToList();
 
         // Create display items
-        var allPayments = companyData?.Payments ?? new List<Payment>();
         var displayItems = filteredList.Select(revenue =>
         {
             var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");
@@ -513,11 +526,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var categoryId = product?.CategoryId;
             var category = categoryId != null ? companyData?.GetCategory(categoryId) : null;
             var accountant = companyData?.GetAccountant(revenue.AccountantId ?? "");
-            var refundedAmount = RefundAggregator.GetRefundedForRevenue(revenue, allPayments);
+            var refundedAmount = RefundedForRevenue(revenue);
             var netTotal = Math.Max(0, revenue.Total - refundedAmount);
             var statusDisplay = revenue.IsPendingConversion ? "Pending" : GetStatusDisplay(revenue, lostDamagedIds, returnedIds, refundedAmount);
             var isFromPortal = !string.IsNullOrEmpty(revenue.InvoiceId) &&
-                allPayments.Any(p => p.InvoiceId == revenue.InvoiceId && p.Source == PaymentSource.Online);
+                onlinePaymentInvoiceIds.Contains(revenue.InvoiceId);
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
