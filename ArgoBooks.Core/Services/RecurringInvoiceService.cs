@@ -28,8 +28,22 @@ public static class RecurringInvoiceService
     /// <summary>Raised with the generated count after invoices are produced on company open.</summary>
     public static event Action<int>? InvoicesGenerated;
 
-    /// <summary>Fires <see cref="InvoicesGenerated"/>. Called by the app-open wiring.</summary>
-    public static void RaiseGenerated(int count) => InvoicesGenerated?.Invoke(count);
+    /// <summary>
+    /// Count of invoices generated on the last open that the user has not acknowledged yet. The
+    /// Invoices page reads this on construction so the banner survives the gap between generation
+    /// (which happens while the user is on the dashboard) and navigating to the Invoices page.
+    /// </summary>
+    public static int PendingGeneratedCount { get; private set; }
+
+    /// <summary>Records the pending count and fires <see cref="InvoicesGenerated"/>.</summary>
+    public static void RaiseGenerated(int count)
+    {
+        PendingGeneratedCount = count;
+        InvoicesGenerated?.Invoke(count);
+    }
+
+    /// <summary>Clears the pending banner count once the user has reviewed or dismissed it.</summary>
+    public static void ClearPendingGenerated() => PendingGeneratedCount = 0;
 
     /// <summary>Advances a date by one cadence step.</summary>
     public static DateTime AdvanceDate(DateTime date, Frequency frequency) => frequency switch

@@ -186,6 +186,24 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    // Recurring schedule fields, driven by the "Repeat this invoice" toggle in the create form.
+    [ObservableProperty]
+    private bool _isRecurring;
+
+    [ObservableProperty]
+    private Frequency _recurringFrequency = Frequency.Monthly;
+
+    [ObservableProperty]
+    private DateTimeOffset? _recurringStartDate = DateTimeOffset.Now;
+
+    [ObservableProperty]
+    private DateTimeOffset? _recurringEndDate;
+
+    [ObservableProperty]
+    private bool _recurringAutoSend;
+
+    public IReadOnlyList<Frequency> FrequencyOptions { get; } = Enum.GetValues<Frequency>();
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
@@ -728,6 +746,17 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalTitle = "Create Invoice";
         SaveButtonText = "Preview";
         IsCreateEditModalOpen = true;
+    }
+
+    /// <summary>
+    /// Opens the create-invoice modal with the "Repeat this invoice" toggle pre-flipped, so the
+    /// "New recurring invoice" button reuses the same form instead of a separate schedule editor.
+    /// </summary>
+    public void OpenCreateRecurringModal()
+    {
+        OpenCreateModal();
+        ModalTitle = "New Recurring Invoice";
+        IsRecurring = true;
     }
 
     /// <summary>
@@ -1854,6 +1883,30 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
         LinkInvoiceToRentals(invoice, companyData);
 
+        // If the user flipped "Repeat this invoice", create the schedule. This invoice is
+        // occurrence #1; the schedule's next date is one cadence step after the start.
+        if (IsRecurring)
+        {
+            var startDate = (RecurringStartDate ?? DateTimeOffset.Now).Date;
+            var schedule = new RecurringInvoice
+            {
+                Id = idGenerator.NextRecurringInvoiceId(),
+                CustomerId = invoice.CustomerId,
+                Amount = invoice.Total,
+                Description = invoice.LineItems.FirstOrDefault()?.Description ?? string.Empty,
+                Frequency = RecurringFrequency,
+                StartDate = startDate,
+                EndDate = RecurringEndDate?.Date,
+                NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency),
+                PaymentTerms = "Net 30",
+                AutoSend = RecurringAutoSend,
+                Status = RecurringInvoiceStatus.Active,
+                Template = RecurringInvoiceService.BuildTemplateFrom(invoice)
+            };
+            invoice.RecurringInvoiceId = schedule.Id;
+            companyData.RecurringInvoices.Add(schedule);
+        }
+
         LastSavedInvoiceId = invoice.Id;
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         CloseCreateEditModal();
@@ -2047,6 +2100,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         DiscountAmount = 0;
         DiscountIsPercent = false;
         SelectedCurrency = CurrencyService.GetDisplayString(CurrencyService.CurrentCurrencyCode);
+        IsRecurring = false;
+        RecurringFrequency = Frequency.Monthly;
+        RecurringStartDate = DateTimeOffset.Now;
+        RecurringEndDate = null;
+        RecurringAutoSend = false;
         foreach (var item in LineItems)
             item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();

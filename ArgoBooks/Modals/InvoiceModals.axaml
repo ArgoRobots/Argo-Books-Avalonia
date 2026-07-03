@@ -410,6 +410,43 @@
                                          PlaceholderText="{loc:Loc 'Additional notes for this invoice...'}"
                                          MaxLength="500" />
                             </StackPanel>
+
+                            <!-- Recurring schedule (create mode only) -->
+                            <StackPanel Spacing="10" IsVisible="{Binding !IsEditMode}">
+                                <CheckBox IsChecked="{Binding IsRecurring}"
+                                          Content="Repeat this invoice" />
+                                <Border IsVisible="{Binding IsRecurring}"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="Frequency" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding FrequencyOptions}"
+                                                      SelectedItem="{Binding RecurringFrequency}"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+                                        <Grid ColumnDefinitions="*,*">
+                                            <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,6,0">
+                                                <TextBlock Text="Start date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding RecurringStartDate}" HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="6" Margin="6,0,0,0">
+                                                <TextBlock Text="End date (optional)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding RecurringEndDate}" HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <CheckBox IsChecked="{Binding RecurringAutoSend}"
+                                                  Content="Automatically send each time it is generated" />
+                                        <TextBlock Text="New invoices are created as drafts when you open the app on or after each due date."
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
 

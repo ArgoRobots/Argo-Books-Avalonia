@@ -44,6 +44,46 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Recurring Generation Banner
+
+    [NotifyPropertyChangedFor(nameof(GeneratedBannerText))]
+    [ObservableProperty]
+    private int _generatedBannerCount;
+
+    [ObservableProperty]
+    private bool _hasGeneratedBanner;
+
+    public string GeneratedBannerText => GeneratedBannerCount == 1
+        ? "1 invoice was generated from your recurring schedules."
+        : $"{GeneratedBannerCount} invoices were generated from your recurring schedules.";
+
+    [RelayCommand]
+    private void ReviewGenerated()
+    {
+        HasGeneratedBanner = false;
+        RecurringInvoiceService.ClearPendingGenerated();
+        SelectedTabIndex = 1; // jump to the Drafts tab where the generated invoices land
+    }
+
+    [RelayCommand]
+    private void DismissGeneratedBanner()
+    {
+        HasGeneratedBanner = false;
+        RecurringInvoiceService.ClearPendingGenerated();
+    }
+
+    private void OnRecurringInvoicesGenerated(int count)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            GeneratedBannerCount = count;
+            HasGeneratedBanner = true;
+            LoadInvoices();
+        });
+    }
+
+    #endregion
+
     #region Tab Navigation
 
     [ObservableProperty]
@@ -60,7 +100,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 {
                     0 => "All",
                     1 => "Drafts",
-                    2 => "Recurring",
+                    2 => "Sent",
+                    3 => "Recurring",
                     _ => "All"
                 };
                 SelectTabInternal(tab);
@@ -73,6 +114,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private bool _isDraftsTab;
+
+    [ObservableProperty]
+    private bool _isSentTab;
 
     [ObservableProperty]
     private bool _isRecurringTab;
@@ -94,12 +138,14 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         SelectedTab = tab;
         IsAllInvoicesTab = tab == "All";
         IsDraftsTab = tab == "Drafts";
+        IsSentTab = tab == "Sent";
         IsRecurringTab = tab == "Recurring";
 
         // Update empty state messages based on tab
         EmptyStateTitle = tab switch
         {
             "Drafts" => "No Draft Invoices",
+            "Sent" => "No Sent Invoices",
             "Recurring" => "No Recurring Invoices",
             _ => "No invoices found."
         };
@@ -107,11 +153,14 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         EmptyStateMessage = tab switch
         {
             "Drafts" => "Draft invoices you're working on will appear here.",
+            "Sent" => "Invoices you've sent will appear here.",
             "Recurring" => "Set up recurring invoices to automate your billing.",
             _ => "Create your first invoice to start tracking your billing."
         };
 
         CurrentPage = 1;
+        if (tab == "Recurring")
+            LoadSchedules();
         FilterInvoices();
     }
 
@@ -329,6 +378,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     public BatchObservableCollection<InvoiceDisplayItem> Invoices { get; } = [];
 
+    /// <summary>Recurring invoice schedules shown on the Recurring tab.</summary>
+    public BatchObservableCollection<RecurringScheduleDisplayItem> Schedules { get; } = [];
+
+    public bool HasSchedules => Schedules.Count > 0;
+
     public ObservableCollection<string> StatusOptions { get; } = new(InvoiceStatusExtensions.GetFilterOptions());
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
@@ -385,6 +439,15 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to plan status changes so we update when user upgrades
         App.PlanStatusChanged += OnPlanStatusChanged;
+
+        // Recurring invoices generated on company open: show a banner. Subscribe for the live case
+        // and read any pending count for the common case where generation ran before this page existed.
+        RecurringInvoiceService.InvoicesGenerated += OnRecurringInvoicesGenerated;
+        if (RecurringInvoiceService.PendingGeneratedCount > 0)
+        {
+            GeneratedBannerCount = RecurringInvoiceService.PendingGeneratedCount;
+            HasGeneratedBanner = true;
+        }
 
         // Auto-sync online payments so invoice statuses reflect portal payments
         _ = App.AutoSyncPortalPaymentsAsync();
@@ -464,6 +527,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (App.CompanyManager != null)
             App.CompanyManager.CompanyDataChanged -= OnCompanyDataChanged;
         App.PlanStatusChanged -= OnPlanStatusChanged;
+        RecurringInvoiceService.InvoicesGenerated -= OnRecurringInvoicesGenerated;
     }
 
     private bool _needsRefresh;
@@ -609,7 +673,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         filtered = SelectedTab switch
         {
             "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft),
-            "Recurring" => filtered.Where(i => !string.IsNullOrEmpty(i.RecurringInvoiceId)),
+            "Sent" => filtered.Where(i => i.Status == InvoiceStatus.Sent),
             _ => filtered
         };
 
@@ -917,6 +981,82 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.InvoiceModalsViewModel?.OpenCreateModal();
     }
 
+    [RelayCommand(CanExecute = nameof(CanOpenCreateModal))]
+    private void NewRecurringInvoice()
+    {
+        App.InvoiceModalsViewModel?.OpenCreateRecurringModal();
+    }
+
+    /// <summary>Rebuilds the Recurring tab's schedule list from CompanyData.</summary>
+    private void LoadSchedules()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+        {
+            Schedules.ReplaceAll([]);
+            OnPropertyChanged(nameof(HasSchedules));
+            return;
+        }
+
+        var items = companyData.RecurringInvoices.Select(s =>
+        {
+            var customer = companyData.GetCustomer(s.CustomerId);
+            var currency = s.Template?.OriginalCurrency ?? "USD";
+            return new RecurringScheduleDisplayItem
+            {
+                Id = s.Id,
+                CustomerName = customer?.Name ?? "Unknown Customer",
+                AmountFormatted = CurrencyService.FormatWithOriginal(
+                    s.Amount, currency, s.Template?.TotalUSD ?? s.Amount, s.NextInvoiceDate),
+                FrequencyDisplay = s.Frequency.ToString(),
+                NextInvoiceFormatted = s.NextInvoiceDate.ToString("MMM d, yyyy"),
+                StatusDisplay = s.Status.ToString(),
+                IsPaused = s.Status == RecurringInvoiceStatus.Paused
+            };
+        }).ToList();
+
+        Schedules.ReplaceAll(items);
+        OnPropertyChanged(nameof(HasSchedules));
+    }
+
+    [RelayCommand]
+    private async Task PauseResumeSchedule(RecurringScheduleDisplayItem? item)
+    {
+        if (item == null) return;
+        var companyData = App.CompanyManager?.CompanyData;
+        var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
+        if (schedule == null) return;
+
+        schedule.Status = schedule.Status == RecurringInvoiceStatus.Paused
+            ? RecurringInvoiceStatus.Active
+            : RecurringInvoiceStatus.Paused;
+
+        LoadSchedules();
+        await PersistAsync();
+    }
+
+    [RelayCommand]
+    private async Task DeleteSchedule(RecurringScheduleDisplayItem? item)
+    {
+        if (item == null) return;
+        var companyData = App.CompanyManager?.CompanyData;
+        var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
+        if (companyData == null || schedule == null) return;
+
+        // Removes only the schedule; invoices already generated from it are left untouched.
+        companyData.RecurringInvoices.Remove(schedule);
+        LoadSchedules();
+        await PersistAsync();
+    }
+
+    private static async Task PersistAsync()
+    {
+        if (App.CompanyManager == null) return;
+        App.SuppressNextSavedFeedback();
+        try { await App.CompanyManager.SaveCompanyAsync(); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Save failed: {ex.Message}"); }
+    }
+
     [RelayCommand]
     private void ViewInvoice(InvoiceDisplayItem? item)
     {
@@ -1112,6 +1252,26 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     [ObservableProperty]
     private bool _isHighlighted;
+}
+
+/// <summary>
+/// Display model for a recurring invoice schedule row on the Recurring tab.
+/// </summary>
+public partial class RecurringScheduleDisplayItem : ObservableObject
+{
+    [ObservableProperty] private string _id = string.Empty;
+    [ObservableProperty] private string _customerName = string.Empty;
+    [ObservableProperty] private string _amountFormatted = string.Empty;
+    [ObservableProperty] private string _frequencyDisplay = string.Empty;
+    [ObservableProperty] private string _nextInvoiceFormatted = string.Empty;
+
+    [NotifyPropertyChangedFor(nameof(PauseResumeLabel))]
+    [ObservableProperty] private string _statusDisplay = string.Empty;
+
+    [NotifyPropertyChangedFor(nameof(PauseResumeLabel))]
+    [ObservableProperty] private bool _isPaused;
+
+    public string PauseResumeLabel => IsPaused ? "Resume" : "Pause";
 }
 
 /// <summary>

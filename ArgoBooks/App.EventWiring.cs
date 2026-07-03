@@ -139,6 +139,20 @@ public partial class App
                     // writes them back. Save paths also gate on this, so it's safe either way.
                     await CompanyManager.EnsureReceiptsLoadedAsync();
 
+                    // Generate any recurring invoices that came due while the app was closed.
+                    // Draft-first and idempotent: each schedule is keyed on its next date, so this
+                    // only produces the occurrences actually missed since the last open.
+                    if (CompanyManager.CompanyData != null)
+                    {
+                        var generatedRecurring = ArgoBooks.Core.Services.RecurringInvoiceService
+                            .GenerateDueInvoices(CompanyManager.CompanyData, DateTime.UtcNow);
+                        if (generatedRecurring.Count > 0)
+                        {
+                            await CompanyManager.SaveCompanyAsync();
+                            ArgoBooks.Core.Services.RecurringInvoiceService.RaiseGenerated(generatedRecurring.Count);
+                        }
+                    }
+
                     // Reconcile and process any pending currency conversions
                     if (PendingConversionService != null && CompanyManager.CompanyData != null)
                     {
