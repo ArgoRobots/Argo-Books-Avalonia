@@ -1535,6 +1535,27 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     /// </summary>
     public static List<RentalLineItem> GetEffectiveLineItems(RentalRecord record)
     {
+        if (record.LineItems.Count > 0)
+            return record.LineItems;
+
+        // Legacy / "Rent Out" records populate only the top-level fields and leave LineItems empty.
+        // Synthesize a single line item from them so return-cost, inventory restoration, and display
+        // all work (mirrors RentalAvailabilityModalViewModel.QuantitiesForItem's fallback).
+        if (!string.IsNullOrEmpty(record.RentalItemId))
+        {
+            return
+            [
+                new RentalLineItem
+                {
+                    RentalItemId = record.RentalItemId,
+                    Quantity = record.Quantity,
+                    RateType = record.RateType,
+                    RateAmount = record.RateAmount,
+                    SecurityDeposit = record.SecurityDeposit
+                }
+            ];
+        }
+
         return record.LineItems;
     }
 
