@@ -233,9 +233,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 IssueDate = i.IssueDate,
                 DueDate = i.DueDate,
                 CustomerName = customer?.Name ?? "Unknown",
-                Total = i.Total,
-                AmountPaid = i.AmountPaid,
-                Balance = i.Balance,
+                // Store USD-normalized amounts; the renderer converts them to the display currency at
+                // the invoice's date (mirrors the Revenue/Expense Total column). Paid = Total - Balance.
+                Total = i.EffectiveTotalUSD,
+                AmountPaid = i.EffectiveTotalUSD - i.EffectiveBalanceUSD,
+                Balance = i.EffectiveBalanceUSD,
                 Status = i.Status.ToString()
             };
         }).ToList();
@@ -275,7 +277,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 Id = p.Id,
                 Date = p.Date,
                 CustomerName = customer?.Name ?? "Unknown",
-                Amount = p.Amount,
+                // USD-normalized; the renderer converts to the display currency at the payment's date.
+                Amount = p.EffectiveAmountUSD,
                 PaymentMethod = p.PaymentMethod.ToString(),
                 ReferenceNumber = p.ReferenceNumber ?? "",
                 InvoiceId = p.InvoiceId
@@ -450,7 +453,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 SupplierName = supplier?.Name ?? "Unknown",
                 OrderDate = po.OrderDate,
                 ExpectedDeliveryDate = po.ExpectedDeliveryDate,
-                Total = po.Total,
+                // USD-normalized; the renderer converts to the display currency at the order's date.
+                Total = po.EffectiveTotalUSD,
                 Status = po.Status.ToString()
             };
         }).ToList();

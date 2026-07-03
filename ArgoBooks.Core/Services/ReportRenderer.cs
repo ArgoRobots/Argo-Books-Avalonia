@@ -2805,9 +2805,10 @@ public class ReportRenderer : IDisposable
                         "ID" => r.InvoiceNumber,
                         "Company" => r.CustomerName,
                         "Due Date" => r.DueDate.ToString("MM/dd/yyyy"),
-                        "Total" => FormatCurrency(r.Total),
-                        "Paid" => FormatCurrency(r.AmountPaid),
-                        "Balance" => FormatCurrency(r.Balance),
+                        // Amounts are USD-normalized; convert to the display currency at the invoice's date.
+                        "Total" => FormatCurrency(ToDisplayCurrency(r.Total, r.IssueDate)),
+                        "Paid" => FormatCurrency(ToDisplayCurrency(r.AmountPaid, r.IssueDate)),
+                        "Balance" => FormatCurrency(ToDisplayCurrency(r.Balance, r.IssueDate)),
                         "Status" => r.Status,
                         _ => ""
                     }).ToList());
@@ -2818,7 +2819,8 @@ public class ReportRenderer : IDisposable
                     {
                         "Date" => r.Date.ToString("MM/dd/yyyy"),
                         "Company" => r.CustomerName,
-                        "Total" => FormatCurrency(r.Amount),
+                        // USD-normalized; convert to the display currency at the payment's date.
+                        "Total" => FormatCurrency(ToDisplayCurrency(r.Amount, r.Date)),
                         "Method" => r.PaymentMethod,
                         "ID" => r.Id,
                         "Invoice" => r.InvoiceId,
@@ -2877,7 +2879,8 @@ public class ReportRenderer : IDisposable
                         "Company" => r.SupplierName,
                         "Date" => r.OrderDate.ToString("MM/dd/yyyy"),
                         "Due Date" => r.ExpectedDeliveryDate.ToString("MM/dd/yyyy"),
-                        "Total" => FormatCurrency(r.Total),
+                        // USD-normalized; convert to the display currency at the order's date.
+                        "Total" => FormatCurrency(ToDisplayCurrency(r.Total, r.OrderDate)),
                         "Status" => r.Status,
                         _ => ""
                     }).ToList());
