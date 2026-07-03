@@ -313,6 +313,8 @@ public class CompanyData
     [JsonIgnore] private int _locationLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Invoice>? _invoiceLookup;
     [JsonIgnore] private int _invoiceLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Receipt>? _receiptLookup;
+    [JsonIgnore] private int _receiptLookupCount = -1;
 
     private static Dictionary<string, T> BuildLookup<T>(List<T> list, Func<T, string> keySelector)
     {
@@ -339,6 +341,7 @@ public class CompanyData
         _accountantLookup = null;
         _locationLookup = null;
         _invoiceLookup = null;
+        _receiptLookup = null;
     }
 
     #endregion
@@ -439,6 +442,20 @@ public class CompanyData
             _invoiceLookupCount = Invoices.Count;
         }
         return _invoiceLookup.GetValueOrDefault(id);
+    }
+
+    /// <summary>
+    /// Gets a receipt by ID.
+    /// </summary>
+    public Receipt? GetReceipt(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_receiptLookup == null || _receiptLookupCount != Receipts.Count)
+        {
+            _receiptLookup = BuildLookup(Receipts, r => r.Id);
+            _receiptLookupCount = Receipts.Count;
+        }
+        return _receiptLookup.GetValueOrDefault(id);
     }
 
     /// <summary>

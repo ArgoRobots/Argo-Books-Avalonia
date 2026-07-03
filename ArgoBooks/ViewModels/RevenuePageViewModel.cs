@@ -534,7 +534,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             var (productName, productMoreText) = FormatProductDescription(revenue);
 
             var hasReceipt = !string.IsNullOrEmpty(revenue.ReceiptId);
-            var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == revenue.ReceiptId) : null;
+            var receipt = hasReceipt ? companyData?.GetReceipt(revenue.ReceiptId!) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
             var customerAvatar = AvatarBitmapLoader.LoadCustomer(customer);
 

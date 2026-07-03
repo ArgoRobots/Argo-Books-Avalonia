@@ -505,7 +505,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, lostDamagedIds, returnedIds);
             var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
-            var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
+            var receipt = hasReceipt ? companyData?.GetReceipt(purchase.ReceiptId!) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
 
             return new ExpenseDisplayItem
