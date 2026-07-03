@@ -107,10 +107,11 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterLocations();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterLocations();
+        });
 
     [ObservableProperty]
     private string _filterType = "All";

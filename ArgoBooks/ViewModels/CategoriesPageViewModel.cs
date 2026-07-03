@@ -51,10 +51,11 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterCategories();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterCategories();
+        });
 
     #endregion
 

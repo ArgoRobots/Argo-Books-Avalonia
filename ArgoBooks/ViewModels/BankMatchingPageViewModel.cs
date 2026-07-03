@@ -125,10 +125,11 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        ApplyFiltersAndPaginate();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            ApplyFiltersAndPaginate();
+        });
 
     // Bank-lines filter state (set from the filter modal).
     [ObservableProperty]

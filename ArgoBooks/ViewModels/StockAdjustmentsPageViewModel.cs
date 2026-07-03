@@ -165,10 +165,11 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterAdjustments();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterAdjustments();
+        });
 
     [ObservableProperty]
     private DateTime? _startDate;

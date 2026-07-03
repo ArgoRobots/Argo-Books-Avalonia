@@ -39,6 +39,7 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase, ICleanu
     public virtual void Cleanup()
     {
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+        CancelPendingSearch();
     }
 
     #region Sorting

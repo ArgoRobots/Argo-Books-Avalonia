@@ -41,10 +41,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterExpenses();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterExpenses();
+        });
 
     [ObservableProperty]
     private string _filterStatus = "All";

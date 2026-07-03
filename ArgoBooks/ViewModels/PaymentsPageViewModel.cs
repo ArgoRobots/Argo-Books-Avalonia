@@ -229,10 +229,11 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterPayments();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterPayments();
+        });
 
     [ObservableProperty]
     private string _filterPaymentMethod = "All";

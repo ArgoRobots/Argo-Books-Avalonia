@@ -143,10 +143,11 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterProducts();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterProducts();
+        });
 
     [ObservableProperty]
     private string _filterItemType = "All";

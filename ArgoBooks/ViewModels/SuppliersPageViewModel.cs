@@ -109,10 +109,11 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterSuppliers();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterSuppliers();
+        });
 
     [ObservableProperty]
     private string _filterStatus = "All";

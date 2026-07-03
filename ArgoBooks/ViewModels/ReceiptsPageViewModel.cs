@@ -86,10 +86,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterReceipts();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterReceipts();
+        });
 
     #endregion
 
@@ -396,6 +397,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
     /// </summary>
     public void Cleanup()
     {
+        CancelPendingSearch();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;

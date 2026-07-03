@@ -115,10 +115,11 @@ public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterItems();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterItems();
+        });
 
     #endregion
 
@@ -217,6 +218,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
     /// </summary>
     public void Cleanup()
     {
+        CancelPendingSearch();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;

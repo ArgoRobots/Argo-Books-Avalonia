@@ -44,10 +44,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterRevenue();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterRevenue();
+        });
 
     [ObservableProperty]
     private string _filterStatus = "All";

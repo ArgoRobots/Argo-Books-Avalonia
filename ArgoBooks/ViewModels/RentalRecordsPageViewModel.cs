@@ -47,10 +47,11 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterRecords();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterRecords();
+        });
 
     [ObservableProperty]
     private string _filterStatus = "All";

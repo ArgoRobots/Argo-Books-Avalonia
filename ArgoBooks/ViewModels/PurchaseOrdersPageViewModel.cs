@@ -157,10 +157,11 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterOrders();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterOrders();
+        });
 
     #endregion
 
