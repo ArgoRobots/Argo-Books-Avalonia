@@ -145,6 +145,39 @@ public class AccountingReportDataServiceTests
 
     #endregion
 
+    #region AR Aging Tests
+
+    [Fact]
+    public void GetReportData_ARaging_ExcludesInvoicesIssuedAfterTheEndDate_AndAgesAsOfEndDate()
+    {
+        var data = new CompanyData();
+        // Open invoice within the report window.
+        data.Invoices.Add(new Invoice
+        {
+            Id = "INV-A", InvoiceNumber = "INV-A", CustomerId = "C1",
+            IssueDate = new DateTime(2024, 6, 1), DueDate = new DateTime(2024, 7, 1),
+            Total = 100m, Balance = 100m, Status = InvoiceStatus.Sent
+        });
+        // Open invoice issued AFTER the report's end date - must not appear on an "as of 2024-12-31" aging.
+        data.Invoices.Add(new Invoice
+        {
+            Id = "INV-B", InvoiceNumber = "INV-B", CustomerId = "C1",
+            IssueDate = new DateTime(2025, 1, 1), DueDate = new DateTime(2025, 2, 1),
+            Total = 600m, Balance = 600m, Status = InvoiceStatus.Sent
+        });
+        var filters = new ReportFilters { StartDate = new DateTime(2024, 1, 1), EndDate = new DateTime(2024, 12, 31) };
+
+        var result = new AccountingReportDataService(data, filters).GetReportData(AccountingReportType.AccountsReceivableAging);
+
+        var totalRow = result.Rows.Find(r => r.Label == "TOTAL");
+        Assert.NotNull(totalRow);
+        var grandTotal = totalRow!.Values[^1];
+        Assert.Contains("100", grandTotal);       // only INV-A counts
+        Assert.DoesNotContain("600", grandTotal); // INV-B (issued after the end date) excluded
+    }
+
+    #endregion
+
     #region Cash Flow Tests
 
     [Fact]

@@ -1031,13 +1031,17 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             return data;
         }
 
-        var today = DateTime.Today;
+        // Age receivables "as of" the report's end date (matching the Balance Sheet), not today.
+        var asOf = EndDateForValuation;
 
-        // Filter to unpaid, non-draft, uncancelled invoices (drafts are not real receivables)
+        // Filter to unpaid, non-draft, uncancelled invoices issued on or before the end date - the same
+        // set the Balance Sheet's Accounts Receivable uses - so a historical report doesn't leak invoices
+        // issued after its end date.
         var openInvoices = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft)
+                        && i.Status != InvoiceStatus.Draft
+                        && IsOnOrBeforeEndDate(i.IssueDate))
             .ToList();
 
         // Group by customer
@@ -1063,7 +1067,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
             foreach (var invoice in group)
             {
-                var daysPastDue = (today - invoice.DueDate.Date).Days;
+                var daysPastDue = (asOf - invoice.DueDate.Date).Days;
                 // Convert each open invoice's balance at its issue date (Calculations.md §3a Phase 2).
                 var balance = ToDisplay(invoice.EffectiveBalanceUSD, invoice.IssueDate);
 
