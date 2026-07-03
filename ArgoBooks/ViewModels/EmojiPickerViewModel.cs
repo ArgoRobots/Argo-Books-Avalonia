@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Data;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -39,6 +40,10 @@ public partial class EmojiPickerViewModel : ObservableObject
     private EmojiPickerSettings? _settings;
     private Action<string>? _onEmojiSelected;
 
+    // Debounce typing in the search box so a fast typist doesn't rebuild the grid on every keystroke.
+    private const int SearchDebounceMs = 120;
+    private CancellationTokenSource? _searchDebounceCts;
+
     [ObservableProperty]
     private bool _isOpen;
 
@@ -52,7 +57,18 @@ public partial class EmojiPickerViewModel : ObservableObject
     private string? _selectedEmoji;
 
     public ObservableCollection<EmojiTabItem> Tabs { get; } = [];
-    public ObservableCollection<EmojiDisplayItem> DisplayedEmojis { get; } = [];
+    public BatchObservableCollection<EmojiDisplayItem> DisplayedEmojis { get; } = [];
+
+    // Cap search results: the emoji grid is a non-virtualizing WrapPanel where each item is a fairly
+    // heavy Button (context menu + tooltip), so a broad query (e.g. a single letter) that matched
+    // hundreds of emojis was the main source of lag. Most real searches return far fewer than this.
+    private const int MaxSearchResults = 200;
+
+    // Emoji -> item lookup, built once, for resolving names of Recent/Favorite emojis.
+    private static readonly Dictionary<string, EmojiData.EmojiItem> EmojiLookup =
+        EmojiData.AllEmojis
+            .GroupBy(e => e.Emoji)
+            .ToDictionary(g => g.Key, g => g.First());
 
     public bool HasRecentEmojis => _settings?.RecentEmojis.Count > 0;
     public bool HasFavoriteEmojis => _settings?.FavoriteEmojis.Count > 0;
@@ -149,6 +165,7 @@ public partial class EmojiPickerViewModel : ObservableObject
     [RelayCommand]
     public void Close()
     {
+        _searchDebounceCts?.Cancel();
         IsOpen = false;
         _onEmojiSelected = null;
     }
@@ -227,48 +244,71 @@ public partial class EmojiPickerViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value)
     {
-        UpdateDisplayedEmojis();
+        // Cancel any pending debounced search.
+        _searchDebounceCts?.Cancel();
+
+        // Clearing the box (e.g. the X button, or switching tabs) should feel instant; only debounce
+        // actual typing, where results shrink as the query grows.
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            UpdateDisplayedEmojis();
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+        _ = DebounceSearchAsync(cts.Token);
+    }
+
+    private async Task DebounceSearchAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(SearchDebounceMs, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return; // superseded by a newer keystroke
+        }
+
+        // Resumes on the UI thread's synchronization context, so it's safe to update DisplayedEmojis.
+        if (!token.IsCancellationRequested)
+            UpdateDisplayedEmojis();
     }
 
     private void UpdateDisplayedEmojis()
     {
-        DisplayedEmojis.Clear();
-
-        if (_settings == null) return;
+        if (_settings == null)
+        {
+            DisplayedEmojis.ReplaceAll([]);
+            return;
+        }
 
         IEnumerable<EmojiData.EmojiItem> emojis;
 
         // If searching, search all emojis
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            var searchLower = SearchText.ToLowerInvariant();
+            var search = SearchText.Trim();
             emojis = EmojiData.AllEmojis
-                .Where(e => e.Name.Contains(searchLower, StringComparison.OrdinalIgnoreCase) ||
-                            e.Emoji.Contains(searchLower));
+                .Where(e => e.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                            e.Emoji.Contains(search, StringComparison.Ordinal))
+                .Take(MaxSearchResults);
         }
         else if (SelectedTab == null)
         {
+            DisplayedEmojis.ReplaceAll([]);
             return;
         }
         else if (SelectedTab.Name == "Recent")
         {
-            // Get recent emojis with their names (O(1) lookup via dictionary)
-            var emojiLookup = EmojiData.AllEmojis.GroupBy(e => e.Emoji).ToDictionary(g => g.Key, g => g.First());
-            var recentEmojis = _settings.RecentEmojis
-                .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
-                                 new EmojiData.EmojiItem(emoji, ""))
-                .ToList();
-            emojis = recentEmojis;
+            emojis = _settings.RecentEmojis
+                .Select(emoji => EmojiLookup.GetValueOrDefault(emoji) ?? new EmojiData.EmojiItem(emoji, ""));
         }
         else if (SelectedTab.Name == "Favorites")
         {
-            // Get favorite emojis with their names (O(1) lookup via dictionary)
-            var emojiLookup = EmojiData.AllEmojis.GroupBy(e => e.Emoji).ToDictionary(g => g.Key, g => g.First());
-            var favoriteEmojis = _settings.FavoriteEmojis
-                .Select(emoji => emojiLookup.GetValueOrDefault(emoji) ??
-                                 new EmojiData.EmojiItem(emoji, ""))
-                .ToList();
-            emojis = favoriteEmojis;
+            emojis = _settings.FavoriteEmojis
+                .Select(emoji => EmojiLookup.GetValueOrDefault(emoji) ?? new EmojiData.EmojiItem(emoji, ""));
         }
         else
         {
@@ -277,15 +317,17 @@ public partial class EmojiPickerViewModel : ObservableObject
             emojis = category?.Emojis ?? [];
         }
 
-        foreach (var emoji in emojis)
+        // A HashSet of favorites keeps the per-item IsFavorite check O(1) across all results.
+        var favorites = _settings.FavoriteEmojis.ToHashSet();
+
+        // Build the whole list, then swap it in with a single Reset notification (instead of clearing
+        // and adding one item at a time, which made the non-virtualized grid re-layout per item).
+        DisplayedEmojis.ReplaceAll(emojis.Select(e => new EmojiDisplayItem
         {
-            DisplayedEmojis.Add(new EmojiDisplayItem
-            {
-                Emoji = emoji.Emoji,
-                Name = emoji.Name,
-                IsFavorite = _settings.FavoriteEmojis.Contains(emoji.Emoji)
-            });
-        }
+            Emoji = e.Emoji,
+            Name = e.Name,
+            IsFavorite = favorites.Contains(e.Emoji)
+        }));
 
         OnPropertyChanged(nameof(ShowEmptyState));
         OnPropertyChanged(nameof(EmptyStateMessage));
