@@ -81,6 +81,20 @@ public partial class InvoicePreviewControl : UserControl
         set => SetValue(CustomersJsonProperty, value);
     }
 
+    /// <summary>
+    /// JSON config the paper's live totals recompute needs (currency symbol/code, security deposit,
+    /// whether the payment portal is configured for the processing-fee row). Lets typing update the
+    /// amounts in the browser without a C# round-trip.
+    /// </summary>
+    public static readonly StyledProperty<string?> TotalsConfigJsonProperty =
+        AvaloniaProperty.Register<InvoicePreviewControl, string?>(nameof(TotalsConfigJson));
+
+    public string? TotalsConfigJson
+    {
+        get => GetValue(TotalsConfigJsonProperty);
+        set => SetValue(TotalsConfigJsonProperty, value);
+    }
+
     /// <summary>Raised when a product is chosen from a line item's dropdown on the paper.</summary>
     public event EventHandler<ProductPickEventArgs>? ProductPicked;
 
@@ -108,9 +122,6 @@ public partial class InvoicePreviewControl : UserControl
     /// <summary>Raised when the logo's hover "x" is clicked to remove it.</summary>
     public event EventHandler? DeleteLogoRequested;
 
-    /// <summary>Raised when an on-paper totals field commits (blur), so the paper can reconcile.</summary>
-    public event EventHandler? TotalsCommitRequested;
-
     /// <summary>Raised when a totals swap button toggles a field between percent and fixed. Arg is the field key.</summary>
     public event EventHandler<string>? TotalsModeToggled;
 
@@ -122,6 +133,10 @@ public partial class InvoicePreviewControl : UserControl
     private bool _isInitialized;
     private bool _webViewReady;
     private double _currentZoom = 1.0;
+    // True once the first page has rendered for this activation. Subsequent re-renders (logo,
+    // template, totals changes) preserve the current zoom instead of auto-fitting, so the preview
+    // doesn't visibly jump when the user edits the paper.
+    private bool _hasRenderedOnce;
     private double _pendingScrollX;
     private double _pendingScrollY;
     private bool _hasPendingScroll;
@@ -137,15 +152,18 @@ public partial class InvoicePreviewControl : UserControl
     {
         var products = string.IsNullOrWhiteSpace(ProductsJson) ? "[]" : ProductsJson;
         var customers = string.IsNullOrWhiteSpace(CustomersJson) ? "[]" : CustomersJson;
+        var totalsConfig = string.IsNullOrWhiteSpace(TotalsConfigJson) ? "{}" : TotalsConfigJson;
         return EditingScriptTemplate
             .Replace("__PRODUCTS_JSON__", products)
-            .Replace("__CUSTOMERS_JSON__", customers);
+            .Replace("__CUSTOMERS_JSON__", customers)
+            .Replace("__TOTALS_CONFIG__", totalsConfig);
     }
 
     private const string EditingScriptTemplate = @"
 <script>
 window.__invProducts = __PRODUCTS_JSON__;
 window.__invCustomers = __CUSTOMERS_JSON__;
+window.__totalsConfig = __TOTALS_CONFIG__;
 (function() {
     if (window.__editHandlersInstalled) return;
     window.__editHandlersInstalled = true;
@@ -390,14 +408,12 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             t = setTimeout(function() { post({ type:'invoiceEdit', field: fieldName, index: null, value: val.textContent }); }, 150);
         });
         val.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); val.blur(); } });
-        val.addEventListener('blur', function(e) {
+        val.addEventListener('blur', function() {
+            // Flush the value to the model. The displayed Total updates live in JS (see the recompute
+            // block below), so there is no paper re-render here, which is what kept the preview from
+            // resetting its zoom while the user typed.
             clearTimeout(t);
             post({ type:'invoiceEdit', field: fieldName, index: null, value: val.textContent });
-            // Reconcile the paper (updates the Total) once the user is done, but not if they're just
-            // hopping to another editable field, since the re-render would steal that focus.
-            var to = e.relatedTarget;
-            var stayingInEditor = to && to.closest && (to.closest('[data-total]') || to.hasAttribute('data-field') || to.hasAttribute('data-total-input'));
-            if (!stayingInEditor) post({ type:'totalsCommit' });
         });
 
         if (mode) {
@@ -412,6 +428,82 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         }
         cell.appendChild(box);
     });
+
+    // ---- live totals: recompute amounts/subtotal/total/fee in the browser as the user types, so
+    // ---- the paper never has to re-render (which would reset the zoom). Mirrors the C# math; the
+    // ---- authoritative values are recomputed in C# on preview/save.
+    (function() {
+        var cfg = window.__totalsConfig || {};
+        var sym = cfg.symbol || '$';
+        var code = cfg.code || '';
+        var deposit = Number(cfg.deposit) || 0;
+        var portal = !!cfg.portal;
+
+        function num(el) { return el ? (parseFloat((el.textContent || '').replace(/[^0-9.\-]/g, '')) || 0) : 0; }
+        function money(a) { return sym + a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function due(a) { return money(a) + (code ? ' ' + code : ''); }
+        function setOut(name, text) {
+            document.querySelectorAll('[data-out=""' + name + '""]').forEach(function(o) { o.textContent = text; });
+        }
+        function totalVal(which) {
+            var el = document.querySelector('[data-total=""' + which + '""] [data-total-input]');
+            return el ? (parseFloat((el.textContent || '').replace(/[^0-9.\-]/g, '')) || 0) : 0;
+        }
+        function totalMode(which) {
+            var el = document.querySelector('[data-total=""' + which + '""]');
+            return el ? (el.dataset.totalMode || '') : '';
+        }
+
+        window.__recomputeTotals = function() {
+            var subtotal = 0;
+            document.querySelectorAll('[data-field=""rate""]').forEach(function(rateEl) {
+                var idx = rateEl.dataset.lineIndex;
+                var qtyEl = document.querySelector('[data-field=""quantity""][data-line-index=""' + idx + '""]');
+                var amt = num(qtyEl) * num(rateEl);
+                subtotal += amt;
+                var amtOut = document.querySelector('[data-out=""lineAmount""][data-line-index=""' + idx + '""]');
+                if (amtOut) amtOut.textContent = money(amt);
+            });
+
+            var discount = totalVal('discount'), discMode = totalMode('discount');
+            var fee = totalVal('fee'), feeMode = totalMode('fee');
+            var shipping = totalVal('shipping');
+            var tax = totalVal('tax'), taxMode = totalMode('tax');
+
+            var discountCalc = discMode === 'percent' ? subtotal * discount / 100 : discount;
+            var feeCalc = feeMode === 'percent' ? subtotal * fee / 100 : fee;
+            var taxableBase = subtotal - discountCalc + feeCalc + shipping;
+            var taxAmount = taxMode === 'fixed' ? tax : taxableBase * tax / 100;
+            var total = taxableBase + taxAmount + deposit;
+            var balance = total;
+            var procFee = (portal && balance > 0) ? Math.round((balance * 2.9 / 100 + 0.30) * 100) / 100 : 0;
+
+            setOut('subtotal', money(subtotal));
+            setOut('total', due(total));
+            setOut('processingFee', money(procFee));
+            setOut('amountToPay', due(balance + procFee));
+            setOut('balance', due(balance));
+        };
+
+        // Rate placeholder: show a greyed hint (e.g. ""$0.00"") instead of a literal zero, so clicking
+        // the field leaves an empty box to type into.
+        var phStyle = document.createElement('style');
+        phStyle.textContent = '[data-field=""rate""][data-ph]:empty::before{content:attr(data-ph);color:#9ca3af;}';
+        document.head.appendChild(phStyle);
+        document.querySelectorAll('[data-field=""rate""]').forEach(function(el) {
+            var raw = (el.textContent || '').trim();
+            if ((parseFloat(raw.replace(/[^0-9.\-]/g, '')) || 0) === 0) {
+                el.dataset.ph = raw || (sym + '0.00');
+                el.textContent = '';
+            }
+            // Keep the node truly empty when cleared so :empty (and the placeholder) apply.
+            el.addEventListener('input', function() { if (!el.textContent.trim()) el.innerHTML = ''; });
+        });
+
+        // Any edit to a line or totals field triggers a live recompute.
+        document.addEventListener('input', function() { window.__recomputeTotals(); });
+        window.__recomputeTotals();
+    })();
 })();
 </script>";
 
@@ -452,7 +544,8 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         base.OnPropertyChanged(change);
 
         if ((change.Property == HtmlProperty || change.Property == IsEditableProperty
-                || change.Property == ProductsJsonProperty || change.Property == CustomersJsonProperty) && _isInitialized)
+                || change.Property == ProductsJsonProperty || change.Property == CustomersJsonProperty
+                || change.Property == TotalsConfigJsonProperty) && _isInitialized)
         {
             EnsureWebViewActiveIfVisible();
             _ = UpdateWebViewContent();
@@ -525,6 +618,9 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         }
 
         _webViewReady = false;
+        // Next activation should auto-fit fresh rather than restore a stale zoom.
+        _hasRenderedOnce = false;
+        _currentZoom = 1.0;
 
         if (_zoomToolbar != null)
             _zoomToolbar.IsVisible = false;
@@ -636,10 +732,6 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             else if (messageType == "deleteLogo")
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => DeleteLogoRequested?.Invoke(this, System.EventArgs.Empty));
-            }
-            else if (messageType == "totalsCommit")
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => TotalsCommitRequested?.Invoke(this, System.EventArgs.Empty));
             }
             else if (messageType == "totalsToggle")
             {
@@ -832,6 +924,12 @@ window.__invCustomers = __CUSTOMERS_JSON__;
     // case we proactively fit so the user isn't stuck looking at a
     // ""zoomed in"" preview where the 1:1 button doesn't fix it.
     function maybeInitialFit() {
+        // On a re-render (logo/template/totals edit) C# passes the prior zoom so we keep it instead
+        // of auto-fitting, which is what made the preview jump when the user edited the paper.
+        if (typeof window.__restoreScale === 'number' && window.__restoreScale > 0) {
+            window.__setZoom(window.__restoreScale);
+            return;
+        }
         var wrapper = document.getElementById('__zoomWrapper');
         if (!wrapper) return;
         var cw = wrapper.scrollWidth;
@@ -931,8 +1029,16 @@ window.__invCustomers = __CUSTOMERS_JSON__;
 })();
 </script>";
 
+        // On the first render for this activation, let the page auto-fit. On every re-render after
+        // (logo/template/totals edits) restore the current zoom so the preview doesn't jump.
+        var restoreScale = _hasRenderedOnce
+            ? _currentZoom.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            : "null";
+        _hasRenderedOnce = true;
+        var restoreScript = $"<script>window.__restoreScale = {restoreScale};</script>";
+
         // Editing mode adds contenteditable + the edit->postMessage bridge on top of the interaction script.
-        var injected = IsEditable ? interactionScript + BuildEditingScript() : interactionScript;
+        var injected = restoreScript + (IsEditable ? interactionScript + BuildEditingScript() : interactionScript);
 
         // Insert script before closing body tag, or at end if no body tag
         var html = Html!;

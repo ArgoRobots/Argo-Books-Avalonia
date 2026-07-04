@@ -274,12 +274,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Re-renders the paper after an on-paper totals edit is committed (e.g. the field lost focus),
-    /// so the Subtotal/Total reflect the change. Kept separate from the per-keystroke apply so the
-    /// caret isn't lost while typing.
-    /// </summary>
-    public void CommitPaperTotals() => RegeneratePaper();
 
     // Pulls a number out of a value that may carry a currency symbol / thousands separators.
     private static bool TryParsePaperNumber(string raw, out decimal result)
@@ -293,6 +287,27 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public string ProductsJson =>
         System.Text.Json.JsonSerializer.Serialize(
             ProductOptions.Select(p => new { id = p.Id, name = p.Name, price = p.UnitPrice }));
+
+    /// <summary>
+    /// Config the paper's live totals recompute needs: currency symbol/code, the security deposit,
+    /// and whether the payment portal is connected (which decides if the processing-fee row shows).
+    /// </summary>
+    public string TotalsConfigJson
+    {
+        get
+        {
+            var accounts = App.CompanyManager?.CompanyData?.Settings.PaymentPortal?.ConnectedAccounts;
+            var portal = accounts != null &&
+                (accounts.StripeConnected || accounts.PaypalConnected || accounts.SquareConnected);
+            return System.Text.Json.JsonSerializer.Serialize(new
+            {
+                symbol = InvoiceCurrencySymbol,
+                code = SelectedCurrencyCode,
+                deposit = SecurityDeposit,
+                portal
+            });
+        }
+    }
 
     /// <summary>
     /// Selects a product for a line item from the paper's product dropdown. Setting SelectedProduct
@@ -400,6 +415,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ShowEditorPreview()
     {
+        // Clear any stale send error (e.g. a "$0 or less" banner from an earlier attempt) so it can't
+        // linger over a preview that is now valid.
+        HasSendError = false;
+        SendErrorMessage = string.Empty;
         IsEditorPreviewing = true;
         // Re-render from the model so the preview reflects the latest edits (totals, rates, etc.)
         // rather than the HTML that was last generated while editing.
@@ -641,6 +660,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     partial void OnSecurityDepositChanged(decimal value)
     {
+        OnPropertyChanged(nameof(TotalsConfigJson));
         UpdateTotals();
         RegeneratePaper();
     }
@@ -676,6 +696,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(InvoiceCurrencySymbol));
         OnPropertyChanged(nameof(CustomFeeSymbol));
         OnPropertyChanged(nameof(DiscountSymbol));
+        OnPropertyChanged(nameof(TotalsConfigJson));
         var code = SelectedCurrencyCode;
         foreach (var item in LineItems)
         {
@@ -1035,6 +1056,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
         OnPropertyChanged(nameof(ProductsJson));
         OnPropertyChanged(nameof(CustomersJson));
+        OnPropertyChanged(nameof(TotalsConfigJson));
         GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }
@@ -1305,6 +1327,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
         OnPropertyChanged(nameof(ProductsJson));
         OnPropertyChanged(nameof(CustomersJson));
+        OnPropertyChanged(nameof(TotalsConfigJson));
         GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }
@@ -1671,6 +1694,31 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
+        // Start each attempt from a clean slate so a banner from a previous attempt never lingers.
+        HasSendError = false;
+        SendErrorMessage = string.Empty;
+
+        // Require a customer and a positive total before anything else (including the server usage
+        // check). Both are hard requirements for a sendable invoice.
+        if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
+        {
+            await ShowSendErrorAsync("Please select a customer.".Translate());
+            return;
+        }
+
+        if (Total <= 0)
+        {
+            await ShowSendErrorAsync("Cannot send an invoice for {0}0 or less.".TranslateFormat(CurrencyService.CurrentSymbol));
+            return;
+        }
+
+        // A recurring schedule that has already ended can never generate an invoice.
+        if (IsRecurring && RecurringEndDate is { } recurringEnd && recurringEnd.Date < DateTime.Today)
+        {
+            await ShowSendErrorAsync("The recurring end date is in the past. Choose a future end date or clear it.".Translate());
+            return;
+        }
+
         // Enforce free-tier invoice send limit via server
         if (!HasPremium)
         {
@@ -1716,13 +1764,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (customer == null || string.IsNullOrWhiteSpace(customer.Email))
         {
             await ShowSendErrorAsync("Customer does not have an email address.".Translate());
-            return;
-        }
-
-        // Prevent sending invoices with a total of $0 or less
-        if (Total <= 0)
-        {
-            await ShowSendErrorAsync("Cannot send an invoice for {0}0 or less.".TranslateFormat(CurrencyService.CurrentSymbol));
             return;
         }
 

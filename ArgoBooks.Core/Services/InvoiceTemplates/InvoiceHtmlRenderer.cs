@@ -263,8 +263,10 @@ public partial class InvoiceHtmlRenderer
             ? CalculateProcessingFee(invoice.Balance)
             : 0m;
         var displayProcessingFee = actualProcessingFee > 0 ? actualProcessingFee : estimatedProcessingFee;
-        var showProcessingFeeRow = displayProcessingFee > 0;
-        var showAmountToPay = hasUnpaidBalance && portalConfigured;
+        // In the editor, keep the fee / amount-to-pay rows present whenever a portal is connected so
+        // the live recompute can fill them in as the user types (even from a $0 starting point).
+        var showProcessingFeeRow = displayProcessingFee > 0 || (editable && portalConfigured);
+        var showAmountToPay = (hasUnpaidBalance || editable) && portalConfigured;
 
         var context = new Dictionary<string, object?>
         {
@@ -312,7 +314,9 @@ public partial class InvoiceHtmlRenderer
             ["CompanyCountry"] = companySettings.Company.Country,
 
             // Customer info
-            ["CustomerName"] = customer?.Name ?? "Unknown Customer",
+            // Empty (not "Unknown Customer") when no customer is picked yet, so the editable field on
+            // the paper reads as a blank, clickable placeholder rather than a bogus name.
+            ["CustomerName"] = customer?.Name ?? string.Empty,
             ["CustomerAddress"] = FormatAddress(customer?.Address),
             ["CustomerEmail"] = customer?.Email,
 
