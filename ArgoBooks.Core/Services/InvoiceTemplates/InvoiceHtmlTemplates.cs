@@ -32,7 +32,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}}">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}}">
                                         {{/ShowLogo}}
                                         {{^ShowLogo}}
                                         <span style="font-size: 24px; font-weight: bold; color: #ffffff;">{{CompanyName}}</span>
@@ -53,7 +53,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="vertical-align: top; width: 50%;">
                                         <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Bill To</p>
-                                        <p style="margin: 0 0 5px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0 0 5px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}
                                         <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>
                                         {{/CustomerAddress}}
@@ -69,17 +69,17 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             <tr>
                                                 <td style="padding: 4px 15px 4px 0; font-size: 13px; color: #6b7280;">Issue Date</td>
-                                                <td style="padding: 4px 0; font-size: 13px; color: {{TextColor}};">{{IssueDate}}</td>
+                                                <td style="padding: 4px 0; font-size: 13px; color: {{TextColor}};"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding: 4px 15px 4px 0; font-size: 13px; color: #6b7280;">Due Date</td>
-                                                <td style="padding: 4px 0; font-size: 13px; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                                <td style="padding: 4px 0; font-size: 13px; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></td>
                                             </tr>
                                             {{#ShowDueDateProminent}}
                                             <tr>
                                                 <td colspan="2" style="padding-top: 10px;">
                                                     <span style="display: inline-block; background-color: {{#IsOverdue}}#fef2f2{{/IsOverdue}}{{^IsOverdue}}#f0fdf4{{/IsOverdue}}; color: {{#IsOverdue}}#dc2626{{/IsOverdue}}{{^IsOverdue}}{{AccentColor}}{{/IsOverdue}}; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                                        {{#IsOverdue}}OVERDUE{{/IsOverdue}}{{^IsOverdue}}DUE: {{DueDate}}{{/IsOverdue}}
+                                                        {{#IsOverdue}}OVERDUE{{/IsOverdue}}{{^IsOverdue}}DUE: <span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span>{{/IsOverdue}}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -266,7 +266,7 @@ public static class InvoiceHtmlTemplates
                                             <tr>
                                                 <td style="vertical-align: middle;">
                                                     {{#ShowLogo}}
-                                                    <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 55px;{{/LockAspectRatio}}">
+                                                    <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 55px;{{/LockAspectRatio}}">
                                                     {{/ShowLogo}}
                                                     {{^ShowLogo}}
                                                     <span style="font-size: 22px; font-weight: 700; color: {{TextColor}};">{{CompanyName}}</span>
@@ -291,7 +291,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 55%; vertical-align: top; padding-right: 20px;">
                                         <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: {{HeaderColor}}; font-weight: 600;">Bill To</p>
-                                        <p style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}<p style="margin: 0 0 2px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>{{/CustomerAddress}}
                                         {{#CustomerEmail}}<p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
@@ -302,17 +302,17 @@ public static class InvoiceHtmlTemplates
                                                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td style="padding: 4px 0; font-size: 12px; color: #6b7280;">Issue Date</td>
-                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; color: {{TextColor}}; text-align: right;">{{IssueDate}}</td>
+                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; color: {{TextColor}}; text-align: right;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td style="padding: 4px 0; font-size: 12px; color: #6b7280;">Due Date</td>
-                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; text-align: right; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; text-align: right; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></td>
                                                         </tr>
                                                         {{#ShowDueDateProminent}}
                                                         <tr>
                                                             <td colspan="2" style="padding-top: 10px;">
                                                                 <span style="display: inline-block; width: 100%; text-align: center; background-color: {{#IsOverdue}}#fef2f2{{/IsOverdue}}{{^IsOverdue}}{{BackgroundColor}}{{/IsOverdue}}; color: {{#IsOverdue}}#dc2626{{/IsOverdue}}{{^IsOverdue}}{{PrimaryColor}}{{/IsOverdue}}; padding: 8px 0; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                                                                    {{#IsOverdue}}⚠ Overdue{{/IsOverdue}}{{^IsOverdue}}Due: {{DueDate}}{{/IsOverdue}}
+                                                                    {{#IsOverdue}}⚠ Overdue{{/IsOverdue}}{{^IsOverdue}}Due: <span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span>{{/IsOverdue}}
                                                                 </span>
                                                             </td>
                                                         </tr>
@@ -499,7 +499,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
                                         {{/ShowLogo}}
                                         <p style="margin: 0; font-size: 18px; font-weight: bold; color: {{TextColor}};">{{CompanyName}}</p>
                                         {{#ShowCompanyAddress}}{{#CompanyAddress}}<p style="margin: 5px 0 0 0; font-size: 12px; color: #666666; line-height: 1.5;">{{CompanyAddress}}</p>{{/CompanyAddress}}{{/ShowCompanyAddress}}
@@ -511,8 +511,8 @@ public static class InvoiceHtmlTemplates
                                     <td style="width: 40%; text-align: right; vertical-align: top;">
                                         <p style="margin: 0; font-size: 28px; font-weight: bold; color: {{HeaderColor}};">{{HeaderText}}</p>
                                         <p style="margin: 10px 0 0 0; font-size: 14px; color: {{TextColor}};"><strong>Invoice #:</strong> {{InvoiceNumber}}</p>
-                                        <p style="margin: 5px 0 0 0; font-size: 14px; color: {{TextColor}};"><strong>Date:</strong> {{IssueDate}}</p>
-                                        <p style="margin: 5px 0 0 0; font-size: 14px; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><strong>Due:</strong> {{DueDate}}</p>
+                                        <p style="margin: 5px 0 0 0; font-size: 14px; color: {{TextColor}};"><strong>Date:</strong> <span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></p>
+                                        <p style="margin: 5px 0 0 0; font-size: 14px; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><strong>Due:</strong> <span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></p>
                                     </td>
                                 </tr>
                             </table>
@@ -526,7 +526,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         <p style="margin: 0 0 5px 0; font-size: 12px; font-weight: bold; color: {{HeaderColor}}; text-transform: uppercase;">Bill To:</p>
-                                        <p style="margin: 0; font-size: 15px; font-weight: bold; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0; font-size: 15px; font-weight: bold; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}<p style="margin: 3px 0 0 0; font-size: 13px; color: #666666;">{{CustomerAddress}}</p>{{/CustomerAddress}}
                                         {{#CustomerEmail}}<p style="margin: 3px 0 0 0; font-size: 13px; color: #666666;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
@@ -683,7 +683,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%; vertical-align: top;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 55px;{{/LockAspectRatio}} margin-bottom: 15px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 55px;{{/LockAspectRatio}} margin-bottom: 15px;">
                                         {{/ShowLogo}}
                                         {{^ShowLogo}}
                                         <p style="margin: 0 0 15px 0; font-size: 20px; font-weight: 600; color: {{TextColor}}; letter-spacing: -0.5px;">{{CompanyName}}</p>
@@ -700,17 +700,17 @@ public static class InvoiceHtmlTemplates
                                         <table role="presentation" cellpadding="0" cellspacing="0" style="margin-left: auto;">
                                             <tr>
                                                 <td style="padding: 3px 12px 3px 0; font-size: 12px; color: #9ca3af; text-align: right;">Issued</td>
-                                                <td style="padding: 3px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{IssueDate}}</td>
+                                                <td style="padding: 3px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding: 3px 12px 3px 0; font-size: 12px; color: #9ca3af; text-align: right;">Due</td>
-                                                <td style="padding: 3px 0; font-size: 13px; text-align: right; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                                <td style="padding: 3px 0; font-size: 13px; text-align: right; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></td>
                                             </tr>
                                         </table>
                                         {{#ShowDueDateProminent}}
                                         <p style="margin: 15px 0 0 0;">
                                             <span style="display: inline-block; background-color: {{#IsOverdue}}#fef2f2{{/IsOverdue}}{{^IsOverdue}}{{SecondaryColor}}{{/IsOverdue}}; color: {{#IsOverdue}}#dc2626{{/IsOverdue}}{{^IsOverdue}}{{PrimaryColor}}{{/IsOverdue}}; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                                                {{#IsOverdue}}Overdue{{/IsOverdue}}{{^IsOverdue}}Due {{DueDate}}{{/IsOverdue}}
+                                                {{#IsOverdue}}Overdue{{/IsOverdue}}{{^IsOverdue}}Due <span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span>{{/IsOverdue}}
                                             </span>
                                         </p>
                                         {{/ShowDueDateProminent}}
@@ -727,7 +727,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         <p style="margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Bill To</p>
-                                        <p style="margin: 0 0 3px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0 0 3px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}<p style="margin: 0 0 2px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>{{/CustomerAddress}}
                                         {{#CustomerEmail}}<p style="margin: 0; font-size: 13px; color: #6b7280;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
@@ -953,7 +953,7 @@ public static class InvoiceHtmlTemplates
             <!-- Company Info -->
             <div style="margin-bottom: 30px;">
                 {{#ShowLogo}}
-                <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
+                <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
                 {{/ShowLogo}}
                 <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 15px;">{{CompanyName}}</div>
                 {{#ShowCompanyAddress}}{{#CompanyAddress}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyAddress}}</div>{{/CompanyAddress}}{{/ShowCompanyAddress}}
@@ -968,7 +968,7 @@ public static class InvoiceHtmlTemplates
                 <div style="flex: 1;">
                     <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Sold To</div>
                     <div style="color: {{TextColor}}; font-size: 14px; line-height: 1.6;">
-                        <strong>{{CustomerName}}</strong><br>
+                        <strong><span data-field="customer">{{CustomerName}}</span></strong><br>
                         {{#CustomerAddress}}{{CustomerAddress}}<br>{{/CustomerAddress}}
                         {{#CustomerEmail}}{{CustomerEmail}}{{/CustomerEmail}}
                     </div>
@@ -979,14 +979,14 @@ public static class InvoiceHtmlTemplates
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt #</span>
                         <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{InvoiceNumber}}</span>
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt Date</span>
-                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{IssueDate}}</span>
+                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></span>
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Due Date</span>
-                        <span style="text-align: right; font-size: 14px; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</span>
+                        <span style="text-align: right; font-size: 14px; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></span>
                     </div>
                     {{#ShowDueDateProminent}}
                     <div style="text-align: right; margin-top: 10px;">
                         <span style="display: inline-block; background-color: {{#IsOverdue}}#fef2f2{{/IsOverdue}}{{^IsOverdue}}#f0fdf4{{/IsOverdue}}; color: {{#IsOverdue}}#dc2626{{/IsOverdue}}{{^IsOverdue}}{{AccentColor}}{{/IsOverdue}}; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                            {{#IsOverdue}}OVERDUE{{/IsOverdue}}{{^IsOverdue}}DUE: {{DueDate}}{{/IsOverdue}}
+                            {{#IsOverdue}}OVERDUE{{/IsOverdue}}{{^IsOverdue}}DUE: <span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span>{{/IsOverdue}}
                         </span>
                     </div>
                     {{/ShowDueDateProminent}}

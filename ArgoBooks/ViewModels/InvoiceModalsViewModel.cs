@@ -299,6 +299,40 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
+    /// <summary>The customer options, as JSON, for the Bill To picker built inside the paper.</summary>
+    public string CustomersJson =>
+        System.Text.Json.JsonSerializer.Serialize(CustomerOptions.Select(c => new { id = c.Id, name = c.Name }));
+
+    /// <summary>Selects a customer from the paper's Bill To dropdown; re-renders via the change handler.</summary>
+    public void SelectCustomerFromPaper(string customerId)
+    {
+        var customer = CustomerOptions.FirstOrDefault(c => c.Id == customerId);
+        if (customer != null) SelectedCustomer = customer;
+    }
+
+    /// <summary>Opens the create-customer modal from the paper's Bill To dropdown.</summary>
+    public void CreateCustomerFromPaper() => OpenCreateCustomer();
+
+    /// <summary>Sets an issue/due date from the paper's date editor (yyyy-MM-dd); re-renders via the handler.</summary>
+    public void SetDateFromPaper(string field, string iso)
+    {
+        if (!DateTime.TryParse(iso, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var date))
+            return;
+        var dto = new DateTimeOffset(date);
+        if (field == "issueDate") ModalIssueDate = dto;
+        else if (field == "dueDate") ModalDueDate = dto;
+    }
+
+    /// <summary>Sets the invoice template's logo (raw base64) from the paper's logo click, re-rendering.</summary>
+    public void SetLogoFromPaper(string base64)
+    {
+        if (SelectedTemplate == null || string.IsNullOrEmpty(base64)) return;
+        SelectedTemplate.LogoBase64 = base64;
+        SelectedTemplate.ShowLogo = true;
+        RegeneratePaper();
+    }
+
     // Preview mode shows the invoice clean (no edit outlines, no +line item, no product dropdowns) so
     // the user can see exactly what the customer gets before sending. Bound to the paper's IsEditable.
     [ObservableProperty]
@@ -668,6 +702,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             () =>
             {
                 LoadCustomerOptions(includeAllOption: false);
+                OnPropertyChanged(nameof(CustomersJson));
 
                 // Auto-select the customer the user just created.
                 var newCustomer = CustomerOptions.FirstOrDefault(c => c.Id == customerModals.LastSavedCustomerId);
@@ -901,6 +936,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
         OnPropertyChanged(nameof(ProductsJson));
+        OnPropertyChanged(nameof(CustomersJson));
         GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }
@@ -1168,6 +1204,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
         OnPropertyChanged(nameof(ProductsJson));
+        OnPropertyChanged(nameof(CustomersJson));
         GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }

@@ -360,6 +360,9 @@ public partial class InvoiceHtmlRenderer
             // The footer shows the invoice's Notes (the customer message), falling back to the
             // template's default footer text when the user hasn't set notes. Editable on the paper.
             ["FooterOrNotes"] = !string.IsNullOrEmpty(invoice.Notes) ? invoice.Notes : (template.FooterText ?? string.Empty),
+            // ISO dates so the paper's date editor (an <input type=date>) can pre-fill.
+            ["IssueDateIso"] = invoice.IssueDate.ToString("yyyy-MM-dd"),
+            ["DueDateIso"] = invoice.DueDate.ToString("yyyy-MM-dd"),
 
             // Line items (as a list of dictionaries). Index drives the editor's data-line-index so
             // an edit on the paper can be routed back to the right row.

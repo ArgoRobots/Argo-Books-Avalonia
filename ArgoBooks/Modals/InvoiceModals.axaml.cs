@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
 
@@ -23,6 +25,63 @@ public partial class InvoiceModals : UserControl
             editorPreview.CreateProductRequested += OnCreateProductRequested;
             editorPreview.AddLineRequested += OnAddLineRequested;
             editorPreview.RemoveLineRequested += OnRemoveLineRequested;
+            editorPreview.CustomerPicked += OnCustomerPicked;
+            editorPreview.CreateCustomerRequested += OnCreateCustomerRequested;
+            editorPreview.DateEdited += OnDateEdited;
+            editorPreview.PickLogoRequested += OnPickLogoRequested;
+        }
+    }
+
+    private void OnCustomerPicked(object? sender, string customerId)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.SelectCustomerFromPaper(customerId);
+    }
+
+    private void OnCreateCustomerRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.CreateCustomerFromPaper();
+    }
+
+    private void OnDateEdited(object? sender, (string Field, string Value) e)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.SetDateFromPaper(e.Field, e.Value);
+    }
+
+    // Let the user pick a logo image from the invoice paper; embed it as base64 on the template.
+    private async void OnPickLogoRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        var top = TopLevel.GetTopLevel(this);
+        if (top == null) return;
+
+        var files = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose a logo",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Images")
+                {
+                    Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.bmp" }
+                }
+            }
+        });
+
+        if (files.Count == 0) return;
+
+        try
+        {
+            await using var stream = await files[0].OpenReadAsync();
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            vm.SetLogoFromPaper(Convert.ToBase64String(ms.ToArray()));
+        }
+        catch
+        {
+            // Ignore unreadable/oversized images; the user can pick another.
         }
     }
 

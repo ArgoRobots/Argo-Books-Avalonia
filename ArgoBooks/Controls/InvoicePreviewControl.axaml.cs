@@ -71,6 +71,16 @@ public partial class InvoicePreviewControl : UserControl
         set => SetValue(ProductsJsonProperty, value);
     }
 
+    /// <summary>JSON array of customers [{id,name}] for the Bill To dropdown on the paper.</summary>
+    public static readonly StyledProperty<string?> CustomersJsonProperty =
+        AvaloniaProperty.Register<InvoicePreviewControl, string?>(nameof(CustomersJson));
+
+    public string? CustomersJson
+    {
+        get => GetValue(CustomersJsonProperty);
+        set => SetValue(CustomersJsonProperty, value);
+    }
+
     /// <summary>Raised when a product is chosen from a line item's dropdown on the paper.</summary>
     public event EventHandler<ProductPickEventArgs>? ProductPicked;
 
@@ -82,6 +92,18 @@ public partial class InvoicePreviewControl : UserControl
 
     /// <summary>Raised when a line item's remove "x" is clicked on the paper (line index).</summary>
     public event EventHandler<int>? RemoveLineRequested;
+
+    /// <summary>Raised when a customer is chosen from the Bill To dropdown on the paper (customer id).</summary>
+    public event EventHandler<string>? CustomerPicked;
+
+    /// <summary>Raised when "create new customer" is chosen from the Bill To dropdown.</summary>
+    public event EventHandler? CreateCustomerRequested;
+
+    /// <summary>Raised when an issue/due date is edited on the paper (field name and yyyy-MM-dd value).</summary>
+    public event EventHandler<(string Field, string Value)>? DateEdited;
+
+    /// <summary>Raised when the logo on the paper is clicked to change it.</summary>
+    public event EventHandler? PickLogoRequested;
 
     private NativeWebView? _webView;
     private Panel? _rootPanel;
@@ -105,12 +127,16 @@ public partial class InvoicePreviewControl : UserControl
     private string BuildEditingScript()
     {
         var products = string.IsNullOrWhiteSpace(ProductsJson) ? "[]" : ProductsJson;
-        return EditingScriptTemplate.Replace("__PRODUCTS_JSON__", products);
+        var customers = string.IsNullOrWhiteSpace(CustomersJson) ? "[]" : CustomersJson;
+        return EditingScriptTemplate
+            .Replace("__PRODUCTS_JSON__", products)
+            .Replace("__CUSTOMERS_JSON__", customers);
     }
 
     private const string EditingScriptTemplate = @"
 <script>
 window.__invProducts = __PRODUCTS_JSON__;
+window.__invCustomers = __CUSTOMERS_JSON__;
 (function() {
     if (window.__editHandlersInstalled) return;
     window.__editHandlersInstalled = true;
@@ -135,8 +161,11 @@ window.__invProducts = __PRODUCTS_JSON__;
         catch(e) { try { window.webkit.messageHandlers.webview.postMessage(msg); } catch(e2) {} }
     }
 
+    // Text fields (description, qty, rate, notes) are contenteditable. customer/dates are pickers below.
+    var pickers = { customer: 1, issueDate: 1, dueDate: 1 };
     var timers = {};
     document.querySelectorAll('[data-field]').forEach(function(el) {
+        if (pickers[el.dataset.field]) return;
         el.setAttribute('contenteditable', 'true');
         var single = el.dataset.field !== 'notes' && el.dataset.field !== 'description';
         el.addEventListener('input', function() {
@@ -151,9 +180,9 @@ window.__invProducts = __PRODUCTS_JSON__;
         }
     });
 
-    // ---- product dropdown for line-item description fields ----
-    var drop = null, target = null, hl = -1, filtered = [];
-    function closeDrop() { if (drop) { drop.remove(); drop = null; } target = null; hl = -1; filtered = []; }
+    // ---- shared entity dropdown: products (per line) and the customer on Bill To ----
+    var drop = null, target = null, hl = -1, filtered = [], mode = null;
+    function closeDrop() { if (drop) { drop.remove(); drop = null; } target = null; hl = -1; filtered = []; mode = null; }
     function positionDrop() {
         if (!drop || !target) return;
         var r = target.getBoundingClientRect();
@@ -161,64 +190,82 @@ window.__invProducts = __PRODUCTS_JSON__;
         drop.style.top = (r.bottom + 4) + 'px';
         drop.style.minWidth = Math.max(240, r.width) + 'px';
     }
-    function selectProduct(p) {
+    function sourceItems() { return mode === 'customer' ? (window.__invCustomers || []) : (window.__invProducts || []); }
+    function pick(p) {
         if (!target) return;
-        var idx = parseInt(target.dataset.lineIndex, 10);
         target.textContent = p.name;
-        closeDrop();
-        post({ type:'productSelected', index: idx, id: p.id });
+        if (mode === 'customer') { closeDrop(); post({ type:'customerSelected', id: p.id }); }
+        else { var idx = parseInt(target.dataset.lineIndex, 10); closeDrop(); post({ type:'productSelected', index: idx, id: p.id }); }
     }
     function render() {
         if (!drop) return;
         drop.innerHTML = '';
         if (filtered.length === 0) {
-            var em = document.createElement('div'); em.className = 'empty'; em.textContent = 'No products found.';
+            var em = document.createElement('div'); em.className = 'empty';
+            em.textContent = mode === 'customer' ? 'No customers found.' : 'No products found.';
             drop.appendChild(em);
         } else {
             filtered.forEach(function(p, i) {
                 var it = document.createElement('div');
                 it.className = 'it' + (i === hl ? ' hl' : '');
                 it.textContent = p.name;
-                it.addEventListener('mousedown', function(e) { e.preventDefault(); selectProduct(p); });
+                it.addEventListener('mousedown', function(e) { e.preventDefault(); pick(p); });
                 drop.appendChild(it);
             });
         }
-        var add = document.createElement('div'); add.className = 'add'; add.textContent = '+ Create new product';
+        var add = document.createElement('div'); add.className = 'add';
+        add.textContent = mode === 'customer' ? '+ Create new customer' : '+ Create new product';
         add.addEventListener('mousedown', function(e) {
             e.preventDefault();
-            var idx = target ? parseInt(target.dataset.lineIndex, 10) : -1;
-            closeDrop();
-            post({ type:'createProduct', index: idx });
+            if (mode === 'customer') { closeDrop(); post({ type:'createCustomer' }); }
+            else { var idx = target ? parseInt(target.dataset.lineIndex, 10) : -1; closeDrop(); post({ type:'createProduct', index: idx }); }
         });
         drop.appendChild(add);
     }
     function filter(text) {
         var t = (text || '').toLowerCase();
-        var all = window.__invProducts || [];
-        filtered = all.filter(function(p) { return (p.name || '').toLowerCase().indexOf(t) !== -1; });
+        filtered = sourceItems().filter(function(p) { return (p.name || '').toLowerCase().indexOf(t) !== -1; });
         hl = filtered.length ? 0 : -1;
     }
-    function openFor(el) {
-        target = el;
+    function openFor(el, m) {
+        target = el; mode = m;
         if (!drop) { drop = document.createElement('div'); drop.id = '__prodDrop'; document.body.appendChild(drop); }
         filter(el.textContent); render(); positionDrop();
     }
-    document.querySelectorAll(""[data-field='description']"").forEach(function(el) {
-        el.addEventListener('focus', function() { openFor(el); });
-        el.addEventListener('click', function() { openFor(el); });
-        el.addEventListener('input', function() {
-            if (target !== el) openFor(el); else { filter(el.textContent); render(); positionDrop(); }
-        });
+    function wirePicker(el, m) {
+        el.setAttribute('contenteditable', 'true');
+        el.addEventListener('focus', function() { openFor(el, m); });
+        el.addEventListener('click', function() { openFor(el, m); });
+        el.addEventListener('input', function() { if (target !== el) openFor(el, m); else { filter(el.textContent); render(); positionDrop(); } });
         el.addEventListener('blur', function() { setTimeout(closeDrop, 150); });
         el.addEventListener('keydown', function(e) {
             if (!drop) return;
             if (e.key === 'ArrowDown') { e.preventDefault(); hl = Math.min(hl + 1, filtered.length - 1); render(); }
             else if (e.key === 'ArrowUp') { e.preventDefault(); hl = Math.max(hl - 1, 0); render(); }
-            else if (e.key === 'Enter') { e.preventDefault(); if (hl >= 0 && filtered[hl]) selectProduct(filtered[hl]); else el.blur(); }
+            else if (e.key === 'Enter') { e.preventDefault(); if (hl >= 0 && filtered[hl]) pick(filtered[hl]); else el.blur(); }
             else if (e.key === 'Escape') { closeDrop(); }
         });
-    });
+    }
+    document.querySelectorAll(""[data-field='description']"").forEach(function(el) { wirePicker(el, 'product'); });
+    document.querySelectorAll(""[data-field='customer']"").forEach(function(el) { wirePicker(el, 'customer'); });
     window.addEventListener('scroll', positionDrop, true);
+
+    // ---- date editors (issue / due): click opens a native date input ----
+    document.querySelectorAll(""[data-field='issueDate'],[data-field='dueDate']"").forEach(function(el) {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function() {
+            var prev = document.getElementById('__dateInput'); if (prev) prev.remove();
+            var inp = document.createElement('input'); inp.type = 'date'; inp.id = '__dateInput';
+            inp.value = el.dataset.iso || '';
+            var r = el.getBoundingClientRect();
+            inp.style.cssText = 'position:fixed;z-index:99999;left:' + r.left + 'px;top:' + r.top + 'px;font-size:13px;padding:2px 4px';
+            document.body.appendChild(inp);
+            inp.focus(); if (inp.showPicker) { try { inp.showPicker(); } catch(e) {} }
+            var field = el.dataset.field;
+            inp.addEventListener('change', function() { post({ type:'dateEdit', field: field, value: inp.value }); if (inp.parentNode) inp.remove(); });
+            inp.addEventListener('blur', function() { setTimeout(function() { if (inp.parentNode) inp.remove(); }, 200); });
+        });
+    });
 
     // ---- '+ Add line item' affordance, injected after the line-items table ----
     var firstRow = document.querySelector('[data-line-index]');
@@ -235,9 +282,9 @@ window.__invProducts = __PRODUCTS_JSON__;
     }
 
     // ---- remove-row 'x' per line item, only when there is more than one row ----
-    var descs = document.querySelectorAll(""[data-field='description']"");
-    if (descs.length > 1) {
-        descs.forEach(function(sp) {
+    var rows = document.querySelectorAll(""[data-field='description']"");
+    if (rows.length > 1) {
+        rows.forEach(function(sp) {
             var tr = sp.closest('tr');
             if (!tr) return;
             var lastCell = tr.lastElementChild;
@@ -250,6 +297,18 @@ window.__invProducts = __PRODUCTS_JSON__;
             x.addEventListener('click', function() { post({ type:'removeLine', index: parseInt(sp.dataset.lineIndex, 10) }); });
             lastCell.appendChild(x);
         });
+    }
+
+    // ---- logo: click the logo to change it, or an 'Add logo' prompt when there is none ----
+    var logoEl = document.querySelector('[data-logo]');
+    if (logoEl) {
+        logoEl.style.cursor = 'pointer'; logoEl.title = 'Click to change logo';
+        logoEl.addEventListener('click', function() { post({ type:'pickLogo' }); });
+    } else {
+        var addLogo = document.createElement('div'); addLogo.textContent = '+ Add logo';
+        addLogo.style.cssText = 'position:fixed;left:14px;top:14px;z-index:99998;background:#fff;border:1px dashed #c4ccd6;border-radius:6px;padding:6px 10px;color:#8a94a3;font-size:12px;cursor:pointer;font-family:sans-serif';
+        addLogo.addEventListener('click', function() { post({ type:'pickLogo' }); });
+        document.body.appendChild(addLogo);
     }
 })();
 </script>";
@@ -291,7 +350,7 @@ window.__invProducts = __PRODUCTS_JSON__;
         base.OnPropertyChanged(change);
 
         if ((change.Property == HtmlProperty || change.Property == IsEditableProperty
-                || change.Property == ProductsJsonProperty) && _isInitialized)
+                || change.Property == ProductsJsonProperty || change.Property == CustomersJsonProperty) && _isInitialized)
         {
             EnsureWebViewActiveIfVisible();
             _ = UpdateWebViewContent();
@@ -448,6 +507,29 @@ window.__invProducts = __PRODUCTS_JSON__;
                     var lineIndex = ri.GetInt32();
                     Avalonia.Threading.Dispatcher.UIThread.Post(() => RemoveLineRequested?.Invoke(this, lineIndex));
                 }
+            }
+            else if (messageType == "customerSelected")
+            {
+                if (root.TryGetProperty("id", out var cid))
+                {
+                    var customerId = cid.GetString() ?? string.Empty;
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => CustomerPicked?.Invoke(this, customerId));
+                }
+            }
+            else if (messageType == "createCustomer")
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => CreateCustomerRequested?.Invoke(this, System.EventArgs.Empty));
+            }
+            else if (messageType == "dateEdit")
+            {
+                var dField = root.TryGetProperty("field", out var df) ? df.GetString() ?? string.Empty : string.Empty;
+                var dValue = root.TryGetProperty("value", out var dv) ? dv.GetString() ?? string.Empty : string.Empty;
+                if (!string.IsNullOrEmpty(dField) && !string.IsNullOrEmpty(dValue))
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => DateEdited?.Invoke(this, (dField, dValue)));
+            }
+            else if (messageType == "pickLogo")
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => PickLogoRequested?.Invoke(this, System.EventArgs.Empty));
             }
         }
         catch (Exception ex)

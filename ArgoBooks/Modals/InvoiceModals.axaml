@@ -86,6 +86,7 @@
                                                                 Html="{Binding PreviewHtml}"
                                                                 IsEditable="{Binding !IsEditorPreviewing}"
                                                                 ProductsJson="{Binding ProductsJson}"
+                                                                CustomersJson="{Binding CustomersJson}"
                                                                 OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
                                     <controls:InvoicePreviewControl.IsVisible>
                                         <MultiBinding Converter="{x:Static BoolConverters.And}">
