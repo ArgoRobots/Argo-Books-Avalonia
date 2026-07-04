@@ -19,6 +19,10 @@ public partial class InvoiceHtmlRenderer
     private static string Money(decimal amount) =>
         amount.ToString("N2", System.Globalization.CultureInfo.InvariantCulture);
 
+    // " CAD" style suffix appended to the amount-due rows so the currency is unambiguous.
+    private static string CurrencyCodeSuffix(Invoice invoice) =>
+        string.IsNullOrEmpty(invoice.OriginalCurrency) ? string.Empty : $" {invoice.OriginalCurrency}";
+
     /// <summary>
     /// Renders an invoice to HTML using the specified template.
     /// </summary>
@@ -355,9 +359,11 @@ public partial class InvoiceHtmlRenderer
             // Amount Paid (Total − Amount Paid = Balance Due). The bare
             // invoice subtotal/tax/etc. roll-up is already shown by the
             // Subtotal/Tax rows above; this Total row is the gross.
-            ["Total"] = $"{currencySymbol}{Money(invoice.Total + actualProcessingFee)}",
+            // The final amount due always shows the currency code (e.g. "$841.85 CAD") so there's no
+            // ambiguity about which dollar it is.
+            ["Total"] = $"{currencySymbol}{Money(invoice.Total + actualProcessingFee)}{CurrencyCodeSuffix(invoice)}",
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{Money(invoice.AmountPaid)}" : null,
-            ["Balance"] = $"{currencySymbol}{Money(invoice.Balance)}",
+            ["Balance"] = $"{currencySymbol}{Money(invoice.Balance)}{CurrencyCodeSuffix(invoice)}",
 
             // Processing fee, see invoiceCurrency / actualProcessingFee
             // block above for the row-visibility rules. ShowProcessingFee
@@ -372,7 +378,7 @@ public partial class InvoiceHtmlRenderer
                 : "",
             ["ShowAmountToPay"] = showAmountToPay,
             ["AmountToPay"] = showAmountToPay
-                ? $"{currencySymbol}{Money(invoice.Balance + estimatedProcessingFee)}"
+                ? $"{currencySymbol}{Money(invoice.Balance + estimatedProcessingFee)}{CurrencyCodeSuffix(invoice)}"
                 : "",
 
             // Notes

@@ -144,7 +144,7 @@
                                                     <StackPanel Spacing="10">
                                                         <StackPanel Spacing="4">
                                                             <TextBlock Text="Frequency" Classes="sidebar-label" Margin="0" />
-                                                            <ComboBox ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding RecurringFrequency}" HorizontalAlignment="Stretch" />
+                                                            <ComboBox ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding RecurringFrequency}" Classes="form-combobox" HorizontalAlignment="Stretch" />
                                                         </StackPanel>
                                                         <StackPanel Spacing="4">
                                                             <TextBlock Text="Start date" Classes="sidebar-label" Margin="0" />

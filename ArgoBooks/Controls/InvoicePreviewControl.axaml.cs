@@ -313,13 +313,16 @@ window.__invCustomers = __CUSTOMERS_JSON__;
     if (logoEl) {
         logoEl.style.cursor = 'pointer'; logoEl.title = 'Click to change logo';
         logoEl.addEventListener('click', function() { post({ type:'pickLogo' }); });
-        // Wrap the logo so a delete 'x' can be positioned over its top-right corner.
+        // Wrap the logo so a delete 'x' can be positioned over its top-right corner. The wrapper
+        // carries the spacing margin (not the image) so the 'x' hugs the image corner, not the gap.
         var wrap = document.createElement('span');
-        wrap.style.cssText = 'position:relative;display:inline-block;';
+        wrap.style.cssText = 'position:relative;display:inline-block;vertical-align:middle;line-height:0;margin-right:14px;';
         logoEl.parentNode.insertBefore(wrap, logoEl);
         wrap.appendChild(logoEl);
-        var del = document.createElement('div'); del.textContent = 'x'; del.title = 'Remove logo';
-        del.style.cssText = 'position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:#e5484d;color:#fff;font-size:12px;line-height:18px;text-align:center;cursor:pointer;font-family:sans-serif;display:none;box-shadow:0 1px 3px rgba(0,0,0,0.3);';
+        logoEl.style.margin = '0';
+        logoEl.style.display = 'block';
+        var del = document.createElement('div'); del.textContent = '×'; del.title = 'Remove logo';
+        del.style.cssText = 'position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:#e5484d;color:#fff;font-size:12px;line-height:17px;text-align:center;cursor:pointer;font-family:sans-serif;display:none;box-shadow:0 1px 3px rgba(0,0,0,0.3);';
         wrap.appendChild(del);
         wrap.addEventListener('mouseenter', function() { del.style.display = 'block'; });
         wrap.addEventListener('mouseleave', function() { del.style.display = 'none'; });
@@ -328,7 +331,7 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         // Show a clickable square where the logo would sit, next to the company name slot.
         var square = document.createElement('div'); square.textContent = '+ Logo';
         square.title = 'Click to add a logo';
-        square.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:72px;height:72px;border:2px dashed #c4ccd6;border-radius:8px;color:#8a94a3;font-size:12px;cursor:pointer;font-family:sans-serif;margin-right:14px;background:rgba(255,255,255,0.35);';
+        square.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:72px;height:72px;border:2px dashed #b6bfca;border-radius:8px;color:#5b6472;font-weight:600;font-size:12px;cursor:pointer;font-family:sans-serif;margin-right:14px;background:#ffffff;';
         square.addEventListener('click', function() { post({ type:'pickLogo' }); });
         var slot = document.querySelector('[data-logo-slot]');
         if (slot) { slot.parentNode.insertBefore(square, slot); }
@@ -347,20 +350,39 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         var sym = cell.dataset.totalSymbol || '$';
         var raw = cell.dataset.totalRaw || '0';
         var fieldName = which + 'Value';
+        var isPercent = mode === 'percent';
 
         cell.textContent = '';
+
+        // One bordered rounded box holding: optional currency prefix, the number, a %/currency
+        // affix, and (for togglable fields) a swap button, matching the website's totals inputs.
         var box = document.createElement('span');
-        box.style.cssText = 'display:inline-flex;align-items:center;gap:4px;justify-content:flex-end';
+        // Fixed width so tax, shipping and discount boxes line up the same, with or without a swap button.
+        box.style.cssText = 'display:inline-flex;align-items:stretch;height:30px;width:160px;border:1px solid #d0d5dd;border-radius:6px;background:#fff;overflow:hidden;font-size:13px;font-family:inherit;vertical-align:middle';
+
+        if (!isPercent) {
+            var pre = document.createElement('span');
+            pre.textContent = sym;
+            pre.style.cssText = 'display:flex;align-items:center;padding:0 8px;color:#8a94a3';
+            box.appendChild(pre);
+        }
 
         var val = document.createElement('span');
         val.setAttribute('contenteditable', 'true');
-        val.setAttribute('data-field', fieldName);
+        val.setAttribute('data-total-input', fieldName);
         val.textContent = raw;
-        val.style.cssText = 'min-width:32px;text-align:right';
+        val.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;text-align:right;padding:0 6px;min-width:44px;flex:1 1 auto;outline:none';
+        box.appendChild(val);
 
-        var unit = document.createElement('span');
-        unit.textContent = (mode === 'percent') ? '%' : sym;
-        unit.style.cssText = 'color:#8a94a3;font-size:12px';
+        if (isPercent) {
+            var suf = document.createElement('span');
+            suf.textContent = '%';
+            suf.style.cssText = 'display:flex;align-items:center;padding:0 8px;color:#8a94a3';
+            box.appendChild(suf);
+        }
+
+        box.addEventListener('focusin', function() { box.style.borderColor = '#2f6bff'; });
+        box.addEventListener('focusout', function() { box.style.borderColor = '#d0d5dd'; });
 
         var t;
         val.addEventListener('input', function() {
@@ -374,19 +396,16 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             // Reconcile the paper (updates the Total) once the user is done, but not if they're just
             // hopping to another editable field, since the re-render would steal that focus.
             var to = e.relatedTarget;
-            var stayingInEditor = to && to.closest && (to.closest('[data-total]') || to.hasAttribute('data-field'));
+            var stayingInEditor = to && to.closest && (to.closest('[data-total]') || to.hasAttribute('data-field') || to.hasAttribute('data-total-input'));
             if (!stayingInEditor) post({ type:'totalsCommit' });
         });
-
-        box.appendChild(val);
-        box.appendChild(unit);
 
         if (mode) {
             var swap = document.createElement('button');
             swap.type = 'button';
             swap.innerHTML = '&#x21c4;';
             swap.title = 'Switch between percent and fixed amount';
-            swap.style.cssText = 'border:1px solid #d0d5dd;background:#fff;border-radius:4px;cursor:pointer;color:#5b6472;font-size:12px;line-height:1;padding:2px 5px;margin-left:2px';
+            swap.style.cssText = 'border:none;border-left:1px solid #d0d5dd;background:transparent;cursor:pointer;color:#5b6472;font-size:13px;line-height:1;padding:0 8px';
             // mousedown + preventDefault so the value field doesn't blur (which would double-commit).
             swap.addEventListener('mousedown', function(e) { e.preventDefault(); post({ type:'totalsToggle', which: which }); });
             box.appendChild(swap);
@@ -1053,8 +1072,8 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         try
         {
             const string js =
-                "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[data-field]'),function(el){" +
-                "return {f:el.dataset.field,i:(el.dataset.lineIndex!=null?parseInt(el.dataset.lineIndex,10):null),v:el.textContent};}))";
+                "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[data-field],[data-total-input]'),function(el){" +
+                "return {f:(el.dataset.field||el.dataset.totalInput),i:(el.dataset.lineIndex!=null?parseInt(el.dataset.lineIndex,10):null),v:el.textContent};}))";
 
             var result = await _webView.InvokeScript(js);
             if (string.IsNullOrEmpty(result))

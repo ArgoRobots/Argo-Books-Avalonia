@@ -1542,6 +1542,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             DiscountAmount = DiscountAmount,
             DiscountIsPercent = DiscountIsPercent,
             ShippingAmount = ShippingAmount,
+            OriginalCurrency = SelectedCurrencyCode,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
             LineItems = LineItems.Select(li => new LineItem
