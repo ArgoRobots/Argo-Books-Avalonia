@@ -368,7 +368,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isEditorPreviewing;
 
     [RelayCommand]
-    private void ShowEditorPreview() => IsEditorPreviewing = true;
+    private void ShowEditorPreview()
+    {
+        IsEditorPreviewing = true;
+        // Re-render from the model so the preview reflects the latest edits (totals, rates, etc.)
+        // rather than the HTML that was last generated while editing.
+        RegeneratePaper();
+    }
 
     [RelayCommand]
     private void BackToEditor() => IsEditorPreviewing = false;

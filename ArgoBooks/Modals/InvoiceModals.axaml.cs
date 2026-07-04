@@ -41,6 +41,27 @@ public partial class InvoiceModals : UserControl
             vm.DeleteLogoFromPaper();
     }
 
+    // Flush any value the user just typed on the paper into the model before previewing/saving,
+    // otherwise the re-render would drop the last edit (e.g. a rate that hasn't posted yet).
+    private async void OnPreviewClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
+        if (editorPreview != null)
+            await editorPreview.CommitPendingEditsAsync();
+        vm.ShowEditorPreviewCommand.Execute(null);
+    }
+
+    private async void OnSaveAsDraftClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
+        if (editorPreview != null)
+            await editorPreview.CommitPendingEditsAsync();
+        if (vm.SaveAsDraftCommand.CanExecute(null))
+            vm.SaveAsDraftCommand.Execute(null);
+    }
+
     private void OnCustomerPicked(object? sender, string customerId)
     {
         if (DataContext is InvoiceModalsViewModel vm)

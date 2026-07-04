@@ -322,7 +322,7 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         // Show a clickable square where the logo would sit, next to the company name slot.
         var square = document.createElement('div'); square.textContent = '+ Logo';
         square.title = 'Click to add a logo';
-        square.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border:2px dashed #c4ccd6;border-radius:8px;color:#8a94a3;font-size:12px;cursor:pointer;font-family:sans-serif;margin-bottom:10px;background:rgba(255,255,255,0.35);';
+        square.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:72px;height:72px;border:2px dashed #c4ccd6;border-radius:8px;color:#8a94a3;font-size:12px;cursor:pointer;font-family:sans-serif;margin-right:14px;background:rgba(255,255,255,0.35);';
         square.addEventListener('click', function() { post({ type:'pickLogo' }); });
         var slot = document.querySelector('[data-logo-slot]');
         if (slot) { slot.parentNode.insertBefore(square, slot); }
@@ -965,6 +965,52 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         return parts.Length == 2
             && double.TryParse(parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
             && double.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y);
+    }
+
+    /// <summary>
+    /// Reads the current text of every editable field straight from the DOM and applies it to the
+    /// model via <see cref="InvoiceEdited"/>. Call this before previewing or saving so a value the
+    /// user just typed (still only in the live DOM, not yet posted by the debounced input handler)
+    /// isn't lost when the paper re-renders.
+    /// </summary>
+    public async System.Threading.Tasks.Task CommitPendingEditsAsync()
+    {
+        if (_webView == null || !_webViewReady || !IsEditable)
+            return;
+
+        try
+        {
+            const string js =
+                "JSON.stringify(Array.prototype.map.call(document.querySelectorAll('[data-field]'),function(el){" +
+                "return {f:el.dataset.field,i:(el.dataset.lineIndex!=null?parseInt(el.dataset.lineIndex,10):null),v:el.textContent};}))";
+
+            var result = await _webView.InvokeScript(js);
+            if (string.IsNullOrEmpty(result))
+                return;
+
+            // InvokeScript hands back the JS return value as a JSON-encoded string; unwrap one level.
+            var json = result.Trim();
+            if (json.StartsWith('"') && json.EndsWith('"'))
+                json = System.Text.Json.JsonSerializer.Deserialize<string>(json) ?? json;
+
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            foreach (var item in doc.RootElement.EnumerateArray())
+            {
+                var field = item.TryGetProperty("f", out var fe) ? fe.GetString() ?? string.Empty : string.Empty;
+                if (field is not ("description" or "quantity" or "rate" or "notes"))
+                    continue;
+
+                int? index = item.TryGetProperty("i", out var ie) && ie.ValueKind == System.Text.Json.JsonValueKind.Number
+                    ? ie.GetInt32()
+                    : null;
+                var value = item.TryGetProperty("v", out var ve) ? ve.GetString() ?? string.Empty : string.Empty;
+                InvoiceEdited?.Invoke(this, new InvoiceEditEventArgs(field, index, value));
+            }
+        }
+        catch
+        {
+            // If capture fails, fall back to whatever the debounced handlers already posted.
+        }
     }
 
     private void OpenInBrowserButton_Click(object? sender, RoutedEventArgs e)

@@ -53,6 +53,7 @@
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
+                        Width="1040"
                         MaxWidth="1040"
                         Margin="24,32"
                         Background="{DynamicResource SurfaceBrush}"
@@ -185,9 +186,9 @@
                                             <StackPanel Spacing="8" Margin="0,4,0,0">
                                                 <!-- Edit mode -->
                                                 <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Preview"
-                                                        Command="{Binding ShowEditorPreviewCommand}" IsVisible="{Binding !IsEditorPreviewing}" />
+                                                        Click="OnPreviewClick" IsVisible="{Binding !IsEditorPreviewing}" />
                                                 <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft"
-                                                        Command="{Binding SaveAsDraftCommand}" IsVisible="{Binding !IsEditorPreviewing}" />
+                                                        Click="OnSaveAsDraftClick" IsVisible="{Binding !IsEditorPreviewing}" />
                                                 <!-- Preview mode -->
                                                 <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Create &amp; send"
                                                         Command="{Binding CreateAndSendInvoiceCommand}" IsVisible="{Binding IsEditorPreviewing}" />

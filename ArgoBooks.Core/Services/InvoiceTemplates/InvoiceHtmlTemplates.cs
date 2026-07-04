@@ -32,11 +32,9 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: block; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                         {{/ShowLogo}}
-                                        {{^ShowLogo}}
-                                        <span data-logo-slot="1" style="font-size: 24px; font-weight: bold; color: #ffffff;">{{CompanyName}}</span>
-                                        {{/ShowLogo}}
+                                        <span data-logo-slot="1" style="display: inline-block; vertical-align: middle; font-size: 24px; font-weight: bold; color: #ffffff;">{{CompanyName}}</span>
                                     </td>
                                     <td align="right" style="vertical-align: top;">
                                         <span style="font-size: 28px; font-weight: bold; color: #ffffff; letter-spacing: 1px;">{{HeaderText}}</span>
@@ -266,11 +264,9 @@ public static class InvoiceHtmlTemplates
                                             <tr>
                                                 <td style="vertical-align: middle;">
                                                     {{#ShowLogo}}
-                                                    <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: block; max-width: {{LogoWidth}}px; max-height: 55px; width: auto; height: auto; object-fit: contain;">
+                                                    <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 55px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                                     {{/ShowLogo}}
-                                                    {{^ShowLogo}}
-                                                    <span data-logo-slot="1" style="font-size: 22px; font-weight: 700; color: {{TextColor}};">{{CompanyName}}</span>
-                                                    {{/ShowLogo}}
+                                                    <span data-logo-slot="1" style="display: inline-block; vertical-align: middle; font-size: 22px; font-weight: 700; color: {{TextColor}};">{{CompanyName}}</span>
                                                 </td>
                                                 <td style="text-align: right; vertical-align: middle;">
                                                     <p style="margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: {{HeaderColor}}; letter-spacing: -0.5px;">{{HeaderText}}</p>
@@ -499,9 +495,9 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: block; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-bottom: 10px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                         {{/ShowLogo}}
-                                        <p data-logo-slot="1" style="margin: 0; font-size: 18px; font-weight: bold; color: {{TextColor}};">{{CompanyName}}</p>
+                                        <p data-logo-slot="1" style="display: inline-block; vertical-align: middle; margin: 0; font-size: 18px; font-weight: bold; color: {{TextColor}};">{{CompanyName}}</p>
                                         {{#ShowCompanyAddress}}{{#CompanyAddress}}<p style="margin: 5px 0 0 0; font-size: 12px; color: #666666; line-height: 1.5;">{{CompanyAddress}}</p>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                                         {{#ShowCompanyCity}}{{#CompanyCity}}<p style="margin: 2px 0 0 0; font-size: 12px; color: #666666;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyCity}}{{/ShowCompanyCity}}
                                         {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<p style="margin: 2px 0 0 0; font-size: 12px; color: #666666;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{^ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}<p style="margin: 2px 0 0 0; font-size: 12px; color: #666666;">{{CompanyCountry}}</p>{{/CompanyCountry}}{{/ShowCompanyCountry}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
@@ -683,11 +679,9 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%; vertical-align: top;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: block; max-width: {{LogoWidth}}px; max-height: 55px; width: auto; height: auto; object-fit: contain; margin-bottom: 15px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 55px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                         {{/ShowLogo}}
-                                        {{^ShowLogo}}
-                                        <p data-logo-slot="1" style="margin: 0 0 15px 0; font-size: 20px; font-weight: 600; color: {{TextColor}}; letter-spacing: -0.5px;">{{CompanyName}}</p>
-                                        {{/ShowLogo}}
+                                        <p data-logo-slot="1" style="display: inline-block; vertical-align: middle; margin: 0 0 15px 0; font-size: 20px; font-weight: 600; color: {{TextColor}}; letter-spacing: -0.5px;">{{CompanyName}}</p>
                                         {{#ShowCompanyAddress}}{{#CompanyAddress}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CompanyAddress}}</p>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                                         {{#ShowCompanyCity}}{{#CompanyCity}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyCity}}{{/ShowCompanyCity}}
                                         {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{^ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyCountry}}</p>{{/CompanyCountry}}{{/ShowCompanyCountry}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
@@ -953,9 +947,9 @@ public static class InvoiceHtmlTemplates
             <!-- Company Info -->
             <div style="margin-bottom: 30px;">
                 {{#ShowLogo}}
-                <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: block; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-bottom: 10px;">
+                <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                 {{/ShowLogo}}
-                <div data-logo-slot="1" style="font-weight: bold; color: {{HeaderColor}}; font-size: 15px;">{{CompanyName}}</div>
+                <div data-logo-slot="1" style="display: inline-block; vertical-align: middle; font-weight: bold; color: {{HeaderColor}}; font-size: 15px;">{{CompanyName}}</div>
                 {{#ShowCompanyAddress}}{{#CompanyAddress}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyAddress}}</div>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                 {{#ShowCompanyCity}}{{#CompanyCity}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</div>{{/CompanyCity}}{{/ShowCompanyCity}}
                 {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</div>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
