@@ -84,7 +84,7 @@
                                 <controls:InvoicePreviewControl x:Name="EditorPreview"
                                                                 Grid.Column="0"
                                                                 Html="{Binding PreviewHtml}"
-                                                                IsEditable="True"
+                                                                IsEditable="{Binding !IsEditorPreviewing}"
                                                                 ProductsJson="{Binding ProductsJson}"
                                                                 OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
                                     <controls:InvoicePreviewControl.IsVisible>
@@ -209,8 +209,16 @@
 
                                             <!-- Actions -->
                                             <StackPanel Spacing="8" Margin="0,4,0,0">
-                                                <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Create &amp; send" Command="{Binding CreateAndSendInvoiceCommand}" />
-                                                <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft" Command="{Binding SaveAsDraftCommand}" IsVisible="{Binding !IsEditMode}" />
+                                                <!-- Edit mode -->
+                                                <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Preview"
+                                                        Command="{Binding ShowEditorPreviewCommand}" IsVisible="{Binding !IsEditorPreviewing}" />
+                                                <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft"
+                                                        Command="{Binding SaveAsDraftCommand}" IsVisible="{Binding !IsEditorPreviewing}" />
+                                                <!-- Preview mode -->
+                                                <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Create &amp; send"
+                                                        Command="{Binding CreateAndSendInvoiceCommand}" IsVisible="{Binding IsEditorPreviewing}" />
+                                                <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Back to edit"
+                                                        Command="{Binding BackToEditorCommand}" IsVisible="{Binding IsEditorPreviewing}" />
                                             </StackPanel>
                                         </StackPanel>
                                     </ScrollViewer>

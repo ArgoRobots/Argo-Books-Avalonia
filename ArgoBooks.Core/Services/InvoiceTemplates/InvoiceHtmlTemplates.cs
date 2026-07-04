@@ -222,7 +222,7 @@ public static class InvoiceHtmlTemplates
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 25px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; font-size: 14px; color: {{TextColor}};">{{FooterText}}</p>
+                            <p style="margin: 0 0 10px 0; font-size: 14px; color: {{TextColor}};"><span data-field="notes">{{FooterOrNotes}}</span></p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} • {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} • {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} • {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} • {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}
                             </p>
@@ -458,7 +458,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 8px; background-color: {{PrimaryColor}};"></td>
                                     <td style="padding: 20px 35px; background-color: {{SecondaryColor}}; text-align: center;">
-                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: {{TextColor}};">{{FooterText}}</p>
+                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: {{TextColor}};"><span data-field="notes">{{FooterOrNotes}}</span></p>
                                         <p style="margin: 0; font-size: 11px; color: #9ca3af;">
                                             {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} • {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} • {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} • {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} • {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}{{#ShowCompanyPhone}}{{#CompanyPhone}} • {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
                                         </p>
@@ -643,7 +643,7 @@ public static class InvoiceHtmlTemplates
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 15px; background-color: {{PrimaryColor}}; text-align: center;">
-                            <p style="margin: 0; font-size: 13px; color: #ffffff;">{{FooterText}}</p>
+                            <p style="margin: 0; font-size: 13px; color: #ffffff;"><span data-field="notes">{{FooterOrNotes}}</span></p>
                         </td>
                     </tr>
                 </table>
@@ -863,7 +863,7 @@ public static class InvoiceHtmlTemplates
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 25px 40px; background-color: {{SecondaryColor}}; text-align: center; border-radius: 0 0 4px 4px;">
-                            <p style="margin: 0; font-size: 13px; color: {{TextColor}};">{{FooterText}}</p>
+                            <p style="margin: 0; font-size: 13px; color: {{TextColor}};"><span data-field="notes">{{FooterOrNotes}}</span></p>
                             <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
                                 {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} • {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} • {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} • {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} • {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}{{#CompanyEmail}} • {{CompanyEmail}}{{/CompanyEmail}}{{#ShowCompanyPhone}}{{#CompanyPhone}} • {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
                             </p>
@@ -1102,7 +1102,7 @@ public static class InvoiceHtmlTemplates
 
             <!-- Footer -->
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                <div style="font-size: 13px; color: {{TextColor}}; margin-bottom: 6px;">{{FooterText}}</div>
+                <div style="font-size: 13px; color: {{TextColor}}; margin-bottom: 6px;"><span data-field="notes">{{FooterOrNotes}}</span></div>
                 <div style="font-size: 12px; color: #9ca3af;">
                     {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} &bull; {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} &bull; {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} &bull; {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} &bull; {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}{{#CompanyEmail}} &bull; {{CompanyEmail}}{{/CompanyEmail}}{{#ShowCompanyPhone}}{{#CompanyPhone}} &bull; {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
                 </div>

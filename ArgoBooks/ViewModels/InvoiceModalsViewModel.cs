@@ -291,6 +291,25 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
+    /// <summary>Removes a line item from the paper's remove "x" and re-renders (keeps at least one).</summary>
+    public void RemoveLineFromPaper(int index)
+    {
+        if (index < 0 || index >= LineItems.Count || LineItems.Count <= 1) return;
+        RemoveLineItem(LineItems[index]);
+        RegeneratePaper();
+    }
+
+    // Preview mode shows the invoice clean (no edit outlines, no +line item, no product dropdowns) so
+    // the user can see exactly what the customer gets before sending. Bound to the paper's IsEditable.
+    [ObservableProperty]
+    private bool _isEditorPreviewing;
+
+    [RelayCommand]
+    private void ShowEditorPreview() => IsEditorPreviewing = true;
+
+    [RelayCommand]
+    private void BackToEditor() => IsEditorPreviewing = false;
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
@@ -2243,6 +2262,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         DiscountIsPercent = false;
         SelectedCurrency = CurrencyService.GetDisplayString(CurrencyService.CurrentCurrencyCode);
         IsRecurring = false;
+        IsEditorPreviewing = false;
         RecurringFrequency = Frequency.Monthly;
         RecurringStartDate = DateTimeOffset.Now;
         RecurringEndDate = null;

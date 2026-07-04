@@ -80,6 +80,9 @@ public partial class InvoicePreviewControl : UserControl
     /// <summary>Raised when "+ Add line item" is clicked on the paper.</summary>
     public event EventHandler? AddLineRequested;
 
+    /// <summary>Raised when a line item's remove "x" is clicked on the paper (line index).</summary>
+    public event EventHandler<int>? RemoveLineRequested;
+
     private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
@@ -221,11 +224,32 @@ window.__invProducts = __PRODUCTS_JSON__;
     var firstRow = document.querySelector('[data-line-index]');
     var itemsTable = firstRow ? firstRow.closest('table') : null;
     if (itemsTable && itemsTable.parentNode) {
-        var addLine = document.createElement('div');
+        var addWrap = document.createElement('div');
+        addWrap.style.cssText = 'padding:8px 0';
+        var addLine = document.createElement('span');
         addLine.textContent = '+ Add line item';
-        addLine.style.cssText = 'color:#2f6bff;cursor:pointer;padding:10px 2px;font-weight:600;font-family:inherit;font-size:13px';
+        addLine.style.cssText = 'display:inline-block;color:#2f6bff;cursor:pointer;padding:4px 2px;font-weight:600;font-family:inherit;font-size:13px';
         addLine.addEventListener('click', function() { post({ type:'addLine' }); });
-        itemsTable.parentNode.insertBefore(addLine, itemsTable.nextSibling);
+        addWrap.appendChild(addLine);
+        itemsTable.parentNode.insertBefore(addWrap, itemsTable.nextSibling);
+    }
+
+    // ---- remove-row 'x' per line item, only when there is more than one row ----
+    var descs = document.querySelectorAll(""[data-field='description']"");
+    if (descs.length > 1) {
+        descs.forEach(function(sp) {
+            var tr = sp.closest('tr');
+            if (!tr) return;
+            var lastCell = tr.lastElementChild;
+            if (!lastCell) return;
+            lastCell.style.position = 'relative';
+            var x = document.createElement('span');
+            x.textContent = '×';
+            x.title = 'Remove line';
+            x.style.cssText = 'position:absolute;right:-22px;top:50%;transform:translateY(-50%);cursor:pointer;color:#c4ccd6;font-size:18px;line-height:1;padding:2px 4px';
+            x.addEventListener('click', function() { post({ type:'removeLine', index: parseInt(sp.dataset.lineIndex, 10) }); });
+            lastCell.appendChild(x);
+        });
     }
 })();
 </script>";
@@ -416,6 +440,14 @@ window.__invProducts = __PRODUCTS_JSON__;
             else if (messageType == "addLine")
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => AddLineRequested?.Invoke(this, System.EventArgs.Empty));
+            }
+            else if (messageType == "removeLine")
+            {
+                if (root.TryGetProperty("index", out var ri) && ri.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    var lineIndex = ri.GetInt32();
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => RemoveLineRequested?.Invoke(this, lineIndex));
+                }
             }
         }
         catch (Exception ex)

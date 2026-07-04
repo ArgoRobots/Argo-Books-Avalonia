@@ -22,6 +22,7 @@ public partial class InvoiceModals : UserControl
             editorPreview.ProductPicked += OnProductPicked;
             editorPreview.CreateProductRequested += OnCreateProductRequested;
             editorPreview.AddLineRequested += OnAddLineRequested;
+            editorPreview.RemoveLineRequested += OnRemoveLineRequested;
         }
     }
 
@@ -29,6 +30,12 @@ public partial class InvoiceModals : UserControl
     {
         if (DataContext is InvoiceModalsViewModel vm)
             vm.AddLineFromPaper();
+    }
+
+    private void OnRemoveLineRequested(object? sender, int index)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.RemoveLineFromPaper(index);
     }
 
     // Route an edit made directly on the invoice paper back into the view-model.

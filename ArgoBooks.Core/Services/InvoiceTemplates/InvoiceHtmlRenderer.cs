@@ -285,7 +285,9 @@ public partial class InvoiceHtmlRenderer
             ["ShowCompanyCountry"] = template.ShowCompanyCountry,
             ["ShowTaxBreakdown"] = template.ShowTaxBreakdown && invoice.TaxAmount > 0,
             ["ShowItemDescriptions"] = template.ShowItemDescriptions,
-            ["ShowNotes"] = template.ShowNotes,
+            // The customer message/notes now render in the footer (FooterOrNotes), so the separate
+            // Notes section is off. Editing the footer on the paper writes to the invoice Notes.
+            ["ShowNotes"] = false,
             ["ShowPaymentInstructions"] = template.ShowPaymentInstructions && !string.IsNullOrWhiteSpace(template.PaymentInstructions),
             ["ShowDueDateProminent"] = template.ShowDueDateProminent,
 
@@ -355,9 +357,9 @@ public partial class InvoiceHtmlRenderer
 
             // Notes
             ["Notes"] = invoice.Notes,
-            // Always render the notes body in the editor (so an empty notes area is clickable);
-            // on the customer-facing render it only shows when there are actual notes.
-            ["ShowNotesBody"] = editable || !string.IsNullOrEmpty(invoice.Notes),
+            // The footer shows the invoice's Notes (the customer message), falling back to the
+            // template's default footer text when the user hasn't set notes. Editable on the paper.
+            ["FooterOrNotes"] = !string.IsNullOrEmpty(invoice.Notes) ? invoice.Notes : (template.FooterText ?? string.Empty),
 
             // Line items (as a list of dictionaries). Index drives the editor's data-line-index so
             // an edit on the paper can be routed back to the right row.
