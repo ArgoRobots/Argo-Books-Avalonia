@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
@@ -20,7 +21,14 @@ public partial class InvoiceModals : UserControl
             editorPreview.InvoiceEdited += OnInvoiceEdited;
             editorPreview.ProductPicked += OnProductPicked;
             editorPreview.CreateProductRequested += OnCreateProductRequested;
+            editorPreview.AddLineRequested += OnAddLineRequested;
         }
+    }
+
+    private void OnAddLineRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.AddLineFromPaper();
     }
 
     // Route an edit made directly on the invoice paper back into the view-model.

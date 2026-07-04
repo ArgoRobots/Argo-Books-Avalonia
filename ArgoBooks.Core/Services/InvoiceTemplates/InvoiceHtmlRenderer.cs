@@ -31,7 +31,8 @@ public partial class InvoiceHtmlRenderer
         Invoice invoice,
         InvoiceTemplate template,
         CompanyData companyData,
-        string currencySymbol = "$")
+        string currencySymbol = "$",
+        bool editable = false)
     {
         var customer = companyData.GetCustomer(invoice.CustomerId);
         var companySettings = companyData.Settings;
@@ -40,7 +41,7 @@ public partial class InvoiceHtmlRenderer
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
 
         // Build the data context for template rendering
-        var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true, companyData.Payments);
+        var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true, companyData.Payments, editable);
 
         // Process the template
         html = ProcessTemplate(html, context);
@@ -224,7 +225,8 @@ public partial class InvoiceHtmlRenderer
         CompanySettings companySettings,
         string currencySymbol,
         bool lockAspectRatio,
-        IEnumerable<Payment>? payments)
+        IEnumerable<Payment>? payments,
+        bool editable = false)
     {
         var isOverdue = invoice.DueDate.Date < DateTime.UtcNow.Date &&
                         invoice.Balance > 0;
@@ -353,6 +355,9 @@ public partial class InvoiceHtmlRenderer
 
             // Notes
             ["Notes"] = invoice.Notes,
+            // Always render the notes body in the editor (so an empty notes area is clickable);
+            // on the customer-facing render it only shows when there are actual notes.
+            ["ShowNotesBody"] = editable || !string.IsNullOrEmpty(invoice.Notes),
 
             // Line items (as a list of dictionaries). Index drives the editor's data-line-index so
             // an edit on the paper can be routed back to the right row.

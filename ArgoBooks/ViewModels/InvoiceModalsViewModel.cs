@@ -284,6 +284,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OpenCreateProduct(LineItems[index]);
     }
 
+    /// <summary>Adds a blank line item from the paper's "+ Add line item" and re-renders.</summary>
+    public void AddLineFromPaper()
+    {
+        AddLineItem();
+        RegeneratePaper();
+    }
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
@@ -1403,7 +1410,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             // Preview reflects the invoice's selected currency, not the user's display setting.
             var currencySymbol = CurrencyService.GetSymbol(SelectedCurrencyCode);
-            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol);
+            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, editable: true);
         }
         else
         {

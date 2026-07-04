@@ -77,6 +77,9 @@ public partial class InvoicePreviewControl : UserControl
     /// <summary>Raised when "create new product" is chosen from a line item's dropdown (line index).</summary>
     public event EventHandler<int>? CreateProductRequested;
 
+    /// <summary>Raised when "+ Add line item" is clicked on the paper.</summary>
+    public event EventHandler? AddLineRequested;
+
     private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
@@ -111,14 +114,13 @@ window.__invProducts = __PRODUCTS_JSON__;
 
     var style = document.createElement('style');
     style.textContent =
-        '[data-field]{outline:1px dashed rgba(47,107,255,0.55);outline-offset:2px;border-radius:2px;cursor:text}' +
-        '[data-field]:empty{min-width:44px;display:inline-block;min-height:1em}' +
-        '[data-field]:hover{background:rgba(47,107,255,0.09)}' +
-        '[data-field]:focus{outline:2px solid rgba(47,107,255,0.95);background:rgba(47,107,255,0.11)}' +
+        '[data-field]{display:inline-block;outline:2px dashed rgba(47,107,255,0.6);outline-offset:3px;border-radius:4px;padding:3px 7px;cursor:text;background:rgba(47,107,255,0.05)}' +
+        '[data-field]:empty{min-width:60px;min-height:1.15em}' +
+        '[data-field]:hover{background:rgba(47,107,255,0.12)}' +
+        '[data-field]:focus{outline:2px solid rgba(47,107,255,0.95);background:rgba(47,107,255,0.14)}' +
         '#__prodDrop{position:fixed;z-index:99999;background:#fff;border:1px solid #d0d5dd;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.15);max-height:280px;overflow-y:auto;min-width:240px;font-family:inherit;font-size:13px;color:#1a1f2b}' +
-        '#__prodDrop .it{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}' +
+        '#__prodDrop .it{padding:9px 12px;cursor:pointer}' +
         '#__prodDrop .it:hover,#__prodDrop .it.hl{background:#eff4ff}' +
-        '#__prodDrop .it .pr{color:#6b7280}' +
         '#__prodDrop .empty{padding:12px;color:#9ca3af}' +
         '#__prodDrop .add{padding:10px 12px;color:#2f6bff;font-weight:600;cursor:pointer;border-top:1px solid #eef1f5}' +
         '#__prodDrop .add:hover{background:#f5f8ff}';
@@ -173,9 +175,7 @@ window.__invProducts = __PRODUCTS_JSON__;
             filtered.forEach(function(p, i) {
                 var it = document.createElement('div');
                 it.className = 'it' + (i === hl ? ' hl' : '');
-                var nm = document.createElement('span'); nm.textContent = p.name;
-                var pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = (p.price != null ? p.price : '');
-                it.appendChild(nm); it.appendChild(pr);
+                it.textContent = p.name;
                 it.addEventListener('mousedown', function(e) { e.preventDefault(); selectProduct(p); });
                 drop.appendChild(it);
             });
@@ -202,6 +202,7 @@ window.__invProducts = __PRODUCTS_JSON__;
     }
     document.querySelectorAll(""[data-field='description']"").forEach(function(el) {
         el.addEventListener('focus', function() { openFor(el); });
+        el.addEventListener('click', function() { openFor(el); });
         el.addEventListener('input', function() {
             if (target !== el) openFor(el); else { filter(el.textContent); render(); positionDrop(); }
         });
@@ -215,6 +216,17 @@ window.__invProducts = __PRODUCTS_JSON__;
         });
     });
     window.addEventListener('scroll', positionDrop, true);
+
+    // ---- '+ Add line item' affordance, injected after the line-items table ----
+    var firstRow = document.querySelector('[data-line-index]');
+    var itemsTable = firstRow ? firstRow.closest('table') : null;
+    if (itemsTable && itemsTable.parentNode) {
+        var addLine = document.createElement('div');
+        addLine.textContent = '+ Add line item';
+        addLine.style.cssText = 'color:#2f6bff;cursor:pointer;padding:10px 2px;font-weight:600;font-family:inherit;font-size:13px';
+        addLine.addEventListener('click', function() { post({ type:'addLine' }); });
+        itemsTable.parentNode.insertBefore(addLine, itemsTable.nextSibling);
+    }
 })();
 </script>";
 
@@ -400,6 +412,10 @@ window.__invProducts = __PRODUCTS_JSON__;
                     var lineIndex = ci.GetInt32();
                     Avalonia.Threading.Dispatcher.UIThread.Post(() => CreateProductRequested?.Invoke(this, lineIndex));
                 }
+            }
+            else if (messageType == "addLine")
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => AddLineRequested?.Invoke(this, System.EventArgs.Empty));
             }
         }
         catch (Exception ex)

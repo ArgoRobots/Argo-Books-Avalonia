@@ -51,9 +51,10 @@
         <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}"
                                ClosingCommand="{Binding RequestCloseCreateEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
-                <Border HorizontalAlignment="Stretch"
+                <Border HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
-                        Margin="32"
+                        MaxWidth="1040"
+                        Margin="24,32"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         ClipToBounds="True"

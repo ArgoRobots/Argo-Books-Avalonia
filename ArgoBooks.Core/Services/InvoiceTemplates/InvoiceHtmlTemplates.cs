@@ -184,7 +184,7 @@ public static class InvoiceHtmlTemplates
                     </tr>
 
                     {{#ShowNotes}}
-                    {{#Notes}}
+                    {{#ShowNotesBody}}
                     <!-- Notes -->
                     <tr>
                         <td style="padding: 0 40px 20px 40px;">
@@ -198,7 +198,7 @@ public static class InvoiceHtmlTemplates
                             </table>
                         </td>
                     </tr>
-                    {{/Notes}}
+                    {{/ShowNotesBody}}
                     {{/ShowNotes}}
 
                     {{#ShowPaymentInstructions}}
@@ -359,10 +359,10 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 55%; vertical-align: top; padding-right: 30px;">
                                         {{#ShowNotes}}
-                                        {{#Notes}}
+                                        {{#ShowNotesBody}}
                                         <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: {{HeaderColor}}; font-weight: 600;">Notes</p>
                                         <p style="margin: 0; font-size: 13px; color: {{TextColor}}; line-height: 1.6;"><span data-field="notes">{{Notes}}</span></p>
-                                        {{/Notes}}
+                                        {{/ShowNotesBody}}
                                         {{/ShowNotes}}
                                     </td>
                                     <td style="width: 45%;">
@@ -567,10 +567,10 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%; padding: 15px; vertical-align: top;">
                                         {{#ShowNotes}}
-                                        {{#Notes}}
+                                        {{#ShowNotesBody}}
                                         <p style="margin: 0 0 5px 0; font-size: 12px; font-weight: bold; color: {{HeaderColor}};">NOTES:</p>
                                         <p style="margin: 0; font-size: 12px; color: {{TextColor}}; line-height: 1.5;"><span data-field="notes">{{Notes}}</span></p>
-                                        {{/Notes}}
+                                        {{/ShowNotesBody}}
                                         {{/ShowNotes}}
                                     </td>
                                     <td style="width: 40%; border-left: 1px solid {{SecondaryColor}};">
@@ -768,10 +768,10 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 55%; vertical-align: top; padding-right: 30px;">
                                         {{#ShowNotes}}
-                                        {{#Notes}}
+                                        {{#ShowNotesBody}}
                                         <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Notes</p>
                                         <p style="margin: 0; font-size: 13px; color: {{TextColor}}; line-height: 1.6;"><span data-field="notes">{{Notes}}</span></p>
-                                        {{/Notes}}
+                                        {{/ShowNotesBody}}
                                         {{/ShowNotes}}
                                     </td>
                                     <td style="width: 45%;">
@@ -1081,13 +1081,13 @@ public static class InvoiceHtmlTemplates
             </div>
 
             {{#ShowNotes}}
-            {{#Notes}}
+            {{#ShowNotesBody}}
             <!-- Notes -->
             <div style="margin-bottom: 30px; padding: 15px 20px; background-color: #f9fafb; border-radius: 6px;">
                 <div style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 5px;">Notes</div>
                 <div style="font-size: 14px; color: {{TextColor}}; line-height: 1.5;"><span data-field="notes">{{Notes}}</span></div>
             </div>
-            {{/Notes}}
+            {{/ShowNotesBody}}
             {{/ShowNotes}}
 
             {{#ShowPaymentInstructions}}
