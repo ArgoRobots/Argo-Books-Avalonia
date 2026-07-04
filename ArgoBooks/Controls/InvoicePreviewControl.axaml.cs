@@ -58,6 +58,25 @@ public partial class InvoicePreviewControl : UserControl
     /// <summary>Raised when the user edits a [data-field] element directly on the invoice.</summary>
     public event EventHandler<InvoiceEditEventArgs>? InvoiceEdited;
 
+    /// <summary>
+    /// JSON array of products [{id,name,price}] used to build the line-item product dropdown on the
+    /// paper (only used in editable mode). Bound from the view-model.
+    /// </summary>
+    public static readonly StyledProperty<string?> ProductsJsonProperty =
+        AvaloniaProperty.Register<InvoicePreviewControl, string?>(nameof(ProductsJson));
+
+    public string? ProductsJson
+    {
+        get => GetValue(ProductsJsonProperty);
+        set => SetValue(ProductsJsonProperty, value);
+    }
+
+    /// <summary>Raised when a product is chosen from a line item's dropdown on the paper.</summary>
+    public event EventHandler<ProductPickEventArgs>? ProductPicked;
+
+    /// <summary>Raised when "create new product" is chosen from a line item's dropdown (line index).</summary>
+    public event EventHandler<int>? CreateProductRequested;
+
     private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
@@ -74,36 +93,128 @@ public partial class InvoicePreviewControl : UserControl
     private const double MinZoom = 0.25;
     private const double MaxZoom = 5.0;
 
-    // Injected only in editable mode: makes [data-field] elements contenteditable and posts each edit
-    // back to C# via the same postMessage channel the zoom feature uses.
-    private const string EditingScript = @"
+    // Injected only in editable mode: makes [data-field] elements contenteditable, posts edits back
+    // via the zoom feature's postMessage channel, and builds a product dropdown on description fields
+    // that mirrors the app's SearchableDropdown (filter, keyboard nav, create-new, empty state).
+    private string BuildEditingScript()
+    {
+        var products = string.IsNullOrWhiteSpace(ProductsJson) ? "[]" : ProductsJson;
+        return EditingScriptTemplate.Replace("__PRODUCTS_JSON__", products);
+    }
+
+    private const string EditingScriptTemplate = @"
 <script>
+window.__invProducts = __PRODUCTS_JSON__;
 (function() {
     if (window.__editHandlersInstalled) return;
     window.__editHandlersInstalled = true;
+
     var style = document.createElement('style');
-    style.textContent = '[data-field]{outline:1px dashed rgba(47,107,255,0.55);outline-offset:2px;border-radius:2px;cursor:text} [data-field]:empty{min-width:44px;display:inline-block;min-height:1em} [data-field]:hover{background:rgba(47,107,255,0.09)} [data-field]:focus{outline:2px solid rgba(47,107,255,0.95);background:rgba(47,107,255,0.11)}';
+    style.textContent =
+        '[data-field]{outline:1px dashed rgba(47,107,255,0.55);outline-offset:2px;border-radius:2px;cursor:text}' +
+        '[data-field]:empty{min-width:44px;display:inline-block;min-height:1em}' +
+        '[data-field]:hover{background:rgba(47,107,255,0.09)}' +
+        '[data-field]:focus{outline:2px solid rgba(47,107,255,0.95);background:rgba(47,107,255,0.11)}' +
+        '#__prodDrop{position:fixed;z-index:99999;background:#fff;border:1px solid #d0d5dd;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.15);max-height:280px;overflow-y:auto;min-width:240px;font-family:inherit;font-size:13px;color:#1a1f2b}' +
+        '#__prodDrop .it{padding:9px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}' +
+        '#__prodDrop .it:hover,#__prodDrop .it.hl{background:#eff4ff}' +
+        '#__prodDrop .it .pr{color:#6b7280}' +
+        '#__prodDrop .empty{padding:12px;color:#9ca3af}' +
+        '#__prodDrop .add{padding:10px 12px;color:#2f6bff;font-weight:600;cursor:pointer;border-top:1px solid #eef1f5}' +
+        '#__prodDrop .add:hover{background:#f5f8ff}';
     document.head.appendChild(style);
-    function post(field, index, value) {
-        var msg = JSON.stringify({ type: 'invoiceEdit', field: field, index: index, value: value });
+
+    function post(obj) {
+        var msg = JSON.stringify(obj);
         try { window.chrome.webview.postMessage(msg); }
         catch(e) { try { window.webkit.messageHandlers.webview.postMessage(msg); } catch(e2) {} }
     }
+
     var timers = {};
     document.querySelectorAll('[data-field]').forEach(function(el) {
         el.setAttribute('contenteditable', 'true');
-        var single = el.dataset.field !== 'notes';
+        var single = el.dataset.field !== 'notes' && el.dataset.field !== 'description';
         el.addEventListener('input', function() {
             var field = el.dataset.field;
             var index = (el.dataset.lineIndex != null) ? parseInt(el.dataset.lineIndex, 10) : null;
             var key = field + ':' + index;
             clearTimeout(timers[key]);
-            timers[key] = setTimeout(function() { post(field, index, el.textContent); }, 150);
+            timers[key] = setTimeout(function() { post({ type:'invoiceEdit', field:field, index:index, value: el.textContent }); }, 150);
         });
         if (single) {
             el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
         }
     });
+
+    // ---- product dropdown for line-item description fields ----
+    var drop = null, target = null, hl = -1, filtered = [];
+    function closeDrop() { if (drop) { drop.remove(); drop = null; } target = null; hl = -1; filtered = []; }
+    function positionDrop() {
+        if (!drop || !target) return;
+        var r = target.getBoundingClientRect();
+        drop.style.left = r.left + 'px';
+        drop.style.top = (r.bottom + 4) + 'px';
+        drop.style.minWidth = Math.max(240, r.width) + 'px';
+    }
+    function selectProduct(p) {
+        if (!target) return;
+        var idx = parseInt(target.dataset.lineIndex, 10);
+        target.textContent = p.name;
+        closeDrop();
+        post({ type:'productSelected', index: idx, id: p.id });
+    }
+    function render() {
+        if (!drop) return;
+        drop.innerHTML = '';
+        if (filtered.length === 0) {
+            var em = document.createElement('div'); em.className = 'empty'; em.textContent = 'No products found.';
+            drop.appendChild(em);
+        } else {
+            filtered.forEach(function(p, i) {
+                var it = document.createElement('div');
+                it.className = 'it' + (i === hl ? ' hl' : '');
+                var nm = document.createElement('span'); nm.textContent = p.name;
+                var pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = (p.price != null ? p.price : '');
+                it.appendChild(nm); it.appendChild(pr);
+                it.addEventListener('mousedown', function(e) { e.preventDefault(); selectProduct(p); });
+                drop.appendChild(it);
+            });
+        }
+        var add = document.createElement('div'); add.className = 'add'; add.textContent = '+ Create new product';
+        add.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var idx = target ? parseInt(target.dataset.lineIndex, 10) : -1;
+            closeDrop();
+            post({ type:'createProduct', index: idx });
+        });
+        drop.appendChild(add);
+    }
+    function filter(text) {
+        var t = (text || '').toLowerCase();
+        var all = window.__invProducts || [];
+        filtered = all.filter(function(p) { return (p.name || '').toLowerCase().indexOf(t) !== -1; });
+        hl = filtered.length ? 0 : -1;
+    }
+    function openFor(el) {
+        target = el;
+        if (!drop) { drop = document.createElement('div'); drop.id = '__prodDrop'; document.body.appendChild(drop); }
+        filter(el.textContent); render(); positionDrop();
+    }
+    document.querySelectorAll(""[data-field='description']"").forEach(function(el) {
+        el.addEventListener('focus', function() { openFor(el); });
+        el.addEventListener('input', function() {
+            if (target !== el) openFor(el); else { filter(el.textContent); render(); positionDrop(); }
+        });
+        el.addEventListener('blur', function() { setTimeout(closeDrop, 150); });
+        el.addEventListener('keydown', function(e) {
+            if (!drop) return;
+            if (e.key === 'ArrowDown') { e.preventDefault(); hl = Math.min(hl + 1, filtered.length - 1); render(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); hl = Math.max(hl - 1, 0); render(); }
+            else if (e.key === 'Enter') { e.preventDefault(); if (hl >= 0 && filtered[hl]) selectProduct(filtered[hl]); else el.blur(); }
+            else if (e.key === 'Escape') { closeDrop(); }
+        });
+    });
+    window.addEventListener('scroll', positionDrop, true);
 })();
 </script>";
 
@@ -143,7 +254,8 @@ public partial class InvoicePreviewControl : UserControl
     {
         base.OnPropertyChanged(change);
 
-        if ((change.Property == HtmlProperty || change.Property == IsEditableProperty) && _isInitialized)
+        if ((change.Property == HtmlProperty || change.Property == IsEditableProperty
+                || change.Property == ProductsJsonProperty) && _isInitialized)
         {
             EnsureWebViewActiveIfVisible();
             _ = UpdateWebViewContent();
@@ -270,6 +382,24 @@ public partial class InvoicePreviewControl : UserControl
                 var value = root.TryGetProperty("value", out var v) ? v.GetString() ?? string.Empty : string.Empty;
                 var args = new InvoiceEditEventArgs(field, index, value);
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => InvoiceEdited?.Invoke(this, args));
+            }
+            else if (messageType == "productSelected")
+            {
+                if (root.TryGetProperty("index", out var pi) && pi.ValueKind == System.Text.Json.JsonValueKind.Number
+                    && root.TryGetProperty("id", out var pid))
+                {
+                    var lineIndex = pi.GetInt32();
+                    var productId = pid.GetString() ?? string.Empty;
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => ProductPicked?.Invoke(this, new ProductPickEventArgs(lineIndex, productId)));
+                }
+            }
+            else if (messageType == "createProduct")
+            {
+                if (root.TryGetProperty("index", out var ci) && ci.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    var lineIndex = ci.GetInt32();
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => CreateProductRequested?.Invoke(this, lineIndex));
+                }
             }
         }
         catch (Exception ex)
@@ -556,7 +686,7 @@ public partial class InvoicePreviewControl : UserControl
 </script>";
 
         // Editing mode adds contenteditable + the edit->postMessage bridge on top of the interaction script.
-        var injected = IsEditable ? interactionScript + EditingScript : interactionScript;
+        var injected = IsEditable ? interactionScript + BuildEditingScript() : interactionScript;
 
         // Insert script before closing body tag, or at end if no body tag
         var html = Html!;
@@ -737,4 +867,11 @@ public sealed class InvoiceEditEventArgs(string field, int? index, string value)
     public string Field { get; } = field;
     public int? Index { get; } = index;
     public string Value { get; } = value;
+}
+
+/// <summary>A product chosen from a line item's dropdown on the invoice paper.</summary>
+public sealed class ProductPickEventArgs(int index, string productId) : System.EventArgs
+{
+    public int Index { get; } = index;
+    public string ProductId { get; } = productId;
 }

@@ -259,6 +259,31 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             System.Globalization.CultureInfo.InvariantCulture, out result);
     }
 
+    /// <summary>The product/service options, as JSON, for the line-item picker built inside the paper.</summary>
+    public string ProductsJson =>
+        System.Text.Json.JsonSerializer.Serialize(
+            ProductOptions.Select(p => new { id = p.Id, name = p.Name, price = p.UnitPrice }));
+
+    /// <summary>
+    /// Selects a product for a line item from the paper's product dropdown. Setting SelectedProduct
+    /// fills the description and unit price via the line item's own handler; then the paper re-renders.
+    /// </summary>
+    public void SelectProductForLine(int index, string productId)
+    {
+        if (index < 0 || index >= LineItems.Count) return;
+        var product = ProductOptions.FirstOrDefault(p => p.Id == productId);
+        if (product == null) return;
+        LineItems[index].SelectedProduct = product;
+        RegeneratePaper();
+    }
+
+    /// <summary>Opens the create-product modal for a line item (the paper dropdown's "create new").</summary>
+    public void CreateProductForLine(int index)
+    {
+        if (index < 0 || index >= LineItems.Count) return;
+        OpenCreateProduct(LineItems[index]);
+    }
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 
@@ -821,6 +846,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         SaveButtonText = "Preview";
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
+        OnPropertyChanged(nameof(ProductsJson));
         GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }
@@ -1087,6 +1113,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
+        OnPropertyChanged(nameof(ProductsJson));
         GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }

@@ -84,6 +84,7 @@
                                                                 Grid.Column="0"
                                                                 Html="{Binding PreviewHtml}"
                                                                 IsEditable="True"
+                                                                ProductsJson="{Binding ProductsJson}"
                                                                 OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
                                     <controls:InvoicePreviewControl.IsVisible>
                                         <MultiBinding Converter="{x:Static BoolConverters.And}">

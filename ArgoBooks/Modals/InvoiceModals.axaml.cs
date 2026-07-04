@@ -16,7 +16,11 @@ public partial class InvoiceModals : UserControl
 
         var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
         if (editorPreview != null)
+        {
             editorPreview.InvoiceEdited += OnInvoiceEdited;
+            editorPreview.ProductPicked += OnProductPicked;
+            editorPreview.CreateProductRequested += OnCreateProductRequested;
+        }
     }
 
     // Route an edit made directly on the invoice paper back into the view-model.
@@ -24,5 +28,17 @@ public partial class InvoiceModals : UserControl
     {
         if (DataContext is InvoiceModalsViewModel vm)
             vm.ApplyPaperEdit(e.Field, e.Index, e.Value);
+    }
+
+    private void OnProductPicked(object? sender, ProductPickEventArgs e)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.SelectProductForLine(e.Index, e.ProductId);
+    }
+
+    private void OnCreateProductRequested(object? sender, int index)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.CreateProductForLine(index);
     }
 }
