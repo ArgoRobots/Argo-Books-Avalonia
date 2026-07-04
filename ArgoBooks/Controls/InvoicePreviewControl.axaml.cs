@@ -42,6 +42,22 @@ public partial class InvoicePreviewControl : UserControl
         set => SetValue(OpenInBrowserCommandProperty, value);
     }
 
+    /// <summary>
+    /// When true, the invoice's [data-field] elements become directly editable on the page and each
+    /// edit is raised via <see cref="InvoiceEdited"/>. Off for the customer-facing / view-only render.
+    /// </summary>
+    public static readonly StyledProperty<bool> IsEditableProperty =
+        AvaloniaProperty.Register<InvoicePreviewControl, bool>(nameof(IsEditable));
+
+    public bool IsEditable
+    {
+        get => GetValue(IsEditableProperty);
+        set => SetValue(IsEditableProperty, value);
+    }
+
+    /// <summary>Raised when the user edits a [data-field] element directly on the invoice.</summary>
+    public event EventHandler<InvoiceEditEventArgs>? InvoiceEdited;
+
     private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
@@ -57,6 +73,39 @@ public partial class InvoicePreviewControl : UserControl
     private const double ZoomStep = 0.1;
     private const double MinZoom = 0.25;
     private const double MaxZoom = 5.0;
+
+    // Injected only in editable mode: makes [data-field] elements contenteditable and posts each edit
+    // back to C# via the same postMessage channel the zoom feature uses.
+    private const string EditingScript = @"
+<script>
+(function() {
+    if (window.__editHandlersInstalled) return;
+    window.__editHandlersInstalled = true;
+    var style = document.createElement('style');
+    style.textContent = '[data-field]{outline:none;cursor:text} [data-field]:hover{background:rgba(47,107,255,0.06)} [data-field]:focus{background:rgba(47,107,255,0.10);box-shadow:0 0 0 1px rgba(47,107,255,0.45)}';
+    document.head.appendChild(style);
+    function post(field, index, value) {
+        var msg = JSON.stringify({ type: 'invoiceEdit', field: field, index: index, value: value });
+        try { window.chrome.webview.postMessage(msg); }
+        catch(e) { try { window.webkit.messageHandlers.webview.postMessage(msg); } catch(e2) {} }
+    }
+    var timers = {};
+    document.querySelectorAll('[data-field]').forEach(function(el) {
+        el.setAttribute('contenteditable', 'true');
+        var single = el.dataset.field !== 'notes';
+        el.addEventListener('input', function() {
+            var field = el.dataset.field;
+            var index = (el.dataset.lineIndex != null) ? parseInt(el.dataset.lineIndex, 10) : null;
+            var key = field + ':' + index;
+            clearTimeout(timers[key]);
+            timers[key] = setTimeout(function() { post(field, index, el.textContent); }, 150);
+        });
+        if (single) {
+            el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+        }
+    });
+})();
+</script>";
 
     /// <summary>
     /// Whether the current platform supports inline WebView embedding.
@@ -94,7 +143,7 @@ public partial class InvoicePreviewControl : UserControl
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == HtmlProperty && _isInitialized)
+        if ((change.Property == HtmlProperty || change.Property == IsEditableProperty) && _isInitialized)
         {
             EnsureWebViewActiveIfVisible();
             _ = UpdateWebViewContent();
@@ -209,6 +258,18 @@ public partial class InvoicePreviewControl : UserControl
             {
                 _currentZoom = zoomElement.GetDouble();
                 Avalonia.Threading.Dispatcher.UIThread.Post(UpdateZoomDisplay);
+            }
+            else if (messageType == "invoiceEdit")
+            {
+                var field = root.TryGetProperty("field", out var f) ? f.GetString() : null;
+                if (string.IsNullOrEmpty(field))
+                    return;
+                int? index = null;
+                if (root.TryGetProperty("index", out var idx) && idx.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    index = idx.GetInt32();
+                var value = root.TryGetProperty("value", out var v) ? v.GetString() ?? string.Empty : string.Empty;
+                var args = new InvoiceEditEventArgs(field, index, value);
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => InvoiceEdited?.Invoke(this, args));
             }
         }
         catch (Exception ex)
@@ -494,19 +555,22 @@ public partial class InvoicePreviewControl : UserControl
 })();
 </script>";
 
+        // Editing mode adds contenteditable + the edit->postMessage bridge on top of the interaction script.
+        var injected = IsEditable ? interactionScript + EditingScript : interactionScript;
+
         // Insert script before closing body tag, or at end if no body tag
         var html = Html!;
         if (html.Contains("</body>", StringComparison.OrdinalIgnoreCase))
         {
-            html = html.Replace("</body>", interactionScript + "</body>", StringComparison.OrdinalIgnoreCase);
+            html = html.Replace("</body>", injected + "</body>", StringComparison.OrdinalIgnoreCase);
         }
         else if (html.Contains("</html>", StringComparison.OrdinalIgnoreCase))
         {
-            html = html.Replace("</html>", interactionScript + "</html>", StringComparison.OrdinalIgnoreCase);
+            html = html.Replace("</html>", injected + "</html>", StringComparison.OrdinalIgnoreCase);
         }
         else
         {
-            html += interactionScript;
+            html += injected;
         }
 
         try
@@ -662,4 +726,15 @@ public partial class InvoicePreviewControl : UserControl
         base.OnUnloaded(e);
         DeactivateWebView();
     }
+}
+
+/// <summary>
+/// A single edit made directly on the invoice paper. <see cref="Index"/> is the line-item index for
+/// per-row fields (description/quantity/rate), or null for document-level fields (e.g. notes).
+/// </summary>
+public sealed class InvoiceEditEventArgs(string field, int? index, string value) : System.EventArgs
+{
+    public string Field { get; } = field;
+    public int? Index { get; } = index;
+    public string Value { get; } = value;
 }

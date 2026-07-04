@@ -223,6 +223,41 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Applies a single edit made directly on the invoice paper (via the editable HTML surface) back
+    /// into the form state. Line-item quantity/rate parse leniently (the paper shows a formatted,
+    /// currency-prefixed value). Totals recompute through the existing line-item change wiring.
+    /// </summary>
+    public void ApplyPaperEdit(string field, int? index, string value)
+    {
+        switch (field)
+        {
+            case "notes":
+                ModalNotes = value;
+                break;
+            case "description":
+                if (index is int di && di >= 0 && di < LineItems.Count)
+                    LineItems[di].Description = value;
+                break;
+            case "quantity":
+                if (index is int qi && qi >= 0 && qi < LineItems.Count && TryParsePaperNumber(value, out var q))
+                    LineItems[qi].Quantity = q;
+                break;
+            case "rate":
+                if (index is int ri && ri >= 0 && ri < LineItems.Count && TryParsePaperNumber(value, out var r))
+                    LineItems[ri].UnitPrice = r;
+                break;
+        }
+    }
+
+    // Pulls a number out of a value that may carry a currency symbol / thousands separators.
+    private static bool TryParsePaperNumber(string raw, out decimal result)
+    {
+        var cleaned = new string((raw ?? string.Empty).Where(c => char.IsDigit(c) || c == '.' || c == '-').ToArray());
+        return decimal.TryParse(cleaned, System.Globalization.NumberStyles.Number,
+            System.Globalization.CultureInfo.InvariantCulture, out result);
+    }
+
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
 

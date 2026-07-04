@@ -354,9 +354,11 @@ public partial class InvoiceHtmlRenderer
             // Notes
             ["Notes"] = invoice.Notes,
 
-            // Line items (as a list of dictionaries)
-            ["LineItems"] = invoice.LineItems.Select(item => new Dictionary<string, object?>
+            // Line items (as a list of dictionaries). Index drives the editor's data-line-index so
+            // an edit on the paper can be routed back to the right row.
+            ["LineItems"] = invoice.LineItems.Select((item, i) => new Dictionary<string, object?>
             {
+                ["Index"] = i,
                 ["Description"] = item.Description,
                 ["ItemDescription"] = null, // Can be extended for product descriptions
                 ["Quantity"] = item.Quantity.ToString("0.##"),
