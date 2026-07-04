@@ -103,22 +103,6 @@
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                                         <StackPanel Margin="16" Spacing="16">
 
-                                            <StackPanel IsVisible="{Binding !IsFromExternalSource}">
-                                                <TextBlock Text="CUSTOMER" Classes="sidebar-label" />
-                                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
-                                                                             SelectedItem="{Binding SelectedCustomer}"
-                                                                             DisplayMemberPath="Name"
-                                                                             Placeholder="Search for a customer..."
-                                                                             IsRequired="True"
-                                                                             HasError="{Binding HasCustomerError}"
-                                                                             ErrorMessage="Please select a customer."
-                                                                             ShowAddNew="True"
-                                                                             AddNewText="Create new customer"
-                                                                             AddNewCommand="{Binding OpenCreateCustomerCommand}"
-                                                                             EmptyMessage="No customers found."
-                                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
-                                            </StackPanel>
-
                                             <StackPanel>
                                                 <TextBlock Text="TEMPLATE" Classes="sidebar-label" />
                                                 <ComboBox ItemsSource="{Binding TemplateOptions}" SelectedItem="{Binding SelectedTemplate}"
@@ -133,17 +117,6 @@
                                                 <TextBlock Text="CURRENCY" Classes="sidebar-label" />
                                                 <ComboBox ItemsSource="{Binding AvailableCurrencies}" SelectedItem="{Binding SelectedCurrency}"
                                                           Classes="form-combobox" HorizontalAlignment="Stretch" />
-                                            </StackPanel>
-
-                                            <StackPanel Spacing="10">
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="ISSUE DATE" Classes="sidebar-label" Margin="0" />
-                                                    <DatePicker SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                                </StackPanel>
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="DUE DATE" Classes="sidebar-label" Margin="0" />
-                                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                                </StackPanel>
                                             </StackPanel>
 
                                             <StackPanel>

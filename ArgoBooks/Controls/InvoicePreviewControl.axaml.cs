@@ -105,6 +105,9 @@ public partial class InvoicePreviewControl : UserControl
     /// <summary>Raised when the logo on the paper is clicked to change it.</summary>
     public event EventHandler? PickLogoRequested;
 
+    /// <summary>Raised when the logo's hover "x" is clicked to remove it.</summary>
+    public event EventHandler? DeleteLogoRequested;
+
     private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
@@ -299,16 +302,34 @@ window.__invCustomers = __CUSTOMERS_JSON__;
         });
     }
 
-    // ---- logo: click the logo to change it, or an 'Add logo' prompt when there is none ----
+    // ---- logo: click to change; hover shows an 'x' to delete; a square prompt when there is none ----
     var logoEl = document.querySelector('[data-logo]');
     if (logoEl) {
         logoEl.style.cursor = 'pointer'; logoEl.title = 'Click to change logo';
         logoEl.addEventListener('click', function() { post({ type:'pickLogo' }); });
+        // Wrap the logo so a delete 'x' can be positioned over its top-right corner.
+        var wrap = document.createElement('span');
+        wrap.style.cssText = 'position:relative;display:inline-block;';
+        logoEl.parentNode.insertBefore(wrap, logoEl);
+        wrap.appendChild(logoEl);
+        var del = document.createElement('div'); del.textContent = 'x'; del.title = 'Remove logo';
+        del.style.cssText = 'position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:#e5484d;color:#fff;font-size:12px;line-height:18px;text-align:center;cursor:pointer;font-family:sans-serif;display:none;box-shadow:0 1px 3px rgba(0,0,0,0.3);';
+        wrap.appendChild(del);
+        wrap.addEventListener('mouseenter', function() { del.style.display = 'block'; });
+        wrap.addEventListener('mouseleave', function() { del.style.display = 'none'; });
+        del.addEventListener('click', function(e) { e.stopPropagation(); post({ type:'deleteLogo' }); });
     } else {
-        var addLogo = document.createElement('div'); addLogo.textContent = '+ Add logo';
-        addLogo.style.cssText = 'position:fixed;left:14px;top:14px;z-index:99998;background:#fff;border:1px dashed #c4ccd6;border-radius:6px;padding:6px 10px;color:#8a94a3;font-size:12px;cursor:pointer;font-family:sans-serif';
-        addLogo.addEventListener('click', function() { post({ type:'pickLogo' }); });
-        document.body.appendChild(addLogo);
+        // Show a clickable square where the logo would sit, next to the company name slot.
+        var square = document.createElement('div'); square.textContent = '+ Logo';
+        square.title = 'Click to add a logo';
+        square.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border:2px dashed #c4ccd6;border-radius:8px;color:#8a94a3;font-size:12px;cursor:pointer;font-family:sans-serif;margin-bottom:10px;background:rgba(255,255,255,0.35);';
+        square.addEventListener('click', function() { post({ type:'pickLogo' }); });
+        var slot = document.querySelector('[data-logo-slot]');
+        if (slot) { slot.parentNode.insertBefore(square, slot); }
+        else {
+            square.style.position = 'fixed'; square.style.left = '14px'; square.style.top = '14px'; square.style.zIndex = '99998';
+            document.body.appendChild(square);
+        }
     }
 })();
 </script>";
@@ -530,6 +551,10 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             else if (messageType == "pickLogo")
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => PickLogoRequested?.Invoke(this, System.EventArgs.Empty));
+            }
+            else if (messageType == "deleteLogo")
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => DeleteLogoRequested?.Invoke(this, System.EventArgs.Empty));
             }
         }
         catch (Exception ex)

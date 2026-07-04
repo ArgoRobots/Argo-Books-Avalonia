@@ -324,13 +324,42 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         else if (field == "dueDate") ModalDueDate = dto;
     }
 
+    // The logo the user set on the paper this session. null = untouched (leave each template's own
+    // logo alone); "" = explicitly removed; otherwise the raw base64 to carry across template switches.
+    private string? _paperLogo;
+
     /// <summary>Sets the invoice template's logo (raw base64) from the paper's logo click, re-rendering.</summary>
     public void SetLogoFromPaper(string base64)
     {
-        if (SelectedTemplate == null || string.IsNullOrEmpty(base64)) return;
-        SelectedTemplate.LogoBase64 = base64;
-        SelectedTemplate.ShowLogo = true;
+        if (string.IsNullOrEmpty(base64)) return;
+        _paperLogo = base64;
+        ApplyPaperLogo();
         RegeneratePaper();
+    }
+
+    /// <summary>Removes the logo when the user clicks the hover "x" on the paper, re-rendering.</summary>
+    public void DeleteLogoFromPaper()
+    {
+        _paperLogo = string.Empty;
+        ApplyPaperLogo();
+        RegeneratePaper();
+    }
+
+    // Push the session's logo choice onto the currently selected template so it survives template switches.
+    private void ApplyPaperLogo()
+    {
+        if (SelectedTemplate == null || _paperLogo == null) return;
+        if (_paperLogo.Length == 0)
+        {
+            SelectedTemplate.LogoBase64 = null;
+            SelectedTemplate.ShowLogo = false;
+        }
+        else
+        {
+            SelectedTemplate.LogoBase64 = _paperLogo;
+            SelectedTemplate.LogoWidth = 150;
+            SelectedTemplate.ShowLogo = true;
+        }
     }
 
     // Preview mode shows the invoice clean (no edit outlines, no +line item, no product dropdowns) so
@@ -531,6 +560,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             ModalNotes = value.DefaultNotes;
         }
+        // Carry the logo the user picked on the paper onto the newly selected template.
+        ApplyPaperLogo();
         RegeneratePaper();
     }
 
@@ -1946,6 +1977,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsCreateEditModalOpen = false;
         IsShowingPreview = false;
         IsShowingSuccess = false;
+        IsNestedModalOpen = false;
         ResetForm();
     }
 
@@ -1967,10 +1999,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (hasUnsavedWork)
         {
-            // Hide the WebView so the confirmation dialog renders above it (airspace issue)
-            var wasShowingPreview = IsShowingPreview;
-            if (wasShowingPreview)
-                IsShowingPreview = false;
+            // Hide the editable WebView so the confirmation dialog renders above it. The native
+            // WebView renders in its own airspace above Avalonia content, so it otherwise occludes
+            // the dialog (same fix as the create-customer/product flows).
+            IsNestedModalOpen = true;
 
             var confirmed = IsEditMode
                 ? await ConfirmDiscardEditsAsync()
@@ -1978,8 +2010,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
             if (!confirmed)
             {
-                if (wasShowingPreview)
-                    IsShowingPreview = true;
+                IsNestedModalOpen = false;
                 return;
             }
         }
@@ -2282,6 +2313,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private void ResetForm()
     {
         _editingInvoiceId = string.Empty;
+        _paperLogo = null;
         IsFromRental = false;
         IsFromRevenue = false;
         IsViewOnly = false;

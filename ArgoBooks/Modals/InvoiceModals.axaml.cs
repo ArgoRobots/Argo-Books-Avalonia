@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
@@ -29,7 +31,14 @@ public partial class InvoiceModals : UserControl
             editorPreview.CreateCustomerRequested += OnCreateCustomerRequested;
             editorPreview.DateEdited += OnDateEdited;
             editorPreview.PickLogoRequested += OnPickLogoRequested;
+            editorPreview.DeleteLogoRequested += OnDeleteLogoRequested;
         }
+    }
+
+    private void OnDeleteLogoRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.DeleteLogoFromPaper();
     }
 
     private void OnCustomerPicked(object? sender, string customerId)
@@ -75,13 +84,44 @@ public partial class InvoiceModals : UserControl
         try
         {
             await using var stream = await files[0].OpenReadAsync();
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-            vm.SetLogoFromPaper(Convert.ToBase64String(ms.ToArray()));
+            using var raw = new MemoryStream();
+            await stream.CopyToAsync(raw);
+            vm.SetLogoFromPaper(DownscaleToBase64(raw.ToArray()));
         }
         catch
         {
             // Ignore unreadable/oversized images; the user can pick another.
+        }
+    }
+
+    // Downscale an uploaded logo so it renders crisply without bloating the invoice (and its base64).
+    private const int MaxLogoDimension = 300;
+
+    private static string DownscaleToBase64(byte[] imageBytes)
+    {
+        try
+        {
+            using var input = new MemoryStream(imageBytes);
+            using var bitmap = new Bitmap(input);
+            var size = bitmap.PixelSize;
+            var longest = Math.Max(size.Width, size.Height);
+            if (longest <= MaxLogoDimension)
+                return Convert.ToBase64String(imageBytes);
+
+            var scale = (double)MaxLogoDimension / longest;
+            var target = new PixelSize(
+                Math.Max(1, (int)Math.Round(size.Width * scale)),
+                Math.Max(1, (int)Math.Round(size.Height * scale)));
+
+            using var scaled = bitmap.CreateScaledBitmap(target, BitmapInterpolationMode.HighQuality);
+            using var output = new MemoryStream();
+            scaled.Save(output);
+            return Convert.ToBase64String(output.ToArray());
+        }
+        catch
+        {
+            // If decoding/scaling fails, fall back to the original bytes.
+            return Convert.ToBase64String(imageBytes);
         }
     }
 
