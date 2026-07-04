@@ -82,7 +82,7 @@ public partial class InvoicePreviewControl : UserControl
     if (window.__editHandlersInstalled) return;
     window.__editHandlersInstalled = true;
     var style = document.createElement('style');
-    style.textContent = '[data-field]{outline:none;cursor:text} [data-field]:hover{background:rgba(47,107,255,0.06)} [data-field]:focus{background:rgba(47,107,255,0.10);box-shadow:0 0 0 1px rgba(47,107,255,0.45)}';
+    style.textContent = '[data-field]{outline:1px dashed rgba(47,107,255,0.55);outline-offset:2px;border-radius:2px;cursor:text} [data-field]:empty{min-width:44px;display:inline-block;min-height:1em} [data-field]:hover{background:rgba(47,107,255,0.09)} [data-field]:focus{outline:2px solid rgba(47,107,255,0.95);background:rgba(47,107,255,0.11)}';
     document.head.appendChild(style);
     function post(field, index, value) {
         var msg = JSON.stringify({ type: 'invoiceEdit', field: field, index: index, value: value });

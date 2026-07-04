@@ -56,6 +56,7 @@
                         Margin="32"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
+                        ClipToBounds="True"
                         BoxShadow="0 8 32 0 #40000000">
                     <Grid RowDefinitions="Auto,*">
 
@@ -83,7 +84,14 @@
                                                                 Grid.Column="0"
                                                                 Html="{Binding PreviewHtml}"
                                                                 IsEditable="True"
-                                                                OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}" />
+                                                                OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
+                                    <controls:InvoicePreviewControl.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="IsCreateEditModalOpen" />
+                                            <Binding Path="!IsViewOnly" />
+                                        </MultiBinding>
+                                    </controls:InvoicePreviewControl.IsVisible>
+                                </controls:InvoicePreviewControl>
 
                                 <!-- SIDEBAR -->
                                 <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
@@ -123,12 +131,15 @@
                                                           Classes="form-combobox" HorizontalAlignment="Stretch" />
                                             </StackPanel>
 
-                                            <StackPanel>
-                                                <TextBlock Text="DATES" Classes="sidebar-label" />
-                                                <Grid ColumnDefinitions="*,8,*">
-                                                    <DatePicker Grid.Column="0" SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                                    <DatePicker Grid.Column="2" SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                                </Grid>
+                                            <StackPanel Spacing="10">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="ISSUE DATE" Classes="sidebar-label" Margin="0" />
+                                                    <DatePicker SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                </StackPanel>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="DUE DATE" Classes="sidebar-label" Margin="0" />
+                                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                </StackPanel>
                                             </StackPanel>
 
                                             <StackPanel>
@@ -205,8 +216,14 @@
 
                             <!-- VIEW-ONLY: rendered HTML preview -->
                             <controls:InvoicePreviewControl Html="{Binding PreviewHtml}"
-                                                            OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}"
-                                                            IsVisible="{Binding IsViewOnly}" />
+                                                            OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
+                                <controls:InvoicePreviewControl.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="IsCreateEditModalOpen" />
+                                        <Binding Path="IsViewOnly" />
+                                    </MultiBinding>
+                                </controls:InvoicePreviewControl.IsVisible>
+                            </controls:InvoicePreviewControl>
 
                             <!-- View-only bottom bar -->
                             <Border VerticalAlignment="Bottom" Padding="20,14"

@@ -446,6 +446,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             ModalNotes = value.DefaultNotes;
         }
+        RegeneratePaper();
     }
 
     partial void OnTaxRateChanged(decimal value)
