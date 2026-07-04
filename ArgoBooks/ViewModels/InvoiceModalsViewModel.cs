@@ -612,14 +612,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isNestedModalOpen;
 
     // Hide the invoice WebView while a modal is open on top of it; restore when it closes (its
-    // IsAddModalOpen flag flips back to false, on either save or cancel).
-    private void HideWebViewWhileModalOpen(System.ComponentModel.INotifyPropertyChanged modalVm, Func<bool> isOpen)
+    // open flag flips back to false, on save or cancel). Only the named open-flag property is watched:
+    // OpenAddModal resets other fields first (firing PropertyChanged while the flag is still false), and
+    // reacting to those would prematurely clear our flag before the modal is even shown.
+    private void HideWebViewWhileModalOpen(System.ComponentModel.INotifyPropertyChanged modalVm, string openFlagName, Func<bool> isOpen)
     {
         IsNestedModalOpen = true;
         System.ComponentModel.PropertyChangedEventHandler? handler = null;
-        handler = (_, _) =>
+        handler = (_, args) =>
         {
-            if (!isOpen())
+            if (args.PropertyName == openFlagName && !isOpen())
             {
                 IsNestedModalOpen = false;
                 modalVm.PropertyChanged -= handler;
@@ -646,7 +648,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (newCustomer != null)
                     SelectedCustomer = newCustomer;
             });
-        HideWebViewWhileModalOpen(customerModals, () => customerModals.IsAddModalOpen);
+        HideWebViewWhileModalOpen(customerModals, nameof(customerModals.IsAddModalOpen), () => customerModals.IsAddModalOpen);
         customerModals.OpenAddModal();
     }
 
@@ -675,7 +677,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 }
                 RegeneratePaper();
             });
-        HideWebViewWhileModalOpen(productModals, () => productModals.IsAddModalOpen);
+        HideWebViewWhileModalOpen(productModals, nameof(productModals.IsAddModalOpen), () => productModals.IsAddModalOpen);
         productModals.OpenAddModal();
     }
 
