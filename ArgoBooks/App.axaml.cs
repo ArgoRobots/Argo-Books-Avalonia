@@ -1832,6 +1832,11 @@ public partial class App : Application
                 await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open sample company.".Translate());
             }
         }
+        catch (CompanyAlreadyOpenException)
+        {
+            _mainWindowViewModel.HideLoading();
+            await ShowCompanyAlreadyOpenAsync();
+        }
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
@@ -3070,6 +3075,15 @@ public partial class App : Application
                 });
             }
         }
+        catch (CompanyAlreadyOpenException)
+        {
+            // Expected, recoverable: the company is open in another running instance. Show a
+            // friendly notice (neutral dialog, not the red error box) and leave it in recents.
+            _isOpeningCompany = false;
+            _mainWindowViewModel.HideLoading();
+            passwordModal.Close();
+            await ShowCompanyAlreadyOpenAsync();
+        }
         catch (Exception ex)
         {
             _isOpeningCompany = false;
@@ -3078,6 +3092,24 @@ public partial class App : Application
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
             await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Shows the friendly "this company is already open in another window" notice. Uses the neutral
+    /// confirmation dialog (not the red error box) since it's an expected, recoverable situation.
+    /// </summary>
+    private static async Task ShowCompanyAlreadyOpenAsync()
+    {
+        if (ConfirmationDialog == null) return;
+
+        await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Already Open".Translate(),
+            Message = "This company is already open in another window. Close it there first, then try again.".Translate(),
+            PrimaryButtonText = "OK".Translate(),
+            SecondaryButtonText = null,
+            CancelButtonText = null
+        });
     }
 
     /// <summary>
@@ -3127,6 +3159,13 @@ public partial class App : Application
             // Close the modal and retry recursively
             passwordModal.Close();
             return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+        }
+        catch (CompanyAlreadyOpenException)
+        {
+            _mainWindowViewModel.HideLoading();
+            passwordModal.Close();
+            await ShowCompanyAlreadyOpenAsync();
+            return false;
         }
         catch (Exception ex)
         {

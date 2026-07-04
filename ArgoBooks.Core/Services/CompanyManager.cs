@@ -23,6 +23,9 @@ public class CompanyManager : IDisposable
     private string? _currentTempDirectory;
     private string? _currentPassword;
     private FileStream? _fileLock;
+    // Cross-instance guard: prevents the same company being opened in a second running instance,
+    // which would race auto-saves and corrupt the .argo file.
+    private readonly CompanyInstanceLock _instanceLock = new();
     private bool _isDisposed;
 
     // Receipts are loaded off the critical open path (they carry base64 image data).
@@ -535,6 +538,9 @@ public class CompanyManager : IDisposable
 
             // Hold a read lock on the file to prevent deletion while the company is open
             AcquireFileLock(filePath);
+            // Claim the cross-instance lock for the brand-new company (a new path can't already be
+            // held elsewhere, so no need to check the result).
+            _instanceLock.TryAcquire(filePath);
 
             // Add to recent companies
             _settingsService.AddRecentCompany(filePath);
@@ -546,6 +552,7 @@ public class CompanyManager : IDisposable
         catch (Exception ex)
         {
             // Clean up on failure
+            _instanceLock.Release();
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
             {
@@ -575,43 +582,65 @@ public class CompanyManager : IDisposable
             throw new FileNotFoundException("Company file not found.", filePath);
         }
 
-        // Close any existing company
+        // Fail fast if the company is already open in another instance, BEFORE closing the current
+        // company. Otherwise a blocked open would still close the current company first and dump the
+        // user on the welcome screen just for attempting to open a locked file.
+        if (_instanceLock.IsHeldByAnotherInstance(filePath))
+        {
+            throw new CompanyAlreadyOpenException(filePath);
+        }
+
+        // Close any existing company (this releases the previous company's instance lock).
         if (IsCompanyOpen)
         {
             await CloseCompanyAsync(cancellationToken);
         }
 
-        // Check if file is encrypted
-        var isEncrypted = await _fileService.IsFileEncryptedAsync(filePath);
-
-        if (isEncrypted && string.IsNullOrEmpty(password))
+        // Authoritatively claim the lock now that the current company is closed. Re-checked here (not
+        // just via the peek above) to close the small race between the peek and this point. Taken
+        // before the password prompt so the user isn't asked to unlock a file they can't open anyway;
+        // every early exit below releases it, and on success the open company keeps holding it.
+        if (!_instanceLock.TryAcquire(filePath))
         {
-            // Try async callback first (preferred)
-            if (PasswordRequestCallback != null)
-            {
-                password = await PasswordRequestCallback(filePath);
-                if (string.IsNullOrEmpty(password))
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                // Fall back to synchronous event (for backwards compatibility)
-                var args = new PasswordRequiredEventArgs();
-                PasswordRequired?.Invoke(this, args);
-
-                if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
-                {
-                    return false;
-                }
-
-                password = args.Password;
-            }
+            throw new CompanyAlreadyOpenException(filePath);
         }
 
+        // From here on the instance lock is held. Any failure or password cancel must release it,
+        // so encryption detection, the password prompt, and the load all run inside one try; the
+        // finally releases the lock unless the company opened successfully (in which case the open
+        // company keeps holding it until it is closed).
+        var opened = false;
         try
         {
+            // Check if file is encrypted
+            var isEncrypted = await _fileService.IsFileEncryptedAsync(filePath);
+
+            if (isEncrypted && string.IsNullOrEmpty(password))
+            {
+                // Try async callback first (preferred)
+                if (PasswordRequestCallback != null)
+                {
+                    password = await PasswordRequestCallback(filePath);
+                    if (string.IsNullOrEmpty(password))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Fall back to synchronous event (for backwards compatibility)
+                    var args = new PasswordRequiredEventArgs();
+                    PasswordRequired?.Invoke(this, args);
+
+                    if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
+                    {
+                        return false;
+                    }
+
+                    password = args.Password;
+                }
+            }
+
             // Open the file
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
@@ -650,16 +679,18 @@ public class CompanyManager : IDisposable
                 filePath,
                 isEncrypted));
 
+            opened = true;
             return true;
         }
         catch (UnauthorizedAccessException)
         {
-            // Invalid password - let UI handle retry
+            // Invalid password - let UI handle retry. The finally releases the instance lock so the
+            // retry (a fresh OpenCompanyAsync) can re-acquire it instead of colliding with our hold.
             throw;
         }
         catch (Exception ex)
         {
-            // Clean up on failure
+            // Clean up on failure (the finally releases the instance lock).
             ReleaseFileLock();
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
@@ -669,6 +700,13 @@ public class CompanyManager : IDisposable
             _currentTempDirectory = null;
             CompanyData = null;
             throw;
+        }
+        finally
+        {
+            if (!opened)
+            {
+                _instanceLock.Release();
+            }
         }
     }
 
@@ -849,6 +887,9 @@ public class CompanyManager : IDisposable
                 // Update the recent companies list so the old path is replaced with the new one
                 if (CurrentFilePath != oldPath)
                 {
+                    // Move the cross-instance lock onto the new path so a second instance is
+                    // blocked from the renamed file (and freed from the old one).
+                    _instanceLock.TryAcquire(CurrentFilePath);
                     _settingsService.RemoveRecentCompany(oldPath);
                     _settingsService.AddRecentCompany(CurrentFilePath);
                     await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
@@ -944,6 +985,8 @@ public class CompanyManager : IDisposable
                 // Update current file path and password
                 CurrentFilePath = newFilePath;
                 _currentPassword = passwordToUse;
+                // Move the cross-instance lock onto the Save-As target so it guards the new file.
+                _instanceLock.TryAcquire(newFilePath);
                 // A deferred rename targeted the OLD path; once the working file has moved to a new
                 // path via Save As it no longer applies, so a later normal Save must not act on it.
                 PendingRenamePath = null;
@@ -976,6 +1019,7 @@ public class CompanyManager : IDisposable
     public async Task CloseCompanyAsync(CancellationToken cancellationToken = default)
     {
         ReleaseFileLock();
+        _instanceLock.Release();
 
         if (_currentTempDirectory != null)
         {
@@ -1552,6 +1596,7 @@ public class CompanyManager : IDisposable
         if (_isDisposed) return;
 
         ReleaseFileLock();
+        _instanceLock.Dispose();
         _saveLock.Dispose();
         _currentPassword = null;
 
