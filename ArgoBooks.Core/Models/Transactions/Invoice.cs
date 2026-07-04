@@ -107,6 +107,18 @@ public partial class Invoice : ObservableObject
     public bool DiscountIsPercent { get; set; }
 
     /// <summary>
+    /// Flat shipping amount added to the taxable base.
+    /// </summary>
+    [JsonPropertyName("shippingAmount")]
+    public decimal ShippingAmount { get; set; }
+
+    /// <summary>
+    /// Whether the tax value is a flat amount rather than a percentage of the taxable base.
+    /// </summary>
+    [JsonPropertyName("taxIsFixed")]
+    public bool TaxIsFixed { get; set; }
+
+    /// <summary>
     /// Total amount due.
     /// </summary>
     [JsonPropertyName("total")]

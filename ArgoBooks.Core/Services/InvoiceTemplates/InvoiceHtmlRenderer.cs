@@ -322,14 +322,34 @@ public partial class InvoiceHtmlRenderer
             ["Subtotal"] = $"{currencySymbol}{Money(invoice.Subtotal)}",
             ["TaxRate"] = invoice.TaxRate.ToString("0.##"),
             ["TaxLabel"] = GetTaxLabel(companySettings.Company.Country),
+            // The "(13%)" suffix on the tax label only makes sense in percent mode.
+            ["TaxRateLabel"] = invoice.TaxIsFixed ? "" : $" ({invoice.TaxRate.ToString("0.##")}%)",
             ["TaxAmount"] = $"{currencySymbol}{Money(invoice.TaxAmount)}",
+            // The tax row is always shown in the editor so it can be edited, even if the template
+            // normally hides the breakdown.
+            ["ShowTaxRow"] = template.ShowTaxBreakdown || editable,
             ["ShowSecurityDeposit"] = invoice.SecurityDeposit > 0,
             ["SecurityDeposit"] = $"{currencySymbol}{Money(invoice.SecurityDeposit)}",
+            ["ShowShipping"] = invoice.ShippingAmount > 0 || editable,
+            ["ShippingAmount"] = $"{currencySymbol}{Money(invoice.ShippingAmount)}",
+            // The custom fee carries a user-defined label, so only surface it once one is actually set
+            // (it stays editable on the paper when present); tax/shipping/discount are always editable.
             ["ShowCustomFee"] = invoice.CustomFeeAmount > 0,
             ["CustomFeeLabel"] = BuildFeeLabel(invoice),
             ["CustomFeeAmount"] = $"{currencySymbol}{Money(CalculateCustomFee(invoice))}",
-            ["ShowDiscount"] = invoice.DiscountAmount > 0,
+            ["ShowDiscount"] = invoice.DiscountAmount > 0 || editable,
             ["DiscountAmount"] = $"-{currencySymbol}{Money(CalculateDiscount(invoice))}",
+            // Raw values + modes for the on-paper totals editors (the editing script builds the
+            // input + %/fixed swap from these; the customer view just shows the computed amounts above).
+            ["Editable"] = editable,
+            ["CurrencySymbol"] = currencySymbol,
+            ["TaxRateRaw"] = invoice.TaxRate.ToString("0.##"),
+            ["TaxModeRaw"] = invoice.TaxIsFixed ? "fixed" : "percent",
+            ["ShippingRaw"] = invoice.ShippingAmount.ToString("0.##"),
+            ["CustomFeeRaw"] = invoice.CustomFeeAmount.ToString("0.##"),
+            ["FeeModeRaw"] = invoice.CustomFeeIsPercent ? "percent" : "fixed",
+            ["DiscountRaw"] = invoice.DiscountAmount.ToString("0.##"),
+            ["DiscountModeRaw"] = invoice.DiscountIsPercent ? "percent" : "fixed",
             // Total includes any actual processing fee the customer paid
             // on top of the invoice, so the row reconciles cleanly with
             // Amount Paid (Total − Amount Paid = Balance Due). The bare

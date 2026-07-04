@@ -248,8 +248,38 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (index is int ri && ri >= 0 && ri < LineItems.Count && TryParsePaperNumber(value, out var r))
                     LineItems[ri].UnitPrice = r;
                 break;
+            case "taxValue":
+                if (TryParsePaperNumber(value, out var tax)) TaxRate = tax;
+                break;
+            case "shippingValue":
+                if (TryParsePaperNumber(value, out var ship)) ShippingAmount = ship;
+                break;
+            case "discountValue":
+                if (TryParsePaperNumber(value, out var disc)) DiscountAmount = disc;
+                break;
+            case "feeValue":
+                if (TryParsePaperNumber(value, out var fee)) CustomFeeAmount = fee;
+                break;
         }
     }
+
+    /// <summary>Toggles a totals field between percent and fixed from the paper's swap button.</summary>
+    public void ToggleTotalsMode(string which)
+    {
+        switch (which)
+        {
+            case "tax": TaxIsFixed = !TaxIsFixed; break;
+            case "discount": DiscountIsPercent = !DiscountIsPercent; break;
+            case "fee": CustomFeeIsPercent = !CustomFeeIsPercent; break;
+        }
+    }
+
+    /// <summary>
+    /// Re-renders the paper after an on-paper totals edit is committed (e.g. the field lost focus),
+    /// so the Subtotal/Total reflect the change. Kept separate from the per-keystroke apply so the
+    /// caret isn't lost while typing.
+    /// </summary>
+    public void CommitPaperTotals() => RegeneratePaper();
 
     // Pulls a number out of a value that may carry a currency symbol / thousands separators.
     private static bool TryParsePaperNumber(string raw, out decimal result)
@@ -413,6 +443,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _discountIsPercent;
 
     [ObservableProperty]
+    private decimal _shippingAmount;
+
+    [ObservableProperty]
+    private bool _taxIsFixed;
+
+    [ObservableProperty]
     private string _validationMessage = string.Empty;
 
     [ObservableProperty]
@@ -446,6 +482,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
               !string.IsNullOrWhiteSpace(ModalNotes) ||
               TaxRate > 0 ||
               SecurityDeposit > 0 ||
+              ShippingAmount > 0 ||
+              CustomFeeAmount > 0 ||
+              DiscountAmount > 0 ||
               LineItems.Any(i => !string.IsNullOrWhiteSpace(i.Description) || i.SelectedProduct != null || (i.UnitPrice ?? 0) > 0);
 
     // Original values for change detection in edit mode
@@ -455,7 +494,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private string _originalStatus = "Draft";
     private string _originalNotes = string.Empty;
     private decimal _originalTaxRate;
+    private bool _originalTaxIsFixed;
     private decimal _originalSecurityDeposit;
+    private decimal _originalShippingAmount;
+    private decimal _originalCustomFeeAmount;
+    private bool _originalCustomFeeIsPercent;
+    private decimal _originalDiscountAmount;
+    private bool _originalDiscountIsPercent;
     private List<(string? ProductId, string Description, decimal? Quantity, decimal? UnitPrice)> _originalLineItems = [];
 
     /// <summary>
@@ -471,7 +516,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             if (ModalStatus != _originalStatus) return true;
             if (ModalNotes != _originalNotes) return true;
             if (TaxRate != _originalTaxRate) return true;
+            if (TaxIsFixed != _originalTaxIsFixed) return true;
             if (SecurityDeposit != _originalSecurityDeposit) return true;
+            if (ShippingAmount != _originalShippingAmount) return true;
+            if (CustomFeeAmount != _originalCustomFeeAmount) return true;
+            if (CustomFeeIsPercent != _originalCustomFeeIsPercent) return true;
+            if (DiscountAmount != _originalDiscountAmount) return true;
+            if (DiscountIsPercent != _originalDiscountIsPercent) return true;
 
             // Compare line items
             if (LineItems.Count != _originalLineItems.Count) return true;
@@ -501,7 +552,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         _originalStatus = ModalStatus;
         _originalNotes = ModalNotes;
         _originalTaxRate = TaxRate;
+        _originalTaxIsFixed = TaxIsFixed;
         _originalSecurityDeposit = SecurityDeposit;
+        _originalShippingAmount = ShippingAmount;
+        _originalCustomFeeAmount = CustomFeeAmount;
+        _originalCustomFeeIsPercent = CustomFeeIsPercent;
+        _originalDiscountAmount = DiscountAmount;
+        _originalDiscountIsPercent = DiscountIsPercent;
         _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.Description, li.Quantity, li.UnitPrice)).ToList();
     }
 
@@ -539,8 +596,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
     public decimal CustomFeeCalculated => CustomFeeIsPercent ? Subtotal * (CustomFeeAmount / 100m) : CustomFeeAmount;
     public decimal DiscountCalculated => DiscountIsPercent ? Subtotal * (DiscountAmount / 100m) : DiscountAmount;
-    public decimal TaxableBase => Subtotal - DiscountCalculated + CustomFeeCalculated;
-    public decimal TaxAmount => TaxableBase * (TaxRate / 100m);
+    public decimal TaxableBase => Subtotal - DiscountCalculated + CustomFeeCalculated + ShippingAmount;
+    public decimal TaxAmount => TaxIsFixed ? TaxRate : TaxableBase * (TaxRate / 100m);
     public decimal Total => TaxableBase + TaxAmount + SecurityDeposit;
 
     // Format using the invoice's selected currency so modal totals match the picker.
@@ -548,9 +605,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public string InvoiceCurrencySymbol => InvoiceCurrencyInfo.Symbol;
     public string CustomFeeSymbol => CustomFeeIsPercent ? "%" : InvoiceCurrencySymbol;
     public string DiscountSymbol => DiscountIsPercent ? "%" : InvoiceCurrencySymbol;
+    public string TaxSymbol => TaxIsFixed ? InvoiceCurrencySymbol : "%";
     public string SubtotalFormatted => InvoiceCurrencyInfo.Format(Subtotal);
     public string TaxAmountFormatted => InvoiceCurrencyInfo.Format(TaxAmount);
     public string SecurityDepositFormatted => InvoiceCurrencyInfo.Format(SecurityDeposit);
+    public string ShippingFormatted => InvoiceCurrencyInfo.Format(ShippingAmount);
     public string CustomFeeCalculatedFormatted => $"+{InvoiceCurrencyInfo.Format(CustomFeeCalculated)}";
     public string DiscountCalculatedFormatted => $"-{InvoiceCurrencyInfo.Format(DiscountCalculated)}";
     public string TotalFormatted => InvoiceCurrencyInfo.Format(Total);
@@ -558,6 +617,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public bool HasSecurityDeposit => SecurityDeposit > 0;
     public bool HasCustomFee => CustomFeeAmount > 0;
     public bool HasDiscount => DiscountAmount > 0;
+    public bool HasShipping => ShippingAmount > 0;
 
     partial void OnSelectedTemplateChanged(InvoiceTemplate? value)
     {
@@ -571,11 +631,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
-    partial void OnTaxRateChanged(decimal value)
-    {
-        UpdateTotals();
-        RegeneratePaper();
-    }
+    // Amount edits come from typing directly on the paper; only recompute totals here. A full
+    // paper re-render would recreate the field mid-keystroke and drop the caret, so the paper is
+    // reconciled on blur (RegeneratePaperFromPaper) or when previewing/saving instead.
+    partial void OnTaxRateChanged(decimal value) => UpdateTotals();
+    partial void OnCustomFeeAmountChanged(decimal value) => UpdateTotals();
+    partial void OnDiscountAmountChanged(decimal value) => UpdateTotals();
+    partial void OnShippingAmountChanged(decimal value) => UpdateTotals();
 
     partial void OnSecurityDepositChanged(decimal value)
     {
@@ -583,12 +645,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
-    partial void OnCustomFeeAmountChanged(decimal value)
-    {
-        UpdateTotals();
-        RegeneratePaper();
-    }
-
+    // Mode toggles (percent vs fixed) are deliberate clicks, so a re-render here is fine.
     partial void OnCustomFeeIsPercentChanged(bool value)
     {
         OnPropertyChanged(nameof(CustomFeeSymbol));
@@ -596,15 +653,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
-    partial void OnDiscountAmountChanged(decimal value)
+    partial void OnDiscountIsPercentChanged(bool value)
     {
+        OnPropertyChanged(nameof(DiscountSymbol));
         UpdateTotals();
         RegeneratePaper();
     }
 
-    partial void OnDiscountIsPercentChanged(bool value)
+    partial void OnTaxIsFixedChanged(bool value)
     {
-        OnPropertyChanged(nameof(DiscountSymbol));
+        OnPropertyChanged(nameof(TaxSymbol));
         UpdateTotals();
         RegeneratePaper();
     }
@@ -664,6 +722,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(DiscountCalculated));
         OnPropertyChanged(nameof(DiscountCalculatedFormatted));
         OnPropertyChanged(nameof(HasDiscount));
+        OnPropertyChanged(nameof(ShippingFormatted));
+        OnPropertyChanged(nameof(HasShipping));
+        OnPropertyChanged(nameof(TaxSymbol));
         OnPropertyChanged(nameof(TotalFormatted));
     }
 
@@ -1194,7 +1255,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalStatus = invoice.Status.ToString();
         ModalNotes = invoice.Notes;
         TaxRate = invoice.TaxRate;
+        TaxIsFixed = invoice.TaxIsFixed;
         SecurityDeposit = invoice.SecurityDeposit;
+        ShippingAmount = invoice.ShippingAmount;
         CustomFeeLabel = invoice.CustomFeeLabel;
         CustomFeeAmount = invoice.CustomFeeAmount;
         CustomFeeIsPercent = invoice.CustomFeeIsPercent;
@@ -1472,11 +1535,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
             TaxRate = TaxRate,
+            TaxIsFixed = TaxIsFixed,
             CustomFeeLabel = CustomFeeLabel,
             CustomFeeAmount = CustomFeeAmount,
             CustomFeeIsPercent = CustomFeeIsPercent,
             DiscountAmount = DiscountAmount,
             DiscountIsPercent = DiscountIsPercent,
+            ShippingAmount = ShippingAmount,
             Notes = ModalNotes,
             Status = InvoiceStatus.Draft,
             LineItems = LineItems.Select(li => new LineItem
@@ -1490,9 +1555,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // Calculate totals
         previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         previewInvoice.SecurityDeposit = SecurityDeposit;
-        // Tax applies to the subtotal AFTER discount and the taxable fee (docs/Calculations.md §4).
-        var previewTaxableBase = previewInvoice.Subtotal - DiscountCalculated + CustomFeeCalculated;
-        previewInvoice.TaxAmount = previewTaxableBase * (TaxRate / 100m);
+        // Tax applies to the subtotal AFTER discount and the taxable fee plus shipping (docs/Calculations.md §4).
+        var previewTaxableBase = previewInvoice.Subtotal - DiscountCalculated + CustomFeeCalculated + ShippingAmount;
+        previewInvoice.TaxAmount = TaxIsFixed ? TaxRate : previewTaxableBase * (TaxRate / 100m);
         previewInvoice.Total = previewTaxableBase + previewInvoice.TaxAmount + SecurityDeposit;
         previewInvoice.Balance = previewInvoice.Total;
 
@@ -1710,7 +1775,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
             invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1);
             invoice.TaxRate = TaxRate;
+            invoice.TaxIsFixed = TaxIsFixed;
             invoice.SecurityDeposit = SecurityDeposit;
+            invoice.ShippingAmount = ShippingAmount;
             invoice.CustomFeeLabel = CustomFeeLabel;
             invoice.CustomFeeAmount = CustomFeeAmount;
             invoice.CustomFeeIsPercent = CustomFeeIsPercent;
@@ -1745,7 +1812,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
                 DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
                 TaxRate = TaxRate,
+                TaxIsFixed = TaxIsFixed,
                 SecurityDeposit = SecurityDeposit,
+                ShippingAmount = ShippingAmount,
                 CustomFeeLabel = CustomFeeLabel,
                 CustomFeeAmount = CustomFeeAmount,
                 CustomFeeIsPercent = CustomFeeIsPercent,
@@ -1773,9 +1842,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
         var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
         var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
-        // Tax applies to the subtotal AFTER discount and the taxable fee (docs/Calculations.md §4).
-        var taxableBase = invoice.Subtotal - discCalc + feeCalc;
-        invoice.TaxAmount = taxableBase * (invoice.TaxRate / 100m);
+        // Tax applies to the subtotal AFTER discount and the taxable fee plus shipping (docs/Calculations.md §4).
+        var taxableBase = invoice.Subtotal - discCalc + feeCalc + invoice.ShippingAmount;
+        invoice.TaxAmount = invoice.TaxIsFixed ? invoice.TaxRate : taxableBase * (invoice.TaxRate / 100m);
         invoice.Total = taxableBase + invoice.TaxAmount + invoice.SecurityDeposit;
 
         // Set currency fields for multi-currency support
@@ -2061,7 +2130,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
             DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
             TaxRate = TaxRate,
+            TaxIsFixed = TaxIsFixed,
             SecurityDeposit = SecurityDeposit,
+            ShippingAmount = ShippingAmount,
             CustomFeeLabel = CustomFeeLabel,
             CustomFeeAmount = CustomFeeAmount,
             CustomFeeIsPercent = CustomFeeIsPercent,
@@ -2253,7 +2324,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Amount = invoice.Subtotal,
             TaxRate = invoice.TaxRate,
             TaxAmount = invoice.TaxAmount,
-            Fee = feeAmount + invoice.SecurityDeposit,
+            Fee = feeAmount + invoice.SecurityDeposit + invoice.ShippingAmount,
             Discount = discountAmount,
             Total = invoice.Total,
             PaymentMethod = PaymentMethod.Other,
@@ -2273,8 +2344,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 ? invoice.TaxAmount * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? invoice.TaxAmount : 0,
             FeeUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
-                ? (feeAmount + invoice.SecurityDeposit) * (invoice.EffectiveTotalUSD / invoice.Total)
-                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.SecurityDeposit : 0,
+                ? (feeAmount + invoice.SecurityDeposit + invoice.ShippingAmount) * (invoice.EffectiveTotalUSD / invoice.Total)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.SecurityDeposit + invoice.ShippingAmount : 0,
             DiscountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
                 ? discountAmount * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? discountAmount : 0
@@ -2329,7 +2400,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalStatus = "Draft";
         ModalNotes = string.Empty;
         TaxRate = 0;
+        TaxIsFixed = false;
         SecurityDeposit = 0;
+        ShippingAmount = 0;
         CustomFeeLabel = string.Empty;
         CustomFeeAmount = 0;
         CustomFeeIsPercent = false;

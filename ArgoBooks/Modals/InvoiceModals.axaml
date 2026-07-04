@@ -120,10 +120,8 @@
                                                           Classes="form-combobox" HorizontalAlignment="Stretch" />
                                             </StackPanel>
 
-                                            <StackPanel>
-                                                <TextBlock Text="TAX RATE (%)" Classes="sidebar-label" />
-                                                <NumericUpDown Value="{Binding TaxRate}" ShowButtonSpinner="False" Minimum="0" Maximum="100" FormatString="0.##" HorizontalAlignment="Stretch" />
-                                            </StackPanel>
+                                            <!-- Tax, shipping, discount and fees are edited directly in the totals
+                                                 section on the invoice paper. -->
 
                                             <!-- Status (edit mode) -->
                                             <StackPanel IsVisible="{Binding IsEditMode}">

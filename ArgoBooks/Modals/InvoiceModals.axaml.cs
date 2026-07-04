@@ -32,7 +32,21 @@ public partial class InvoiceModals : UserControl
             editorPreview.DateEdited += OnDateEdited;
             editorPreview.PickLogoRequested += OnPickLogoRequested;
             editorPreview.DeleteLogoRequested += OnDeleteLogoRequested;
+            editorPreview.TotalsCommitRequested += OnTotalsCommitRequested;
+            editorPreview.TotalsModeToggled += OnTotalsModeToggled;
         }
+    }
+
+    private void OnTotalsCommitRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.CommitPaperTotals();
+    }
+
+    private void OnTotalsModeToggled(object? sender, string which)
+    {
+        if (DataContext is InvoiceModalsViewModel vm)
+            vm.ToggleTotalsMode(which);
     }
 
     private void OnDeleteLogoRequested(object? sender, EventArgs e)

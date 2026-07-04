@@ -108,6 +108,12 @@ public partial class InvoicePreviewControl : UserControl
     /// <summary>Raised when the logo's hover "x" is clicked to remove it.</summary>
     public event EventHandler? DeleteLogoRequested;
 
+    /// <summary>Raised when an on-paper totals field commits (blur), so the paper can reconcile.</summary>
+    public event EventHandler? TotalsCommitRequested;
+
+    /// <summary>Raised when a totals swap button toggles a field between percent and fixed. Arg is the field key.</summary>
+    public event EventHandler<string>? TotalsModeToggled;
+
     private NativeWebView? _webView;
     private Panel? _rootPanel;
     private Border? _fallbackPanel;
@@ -331,6 +337,62 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             document.body.appendChild(square);
         }
     }
+
+    // ---- editable totals: tax (%/fixed), shipping ($), discount (%/fixed), custom fee (%/fixed) ----
+    // Each marked cell shows the computed amount in the customer view; here we replace it with an
+    // inline value editor plus a swap button, mirroring the website's totals controls.
+    document.querySelectorAll('[data-total]').forEach(function(cell) {
+        var which = cell.dataset.total;              // tax | shipping | discount | fee
+        var mode = cell.dataset.totalMode || '';     // percent | fixed | '' (shipping has no mode)
+        var sym = cell.dataset.totalSymbol || '$';
+        var raw = cell.dataset.totalRaw || '0';
+        var fieldName = which + 'Value';
+
+        cell.textContent = '';
+        var box = document.createElement('span');
+        box.style.cssText = 'display:inline-flex;align-items:center;gap:4px;justify-content:flex-end';
+
+        var val = document.createElement('span');
+        val.setAttribute('contenteditable', 'true');
+        val.setAttribute('data-field', fieldName);
+        val.textContent = raw;
+        val.style.cssText = 'min-width:32px;text-align:right';
+
+        var unit = document.createElement('span');
+        unit.textContent = (mode === 'percent') ? '%' : sym;
+        unit.style.cssText = 'color:#8a94a3;font-size:12px';
+
+        var t;
+        val.addEventListener('input', function() {
+            clearTimeout(t);
+            t = setTimeout(function() { post({ type:'invoiceEdit', field: fieldName, index: null, value: val.textContent }); }, 150);
+        });
+        val.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); val.blur(); } });
+        val.addEventListener('blur', function(e) {
+            clearTimeout(t);
+            post({ type:'invoiceEdit', field: fieldName, index: null, value: val.textContent });
+            // Reconcile the paper (updates the Total) once the user is done, but not if they're just
+            // hopping to another editable field, since the re-render would steal that focus.
+            var to = e.relatedTarget;
+            var stayingInEditor = to && to.closest && (to.closest('[data-total]') || to.hasAttribute('data-field'));
+            if (!stayingInEditor) post({ type:'totalsCommit' });
+        });
+
+        box.appendChild(val);
+        box.appendChild(unit);
+
+        if (mode) {
+            var swap = document.createElement('button');
+            swap.type = 'button';
+            swap.innerHTML = '&#x21c4;';
+            swap.title = 'Switch between percent and fixed amount';
+            swap.style.cssText = 'border:1px solid #d0d5dd;background:#fff;border-radius:4px;cursor:pointer;color:#5b6472;font-size:12px;line-height:1;padding:2px 5px;margin-left:2px';
+            // mousedown + preventDefault so the value field doesn't blur (which would double-commit).
+            swap.addEventListener('mousedown', function(e) { e.preventDefault(); post({ type:'totalsToggle', which: which }); });
+            box.appendChild(swap);
+        }
+        cell.appendChild(box);
+    });
 })();
 </script>";
 
@@ -555,6 +617,16 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             else if (messageType == "deleteLogo")
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => DeleteLogoRequested?.Invoke(this, System.EventArgs.Empty));
+            }
+            else if (messageType == "totalsCommit")
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => TotalsCommitRequested?.Invoke(this, System.EventArgs.Empty));
+            }
+            else if (messageType == "totalsToggle")
+            {
+                var which = root.TryGetProperty("which", out var we) ? we.GetString() ?? string.Empty : string.Empty;
+                if (!string.IsNullOrEmpty(which))
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => TotalsModeToggled?.Invoke(this, which));
             }
         }
         catch (Exception ex)
@@ -997,7 +1069,8 @@ window.__invCustomers = __CUSTOMERS_JSON__;
             foreach (var item in doc.RootElement.EnumerateArray())
             {
                 var field = item.TryGetProperty("f", out var fe) ? fe.GetString() ?? string.Empty : string.Empty;
-                if (field is not ("description" or "quantity" or "rate" or "notes"))
+                if (field is not ("description" or "quantity" or "rate" or "notes"
+                    or "taxValue" or "shippingValue" or "discountValue" or "feeValue"))
                     continue;
 
                 int? index = item.TryGetProperty("i", out var ie) && ie.ValueKind == System.Text.Json.JsonValueKind.Number

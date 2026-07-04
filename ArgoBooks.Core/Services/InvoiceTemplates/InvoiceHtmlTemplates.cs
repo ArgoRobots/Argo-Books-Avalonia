@@ -122,12 +122,18 @@ public static class InvoiceHtmlTemplates
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Subtotal</td>
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
                                 </tr>
-                                {{#ShowTaxBreakdown}}
+                                {{#ShowTaxRow}}
                                 <tr>
-                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                 </tr>
-                                {{/ShowTaxBreakdown}}
+                                {{/ShowTaxRow}}
+                                {{#ShowShipping}}
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Shipping</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                </tr>
+                                {{/ShowShipping}}
                                 {{#ShowSecurityDeposit}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Security Deposit</td>
@@ -137,13 +143,13 @@ public static class InvoiceHtmlTemplates
                                 {{#ShowCustomFee}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{CustomFeeLabel}}</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                 </tr>
                                 {{/ShowCustomFee}}
                                 {{#ShowDiscount}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Discount</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                 </tr>
                                 {{/ShowDiscount}}
                                 {{#ShowProcessingFee}}
@@ -367,12 +373,18 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Subtotal</td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
                                             </tr>
-                                            {{#ShowTaxBreakdown}}
+                                            {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
-                                            {{/ShowTaxBreakdown}}
+                                            {{/ShowTaxRow}}
+                                            {{#ShowShipping}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Shipping</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                            </tr>
+                                            {{/ShowShipping}}
                                             {{#ShowSecurityDeposit}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Security Deposit</td>
@@ -382,13 +394,13 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowCustomFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{CustomFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowCustomFee}}
                                             {{#ShowDiscount}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Discount</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
@@ -575,12 +587,18 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Subtotal</td>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{Subtotal}}</td>
                                             </tr>
-                                            {{#ShowTaxBreakdown}}
+                                            {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{TaxAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
-                                            {{/ShowTaxBreakdown}}
+                                            {{/ShowTaxRow}}
+                                            {{#ShowShipping}}
+                                            <tr>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Shipping</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                            </tr>
+                                            {{/ShowShipping}}
                                             {{#ShowSecurityDeposit}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Security Deposit</td>
@@ -590,13 +608,13 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowCustomFee}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{CustomFeeLabel}}</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{CustomFeeAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowCustomFee}}
                                             {{#ShowDiscount}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Discount</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{DiscountAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
@@ -774,12 +792,18 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Subtotal</td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
                                             </tr>
-                                            {{#ShowTaxBreakdown}}
+                                            {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
-                                            {{/ShowTaxBreakdown}}
+                                            {{/ShowTaxRow}}
+                                            {{#ShowShipping}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Shipping</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                            </tr>
+                                            {{/ShowShipping}}
                                             {{#ShowSecurityDeposit}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Security Deposit</td>
@@ -789,13 +813,13 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowCustomFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{CustomFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowCustomFee}}
                                             {{#ShowDiscount}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Discount</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
@@ -1019,12 +1043,18 @@ public static class InvoiceHtmlTemplates
                         <span>Subtotal</span>
                         <span>{{Subtotal}}</span>
                     </div>
-                    {{#ShowTaxBreakdown}}
+                    {{#ShowTaxRow}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
-                        <span>{{TaxLabel}} ({{TaxRate}}%)</span>
-                        <span>{{TaxAmount}}</span>
+                        <span>{{TaxLabel}}{{TaxRateLabel}}</span>
+                        <span><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></span>
                     </div>
-                    {{/ShowTaxBreakdown}}
+                    {{/ShowTaxRow}}
+                    {{#ShowShipping}}
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
+                        <span>Shipping</span>
+                        <span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span>
+                    </div>
+                    {{/ShowShipping}}
                     {{#ShowSecurityDeposit}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>Security Deposit</span>
@@ -1034,13 +1064,13 @@ public static class InvoiceHtmlTemplates
                     {{#ShowCustomFee}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>{{CustomFeeLabel}}</span>
-                        <span>{{CustomFeeAmount}}</span>
+                        <span><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></span>
                     </div>
                     {{/ShowCustomFee}}
                     {{#ShowDiscount}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>Discount</span>
-                        <span>{{DiscountAmount}}</span>
+                        <span><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></span>
                     </div>
                     {{/ShowDiscount}}
                     {{#ShowProcessingFee}}
