@@ -90,6 +90,7 @@
                                         <MultiBinding Converter="{x:Static BoolConverters.And}">
                                             <Binding Path="IsCreateEditModalOpen" />
                                             <Binding Path="!IsViewOnly" />
+                                            <Binding Path="!IsNestedModalOpen" />
                                         </MultiBinding>
                                     </controls:InvoicePreviewControl.IsVisible>
                                 </controls:InvoicePreviewControl>

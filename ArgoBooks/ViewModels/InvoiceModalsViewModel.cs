@@ -605,6 +605,29 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private EventHandler? _customerSavedHandler;
     private EventHandler? _productSavedHandler;
 
+    // True while a nested modal (create product/customer) is open over the editor. The native invoice
+    // WebView renders above Avalonia content and would occlude that modal, so the WebView is hidden
+    // (via the EditorPreview IsVisible binding) while this is true.
+    [ObservableProperty]
+    private bool _isNestedModalOpen;
+
+    // Hide the invoice WebView while a modal is open on top of it; restore when it closes (its
+    // IsAddModalOpen flag flips back to false, on either save or cancel).
+    private void HideWebViewWhileModalOpen(System.ComponentModel.INotifyPropertyChanged modalVm, Func<bool> isOpen)
+    {
+        IsNestedModalOpen = true;
+        System.ComponentModel.PropertyChangedEventHandler? handler = null;
+        handler = (_, _) =>
+        {
+            if (!isOpen())
+            {
+                IsNestedModalOpen = false;
+                modalVm.PropertyChanged -= handler;
+            }
+        };
+        modalVm.PropertyChanged += handler;
+    }
+
     [RelayCommand]
     private void OpenCreateCustomer()
     {
@@ -623,6 +646,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (newCustomer != null)
                     SelectedCustomer = newCustomer;
             });
+        HideWebViewWhileModalOpen(customerModals, () => customerModals.IsAddModalOpen);
         customerModals.OpenAddModal();
     }
 
@@ -649,7 +673,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                     if (newProduct != null)
                         lineItem.SelectedProduct = newProduct;
                 }
+                RegeneratePaper();
             });
+        HideWebViewWhileModalOpen(productModals, () => productModals.IsAddModalOpen);
         productModals.OpenAddModal();
     }
 
