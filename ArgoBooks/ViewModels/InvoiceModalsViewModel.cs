@@ -184,6 +184,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             HasCustomerError = false;
         }
+        RegeneratePaper();
     }
 
     // Recurring schedule fields, driven by the "Repeat this invoice" toggle in the create form.
@@ -450,34 +451,43 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     partial void OnTaxRateChanged(decimal value)
     {
         UpdateTotals();
+        RegeneratePaper();
     }
 
     partial void OnSecurityDepositChanged(decimal value)
     {
         UpdateTotals();
+        RegeneratePaper();
     }
 
     partial void OnCustomFeeAmountChanged(decimal value)
     {
         UpdateTotals();
+        RegeneratePaper();
     }
 
     partial void OnCustomFeeIsPercentChanged(bool value)
     {
         OnPropertyChanged(nameof(CustomFeeSymbol));
         UpdateTotals();
+        RegeneratePaper();
     }
 
     partial void OnDiscountAmountChanged(decimal value)
     {
         UpdateTotals();
+        RegeneratePaper();
     }
 
     partial void OnDiscountIsPercentChanged(bool value)
     {
         OnPropertyChanged(nameof(DiscountSymbol));
         UpdateTotals();
+        RegeneratePaper();
     }
+
+    partial void OnModalIssueDateChanged(DateTimeOffset? value) => RegeneratePaper();
+    partial void OnModalDueDateChanged(DateTimeOffset? value) => RegeneratePaper();
 
     partial void OnSelectedCurrencyChanged(string value)
     {
@@ -491,10 +501,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             item.InvoiceCurrencyCode = code;
         }
         UpdateTotals();
-        if (IsShowingPreview)
-        {
+        RegeneratePaper();
+    }
+
+    /// <summary>
+    /// Re-renders the editable HTML paper from current form state, but only while the create/edit
+    /// modal is open (not view-only). Structured changes (customer, currency, dates, tax, fee,
+    /// discount, template) call this. Line-item text and notes edits happen directly in the page DOM
+    /// and must NOT call this, a reload would interrupt typing.
+    /// </summary>
+    private void RegeneratePaper()
+    {
+        if (IsCreateEditModalOpen && !IsViewOnly && SelectedTemplate != null)
             GeneratePreviewHtml();
-        }
     }
 
     private void OnLineItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -801,6 +820,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         SaveButtonText = "Preview";
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
+        GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }
 
@@ -1066,6 +1086,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(CompanyName));
         OnPropertyChanged(nameof(InvoiceNumberDisplay));
+        GeneratePreviewHtml();
         IsCreateEditModalOpen = true;
     }
 

@@ -78,110 +78,12 @@
                             <!-- EDITOR: paper + sidebar (create / continue) -->
                             <Grid ColumnDefinitions="*,320" IsVisible="{Binding !IsViewOnly}">
 
-                                <!-- PAPER -->
-                                <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="28"
-                                              Background="{DynamicResource BackgroundBrush}">
-                                    <Border Background="#FFFFFF" CornerRadius="6" Padding="44,40"
-                                            MaxWidth="760" HorizontalAlignment="Center" VerticalAlignment="Top"
-                                            BoxShadow="0 6 24 0 #33000000">
-                                        <StackPanel Spacing="0">
-
-                                            <!-- Header -->
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <StackPanel Grid.Column="0" Spacing="10">
-                                                    <Border BorderBrush="#C4CCD6" BorderThickness="1" CornerRadius="6"
-                                                            Padding="14,12" HorizontalAlignment="Left">
-                                                        <TextBlock Text="+ Add your logo" Foreground="#8A94A3" FontSize="12" />
-                                                    </Border>
-                                                    <TextBlock Text="{Binding CompanyName}" FontSize="18" FontWeight="Bold" Foreground="#1A1F2B" />
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                                    <TextBlock Text="INVOICE" FontSize="24" FontWeight="Bold" Foreground="#2F3A4D" HorizontalAlignment="Right" />
-                                                    <TextBlock Text="{Binding InvoiceNumberDisplay}" FontSize="13" Foreground="#5A6473" HorizontalAlignment="Right" Margin="0,4,0,0" />
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- Bill To + dates -->
-                                            <Grid ColumnDefinitions="*,Auto" Margin="0,28,0,0">
-                                                <StackPanel Grid.Column="0" Spacing="3">
-                                                    <TextBlock Text="BILL TO" Classes="paper-label" />
-                                                    <TextBlock Text="{Binding SelectedCustomer.Name}" FontWeight="SemiBold" Foreground="#1A1F2B" FontSize="14"
-                                                               IsVisible="{Binding SelectedCustomer, Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                                    <TextBlock Text="Pick a customer in the sidebar" Foreground="#B4BCC7" FontStyle="Italic"
-                                                               IsVisible="{Binding SelectedCustomer, Converter={x:Static ObjectConverters.IsNull}}" />
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" Spacing="6" HorizontalAlignment="Right">
-                                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                                        <TextBlock Text="Issue date" Classes="paper-label" VerticalAlignment="Center" Width="64" TextAlignment="Right" />
-                                                        <DatePicker SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" />
-                                                    </StackPanel>
-                                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                                        <TextBlock Text="Due date" Classes="paper-label" VerticalAlignment="Center" Width="64" TextAlignment="Right" />
-                                                        <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" />
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- Line items -->
-                                            <Grid ColumnDefinitions="*,72,96,96,28" Margin="0,28,0,0">
-                                                <TextBlock Grid.Column="0" Text="DESCRIPTION" Classes="paper-label" />
-                                                <TextBlock Grid.Column="1" Text="QTY" Classes="paper-label" TextAlignment="Right" />
-                                                <TextBlock Grid.Column="2" Text="RATE" Classes="paper-label" TextAlignment="Right" />
-                                                <TextBlock Grid.Column="3" Text="AMOUNT" Classes="paper-label" TextAlignment="Right" />
-                                            </Grid>
-                                            <Rectangle Height="1" Fill="#ECEFF3" Margin="0,5,0,0" />
-
-                                            <ItemsControl ItemsSource="{Binding LineItems}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="vm:LineItemDisplayModel">
-                                                        <Grid ColumnDefinitions="*,72,96,96,28" Margin="0,3">
-                                                            <TextBox Grid.Column="0" Classes="paper" Text="{Binding Description}" PlaceholderText="Item description" />
-                                                            <NumericUpDown Grid.Column="1" Classes="paper" Value="{Binding Quantity}" ShowButtonSpinner="False" Minimum="0" HorizontalContentAlignment="Right" />
-                                                            <NumericUpDown Grid.Column="2" Classes="paper" Value="{Binding UnitPrice}" ShowButtonSpinner="False" Minimum="0" FormatString="0.00" HorizontalContentAlignment="Right" />
-                                                            <TextBlock Grid.Column="3" Text="{Binding AmountFormatted}" Foreground="#1A1F2B" FontWeight="SemiBold" TextAlignment="Right" VerticalAlignment="Center" />
-                                                            <Button Grid.Column="4" Classes="icon-button" Padding="2" VerticalAlignment="Center"
-                                                                    Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
-                                                                    CommandParameter="{Binding}">
-                                                                <TextBlock Text="&#215;" Foreground="#B4BCC7" FontSize="16" />
-                                                            </Button>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-
-                                            <Button Classes="link-button" Content="+ Add line item" HorizontalAlignment="Left" Margin="0,8,0,0"
-                                                    Foreground="#2F6BFF" Command="{Binding AddLineItemCommand}" />
-
-                                            <!-- Totals + notes -->
-                                            <Grid ColumnDefinitions="*,240" Margin="0,20,0,0">
-                                                <StackPanel Grid.Column="0" Spacing="3">
-                                                    <TextBlock Text="NOTES" Classes="paper-label" />
-                                                    <TextBox Classes="paper" Text="{Binding ModalNotes}" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="Notes for this invoice..." MaxLength="500" />
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1" Spacing="4">
-                                                    <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Subtotal" Foreground="#5A6473" />
-                                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" Foreground="#1A1F2B" />
-                                                    </Grid>
-                                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Tax" Foreground="#5A6473" VerticalAlignment="Center" />
-                                                        <NumericUpDown Grid.Column="1" Classes="paper" Value="{Binding TaxRate}" ShowButtonSpinner="False" Minimum="0" Maximum="100" FormatString="0.##" Width="58" HorizontalAlignment="Left" Margin="6,0,0,0" />
-                                                        <TextBlock Grid.Column="2" Text="{Binding TaxAmountFormatted}" Foreground="#1A1F2B" VerticalAlignment="Center" />
-                                                    </Grid>
-                                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSecurityDeposit}">
-                                                        <TextBlock Grid.Column="0" Text="Security deposit" Foreground="#5A6473" />
-                                                        <TextBlock Grid.Column="1" Text="{Binding SecurityDepositFormatted}" Foreground="#1A1F2B" />
-                                                    </Grid>
-                                                    <Rectangle Height="1" Fill="#ECEFF3" Margin="0,6" />
-                                                    <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Total" FontWeight="Bold" FontSize="16" Foreground="#1A1F2B" />
-                                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontWeight="Bold" FontSize="16" Foreground="#1A1F2B" />
-                                                    </Grid>
-                                                </StackPanel>
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
-                                </ScrollViewer>
+                                <!-- PAPER: the real customer-facing invoice HTML, edited in place -->
+                                <controls:InvoicePreviewControl x:Name="EditorPreview"
+                                                                Grid.Column="0"
+                                                                Html="{Binding PreviewHtml}"
+                                                                IsEditable="True"
+                                                                OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}" />
 
                                 <!-- SIDEBAR -->
                                 <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
@@ -219,6 +121,19 @@
                                                 <TextBlock Text="CURRENCY" Classes="sidebar-label" />
                                                 <ComboBox ItemsSource="{Binding AvailableCurrencies}" SelectedItem="{Binding SelectedCurrency}"
                                                           Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+
+                                            <StackPanel>
+                                                <TextBlock Text="DATES" Classes="sidebar-label" />
+                                                <Grid ColumnDefinitions="*,8,*">
+                                                    <DatePicker Grid.Column="0" SelectedDate="{Binding ModalIssueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                    <DatePicker Grid.Column="2" SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <StackPanel>
+                                                <TextBlock Text="TAX RATE (%)" Classes="sidebar-label" />
+                                                <NumericUpDown Value="{Binding TaxRate}" ShowButtonSpinner="False" Minimum="0" Maximum="100" FormatString="0.##" HorizontalAlignment="Stretch" />
                                             </StackPanel>
 
                                             <!-- Status (edit mode) -->
