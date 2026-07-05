@@ -150,6 +150,13 @@ public partial class App
                         {
                             await CompanyManager.SaveCompanyAsync();
                             ArgoBooks.Core.Services.RecurringInvoiceService.RaiseGenerated(generatedRecurring.Count);
+                            var recurringCount = generatedRecurring.Count;
+                            AddNotification(
+                                "Recurring invoices",
+                                recurringCount == 1
+                                    ? "1 recurring invoice was added to your drafts."
+                                    : $"{recurringCount} recurring invoices were added to your drafts.",
+                                NotificationType.Info);
                         }
                     }
 
