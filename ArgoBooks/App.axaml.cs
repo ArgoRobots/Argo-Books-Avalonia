@@ -262,9 +262,16 @@ public partial class App : Application
     /// <param name="title">The notification title.</param>
     /// <param name="message">The notification message.</param>
     /// <param name="type">The notification type.</param>
-    public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
+    public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info,
+        Action? onClick = null)
     {
-        _appShellViewModel?.AddNotification(title, message, type);
+        _appShellViewModel?.AddNotification(title, message, type, onClick);
+    }
+
+    /// <summary>Navigates to the Invoices page and selects its Recurring tab (tab index 3).</summary>
+    public static void OpenRecurringInvoicesTab()
+    {
+        NavigationService?.NavigateTo("Invoices", new Dictionary<string, object?> { ["selectedTabIndex"] = 3 });
     }
 
     /// <summary>
@@ -3716,6 +3723,11 @@ public partial class App : Application
             {
                 _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
                 _invoicesPageViewModel.ApplyHighlight();
+            }
+            else if (param is Dictionary<string, object?> dict
+                && dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
+            {
+                _invoicesPageViewModel.SelectedTabIndex = index;
             }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });

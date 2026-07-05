@@ -1211,13 +1211,15 @@ public partial class AppShellViewModel : ViewModelBase
     /// <param name="title">Notification title.</param>
     /// <param name="message">Notification message.</param>
     /// <param name="type">Notification type.</param>
-    public void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
+    public void AddNotification(string title, string message, NotificationType type = NotificationType.Info,
+        Action? onClick = null)
     {
         HeaderViewModel.AddNotification(new NotificationItem
         {
             Title = title,
             Message = message,
-            Type = type
+            Type = type,
+            OnClick = onClick
         });
     }
 }

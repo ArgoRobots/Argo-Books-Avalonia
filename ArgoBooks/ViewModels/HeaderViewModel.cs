@@ -718,6 +718,11 @@ public class NotificationItem : ObservableObject
     public NotificationType Type { get; set; }
 
     /// <summary>
+    /// Optional action run when the notification is clicked (e.g. navigate to the related page).
+    /// </summary>
+    public Action? OnClick { get; set; }
+
+    /// <summary>
     /// Whether the notification has been read.
     /// </summary>
     public bool IsRead

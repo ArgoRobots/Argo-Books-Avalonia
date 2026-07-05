@@ -29,7 +29,20 @@
                 <TabItem Header="{loc:Loc 'All Invoices'}" />
                 <TabItem Header="{loc:Loc Drafts}" />
                 <TabItem Header="Sent" />
-                <TabItem Header="Recurring" />
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                            <TextBlock Text="Recurring" VerticalAlignment="Center" />
+                            <!-- Count of recurring drafts waiting to be sent -->
+                            <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="9"
+                                    MinWidth="18" Height="18" Padding="5,0" VerticalAlignment="Center"
+                                    IsVisible="{Binding HasPendingRecurring}">
+                                <TextBlock Text="{Binding PendingRecurringCount}" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+                </TabItem>
             </TabControl>
         </Border>
 
@@ -370,10 +383,64 @@
                 </table:ArgoTable.RowsContent>
             </table:ArgoTable>
 
-            <!-- Recurring schedules (shown on the Recurring tab) -->
-            <table:ArgoTable Grid.Row="1"
-                             IsVisible="{Binding IsRecurringTab}"
-                             Title="Recurring invoices"
+            <!-- Recurring tab: "Waiting to send" list above the schedules table -->
+            <Grid Grid.Row="1" IsVisible="{Binding IsRecurringTab}" RowDefinitions="Auto,*" RowSpacing="16">
+
+                <!-- Recurring drafts waiting to be sent (only shown when there are any) -->
+                <Border Grid.Row="0" IsVisible="{Binding HasPendingRecurring}"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto" Margin="20,16,20,8">
+                            <TextBlock Grid.Column="0" Text="Waiting to send"
+                                       FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Text="{Binding PendingRecurringCount, StringFormat='{}{0} to send'}" />
+                        </Grid>
+                        <!-- Column headers -->
+                        <Grid ColumnDefinitions="1.4*,2*,1.2*,Auto" Margin="20,0,20,6">
+                            <TextBlock Grid.Column="0" Text="INVOICE #" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Grid.Column="1" Text="CUSTOMER" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Grid.Column="2" Text="AMOUNT" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Grid.Column="3" Text="STATUS" Width="150" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </Grid>
+                        <ScrollViewer MaxHeight="320" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding PendingRecurringInvoices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:InvoiceDisplayItem">
+                                        <!-- Whole row is clickable: opens the draft in the editor/preview so it can be sent. -->
+                                        <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                CornerRadius="0" Padding="20,12"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                                ToolTip.Tip="Open to review and send"
+                                                Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="1.4*,2*,1.2*,Auto" VerticalAlignment="Center">
+                                                <TextBlock Grid.Column="0" Text="{Binding Id}" VerticalAlignment="Center" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CustomerName}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="2" Text="{Binding TotalFormatted}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <Border Grid.Column="3" Width="150" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                    <Border Background="{DynamicResource WarningLightBrush}" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                            <PathIcon Data="{x:Static icons:Icons.Send}" Width="12" Height="12" Foreground="{DynamicResource WarningTextBrush}" />
+                                                            <TextBlock Text="Needs to be sent" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource WarningTextBrush}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recurring schedules -->
+                <table:ArgoTable Grid.Row="1"
+                                 Title="Recurring invoices"
                              ItemsSource="{Binding Schedules}"
                              ShowSearch="False"
                              ShowFilterButton="False"
@@ -477,6 +544,7 @@
                     </ItemsControl>
                 </table:ArgoTable.RowsContent>
             </table:ArgoTable>
+            </Grid>
         </Grid>
     </Grid>
 

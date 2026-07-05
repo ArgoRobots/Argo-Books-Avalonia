@@ -156,7 +156,8 @@ public partial class App
                                 recurringCount == 1
                                     ? "1 recurring invoice was added to your drafts."
                                     : $"{recurringCount} recurring invoices were added to your drafts.",
-                                NotificationType.Info);
+                                NotificationType.Info,
+                                OpenRecurringInvoicesTab);
                         }
 
                         // Remind about recurring drafts still waiting to be sent: ones generated on an
@@ -172,7 +173,8 @@ public partial class App
                                 awaitingSend == 1
                                     ? "1 recurring invoice is waiting to be sent."
                                     : $"{awaitingSend} recurring invoices are waiting to be sent.",
-                                NotificationType.Warning);
+                                NotificationType.Warning,
+                                OpenRecurringInvoicesTab);
                         }
                     }
 

@@ -385,6 +385,16 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     public bool HasSchedules => Schedules.Count > 0;
 
+    /// <summary>Recurring invoices generated as drafts that still need to be sent, shown in the
+    /// "Waiting to send" section of the Recurring tab (and hidden from All/Drafts until sent).</summary>
+    public BatchObservableCollection<InvoiceDisplayItem> PendingRecurringInvoices { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPendingRecurring))]
+    private int _pendingRecurringCount;
+
+    public bool HasPendingRecurring => PendingRecurringCount > 0;
+
     public ObservableCollection<string> StatusOptions { get; } = new(InvoiceStatusExtensions.GetFilterOptions());
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
@@ -616,7 +626,43 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         _allInvoices.AddRange(companyData.Invoices);
         UpdateStatistics();
         FilterInvoices();
+        LoadPendingRecurring();
         UpdateSentInvoicesCount();
+    }
+
+    /// <summary>
+    /// Builds the "Waiting to send" list for the Recurring tab: recurring-generated drafts that
+    /// haven't been sent yet. Newest first. Drives the tab count badge too.
+    /// </summary>
+    private void LoadPendingRecurring()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        var items = new List<InvoiceDisplayItem>();
+        if (companyData?.Invoices != null)
+        {
+            foreach (var invoice in companyData.Invoices.Where(IsPendingRecurring).OrderByDescending(i => i.IssueDate))
+            {
+                var customer = companyData.GetCustomer(invoice.CustomerId);
+                items.Add(new InvoiceDisplayItem
+                {
+                    Id = invoice.Id,
+                    InvoiceNumber = invoice.InvoiceNumber,
+                    CustomerId = invoice.CustomerId,
+                    CustomerName = customer?.Name ?? "Unknown Customer",
+                    CustomerInitials = GetInitials(customer?.Name ?? "?"),
+                    IssueDate = invoice.IssueDate,
+                    DueDate = invoice.DueDate,
+                    Total = invoice.Total,
+                    TotalUSD = invoice.EffectiveTotalUSD,
+                    OriginalCurrency = invoice.OriginalCurrency,
+                    Status = invoice.Status,
+                    StatusDisplay = GetStatusDisplay(invoice),
+                    IsRecurring = true
+                });
+            }
+        }
+        PendingRecurringInvoices.ReplaceAll(items);
+        PendingRecurringCount = items.Count;
     }
 
     private void LoadCustomerOptions()
@@ -669,10 +715,19 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         LoadCustomerOptions();
     }
 
+    /// <summary>
+    /// A recurring-generated invoice still sitting as an un-sent draft. These are surfaced in the
+    /// Recurring tab's "Waiting to send" list instead of the All/Drafts tabs, so the user actions
+    /// them there. Once sent they become normal Sent invoices and appear in the usual tabs.
+    /// </summary>
+    private static bool IsPendingRecurring(Invoice invoice) =>
+        invoice.Status == InvoiceStatus.Draft && !string.IsNullOrEmpty(invoice.RecurringInvoiceId);
+
     private void FilterInvoices()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        IEnumerable<Invoice> filtered = _allInvoices;
+        // Waiting-to-send recurring drafts live only in the Recurring tab, not All/Drafts.
+        IEnumerable<Invoice> filtered = _allInvoices.Where(i => !IsPendingRecurring(i));
 
         // Apply tab filter
         filtered = SelectedTab switch

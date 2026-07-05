@@ -217,6 +217,9 @@ public partial class NotificationPanelViewModel : ViewModelBase
 
         // Close the panel
         Close();
+
+        // Run the notification's navigation action, if any (e.g. open the related page).
+        notification.OnClick?.Invoke();
     }
 
 }
