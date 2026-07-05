@@ -1037,14 +1037,28 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         if (item == null) return;
         var companyData = App.CompanyManager?.CompanyData;
         var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
-        if (schedule == null) return;
+        if (companyData == null || schedule == null) return;
 
-        schedule.Status = schedule.Status == RecurringInvoiceStatus.Paused
-            ? RecurringInvoiceStatus.Active
-            : RecurringInvoiceStatus.Paused;
+        var pausing = schedule.Status != RecurringInvoiceStatus.Paused;
+        // Confirm first: the buttons sit right next to each other and are easy to hit by accident.
+        var confirmed = await ConfirmScheduleActionAsync(
+            pausing ? "Pause recurring invoice?" : "Resume recurring invoice?",
+            pausing
+                ? "It will stop generating new invoices until you resume it."
+                : "It will start generating invoices again on its schedule.",
+            pausing ? "Pause" : "Resume");
+        if (!confirmed) return;
 
+        var oldStatus = schedule.Status;
+        var newStatus = pausing ? RecurringInvoiceStatus.Paused : RecurringInvoiceStatus.Active;
+        schedule.Status = newStatus;
+        companyData.MarkAsModified();
         LoadSchedules();
-        await PersistAsync();
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            pausing ? "Pause recurring invoice" : "Resume recurring invoice",
+            () => { schedule.Status = oldStatus; companyData.MarkAsModified(); LoadSchedules(); },
+            () => { schedule.Status = newStatus; companyData.MarkAsModified(); LoadSchedules(); }));
     }
 
     [RelayCommand]
@@ -1055,18 +1069,54 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
         if (companyData == null || schedule == null) return;
 
+        var confirmed = await ConfirmScheduleActionAsync(
+            "Delete recurring invoice?",
+            "This stops it from generating new invoices. Invoices it already created are kept.",
+            "Delete");
+        if (!confirmed) return;
+
         // Removes only the schedule; invoices already generated from it are left untouched.
+        var deleted = schedule;
+        var index = companyData.RecurringInvoices.IndexOf(schedule);
         companyData.RecurringInvoices.Remove(schedule);
+        companyData.MarkAsModified();
         LoadSchedules();
-        await PersistAsync();
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            "Delete recurring invoice",
+            () =>
+            {
+                if (!companyData.RecurringInvoices.Contains(deleted))
+                {
+                    if (index >= 0 && index <= companyData.RecurringInvoices.Count)
+                        companyData.RecurringInvoices.Insert(index, deleted);
+                    else
+                        companyData.RecurringInvoices.Add(deleted);
+                }
+                companyData.MarkAsModified();
+                LoadSchedules();
+            },
+            () =>
+            {
+                companyData.RecurringInvoices.Remove(deleted);
+                companyData.MarkAsModified();
+                LoadSchedules();
+            }));
     }
 
-    private static async Task PersistAsync()
+    /// <summary>Shows a Primary/Cancel confirmation dialog; returns true only if the user confirmed.</summary>
+    private static async Task<bool> ConfirmScheduleActionAsync(string title, string message, string primaryButton)
     {
-        if (App.CompanyManager == null) return;
-        App.SuppressNextSavedFeedback();
-        try { await App.CompanyManager.SaveCompanyAsync(); }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Save failed: {ex.Message}"); }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return true;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = title,
+            Message = message,
+            PrimaryButtonText = primaryButton,
+            CancelButtonText = "Cancel"
+        });
+        return result == ConfirmationResult.Primary;
     }
 
     [RelayCommand]
