@@ -51,6 +51,8 @@
         <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}"
                                ClosingCommand="{Binding RequestCloseCreateEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
+                <Panel>
+                <!-- Big editor. Hidden on success / sending so those show as a normal-sized card below. -->
                 <Border HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
                         Width="1040"
@@ -60,6 +62,12 @@
                         CornerRadius="12"
                         ClipToBounds="True"
                         BoxShadow="0 8 32 0 #40000000">
+                    <Border.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsShowingSuccess" />
+                            <Binding Path="!IsSending" />
+                        </MultiBinding>
+                    </Border.IsVisible>
                     <Grid RowDefinitions="Auto,*">
 
                         <!-- Header -->
@@ -243,28 +251,40 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Success overlay -->
-                            <controls:SuccessAnimation Title="{Binding SuccessTitle}"
-                                                       Message="{Binding SuccessMessage}"
-                                                       ShowContinueButton="True"
-                                                       ContinueButtonText="{loc:Loc Done}"
-                                                       ContinueButtonDelayMs="300"
-                                                       ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
-                                                       IsPlaying="{Binding IsShowingSuccess}"
-                                                       IsVisible="{Binding IsShowingSuccess}" />
-
-                            <!-- Sending overlay -->
-                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="12" Cursor="Arrow"
-                                    IsVisible="{Binding IsSending}">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20">
-                                    <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
-                                    <TextBlock Text="{loc:Loc 'Sending invoice...'}" FontSize="16" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-                                    <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
                         </Grid>
                     </Grid>
                 </Border>
+
+                <!-- Success / sending: a normal-sized centered card, not the full editor width. -->
+                <Border Width="440" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24"
+                        Background="{DynamicResource SurfaceBrush}" CornerRadius="12" ClipToBounds="True"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Border.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                            <Binding Path="IsShowingSuccess" />
+                            <Binding Path="IsSending" />
+                        </MultiBinding>
+                    </Border.IsVisible>
+                    <Panel MinHeight="300">
+                        <!-- Success -->
+                        <controls:SuccessAnimation Title="{Binding SuccessTitle}"
+                                                   Message="{Binding SuccessMessage}"
+                                                   ShowContinueButton="True"
+                                                   ContinueButtonText="{loc:Loc Done}"
+                                                   ContinueButtonDelayMs="300"
+                                                   ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
+                                                   IsPlaying="{Binding IsShowingSuccess}"
+                                                   IsVisible="{Binding IsShowingSuccess}" />
+                        <!-- Sending -->
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20" Margin="24"
+                                    IsVisible="{Binding IsSending}">
+                            <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                            <TextBlock Text="{loc:Loc 'Sending invoice...'}" FontSize="16" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                            <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Panel>
+                </Border>
+                </Panel>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 

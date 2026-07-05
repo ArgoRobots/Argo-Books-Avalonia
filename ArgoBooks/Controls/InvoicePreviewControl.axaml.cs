@@ -846,9 +846,13 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         newScale = Math.max(0.25, Math.min(5.0, newScale));
         wrapper.dataset.scale = newScale;
         window.__isInFitMode = false;
-        // User-initiated zoom, content may overflow either direction
-        // post-zoom, so restore scrollbars.
-        document.body.style.overflow = 'auto';
+        // Show scrollbars only if the SCALED content actually overflows the viewport. transform:scale
+        // doesn't shrink the layout box, so a plain overflow:auto shows phantom scrollbars (e.g. at
+        // 1:1 when the paper visibly fits). Compare the scaled size to the viewport instead.
+        var scaledW = wrapper.scrollWidth * newScale;
+        var scaledH = wrapper.scrollHeight * newScale;
+        var fits = scaledW <= window.innerWidth + 1 && scaledH <= window.innerHeight + 1;
+        document.body.style.overflow = fits ? 'hidden' : 'auto';
 
         // Calculate scroll adjustment to keep the point under cursor.
         // Assumes centering offset doesn't change much across the zoom
