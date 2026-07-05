@@ -386,10 +386,11 @@
             <!-- Recurring tab: "Waiting to send" list above the schedules table -->
             <Grid Grid.Row="1" IsVisible="{Binding IsRecurringTab}" RowDefinitions="Auto,*" RowSpacing="16">
 
-                <!-- Recurring drafts waiting to be sent (only shown when there are any) -->
+                <!-- Recurring drafts waiting to be sent (only shown when there are any). ClipToBounds so a
+                     row's square hover highlight can't overflow the card's rounded bottom corners. -->
                 <Border Grid.Row="0" IsVisible="{Binding HasPendingRecurring}"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1" CornerRadius="12">
+                        BorderThickness="1" CornerRadius="12" ClipToBounds="True">
                     <StackPanel>
                         <Grid ColumnDefinitions="*,Auto" Margin="20,16,20,8">
                             <TextBlock Grid.Column="0" Text="Waiting to send"

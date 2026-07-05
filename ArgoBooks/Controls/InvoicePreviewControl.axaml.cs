@@ -394,7 +394,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         val.setAttribute('data-ph', '0');
         var isZeroVal = !raw || parseFloat(raw) === 0;
         val.textContent = isZeroVal ? '' : raw;
-        val.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;text-align:right;padding:0 6px;min-width:44px;flex:1 1 auto;outline:none';
+        // Vertically center via line-height (matches the 30px box) rather than display:flex - an empty
+        // contenteditable flex box renders the caret at the top instead of centered.
+        val.style.cssText = 'line-height:30px;text-align:right;padding:0 6px;min-width:44px;flex:1 1 auto;outline:none;white-space:nowrap;overflow:hidden';
         box.appendChild(val);
 
         if (isPercent) {
