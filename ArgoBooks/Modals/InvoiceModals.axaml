@@ -79,7 +79,14 @@
                         <Grid Grid.Row="1">
 
                             <!-- EDITOR: paper + sidebar (create / continue) -->
-                            <Grid ColumnDefinitions="*,320" IsVisible="{Binding !IsViewOnly}">
+                            <Grid ColumnDefinitions="*,320">
+                                <Grid.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!IsViewOnly" />
+                                        <Binding Path="!IsShowingSuccess" />
+                                        <Binding Path="!IsSending" />
+                                    </MultiBinding>
+                                </Grid.IsVisible>
 
                                 <!-- PAPER: the real customer-facing invoice HTML, edited in place -->
                                 <controls:InvoicePreviewControl x:Name="EditorPreview"
@@ -91,10 +98,14 @@
                                                                 TotalsConfigJson="{Binding TotalsConfigJson}"
                                                                 OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
                                     <controls:InvoicePreviewControl.IsVisible>
+                                        <!-- Also hidden on success / while sending so the native WebView (which renders
+                                             above Avalonia content) doesn't cover the success + sending overlays. -->
                                         <MultiBinding Converter="{x:Static BoolConverters.And}">
                                             <Binding Path="IsCreateEditModalOpen" />
                                             <Binding Path="!IsViewOnly" />
                                             <Binding Path="!IsNestedModalOpen" />
+                                            <Binding Path="!IsShowingSuccess" />
+                                            <Binding Path="!IsSending" />
                                         </MultiBinding>
                                     </controls:InvoicePreviewControl.IsVisible>
                                 </controls:InvoicePreviewControl>
@@ -188,9 +199,15 @@
                                                         Click="OnPreviewClick" IsVisible="{Binding !IsEditorPreviewing}" />
                                                 <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft"
                                                         Click="OnSaveAsDraftClick" IsVisible="{Binding !IsEditorPreviewing}" />
-                                                <!-- Preview mode -->
-                                                <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Create &amp; send"
-                                                        Command="{Binding CreateAndSendInvoiceCommand}" IsVisible="{Binding IsEditorPreviewing}" />
+                                                <!-- Preview mode. The send button carries a paper-plane icon so it never reads
+                                                     as the same button as "Preview" (which sat in the same spot a click earlier). -->
+                                                <Button Classes="primary-button" HorizontalAlignment="Stretch"
+                                                        Command="{Binding CreateAndSendInvoiceCommand}" IsVisible="{Binding IsEditorPreviewing}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                                        <PathIcon Data="{x:Static icons:Icons.Send}" Width="15" Height="15" />
+                                                        <TextBlock Text="Create &amp; send" />
+                                                    </StackPanel>
+                                                </Button>
                                                 <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Back to edit"
                                                         Command="{Binding BackToEditorCommand}" IsVisible="{Binding IsEditorPreviewing}" />
                                             </StackPanel>

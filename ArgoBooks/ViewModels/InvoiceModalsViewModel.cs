@@ -1719,6 +1719,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
+        // Confirm before sending: this emails the customer and can't be undone. Verify the recipient
+        // has an email up front so the confirmation can show exactly where it's going.
+        var recipient = companyData.GetCustomer(SelectedCustomer.Id);
+        if (recipient == null || string.IsNullOrWhiteSpace(recipient.Email))
+        {
+            await ShowSendErrorAsync("Customer does not have an email address.".Translate());
+            return;
+        }
+
+        if (!await ConfirmSendAsync(recipient.Name, recipient.Email, Total))
+        {
+            return;
+        }
+
         // Enforce free-tier invoice send limit via server
         if (!HasPremium)
         {
@@ -2075,6 +2089,37 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         HasSendError = true;
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Confirms an irreversible send, showing exactly who it goes to and for how much. Returns true
+    /// only if the user chose "Send invoice". Hides the native WebView while the dialog is up so it
+    /// doesn't render over the dialog (and to avoid the message-box deadlock the paper otherwise
+    /// causes).
+    /// </summary>
+    private async Task<bool> ConfirmSendAsync(string customerName, string customerEmail, decimal total)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return true; // no dialog host available; don't block the send
+
+        IsNestedModalOpen = true;
+        try
+        {
+            var amount = $"{InvoiceCurrencyInfo.Format(total)} {SelectedCurrencyCode}";
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Send invoice?".Translate(),
+                Message = "This invoice for {0} will be emailed to {1} ({2}). This can't be undone."
+                    .TranslateFormat(amount, customerName, customerEmail),
+                PrimaryButtonText = "Send invoice".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            });
+            return result == ConfirmationResult.Primary;
+        }
+        finally
+        {
+            IsNestedModalOpen = false;
+        }
     }
 
     [RelayCommand]
