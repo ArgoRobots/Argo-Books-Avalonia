@@ -179,7 +179,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         '#__prodDrop .it:hover,#__prodDrop .it.hl{background:#eff4ff}' +
         '#__prodDrop .empty{padding:12px;color:#9ca3af}' +
         '#__prodDrop .add{padding:10px 12px;color:#2f6bff;font-weight:600;cursor:pointer;border-top:1px solid #eef1f5}' +
-        '#__prodDrop .add:hover{background:#f5f8ff}';
+        '#__prodDrop .add:hover{background:#f5f8ff}' +
+        // A zero tax/shipping/discount/fee value shows as a faded placeholder instead of a literal 0.
+        '[data-total-input]:empty:before{content:attr(data-ph);color:#b0b7c3;pointer-events:none}';
     document.head.appendChild(style);
 
     function post(obj) {
@@ -388,7 +390,10 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         var val = document.createElement('span');
         val.setAttribute('contenteditable', 'true');
         val.setAttribute('data-total-input', fieldName);
-        val.textContent = raw;
+        // A zero value renders empty so the '0' shows as a faded placeholder (see CSS) instead of real text.
+        val.setAttribute('data-ph', '0');
+        var isZeroVal = !raw || parseFloat(raw) === 0;
+        val.textContent = isZeroVal ? '' : raw;
         val.style.cssText = 'display:flex;align-items:center;justify-content:flex-end;text-align:right;padding:0 6px;min-width:44px;flex:1 1 auto;outline:none';
         box.appendChild(val);
 
@@ -404,6 +409,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
 
         var t;
         val.addEventListener('input', function() {
+            // Keep the element truly empty when cleared so the :empty placeholder shows (browsers can
+            // leave a stray <br> behind after deleting the last character).
+            if (!val.textContent.trim()) val.innerHTML = '';
             clearTimeout(t);
             t = setTimeout(function() { post({ type:'invoiceEdit', field: fieldName, index: null, value: val.textContent }); }, 150);
         });

@@ -245,17 +245,22 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 if (index is int ri && ri >= 0 && ri < LineItems.Count && TryParsePaperNumber(value, out var r))
                     LineItems[ri].UnitPrice = r;
                 break;
+            // An empty box means the placeholder is showing, i.e. zero (not "leave unchanged").
             case "taxValue":
-                if (TryParsePaperNumber(value, out var tax)) TaxRate = tax;
+                if (string.IsNullOrWhiteSpace(value)) TaxRate = 0;
+                else if (TryParsePaperNumber(value, out var tax)) TaxRate = tax;
                 break;
             case "shippingValue":
-                if (TryParsePaperNumber(value, out var ship)) ShippingAmount = ship;
+                if (string.IsNullOrWhiteSpace(value)) ShippingAmount = 0;
+                else if (TryParsePaperNumber(value, out var ship)) ShippingAmount = ship;
                 break;
             case "discountValue":
-                if (TryParsePaperNumber(value, out var disc)) DiscountAmount = disc;
+                if (string.IsNullOrWhiteSpace(value)) DiscountAmount = 0;
+                else if (TryParsePaperNumber(value, out var disc)) DiscountAmount = disc;
                 break;
             case "feeValue":
-                if (TryParsePaperNumber(value, out var fee)) CustomFeeAmount = fee;
+                if (string.IsNullOrWhiteSpace(value)) CustomFeeAmount = 0;
+                else if (TryParsePaperNumber(value, out var fee)) CustomFeeAmount = fee;
                 break;
         }
     }
