@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
@@ -232,6 +233,106 @@ public class CompanyManagerTests : IDisposable
         {
             await _manager.CloseCompanyAsync();
             if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
+
+    #endregion
+
+    #region ChangeCustomerId Cascade Tests
+
+    [Fact]
+    public async Task ChangeCustomerId_CascadesToRecurringScheduleTemplate()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(path, "Acme");
+            var data = _manager.CompanyData!;
+            var customer = new Customer { Id = "CUST-1", Name = "Acme Corp" };
+            data.Customers.Add(customer);
+            data.RecurringInvoices.Add(new RecurringInvoice
+            {
+                Id = "REC-INV-00001",
+                CustomerId = "CUST-1",
+                // The generator clones this template per occurrence, so its CustomerId must follow a rename.
+                Template = new Invoice { CustomerId = "CUST-1" }
+            });
+
+            _manager.ChangeCustomerId(customer, "CUST-2");
+
+            var schedule = data.RecurringInvoices[0];
+            Assert.Equal("CUST-2", schedule.CustomerId);
+            Assert.Equal("CUST-2", schedule.Template!.CustomerId);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    #endregion
+
+    #region Cross-Instance Lock Tests
+
+    private static CompanyManager NewManager()
+    {
+        var platformService = new MockPlatformService();
+        var footerService = new FooterService();
+        var compressionService = new CompressionService();
+        var fileService = new FileService(compressionService, footerService);
+        var settingsService = new GlobalSettingsService(platformService);
+        return new CompanyManager(fileService, settingsService, footerService);
+    }
+
+    [Fact]
+    public async Task CreateCompany_TargetOpenInAnotherInstance_Throws()
+    {
+        var sharedPath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        var other = NewManager();
+        try
+        {
+            // A second running instance holds the company open (and its cross-instance lock).
+            await other.CreateCompanyAsync(sharedPath, "Held");
+
+            // Creating (which overwrites) onto that same held path must be refused, not silently clobber it.
+            await Assert.ThrowsAsync<CompanyAlreadyOpenException>(
+                () => _manager.CreateCompanyAsync(sharedPath, "Intruder"));
+        }
+        finally
+        {
+            await other.CloseCompanyAsync();
+            other.Dispose();
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(sharedPath)) File.Delete(sharedPath);
+        }
+    }
+
+    [Fact]
+    public async Task SaveCompanyAs_TargetOpenInAnotherInstance_Throws()
+    {
+        var heldPath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        var minePath = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        var other = NewManager();
+        try
+        {
+            await other.CreateCompanyAsync(heldPath, "Held");
+            await _manager.CreateCompanyAsync(minePath, "Mine");
+
+            // Save As onto a path another instance holds open must be refused.
+            await Assert.ThrowsAsync<CompanyAlreadyOpenException>(
+                () => _manager.SaveCompanyAsAsync(heldPath));
+
+            // And our own company must be left pointing at its original file, untouched.
+            Assert.Equal(minePath, _manager.CurrentFilePath);
+        }
+        finally
+        {
+            await other.CloseCompanyAsync();
+            other.Dispose();
+            await _manager.CloseCompanyAsync();
+            foreach (var p in new[] { heldPath, minePath })
+                if (File.Exists(p)) File.Delete(p);
         }
     }
 

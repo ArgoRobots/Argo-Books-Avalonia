@@ -1093,7 +1093,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))
         {
-            TemplateOptions.Add(template);
+            // Add a per-session working copy, NOT the shared object. Editing the logo on the invoice
+            // paper (add/remove) mutates the selected template; if that were the persisted instance it
+            // would silently rewrite the branding for every other invoice using it and the Template
+            // Designer. Preserve the original Id so the invoice's TemplateId still round-trips.
+            var working = template.Clone();
+            working.Id = template.Id;
+            TemplateOptions.Add(working);
         }
 
         // Select default template or first one
@@ -2369,8 +2375,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Frequency = RecurringFrequency,
             StartDate = startDate,
             EndDate = RecurringEndDate?.Date,
-            NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency),
-            PaymentTerms = "Net 30",
+            NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency, startDate.Day),
+            // Inherit the terms the user set on this invoice (its issue->due span) instead of a fixed default.
+            PaymentTerms = RecurringInvoiceService.FormatPaymentTerms(invoice.IssueDate, invoice.DueDate),
             Status = RecurringInvoiceStatus.Active,
             Template = RecurringInvoiceService.BuildTemplateFrom(invoice)
         };

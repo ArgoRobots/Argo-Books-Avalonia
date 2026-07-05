@@ -68,8 +68,61 @@ public class RecurringInvoiceServiceTests
     [InlineData("Due on receipt", 0)]
     [InlineData("nonsense", 30)]
     [InlineData(null, 30)]
+    // Arbitrary "Net N" offsets must round-trip, not collapse to the default 30.
+    [InlineData("Net 20", 20)]
+    [InlineData("net 45", 45)]
+    [InlineData("Net 90", 90)]
     public void PaymentTermsDays_Parses(string? terms, int days)
         => Assert.Equal(days, RecurringInvoiceService.PaymentTermsDays(terms));
+
+    [Theory]
+    [InlineData(0, "Due on receipt")]
+    [InlineData(7, "Net 7")]
+    [InlineData(15, "Net 15")]
+    [InlineData(20, "Net 20")]
+    [InlineData(30, "Net 30")]
+    public void FormatPaymentTerms_DerivesTermsFromTheInvoiceDates(int offsetDays, string expected)
+    {
+        var issue = new DateTime(2026, 1, 1);
+        Assert.Equal(expected, RecurringInvoiceService.FormatPaymentTerms(issue, issue.AddDays(offsetDays)));
+    }
+
+    [Fact]
+    public void FormatPaymentTerms_RoundTripsThroughPaymentTermsDays()
+    {
+        var issue = new DateTime(2026, 3, 10);
+        var due = issue.AddDays(21);
+        var terms = RecurringInvoiceService.FormatPaymentTerms(issue, due);
+        Assert.Equal(21, RecurringInvoiceService.PaymentTermsDays(terms));
+    }
+
+    [Fact]
+    public void AdvanceDate_Monthly_AnchorDayRecoversAfterAShortMonth()
+    {
+        // Anchored on the 31st: Jan 31 -> Feb 28 (clamped) must then return to Mar 31,
+        // not stay stuck on the 28th for the rest of the schedule's life.
+        var feb = RecurringInvoiceService.AdvanceDate(new DateTime(2026, 1, 31), Frequency.Monthly, anchorDay: 31);
+        Assert.Equal(new DateTime(2026, 2, 28), feb);
+
+        var mar = RecurringInvoiceService.AdvanceDate(feb, Frequency.Monthly, anchorDay: 31);
+        Assert.Equal(new DateTime(2026, 3, 31), mar);
+    }
+
+    [Fact]
+    public void GenerateDueInvoices_MonthEndAnchor_DoesNotDriftEarlier()
+    {
+        var data = new CompanyData();
+        // Starts on Jan 31. Occurrences due by Apr 15: Jan 31, Feb 28, Mar 31 (Apr 30 is not yet due).
+        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 31), Frequency.Monthly));
+
+        var generated = RecurringInvoiceService.GenerateDueInvoices(data, new DateTime(2026, 4, 15));
+
+        Assert.Equal(3, generated.Count);
+        Assert.Equal(new DateTime(2026, 1, 31), generated[0].IssueDate);
+        Assert.Equal(new DateTime(2026, 2, 28), generated[1].IssueDate);
+        Assert.Equal(new DateTime(2026, 3, 31), generated[2].IssueDate); // recovered to the 31st
+        Assert.Equal(new DateTime(2026, 4, 30), data.RecurringInvoices[0].NextInvoiceDate);
+    }
 
     [Fact]
     public void GenerateDueInvoices_PastDates_GeneratesEachDueOccurrenceAndAdvances()

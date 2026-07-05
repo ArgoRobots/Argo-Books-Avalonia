@@ -491,6 +491,14 @@ public class CompanyManager : IDisposable
         ArgumentException.ThrowIfNullOrEmpty(filePath);
         ArgumentException.ThrowIfNullOrEmpty(companyName);
 
+        // Refuse to overwrite a file another running instance holds open (the Create/Save-As dialog
+        // lets the user pick any existing .argo path). Checked BEFORE closing the current company so a
+        // rejected create doesn't dump the user on the welcome screen. Mirrors OpenCompanyAsync.
+        if (_instanceLock.IsHeldByAnotherInstance(filePath))
+        {
+            throw new CompanyAlreadyOpenException(filePath);
+        }
+
         // Close any existing company
         if (IsCompanyOpen)
         {
@@ -538,8 +546,7 @@ public class CompanyManager : IDisposable
 
             // Hold a read lock on the file to prevent deletion while the company is open
             AcquireFileLock(filePath);
-            // Claim the cross-instance lock for the brand-new company (a new path can't already be
-            // held elsewhere, so no need to check the result).
+            // Claim the cross-instance lock (the held-elsewhere case was already rejected above).
             _instanceLock.TryAcquire(filePath);
 
             // Add to recent companies
@@ -952,6 +959,14 @@ public class CompanyManager : IDisposable
 
             ArgumentException.ThrowIfNullOrEmpty(newFilePath);
 
+            // Refuse to Save As over a file another running instance holds open (the native save
+            // dialog lets the user pick any existing .argo). A path this instance itself holds returns
+            // false here, so saving onto our own current file is still allowed.
+            if (_instanceLock.IsHeldByAnotherInstance(newFilePath))
+            {
+                throw new CompanyAlreadyOpenException(newFilePath);
+            }
+
             // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
             await EnsureReceiptsLoadedAsync();
 
@@ -1176,7 +1191,12 @@ public class CompanyManager : IDisposable
         foreach (var rent in CompanyData.Rentals)
             if (rent.CustomerId == oldId) rent.CustomerId = trimmed;
         foreach (var ri in CompanyData.RecurringInvoices)
+        {
             if (ri.CustomerId == oldId) ri.CustomerId = trimmed;
+            // The embedded template is what each generated occurrence inherits its CustomerId from, so
+            // it must follow the rename too, otherwise future invoices point at the old, gone Id.
+            if (ri.Template != null && ri.Template.CustomerId == oldId) ri.Template.CustomerId = trimmed;
+        }
         foreach (var ret in CompanyData.Returns)
             if (ret.CustomerId == oldId) ret.CustomerId = trimmed;
 

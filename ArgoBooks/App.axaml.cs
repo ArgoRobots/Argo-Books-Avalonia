@@ -799,6 +799,11 @@ public partial class App : Application
         _returnsPageViewModel = null;
         _lostDamagedPageViewModel = null;
         _receiptsPageViewModel = null;
+
+        // The "N recurring invoices were generated" banner count is process-wide static state. Clear
+        // it on a company switch/close so a count produced for the previous company can't surface as a
+        // phantom banner on the next company (whose own generation run may have produced nothing).
+        RecurringInvoiceService.ClearPendingGenerated();
     }
 
     // File watchers for recent companies - watches directories containing recent company files

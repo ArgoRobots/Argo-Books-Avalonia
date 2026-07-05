@@ -45,28 +45,54 @@ public static class RecurringInvoiceService
     /// <summary>Clears the pending banner count once the user has reviewed or dismissed it.</summary>
     public static void ClearPendingGenerated() => PendingGeneratedCount = 0;
 
-    /// <summary>Advances a date by one cadence step.</summary>
-    public static DateTime AdvanceDate(DateTime date, Frequency frequency) => frequency switch
+    /// <summary>
+    /// Advances a date by one cadence step. For monthly/quarterly cadences an optional
+    /// <paramref name="anchorDay"/> (the schedule's original billing day-of-month) keeps the date
+    /// pinned to that day: crossing a shorter month clamps to its last day, but the following month
+    /// returns to the anchor instead of drifting earlier for the rest of the schedule's life. When
+    /// omitted the current date's own day is used as the anchor (single-step, backward-compatible).
+    /// </summary>
+    public static DateTime AdvanceDate(DateTime date, Frequency frequency, int? anchorDay = null) => frequency switch
     {
         Frequency.Weekly => date.AddDays(7),
         Frequency.BiWeekly => date.AddDays(14),
-        Frequency.Monthly => date.AddMonths(1),
-        Frequency.Quarterly => date.AddMonths(3),
+        Frequency.Monthly => AddMonthsAnchored(date, 1, anchorDay ?? date.Day),
+        Frequency.Quarterly => AddMonthsAnchored(date, 3, anchorDay ?? date.Day),
         Frequency.Annually => date.AddYears(1),
-        _ => date.AddMonths(1)
+        _ => AddMonthsAnchored(date, 1, anchorDay ?? date.Day)
     };
 
-    /// <summary>Days added to the issue date to derive the due date, parsed from payment terms.</summary>
-    public static int PaymentTermsDays(string? terms) => (terms ?? string.Empty).Trim().ToLowerInvariant() switch
+    // Adds whole months, then re-pins to the anchor day-of-month (clamped to the target month's
+    // length). Computing from the anchor rather than chaining off the previous clamped day is what
+    // stops end-of-month schedules drifting earlier once they pass February.
+    private static DateTime AddMonthsAnchored(DateTime date, int months, int anchorDay)
     {
-        "due on receipt" => 0,
-        "net 7" => 7,
-        "net 15" => 15,
-        "net 30" => 30,
-        "net 45" => 45,
-        "net 60" => 60,
-        _ => 30
-    };
+        var shifted = date.AddMonths(months);
+        var day = Math.Min(anchorDay, DateTime.DaysInMonth(shifted.Year, shifted.Month));
+        return new DateTime(shifted.Year, shifted.Month, day);
+    }
+
+    /// <summary>
+    /// Formats payment terms ("Due on receipt" or "Net N") from an invoice's issue and due dates,
+    /// so a recurring schedule inherits the terms the user actually set instead of a fixed default.
+    /// </summary>
+    public static string FormatPaymentTerms(DateTime issueDate, DateTime dueDate)
+    {
+        var days = (dueDate.Date - issueDate.Date).Days;
+        if (days <= 0) return "Due on receipt";
+        return $"Net {days}";
+    }
+
+    /// <summary>Days added to the issue date to derive the due date, parsed from payment terms.</summary>
+    public static int PaymentTermsDays(string? terms)
+    {
+        var normalized = (terms ?? string.Empty).Trim().ToLowerInvariant();
+        if (normalized == "due on receipt") return 0;
+        // Parse any "net N" so arbitrary offsets round-trip, not just the fixed presets.
+        if (normalized.StartsWith("net ") && int.TryParse(normalized.AsSpan(4), out var days) && days >= 0)
+            return days;
+        return 30;
+    }
 
     /// <summary>
     /// Builds a clean template invoice from a just-created invoice: same content, stripped of
@@ -124,7 +150,10 @@ public static class RecurringInvoiceService
                 generated.Add(invoice);
 
                 schedule.LastGeneratedAt = asOfUtc;
-                schedule.NextInvoiceDate = AdvanceDate(schedule.NextInvoiceDate, schedule.Frequency);
+                // Anchor on the schedule's original billing day-of-month so end-of-month schedules
+                // don't drift earlier after passing a shorter month (Jan 31 -> Feb 28 -> Mar 31, ...).
+                schedule.NextInvoiceDate = AdvanceDate(
+                    schedule.NextInvoiceDate, schedule.Frequency, schedule.StartDate.Day);
                 count++;
 
                 // Newly advanced date is past the end date: the schedule is finished.
