@@ -258,14 +258,17 @@ public partial class InvoiceHtmlRenderer
             .Sum(p => p.ProcessingFee) ?? 0m;
 
         var portalConfigured = IsPortalConfigured(companySettings);
+        // Passing the fee to the customer is a per-invoice override, else the template's setting.
+        var passProcessingFee = invoice.PassProcessingFee ?? template.PassProcessingFee;
+        var feesActive = portalConfigured && passProcessingFee;
         var hasUnpaidBalance = invoice.Balance > 0;
-        var estimatedProcessingFee = hasUnpaidBalance && portalConfigured
+        var estimatedProcessingFee = hasUnpaidBalance && feesActive
             ? CalculateProcessingFee(invoice.Balance)
             : 0m;
         var displayProcessingFee = actualProcessingFee > 0 ? actualProcessingFee : estimatedProcessingFee;
-        // In the editor, keep the fee / amount-to-pay rows present whenever a portal is connected so
-        // the live recompute can fill them in as the user types (even from a $0 starting point).
-        var showProcessingFeeRow = displayProcessingFee > 0 || (editable && portalConfigured);
+        // In the editor, keep the fee / amount-to-pay rows present whenever the fee applies so the
+        // live recompute can fill them in as the user types (even from a $0 starting point).
+        var showProcessingFeeRow = displayProcessingFee > 0 || (editable && feesActive);
         var showAmountToPay = (hasUnpaidBalance || editable) && portalConfigured;
 
         var context = new Dictionary<string, object?>
@@ -283,19 +286,21 @@ public partial class InvoiceHtmlRenderer
             ["HeaderText"] = template.HeaderText,
             ["FooterText"] = template.FooterText,
             ["PaymentInstructions"] = template.PaymentInstructions,
+            // Per-invoice overrides win over the template setting when present (invoice.X ?? template.X).
+            // "Show company address" hides the whole company location line (address + city/state/country).
             ["ShowLogo"] = template.ShowLogo && !string.IsNullOrEmpty(template.LogoBase64),
-            ["ShowCompanyAddress"] = template.ShowCompanyAddress,
-            ["ShowCompanyPhone"] = template.ShowCompanyPhone,
-            ["ShowCompanyCity"] = template.ShowCompanyCity,
-            ["ShowCompanyProvinceState"] = template.ShowCompanyProvinceState,
-            ["ShowCompanyCountry"] = template.ShowCompanyCountry,
+            ["ShowCompanyAddress"] = invoice.ShowCompanyAddress ?? template.ShowCompanyAddress,
+            ["ShowCompanyPhone"] = invoice.ShowCompanyPhone ?? template.ShowCompanyPhone,
+            ["ShowCompanyCity"] = invoice.ShowCompanyAddress ?? template.ShowCompanyCity,
+            ["ShowCompanyProvinceState"] = invoice.ShowCompanyAddress ?? template.ShowCompanyProvinceState,
+            ["ShowCompanyCountry"] = invoice.ShowCompanyAddress ?? template.ShowCompanyCountry,
             ["ShowTaxBreakdown"] = template.ShowTaxBreakdown && invoice.TaxAmount > 0,
             ["ShowItemDescriptions"] = template.ShowItemDescriptions,
             // The customer message/notes now render in the footer (FooterOrNotes), so the separate
             // Notes section is off. Editing the footer on the paper writes to the invoice Notes.
             ["ShowNotes"] = false,
             ["ShowPaymentInstructions"] = template.ShowPaymentInstructions && !string.IsNullOrWhiteSpace(template.PaymentInstructions),
-            ["ShowDueDateProminent"] = template.ShowDueDateProminent,
+            ["ShowDueDateProminent"] = invoice.ShowDueDateProminent ?? template.ShowDueDateProminent,
 
             // Logo
             ["LogoSrc"] = template.ShowLogo && !string.IsNullOrEmpty(template.LogoBase64)

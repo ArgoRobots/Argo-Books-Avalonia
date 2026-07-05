@@ -678,7 +678,7 @@
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'When customers pay online, Stripe, PayPal, and Square deduct a processing fee from each payment before depositing the rest into your account. Enabling this adds the fee to the customer''s payment so you receive the full invoiced amount.'}"
+                                    <TextBlock Text="{loc:Loc 'When customers pay online, Stripe and Square deduct a processing fee from each payment before depositing the rest into your account. Enabling this adds the fee to the customer''s payment so you receive the full invoiced amount.'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                TextWrapping="Wrap" />

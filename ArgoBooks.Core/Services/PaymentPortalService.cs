@@ -145,7 +145,8 @@ public class PaymentPortalService : IDisposable
                 Notes = invoice.Notes,
                 Status = invoice.Status.ToString().ToLowerInvariant(),
                 SendEmail = !string.IsNullOrWhiteSpace(customer.Email),
-                PassProcessingFee = template?.PassProcessingFee ?? true,
+                // Per-invoice override wins over the template's setting.
+                PassProcessingFee = invoice.PassProcessingFee ?? template?.PassProcessingFee ?? true,
                 LineItems = invoice.LineItems.Select(li => new PortalLineItem
                 {
                     Description = li.Description,

@@ -304,7 +304,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 symbol = InvoiceCurrencySymbol,
                 code = SelectedCurrencyCode,
                 deposit = SecurityDeposit,
-                portal
+                portal,
+                passFee = OptPassProcessingFee
             });
         }
     }
@@ -466,6 +467,52 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _taxIsFixed;
+
+    // Per-invoice display overrides, shown in the sidebar's "Invoice options". Initialised from the
+    // selected template; changing one re-renders the paper (and, for the fee, the live totals config).
+    [ObservableProperty] private bool _optPassProcessingFee = true;
+    [ObservableProperty] private bool _optShowCompanyAddress = true;
+    [ObservableProperty] private bool _optShowCompanyPhone = true;
+    [ObservableProperty] private bool _optShowDueDateProminent = true;
+
+    partial void OnOptShowCompanyAddressChanged(bool value) => RegeneratePaper();
+    partial void OnOptShowCompanyPhoneChanged(bool value) => RegeneratePaper();
+    partial void OnOptShowDueDateProminentChanged(bool value) => RegeneratePaper();
+
+    partial void OnOptPassProcessingFeeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(TotalsConfigJson));
+        RegeneratePaper();
+    }
+
+    // Copies the given template's display settings into the per-invoice option toggles.
+    private void SyncOptionsFromTemplate(InvoiceTemplate? template)
+    {
+        if (template == null) return;
+        OptPassProcessingFee = template.PassProcessingFee;
+        OptShowCompanyAddress = template.ShowCompanyAddress;
+        OptShowCompanyPhone = template.ShowCompanyPhone;
+        OptShowDueDateProminent = template.ShowDueDateProminent;
+    }
+
+    // Writes the per-invoice option toggles onto an invoice being previewed/saved.
+    private void ApplyOptionsTo(Invoice invoice)
+    {
+        invoice.PassProcessingFee = OptPassProcessingFee;
+        invoice.ShowCompanyAddress = OptShowCompanyAddress;
+        invoice.ShowCompanyPhone = OptShowCompanyPhone;
+        invoice.ShowDueDateProminent = OptShowDueDateProminent;
+    }
+
+    // Loads an existing invoice's saved overrides into the option toggles (falling back to the
+    // template's setting when an override wasn't stored, e.g. invoices created before this feature).
+    private void LoadOptionsFrom(Invoice invoice, InvoiceTemplate? template)
+    {
+        OptPassProcessingFee = invoice.PassProcessingFee ?? template?.PassProcessingFee ?? true;
+        OptShowCompanyAddress = invoice.ShowCompanyAddress ?? template?.ShowCompanyAddress ?? true;
+        OptShowCompanyPhone = invoice.ShowCompanyPhone ?? template?.ShowCompanyPhone ?? true;
+        OptShowDueDateProminent = invoice.ShowDueDateProminent ?? template?.ShowDueDateProminent ?? true;
+    }
 
     [ObservableProperty]
     private string _validationMessage = string.Empty;
@@ -645,6 +692,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             ModalNotes = value.DefaultNotes;
         }
+        // Adopt the new template's display settings as the starting point for the per-invoice options
+        // (the user can then override them). In edit mode LoadFromInvoice re-applies saved overrides
+        // after the template is set.
+        SyncOptionsFromTemplate(value);
         // Carry the logo the user picked on the paper onto the newly selected template.
         ApplyPaperLogo();
         RegeneratePaper();
@@ -1288,6 +1339,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         SelectedCurrency = CurrencyService.GetDisplayString(
             string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency);
 
+        // Restore this invoice's saved display overrides (falls back to the template when absent).
+        LoadOptionsFrom(invoice, SelectedTemplate);
+
         // Populate line items, unsubscribe the ResetForm placeholder before clearing
         // so we don't leak its PropertyChanged subscription.
         foreach (var existing in LineItems)
@@ -1575,6 +1629,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 UnitPrice = li.UnitPrice ?? 0
             }).ToList()
         };
+
+        ApplyOptionsTo(previewInvoice);
 
         // Calculate totals
         previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
@@ -1893,6 +1949,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             };
         }
 
+        ApplyOptionsTo(invoice);
+
         // Calculate invoice totals (Subtotal / TaxAmount / Total, these are
         // invoice-level math, not Payment-derived).
         invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
@@ -2092,6 +2150,36 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Explains what "pass processing fee" means (the 'i' button next to the toggle). Same copy as the
+    /// template designer's info popup; shown as a message box with the WebView hidden.
+    /// </summary>
+    [RelayCommand]
+    private async Task ShowProcessingFeeInfo()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
+
+        IsNestedModalOpen = true;
+        try
+        {
+            await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Processing Fees".Translate(),
+                Message = ("When customers pay online, Stripe and Square deduct a processing fee " +
+                           "from each payment before depositing the rest into your account. Enabling this " +
+                           "adds the fee to the customer's payment so you receive the full invoiced amount.").Translate(),
+                PrimaryButtonText = "Got it".Translate(),
+                SecondaryButtonText = null,
+                CancelButtonText = null
+            });
+        }
+        finally
+        {
+            IsNestedModalOpen = false;
+        }
+    }
+
+    /// <summary>
     /// Confirms an irreversible send, showing exactly who it goes to and for how much. Returns true
     /// only if the user chose "Send invoice". Hides the native WebView while the dialog is up so it
     /// doesn't render over the dialog (and to avoid the message-box deadlock the paper otherwise
@@ -2240,6 +2328,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 TaxRate = 0
             }).ToList()
         };
+
+        ApplyOptionsTo(invoice);
 
         // Compute and store invoice-level totals (Subtotal / TaxAmount /
         // Total). Payment-derived fields are set by InvoiceTotalsService
@@ -2488,6 +2578,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalNotes = string.Empty;
         TaxRate = 0;
         TaxIsFixed = false;
+        // Per-invoice option toggles reset to on; OpenCreateModal's template selection then syncs them.
+        OptPassProcessingFee = true;
+        OptShowCompanyAddress = true;
+        OptShowCompanyPhone = true;
+        OptShowDueDateProminent = true;
         SecurityDeposit = 0;
         ShippingAmount = 0;
         CustomFeeLabel = string.Empty;

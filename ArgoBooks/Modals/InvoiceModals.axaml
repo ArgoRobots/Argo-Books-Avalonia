@@ -140,6 +140,14 @@
                                                           Classes="form-combobox" HorizontalAlignment="Stretch" />
                                             </StackPanel>
 
+                                            <!-- Display toggles: what appears on the invoice (per-invoice overrides). -->
+                                            <StackPanel Spacing="7">
+                                                <TextBlock Text="DISPLAY" Classes="sidebar-label" />
+                                                <CheckBox IsChecked="{Binding OptShowCompanyAddress}" Content="Show company address" />
+                                                <CheckBox IsChecked="{Binding OptShowCompanyPhone}" Content="Show company phone" />
+                                                <CheckBox IsChecked="{Binding OptShowDueDateProminent}" Content="Show prominent due date" />
+                                            </StackPanel>
+
                                             <!-- Tax, shipping, discount and fees are edited directly in the totals
                                                  section on the invoice paper. -->
 
@@ -154,9 +162,18 @@
                                                 </ComboBox>
                                             </StackPanel>
 
-                                            <!-- Recurring -->
-                                            <StackPanel Spacing="10" IsVisible="{Binding !IsEditMode}">
-                                                <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" />
+                                            <!-- Behaviour toggles: how the invoice works (fees, recurrence). -->
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Text="OPTIONS" Classes="sidebar-label" />
+                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                    <CheckBox IsChecked="{Binding OptPassProcessingFee}" Content="Pass processing fee to customer" VerticalAlignment="Center" />
+                                                    <Button Classes="icon-button" Padding="4" VerticalAlignment="Center"
+                                                            ToolTip.Tip="Learn more" Command="{Binding ShowProcessingFeeInfoCommand}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Info}" Width="14" Height="14" />
+                                                    </Button>
+                                                </StackPanel>
+
+                                                <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" IsVisible="{Binding !IsEditMode}" />
                                                 <Border IsVisible="{Binding IsRecurring}"
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         BorderBrush="{DynamicResource BorderBrush}"

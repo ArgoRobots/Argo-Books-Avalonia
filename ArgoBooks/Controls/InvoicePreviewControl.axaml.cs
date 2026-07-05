@@ -438,6 +438,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         var code = cfg.code || '';
         var deposit = Number(cfg.deposit) || 0;
         var portal = !!cfg.portal;
+        var passFee = cfg.passFee !== false;
 
         function num(el) { return el ? (parseFloat((el.textContent || '').replace(/[^0-9.\-]/g, '')) || 0) : 0; }
         function money(a) { return sym + a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -476,7 +477,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             var taxAmount = taxMode === 'fixed' ? tax : taxableBase * tax / 100;
             var total = taxableBase + taxAmount + deposit;
             var balance = total;
-            var procFee = (portal && balance > 0) ? Math.round((balance * 2.9 / 100 + 0.30) * 100) / 100 : 0;
+            var procFee = (portal && passFee && balance > 0) ? Math.round((balance * 2.9 / 100 + 0.30) * 100) / 100 : 0;
 
             setOut('subtotal', money(subtotal));
             setOut('total', due(total));

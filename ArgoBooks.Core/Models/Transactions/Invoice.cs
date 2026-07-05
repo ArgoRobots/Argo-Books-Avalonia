@@ -118,6 +118,26 @@ public partial class Invoice : ObservableObject
     [JsonPropertyName("taxIsFixed")]
     public bool TaxIsFixed { get; set; }
 
+    // Per-invoice display overrides. Null = inherit the selected template's setting; a value
+    // overrides it for this invoice only, so the invoice's appearance is frozen at creation and
+    // isn't changed by later template edits.
+
+    /// <summary>Override: pass the card processing fee to the customer on online payments.</summary>
+    [JsonPropertyName("passProcessingFee")]
+    public bool? PassProcessingFee { get; set; }
+
+    /// <summary>Override: show the company address block.</summary>
+    [JsonPropertyName("showCompanyAddress")]
+    public bool? ShowCompanyAddress { get; set; }
+
+    /// <summary>Override: show the company phone number.</summary>
+    [JsonPropertyName("showCompanyPhone")]
+    public bool? ShowCompanyPhone { get; set; }
+
+    /// <summary>Override: show the prominent "due date" badge.</summary>
+    [JsonPropertyName("showDueDateProminent")]
+    public bool? ShowDueDateProminent { get; set; }
+
     /// <summary>
     /// Total amount due.
     /// </summary>
