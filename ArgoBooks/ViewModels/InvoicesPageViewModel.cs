@@ -383,10 +383,19 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     public BatchObservableCollection<InvoiceDisplayItem> Invoices { get; } = [];
 
-    /// <summary>Recurring invoice schedules shown on the Recurring tab.</summary>
+    /// <summary>The current page of recurring invoice schedules shown on the Recurring tab.</summary>
     public BatchObservableCollection<RecurringScheduleDisplayItem> Schedules { get; } = [];
 
+    /// <summary>All schedules (unpaged); Schedules holds the current page slice of this.</summary>
+    private readonly List<RecurringScheduleDisplayItem> _allSchedules = [];
+
     public bool HasSchedules => Schedules.Count > 0;
+
+    // Independent pagination for the schedules table (the base-class pagination drives the invoice list).
+    [ObservableProperty] private int _scheduleCurrentPage = 1;
+    [ObservableProperty] private int _schedulePageSize = 10;
+    [ObservableProperty] private int _scheduleTotalPages = 1;
+    [ObservableProperty] private string _schedulePaginationText = string.Empty;
 
     /// <summary>Recurring invoices generated as drafts that still need to be sent, shown in the
     /// "Waiting to send" section of the Recurring tab (and hidden from All/Drafts until sent).</summary>
@@ -1056,43 +1065,81 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.InvoiceModalsViewModel?.OpenCreateRecurringModal();
     }
 
-    /// <summary>Rebuilds the Recurring tab's schedule list from CompanyData.</summary>
+    /// <summary>Rebuilds the full Recurring-tab schedule list from CompanyData, then shows the current page.</summary>
     private void LoadSchedules()
     {
+        _allSchedules.Clear();
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
+        if (companyData != null)
         {
-            Schedules.ReplaceAll([]);
-            OnPropertyChanged(nameof(HasSchedules));
-            return;
-        }
-
-        var items = companyData.RecurringInvoices.Select(s =>
-        {
-            var customer = companyData.GetCustomer(s.CustomerId);
-            var currency = s.Template?.OriginalCurrency ?? "USD";
-            // The most recent invoice this schedule produced (occurrence #1 or a later generated one),
-            // so the row's "View invoice" action can open it.
-            var latestInvoice = companyData.Invoices
-                .Where(i => i.RecurringInvoiceId == s.Id)
-                .OrderByDescending(i => i.CreatedAt)
-                .FirstOrDefault();
-            return new RecurringScheduleDisplayItem
+            _allSchedules.AddRange(companyData.RecurringInvoices.Select(s =>
             {
-                Id = s.Id,
-                CustomerName = customer?.Name ?? "Unknown Customer",
-                AmountFormatted = CurrencyService.FormatWithOriginal(
-                    s.Amount, currency, s.Template?.TotalUSD ?? s.Amount, s.NextInvoiceDate),
-                FrequencyDisplay = s.Frequency.ToString(),
-                NextInvoiceFormatted = s.NextInvoiceDate.ToString("MMM d, yyyy"),
-                StatusDisplay = s.Status.ToString(),
-                IsPaused = s.Status == RecurringInvoiceStatus.Paused,
-                InvoiceId = latestInvoice?.Id ?? string.Empty
-            };
-        }).ToList();
+                var customer = companyData.GetCustomer(s.CustomerId);
+                var currency = s.Template?.OriginalCurrency ?? "USD";
+                // The most recent invoice this schedule produced (occurrence #1 or a later generated one),
+                // so the row's "View invoice" action can open it.
+                var latestInvoice = companyData.Invoices
+                    .Where(i => i.RecurringInvoiceId == s.Id)
+                    .OrderByDescending(i => i.CreatedAt)
+                    .FirstOrDefault();
+                return new RecurringScheduleDisplayItem
+                {
+                    Id = s.Id,
+                    CustomerName = customer?.Name ?? "Unknown Customer",
+                    AmountFormatted = CurrencyService.FormatWithOriginal(
+                        s.Amount, currency, s.Template?.TotalUSD ?? s.Amount, s.NextInvoiceDate),
+                    FrequencyDisplay = s.Frequency.ToString(),
+                    NextInvoiceFormatted = s.NextInvoiceDate.ToString("MMM d, yyyy"),
+                    StatusDisplay = s.Status.ToString(),
+                    IsPaused = s.Status == RecurringInvoiceStatus.Paused,
+                    InvoiceId = latestInvoice?.Id ?? string.Empty
+                };
+            }));
+        }
+        RefreshSchedulesPage();
+    }
 
-        Schedules.ReplaceAll(items);
+    /// <summary>Slices the full schedule list into the current page and updates the pagination state.</summary>
+    private void RefreshSchedulesPage()
+    {
+        var totalCount = _allSchedules.Count;
+        ScheduleTotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / SchedulePageSize));
+        if (ScheduleCurrentPage > ScheduleTotalPages) ScheduleCurrentPage = ScheduleTotalPages;
+        if (ScheduleCurrentPage < 1) ScheduleCurrentPage = 1;
+
+        Schedules.ReplaceAll(_allSchedules
+            .Skip((ScheduleCurrentPage - 1) * SchedulePageSize)
+            .Take(SchedulePageSize));
+        SchedulePaginationText = PaginationTextHelper.FormatPaginationText(
+            totalCount, ScheduleCurrentPage, SchedulePageSize, ScheduleTotalPages, "schedule");
         OnPropertyChanged(nameof(HasSchedules));
+    }
+
+    partial void OnScheduleCurrentPageChanged(int value) => RefreshSchedulesPage();
+
+    partial void OnSchedulePageSizeChanged(int value)
+    {
+        ScheduleCurrentPage = 1;
+        RefreshSchedulesPage();
+    }
+
+    [RelayCommand]
+    private void ScheduleGoToPreviousPage()
+    {
+        if (ScheduleCurrentPage > 1) ScheduleCurrentPage--;
+    }
+
+    [RelayCommand]
+    private void ScheduleGoToNextPage()
+    {
+        if (ScheduleCurrentPage < ScheduleTotalPages) ScheduleCurrentPage++;
+    }
+
+    [RelayCommand]
+    private void ScheduleGoToPage(int page)
+    {
+        if (page >= 1 && page <= ScheduleTotalPages && page != ScheduleCurrentPage)
+            ScheduleCurrentPage = page;
     }
 
     [RelayCommand]
