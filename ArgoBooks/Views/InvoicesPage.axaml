@@ -407,8 +407,9 @@
                             <TextBlock Grid.Column="2" Text="AMOUNT" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                             <TextBlock Grid.Column="3" Text="STATUS" Width="150" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                         </Grid>
-                        <ScrollViewer MaxHeight="320" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding PendingRecurringInvoices}">
+                        <!-- table-rows gives the app's standard virtualized rows (VirtualizingStackPanel +
+                             its own scroll); MaxHeight caps the card so a long list scrolls, not grows. -->
+                        <ItemsControl Classes="table-rows" MaxHeight="320" ItemsSource="{Binding PendingRecurringInvoices}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="vm:InvoiceDisplayItem">
                                         <!-- Whole row is clickable: opens the draft in the editor/preview so it can be sent. -->
@@ -434,8 +435,7 @@
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
+                        </ItemsControl>
                     </StackPanel>
                 </Border>
 
