@@ -885,6 +885,14 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         // Reset to 1 first to measure natural size
         wrapper.style.transform = '';
         wrapper.dataset.scale = '1';
+        // Hide scrollbars BEFORE measuring the viewport. transform: scale() doesn't shrink the
+        // wrapper's layout box, so the body reports overflow and shows scrollbars even though the
+        // scaled content fits; we hide them while in fit mode. Doing it first matters: if we
+        // measured with the scrollbar present and hid it afterwards, removing the scrollbar would
+        // widen the viewport and fire a resize, which re-fit to the new width and nudged the paper
+        // a few px right - the shift the user saw a moment after the paper appeared. Measuring after
+        // the hide means the fit (and any resize-triggered re-fit) use the same final viewport.
+        document.body.style.overflow = 'hidden';
         var contentWidth = wrapper.scrollWidth;
         var contentHeight = wrapper.scrollHeight;
         var viewportWidth = window.innerWidth;
@@ -897,11 +905,10 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         applyTransform(fitScale);
         window.scrollTo(0, 0);
         window.__isInFitMode = true;
-        // transform: scale() doesn't shrink the wrapper's layout box, so
-        // the body would still report overflow and show scrollbars even
-        // though the scaled content fits the viewport. Hide them while in
-        // fit mode, there's nothing to scroll to anyway.
-        document.body.style.overflow = 'hidden';
+        // Remember the viewport we fit to so the resize handler can tell a genuine
+        // window/DPI change from the scrollbar-toggle resize our own fit just fired.
+        window.__fitVW = viewportWidth;
+        window.__fitVH = viewportHeight;
         notifyZoom(fitScale);
     };
 
@@ -918,6 +925,11 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     var resizeTimer = null;
     window.addEventListener('resize', function() {
         if (!window.__isInFitMode) return;
+        // Ignore the spurious resize our own fit fires when it toggles the scrollbar (the viewport
+        // barely changes). Only re-fit on a real window/monitor/DPI change, otherwise we re-fit in a
+        // loop and nudge the paper a few px each pass. A scrollbar is ~17px, so 24px is a safe cutoff.
+        if (Math.abs(window.innerWidth - (window.__fitVW || 0)) < 24
+            && Math.abs(window.innerHeight - (window.__fitVH || 0)) < 24) return;
         if (resizeTimer) clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() { window.__fitToWindow(); }, 50);
     });
@@ -945,10 +957,23 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             window.__fitToWindow();
         }
     }
+    // Apply the initial fit synchronously - before the browser's first paint - so the content
+    // appears already fitted and centered. This script runs at the end of <body>, so the DOM is
+    // parsed and measurable here. Deferring to setTimeout painted the page at natural scale 1
+    // (left-aligned) first, then shifted it right to center a frame later: the ""shifts right a
+    // second later"" jump the user saw on every show. Fall back to a deferred pass only if the
+    // viewport isn't measurable yet (innerWidth 0 during an early navigation).
+    function runInitialFit() {
+        if (window.innerWidth > 0 && document.getElementById('__zoomWrapper')) {
+            maybeInitialFit();
+        } else {
+            setTimeout(maybeInitialFit, 0);
+        }
+    }
     if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', function() { setTimeout(maybeInitialFit, 0); });
+        window.addEventListener('DOMContentLoaded', runInitialFit);
     } else {
-        setTimeout(maybeInitialFit, 0);
+        runInitialFit();
     }
 
     // Zoom handling (Ctrl+Scroll)
