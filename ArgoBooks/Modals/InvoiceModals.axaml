@@ -121,7 +121,10 @@
                                 <!-- SIDEBAR -->
                                 <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <!-- HorizontalScrollBarVisibility=Disabled so content is measured at the fixed
+                                         sidebar width and wraps, instead of a long validation message forcing the
+                                         whole modal to scroll sideways. -->
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <StackPanel Margin="16" Spacing="16">
 
                                             <StackPanel>
@@ -238,32 +241,35 @@
                                 </Border>
                             </Grid>
 
-                            <!-- VIEW-ONLY: rendered HTML preview -->
-                            <controls:InvoicePreviewControl Html="{Binding PreviewHtml}"
-                                                            OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
-                                <controls:InvoicePreviewControl.IsVisible>
-                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                        <Binding Path="IsCreateEditModalOpen" />
-                                        <Binding Path="IsViewOnly" />
-                                    </MultiBinding>
-                                </controls:InvoicePreviewControl.IsVisible>
-                            </controls:InvoicePreviewControl>
+                            <!-- VIEW-ONLY: rendered HTML preview above its own bottom bar. The preview lives
+                                 in its own row so the native WebView (which draws above Avalonia) can't
+                                 overflow onto the buttons. -->
+                            <Grid RowDefinitions="*,Auto" IsVisible="{Binding IsViewOnly}">
+                                <controls:InvoicePreviewControl Grid.Row="0" Html="{Binding PreviewHtml}"
+                                                                OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
+                                    <controls:InvoicePreviewControl.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="IsCreateEditModalOpen" />
+                                            <Binding Path="IsViewOnly" />
+                                        </MultiBinding>
+                                    </controls:InvoicePreviewControl.IsVisible>
+                                </controls:InvoicePreviewControl>
 
-                            <!-- View-only bottom bar -->
-                            <Border VerticalAlignment="Bottom" Padding="20,14"
-                                    Background="{DynamicResource SurfaceBrush}"
-                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                                    IsVisible="{Binding IsViewOnly}">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Button Grid.Column="0" Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
-                                            <TextBlock Text="{loc:Loc 'Open in Browser'}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Grid.Column="2" Classes="primary-button" Content="{loc:Loc Close}" Command="{Binding CloseCreateEditModalCommand}" />
-                                </Grid>
-                            </Border>
+                                <!-- View-only bottom bar -->
+                                <Border Grid.Row="1" Padding="20,14"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Button Grid.Column="0" Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
+                                                <TextBlock Text="{loc:Loc 'Open in Browser'}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="2" Classes="primary-button" Content="{loc:Loc Close}" Command="{Binding CloseCreateEditModalCommand}" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
 
                         </Grid>
                     </Grid>
