@@ -173,7 +173,13 @@
                                                     </Button>
                                                 </StackPanel>
 
-                                                <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" IsVisible="{Binding !IsEditMode}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding !IsEditMode}">
+                                                    <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" VerticalAlignment="Center" />
+                                                    <Button Classes="icon-button" Padding="4" VerticalAlignment="Center"
+                                                            ToolTip.Tip="Learn more" Command="{Binding ShowRecurringInfoCommand}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Info}" Width="14" Height="14" />
+                                                    </Button>
+                                                </StackPanel>
                                                 <Border IsVisible="{Binding IsRecurring}"
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         BorderBrush="{DynamicResource BorderBrush}"
@@ -191,15 +197,6 @@
                                                             <TextBlock Text="End date (optional)" Classes="sidebar-label" Margin="0" />
                                                             <DatePicker SelectedDate="{Binding RecurringEndDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                                         </StackPanel>
-                                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                                            <CheckBox Grid.Column="0" IsChecked="{Binding RecurringAutoSend}" Content="Auto-send each time" IsEnabled="{Binding HasPremium}" />
-                                                            <Border Grid.Column="2" Background="#3A2E12" CornerRadius="8" Padding="6,1" IsVisible="{Binding !HasPremium}" VerticalAlignment="Center">
-                                                                <TextBlock Text="PREMIUM" FontSize="10" Foreground="#F0B24A" />
-                                                            </Border>
-                                                        </Grid>
-                                                        <TextBlock Text="Upgrade to send automatically while the app is closed."
-                                                                   FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   TextWrapping="Wrap" IsVisible="{Binding !HasPremium}" />
                                                     </StackPanel>
                                                 </Border>
                                             </StackPanel>

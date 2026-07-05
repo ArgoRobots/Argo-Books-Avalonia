@@ -200,9 +200,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [ObservableProperty]
     private DateTimeOffset? _recurringEndDate;
 
-    [ObservableProperty]
-    private bool _recurringAutoSend;
-
     public IReadOnlyList<Frequency> FrequencyOptions { get; } = Enum.GetValues<Frequency>();
 
     /// <summary>Company name shown on the editor paper header.</summary>
@@ -2180,6 +2177,36 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Explains how recurring invoices work (the 'i' button next to "Make recurring").
+    /// </summary>
+    [RelayCommand]
+    private async Task ShowRecurringInfo()
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
+
+        IsNestedModalOpen = true;
+        try
+        {
+            await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Recurring invoices".Translate(),
+                Message = ("This creates a schedule that makes a fresh copy of this invoice on the frequency " +
+                           "you pick (e.g. monthly), starting on the start date and stopping at the end date " +
+                           "if you set one. Each new copy is added to your invoices as a draft the next time " +
+                           "you open the app, so you can review it and send it. Nothing is emailed automatically.").Translate(),
+                PrimaryButtonText = "Got it".Translate(),
+                SecondaryButtonText = null,
+                CancelButtonText = null
+            });
+        }
+        finally
+        {
+            IsNestedModalOpen = false;
+        }
+    }
+
+    /// <summary>
     /// Confirms an irreversible send, showing exactly who it goes to and for how much. Returns true
     /// only if the user chose "Send invoice". Hides the native WebView while the dialog is up so it
     /// doesn't render over the dialog (and to avoid the message-box deadlock the paper otherwise
@@ -2382,7 +2409,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 EndDate = RecurringEndDate?.Date,
                 NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency),
                 PaymentTerms = "Net 30",
-                AutoSend = RecurringAutoSend,
                 Status = RecurringInvoiceStatus.Active,
                 Template = RecurringInvoiceService.BuildTemplateFrom(invoice)
             };
@@ -2596,7 +2622,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RecurringFrequency = Frequency.Monthly;
         RecurringStartDate = DateTimeOffset.Now;
         RecurringEndDate = null;
-        RecurringAutoSend = false;
         foreach (var item in LineItems)
             item.PropertyChanged -= OnLineItemPropertyChanged;
         LineItems.Clear();
