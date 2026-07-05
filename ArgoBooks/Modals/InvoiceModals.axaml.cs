@@ -69,6 +69,28 @@ public partial class InvoiceModals : UserControl
             vm.SaveAsDraftCommand.Execute(null);
     }
 
+    // The sidebar info messageboxes hide and re-show the native WebView, which re-navigates the
+    // paper. Flush any value the user just typed into the model first (while the WebView is still
+    // active), otherwise the re-show reloads a stale paper and the edit is lost. The command then
+    // rebuilds PreviewHtml from the flushed model while the WebView is hidden.
+    private async void OnProcessingFeeInfoClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
+        if (editorPreview != null)
+            await editorPreview.CommitPendingEditsAsync();
+        vm.ShowProcessingFeeInfoCommand.Execute(null);
+    }
+
+    private async void OnRecurringInfoClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
+        if (editorPreview != null)
+            await editorPreview.CommitPendingEditsAsync();
+        vm.ShowRecurringInfoCommand.Execute(null);
+    }
+
     private void OnCustomerPicked(object? sender, string customerId)
     {
         if (DataContext is InvoiceModalsViewModel vm)

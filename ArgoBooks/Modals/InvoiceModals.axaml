@@ -168,7 +168,7 @@
                                                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                                     <CheckBox IsChecked="{Binding OptPassProcessingFee}" Content="Pass processing fee to customer" VerticalAlignment="Center" />
                                                     <Button Classes="icon-button" Padding="4" VerticalAlignment="Center"
-                                                            ToolTip.Tip="Learn more" Command="{Binding ShowProcessingFeeInfoCommand}">
+                                                            ToolTip.Tip="Learn more" Click="OnProcessingFeeInfoClick">
                                                         <PathIcon Data="{x:Static icons:Icons.Info}" Width="14" Height="14" />
                                                     </Button>
                                                 </StackPanel>
@@ -176,7 +176,7 @@
                                                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding !IsEditMode}">
                                                     <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" VerticalAlignment="Center" />
                                                     <Button Classes="icon-button" Padding="4" VerticalAlignment="Center"
-                                                            ToolTip.Tip="Learn more" Command="{Binding ShowRecurringInfoCommand}">
+                                                            ToolTip.Tip="Learn more" Click="OnRecurringInfoClick">
                                                         <PathIcon Data="{x:Static icons:Icons.Info}" Width="14" Height="14" />
                                                     </Button>
                                                 </StackPanel>

@@ -2157,6 +2157,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (dialog == null) return;
 
         IsNestedModalOpen = true;
+        // The caller flushed the live paper edits into the model first. Rebuild PreviewHtml from it
+        // now (while the WebView is hidden, so there's no visible reload) so re-showing the WebView
+        // re-navigates to content that includes those edits instead of a stale paper that drops them.
+        RegeneratePaper();
         try
         {
             await dialog.ShowAsync(new ConfirmationDialogOptions
@@ -2186,6 +2190,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (dialog == null) return;
 
         IsNestedModalOpen = true;
+        // See ShowProcessingFeeInfo: rebuild the paper from the just-flushed model while hidden so
+        // re-showing the WebView keeps the user's live edits instead of reloading a stale paper.
+        RegeneratePaper();
         try
         {
             await dialog.ShowAsync(new ConfirmationDialogOptions
@@ -2194,7 +2201,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 Message = ("This creates a schedule that makes a fresh copy of this invoice on the frequency " +
                            "you pick (e.g. monthly), starting on the start date and stopping at the end date " +
                            "if you set one. Each new copy is added to your invoices as a draft the next time " +
-                           "you open the app, so you can review it and send it. Nothing is emailed automatically.").Translate(),
+                           "you open the app, so you can review it and send it. Nothing is sent automatically.").Translate(),
                 PrimaryButtonText = "Got it".Translate(),
                 SecondaryButtonText = null,
                 CancelButtonText = null
