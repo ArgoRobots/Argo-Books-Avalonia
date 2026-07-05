@@ -158,6 +158,22 @@ public partial class App
                                     : $"{recurringCount} recurring invoices were added to your drafts.",
                                 NotificationType.Info);
                         }
+
+                        // Remind about recurring drafts still waiting to be sent: ones generated on an
+                        // earlier open that the user hasn't sent yet. Exclude the ones just generated above
+                        // (they already got the "added to drafts" notice) so the same drafts aren't announced twice.
+                        var pendingRecurringDrafts = CompanyManager.CompanyData.Invoices.Count(
+                            i => i.Status == InvoiceStatus.Draft && !string.IsNullOrEmpty(i.RecurringInvoiceId));
+                        var awaitingSend = pendingRecurringDrafts - generatedRecurring.Count;
+                        if (awaitingSend > 0)
+                        {
+                            AddNotification(
+                                "Recurring invoices",
+                                awaitingSend == 1
+                                    ? "1 recurring invoice is waiting to be sent."
+                                    : $"{awaitingSend} recurring invoices are waiting to be sent.",
+                                NotificationType.Warning);
+                        }
                     }
 
                     // Reconcile and process any pending currency conversions
