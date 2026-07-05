@@ -259,7 +259,8 @@ public partial class InvoiceHtmlRenderer
 
         var portalConfigured = IsPortalConfigured(companySettings);
         // Passing the fee to the customer is a per-invoice override, else the template's setting.
-        var passProcessingFee = invoice.PassProcessingFee ?? template.PassProcessingFee;
+        // Passing the fee to the customer is a per-invoice setting (default on); no longer a template setting.
+        var passProcessingFee = invoice.PassProcessingFee ?? true;
         var feesActive = portalConfigured && passProcessingFee;
         var hasUnpaidBalance = invoice.Balance > 0;
         var estimatedProcessingFee = hasUnpaidBalance && feesActive

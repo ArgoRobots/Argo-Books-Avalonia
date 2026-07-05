@@ -485,11 +485,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
-    // Copies the given template's display settings into the per-invoice option toggles.
+    // Copies the given template's display settings into the per-invoice option toggles. Pass-fee is a
+    // per-invoice choice (not a template setting), so it isn't synced here.
     private void SyncOptionsFromTemplate(InvoiceTemplate? template)
     {
         if (template == null) return;
-        OptPassProcessingFee = template.PassProcessingFee;
         OptShowCompanyAddress = template.ShowCompanyAddress;
         OptShowCompanyPhone = template.ShowCompanyPhone;
         OptShowDueDateProminent = template.ShowDueDateProminent;
@@ -508,7 +508,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     // template's setting when an override wasn't stored, e.g. invoices created before this feature).
     private void LoadOptionsFrom(Invoice invoice, InvoiceTemplate? template)
     {
-        OptPassProcessingFee = invoice.PassProcessingFee ?? template?.PassProcessingFee ?? true;
+        OptPassProcessingFee = invoice.PassProcessingFee ?? true;
         OptShowCompanyAddress = invoice.ShowCompanyAddress ?? template?.ShowCompanyAddress ?? true;
         OptShowCompanyPhone = invoice.ShowCompanyPhone ?? template?.ShowCompanyPhone ?? true;
         OptShowDueDateProminent = invoice.ShowDueDateProminent ?? template?.ShowDueDateProminent ?? true;

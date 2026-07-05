@@ -146,7 +146,8 @@ public class PaymentPortalService : IDisposable
                 Status = invoice.Status.ToString().ToLowerInvariant(),
                 SendEmail = !string.IsNullOrWhiteSpace(customer.Email),
                 // Per-invoice override wins over the template's setting.
-                PassProcessingFee = invoice.PassProcessingFee ?? template?.PassProcessingFee ?? true,
+                // Per-invoice setting (default on).
+                PassProcessingFee = invoice.PassProcessingFee ?? true,
                 LineItems = invoice.LineItems.Select(li => new PortalLineItem
                 {
                     Description = li.Description,
