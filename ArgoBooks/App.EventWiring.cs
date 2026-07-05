@@ -154,8 +154,8 @@ public partial class App
                             AddNotification(
                                 "Recurring invoices",
                                 recurringCount == 1
-                                    ? "1 recurring invoice was added to your drafts."
-                                    : $"{recurringCount} recurring invoices were added to your drafts.",
+                                    ? "1 recurring invoice was generated and needs to be sent (Recurring tab)."
+                                    : $"{recurringCount} recurring invoices were generated and need to be sent (Recurring tab).",
                                 NotificationType.Info,
                                 OpenRecurringInvoicesTab);
                         }

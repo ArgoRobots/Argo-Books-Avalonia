@@ -62,7 +62,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         HasGeneratedBanner = false;
         RecurringInvoiceService.ClearPendingGenerated();
-        SelectedTabIndex = 1; // jump to the Drafts tab where the generated invoices land
+        SelectedTabIndex = 3; // jump to the Recurring tab, where generated drafts wait to be sent
     }
 
     [RelayCommand]
@@ -79,6 +79,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             GeneratedBannerCount = count;
             HasGeneratedBanner = true;
             LoadInvoices();
+            // Generation advances each schedule's next date (and may complete some), so refresh the
+            // schedules table too, not just the invoice/waiting lists.
+            LoadSchedules();
         });
     }
 
@@ -1124,39 +1127,50 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
         if (companyData == null || schedule == null) return;
 
+        // Unsent drafts this schedule already generated. On delete we unlink them so they become
+        // ordinary drafts (visible in the Drafts tab) rather than being stranded in "Waiting to send"
+        // with no schedule behind them.
+        var orphanedDrafts = companyData.Invoices
+            .Where(i => i.Status == InvoiceStatus.Draft && i.RecurringInvoiceId == schedule.Id)
+            .ToList();
+
+        var draftWord = orphanedDrafts.Count == 1 ? "draft" : "drafts";
         var confirmed = await ConfirmScheduleActionAsync(
             "Delete recurring invoice?",
-            "This stops it from generating new invoices. Invoices it already created are kept.",
+            orphanedDrafts.Count > 0
+                ? $"This stops it from generating new invoices. Its {orphanedDrafts.Count} unsent {draftWord} will move to the Drafts tab."
+                : "This stops it from generating new invoices. Invoices it already created are kept.",
             "Delete");
         if (!confirmed) return;
 
-        // Removes only the schedule; invoices already generated from it are left untouched.
         var deleted = schedule;
         var index = companyData.RecurringInvoices.IndexOf(schedule);
-        companyData.RecurringInvoices.Remove(schedule);
-        companyData.MarkAsModified();
-        LoadSchedules();
 
-        App.UndoRedoManager.RecordAction(new DelegateAction(
-            "Delete recurring invoice",
-            () =>
+        void ApplyDelete()
+        {
+            companyData.RecurringInvoices.Remove(deleted);
+            foreach (var d in orphanedDrafts) d.RecurringInvoiceId = string.Empty;
+            companyData.MarkAsModified();
+            LoadInvoices();
+            LoadSchedules();
+        }
+        void UndoDelete()
+        {
+            if (!companyData.RecurringInvoices.Contains(deleted))
             {
-                if (!companyData.RecurringInvoices.Contains(deleted))
-                {
-                    if (index >= 0 && index <= companyData.RecurringInvoices.Count)
-                        companyData.RecurringInvoices.Insert(index, deleted);
-                    else
-                        companyData.RecurringInvoices.Add(deleted);
-                }
-                companyData.MarkAsModified();
-                LoadSchedules();
-            },
-            () =>
-            {
-                companyData.RecurringInvoices.Remove(deleted);
-                companyData.MarkAsModified();
-                LoadSchedules();
-            }));
+                if (index >= 0 && index <= companyData.RecurringInvoices.Count)
+                    companyData.RecurringInvoices.Insert(index, deleted);
+                else
+                    companyData.RecurringInvoices.Add(deleted);
+            }
+            foreach (var d in orphanedDrafts) d.RecurringInvoiceId = deleted.Id;
+            companyData.MarkAsModified();
+            LoadInvoices();
+            LoadSchedules();
+        }
+
+        ApplyDelete();
+        App.UndoRedoManager.RecordAction(new DelegateAction("Delete recurring invoice", UndoDelete, ApplyDelete));
     }
 
     /// <summary>Shows a Primary/Cancel confirmation dialog; returns true only if the user confirmed.</summary>
