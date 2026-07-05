@@ -28,4 +28,12 @@ public partial class InvoicesPage : UserControl
             viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
         }
     }
+
+    private void OnRecurringTableSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is InvoicesPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.RecurringColumnWidths.SetAvailableWidth(e.NewSize.Width);
+        }
+    }
 }

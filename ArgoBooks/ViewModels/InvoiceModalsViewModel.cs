@@ -2086,6 +2086,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LinkInvoiceToRevenue(invoice, companyData);
         }
 
+        // If "Repeat this invoice" was set, create the recurring schedule here too. Previously this
+        // only happened on save-as-draft, so a recurring invoice sent directly never showed up in the
+        // recurring tab. The helper no-ops if it isn't recurring or a schedule already exists (e.g. a
+        // recurring draft that was scheduled on save and is now being sent).
+        CreateRecurringScheduleIfNeeded(invoice, companyData, new IdGenerator(companyData));
+
         // Auto-create a Revenue transaction if this invoice isn't already linked to one.
         // Path A (Revenue → Invoice): revenue already exists, LinkInvoiceToRevenue linked it above.
         // Path B (Invoice → Revenue): no revenue exists yet, so create one automatically.
@@ -2311,6 +2317,36 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ResetForm();
     }
 
+    /// <summary>
+    /// If the user flipped "Repeat this invoice" and this invoice doesn't already have a schedule,
+    /// create the recurring schedule (this invoice is occurrence #1; the schedule's next date is one
+    /// cadence step after the start) and add it to the company data. Called from both the
+    /// save-as-draft and create-and-send paths so a recurring invoice is scheduled either way.
+    /// </summary>
+    private void CreateRecurringScheduleIfNeeded(Invoice invoice, CompanyData companyData, IdGenerator idGenerator)
+    {
+        if (!IsRecurring || !string.IsNullOrEmpty(invoice.RecurringInvoiceId))
+            return;
+
+        var startDate = (RecurringStartDate ?? DateTimeOffset.Now).Date;
+        var schedule = new RecurringInvoice
+        {
+            Id = idGenerator.NextRecurringInvoiceId(),
+            CustomerId = invoice.CustomerId,
+            Amount = invoice.Total,
+            Description = invoice.LineItems.FirstOrDefault()?.Description ?? string.Empty,
+            Frequency = RecurringFrequency,
+            StartDate = startDate,
+            EndDate = RecurringEndDate?.Date,
+            NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency),
+            PaymentTerms = "Net 30",
+            Status = RecurringInvoiceStatus.Active,
+            Template = RecurringInvoiceService.BuildTemplateFrom(invoice)
+        };
+        invoice.RecurringInvoiceId = schedule.Id;
+        companyData.RecurringInvoices.Add(schedule);
+    }
+
     [RelayCommand]
     private async Task SaveAsDraft()
     {
@@ -2400,28 +2436,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
         LinkInvoiceToRentals(invoice, companyData);
 
-        // If the user flipped "Repeat this invoice", create the schedule. This invoice is
-        // occurrence #1; the schedule's next date is one cadence step after the start.
-        if (IsRecurring)
-        {
-            var startDate = (RecurringStartDate ?? DateTimeOffset.Now).Date;
-            var schedule = new RecurringInvoice
-            {
-                Id = idGenerator.NextRecurringInvoiceId(),
-                CustomerId = invoice.CustomerId,
-                Amount = invoice.Total,
-                Description = invoice.LineItems.FirstOrDefault()?.Description ?? string.Empty,
-                Frequency = RecurringFrequency,
-                StartDate = startDate,
-                EndDate = RecurringEndDate?.Date,
-                NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency),
-                PaymentTerms = "Net 30",
-                Status = RecurringInvoiceStatus.Active,
-                Template = RecurringInvoiceService.BuildTemplateFrom(invoice)
-            };
-            invoice.RecurringInvoiceId = schedule.Id;
-            companyData.RecurringInvoices.Add(schedule);
-        }
+        CreateRecurringScheduleIfNeeded(invoice, companyData, idGenerator);
 
         LastSavedInvoiceId = invoice.Id;
         InvoiceSaved?.Invoke(this, EventArgs.Empty);

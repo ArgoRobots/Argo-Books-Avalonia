@@ -315,6 +315,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// </summary>
     public InvoicesTableColumnWidths ColumnWidths => App.InvoicesColumnWidths;
 
+    public RecurringTableColumnWidths RecurringColumnWidths => App.RecurringColumnWidths;
+
     [ObservableProperty]
     private bool _showIdColumn = ColumnVisibilityHelper.Load("Invoices", "Id", true);
 
@@ -554,6 +556,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void OnInvoiceSaved(object? sender, EventArgs e)
     {
         LoadInvoices();
+        // Saving/sending an invoice may have created a recurring schedule, so refresh the Recurring
+        // tab too. Without this the new schedule only appeared after navigating away and back.
+        LoadSchedules();
     }
 
     private void OnInvoiceDeleted(object? sender, EventArgs e)
@@ -1002,6 +1007,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         {
             var customer = companyData.GetCustomer(s.CustomerId);
             var currency = s.Template?.OriginalCurrency ?? "USD";
+            // The most recent invoice this schedule produced (occurrence #1 or a later generated one),
+            // so the row's "View invoice" action can open it.
+            var latestInvoice = companyData.Invoices
+                .Where(i => i.RecurringInvoiceId == s.Id)
+                .OrderByDescending(i => i.CreatedAt)
+                .FirstOrDefault();
             return new RecurringScheduleDisplayItem
             {
                 Id = s.Id,
@@ -1011,7 +1022,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 FrequencyDisplay = s.Frequency.ToString(),
                 NextInvoiceFormatted = s.NextInvoiceDate.ToString("MMM d, yyyy"),
                 StatusDisplay = s.Status.ToString(),
-                IsPaused = s.Status == RecurringInvoiceStatus.Paused
+                IsPaused = s.Status == RecurringInvoiceStatus.Paused,
+                InvoiceId = latestInvoice?.Id ?? string.Empty
             };
         }).ToList();
 
@@ -1062,6 +1074,14 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         if (item == null) return;
         App.InvoiceModalsViewModel?.OpenViewInvoice(item.Id);
+    }
+
+    /// <summary>Opens the invoice most recently produced by a recurring schedule (the row's View action).</summary>
+    [RelayCommand]
+    private void ViewScheduleInvoice(RecurringScheduleDisplayItem? item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.InvoiceId)) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(item.InvoiceId);
     }
 
     [RelayCommand]
@@ -1270,6 +1290,13 @@ public partial class RecurringScheduleDisplayItem : ObservableObject
 
     [NotifyPropertyChangedFor(nameof(PauseResumeLabel))]
     [ObservableProperty] private bool _isPaused;
+
+    // Id of the invoice this schedule most recently produced, used by the "View invoice" action.
+    // Empty when no invoice is linked yet (the button is hidden in that case).
+    [NotifyPropertyChangedFor(nameof(HasInvoice))]
+    [ObservableProperty] private string _invoiceId = string.Empty;
+
+    public bool HasInvoice => !string.IsNullOrEmpty(InvoiceId);
 
     public string PauseResumeLabel => IsPaused ? "Resume" : "Pause";
 }

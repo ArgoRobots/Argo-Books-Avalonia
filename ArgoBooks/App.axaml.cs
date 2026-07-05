@@ -643,6 +643,8 @@ public partial class App : Application
     /// </summary>
     public static Controls.ColumnWidths.InvoicesTableColumnWidths InvoicesColumnWidths { get; } = new();
 
+    public static Controls.ColumnWidths.RecurringTableColumnWidths RecurringColumnWidths { get; } = new();
+
     /// <summary>
     /// Gets the shared column widths for the Customers table.
     /// </summary>
