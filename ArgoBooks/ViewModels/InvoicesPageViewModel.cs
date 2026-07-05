@@ -686,29 +686,33 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void UpdateStatistics()
     {
         var now = DateTime.Now;
-        var startOfMonth = new DateTime(now.Year, now.Month, 1);
         var endOfWeek = now.AddDays(7);
+        // UpdatedAt is written as DateTime.UtcNow, so the "this month" cutoff must be UTC-based too,
+        // otherwise a large local offset can bucket a payment into the wrong month at the boundary.
+        var startOfMonthUtc = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // Total outstanding (unpaid invoices) - calculate in USD, convert for display
-        // Convert each invoice at its OWN issue date before summing (Calculations.md §3a Phase 2).
+        // Total outstanding (unpaid invoices) - calculate in USD, convert for display. Drafts are excluded:
+        // a never-sent draft isn't money a customer owes. Convert each at its OWN issue date (Calculations.md §3a).
         TotalOutstanding = CurrencyService.FormatSumDisplayFromUSD(
-            _allInvoices.Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled),
+            _allInvoices.Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled
+                && i.Status != InvoiceStatus.Draft),
             i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
         // Paid this month
         PaidThisMonth = CurrencyService.FormatSumDisplayFromUSD(
-            _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
+            _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonthUtc),
             i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
 
-        // Overdue amount
+        // Overdue amount - drafts excluded (a never-sent draft past its due date isn't overdue money owed).
         OverdueAmount = CurrencyService.FormatSumDisplayFromUSD(
-            _allInvoices.Where(i => i.IsOverdue || i.Status == InvoiceStatus.Overdue),
+            _allInvoices.Where(i => (i.IsOverdue || i.Status == InvoiceStatus.Overdue) && i.Status != InvoiceStatus.Draft),
             i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
-        // Due this week
+        // Due this week - drafts excluded (not yet billed).
         DueThisWeekCount = _allInvoices
             .Count(i => i.DueDate >= now.Date && i.DueDate <= endOfWeek &&
-                       i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled);
+                       i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled &&
+                       i.Status != InvoiceStatus.Draft);
     }
 
     [RelayCommand]
@@ -736,7 +740,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         filtered = SelectedTab switch
         {
             "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft),
-            "Sent" => filtered.Where(i => i.Status == InvoiceStatus.Sent),
+            // "Sent" = anything that has actually been sent, i.e. left the Draft stage (and isn't
+            // Cancelled). Matching only exactly-Sent hid invoices once they became Viewed/Partial/Paid/etc.
+            "Sent" => filtered.Where(i => i.Status != InvoiceStatus.Draft && i.Status != InvoiceStatus.Cancelled),
             _ => filtered
         };
 

@@ -509,6 +509,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         invoice.ShowCompanyAddress = OptShowCompanyAddress;
         invoice.ShowCompanyPhone = OptShowCompanyPhone;
         invoice.ShowDueDateProminent = OptShowDueDateProminent;
+        // Record which template this invoice was created with, so the viewer re-renders the layout the
+        // customer actually received rather than the current default.
+        if (SelectedTemplate != null)
+            invoice.TemplateId = SelectedTemplate.Id;
     }
 
     // Loads an existing invoice's saved overrides into the option toggles (falling back to the
@@ -1269,8 +1273,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == invoiceId);
         if (invoice == null) return;
 
-        // Get the template
-        var template = companyData.InvoiceTemplates.FirstOrDefault(t => t.IsDefault);
+        // Render with the template the invoice was created with (frozen layout the customer received),
+        // falling back to the default for older invoices that don't record one.
+        var template = (!string.IsNullOrEmpty(invoice.TemplateId)
+                ? companyData.InvoiceTemplates.FirstOrDefault(t => t.Id == invoice.TemplateId)
+                : null)
+            ?? companyData.InvoiceTemplates.FirstOrDefault(t => t.IsDefault);
         if (template == null)
         {
             var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
@@ -1904,7 +1912,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.DiscountAmount = DiscountAmount;
             invoice.DiscountIsPercent = DiscountIsPercent;
             invoice.Notes = ModalNotes;
-            invoice.Status = InvoiceStatus.Pending;
+            // Leave the status as Draft during the send attempt; it's set to Sent only after publish/email
+            // succeeds (below). Flipping it to Pending here left the draft stuck and un-continuable if the
+            // send then failed (ContinueDraftInvoice only accepts Draft).
             invoice.UpdatedAt = DateTime.Now;
             invoice.LineItems = LineItems.Select(i => new LineItem
             {
@@ -2373,42 +2383,71 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        // Generate invoice ID using IdGenerator
         var idGenerator = new IdGenerator(companyData);
-        var invoiceId = idGenerator.NextInvoiceId();
-        var invoiceNumber = idGenerator.NextInvoiceNumber();
 
-        var invoice = new Invoice
+        // If we're continuing an existing draft (opened via "Continue"), update it in place instead of
+        // minting a brand-new invoice - otherwise "Save as draft" would leave a duplicate copy behind.
+        var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
+        var existingDraft = isContinuingDraft
+            ? companyData.Invoices.FirstOrDefault(i => i.Id == _editingInvoiceId)
+            : null;
+
+        var newLineItems = LineItems.Select(i => new LineItem
         {
-            Id = invoiceId,
-            InvoiceNumber = invoiceNumber,
-            CustomerId = SelectedCustomer!.Id!,
-            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
-            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
-            TaxRate = TaxRate,
-            TaxIsFixed = TaxIsFixed,
-            SecurityDeposit = SecurityDeposit,
-            ShippingAmount = ShippingAmount,
-            CustomFeeLabel = CustomFeeLabel,
-            CustomFeeAmount = CustomFeeAmount,
-            CustomFeeIsPercent = CustomFeeIsPercent,
-            DiscountAmount = DiscountAmount,
-            DiscountIsPercent = DiscountIsPercent,
-            Notes = ModalNotes,
-            Status = InvoiceStatus.Draft,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
-            LineItems = LineItems.Select(i => new LineItem
+            ProductId = i.SelectedProduct?.Id,
+            RentalRecordId = i.RentalRecordId,
+            RevenueRecordId = i.RevenueRecordId,
+            Description = i.Description,
+            Quantity = i.Quantity ?? 0,
+            UnitPrice = i.UnitPrice ?? 0,
+            TaxRate = 0
+        }).ToList();
+
+        Invoice invoice;
+        if (existingDraft != null)
+        {
+            invoice = existingDraft;
+            invoice.CustomerId = SelectedCustomer!.Id!;
+            invoice.IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now;
+            invoice.DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1);
+            invoice.TaxRate = TaxRate;
+            invoice.TaxIsFixed = TaxIsFixed;
+            invoice.SecurityDeposit = SecurityDeposit;
+            invoice.ShippingAmount = ShippingAmount;
+            invoice.CustomFeeLabel = CustomFeeLabel;
+            invoice.CustomFeeAmount = CustomFeeAmount;
+            invoice.CustomFeeIsPercent = CustomFeeIsPercent;
+            invoice.DiscountAmount = DiscountAmount;
+            invoice.DiscountIsPercent = DiscountIsPercent;
+            invoice.Notes = ModalNotes;
+            invoice.UpdatedAt = DateTime.Now;
+            invoice.LineItems = newLineItems;
+        }
+        else
+        {
+            invoice = new Invoice
             {
-                ProductId = i.SelectedProduct?.Id,
-                RentalRecordId = i.RentalRecordId,
-                RevenueRecordId = i.RevenueRecordId,
-                Description = i.Description,
-                Quantity = i.Quantity ?? 0,
-                UnitPrice = i.UnitPrice ?? 0,
-                TaxRate = 0
-            }).ToList()
-        };
+                Id = idGenerator.NextInvoiceId(),
+                InvoiceNumber = idGenerator.NextInvoiceNumber(),
+                CustomerId = SelectedCustomer!.Id!,
+                IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
+                DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddMonths(1),
+                TaxRate = TaxRate,
+                TaxIsFixed = TaxIsFixed,
+                SecurityDeposit = SecurityDeposit,
+                ShippingAmount = ShippingAmount,
+                CustomFeeLabel = CustomFeeLabel,
+                CustomFeeAmount = CustomFeeAmount,
+                CustomFeeIsPercent = CustomFeeIsPercent,
+                DiscountAmount = DiscountAmount,
+                DiscountIsPercent = DiscountIsPercent,
+                Notes = ModalNotes,
+                Status = InvoiceStatus.Draft,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                LineItems = newLineItems
+            };
+        }
 
         ApplyOptionsTo(invoice);
 
@@ -2442,9 +2481,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
-        // Add the invoice and link to rentals
-        companyData.Invoices.Add(invoice);
-        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
+        // Add the invoice (new only - a continued draft is already in the collection) and link to rentals.
+        if (existingDraft == null)
+        {
+            companyData.Invoices.Add(invoice);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreated);
+        }
         LinkInvoiceToRentals(invoice, companyData);
 
         CreateRecurringScheduleIfNeeded(invoice, companyData, idGenerator);

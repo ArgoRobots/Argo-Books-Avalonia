@@ -118,6 +118,12 @@ public partial class Invoice : ObservableObject
     [JsonPropertyName("taxIsFixed")]
     public bool TaxIsFixed { get; set; }
 
+    /// <summary>Id of the template this invoice was created with, so it can be re-rendered (e.g. the
+    /// read-only viewer) with the layout the customer received. Empty for older invoices, which fall
+    /// back to the default template.</summary>
+    [JsonPropertyName("templateId")]
+    public string TemplateId { get; set; } = string.Empty;
+
     // Per-invoice display overrides. Null = inherit the selected template's setting; a value
     // overrides it for this invoice only, so the invoice's appearance is frozen at creation and
     // isn't changed by later template edits.

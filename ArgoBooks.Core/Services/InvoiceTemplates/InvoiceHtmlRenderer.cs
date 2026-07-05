@@ -178,8 +178,13 @@ public partial class InvoiceHtmlRenderer
         if (invoice.TaxRate > 0)
         {
             var taxLabel = GetTaxLabel(companySettings.Company.Country);
-            sb.AppendLine($"{taxLabel} ({invoice.TaxRate}%): {currencySymbol}{Money(invoice.TaxAmount)}");
+            // A fixed tax stores a dollar amount in TaxRate, so only a percent tax gets a "(x%)" suffix.
+            var taxRateSuffix = invoice.TaxIsFixed ? "" : $" ({invoice.TaxRate}%)";
+            sb.AppendLine($"{taxLabel}{taxRateSuffix}: {currencySymbol}{Money(invoice.TaxAmount)}");
         }
+        // Shipping is part of the stored Total, so the breakdown must list it or it won't sum to TOTAL.
+        if (invoice.ShippingAmount > 0)
+            sb.AppendLine($"Shipping: {currencySymbol}{Money(invoice.ShippingAmount)}");
         if (invoice.SecurityDeposit > 0)
             sb.AppendLine($"Security Deposit: {currencySymbol}{Money(invoice.SecurityDeposit)}");
         if (invoice.CustomFeeAmount > 0)

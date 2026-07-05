@@ -254,7 +254,10 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     function filter(text) {
         var t = (text || '').toLowerCase();
         filtered = sourceItems().filter(function(p) { return (p.name || '').toLowerCase().indexOf(t) !== -1; });
-        hl = filtered.length ? 0 : -1;
+        // Description is a free-text field that also suggests products, so don't auto-highlight a match:
+        // pressing Enter should keep what the user typed. Customer is a pure picker, so keep the top match
+        // highlighted for quick Enter-to-select. Arrowing down still highlights an item in either mode.
+        hl = (mode === 'customer' && filtered.length) ? 0 : -1;
     }
     function openFor(el, m) {
         target = el; mode = m;
@@ -558,8 +561,11 @@ window.__totalsConfig = __TOTALS_CONFIG__;
                 || change.Property == ProductsJsonProperty || change.Property == CustomersJsonProperty
                 || change.Property == TotalsConfigJsonProperty) && _isInitialized)
         {
-            EnsureWebViewActiveIfVisible();
-            _ = UpdateWebViewContent();
+            // If this call activates the WebView, ActivateWebView already renders the current content;
+            // rendering again here would race that first render and make the initial auto-fit lose to
+            // the restore-zoom path (opening zoomed-in instead of fitted).
+            if (!EnsureWebViewActiveIfVisible())
+                _ = UpdateWebViewContent();
         }
 
         if (change.Property == IsVisibleProperty && _isInitialized)
@@ -590,17 +596,21 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         }
     }
 
-    private void EnsureWebViewActiveIfVisible()
+    /// <summary>Activates the WebView (or fallback) if it should be showing but isn't yet.
+    /// Returns true if it activated the inline WebView, which itself renders the current content.</summary>
+    private bool EnsureWebViewActiveIfVisible()
     {
         if (PlatformSupportsInlineWebView && _webView != null && !_webView.IsVisible
             && IsEffectivelyVisible && !string.IsNullOrEmpty(Html))
         {
             InitializePlatformPreview();
+            return true;
         }
-        else if (!PlatformSupportsInlineWebView && IsEffectivelyVisible)
+        if (!PlatformSupportsInlineWebView && IsEffectivelyVisible)
         {
             ShowFallback();
         }
+        return false;
     }
 
     private void ActivateWebView()
@@ -632,6 +642,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         // Next activation should auto-fit fresh rather than restore a stale zoom.
         _hasRenderedOnce = false;
         _currentZoom = 1.0;
+        // Drop any scroll capture that never completed, so reactivation doesn't restore a stale
+        // scroll position from the previous viewing onto the freshly shown invoice.
+        _hasPendingScroll = false;
 
         if (_zoomToolbar != null)
             _zoomToolbar.IsVisible = false;
