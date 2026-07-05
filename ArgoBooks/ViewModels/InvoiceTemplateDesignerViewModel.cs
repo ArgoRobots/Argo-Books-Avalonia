@@ -51,9 +51,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     private bool _isDeleteConfirmOpen;
 
     [ObservableProperty]
-    private bool _isProcessingFeeInfoOpen;
-
-    [ObservableProperty]
     private string _modalTitle = "Create Invoice Template";
 
     [ObservableProperty]
@@ -299,8 +296,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showDueDateProminent = true;
 
-    [ObservableProperty]
-    private bool _passProcessingFee = true;
 
     // Preview HTML
     [ObservableProperty]
@@ -394,24 +389,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     {
         IsDeleteConfirmOpen = false;
         TemplateToDelete = string.Empty;
-    }
-
-    private bool _previewWasVisibleBeforeInfo;
-
-    [RelayCommand]
-    private void OpenProcessingFeeInfo()
-    {
-        _previewWasVisibleBeforeInfo = IsPreviewVisible;
-        IsPreviewVisible = false;
-        IsProcessingFeeInfoOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseProcessingFeeInfo()
-    {
-        IsProcessingFeeInfoOpen = false;
-        if (_previewWasVisibleBeforeInfo)
-            IsPreviewVisible = true;
     }
 
     [RelayCommand]
@@ -533,7 +510,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         IsPreviewVisible = false;
         IsTemplateListMode = false;
         IsDeleteConfirmOpen = false;
-        IsProcessingFeeInfoOpen = false;
         IsOpen = false;
         IsFullscreen = false;
         ModalClosed?.Invoke(this, EventArgs.Empty);
@@ -1009,11 +985,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         UpdatePreview();
     }
 
-    partial void OnPassProcessingFeeChanged(bool oldValue, bool newValue)
-    {
-        RecordChange("Toggle processing fee", v => PassProcessingFee = v, oldValue, newValue);
-        UpdatePreview();
-    }
 
     partial void OnLogoBase64Changed(string? oldValue, string? newValue)
     {
@@ -1093,8 +1064,7 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
             ShowItemDescriptions = ShowItemDescriptions,
             ShowNotes = ShowNotes,
             ShowPaymentInstructions = ShowPaymentInstructions,
-            ShowDueDateProminent = ShowDueDateProminent,
-            PassProcessingFee = PassProcessingFee
+            ShowDueDateProminent = ShowDueDateProminent
         };
     }
 
@@ -1127,7 +1097,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         template.ShowNotes = ShowNotes;
         template.ShowPaymentInstructions = ShowPaymentInstructions;
         template.ShowDueDateProminent = ShowDueDateProminent;
-        template.PassProcessingFee = PassProcessingFee;
         template.UpdatedAt = DateTime.UtcNow;
     }
 
@@ -1160,7 +1129,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         target.ShowNotes = snapshot.ShowNotes;
         target.ShowPaymentInstructions = snapshot.ShowPaymentInstructions;
         target.ShowDueDateProminent = snapshot.ShowDueDateProminent;
-        target.PassProcessingFee = snapshot.PassProcessingFee;
         target.ThumbnailBase64 = snapshot.ThumbnailBase64;
         target.UpdatedAt = snapshot.UpdatedAt;
     }
@@ -1196,7 +1164,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ShowNotes = template.ShowNotes;
         ShowPaymentInstructions = template.ShowPaymentInstructions;
         ShowDueDateProminent = template.ShowDueDateProminent;
-        PassProcessingFee = template.PassProcessingFee;
         HasLogo = !string.IsNullOrEmpty(template.LogoBase64);
     }
 
@@ -1235,7 +1202,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         ShowNotes = true;
         ShowPaymentInstructions = true;
         ShowDueDateProminent = true;
-        PassProcessingFee = true;
         HasLogo = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;

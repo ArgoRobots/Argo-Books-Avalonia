@@ -564,32 +564,8 @@
                                                           Content="{loc:Loc 'Show notes section'}" />
                                                 <CheckBox IsChecked="{Binding ShowPaymentInstructions}"
                                                           Content="{loc:Loc 'Show payment instructions'}" />
-
-                                                <!-- Online Payment Settings -->
-                                                <Border Margin="0,12,0,4"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="0,1,0,0"
-                                                        Padding="0,12,0,0">
-                                                    <StackPanel Spacing="6">
-                                                        <TextBlock Text="{loc:Loc 'Online Payments'}"
-                                                                   FontSize="12"
-                                                                   FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                            <CheckBox IsChecked="{Binding PassProcessingFee}"
-                                                                      Content="{loc:Loc 'Pass processing fees to customers'}"
-                                                                      VerticalAlignment="Center" />
-                                                            <Button Classes="icon-button"
-                                                                    Padding="4"
-                                                                    VerticalAlignment="Center"
-                                                                    ToolTip.Tip="{loc:Loc 'Learn more'}"
-                                                                    Command="{Binding OpenProcessingFeeInfoCommand}">
-                                                                <PathIcon Data="{x:Static icons:Icons.Info}"
-                                                                          Width="14" Height="14" />
-                                                            </Button>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                </Border>
+                                                <!-- "Pass processing fees" moved to Settings > Payment Portal (it's a
+                                                     payment policy, not a template display setting). -->
                                             </StackPanel>
                                         </StackPanel>
                                     </ScrollViewer>
@@ -662,34 +638,6 @@
                             </Grid>
                         </Border>
 
-                        <!-- Processing Fee Info -->
-                        <Border Grid.Row="0" Grid.RowSpan="3"
-                                IsVisible="{Binding IsProcessingFeeInfoOpen}"
-                                Background="#80000000">
-                            <Border Background="{DynamicResource SurfaceBrush}"
-                                    CornerRadius="12"
-                                    Padding="24"
-                                    MaxWidth="440"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                    BoxShadow="0 4 16 0 #40000000">
-                                <StackPanel Spacing="16">
-                                    <TextBlock Text="{loc:Loc 'Processing Fees'}"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'When customers pay online, Stripe and Square deduct a processing fee from each payment before depositing the rest into your account. Enabling this adds the fee to the customer''s payment so you receive the full invoiced amount.'}"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap" />
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Button Classes="secondary-button"
-                                                Content="{loc:Loc Close}"
-                                                Command="{Binding CloseProcessingFeeInfoCommand}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                        </Border>
                     </Grid>
                 </Border>
             </controls:ModalOverlay.ModalContent>

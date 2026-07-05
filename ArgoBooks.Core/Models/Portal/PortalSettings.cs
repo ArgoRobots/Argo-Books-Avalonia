@@ -73,6 +73,14 @@ public class PortalSettings
     public bool NotifyOnPayment { get; set; } = true;
 
     /// <summary>
+    /// Company-wide default for passing the card processing fee to the customer on online payments.
+    /// A per-invoice setting can override this; this is a payment policy, so it lives with the portal
+    /// configuration rather than on each invoice template.
+    /// </summary>
+    [JsonPropertyName("passProcessingFee")]
+    public bool PassProcessingFee { get; set; } = true;
+
+    /// <summary>
     /// The customer-facing portal URL for this company (returned by the server during setup).
     /// </summary>
     [JsonPropertyName("portalUrl")]

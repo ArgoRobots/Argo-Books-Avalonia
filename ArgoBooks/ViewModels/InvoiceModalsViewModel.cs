@@ -489,11 +489,17 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private void SyncOptionsFromTemplate(InvoiceTemplate? template)
     {
         if (template == null) return;
-        OptPassProcessingFee = template.PassProcessingFee;
+        // Pass-fee now defaults from the company-wide portal setting (it's a payment policy), while
+        // the display toggles come from the template.
+        OptPassProcessingFee = CompanyPortalPassFeeDefault;
         OptShowCompanyAddress = template.ShowCompanyAddress;
         OptShowCompanyPhone = template.ShowCompanyPhone;
         OptShowDueDateProminent = template.ShowDueDateProminent;
     }
+
+    // The company-wide "pass processing fee" default from the portal settings.
+    private static bool CompanyPortalPassFeeDefault =>
+        App.CompanyManager?.CompanyData?.Settings.PaymentPortal?.PassProcessingFee ?? true;
 
     // Writes the per-invoice option toggles onto an invoice being previewed/saved.
     private void ApplyOptionsTo(Invoice invoice)
@@ -508,7 +514,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     // template's setting when an override wasn't stored, e.g. invoices created before this feature).
     private void LoadOptionsFrom(Invoice invoice, InvoiceTemplate? template)
     {
-        OptPassProcessingFee = invoice.PassProcessingFee ?? template?.PassProcessingFee ?? true;
+        OptPassProcessingFee = invoice.PassProcessingFee ?? CompanyPortalPassFeeDefault;
         OptShowCompanyAddress = invoice.ShowCompanyAddress ?? template?.ShowCompanyAddress ?? true;
         OptShowCompanyPhone = invoice.ShowCompanyPhone ?? template?.ShowCompanyPhone ?? true;
         OptShowDueDateProminent = invoice.ShowDueDateProminent ?? template?.ShowDueDateProminent ?? true;

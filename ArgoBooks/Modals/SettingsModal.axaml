@@ -1007,6 +1007,20 @@
                                     </Border>
                                 </StackPanel>
 
+                                <!-- Processing fees (company-wide default; invoices can override) -->
+                                <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">
+                                    <TextBlock Text="{loc:Loc 'Processing Fees'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <CheckBox IsChecked="{Binding PortalPassProcessingFee}"
+                                              Content="{loc:Loc 'Pass processing fees to customers'}" />
+                                    <TextBlock Text="{loc:Loc 'When customers pay online, Stripe and Square deduct a processing fee from each payment. Enabling this adds the fee to the customer''s payment so you receive the full invoiced amount. Individual invoices can override this.'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
                                 <!-- Sync Interval -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
