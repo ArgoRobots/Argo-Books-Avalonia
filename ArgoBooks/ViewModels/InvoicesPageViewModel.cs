@@ -696,9 +696,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     {
         var now = DateTime.Now;
         var endOfWeek = now.AddDays(7);
-        // UpdatedAt is written as DateTime.UtcNow, so the "this month" cutoff must be UTC-based too,
-        // otherwise a large local offset can bucket a payment into the wrong month at the boundary.
-        var startOfMonthUtc = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        // Compare against a local month start: the save/send paths stamp UpdatedAt with DateTime.Now
+        // (local), which is the dominant case, so a local cutoff is consistent for it. (UpdatedAt is
+        // mixed-Kind - the portal payment path writes UtcNow - so no cutoff is perfect at the boundary.)
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
         // Total outstanding (unpaid invoices) - calculate in USD, convert for display. Drafts are excluded:
         // a never-sent draft isn't money a customer owes. Convert each at its OWN issue date (Calculations.md §3a).
@@ -709,7 +710,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         // Paid this month
         PaidThisMonth = CurrencyService.FormatSumDisplayFromUSD(
-            _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonthUtc),
+            _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
             i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
 
         // Overdue amount - drafts excluded (a never-sent draft past its due date isn't overdue money owed).

@@ -1355,6 +1355,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         SelectedCurrency = CurrencyService.GetDisplayString(
             string.IsNullOrEmpty(invoice.OriginalCurrency) ? "USD" : invoice.OriginalCurrency);
 
+        // Restore the template this draft was created with, so the preview (and a re-save) keep it
+        // instead of snapping to the default. Set it before LoadOptionsFrom so that its saved overrides
+        // win over the template's defaults; IsEditMode is already true, so this won't clobber the notes.
+        if (!string.IsNullOrEmpty(invoice.TemplateId))
+        {
+            var savedTemplate = TemplateOptions.FirstOrDefault(t => t.Id == invoice.TemplateId);
+            if (savedTemplate != null)
+                SelectedTemplate = savedTemplate;
+        }
+
         // Restore this invoice's saved display overrides (falls back to the template when absent).
         LoadOptionsFrom(invoice, SelectedTemplate);
 
