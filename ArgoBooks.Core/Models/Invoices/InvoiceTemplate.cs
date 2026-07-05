@@ -179,8 +179,13 @@ public class InvoiceTemplate
     [JsonPropertyName("showDueDateProminent")]
     public bool ShowDueDateProminent { get; set; } = true;
 
-    // "Pass processing fee" moved to the company-wide Payment Portal settings (it's a payment policy,
-    // not a per-template display setting). Old templates' passProcessingFee JSON is simply ignored.
+    /// <summary>
+    /// Whether to pass payment processing fees to customers on portal invoices.
+    /// When enabled, a card processing fee is added to online payments
+    /// and clearly labeled as a third-party charge from the payment provider.
+    /// </summary>
+    [JsonPropertyName("passProcessingFee")]
+    public bool PassProcessingFee { get; set; } = true;
 
     /// <summary>
     /// When this template was created.
@@ -236,6 +241,7 @@ public class InvoiceTemplate
             ShowNotes = ShowNotes,
             ShowPaymentInstructions = ShowPaymentInstructions,
             ShowDueDateProminent = ShowDueDateProminent,
+            PassProcessingFee = PassProcessingFee,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             ThumbnailBase64 = ThumbnailBase64

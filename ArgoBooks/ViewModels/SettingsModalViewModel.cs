@@ -633,13 +633,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _portalNotifyOnPayment = true;
 
-    /// <summary>
-    /// Company-wide default for passing the card processing fee to the customer on online payments.
-    /// Individual invoices can override it.
-    /// </summary>
-    [ObservableProperty]
-    private bool _portalPassProcessingFee = true;
-
     partial void OnHasPortalLogoChanged(bool value) => OnPropertyChanged(nameof(PortalLogoButtonText));
 
     /// <summary>
@@ -1173,7 +1166,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         _isLoadingPortalSettings = true;
         PortalCompanyName = string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
-        PortalPassProcessingFee = settings.PassProcessingFee;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
             ? "Manual"
             : settings.AutoSyncIntervalMinutes.ToString();
@@ -1316,7 +1308,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         settings.NotifyOnPayment = PortalNotifyOnPayment;
-        settings.PassProcessingFee = PortalPassProcessingFee;
         settings.AutoSyncIntervalMinutes = PortalSyncInterval == "Manual"
             ? 0
             : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;
