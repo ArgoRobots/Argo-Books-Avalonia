@@ -1,6 +1,8 @@
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -431,6 +433,58 @@ public class ForecastAccuracyServiceTests
         var result = _service.GetAccuracySummary(companyData);
 
         Assert.Contains("No validated forecasts", result);
+    }
+
+    #endregion
+
+    #region ValidatePastForecasts Tests
+
+    [Fact]
+    public void ValidatePastForecasts_MeasuresActualRevenueAsGrossCollected()
+    {
+        // Forecasts are generated from gross (tax-inclusive), collected-only revenue
+        // (InsightsService uses RevenueAggregator.IsCollected + EffectiveTotalUSD). The validation
+        // step must measure "actual" the same way, otherwise the accuracy score compares two
+        // different yardsticks. It used pre-tax amounts and counted uncollected revenue too.
+        var companyData = new CompanyData();
+
+        var period = new AnalysisDateRange
+        {
+            StartDate = new DateTime(2024, 6, 1),
+            EndDate = new DateTime(2024, 6, 30)
+        };
+        _service.SaveForecast(
+            companyData,
+            new ForecastData { ForecastedRevenue = 110m, ForecastedExpenses = 0m, ForecastedProfit = 110m },
+            period);
+
+        // Collected sale: gross 110 (pre-tax 100 + 10 tax). This is the only revenue the forecast
+        // basis would count, and it counts the gross 110.
+        companyData.Revenues.Add(new Revenue
+        {
+            Id = "REV-PAID",
+            Date = new DateTime(2024, 6, 15),
+            OriginalCurrency = "USD",
+            Total = 110m,
+            TaxAmount = 10m,
+            PaymentStatus = RevenuePaymentStatus.Paid
+        });
+        // Uncollected sale: must be excluded from "actual" because the forecast excluded it.
+        companyData.Revenues.Add(new Revenue
+        {
+            Id = "REV-UNPAID",
+            Date = new DateTime(2024, 6, 20),
+            OriginalCurrency = "USD",
+            Total = 200m,
+            TaxAmount = 0m,
+            PaymentStatus = RevenuePaymentStatus.Partial
+        });
+
+        _service.ValidatePastForecasts(companyData);
+
+        var record = companyData.ForecastRecords[0];
+        Assert.True(record.IsValidated);
+        Assert.Equal(110m, record.ActualRevenue);
     }
 
     #endregion

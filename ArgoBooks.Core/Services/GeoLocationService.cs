@@ -110,13 +110,6 @@ public class GeoLocationService : IGeoLocationService
         }
     }
 
-    /// <inheritdoc />
-    public void ClearCache()
-    {
-        _cachedData = null;
-        _cacheTime = DateTime.MinValue;
-    }
-
     private async Task<bool> TryIpApiAsync(GeoLocationData data, CancellationToken cancellationToken)
     {
         try
@@ -226,9 +219,6 @@ public class GeoLocationService : IGeoLocationService
 
         [JsonPropertyName("timezone")]
         public string? Timezone { get; set; }
-
-        [JsonPropertyName("proxy")]
-        public bool Proxy { get; set; }
     }
 
     private class IpApiCoResponse
@@ -278,9 +268,4 @@ public interface IGeoLocationService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Geographic location data.</returns>
     Task<GeoLocationData> GetLocationAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Clears the cached location data.
-    /// </summary>
-    void ClearCache();
 }

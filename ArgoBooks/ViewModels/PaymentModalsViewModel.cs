@@ -342,19 +342,54 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create invoice modal on top of the current modal.
     /// </summary>
+    // One-shot handler for the "create entity from this modal" flow. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _invoiceSavedHandler;
+
     [RelayCommand]
     private void OpenCreateInvoice()
     {
         var invoiceModals = App.InvoiceModalsViewModel;
         if (invoiceModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            invoiceModals.InvoiceSaved -= OnSaved;
-            LoadInvoiceOptions();
-        }
-        invoiceModals.InvoiceSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _invoiceSavedHandler,
+            h => invoiceModals.InvoiceSaved += h,
+            h => invoiceModals.InvoiceSaved -= h,
+            () =>
+            {
+                LoadInvoiceOptions();
+
+                // Auto-select the invoice the user just created.
+                var newInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == invoiceModals.LastSavedInvoiceId);
+                if (newInvoice != null)
+                    SelectedInvoice = newInvoice;
+            });
         invoiceModals.OpenCreateModal();
+    }
+
+    /// <summary>
+    /// The currency a payment must be tagged with. A payment settles the invoice (or revenue) it is
+    /// linked to, in THAT record's currency: <see cref="InvoiceTotalsService"/> only counts a payment
+    /// toward an invoice when their currencies match (docs/Calculations.md §5), so stamping the
+    /// company's display currency instead silently drops payments on any invoice not in that currency.
+    /// Unlinked payments fall back to the company display currency.
+    /// </summary>
+    private string ResolvePaymentCurrency(Core.Data.CompanyData companyData)
+    {
+        if (!string.IsNullOrEmpty(ModalInvoiceId))
+        {
+            var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == ModalInvoiceId);
+            if (invoice != null && !string.IsNullOrEmpty(invoice.OriginalCurrency))
+                return invoice.OriginalCurrency;
+        }
+        if (!string.IsNullOrEmpty(ModalRevenueId))
+        {
+            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == ModalRevenueId);
+            if (revenue != null && !string.IsNullOrEmpty(revenue.OriginalCurrency))
+                return revenue.OriginalCurrency;
+        }
+        return CurrencyService.CurrentCurrencyCode;
     }
 
     [RelayCommand]
@@ -373,7 +408,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var paymentMethod = PaymentMethodExtensions.ParseDisplayName(ModalPaymentMethod);
 
         var parsedAmount = decimal.Parse(ModalAmount);
-        var currentCurrency = CurrencyService.CurrentCurrencyCode;
+        // Tag the payment with the linked invoice's/revenue's currency, not the company display
+        // currency, so it counts toward that invoice's totals (docs/Calculations.md §5).
+        var currentCurrency = ResolvePaymentCurrency(companyData);
         var paymentDate = ModalDate?.DateTime ?? DateTime.Today;
 
         // Convert payment amount to USD for consistent reporting
@@ -386,7 +423,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", paymentDate);
                 if (rate > 0)
                 {
-                    amountUSD = Math.Round(parsedAmount * rate, 2);
+                    // USD base stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
+                    amountUSD = parsedAmount * rate;
                 }
             }
         }
@@ -574,8 +612,9 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var newDate = ModalDate?.DateTime ?? DateTime.Today;
         var newAmount = decimal.Parse(ModalAmount);
 
-        // Convert to USD for consistent reporting
-        var editCurrentCurrency = CurrencyService.CurrentCurrencyCode;
+        // Convert to USD for consistent reporting. Tag the payment with the linked invoice's/revenue's
+        // currency, not the company display currency, so it counts toward that invoice's totals (§5).
+        var editCurrentCurrency = ResolvePaymentCurrency(companyData);
         decimal newAmountUSD = newAmount;
         if (!string.Equals(editCurrentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
         {
@@ -585,7 +624,8 @@ public partial class PaymentModalsViewModel : ViewModelBase
                 var rate = await exchangeService.GetExchangeRateAsync(editCurrentCurrency, "USD", newDate);
                 if (rate > 0)
                 {
-                    newAmountUSD = Math.Round(newAmount * rate, 2);
+                    // USD base stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
+                    newAmountUSD = newAmount * rate;
                 }
             }
         }

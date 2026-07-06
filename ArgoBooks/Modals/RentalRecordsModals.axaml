@@ -137,6 +137,7 @@
                                                                  EmptyMessage="{loc:Loc 'No items available.'}"
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).OpenCreateRentalItemCommand}"
+                                                                 EmptyCreateCommandParameter="{Binding}"
                                                                  HasError="{Binding HasItemError}"
                                                                  ErrorMessage="{loc:Loc 'Select an item'}" />
                                                         <TextBox Grid.Column="1"
@@ -355,6 +356,7 @@
                                                                  EmptyMessage="{loc:Loc 'No items available.'}"
                                                                  EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RentalRecordsModalsViewModel)DataContext).OpenCreateRentalItemCommand}"
+                                                                 EmptyCreateCommandParameter="{Binding}"
                                                                  HasError="{Binding HasItemError}"
                                                                  ErrorMessage="{loc:Loc 'Select an item'}" />
                                                         <TextBox Grid.Column="1"

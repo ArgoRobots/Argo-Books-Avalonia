@@ -152,60 +152,6 @@ public static class DotEnv
     }
 
     /// <summary>
-    /// Sets an environment variable in the .env file. Creates the file if it doesn't exist.
-    /// Updates the in-memory cache and process environment variable immediately.
-    /// </summary>
-    /// <param name="key">The variable name.</param>
-    /// <param name="value">The value to set.</param>
-    public static void Set(string key, string value)
-    {
-        if (!_isLoaded) Load();
-
-        // Update in-memory cache and process env
-        EnvVars[key] = value;
-        Environment.SetEnvironmentVariable(key, value);
-
-        // Find or create .env file
-        var envPath = FindEnvFile();
-        if (string.IsNullOrEmpty(envPath))
-        {
-            envPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".env");
-        }
-
-        // Read existing lines (or empty)
-        var lines = File.Exists(envPath) ? new List<string>(File.ReadAllLines(envPath)) : [];
-
-        // Replace existing key or append
-        var replaced = false;
-        for (var i = 0; i < lines.Count; i++)
-        {
-            var trimmed = lines[i].Trim();
-            if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith('#')) continue;
-
-            var sep = trimmed.IndexOf('=');
-            if (sep <= 0) continue;
-
-            var existingKey = trimmed[..sep].Trim();
-            if (string.Equals(existingKey, key, StringComparison.OrdinalIgnoreCase))
-            {
-                lines[i] = $"{key}={value}";
-                replaced = true;
-                break;
-            }
-        }
-
-        if (!replaced)
-        {
-            lines.Add($"{key}={value}");
-        }
-
-        // Write atomically to avoid corrupting the file if the process is killed mid-write.
-        var tempPath = envPath + ".tmp";
-        File.WriteAllLines(tempPath, lines);
-        File.Move(tempPath, envPath, overwrite: true);
-    }
-
-    /// <summary>
     /// Removes a key from the in-memory cache and clears the corresponding
     /// environment variable for the current process. Does not modify the .env file.
     /// </summary>

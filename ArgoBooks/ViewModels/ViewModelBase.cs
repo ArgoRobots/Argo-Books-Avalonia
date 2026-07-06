@@ -1,3 +1,4 @@
+using System.Threading;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +16,49 @@ public abstract partial class ViewModelBase : ObservableObject
 
     [ObservableProperty]
     private string? _busyMessage;
+
+    #region Search Debounce
+
+    private const int SearchDebounceMs = 150;
+    private CancellationTokenSource? _searchDebounceCts;
+
+    /// <summary>
+    /// Runs a search filter after a short pause in typing instead of on every keystroke.
+    /// The list filters re-sort and rebuild their display rows, so firing per keystroke
+    /// makes fast typing feel laggy on large data sets. Call from an OnSearchQueryChanged
+    /// handler. The action runs on the UI thread once the user stops typing; if another
+    /// keystroke arrives first, the pending run is cancelled. Call <see cref="CancelPendingSearch"/>
+    /// from the ViewModel's cleanup so a pending filter can't fire after teardown.
+    /// </summary>
+    protected void DebounceSearch(Action filter)
+    {
+        _searchDebounceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+        _ = RunDebouncedSearchAsync(filter, cts.Token);
+    }
+
+    /// <summary>
+    /// Cancels any pending debounced search so a queued filter won't run.
+    /// </summary>
+    protected void CancelPendingSearch() => _searchDebounceCts?.Cancel();
+
+    private static async Task RunDebouncedSearchAsync(Action filter, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(SearchDebounceMs, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (!token.IsCancellationRequested)
+            filter();
+    }
+
+    #endregion
 
     /// <summary>
     /// Shows a "Discard Changes?" confirmation dialog for Add modals.

@@ -16,7 +16,7 @@
             helpers:BannerAnimationBehavior.IsVisible="{Binding ShowBanner, RelativeSource={RelativeSource AncestorType=controls:InfoBanner}}"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
-            Margin="0,10,0,0"
+            Margin="{Binding BannerMargin, RelativeSource={RelativeSource AncestorType=controls:InfoBanner}}"
             CornerRadius="6"
             Padding="12,8">
         <Grid ColumnDefinitions="Auto,Auto,Auto,Auto">

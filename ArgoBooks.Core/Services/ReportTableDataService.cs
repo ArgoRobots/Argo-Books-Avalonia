@@ -233,9 +233,11 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 IssueDate = i.IssueDate,
                 DueDate = i.DueDate,
                 CustomerName = customer?.Name ?? "Unknown",
-                Total = i.Total,
-                AmountPaid = i.AmountPaid,
-                Balance = i.Balance,
+                // Store USD-normalized amounts; the renderer converts them to the display currency at
+                // the invoice's date (mirrors the Revenue/Expense Total column). Paid = Total - Balance.
+                Total = i.EffectiveTotalUSD,
+                AmountPaid = i.EffectiveTotalUSD - i.EffectiveBalanceUSD,
+                Balance = i.EffectiveBalanceUSD,
                 Status = i.Status.ToString()
             };
         }).ToList();
@@ -275,7 +277,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 Id = p.Id,
                 Date = p.Date,
                 CustomerName = customer?.Name ?? "Unknown",
-                Amount = p.Amount,
+                // USD-normalized; the renderer converts to the display currency at the payment's date.
+                Amount = p.EffectiveAmountUSD,
                 PaymentMethod = p.PaymentMethod.ToString(),
                 ReferenceNumber = p.ReferenceNumber ?? "",
                 InvoiceId = p.InvoiceId
@@ -450,7 +453,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 SupplierName = supplier?.Name ?? "Unknown",
                 OrderDate = po.OrderDate,
                 ExpectedDeliveryDate = po.ExpectedDeliveryDate,
-                Total = po.Total,
+                // USD-normalized; the renderer converts to the display currency at the order's date.
+                Total = po.EffectiveTotalUSD,
                 Status = po.Status.ToString()
             };
         }).ToList();
@@ -584,7 +588,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     #endregion
 
-    #region Entity Data (Customers, Suppliers, Products, Employees, Departments, Categories, Locations, Accountants)
+    #region Entity Data (Customers, Suppliers, Products, Categories, Locations, Accountants)
 
     public List<CustomerTableRow> GetCustomersTableData(TableReportElement tableConfig)
     {
@@ -663,69 +667,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 UnitPrice = p.UnitPrice,
                 CostPrice = p.CostPrice,
                 Status = p.Status.ToString()
-            };
-        }).ToList();
-    }
-
-    public List<EmployeeTableRow> GetEmployeesTableData(TableReportElement tableConfig)
-    {
-        if (companyData?.Employees == null)
-            return [];
-
-        var query = companyData.Employees.AsEnumerable();
-
-        query = tableConfig.SortOrder switch
-        {
-            TableSortOrder.DateAscending => query.OrderBy(e => e.HireDate),
-            TableSortOrder.DateDescending => query.OrderByDescending(e => e.HireDate),
-            TableSortOrder.AmountAscending => query.OrderBy(e => e.SalaryAmount),
-            TableSortOrder.AmountDescending => query.OrderByDescending(e => e.SalaryAmount),
-            _ => query.OrderBy(e => e.LastName)
-        };
-
-        if (tableConfig.MaxRows > 0)
-            query = query.Take(tableConfig.MaxRows);
-
-        return query.Select(e =>
-        {
-            var dept = companyData?.GetDepartment(e.DepartmentId ?? "");
-            return new EmployeeTableRow
-            {
-                Id = e.Id,
-                FullName = e.FullName,
-                Position = e.Position,
-                DepartmentName = dept?.Name ?? "",
-                HireDate = e.HireDate,
-                EmploymentType = e.EmploymentType,
-                SalaryAmount = e.SalaryAmount,
-                Status = e.Status.ToString()
-            };
-        }).ToList();
-    }
-
-    public List<DepartmentTableRow> GetDepartmentsTableData(TableReportElement tableConfig)
-    {
-        if (companyData?.Departments == null)
-            return [];
-
-        var query = companyData.Departments.AsEnumerable();
-
-        if (tableConfig.MaxRows > 0)
-            query = query.Take(tableConfig.MaxRows);
-
-        return query.Select(d =>
-        {
-            var headEmployee = !string.IsNullOrEmpty(d.HeadEmployeeId)
-                ? companyData?.GetEmployee(d.HeadEmployeeId)
-                : null;
-            var employeeCount = companyData?.Employees.Count(e => e.DepartmentId == d.Id) ?? 0;
-            return new DepartmentTableRow
-            {
-                Id = d.Id,
-                Name = d.Name,
-                HeadName = headEmployee?.FullName ?? "",
-                EmployeeCount = employeeCount,
-                Budget = d.Budget
             };
         }).ToList();
     }
@@ -934,16 +875,19 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             stats.SmallestRevenue = sales.Count > 0 ? sales.Min(s => s.EffectiveSubtotalUSD) : 0;
         }
 
-        // Calculate expense statistics (using USD-converted pre-tax amounts)
+        // Calculate expense statistics (using USD-converted gross amounts, including tax paid to
+        // suppliers). This matches ExpenseAggregator/ProfitCalculator and the Dashboard, which treat
+        // the gross amount as the cash that left the business; using the pre-tax subtotal here made
+        // the report's Net Profit disagree with the Dashboard by the supplier tax.
         if (companyData?.Expenses != null &&
             filters.TransactionType is TransactionType.Expenses)
         {
             var purchases = companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
-            stats.TotalExpenses = purchases.Sum(p => p.EffectiveSubtotalUSD);
+            stats.TotalExpenses = purchases.Sum(p => p.EffectiveTotalUSD);
             stats.ExpenseTransactionCount = purchases.Count;
             stats.AverageExpenseTransaction = purchases.Count > 0 ? stats.TotalExpenses / purchases.Count : 0;
-            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.EffectiveSubtotalUSD) : 0;
-            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.EffectiveSubtotalUSD) : 0;
+            stats.LargestExpense = purchases.Count > 0 ? purchases.Max(p => p.EffectiveTotalUSD) : 0;
+            stats.SmallestExpense = purchases.Count > 0 ? purchases.Min(p => p.EffectiveTotalUSD) : 0;
         }
 
         // Calculate profit
@@ -1414,33 +1358,6 @@ public class ProductTableRow
     public decimal UnitPrice { get; set; }
     public decimal CostPrice { get; set; }
     public string Status { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Represents an employee row in a table.
-/// </summary>
-public class EmployeeTableRow
-{
-    public string Id { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
-    public string Position { get; set; } = string.Empty;
-    public string DepartmentName { get; set; } = string.Empty;
-    public DateTime HireDate { get; set; }
-    public string EmploymentType { get; set; } = string.Empty;
-    public decimal SalaryAmount { get; set; }
-    public string Status { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Represents a department row in a table.
-/// </summary>
-public class DepartmentTableRow
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string HeadName { get; set; } = string.Empty;
-    public int EmployeeCount { get; set; }
-    public decimal Budget { get; set; }
 }
 
 /// <summary>

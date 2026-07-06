@@ -16,555 +16,310 @@
         <vm:InvoiceModalsViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <!-- Borderless "invoice text" inputs on the white paper -->
+        <Style Selector="TextBox.paper">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#1A1F2B" />
+            <Setter Property="CaretBrush" Value="#1A1F2B" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="3,2" />
+        </Style>
+        <Style Selector="NumericUpDown.paper">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#1A1F2B" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.paper-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="#8A94A3" />
+        </Style>
+        <Style Selector="TextBlock.sidebar-label">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
-        <!-- ======================= CREATE / EDIT INVOICE MODAL ======================= -->
+        <!-- ======================= CREATE / EDIT INVOICE EDITOR (big modal) ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsCreateEditModalOpen}"
                                ClosingCommand="{Binding RequestCloseCreateEditModalCommand}">
             <controls:ModalOverlay.ModalContent>
+                <Panel>
+                <!-- Big editor. Hidden on success / sending so those show as a normal-sized card below. -->
                 <Border HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="{Binding ModalWidth}"
-                    Height="{Binding ModalHeight}"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto,Auto">
-                    <!-- Header - Edit Mode -->
-                    <Border Grid.Row="0"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1"
-                            IsVisible="{Binding ShowEditContent}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="{Binding ModalTitle}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseCreateEditModalCommand}">
-                                <PathIcon Data="{x:Static icons:Icons.Close}"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
+                        VerticalAlignment="Stretch"
+                        Width="1040"
+                        MaxWidth="1040"
+                        Margin="24,32"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        ClipToBounds="True"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Border.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsShowingSuccess" />
+                            <Binding Path="!IsSending" />
+                        </MultiBinding>
+                    </Border.IsVisible>
+                    <Grid RowDefinitions="Auto,*">
 
-                    <!-- Header - Preview Mode -->
-                    <Border Grid.Row="0"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1"
-                            IsVisible="{Binding ShowPreviewContent}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="{loc:Loc 'Invoice Preview'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="{loc:Loc 'Review your invoice before sending'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsViewOnly}" />
-                            </StackPanel>
-                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
-                                <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Content - Edit Mode -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding ShowEditContent}">
-                        <StackPanel Margin="24" Spacing="20">
-                            <!-- Template and Customer Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <!-- Template Selection (left) -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Template'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TemplateOptions}"
-                                             SelectedItem="{Binding SelectedTemplate}"
-                                             PlaceholderText="{loc:Loc 'Select template'}"
-                                             Classes="form-combobox"
-                                             HorizontalAlignment="Stretch">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Name}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                </StackPanel>
-
-                                <!-- Customer Selection (right) - hidden when from rental, disabled when limited edit -->
-                                <StackPanel Grid.Column="2" Spacing="6" IsVisible="{Binding !IsFromExternalSource}">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
-                                                                SelectedItem="{Binding SelectedCustomer}"
-                                                                DisplayMemberPath="Name"
-                                                                Placeholder="{loc:Loc 'Search for a customer...'}"
-                                                                IsRequired="True"
-                                                                HasError="{Binding HasCustomerError}"
-                                                                ErrorMessage="{loc:Loc 'Please select a customer.'}"
-                                                                ShowAddNew="True"
-                                                                AddNewText="{loc:Loc 'Create new customer'}"
-                                                                AddNewCommand="{Binding OpenCreateCustomerCommand}"
-                                                                EmptyMessage="{loc:Loc 'No customers found.'}"
-                                                                EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
-                                </StackPanel>
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="20,14"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding ModalTitle}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCreateEditModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
                             </Grid>
+                        </Border>
 
-                            <!-- Dates Row - hidden when from rental -->
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
-                                <!-- Issue Date - disabled when limited edit -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalIssueDate}"
-                                                Classes="form-datepicker"
-                                                HorizontalAlignment="Stretch" />
-                                </StackPanel>
+                        <!-- Body -->
+                        <Grid Grid.Row="1">
 
-                                <!-- Due Date -->
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalDueDate}"
-                                                Classes="form-datepicker"
-                                                HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- EDITOR: paper + sidebar (create / continue) -->
+                            <Grid ColumnDefinitions="*,320">
+                                <Grid.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="!IsViewOnly" />
+                                        <Binding Path="!IsShowingSuccess" />
+                                        <Binding Path="!IsSending" />
+                                    </MultiBinding>
+                                </Grid.IsVisible>
 
-                            <!-- Currency Row - hidden when from rental/revenue (parent transaction owns currency) -->
-                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding !IsFromExternalSource}">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Currency'}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding AvailableCurrencies}"
-                                              SelectedItem="{Binding SelectedCurrency}"
-                                              Classes="form-combobox"
-                                              PlaceholderText="{loc:Loc 'Select currency'}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                                <!-- PAPER: the real customer-facing invoice HTML, edited in place -->
+                                <controls:InvoicePreviewControl x:Name="EditorPreview"
+                                                                Grid.Column="0"
+                                                                Html="{Binding PreviewHtml}"
+                                                                IsEditable="{Binding !IsEditorPreviewing}"
+                                                                ProductsJson="{Binding ProductsJson}"
+                                                                CustomersJson="{Binding CustomersJson}"
+                                                                TotalsConfigJson="{Binding TotalsConfigJson}"
+                                                                OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
+                                    <controls:InvoicePreviewControl.IsVisible>
+                                        <!-- Also hidden on success / while sending so the native WebView (which renders
+                                             above Avalonia content) doesn't cover the success + sending overlays. -->
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="IsCreateEditModalOpen" />
+                                            <Binding Path="!IsViewOnly" />
+                                            <Binding Path="!IsNestedModalOpen" />
+                                            <Binding Path="!IsShowingSuccess" />
+                                            <Binding Path="!IsSending" />
+                                        </MultiBinding>
+                                    </controls:InvoicePreviewControl.IsVisible>
+                                </controls:InvoicePreviewControl>
 
-                            <!-- Line Items Section - hidden when from rental, disabled when limited edit -->
-                            <StackPanel Spacing="12" IsVisible="{Binding !IsFromExternalSource}">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0"
-                                               Text="{loc:Loc 'Line Items'}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <Button Grid.Column="1"
-                                            Classes="secondary-button"
-                                            Command="{Binding AddLineItemCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <PathIcon Data="{x:Static icons:Icons.Add}"
-                                                      Width="14" Height="14" />
-                                            <TextBlock Text="{loc:Loc 'Add Item'}" />
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
+                                <!-- SIDEBAR -->
+                                <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
+                                    <!-- HorizontalScrollBarVisibility=Disabled so content is measured at the fixed
+                                         sidebar width and wraps, instead of a long validation message forcing the
+                                         whole modal to scroll sideways. -->
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel Margin="16" Spacing="16">
 
-                                <!-- Line Items Header -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="6"
-                                        Padding="12,8"
-                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="2*,80,90,100,40">
-                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
-                                            <TextBlock Text="{loc:Loc 'Product / Service'}" FontSize="12" FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text=" *" FontSize="12" FontWeight="Medium"
-                                                       Foreground="{DynamicResource DangerBrush}" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{loc:Loc Qty}" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Left" />
-                                        <TextBlock Grid.Column="2" Text="{loc:Loc Price}" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Left" />
-                                        <TextBlock Grid.Column="3" Text="{loc:Loc Amount}" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Right"
-                                                   Margin="0,0,12,0" />
-                                    </Grid>
-                                </Border>
-
-                                <!-- Line Items List -->
-                                <ItemsControl ItemsSource="{Binding LineItems}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:LineItemDisplayModel">
-                                            <Border Padding="12,8"
+                                            <!-- Shown when reviewing a draft generated by a recurring schedule
+                                                 (the Make-recurring toggle is hidden in edit mode). -->
+                                            <Border IsVisible="{Binding EditingRecurringInvoice}"
+                                                    Background="{DynamicResource SurfaceAltBrush}"
                                                     BorderBrush="{DynamicResource BorderBrush}"
-                                                    BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="2*,80,90,100,40">
-                                                    <controls:SearchableDropdown Grid.Column="0"
-                                                                 Classes="compact"
-                                                                 Margin="0,0,8,0"
-                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
-                                                                 SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                                                                 DisplayMemberPath="Name"
-                                                                 Placeholder="{loc:Loc 'Search for a product...'}"
-                                                                 ShowAddNew="True"
-                                                                 AddNewText="{loc:Loc 'Create new product'}"
-                                                                 AddNewCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
-                                                                 EmptyMessage="{loc:Loc 'No products found.'}"
-                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
-                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).OpenCreateProductCommand}"
-                                                                 HasError="{Binding HasProductError}"
-                                                                 ErrorMessage="{loc:Loc 'Please select a product.'}" />
-                                                    <NumericUpDown Grid.Column="1"
-                                                                   Value="{Binding Quantity, Mode=TwoWay}"
-                                                                   Minimum="1"
-                                                                   Maximum="999999"
-                                                                   FormatString="0"
-                                                                   Classes="line-item-input"
-                                                                   ShowButtonSpinner="False"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Top"
-                                                                   Margin="0,0,8,0" />
-                                                    <NumericUpDown Grid.Column="2"
-                                                                   Value="{Binding UnitPrice, Mode=TwoWay, TargetNullValue=0}"
-                                                                   Minimum="0"
-                                                                   Maximum="999999999"
-                                                                   FormatString="N2"
-                                                                   Classes="line-item-input"
-                                                                   ShowButtonSpinner="False"
-                                                                   HorizontalAlignment="Stretch"
-                                                                   VerticalAlignment="Top"
-                                                                   Margin="0,0,8,0" />
-                                                    <TextBlock Grid.Column="3"
-                                                               Text="{Binding AmountFormatted}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Top"
-                                                               HorizontalAlignment="Right"
-                                                               Margin="0,8,12,0" />
-                                                    <Button Grid.Column="4"
-                                                            Classes="icon-button danger"
-                                                            VerticalAlignment="Top"
-                                                            HorizontalAlignment="Center"
-                                                            IsVisible="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).LineItems.Count, Converter={x:Static local:IntConverters.IsGreaterThanOne}}"
-                                                            Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip.Tip="{loc:Loc 'Remove item'}">
-                                                        <PathIcon Data="{x:Static icons:Icons.Delete}"
-                                                                  Width="14" Height="14" />
+                                                    BorderThickness="1" CornerRadius="8" Padding="10,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                    <PathIcon Data="{x:Static icons:Icons.Refresh}" Width="14" Height="14"
+                                                              Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Generated from a recurring schedule" FontSize="12"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               VerticalAlignment="Center" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <StackPanel>
+                                                <TextBlock Text="TEMPLATE" Classes="sidebar-label" />
+                                                <ComboBox ItemsSource="{Binding TemplateOptions}" SelectedItem="{Binding SelectedTemplate}"
+                                                          Classes="form-combobox" HorizontalAlignment="Stretch">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <StackPanel IsVisible="{Binding !IsFromExternalSource}">
+                                                <TextBlock Text="CURRENCY" Classes="sidebar-label" />
+                                                <ComboBox ItemsSource="{Binding AvailableCurrencies}" SelectedItem="{Binding SelectedCurrency}"
+                                                          Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+
+                                            <!-- Display toggles: what appears on the invoice (per-invoice overrides). -->
+                                            <StackPanel Spacing="7">
+                                                <TextBlock Text="DISPLAY" Classes="sidebar-label" />
+                                                <CheckBox IsChecked="{Binding OptShowCompanyAddress}" Content="Show company address" />
+                                                <CheckBox IsChecked="{Binding OptShowCompanyPhone}" Content="Show company phone" />
+                                                <CheckBox IsChecked="{Binding OptShowDueDateProminent}" Content="Show prominent due date" />
+                                            </StackPanel>
+
+                                            <!-- Tax, shipping, discount and fees are edited directly in the totals
+                                                 section on the invoice paper. -->
+
+                                            <!-- Status (edit mode) -->
+                                            <StackPanel IsVisible="{Binding IsEditMode}">
+                                                <TextBlock Text="STATUS" Classes="sidebar-label" />
+                                                <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding ModalStatus}"
+                                                          Classes="form-combobox" HorizontalAlignment="Stretch">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate><TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" /></DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+
+                                            <!-- Behaviour toggles: how the invoice works (fees, recurrence). -->
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Text="OPTIONS" Classes="sidebar-label" />
+                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                    <CheckBox IsChecked="{Binding OptPassProcessingFee}" Content="Pass processing fee to customer" VerticalAlignment="Center" />
+                                                    <Button Classes="icon-button" Padding="4" VerticalAlignment="Center"
+                                                            ToolTip.Tip="Learn more" Click="OnProcessingFeeInfoClick">
+                                                        <PathIcon Data="{x:Static icons:Icons.Info}" Width="14" Height="14" />
                                                     </Button>
+                                                </StackPanel>
+
+                                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" IsVisible="{Binding !IsEditMode}">
+                                                    <CheckBox IsChecked="{Binding IsRecurring}" Content="Make recurring" VerticalAlignment="Center" />
+                                                    <Button Classes="icon-button" Padding="4" VerticalAlignment="Center"
+                                                            ToolTip.Tip="Learn more" Click="OnRecurringInfoClick">
+                                                        <PathIcon Data="{x:Static icons:Icons.Info}" Width="14" Height="14" />
+                                                    </Button>
+                                                </StackPanel>
+                                                <Border IsVisible="{Binding IsRecurring}"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="1" CornerRadius="8" Padding="12">
+                                                    <StackPanel Spacing="10">
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="Frequency" Classes="sidebar-label" Margin="0" />
+                                                            <ComboBox ItemsSource="{Binding FrequencyOptions}" SelectedItem="{Binding RecurringFrequency}" Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                                        </StackPanel>
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="Start date" Classes="sidebar-label" Margin="0" />
+                                                            <DatePicker SelectedDate="{Binding RecurringStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                        </StackPanel>
+                                                        <StackPanel Spacing="4">
+                                                            <TextBlock Text="End date (optional)" Classes="sidebar-label" Margin="0" />
+                                                            <DatePicker SelectedDate="{Binding RecurringEndDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Validation / send errors -->
+                                            <Border Background="{DynamicResource ErrorLightBrush}" BorderBrush="{DynamicResource ErrorBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="10,8" IsVisible="{Binding HasValidationMessage}">
+                                                <TextBlock Text="{Binding ValidationMessage}" Foreground="{DynamicResource ErrorBrush}" FontSize="12" TextWrapping="Wrap" />
+                                            </Border>
+                                            <Border Background="{DynamicResource ErrorLightBrush}" BorderBrush="{DynamicResource ErrorBrush}"
+                                                    BorderThickness="1" CornerRadius="6" Padding="10,8" IsVisible="{Binding HasSendError}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="{Binding SendErrorMessage}" Foreground="{DynamicResource ErrorBrush}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                    <Button Grid.Column="1" Content="✕" Command="{Binding DismissSendErrorCommand}" Background="Transparent" Foreground="{DynamicResource ErrorBrush}" BorderThickness="0" Padding="4" VerticalAlignment="Center" Cursor="Hand" />
                                                 </Grid>
                                             </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
 
-                            </StackPanel>
-
-                            <!-- Totals Section -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8"
-                                    Padding="16">
-                                <StackPanel Spacing="10">
-                                    <!-- Subtotal -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{loc:Loc Subtotal}" FontSize="14"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" FontSize="14"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-
-                                    <!-- Tax -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{loc:Loc Tax}" FontSize="14"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="%" Width="32"
-                                                       TextAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <NumericUpDown Value="{Binding TaxRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                           Minimum="0" Maximum="100" FormatString="0.##"
-                                                           Width="90" ShowButtonSpinner="False"
-                                                           Classes="line-item-input" />
+                                            <!-- Actions -->
+                                            <StackPanel Spacing="8" Margin="0,4,0,0">
+                                                <!-- Edit mode -->
+                                                <Button Classes="primary-button" HorizontalAlignment="Stretch" Content="Preview"
+                                                        Click="OnPreviewClick" IsVisible="{Binding !IsEditorPreviewing}" />
+                                                <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Save as draft"
+                                                        Click="OnSaveAsDraftClick" IsVisible="{Binding !IsEditorPreviewing}" />
+                                                <!-- Preview mode. The send button carries a paper-plane icon so it never reads
+                                                     as the same button as "Preview" (which sat in the same spot a click earlier). -->
+                                                <Button Classes="primary-button" HorizontalAlignment="Stretch"
+                                                        Command="{Binding CreateAndSendInvoiceCommand}" IsVisible="{Binding IsEditorPreviewing}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                                        <PathIcon Data="{x:Static icons:Icons.Send}" Width="15" Height="15" />
+                                                        <TextBlock Text="Create &amp; send" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button Classes="secondary-button" HorizontalAlignment="Stretch" Content="Back to edit"
+                                                        Command="{Binding BackToEditorCommand}" IsVisible="{Binding IsEditorPreviewing}" />
+                                            </StackPanel>
                                         </StackPanel>
-                                    </Grid>
-
-                                    <!-- Security Deposit (shown only when applicable) -->
-                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasSecurityDeposit}">
-                                        <TextBlock Text="{loc:Loc 'Security Deposit'}" FontSize="14"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding SecurityDepositFormatted}" FontSize="14"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-
-                                    <!-- Custom Fee (optional) -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="+" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource SuccessBrush}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBox Text="{Binding CustomFeeLabel, Mode=TwoWay}"
-                                                     PlaceholderText="{loc:Loc 'Fee label'}"
-                                                     Classes="form-input"
-                                                     Width="140" MaxLength="50" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <ToggleButton IsChecked="{Binding CustomFeeIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding CustomFeeSymbol}"
-                                                          Width="32" Height="28" Padding="0"
-                                                          FontSize="13" FontWeight="SemiBold"
-                                                          HorizontalContentAlignment="Center"
-                                                          VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
-                                            <NumericUpDown Value="{Binding CustomFeeAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                           Minimum="0" Maximum="999999999" FormatString="N2"
-                                                           Width="90" ShowButtonSpinner="False"
-                                                           Classes="line-item-input" />
-                                            <TextBlock Text="{Binding CustomFeeCalculatedFormatted}" FontSize="13"
-                                                       Foreground="{DynamicResource SuccessBrush}"
-                                                       VerticalAlignment="Center" MinWidth="60"
-                                                       TextAlignment="Right"
-                                                       IsVisible="{Binding HasCustomFee}" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- Discount (optional) -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <TextBlock Text="−" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource DangerBrush}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Text="{loc:Loc Discount}" FontSize="14"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                            <ToggleButton IsChecked="{Binding DiscountIsPercent, Mode=TwoWay}"
-                                                          Content="{Binding DiscountSymbol}"
-                                                          Width="32" Height="28" Padding="0"
-                                                          FontSize="13" FontWeight="SemiBold"
-                                                          HorizontalContentAlignment="Center"
-                                                          VerticalContentAlignment="Center"
-                                                          ToolTip.Tip="{loc:Loc 'Toggle between currency and %'}" />
-                                            <NumericUpDown Value="{Binding DiscountAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                           Minimum="0" Maximum="999999999" FormatString="N2"
-                                                           Width="90" ShowButtonSpinner="False"
-                                                           Classes="line-item-input" />
-                                            <TextBlock Text="{Binding DiscountCalculatedFormatted}" FontSize="13"
-                                                       Foreground="{DynamicResource DangerBrush}"
-                                                       VerticalAlignment="Center" MinWidth="60"
-                                                       TextAlignment="Right"
-                                                       IsVisible="{Binding HasDiscount}" />
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- Divider -->
-                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
-
-                                    <!-- Total -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{loc:Loc Total}" FontSize="16" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="16"
-                                                   FontWeight="Bold"
-                                                   Foreground="{DynamicResource PrimaryBrush}" />
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Status (only for Edit) -->
-                            <StackPanel Spacing="6" IsVisible="{Binding IsEditMode}">
-                                <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding StatusOptions}"
-                                          SelectedItem="{Binding ModalStatus}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <!-- Notes -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         MinHeight="80"
-                                         MaxHeight="120"
-                                         PlaceholderText="{loc:Loc 'Additional notes for this invoice...'}"
-                                         MaxLength="500" />
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Content - Preview Mode (HTML Preview) -->
-                    <controls:InvoicePreviewControl Grid.Row="1"
-                                                    Grid.RowSpan="2"
-                                                    Html="{Binding PreviewHtml}"
-                                                    OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}"
-                                                    IsVisible="{Binding ShowPreviewContent}" />
-
-                    <!-- Content - Success Animation -->
-                    <controls:SuccessAnimation Grid.Row="1"
-                                               Grid.RowSpan="3"
-                                               Title="{Binding SuccessTitle}"
-                                               Message="{Binding SuccessMessage}"
-                                               ShowContinueButton="True"
-                                               ContinueButtonText="{loc:Loc Done}"
-                                               ContinueButtonDelayMs="300"
-                                               ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
-                                               IsPlaying="{Binding IsShowingSuccess}"
-                                               IsVisible="{Binding IsShowingSuccess}" />
-
-                    <!-- Content - Sending Overlay (visible while the API call is in flight) -->
-                    <!-- Border (not Panel) so CornerRadius matches the parent
-                         modal shell. Panel doesn't honor a parent Border's
-                         rounded corners and renders a hard rectangle.
-                         Explicit Cursor="Arrow" guards against the embedded
-                         HTML preview occasionally suppressing the system
-                         cursor when it loses hit-testing to this overlay. -->
-                    <Border Grid.Row="0" Grid.RowSpan="4"
-                            Background="{DynamicResource SurfaceBrush}"
-                            CornerRadius="12"
-                            Cursor="Arrow"
-                            IsVisible="{Binding IsSending}">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="20">
-                            <ProgressBar IsIndeterminate="True"
-                                         Width="220"
-                                         Height="4" />
-                            <TextBlock Text="{loc:Loc 'Sending invoice...'}"
-                                       FontSize="16"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       HorizontalAlignment="Center" />
-                            <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center"
-                                       TextAlignment="Center"
-                                       MaxWidth="320"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Footer - Edit Mode -->
-                    <Border Grid.Row="3"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0"
-                            IsVisible="{Binding ShowEditContent}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Please enter all required fields'}"
-                                       Foreground="{DynamicResource ErrorBrush}"
-                                       FontSize="13"
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding HasValidationMessage}" />
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button"
-                                        Content="{loc:Loc Cancel}"
-                                        Command="{Binding CloseCreateEditModalCommand}" />
-                                <Button Classes="secondary-button"
-                                        Content="{loc:Loc 'Save as Draft'}"
-                                        Command="{Binding SaveAsDraftCommand}"
-                                        IsVisible="{Binding !IsEditMode}" />
-                                <!-- Preview button for create/continue modes -->
-                                <Button Classes="primary-button"
-                                        Content="{loc:Loc Preview}"
-                                        Command="{Binding OpenPreviewModalCommand}"
-                                        IsVisible="{Binding AllowPreview}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Footer - View Only Mode -->
-                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                            IsVisible="{Binding IsViewOnly}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
-                                        <TextBlock Text="{loc:Loc 'Open in Browser'}" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                            <Button Grid.Column="2"
-                                    Classes="primary-button"
-                                    Content="{loc:Loc Close}"
-                                    Command="{Binding CloseCreateEditModalCommand}" />
-                        </Grid>
-                    </Border>
-
-                    <!-- Footer - Preview Send Mode -->
-                    <Border Grid.Row="3" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                            IsVisible="{Binding ShowPreviewContent}">
-                        <StackPanel Spacing="12" IsVisible="{Binding !IsViewOnly}">
-                            <!-- Error Banner -->
-                            <Border Background="{DynamicResource ErrorLightBrush}"
-                                    BorderBrush="{DynamicResource ErrorBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="12,8"
-                                    IsVisible="{Binding HasSendError}">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <PathIcon Grid.Column="0"
-                                              Data="{x:Static icons:Icons.WarningCircle}"
-                                              Foreground="{DynamicResource ErrorBrush}"
-                                              Width="20"
-                                              Height="20"
-                                              VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding SendErrorMessage}"
-                                               Foreground="{DynamicResource ErrorBrush}"
-                                               FontSize="13"
-                                               Margin="10,0"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap" />
-                                    <Button Grid.Column="2"
-                                            Content="✕"
-                                            Command="{Binding DismissSendErrorCommand}"
-                                            Background="Transparent"
-                                            Foreground="{DynamicResource ErrorBrush}"
-                                            BorderThickness="0"
-                                            Padding="4"
-                                            VerticalAlignment="Center"
-                                            Cursor="Hand" />
-                                </Grid>
-                            </Border>
-                            <!-- Footer Content -->
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="{loc:Loc 'An email will be sent to the customer'}"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding !HasSendError}" />
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                    <Button Classes="secondary-button" Content="{loc:Loc 'Back to Edit'}" Command="{Binding ClosePreviewModalCommand}" />
-                                    <Button Classes="primary-button" Content="{loc:Loc 'Create &amp; Send'}" Command="{Binding CreateAndSendInvoiceCommand}" />
-                                </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
                             </Grid>
+
+                            <!-- VIEW-ONLY: rendered HTML preview above its own bottom bar. The preview lives
+                                 in its own row so the native WebView (which draws above Avalonia) can't
+                                 overflow onto the buttons. -->
+                            <Grid RowDefinitions="*,Auto" IsVisible="{Binding IsViewOnly}">
+                                <controls:InvoicePreviewControl Grid.Row="0" Html="{Binding PreviewHtml}"
+                                                                OpenInBrowserCommand="{Binding OpenPreviewInBrowserCommand}">
+                                    <controls:InvoicePreviewControl.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="IsCreateEditModalOpen" />
+                                            <Binding Path="IsViewOnly" />
+                                        </MultiBinding>
+                                    </controls:InvoicePreviewControl.IsVisible>
+                                </controls:InvoicePreviewControl>
+
+                                <!-- View-only bottom bar -->
+                                <Border Grid.Row="1" Padding="20,14"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Button Grid.Column="0" Classes="secondary-button" Command="{Binding OpenPreviewInBrowserCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <PathIcon Data="{x:Static icons:Icons.OpenExternal}" Width="14" Height="14" />
+                                                <TextBlock Text="{loc:Loc 'Open in Browser'}" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="2" Classes="primary-button" Content="{loc:Loc Close}" Command="{Binding CloseCreateEditModalCommand}" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Success / sending: a normal-sized centered card, not the full editor width. -->
+                <Border Width="440" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24"
+                        Background="{DynamicResource SurfaceBrush}" CornerRadius="12" ClipToBounds="True"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Border.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                            <Binding Path="IsShowingSuccess" />
+                            <Binding Path="IsSending" />
+                        </MultiBinding>
+                    </Border.IsVisible>
+                    <Panel MinHeight="300">
+                        <!-- Success -->
+                        <controls:SuccessAnimation Title="{Binding SuccessTitle}"
+                                                   Message="{Binding SuccessMessage}"
+                                                   ShowContinueButton="True"
+                                                   ContinueButtonText="{loc:Loc Done}"
+                                                   ContinueButtonDelayMs="300"
+                                                   ContinueCommand="{Binding CloseSuccessAndFinishCommand}"
+                                                   IsPlaying="{Binding IsShowingSuccess}"
+                                                   IsVisible="{Binding IsShowingSuccess}" />
+                        <!-- Sending -->
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20" Margin="24"
+                                    IsVisible="{Binding IsSending}">
+                            <ProgressBar IsIndeterminate="True" Width="220" Height="4" />
+                            <TextBlock Text="{loc:Loc 'Sending invoice...'}" FontSize="16" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                            <TextBlock Text="{loc:Loc 'Publishing to the portal and emailing your customer.'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
                         </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
+                    </Panel>
+                </Border>
+                </Panel>
             </controls:ModalOverlay.ModalContent>
         </controls:ModalOverlay>
 

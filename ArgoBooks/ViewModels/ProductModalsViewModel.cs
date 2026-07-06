@@ -244,6 +244,12 @@ public partial class ProductModalsViewModel : ViewModelBase
 
     public event EventHandler? ProductSaved;
     public event EventHandler? ProductDeleted;
+
+    /// <summary>
+    /// The Id of the product most recently created via the Add modal. Lets a caller that
+    /// opened "create product" from another modal auto-select the new product after save.
+    /// </summary>
+    public string? LastSavedProductId { get; private set; }
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
 
@@ -291,6 +297,12 @@ public partial class ProductModalsViewModel : ViewModelBase
         CloseAddModal();
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _categorySavedHandler;
+    private EventHandler? _supplierSavedHandler;
+
     [RelayCommand]
     public void OpenCategoriesWithAddModal()
     {
@@ -298,12 +310,21 @@ public partial class ProductModalsViewModel : ViewModelBase
         if (categoryModals == null) return;
 
         var isExpense = IsExpensesTab;
-        void OnSaved(object? s, EventArgs e)
-        {
-            categoryModals.CategorySaved -= OnSaved;
-            UpdateDropdownOptions();
-        }
-        categoryModals.CategorySaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _categorySavedHandler,
+            h => categoryModals.CategorySaved += h,
+            h => categoryModals.CategorySaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
+
+                // Auto-select the category the user just created.
+                var newCategory = AvailableCategories.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
+                if (newCategory != null)
+                {
+                    ModalCategory = newCategory;
+                    ModalCategoryId = newCategory.Id;
+                }
+            });
         categoryModals.OpenAddModal(isExpense);
     }
 
@@ -313,12 +334,18 @@ public partial class ProductModalsViewModel : ViewModelBase
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            UpdateDropdownOptions();
-        }
-        supplierModals.SupplierSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
+
+                // Auto-select the supplier the user just created.
+                var newSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == supplierModals.LastSavedSupplierId);
+                if (newSupplier != null)
+                    ModalSupplier = newSupplier;
+            });
         supplierModals.OpenAddModal();
     }
 
@@ -385,6 +412,7 @@ public partial class ProductModalsViewModel : ViewModelBase
                 ProductSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedProductId = newProduct.Id;
         ProductSaved?.Invoke(this, EventArgs.Empty);
 
         // Mark the setup checklist item as complete

@@ -23,6 +23,12 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? ItemSaved;
 
+    /// <summary>
+    /// The Id of the inventory item most recently created via the Add-item modal. Lets a caller
+    /// that opened "create inventory item" from another modal auto-select the new item after save.
+    /// </summary>
+    public string? LastSavedItemId { get; private set; }
+
     #endregion
 
     #region Adjust Stock Modal State
@@ -273,7 +279,11 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
                     "Set" => Core.Enums.AdjustmentType.Set,
                     _ => Core.Enums.AdjustmentType.Add
                 },
-                Quantity = quantity,
+                // Store the quantity that was actually applied. A "Remove" clamps NewStock at 0, so the
+                // user-entered amount can exceed what was removed. InventoryValuationService.SignedDelta
+                // rolls back a Remove by -Quantity, so an unclamped Quantity would corrupt every
+                // historical valuation before this adjustment.
+                Quantity = AdjustmentType == "Remove" ? oldInStock - newStock : quantity,
                 PreviousStock = oldInStock,
                 NewStock = newStock,
                 Reason = AdjustmentReason,
@@ -330,18 +340,30 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create location modal on top of the current modal.
     /// </summary>
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _locationSavedHandler;
+    private EventHandler? _productSavedHandler;
+
     [RelayCommand]
     private void OpenCreateLocation()
     {
         var locationModals = App.LocationsModalsViewModel;
         if (locationModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            locationModals.LocationSaved -= OnSaved;
-            ReloadAvailableLocations();
-        }
-        locationModals.LocationSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _locationSavedHandler,
+            h => locationModals.LocationSaved += h,
+            h => locationModals.LocationSaved -= h,
+            () =>
+            {
+                ReloadAvailableLocations();
+
+                // Auto-select the location the user just created.
+                var newLocation = AvailableLocations.FirstOrDefault(l => l.Id == locationModals.LastSavedLocationId);
+                if (newLocation != null)
+                    SelectedLocation = newLocation;
+            });
         locationModals.OpenAddModal();
     }
 
@@ -354,12 +376,18 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            ReloadAvailableProducts();
-        }
-        productModals.ProductSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
+            {
+                ReloadAvailableProducts();
+
+                // Auto-select the product the user just created.
+                var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                if (newProduct != null)
+                    SelectedProduct = newProduct;
+            });
         productModals.OpenAddModal();
     }
 
@@ -540,6 +568,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
             }));
 
         // Notify and close
+        LastSavedItemId = newItem.Id;
         ItemSaved?.Invoke(this, EventArgs.Empty);
         CloseAddItemModal();
     }

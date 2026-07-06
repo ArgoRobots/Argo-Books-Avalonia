@@ -158,7 +158,12 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
 
                 // Also save when only existing rows were backfilled, without
                 // this the in-memory ProcessingFee update is lost on restart.
-                if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
+                // Only auto-persist when the user has no unsaved edits. The sync never flags the
+                // company dirty, so this reflects only the user's own edits (including any made while
+                // the sync was in flight); otherwise the payments stay in memory and persist on the
+                // next explicit save (or are re-fetched next open), so a sync can't quietly commit the
+                // user's in-progress edits.
+                if ((newPayments.Count > 0 || syncResult.BackfilledRows > 0) && !(App.CompanyManager?.HasUnsavedChanges ?? false))
                 {
                     try { await App.CompanyManager!.SavePaymentSyncAsync(); }
                     catch { /* non-fatal */ }
@@ -224,10 +229,11 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterPayments();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterPayments();
+        });
 
     [ObservableProperty]
     private string _filterPaymentMethod = "All";
@@ -424,6 +430,13 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
+        if (App.PaymentModalsViewModel != null)
+        {
+            App.PaymentModalsViewModel.PaymentSaved -= OnPaymentSaved;
+            App.PaymentModalsViewModel.PaymentDeleted -= OnPaymentDeleted;
+            App.PaymentModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.PaymentModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
         PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
     }
@@ -692,11 +705,19 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime);
         }
 
+        // Refund totals per original payment, computed once. GetRefundedForPayment rescans the whole
+        // Payments list for each displayed row, which is O(payments^2) on refund-heavy data. Precompute
+        // the sum of refunds keyed by the payment they were issued against.
+        var refundedByOriginalPaymentId = _allPayments
+            .Where(r => r.IsRefund && !string.IsNullOrEmpty(r.RefundedFromPaymentId))
+            .GroupBy(r => r.RefundedFromPaymentId!)
+            .ToDictionary(g => g.Key, g => g.Sum(r => Math.Abs(r.Amount)));
+
         // Create display items
         var displayItems = filtered.Select(payment =>
         {
             var customer = companyData?.GetCustomer(payment.CustomerId);
-            var refunded = RefundAggregator.GetRefundedForPayment(payment, _allPayments);
+            var refunded = refundedByOriginalPaymentId.TryGetValue(payment.Id, out var refundSum) ? refundSum : 0m;
 
             string status;
             if (refunded > 0)
@@ -708,7 +729,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                 // "partially refunded". Falls back to payment.Amount when
                 // there's no linked invoice (manual payments, edge cases).
                 var linkedInvoice = !string.IsNullOrEmpty(payment.InvoiceId)
-                    ? companyData?.Invoices.FirstOrDefault(i => i.Id == payment.InvoiceId)
+                    ? companyData?.GetInvoice(payment.InvoiceId)
                     : null;
                 var refundCeiling = linkedInvoice?.Total ?? payment.Amount;
                 status = refunded + 0.01m >= refundCeiling ? "Refunded" : "Partially Refunded";

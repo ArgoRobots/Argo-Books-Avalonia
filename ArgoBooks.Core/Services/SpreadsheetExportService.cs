@@ -166,8 +166,14 @@ public class SpreadsheetExportService
                 }
                 else if (value is DateTime dt)
                 {
-                    cell.Value = dt;
-                    cell.Style.NumberFormat.Format = "yyyy-MM-dd";
+                    // DateTime.MinValue is the "no date" sentinel (e.g. an un-returned rental's Return
+                    // Date is exported as `ReturnDate ?? DateTime.MinValue`). Leave the cell blank
+                    // instead of writing a bogus 0001/1899 date; mirrors FormatValue (CSV/PDF path).
+                    if (dt != DateTime.MinValue)
+                    {
+                        cell.Value = dt;
+                        cell.Style.NumberFormat.Format = "yyyy-MM-dd";
+                    }
                 }
                 else if (value is int i)
                 {
@@ -278,8 +284,6 @@ public class SpreadsheetExportService
             "Rental Inventory" => GetRentalInventoryData(data),
             "Rental Records" => GetRentalRecordsData(data, startDate, endDate),
             "Categories" => GetCategoriesData(data),
-            "Departments" => GetDepartmentsData(data),
-            "Employees" => GetEmployeesData(data),
             "Locations" => GetLocationsData(data),
             "Recurring Invoices" => GetRecurringInvoicesData(data),
             "Stock Adjustments" => GetStockAdjustmentsData(data, startDate, endDate),
@@ -523,41 +527,6 @@ public class SpreadsheetExportService
             c.ParentId ?? "",
             c.Description ?? "",
             c.Icon
-        }).ToList();
-        return (headers, rows);
-    }
-
-    private (string[] Headers, List<object[]> Rows) GetDepartmentsData(CompanyData data)
-    {
-        var headers = new[] { "ID", "Name", "Description" };
-        var rows = data.Departments.Select(d => new object[]
-        {
-            d.Id,
-            d.Name,
-            d.Description ?? ""
-        }).ToList();
-        return (headers, rows);
-    }
-
-    private (string[] Headers, List<object[]> Rows) GetEmployeesData(CompanyData data)
-    {
-        var headers = new[] { "ID", "First Name", "Last Name", "Email", "Phone", "Date of Birth", "Department ID", "Position", "Hire Date", "Employment Type", "Salary Type", "Salary Amount", "Pay Frequency", "Status" };
-        var rows = data.Employees.Select(e => new object[]
-        {
-            e.Id,
-            e.FirstName,
-            e.LastName,
-            e.Email,
-            e.Phone,
-            e.DateOfBirth ?? DateTime.MinValue,
-            e.DepartmentId ?? "",
-            e.Position,
-            e.HireDate,
-            e.EmploymentType,
-            e.SalaryType,
-            e.SalaryAmount,
-            e.PayFrequency,
-            e.Status.ToString()
         }).ToList();
         return (headers, rows);
     }

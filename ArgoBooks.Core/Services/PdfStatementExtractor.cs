@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using ArgoBooks.Core.Models.BankMatching;
@@ -8,7 +9,7 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Sends a PDF bank statement to the AI proxy and returns parsed rows. Mirrors the receipt
-/// proxy's auth/multipart contract. Premium-gated and usage-counted by the caller.
+/// proxy's auth/multipart contract. Usage-counted by the caller.
 /// </summary>
 public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger? errorLogger = null) : IPdfStatementExtractor
 {
@@ -75,7 +76,11 @@ public class PdfStatementExtractor(LicenseService? licenseService, IErrorLogger?
                 Description = el.TryGetProperty("description", out var d) ? d.GetString() ?? "" : "",
                 Amount = el.TryGetProperty("amount", out var a) && a.TryGetDecimal(out var amt) ? amt : 0m
             };
-            if (el.TryGetProperty("date", out var dt) && DateTime.TryParse(dt.GetString(), out var parsed))
+            // InvariantCulture (like every other date parse in the codebase) so the parse doesn't
+            // depend on the machine locale; otherwise an ambiguous date such as 02/03/2023 reads as
+            // March 2 on a day-first machine instead of February 3.
+            if (el.TryGetProperty("date", out var dt)
+                && DateTime.TryParse(dt.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
                 line.Date = parsed;
             rows.Add(line);
         }

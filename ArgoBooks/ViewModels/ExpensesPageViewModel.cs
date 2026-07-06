@@ -41,10 +41,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterExpenses();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterExpenses();
+        });
 
     [ObservableProperty]
     private string _filterStatus = "All";
@@ -251,6 +252,16 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     public override void Cleanup()
     {
         base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ExpenseModalsViewModel != null)
+        {
+            App.ExpenseModalsViewModel.ExpenseSaved -= OnExpenseSaved;
+            App.ExpenseModalsViewModel.ExpenseDeleted -= OnExpenseDeleted;
+            App.ExpenseModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ExpenseModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
         DateFormatService.DateFormatChanged -= OnDateFormatChanged;
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
     }
@@ -495,7 +506,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             var statusDisplay = purchase.IsPendingConversion ? "Pending" : GetStatusDisplay(purchase, lostDamagedIds, returnedIds);
             var (productName, productMoreText) = FormatProductDescription(purchase);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
-            var receipt = hasReceipt ? companyData?.Receipts.FirstOrDefault(r => r.Id == purchase.ReceiptId) : null;
+            var receipt = hasReceipt ? companyData?.GetReceipt(purchase.ReceiptId!) : null;
             var receiptFilePath = receipt?.OriginalFilePath ?? string.Empty;
 
             return new ExpenseDisplayItem

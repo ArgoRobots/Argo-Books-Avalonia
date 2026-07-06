@@ -27,8 +27,11 @@ public static class InventoryValuationService
     /// <summary>
     /// Stock on hand for one item as of <paramref name="asOfDate"/>, computed
     /// by rolling back from the item's current InStock every adjustment whose
-    /// effective date is strictly after the as-of date. Order-independent, so
-    /// back-dated adjustments reconstruct correctly.
+    /// effective date is on a later DAY than the as-of date. Order-independent, so
+    /// back-dated adjustments reconstruct correctly. The comparison is day-granular:
+    /// an adjustment stamped with a time-of-day (every manual/rental adjustment uses
+    /// DateTime.UtcNow) made on the as-of day itself is INCLUDED, matching the
+    /// inclusive end-date semantics of every other report filter. See docs/Calculations.md §10.
     /// </summary>
     public static int StockOnHandAsOf(
         InventoryItem item,
@@ -37,7 +40,7 @@ public static class InventoryValuationService
         DateTime asOfDate)
     {
         var rollback = itemAdjustments
-            .Where(a => effectiveDate(a) > asOfDate)
+            .Where(a => effectiveDate(a).Date > asOfDate.Date)
             .Sum(SignedDelta);
         return item.InStock - rollback;
     }

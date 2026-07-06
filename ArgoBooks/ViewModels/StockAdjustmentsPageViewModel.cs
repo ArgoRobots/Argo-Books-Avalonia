@@ -165,10 +165,11 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterAdjustments();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterAdjustments();
+        });
 
     [ObservableProperty]
     private DateTime? _startDate;
@@ -251,8 +252,33 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             App.StockAdjustmentsModalsViewModel.FiltersApplied += OnFiltersApplied;
         }
 
-        // Subscribe to timezone/time format changes to refresh time display
-        TimeZoneService.TimeSettingsChanged += (_, _) => FilterAdjustments();
+        // Subscribe to timezone/time format changes to refresh time display. Use a named handler (not
+        // a lambda) so Cleanup can unsubscribe it; TimeZoneService is static, so a leaked lambda would
+        // keep this VM alive for the whole process.
+        TimeZoneService.TimeSettingsChanged += OnTimeSettingsChanged;
+    }
+
+    private void OnTimeSettingsChanged(object? sender, EventArgs e) => FilterAdjustments();
+
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.StockLevelsModalsViewModel != null)
+            App.StockLevelsModalsViewModel.ItemSaved -= OnAdjustmentMade;
+        if (App.StockAdjustmentsModalsViewModel != null)
+        {
+            App.StockAdjustmentsModalsViewModel.AdjustmentSaved -= OnAdjustmentMade;
+            App.StockAdjustmentsModalsViewModel.AdjustmentDeleted -= OnAdjustmentMade;
+            App.StockAdjustmentsModalsViewModel.FiltersApplied -= OnFiltersApplied;
+        }
+        TimeZoneService.TimeSettingsChanged -= OnTimeSettingsChanged;
     }
 
     /// <summary>

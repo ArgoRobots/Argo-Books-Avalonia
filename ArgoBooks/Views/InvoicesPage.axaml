@@ -28,7 +28,21 @@
                         Classes="page-tabs">
                 <TabItem Header="{loc:Loc 'All Invoices'}" />
                 <TabItem Header="{loc:Loc Drafts}" />
-                <!-- <TabItem Header="{loc:Loc 'Recurring Invoices'}" /> -->
+                <TabItem Header="Sent" />
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                            <TextBlock Text="Recurring" VerticalAlignment="Center" />
+                            <!-- Count of recurring drafts waiting to be sent -->
+                            <Border Background="{DynamicResource PrimaryBrush}" CornerRadius="9"
+                                    MinWidth="18" Height="18" Padding="5,0" VerticalAlignment="Center"
+                                    IsVisible="{Binding HasPendingRecurring}">
+                                <TextBlock Text="{Binding PendingRecurringCount}" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+                    </TabItem.Header>
+                </TabItem>
             </TabControl>
         </Border>
 
@@ -56,6 +70,7 @@
 
             <!-- Main Content Card using ArgoTable -->
             <table:ArgoTable Grid.Row="1"
+                                IsVisible="{Binding !IsRecurringTab}"
                                 Title="{loc:Loc Invoices}"
                                 ItemsSource="{Binding Invoices}"
                                 SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
@@ -91,6 +106,38 @@
                 <!-- Info Banners (portal warning + invoice limit) -->
                 <table:ArgoTable.InfoBannerContent>
                     <StackPanel>
+                        <!-- Recurring invoices generated on open -->
+                        <Border IsVisible="{Binding HasGeneratedBanner}"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource PrimaryBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="14,10"
+                                Margin="0,8,0,4">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <PathIcon Grid.Column="0"
+                                          Data="{x:Static icons:Icons.Clock}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource PrimaryBrush}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding GeneratedBannerText}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="2"
+                                        Classes="secondary-button"
+                                        Padding="10,4"
+                                        Content="Review"
+                                        Command="{Binding ReviewGeneratedCommand}"
+                                        Margin="8,0,6,0" />
+                                <Button Grid.Column="3"
+                                        Classes="secondary-button"
+                                        Padding="10,4"
+                                        Content="Dismiss"
+                                        Command="{Binding DismissGeneratedBannerCommand}" />
+                            </Grid>
+                        </Border>
                         <controls:PortalWarningBanner IsVisible="{Binding !IsPortalConfigured}"
                                                       ConfigureCommand="{Binding OpenPortalSettingsCommand}"
                                                       Margin="0,2,0,0" />
@@ -335,6 +382,176 @@
                     </ItemsControl>
                 </table:ArgoTable.RowsContent>
             </table:ArgoTable>
+
+            <!-- Recurring tab: "Waiting to send" list above the schedules table -->
+            <Grid Grid.Row="1" IsVisible="{Binding IsRecurringTab}" RowDefinitions="Auto,*" RowSpacing="16">
+
+                <!-- Recurring drafts waiting to be sent (only shown when there are any). ClipToBounds so a
+                     row's square hover highlight can't overflow the card's rounded bottom corners. -->
+                <Border Grid.Row="0" IsVisible="{Binding HasPendingRecurring}"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" ClipToBounds="True">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto" Margin="20,16,20,8">
+                            <TextBlock Grid.Column="0" Text="Waiting to send"
+                                       FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Text="{Binding PendingRecurringCount, StringFormat='{}{0} to send'}" />
+                        </Grid>
+                        <!-- Column headers -->
+                        <Grid ColumnDefinitions="1.4*,2*,1.2*,Auto" Margin="20,0,20,6">
+                            <TextBlock Grid.Column="0" Text="INVOICE #" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Grid.Column="1" Text="CUSTOMER" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Grid.Column="2" Text="AMOUNT" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Grid.Column="3" Text="STATUS" Width="150" FontSize="11" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </Grid>
+                        <!-- table-rows gives the app's standard virtualized rows (VirtualizingStackPanel +
+                             its own scroll); MaxHeight caps the card so a long list scrolls, not grows. -->
+                        <ItemsControl Classes="table-rows" MaxHeight="320" ItemsSource="{Binding PendingRecurringInvoices}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:InvoiceDisplayItem">
+                                        <!-- Whole row is clickable: opens the draft in the editor/preview so it can be sent. -->
+                                        <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                CornerRadius="0" Padding="20,12"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                                                ToolTip.Tip="Open to review and send"
+                                                Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="1.4*,2*,1.2*,Auto" VerticalAlignment="Center">
+                                                <TextBlock Grid.Column="0" Text="{Binding Id}" VerticalAlignment="Center" FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{Binding CustomerName}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Grid.Column="2" Text="{Binding TotalFormatted}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <Border Grid.Column="3" Width="150" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                    <Border Background="{DynamicResource WarningLightBrush}" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                            <PathIcon Data="{x:Static icons:Icons.Send}" Width="12" Height="12" Foreground="{DynamicResource WarningTextBrush}" />
+                                                            <TextBlock Text="Needs to be sent" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource WarningTextBrush}" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recurring schedules -->
+                <table:ArgoTable Grid.Row="1"
+                                 Title="Recurring invoices"
+                             ItemsSource="{Binding Schedules}"
+                             ShowSearch="False"
+                             ShowFilterButton="False"
+                             CurrentPage="{Binding ScheduleCurrentPage, Mode=TwoWay}"
+                             TotalPages="{Binding ScheduleTotalPages}"
+                             PageSize="{Binding SchedulePageSize, Mode=TwoWay}"
+                             PaginationText="{Binding SchedulePaginationText}"
+                             GoToPageCommand="{Binding ScheduleGoToPageCommand}"
+                             GoToPreviousPageCommand="{Binding ScheduleGoToPreviousPageCommand}"
+                             GoToNextPageCommand="{Binding ScheduleGoToNextPageCommand}"
+                             AddCommand="{Binding NewRecurringInvoiceCommand}"
+                             AddButtonText="New recurring invoice"
+                             AddButtonTooltip="New recurring invoice"
+                             EmptyIcon="{x:Static icons:Icons.Refresh}"
+                             EmptyTitle="No recurring invoices yet"
+                             EmptyMessage="Create an invoice and turn on Repeat this invoice."
+                             ColumnWidthsManager="{Binding RecurringColumnWidths}"
+                             TableGridSizeChanged="OnRecurringTableSizeChanged">
+
+                <!-- Column headers - widths driven by RecurringColumnWidths so they redistribute on resize -->
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="Customer" ColumnName="Customer" IsSortable="False"
+                                               ColumnWidth="{Binding RecurringColumnWidths.CustomerColumnWidth}"
+                                               ColumnWidths="{Binding RecurringColumnWidths}" />
+                        <table:ArgoTableHeader Header="Amount" ColumnName="Amount" IsSortable="False"
+                                               ColumnWidth="{Binding RecurringColumnWidths.AmountColumnWidth}"
+                                               ColumnWidths="{Binding RecurringColumnWidths}" />
+                        <table:ArgoTableHeader Header="Frequency" ColumnName="Frequency" IsSortable="False"
+                                               ColumnWidth="{Binding RecurringColumnWidths.FrequencyColumnWidth}"
+                                               ColumnWidths="{Binding RecurringColumnWidths}" />
+                        <table:ArgoTableHeader Header="Next Invoice" ColumnName="NextInvoice" IsSortable="False"
+                                               ColumnWidth="{Binding RecurringColumnWidths.NextInvoiceColumnWidth}"
+                                               ColumnWidths="{Binding RecurringColumnWidths}" />
+                        <table:ArgoTableHeader Header="Status" ColumnName="Status" IsSortable="False"
+                                               ColumnWidth="{Binding RecurringColumnWidths.StatusColumnWidth}"
+                                               ColumnWidths="{Binding RecurringColumnWidths}" />
+                        <table:ArgoTableHeader Header="Actions" ColumnName="Actions" IsSortable="False"
+                                               IsResizable="False" ShowSeparator="False"
+                                               ColumnWidth="{Binding RecurringColumnWidths.ActionsColumnWidth}" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
+
+                <!-- Rows -->
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Schedules}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:RecurringScheduleDisplayItem">
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="56">
+                                    <StackPanel Orientation="Horizontal">
+                                        <table:ArgoTableCell Text="{Binding CustomerName}" FontWeight="Medium"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).RecurringColumnWidths.CustomerColumnWidth}" />
+                                        <table:ArgoTableCell Text="{Binding AmountFormatted}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).RecurringColumnWidths.AmountColumnWidth}" />
+                                        <table:ArgoTableCell Text="{Binding FrequencyDisplay}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).RecurringColumnWidths.FrequencyColumnWidth}" />
+                                        <table:ArgoTableCell Text="{Binding NextInvoiceFormatted}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).RecurringColumnWidths.NextInvoiceColumnWidth}" />
+                                        <table:ArgoTableCell Text="{Binding StatusDisplay}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).RecurringColumnWidths.StatusColumnWidth}" />
+                                        <table:ArgoTableCell ShowSeparator="False"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).RecurringColumnWidths.ActionsColumnWidth}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            Spacing="4">
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'View Invoice'}"
+                                                            AutomationProperties.Name="View Invoice"
+                                                            IsVisible="{Binding HasInvoice}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ViewScheduleInvoiceCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Eye}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="Pause"
+                                                            IsVisible="{Binding !IsPaused}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).PauseResumeScheduleCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Pause}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="Resume"
+                                                            IsVisible="{Binding IsPaused}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).PauseResumeScheduleCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Play}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc Delete}"
+                                                            AutomationProperties.Name="Delete"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).DeleteScheduleCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
+            </Grid>
         </Grid>
     </Grid>
 

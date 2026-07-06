@@ -26,14 +26,11 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
     private double _productsColumnWidth = 100;
 
     [ObservableProperty]
-    private double _statusColumnWidth = 90;
-
-    [ObservableProperty]
     private double _actionsColumnWidth = 84;
 
     public SuppliersTableColumnWidths()
     {
-        ColumnOrder = ["Supplier", "Email", "Phone", "Address", "Country", "Products", "Status", "Actions"];
+        ColumnOrder = ["Supplier", "Email", "Phone", "Address", "Country", "Products", "Actions"];
 
         RegisterColumn("Supplier", new ColumnDef { StarValue = 1.5, MinWidth = 150, PreferredWidth = 200 }, w => SupplierColumnWidth = w);
         RegisterColumn("Email", new ColumnDef { StarValue = 1.2, MinWidth = 120, PreferredWidth = 180 }, w => EmailColumnWidth = w);
@@ -41,7 +38,6 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
         RegisterColumn("Address", new ColumnDef { StarValue = 1.2, MinWidth = 120, PreferredWidth = 180 }, w => AddressColumnWidth = w);
         RegisterColumn("Country", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 130 }, w => CountryColumnWidth = w);
         RegisterColumn("Products", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 }, w => ProductsColumnWidth = w);
-        RegisterColumn("Status", new ColumnDef { StarValue = 0.6, MinWidth = 70, PreferredWidth = 90 }, w => StatusColumnWidth = w);
         RegisterColumn("Actions", new ColumnDef { IsFixed = true, FixedWidth = ActionsWidth(2), MinWidth = ActionsWidth(2) }, w => ActionsColumnWidth = w);
 
         InitializeColumnWidths();

@@ -28,7 +28,7 @@ public class FileService(
         CancellationToken cancellationToken = default)
     {
         // Create temp directory
-        var tempDirectory = CreateTempDirectory();
+        var tempDirectory = SecureTempDirectory.Create();
 
         try
         {
@@ -49,8 +49,6 @@ public class FileService(
             await WriteJsonAsync(companyDir, "customers.json", companyData.Customers, cancellationToken);
             await WriteJsonAsync(companyDir, "products.json", companyData.Products, cancellationToken);
             await WriteJsonAsync(companyDir, "suppliers.json", companyData.Suppliers, cancellationToken);
-            await WriteJsonAsync(companyDir, "employees.json", companyData.Employees, cancellationToken);
-            await WriteJsonAsync(companyDir, "departments.json", companyData.Departments, cancellationToken);
             await WriteJsonAsync(companyDir, "categories.json", companyData.Categories, cancellationToken);
             await WriteJsonAsync(companyDir, "accountants.json", companyData.Accountants, cancellationToken);
             await WriteJsonAsync(companyDir, "locations.json", companyData.Locations, cancellationToken);
@@ -68,7 +66,6 @@ public class FileService(
             await WriteJsonAsync(companyDir, "returns.json", companyData.Returns, cancellationToken);
             await WriteJsonAsync(companyDir, "lostDamaged.json", companyData.LostDamaged, cancellationToken);
             await WriteJsonAsync(companyDir, "receipts.json", companyData.Receipts, cancellationToken);
-            await WriteJsonAsync(companyDir, "reportTemplates.json", companyData.ReportTemplates, cancellationToken);
             await WriteJsonAsync(companyDir, "idCounters.json", companyData.IdCounters, cancellationToken);
             await WriteJsonAsync(companyDir, "eventLog.json", companyData.EventLog, cancellationToken);
             await WriteJsonAsync(companyDir, "pendingConversions.json", companyData.PendingConversions, cancellationToken);
@@ -126,7 +123,7 @@ public class FileService(
         await using var decompressedStream = await compressionService.DecompressGZipAsync(dataStream, cancellationToken);
 
         // Extract TAR to temp directory
-        var tempDirectory = CreateTempDirectory();
+        var tempDirectory = SecureTempDirectory.Create();
         await compressionService.ExtractTarArchiveAsync(decompressedStream, tempDirectory, cancellationToken);
 
         return tempDirectory;
@@ -317,8 +314,6 @@ public class FileService(
         var customersTask         = ReadJsonAsync<List<Models.Entities.Customer>>(tempDirectory, "customers.json", cancellationToken);
         var productsTask          = ReadJsonAsync<List<Models.Entities.Product>>(tempDirectory, "products.json", cancellationToken);
         var suppliersTask         = ReadJsonAsync<List<Models.Entities.Supplier>>(tempDirectory, "suppliers.json", cancellationToken);
-        var employeesTask         = ReadJsonAsync<List<Models.Entities.Employee>>(tempDirectory, "employees.json", cancellationToken);
-        var departmentsTask       = ReadJsonAsync<List<Models.Entities.Department>>(tempDirectory, "departments.json", cancellationToken);
         var categoriesTask        = ReadJsonAsync<List<Models.Entities.Category>>(tempDirectory, "categories.json", cancellationToken);
         var accountantsTask       = ReadJsonAsync<List<Models.Entities.Accountant>>(tempDirectory, "accountants.json", cancellationToken);
         var locationsTask         = ReadJsonAsync<List<Models.Entities.Location>>(tempDirectory, "locations.json", cancellationToken);
@@ -341,7 +336,6 @@ public class FileService(
         var receiptsTask          = loadReceipts
             ? ReadJsonAsync<List<Models.Tracking.Receipt>>(tempDirectory, "receipts.json", cancellationToken)
             : Task.FromResult<List<Models.Tracking.Receipt>?>([]);
-        var reportTemplatesTask   = ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken);
         var invoiceTemplatesTask  = ReadJsonAsync<List<Models.Invoices.InvoiceTemplate>>(tempDirectory, "invoiceTemplates.json", cancellationToken);
         var eventLogTask          = ReadJsonAsync<List<AuditEvent>>(tempDirectory, "eventLog.json", cancellationToken);
         var pendingConversionsTask = ReadJsonAsync<List<PendingConversion>>(tempDirectory, "pendingConversions.json", cancellationToken);
@@ -355,11 +349,11 @@ public class FileService(
         Task[] otherReads =
         [
             idCountersTask, customersTask, productsTask, suppliersTask,
-            employeesTask, departmentsTask, categoriesTask, accountantsTask, locationsTask,
+            categoriesTask, accountantsTask, locationsTask,
             revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
-            reportTemplatesTask, invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
+            invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
             forecastRecordsTask, bankImportSessionsTask
         ];
 
@@ -385,8 +379,6 @@ public class FileService(
             Customers = customersTask.Result ?? [],
             Products = productsTask.Result ?? [],
             Suppliers = suppliersTask.Result ?? [],
-            Employees = employeesTask.Result ?? [],
-            Departments = departmentsTask.Result ?? [],
             Categories = categoriesTask.Result ?? [],
             Accountants = accountantsTask.Result ?? [],
             Locations = locationsTask.Result ?? [],
@@ -404,7 +396,6 @@ public class FileService(
             Returns = returnsTask.Result ?? [],
             LostDamaged = lostDamagedTask.Result ?? [],
             Receipts = receiptsTask.Result ?? [],
-            ReportTemplates = reportTemplatesTask.Result ?? [],
             InvoiceTemplates = invoiceTemplatesTask.Result ?? [],
             EventLog = eventLogTask.Result ?? [],
             PendingConversions = pendingConversionsTask.Result ?? [],
@@ -447,8 +438,6 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "customers.json", data.Customers, cancellationToken);
         await WriteJsonAsync(companyDirectory, "products.json", data.Products, cancellationToken);
         await WriteJsonAsync(companyDirectory, "suppliers.json", data.Suppliers, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "employees.json", data.Employees, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "departments.json", data.Departments, cancellationToken);
         await WriteJsonAsync(companyDirectory, "categories.json", data.Categories, cancellationToken);
         await WriteJsonAsync(companyDirectory, "accountants.json", data.Accountants, cancellationToken);
         await WriteJsonAsync(companyDirectory, "locations.json", data.Locations, cancellationToken);
@@ -466,14 +455,18 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "returns.json", data.Returns, cancellationToken);
         await WriteJsonAsync(companyDirectory, "lostDamaged.json", data.LostDamaged, cancellationToken);
         await WriteJsonAsync(companyDirectory, "receipts.json", data.Receipts, cancellationToken);
-        await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "invoiceTemplates.json", data.InvoiceTemplates, cancellationToken);
         await WriteJsonAsync(companyDirectory, "eventLog.json", data.EventLog, cancellationToken);
         await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
         await WriteJsonAsync(companyDirectory, "forecastRecords.json", data.ForecastRecords, cancellationToken);
         await WriteJsonAsync(companyDirectory, "bankImportSessions.json", data.BankImportSessions, cancellationToken);
 
-        data.MarkAsSaved();
+        // Deliberately does NOT call data.MarkAsSaved() here: this only stages JSON into the temp
+        // directory, and the data isn't durable until the caller commits the .argo file via
+        // SaveCompanyAsync. Marking saved before that commit means a failed commit (AV quarantine,
+        // full disk, IO error) would leave HasUnsavedChanges false and silently risk data loss.
+        // Callers mark saved only after the commit succeeds; backup/payment-sync paths intentionally
+        // never mark saved.
     }
 
     /// <inheritdoc />
@@ -496,13 +489,6 @@ public class FileService(
     }
 
     #region Helper Methods
-
-    private static string CreateTempDirectory()
-    {
-        var tempPath = Path.Combine(Path.GetTempPath(), "ArgoBooks", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
-        return tempPath;
-    }
 
     /// <summary>
     /// Reads and deserializes appSettings.json once from the given directory.

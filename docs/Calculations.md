@@ -78,6 +78,15 @@ The app never substitutes a different date's rate or shows a raw cross-currency 
 
 - The single chokepoint is `ExchangeRateService.TryConvertExact`; it succeeds only on an exact-date
   cache hit (or same-currency). There is no "nearest cached rate" fallback for money.
+- **Storage vs display precision.** `TryConvertExact` rounds to 2 decimals because it produces a
+  number the user sees. The stored USD base is different: every `*USD` field is written at FULL
+  precision (never rounded to cents) via `ExchangeRateService.TryConvertToUsdBase` (cache-only) and
+  `ConvertToUSDAsync` (the async manual-entry path). USD is the aggregation currency; rounding the
+  base to cents made a same-currency round-trip (native -> USD base -> native) drift by a cent, so a
+  $10 CAD expense read $9.99 on a chart that re-derives its value from the USD base while the stat
+  card (which short-circuits to the original amount, §3) still read $10.00. Only the presentation
+  boundary rounds; the base does not. This is why import and the pending self-heal must both use the
+  unrounded path, so an immediately-converted row and a later-healed row store identical USD.
 - **Import** runs `RateReadinessService.EnsureRatesAsync` first and PAUSES with a connect-and-retry
   prompt (offline vs server-unreachable) until the needed rates are cached. Any row still
   unpriceable (future-dated, or a date the pre-scan missed) imports as `IsPendingConversion` and is
@@ -119,20 +128,21 @@ Every aggregation across multi-currency data uses the `Effective*USD` properties
 How an invoice's grand total is built from its parts. The Invoice model stores the final numbers; this is how they're derived.
 
 ```
-1. lineItemsSubtotal  = Σ over LineItem of (Quantity × UnitPrice − Discount)
-2. invoiceDiscount    = DiscountIsPercent ? lineItemsSubtotal × DiscountAmount/100 : DiscountAmount
-3. invoiceCustomFee   = CustomFeeIsPercent ? lineItemsSubtotal × CustomFeeAmount/100 : CustomFeeAmount
-4. Subtotal           = lineItemsSubtotal − invoiceDiscount + invoiceCustomFee
-5. TaxAmount          = Subtotal × TaxRate
-6. Total              = Subtotal + TaxAmount + SecurityDeposit
+1. Subtotal           = Σ over LineItem of (Quantity × UnitPrice − Discount)   (the stored/displayed Subtotal)
+2. invoiceDiscount    = DiscountIsPercent ? Subtotal × DiscountAmount/100 : DiscountAmount
+3. invoiceCustomFee   = CustomFeeIsPercent ? Subtotal × CustomFeeAmount/100 : CustomFeeAmount
+4. TaxableBase        = Subtotal − invoiceDiscount + invoiceCustomFee + ShippingAmount
+5. TaxAmount          = TaxableBase × TaxRate
+6. Total              = TaxableBase + TaxAmount + SecurityDeposit
+                      = Subtotal − invoiceDiscount + invoiceCustomFee + ShippingAmount + TaxAmount + SecurityDeposit
 ```
 
 Notes:
+- **`Subtotal` is the raw line-items sum** (after any per-line discounts). It is stored on the invoice and shown as the "Subtotal" line, and it is the base a *percentage* discount or fee is taken from. The invoice-level discount and custom fee are shown as their own separate lines, not folded into `Subtotal`.
 - **Discount on a line item** reduces only that line's subtotal.
-- **Invoice-level discount** reduces the whole subtotal before tax.
-- **Custom fee** is added to subtotal before tax (so it's taxable).
+- **Invoice-level discount**, **custom fee**, and **shipping** adjust the *taxable base* before tax (industry standard: tax is charged on the net amount after discount, and a taxable fee and shipping are taxed). The discount lowers it; the fee and shipping raise it.
 - **Security deposit** is added to the total but is *not* taxed and is *not* considered revenue earned, it's a refundable hold against damages. If the deposit is forfeited, it should be moved into revenue separately.
-- **Tax** is applied to the post-discount, post-fee subtotal. Argo Books treats tax as a single flat rate on the invoice subtotal. We do not support different tax rates per line item at the invoice-roll-up level (line items each carry a `TaxRate` but the invoice header rate is what's stored as the final tax).
+- **Tax** is applied to `TaxableBase` (Subtotal − discount + fee + shipping), not to the raw `Subtotal`. Argo Books treats tax as a single flat rate; we do not support different tax rates per line item at the invoice-roll-up level (line items each carry a `TaxRate` but the invoice header rate is what's stored as the final tax).
 
 ---
 
@@ -279,6 +289,8 @@ If you find yourself touching these services, do not "fix" them to match the das
 ### Insights tab (`InsightsService`)
 
 The Insights tab (trends, anomalies, forecasts, recommendations) follows the **dashboard** rules: `IsCollected` filter + `EffectiveTotalUSD` for revenue figures shown in descriptions, `EffectiveTotalUSD` for expenses. Forecast inputs use the same cash-basis signal so projections match the Revenue stat card. Forecast profit is computed as `forecasted gross revenue − forecasted gross expenses`, an approximation of net profit; the exact net profit formula (§2 Rule 1) is not currently applied to forecasts because doing so would require two parallel revenue series (gross for display, pre-tax for profit).
+
+**Display currency.** The analytics above run entirely in USD (percentages, z-scores, and forecasting are currency-invariant). Only the amounts shown to the user are converted to the company display currency, display-only: `InsightsService` resolves one currency per run (`ResolveDisplayCode`), the company currency when an exact-date USD→currency rate exists for every conversion date, otherwise "USD" for the whole run (the same all-or-nothing rule reports use, §3a). Description amounts convert each contributing transaction at its own date (`SumDisplay`, §3a Phase 2); statistical means, which have no single date, convert at today's rate. The forecast cards/ranges are "as of now" projections, so `InsightsPageViewModel` converts them at today's rate via `CurrencyService.FormatFromUSD` (warmed with `TryWarmTodayRateAsync`). The free-tier teaser numbers are illustrative and shown with the symbol only, never converted.
 
 ### Returns and Losses
 

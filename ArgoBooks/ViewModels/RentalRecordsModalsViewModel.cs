@@ -373,18 +373,33 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create rental item modal on top of the current modal.
     /// </summary>
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _itemSavedHandler;
+    private EventHandler? _customerSavedHandler;
+
     [RelayCommand]
-    private void OpenCreateRentalItem()
+    private void OpenCreateRentalItem(RentalModalLineItem? lineItem)
     {
         var rentalInventoryModals = App.RentalInventoryModalsViewModel;
         if (rentalInventoryModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            rentalInventoryModals.ItemSaved -= OnSaved;
-            UpdateDropdownOptions();
-        }
-        rentalInventoryModals.ItemSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _itemSavedHandler,
+            h => rentalInventoryModals.ItemSaved += h,
+            h => rentalInventoryModals.ItemSaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
+
+                // Auto-select the new rental item into the line whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newItem = AvailableItems.FirstOrDefault(i => i.Id == rentalInventoryModals.LastSavedItemId);
+                    if (newItem != null)
+                        lineItem.SelectedItem = newItem;
+                }
+            });
         rentalInventoryModals.OpenAddModal();
     }
 
@@ -397,12 +412,18 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var customerModals = App.CustomerModalsViewModel;
         if (customerModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            customerModals.CustomerSaved -= OnSaved;
-            UpdateDropdownOptions();
-        }
-        customerModals.CustomerSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _customerSavedHandler,
+            h => customerModals.CustomerSaved += h,
+            h => customerModals.CustomerSaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
+
+                // Auto-select the customer the user just created.
+                var newCustomer = AvailableCustomers.FirstOrDefault(c => c.Id == customerModals.LastSavedCustomerId);
+                if (newCustomer != null)
+                    ModalCustomer = newCustomer;
+            });
         customerModals.OpenAddModal();
     }
 
@@ -723,6 +744,22 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var allInvItemIds = oldQtyByInvItem.Keys.Union(newQtyByInvItem.Keys).ToList();
         var oldInStockSnapshot = new Dictionary<string, int>();
         var editAdjustments = new List<StockAdjustment>();
+
+        // Guard before mutating anything: raising a rental's quantity must not drive an inventory item
+        // negative. ValidateModal only runs the availability check for NEW records, so edits would
+        // otherwise subtract past zero. Aborting here (no mutation has happened yet) is clean.
+        foreach (var invItemId in allInvItemIds)
+        {
+            var invItem = companyData.Inventory.FirstOrDefault(inv => inv.Id == invItemId);
+            if (invItem == null) continue;
+
+            var requiredExtra = newQtyByInvItem.GetValueOrDefault(invItemId) - oldQtyByInvItem.GetValueOrDefault(invItemId);
+            if (requiredExtra > 0 && invItem.InStock < requiredExtra)
+            {
+                ModalLineItemsError = $"Only {invItem.InStock} more available to add to this rental.";
+                return;
+            }
+        }
 
         foreach (var invItemId in allInvItemIds)
         {
@@ -1125,6 +1162,14 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var savedReturnInvSnapshot = returnInvSnapshot;
         var savedReturnAdjustments = returnAdjustments;
         var newNotes = _returningRecord.Notes;
+        // Capture the applied return values as locals so redo restores exactly what was confirmed.
+        // The live ReturnDate/ReturnTotalCost/ReturnRefundDeposit/ReturnMarkAsPaid properties get reset
+        // every time the Return modal is reopened, so reading them in the redo lambda would re-apply
+        // stale/reset values (or another record's values).
+        var newReturnDate = _returningRecord.ReturnDate;
+        var newTotalCost = _returningRecord.TotalCost;
+        var newDepositRefunded = _returningRecord.DepositRefunded;
+        var newPaid = _returningRecord.Paid;
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Return rental '{recordToReturn.Id}'",
             () =>
@@ -1153,10 +1198,10 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
             () =>
             {
                 recordToReturn.Status = RentalStatus.Returned;
-                recordToReturn.ReturnDate = ReturnDate?.DateTime;
-                recordToReturn.TotalCost = ReturnTotalCost;
-                recordToReturn.DepositRefunded = ReturnRefundDeposit ? recordToReturn.SecurityDeposit : 0;
-                recordToReturn.Paid = ReturnMarkAsPaid;
+                recordToReturn.ReturnDate = newReturnDate;
+                recordToReturn.TotalCost = newTotalCost;
+                recordToReturn.DepositRefunded = newDepositRefunded;
+                recordToReturn.Paid = newPaid;
                 recordToReturn.Notes = newNotes;
                 var returnItems = GetEffectiveLineItems(recordToReturn);
                 foreach (var li in returnItems)
@@ -1212,7 +1257,7 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         ViewTotalCost = rentalRecord.TotalCost ?? 0;
         ViewDepositRefundedAmount = rentalRecord.DepositRefunded;
         ViewNotes = rentalRecord.Notes;
-        ViewDaysOverdue = rentalRecord.DaysOverdue;
+        ViewDaysOverdue = rentalRecord.EffectiveDaysOverdue;
 
         // Populate view line items
         ViewLineItems.Clear();
@@ -1490,6 +1535,27 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
     /// </summary>
     public static List<RentalLineItem> GetEffectiveLineItems(RentalRecord record)
     {
+        if (record.LineItems.Count > 0)
+            return record.LineItems;
+
+        // Legacy / "Rent Out" records populate only the top-level fields and leave LineItems empty.
+        // Synthesize a single line item from them so return-cost, inventory restoration, and display
+        // all work (mirrors RentalAvailabilityModalViewModel.QuantitiesForItem's fallback).
+        if (!string.IsNullOrEmpty(record.RentalItemId))
+        {
+            return
+            [
+                new RentalLineItem
+                {
+                    RentalItemId = record.RentalItemId,
+                    Quantity = record.Quantity,
+                    RateType = record.RateType,
+                    RateAmount = record.RateAmount,
+                    SecurityDeposit = record.SecurityDeposit
+                }
+            ];
+        }
+
         return record.LineItems;
     }
 

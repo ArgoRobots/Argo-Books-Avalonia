@@ -492,8 +492,8 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- Subtotal, Tax, and Discount Row -->
-                                        <Grid ColumnDefinitions="*,16,*,16,*">
+                                        <!-- Subtotal, Tax, Discount, Shipping Row -->
+                                        <Grid ColumnDefinitions="*,16,*,16,*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Subtotal'}"
                                                            FontSize="13"
@@ -522,6 +522,17 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedDiscount}"
+                                                         PlaceholderText="0.00"
+                                                         Classes="form-input"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="6" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Shipping'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ExtractedShipping}"
                                                          PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
@@ -627,6 +638,7 @@
                                                                     ShowAddNew="True"
                                                                     AddNewText="{loc:Loc 'Create new product'}"
                                                                     AddNewCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).OpenCreateProductCommand}"
+                                                                    AddNewCommandParameter="{Binding}"
                                                                     EmptyMessage="{loc:Loc 'No products found.'}"
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />
@@ -1752,8 +1764,8 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- Subtotal, Tax, and Discount Row -->
-                                        <Grid ColumnDefinitions="*,16,*,16,*">
+                                        <!-- Subtotal, Tax, Discount, Shipping Row -->
+                                        <Grid ColumnDefinitions="*,16,*,16,*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
                                                 <TextBlock Text="Subtotal"
                                                            FontSize="13"
@@ -1782,6 +1794,17 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedDiscount}"
+                                                         PlaceholderText="0.00"
+                                                         Classes="form-input"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="6" Spacing="6">
+                                                <TextBlock Text="Shipping"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ExtractedShipping}"
                                                          PlaceholderText="0.00"
                                                          Classes="form-input"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
@@ -1905,6 +1928,7 @@
                                                                     ShowAddNew="True"
                                                                     AddNewText="{loc:Loc 'Create new product'}"
                                                                     AddNewCommand="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).OpenCreateProductCommand}"
+                                                                    AddNewCommandParameter="{Binding}"
                                                                     EmptyMessage="No products found."
                                                                     HasError="{Binding HasProductError}"
                                                                     ErrorMessage="{Binding ProductErrorMessage}" />

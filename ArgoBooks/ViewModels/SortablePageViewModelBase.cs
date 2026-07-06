@@ -11,7 +11,7 @@ namespace ArgoBooks.ViewModels;
 /// Base class for page ViewModels that support sorting and pagination.
 /// Provides common sorting, pagination properties and navigation commands.
 /// </summary>
-public abstract partial class SortablePageViewModelBase : ViewModelBase
+public abstract partial class SortablePageViewModelBase : ViewModelBase, ICleanupViewModel
 {
     protected SortablePageViewModelBase()
     {
@@ -39,6 +39,7 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     public virtual void Cleanup()
     {
         LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+        CancelPendingSearch();
     }
 
     #region Sorting
@@ -82,16 +83,6 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
 
         OnSortOrPageChanged();
     }
-
-    /// <summary>
-    /// Gets whether the specified column is sorted ascending.
-    /// </summary>
-    public bool IsSortedAscending(string column) => SortColumn == column && SortDirection == SortDirection.Ascending;
-
-    /// <summary>
-    /// Gets whether the specified column is sorted descending.
-    /// </summary>
-    public bool IsSortedDescending(string column) => SortColumn == column && SortDirection == SortDirection.Descending;
 
     #endregion
 

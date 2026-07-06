@@ -64,16 +64,6 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     public ObservableCollection<UndoRedoHistoryItem> RedoHistory { get; } = [];
 
     /// <summary>
-    /// Event raised when the undo dropdown should be shown.
-    /// </summary>
-    public event EventHandler<Point>? ShowUndoDropdownRequested;
-
-    /// <summary>
-    /// Event raised when the redo dropdown should be shown.
-    /// </summary>
-    public event EventHandler<Point>? ShowRedoDropdownRequested;
-
-    /// <summary>
     /// Event raised when an action is performed.
     /// </summary>
     public event EventHandler? ActionPerformed;
@@ -225,26 +215,6 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         }
 
         ActionPerformed?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// Toggles the undo dropdown.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleUndoDropdown()
-    {
-        // The position will be calculated by the control and passed via event
-        ShowUndoDropdownRequested?.Invoke(this, new Point(0, 0));
-    }
-
-    /// <summary>
-    /// Toggles the redo dropdown.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleRedoDropdown()
-    {
-        // The position will be calculated by the control and passed via event
-        ShowRedoDropdownRequested?.Invoke(this, new Point(0, 0));
     }
 
     /// <summary>

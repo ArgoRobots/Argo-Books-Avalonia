@@ -131,8 +131,14 @@
                      No dismiss button: the user must answer. IsVisible is bound so the
                      banner only takes up layout space while shown, letting the content
                      below return to its normal position once it goes away. -->
+                <!-- BannerMargin=0 removes the banner's built-in 10px top gap; the negative outer
+                     Margin then pulls the whole control up to tighten the ~24px StackPanel spacing
+                     to ~8px. The negative goes on the control (not BannerMargin) so the banner moves
+                     as a unit instead of overflowing its own bounds. -->
                 <controls:InfoBanner ShowBanner="{Binding ShowSourceSurveyBanner}"
                                      IsVisible="{Binding ShowSourceSurveyBanner}"
+                                     BannerMargin="0"
+                                     Margin="0,-16,0,0"
                                      Message="{loc:Loc 'Quick question: where did you hear about Argo Books?'}"
                                      ActionText="{loc:Loc 'Answer'}"
                                      ActionCommand="{Binding OpenSourceSurveyCommand}"
@@ -188,12 +194,14 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Date Range Message -->
+                <!-- Date Range Message. Negative top margin tightens the 24px StackPanel spacing so the
+                     banner sits closer under the header controls instead of floating in a large gap. -->
                 <Border Background="{DynamicResource InfoLightBrush}"
                         BorderBrush="{DynamicResource InfoBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
                         Padding="14,10"
+                        Margin="0,-16,0,0"
                         HorizontalAlignment="Center"
                         IsVisible="{Binding ShowDateRangeBanner}">
                     <StackPanel Orientation="Horizontal" Spacing="10">

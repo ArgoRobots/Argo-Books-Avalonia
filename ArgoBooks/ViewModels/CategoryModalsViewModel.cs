@@ -122,6 +122,12 @@ public partial class CategoryModalsViewModel : ViewModelBase
     public event EventHandler? CategorySaved;
     public event EventHandler? CategoryDeleted;
 
+    /// <summary>
+    /// The Id of the category most recently created via the Add modal. Lets a caller that
+    /// opened "create category" from another modal auto-select the new category after save.
+    /// </summary>
+    public string? LastSavedCategoryId { get; private set; }
+
     #endregion
 
     /// <summary>
@@ -224,6 +230,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
             () => { companyData.Categories.Remove(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Categories.Add(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 
+        LastSavedCategoryId = newCategory.Id;
         CategorySaved?.Invoke(this, EventArgs.Empty);
 
         // Mark the setup checklist item as complete
@@ -511,7 +518,9 @@ public partial class CategoryModalsViewModel : ViewModelBase
     private void UpdateMoveTargetCategories()
     {
         MoveTargetCategories.Clear();
-        MoveTargetCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Make Top-Level)" });
+        // No icon on the sentinel: CategoryDisplayItem.Icon defaults to a box emoji, and the
+        // move dropdown hides the icon slot only when it's empty.
+        MoveTargetCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Make Top-Level)", Icon = string.Empty });
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;

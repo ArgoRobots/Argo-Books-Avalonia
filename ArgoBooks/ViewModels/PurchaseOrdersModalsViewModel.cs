@@ -339,6 +339,12 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         CloseAddModal();
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _productSavedHandler;
+
     /// <summary>
     /// Opens the create supplier modal on top of the current modal.
     /// </summary>
@@ -348,12 +354,18 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            LoadSuppliers();
-        }
-        supplierModals.SupplierSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                LoadSuppliers();
+
+                // Auto-select the supplier the user just created.
+                var newSupplier = AvailableSuppliers.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
+                if (newSupplier != null)
+                    SelectedSupplier = newSupplier;
+            });
         supplierModals.OpenAddModal();
     }
 
@@ -361,17 +373,26 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// Opens the create product modal on top of the current modal.
     /// </summary>
     [RelayCommand]
-    private void OpenCreateProduct()
+    private void OpenCreateProduct(OrderLineItemViewModel? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            LoadProducts();
-        }
-        productModals.ProductSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
+            {
+                LoadProducts();
+
+                // Auto-select the new product into the line item whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newProduct = AvailableProducts.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                    if (newProduct != null)
+                        lineItem.SelectedProduct = newProduct;
+                }
+            });
         productModals.OpenAddModal();
     }
 
@@ -585,7 +606,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
 
         var rates = Core.Services.ExchangeRateService.Instance;
-        if (rates != null && rates.TryConvertExact(order.Total, currency, "USD", order.OrderDate, out var usd))
+        if (rates != null && rates.TryConvertToUsdBase(order.Total, currency, order.OrderDate, out var usd))
         {
             order.TotalUSD = usd;
             order.IsPendingConversion = false;
@@ -624,6 +645,13 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var oldShipping = order.ShippingCost;
         var oldTotal = order.Total;
         var oldNotes = order.Notes;
+        // Currency-conversion fields are mutated by ApplyDisplayCurrency below (and it may add a
+        // PendingConversions entry). Capture them so undo/redo restore them symmetrically instead of
+        // leaving a stale USD total / pending flag and an orphaned self-heal entry.
+        var oldOriginalCurrency = order.OriginalCurrency;
+        var oldTotalUSD = order.TotalUSD;
+        var oldIsPendingConversion = order.IsPendingConversion;
+        var oldPending = companyData.PendingConversions.Where(p => p.TransactionId == order.Id).ToList();
 
         // Update order
         order.SupplierId = SelectedSupplier!.Id;
@@ -644,9 +672,24 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ApplyDisplayCurrency(companyData, order);
         companyData.MarkAsModified();
 
-        // Record undo action
+        // Record undo action. Capture the NEW values as locals so redo restores the edit itself.
+        // The previous redo read live ViewModel fields (SelectedSupplier!.Id threw a NullReference and
+        // crashed the app once the modal was reset) and read order.Subtotal/order.Total back from the
+        // same object undo had just reverted (self-referential), so the new totals were lost.
         var editedOrder = order;
         var newLineItems = order.LineItems.ToList();
+        var newSupplierId = order.SupplierId;
+        var newOrderDate = order.OrderDate;
+        var newExpectedDate = order.ExpectedDeliveryDate;
+        var newSubtotal = order.Subtotal;
+        var newShipping = order.ShippingCost;
+        var newTotal = order.Total;
+        var newNotes = order.Notes;
+        // Post-ApplyDisplayCurrency currency state, captured so redo restores the edited conversion.
+        var newOriginalCurrency = order.OriginalCurrency;
+        var newTotalUSD = order.TotalUSD;
+        var newIsPendingConversion = order.IsPendingConversion;
+        var newPending = companyData.PendingConversions.Where(p => p.TransactionId == order.Id).ToList();
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit order '{order.PoNumber}'",
             () =>
@@ -659,19 +702,29 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 editedOrder.ShippingCost = oldShipping;
                 editedOrder.Total = oldTotal;
                 editedOrder.Notes = oldNotes;
+                editedOrder.OriginalCurrency = oldOriginalCurrency;
+                editedOrder.TotalUSD = oldTotalUSD;
+                editedOrder.IsPendingConversion = oldIsPendingConversion;
+                companyData.PendingConversions.RemoveAll(p => p.TransactionId == editedOrder.Id);
+                companyData.PendingConversions.AddRange(oldPending);
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                editedOrder.SupplierId = SelectedSupplier!.Id;
-                editedOrder.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
-                editedOrder.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
+                editedOrder.SupplierId = newSupplierId;
+                editedOrder.OrderDate = newOrderDate;
+                editedOrder.ExpectedDeliveryDate = newExpectedDate;
                 editedOrder.LineItems = newLineItems;
-                editedOrder.Subtotal = order.Subtotal;
-                editedOrder.ShippingCost = shipping;
-                editedOrder.Total = order.Total;
-                editedOrder.Notes = Notes;
+                editedOrder.Subtotal = newSubtotal;
+                editedOrder.ShippingCost = newShipping;
+                editedOrder.Total = newTotal;
+                editedOrder.Notes = newNotes;
+                editedOrder.OriginalCurrency = newOriginalCurrency;
+                editedOrder.TotalUSD = newTotalUSD;
+                editedOrder.IsPendingConversion = newIsPendingConversion;
+                companyData.PendingConversions.RemoveAll(p => p.TransactionId == editedOrder.Id);
+                companyData.PendingConversions.AddRange(newPending);
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));

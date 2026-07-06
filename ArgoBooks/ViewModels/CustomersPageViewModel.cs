@@ -82,15 +82,11 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _showCountryColumn = ColumnVisibilityHelper.Load("Customers", "Country", true);
 
-    [ObservableProperty]
-    private bool _showLastRentalColumn = ColumnVisibilityHelper.Load("Customers", "LastRental", true);
-
     partial void OnShowCustomerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Customer", value); ColumnVisibilityHelper.Save("Customers", "Customer", value); }
     partial void OnShowEmailColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Email", value); ColumnVisibilityHelper.Save("Customers", "Email", value); }
     partial void OnShowPhoneColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Phone", value); ColumnVisibilityHelper.Save("Customers", "Phone", value); }
     partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Customers", "Address", value); }
     partial void OnShowCountryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Country", value); ColumnVisibilityHelper.Save("Customers", "Country", value); }
-    partial void OnShowLastRentalColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("LastRental", value); ColumnVisibilityHelper.Save("Customers", "LastRental", value); }
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -114,7 +110,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         ShowPhoneColumn = true;
         ShowAddressColumn = true;
         ShowCountryColumn = true;
-        ShowLastRentalColumn = true;
     }
 
     #endregion
@@ -125,10 +120,11 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterCustomers();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterCustomers();
+        });
 
     [ObservableProperty]
     private string _filterCustomerStatus = "All";
@@ -272,6 +268,25 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             App.CustomerModalsViewModel.CustomerDeleted += OnCustomerDeleted;
             App.CustomerModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.CustomerModalsViewModel.FiltersCleared += OnFiltersCleared;
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.CustomerModalsViewModel != null)
+        {
+            App.CustomerModalsViewModel.CustomerSaved -= OnCustomerSaved;
+            App.CustomerModalsViewModel.CustomerDeleted -= OnCustomerDeleted;
+            App.CustomerModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.CustomerModalsViewModel.FiltersCleared -= OnFiltersCleared;
         }
     }
 
@@ -458,7 +473,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 Phone = string.IsNullOrWhiteSpace(customer.Phone) ? "-" : customer.Phone,
                 Address = addressString,
                 Country = string.IsNullOrWhiteSpace(customer.Address.Country) ? "-" : customer.Address.Country,
-                LastRental = customer.LastTransactionDate,
                 Status = customer.Status,
                 IsHighlighted = customer.Id == HighlightTransactionId,
                 AvatarBitmap = avatarBitmap,
@@ -477,8 +491,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                     ["Name"] = c => c.Name,
                     ["Email"] = c => c.Email,
                     ["Phone"] = c => c.Phone,
-                    ["Address"] = c => c.Address,
-                    ["LastRental"] = c => c.LastRental
+                    ["Address"] = c => c.Address
                 },
                 c => c.Name);
         }
@@ -940,9 +953,6 @@ public partial class CustomerDisplayItem : ObservableObject
     private string _country = string.Empty;
 
     [ObservableProperty]
-    private DateTime? _lastRental;
-
-    [ObservableProperty]
     private EntityStatus _status = EntityStatus.Active;
 
     [ObservableProperty]
@@ -968,11 +978,6 @@ public partial class CustomerDisplayItem : ObservableObject
             return "?";
         }
     }
-
-    /// <summary>
-    /// Gets the formatted last rental date.
-    /// </summary>
-    public string LastRentalFormatted => LastRental?.ToString("MMM d, yyyy") ?? "-";
 
     [ObservableProperty]
     private bool _isHighlighted;

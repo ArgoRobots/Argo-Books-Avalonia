@@ -54,6 +54,13 @@ public class BankLineImportService
             {
                 var type = isExpense ? CategoryType.Expense : CategoryType.Revenue;
                 var categoryId = r.ProductCategoryId;
+                // Don't propagate a category id that doesn't resolve to a real category (a deleted one, or
+                // a bad value the caller/AI supplied - the model sometimes echoes a hallucinated id or a
+                // name in this field). Fall back to resolving by name, or leave it unset, so the product
+                // and its learned rule never carry a dangling category reference (which the Bank import
+                // rules screen then shows with an empty category).
+                if (!string.IsNullOrEmpty(categoryId) && data.GetCategory(categoryId) == null)
+                    categoryId = null;
                 if (categoryId == null && !string.IsNullOrWhiteSpace(r.NewProductCategoryName))
                     categoryId = ResolveCategory(data, creation, categoryCache, r.NewProductCategoryName!, type);
 

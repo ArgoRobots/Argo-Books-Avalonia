@@ -157,10 +157,11 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterItems();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterItems();
+        });
 
     [ObservableProperty]
     private string _filterCategory = "All";
@@ -198,11 +199,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     /// All inventory items (unfiltered).
     /// </summary>
     private readonly List<InventoryItem> _allItems = [];
-
-    /// <summary>
-    /// Gets whether there are any inventory items.
-    /// </summary>
-    public bool HasInventoryItems => _allItems.Count > 0;
 
     /// <summary>
     /// Filtered display items for the current view.
@@ -256,6 +252,23 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         {
             App.StockLevelsModalsViewModel.ItemSaved += OnModalItemSaved;
             App.StockLevelsModalsViewModel.FiltersApplied += OnFiltersApplied;
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.StockLevelsModalsViewModel != null)
+        {
+            App.StockLevelsModalsViewModel.ItemSaved -= OnModalItemSaved;
+            App.StockLevelsModalsViewModel.FiltersApplied -= OnFiltersApplied;
         }
     }
 
@@ -325,10 +338,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         UpdateStatistics();
         UpdateDropdownOptions();
         FilterItems();
-
-        // Notify that HasInventoryItems may have changed
-        OnPropertyChanged(nameof(HasInventoryItems));
-        OpenBulkAdjustModalCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -413,12 +422,11 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
-            var searchProducts = companyData.Products;
             filtered = filtered
                 .Select(i => new
                 {
                     Item = i,
-                    Product = searchProducts.FirstOrDefault(p => p.Id == i.ProductId),
+                    Product = companyData.GetProduct(i.ProductId),
                     SkuScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, i.Sku)
                 })
                 .Where(x => x.Product != null)
@@ -477,16 +485,13 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Create display items
-        var products = companyData.Products;
-        var locations = companyData.Locations;
-        var categories = companyData.Categories;
-
+        // Create display items (using CompanyData's O(1) cached lookups instead of scanning the
+        // full Products/Locations/Categories lists per inventory row).
         var displayItems = filtered.Select(item =>
         {
-            var product = products.FirstOrDefault(p => p.Id == item.ProductId);
-            var location = locations.FirstOrDefault(l => l.Id == item.LocationId);
-            var category = product != null ? categories.FirstOrDefault(c => c.Id == product.CategoryId) : null;
+            var product = companyData.GetProduct(item.ProductId);
+            var location = companyData.GetLocation(item.LocationId);
+            var category = product?.CategoryId is { Length: > 0 } categoryId ? companyData.GetCategory(categoryId) : null;
             var status = item.CalculateStatus();
 
             return new StockLevelDisplayItem
@@ -640,24 +645,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     private void OpenAddItemModal()
     {
         App.StockLevelsModalsViewModel?.OpenAddItemModalCommand.Execute(null);
-    }
-
-    #endregion
-
-    #region Bulk Adjust Modal
-
-    /// <summary>
-    /// Opens a bulk adjust stock modal (placeholder - uses first selected item for now).
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(HasInventoryItems))]
-    private void OpenBulkAdjustModal()
-    {
-        // For now, open adjust for first item
-        var firstItem = DisplayItems.FirstOrDefault();
-        if (firstItem != null)
-        {
-            App.StockLevelsModalsViewModel?.OpenAdjustStockModal(firstItem.Id, firstItem.ProductName, firstItem.InStock);
-        }
     }
 
     #endregion

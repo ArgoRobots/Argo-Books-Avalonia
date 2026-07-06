@@ -107,10 +107,11 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterLocations();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterLocations();
+        });
 
     [ObservableProperty]
     private string _filterType = "All";
@@ -174,6 +175,24 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
             App.LocationsModalsViewModel.LocationSaved += OnModalLocationSaved;
             App.LocationsModalsViewModel.LocationDeleted += OnModalLocationDeleted;
             App.LocationsModalsViewModel.FiltersApplied += OnFiltersApplied;
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.LocationsModalsViewModel != null)
+        {
+            App.LocationsModalsViewModel.LocationSaved -= OnModalLocationSaved;
+            App.LocationsModalsViewModel.LocationDeleted -= OnModalLocationDeleted;
+            App.LocationsModalsViewModel.FiltersApplied -= OnFiltersApplied;
         }
     }
 

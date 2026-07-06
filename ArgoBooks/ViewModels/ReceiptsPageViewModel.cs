@@ -20,7 +20,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Receipts page displaying receipt archive management.
 /// </summary>
-public partial class ReceiptsPageViewModel : ViewModelBase
+public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
 {
     public ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
 
@@ -86,10 +86,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterReceipts();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterReceipts();
+        });
 
     #endregion
 
@@ -387,6 +388,26 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             App.ReceiptsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReceiptsModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+    }
+
+    /// <summary>
+    /// Unsubscribes from app-level and singleton events, plus the per-item PropertyChanged handlers,
+    /// so this page VM can be garbage collected when the company is switched. Called by
+    /// ClearPageCaches via <see cref="ICleanupViewModel"/>.
+    /// </summary>
+    public void Cleanup()
+    {
+        CancelPendingSearch();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ReceiptsModalsViewModel != null)
+        {
+            App.ReceiptsModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ReceiptsModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+        foreach (var item in Receipts)
+            item.PropertyChanged -= OnReceiptItemPropertyChanged;
     }
 
     private void OnFiltersApplied(object? sender, EventArgs e)

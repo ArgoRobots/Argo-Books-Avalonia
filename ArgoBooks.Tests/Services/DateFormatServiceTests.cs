@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Reflection;
+using System.Threading;
 using ArgoBooks.Services;
 using Xunit;
 
@@ -181,6 +182,36 @@ public class DateFormatServiceTests
         var result = DateFormatService.FormatMonthYear(date);
 
         Assert.Equal("Dec 2025", result);
+    }
+
+    #endregion
+
+    #region Culture-independence
+
+    private static T WithCulture<T>(string culture, Func<T> func)
+    {
+        T result = default!;
+        var thread = new Thread(() =>
+        {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(culture);
+            result = func();
+        });
+        thread.Start();
+        thread.Join();
+        return result;
+    }
+
+    [Fact]
+    public void Format_OnNonUsCulture_KeepsSlashSeparators()
+    {
+        // The user picks a format like MM/DD/YYYY; the '/' must render literally. In a .NET custom
+        // format string '/' is the locale date-separator placeholder, so without InvariantCulture a
+        // German locale renders it as '.'. With no company loaded the default format is MM/DD/YYYY.
+        var date = new DateTime(2025, 5, 1);
+
+        var result = WithCulture("de-DE", () => DateFormatService.Format(date));
+
+        Assert.Equal("05/01/2025", result);
     }
 
     #endregion

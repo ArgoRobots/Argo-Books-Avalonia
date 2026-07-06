@@ -73,10 +73,19 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
                             ?? workbook.Worksheets.FirstOrDefault();
             if (worksheet == null) return [];
 
-            var headers = SpreadsheetRowReader.GetHeaders(worksheet);
+            // When essentials are required (a bank statement), scan for the row that actually yields a
+            // Date + money column rather than the first row with >= 2 cells. Many banks put metadata
+            // rows ("Account:", "Statement Period:") above the real header; without this the preamble
+            // would be mistaken for the header and the whole statement would import as zero lines.
+            // The CSV path does the same via FindHeaderRowIndex.
+            var headerRow = requireEssentials
+                ? FindExcelHeaderRow(worksheet, normalize)
+                : SpreadsheetRowReader.FindHeaderRow(worksheet);
+
+            var headers = SpreadsheetRowReader.GetHeaders(worksheet, headerRow);
             if (headers.Count == 0) return [];
 
-            var rows = SpreadsheetRowReader.GetDataRows(worksheet, headers.Count);
+            var rows = SpreadsheetRowReader.GetDataRows(worksheet, headers.Count, headerRow);
             normalize(headers);
             if (requireEssentials && !HasEssentialColumns(headers)) return [];
 
@@ -148,6 +157,24 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
                 return i;
         }
         return 0;
+    }
+
+    /// <summary>
+    /// Excel counterpart of <see cref="FindHeaderRowIndex"/>: scans the first rows for the one whose
+    /// mapped headers yield a Date plus a money column, so metadata/preamble rows above the real
+    /// header don't get mistaken for it. Falls back to the generic first-non-empty-row heuristic.
+    /// </summary>
+    private static int FindExcelHeaderRow(ClosedXML.Excel.IXLWorksheet worksheet, Action<List<string>> normalize)
+    {
+        var lastRow = Math.Min(worksheet.LastRowUsed()?.RowNumber() ?? 1, 10);
+        for (int rowNum = 1; rowNum <= lastRow; rowNum++)
+        {
+            var copy = new List<string>(SpreadsheetRowReader.GetHeaders(worksheet, rowNum));
+            normalize(copy);
+            if (HasEssentialColumns(copy))
+                return rowNum;
+        }
+        return SpreadsheetRowReader.FindHeaderRow(worksheet);
     }
 
     /// <summary>

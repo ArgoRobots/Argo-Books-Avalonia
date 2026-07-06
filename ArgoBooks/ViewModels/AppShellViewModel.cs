@@ -22,7 +22,6 @@ public partial class AppShellViewModel : ViewModelBase
     private CustomerModalsViewModel? _customerModalsViewModel;
     private ProductModalsViewModel? _productModalsViewModel;
     private CategoryModalsViewModel? _categoryModalsViewModel;
-    private DepartmentModalsViewModel? _departmentModalsViewModel;
     private SupplierModalsViewModel? _supplierModalsViewModel;
     private RentalInventoryModalsViewModel? _rentalInventoryModalsViewModel;
     private RentalAvailabilityModalViewModel? _rentalAvailabilityModalViewModel;
@@ -238,24 +237,6 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _categoryModalsViewModel;
-        }
-    }
-
-    /// <summary>
-    /// Gets the department modals view model.
-    /// </summary>
-    public DepartmentModalsViewModel DepartmentModalsViewModel
-    {
-        get
-        {
-            if (_departmentModalsViewModel == null)
-            {
-                _departmentModalsViewModel = new DepartmentModalsViewModel();
-                _departmentModalsViewModel.DepartmentSaved += RaiseUnsavedChanges;
-                _departmentModalsViewModel.DepartmentDeleted += RaiseUnsavedChanges;
-                OnPropertyChanged();
-            }
-            return _departmentModalsViewModel;
         }
     }
 
@@ -1106,22 +1087,6 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Sets the user information on the header.
-    /// </summary>
-    public void SetUserInfo(string? displayName, string? email = null, string? role = null, int userId = 0)
-    {
-        HeaderViewModel.SetUserInfo(displayName, email, role, userId: userId);
-    }
-
-    /// <summary>
-    /// Updates feature visibility based on settings.
-    /// </summary>
-    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals, bool showPayroll)
-    {
-        SidebarViewModel.UpdateFeatureVisibility(showTransactions, showInventory, showRentals, showPayroll);
-    }
-
-    /// <summary>
     /// Sets the premium status to show or hide premium features.
     /// </summary>
     public void SetPremiumStatus(bool hasPremium)
@@ -1144,14 +1109,6 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Sets the enterprise plan status to show or hide enterprise features.
-    /// </summary>
-    public void SetEnterpriseStatus(bool hasEnterprise)
-    {
-        SidebarViewModel.HasEnterprise = hasEnterprise;
-    }
-
-    /// <summary>
     /// Sets all plan statuses at once.
     /// </summary>
     public void SetPlanStatus(bool hasPremium, bool hasEnterprise = false)
@@ -1165,17 +1122,6 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Notify any subscribers (e.g., ProductsPageViewModel) of plan status change
         App.RaisePlanStatusChanged(hasPremium);
-    }
-
-    /// <summary>
-    /// Navigates to a page programmatically.
-    /// </summary>
-    public void NavigateTo(string pageName)
-    {
-        SidebarViewModel.SetActivePage(pageName);
-        HeaderViewModel.SetPageTitle(pageName);
-        CurrentPageName = pageName;
-        _navigationService?.NavigateTo(pageName);
     }
 
     /// <summary>
@@ -1265,13 +1211,15 @@ public partial class AppShellViewModel : ViewModelBase
     /// <param name="title">Notification title.</param>
     /// <param name="message">Notification message.</param>
     /// <param name="type">Notification type.</param>
-    public void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
+    public void AddNotification(string title, string message, NotificationType type = NotificationType.Info,
+        Action? onClick = null)
     {
         HeaderViewModel.AddNotification(new NotificationItem
         {
             Title = title,
             Message = message,
-            Type = type
+            Type = type,
+            OnClick = onClick
         });
     }
 }

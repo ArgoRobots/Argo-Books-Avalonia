@@ -23,6 +23,9 @@ public class CompanyManager : IDisposable
     private string? _currentTempDirectory;
     private string? _currentPassword;
     private FileStream? _fileLock;
+    // Cross-instance guard: prevents the same company being opened in a second running instance,
+    // which would race auto-saves and corrupt the .argo file.
+    private readonly CompanyInstanceLock _instanceLock = new();
     private bool _isDisposed;
 
     // Receipts are loaded off the critical open path (they carry base64 image data).
@@ -32,6 +35,9 @@ public class CompanyManager : IDisposable
     // merge-once flag and the task reference.
     private readonly object _receiptsLock = new();
     private Task<List<Models.Tracking.Receipt>>? _receiptsLoadTask;
+    // The CompanyData the in-flight load belongs to. The merge only proceeds if this is still the
+    // current company, so a company switch during the load can't merge old receipts into the new one.
+    private CompanyData? _receiptsLoadTarget;
     private bool _receiptsMerged;
 
     /// <summary>
@@ -446,6 +452,27 @@ public class CompanyManager : IDisposable
         _errorLogger = errorLogger;
     }
 
+    // Test-only constructor: leaves the file-system services unset. Only the in-memory surface
+    // (CompanyData, MarkAsChanged/NotifyDataChanged, HasUnsavedChanges) is usable; any file
+    // operation will NRE by design. Paired with CreateForTesting below.
+    private CompanyManager()
+    {
+        _fileService = null!;
+        _settingsService = null!;
+        _footerService = null!;
+        _errorLogger = null;
+    }
+
+    /// <summary>
+    /// Creates a CompanyManager wrapping an existing in-memory <see cref="CompanyData"/> for unit
+    /// tests, with no file-system dependencies. Lets tests drive ViewModels that read
+    /// <c>App.CompanyManager.CompanyData</c> without opening a real company file.
+    /// </summary>
+    internal static CompanyManager CreateForTesting(CompanyData data)
+    {
+        return new CompanyManager { CompanyData = data };
+    }
+
     /// <summary>
     /// Creates a new company file.
     /// </summary>
@@ -464,6 +491,14 @@ public class CompanyManager : IDisposable
         ArgumentException.ThrowIfNullOrEmpty(filePath);
         ArgumentException.ThrowIfNullOrEmpty(companyName);
 
+        // Refuse to overwrite a file another running instance holds open (the Create/Save-As dialog
+        // lets the user pick any existing .argo path). Checked BEFORE closing the current company so a
+        // rejected create doesn't dump the user on the welcome screen. Mirrors OpenCompanyAsync.
+        if (_instanceLock.IsHeldByAnotherInstance(filePath))
+        {
+            throw new CompanyAlreadyOpenException(filePath);
+        }
+
         // Close any existing company
         if (IsCompanyOpen)
         {
@@ -471,7 +506,7 @@ public class CompanyManager : IDisposable
         }
 
         // Create temporary directory for the new company
-        _currentTempDirectory = CreateTempDirectory();
+        _currentTempDirectory = SecureTempDirectory.Create();
 
         try
         {
@@ -503,11 +538,16 @@ public class CompanyManager : IDisposable
             // Save to file
             await _fileService.SaveCompanyAsync(filePath, _currentTempDirectory, password, cancellationToken);
 
+            // The new company is now durably on disk, so it starts with no unsaved changes.
+            CompanyData.MarkAsSaved();
+
             CurrentFilePath = filePath;
             _currentPassword = password;
 
             // Hold a read lock on the file to prevent deletion while the company is open
             AcquireFileLock(filePath);
+            // Claim the cross-instance lock (the held-elsewhere case was already rejected above).
+            _instanceLock.TryAcquire(filePath);
 
             // Add to recent companies
             _settingsService.AddRecentCompany(filePath);
@@ -519,6 +559,7 @@ public class CompanyManager : IDisposable
         catch (Exception ex)
         {
             // Clean up on failure
+            _instanceLock.Release();
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to create company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
             {
@@ -548,43 +589,65 @@ public class CompanyManager : IDisposable
             throw new FileNotFoundException("Company file not found.", filePath);
         }
 
-        // Close any existing company
+        // Fail fast if the company is already open in another instance, BEFORE closing the current
+        // company. Otherwise a blocked open would still close the current company first and dump the
+        // user on the welcome screen just for attempting to open a locked file.
+        if (_instanceLock.IsHeldByAnotherInstance(filePath))
+        {
+            throw new CompanyAlreadyOpenException(filePath);
+        }
+
+        // Close any existing company (this releases the previous company's instance lock).
         if (IsCompanyOpen)
         {
             await CloseCompanyAsync(cancellationToken);
         }
 
-        // Check if file is encrypted
-        var isEncrypted = await _fileService.IsFileEncryptedAsync(filePath);
-
-        if (isEncrypted && string.IsNullOrEmpty(password))
+        // Authoritatively claim the lock now that the current company is closed. Re-checked here (not
+        // just via the peek above) to close the small race between the peek and this point. Taken
+        // before the password prompt so the user isn't asked to unlock a file they can't open anyway;
+        // every early exit below releases it, and on success the open company keeps holding it.
+        if (!_instanceLock.TryAcquire(filePath))
         {
-            // Try async callback first (preferred)
-            if (PasswordRequestCallback != null)
-            {
-                password = await PasswordRequestCallback(filePath);
-                if (string.IsNullOrEmpty(password))
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                // Fall back to synchronous event (for backwards compatibility)
-                var args = new PasswordRequiredEventArgs();
-                PasswordRequired?.Invoke(this, args);
-
-                if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
-                {
-                    return false;
-                }
-
-                password = args.Password;
-            }
+            throw new CompanyAlreadyOpenException(filePath);
         }
 
+        // From here on the instance lock is held. Any failure or password cancel must release it,
+        // so encryption detection, the password prompt, and the load all run inside one try; the
+        // finally releases the lock unless the company opened successfully (in which case the open
+        // company keeps holding it until it is closed).
+        var opened = false;
         try
         {
+            // Check if file is encrypted
+            var isEncrypted = await _fileService.IsFileEncryptedAsync(filePath);
+
+            if (isEncrypted && string.IsNullOrEmpty(password))
+            {
+                // Try async callback first (preferred)
+                if (PasswordRequestCallback != null)
+                {
+                    password = await PasswordRequestCallback(filePath);
+                    if (string.IsNullOrEmpty(password))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Fall back to synchronous event (for backwards compatibility)
+                    var args = new PasswordRequiredEventArgs();
+                    PasswordRequired?.Invoke(this, args);
+
+                    if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
+                    {
+                        return false;
+                    }
+
+                    password = args.Password;
+                }
+            }
+
             // Open the file
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
@@ -593,7 +656,7 @@ public class CompanyManager : IDisposable
             // merged in by EnsureReceiptsLoadedAsync before any save or receipts UI read.
             CompanyData = await _fileService.LoadCompanyDataAsync(
                 _currentTempDirectory, cancellationToken, loadReceipts: false);
-            StartReceiptsBackgroundLoad(_currentTempDirectory);
+            StartReceiptsBackgroundLoad(_currentTempDirectory, CompanyData);
 
             // One-time recalc: heal any historic drift between Invoice
             // totals and the Payment rows that drive them.
@@ -623,16 +686,18 @@ public class CompanyManager : IDisposable
                 filePath,
                 isEncrypted));
 
+            opened = true;
             return true;
         }
         catch (UnauthorizedAccessException)
         {
-            // Invalid password - let UI handle retry
+            // Invalid password - let UI handle retry. The finally releases the instance lock so the
+            // retry (a fresh OpenCompanyAsync) can re-acquire it instead of colliding with our hold.
             throw;
         }
         catch (Exception ex)
         {
-            // Clean up on failure
+            // Clean up on failure (the finally releases the instance lock).
             ReleaseFileLock();
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company");
             if (_currentTempDirectory != null && Directory.Exists(_currentTempDirectory))
@@ -642,6 +707,13 @@ public class CompanyManager : IDisposable
             _currentTempDirectory = null;
             CompanyData = null;
             throw;
+        }
+        finally
+        {
+            if (!opened)
+            {
+                _instanceLock.Release();
+            }
         }
     }
 
@@ -705,11 +777,12 @@ public class CompanyManager : IDisposable
     /// Starts reading receipts.json on a background thread. The read does no shared-state
     /// mutation; the merge into CompanyData.Receipts happens in EnsureReceiptsLoadedAsync.
     /// </summary>
-    private void StartReceiptsBackgroundLoad(string tempDirectory)
+    private void StartReceiptsBackgroundLoad(string tempDirectory, CompanyData target)
     {
         lock (_receiptsLock)
         {
             _receiptsMerged = false;
+            _receiptsLoadTarget = target;
             _receiptsLoadTask = Task.Run(() => _fileService.LoadReceiptsAsync(tempDirectory));
         }
     }
@@ -728,20 +801,43 @@ public class CompanyManager : IDisposable
     public async Task EnsureReceiptsLoadedAsync()
     {
         Task<List<Models.Tracking.Receipt>>? task;
+        CompanyData? target;
         lock (_receiptsLock)
         {
             if (_receiptsMerged)
                 return;
             task = _receiptsLoadTask;
+            target = _receiptsLoadTarget;
         }
         if (task == null)
             return;
 
-        var loaded = await task;
+        List<Models.Tracking.Receipt> loaded;
+        try
+        {
+            loaded = await task;
+        }
+        catch
+        {
+            // A company switch can delete the temp directory mid-read, faulting the load. That's
+            // expected and harmless because we'd skip the merge anyway (different company). But if
+            // we're still on the same company the failure is real - rethrow so a save doesn't
+            // silently proceed without the persisted receipts and overwrite them.
+            lock (_receiptsLock)
+            {
+                if (_receiptsMerged || !ReferenceEquals(CompanyData, target))
+                    return;
+            }
+            throw;
+        }
 
         lock (_receiptsLock)
         {
             if (_receiptsMerged)
+                return;
+            // Only merge if the company hasn't changed since the load started; otherwise these
+            // receipts belong to a company that is no longer open.
+            if (!ReferenceEquals(CompanyData, target))
                 return;
             CompanyData?.Receipts.AddRange(loaded);
             _receiptsMerged = true;
@@ -798,6 +894,9 @@ public class CompanyManager : IDisposable
                 // Update the recent companies list so the old path is replaced with the new one
                 if (CurrentFilePath != oldPath)
                 {
+                    // Move the cross-instance lock onto the new path so a second instance is
+                    // blocked from the renamed file (and freed from the old one).
+                    _instanceLock.TryAcquire(CurrentFilePath);
                     _settingsService.RemoveRecentCompany(oldPath);
                     _settingsService.AddRecentCompany(CurrentFilePath);
                     await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
@@ -860,6 +959,14 @@ public class CompanyManager : IDisposable
 
             ArgumentException.ThrowIfNullOrEmpty(newFilePath);
 
+            // Refuse to Save As over a file another running instance holds open (the native save
+            // dialog lets the user pick any existing .argo). A path this instance itself holds returns
+            // false here, so saving onto our own current file is still allowed.
+            if (_instanceLock.IsHeldByAnotherInstance(newFilePath))
+            {
+                throw new CompanyAlreadyOpenException(newFilePath);
+            }
+
             // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
             await EnsureReceiptsLoadedAsync();
 
@@ -893,6 +1000,11 @@ public class CompanyManager : IDisposable
                 // Update current file path and password
                 CurrentFilePath = newFilePath;
                 _currentPassword = passwordToUse;
+                // Move the cross-instance lock onto the Save-As target so it guards the new file.
+                _instanceLock.TryAcquire(newFilePath);
+                // A deferred rename targeted the OLD path; once the working file has moved to a new
+                // path via Save As it no longer applies, so a later normal Save must not act on it.
+                PendingRenamePath = null;
             }
             finally
             {
@@ -922,6 +1034,7 @@ public class CompanyManager : IDisposable
     public async Task CloseCompanyAsync(CancellationToken cancellationToken = default)
     {
         ReleaseFileLock();
+        _instanceLock.Release();
 
         if (_currentTempDirectory != null)
         {
@@ -938,6 +1051,7 @@ public class CompanyManager : IDisposable
         lock (_receiptsLock)
         {
             _receiptsLoadTask = null;
+            _receiptsLoadTarget = null;
             _receiptsMerged = false;
         }
 
@@ -1077,7 +1191,12 @@ public class CompanyManager : IDisposable
         foreach (var rent in CompanyData.Rentals)
             if (rent.CustomerId == oldId) rent.CustomerId = trimmed;
         foreach (var ri in CompanyData.RecurringInvoices)
+        {
             if (ri.CustomerId == oldId) ri.CustomerId = trimmed;
+            // The embedded template is what each generated occurrence inherits its CustomerId from, so
+            // it must follow the rename too, otherwise future invoices point at the old, gone Id.
+            if (ri.Template != null && ri.Template.CustomerId == oldId) ri.Template.CustomerId = trimmed;
+        }
         foreach (var ret in CompanyData.Returns)
             if (ret.CustomerId == oldId) ret.CustomerId = trimmed;
 
@@ -1330,8 +1449,10 @@ public class CompanyManager : IDisposable
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
 
-            // Export the entire temp directory as-is (includes receipts/)
-            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, null, cancellationToken);
+            // Export the entire temp directory as-is (includes receipts/). Use the working file's
+            // password so a backup of an encrypted company is itself encrypted; passing null wrote
+            // the backup in plaintext, letting anyone restore it without the password.
+            await _fileService.SaveCompanyAsync(backupPath, _currentTempDirectory, _currentPassword, cancellationToken);
 
             // Note: We intentionally do NOT:
             // - Change _currentFilePath (backup is a separate file)
@@ -1474,13 +1595,6 @@ public class CompanyManager : IDisposable
         }
     }
 
-    private static string CreateTempDirectory()
-    {
-        var tempPath = Path.Combine(Path.GetTempPath(), "ArgoBooks", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempPath);
-        return tempPath;
-    }
-
     private static string GetCompanyDirectory(string tempDirectory)
     {
         var subdirs = Directory.GetDirectories(tempDirectory);
@@ -1490,7 +1604,7 @@ public class CompanyManager : IDisposable
         // Multiple subdirectories: pick the one that contains company data files
         // (exclude known non-company directories like "receipts")
         var companyDir = subdirs.FirstOrDefault(d =>
-            File.Exists(Path.Combine(d, "settings.json")) ||
+            File.Exists(Path.Combine(d, "appSettings.json")) ||
             File.Exists(Path.Combine(d, "revenues.json")) ||
             File.Exists(Path.Combine(d, "expenses.json")));
 
@@ -1502,6 +1616,7 @@ public class CompanyManager : IDisposable
         if (_isDisposed) return;
 
         ReleaseFileLock();
+        _instanceLock.Dispose();
         _saveLock.Dispose();
         _currentPassword = null;
 

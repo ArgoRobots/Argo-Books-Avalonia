@@ -64,18 +64,6 @@ public class CompanyData
     public List<Supplier> Suppliers { get; init; } = [];
 
     /// <summary>
-    /// All employees.
-    /// </summary>
-    [JsonPropertyName("employees")]
-    public List<Employee> Employees { get; init; } = [];
-
-    /// <summary>
-    /// All departments.
-    /// </summary>
-    [JsonPropertyName("departments")]
-    public List<Department> Departments { get; init; } = [];
-
-    /// <summary>
     /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]
@@ -211,16 +199,6 @@ public class CompanyData
 
     #endregion
 
-    #region Reports
-
-    /// <summary>
-    /// All custom report templates.
-    /// </summary>
-    [JsonPropertyName("reportTemplates")]
-    public List<ReportTemplate> ReportTemplates { get; init; } = [];
-
-    #endregion
-
     #region Invoice Templates
 
     /// <summary>
@@ -327,10 +305,6 @@ public class CompanyData
     [JsonIgnore] private int _productLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Supplier>? _supplierLookup;
     [JsonIgnore] private int _supplierLookupCount = -1;
-    [JsonIgnore] private Dictionary<string, Employee>? _employeeLookup;
-    [JsonIgnore] private int _employeeLookupCount = -1;
-    [JsonIgnore] private Dictionary<string, Department>? _departmentLookup;
-    [JsonIgnore] private int _departmentLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Category>? _categoryLookup;
     [JsonIgnore] private int _categoryLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Accountant>? _accountantLookup;
@@ -339,6 +313,8 @@ public class CompanyData
     [JsonIgnore] private int _locationLookupCount = -1;
     [JsonIgnore] private Dictionary<string, Invoice>? _invoiceLookup;
     [JsonIgnore] private int _invoiceLookupCount = -1;
+    [JsonIgnore] private Dictionary<string, Receipt>? _receiptLookup;
+    [JsonIgnore] private int _receiptLookupCount = -1;
 
     private static Dictionary<string, T> BuildLookup<T>(List<T> list, Func<T, string> keySelector)
     {
@@ -361,12 +337,11 @@ public class CompanyData
         _customerLookup = null;
         _productLookup = null;
         _supplierLookup = null;
-        _employeeLookup = null;
-        _departmentLookup = null;
         _categoryLookup = null;
         _accountantLookup = null;
         _locationLookup = null;
         _invoiceLookup = null;
+        _receiptLookup = null;
     }
 
     #endregion
@@ -411,34 +386,6 @@ public class CompanyData
             _supplierLookupCount = Suppliers.Count;
         }
         return _supplierLookup.GetValueOrDefault(id);
-    }
-
-    /// <summary>
-    /// Gets an employee by ID.
-    /// </summary>
-    public Employee? GetEmployee(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return null;
-        if (_employeeLookup == null || _employeeLookupCount != Employees.Count)
-        {
-            _employeeLookup = BuildLookup(Employees, e => e.Id);
-            _employeeLookupCount = Employees.Count;
-        }
-        return _employeeLookup.GetValueOrDefault(id);
-    }
-
-    /// <summary>
-    /// Gets a department by ID.
-    /// </summary>
-    public Department? GetDepartment(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return null;
-        if (_departmentLookup == null || _departmentLookupCount != Departments.Count)
-        {
-            _departmentLookup = BuildLookup(Departments, d => d.Id);
-            _departmentLookupCount = Departments.Count;
-        }
-        return _departmentLookup.GetValueOrDefault(id);
     }
 
     /// <summary>
@@ -498,6 +445,20 @@ public class CompanyData
     }
 
     /// <summary>
+    /// Gets a receipt by ID.
+    /// </summary>
+    public Receipt? GetReceipt(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (_receiptLookup == null || _receiptLookupCount != Receipts.Count)
+        {
+            _receiptLookup = BuildLookup(Receipts, r => r.Id);
+            _receiptLookupCount = Receipts.Count;
+        }
+        return _receiptLookup.GetValueOrDefault(id);
+    }
+
+    /// <summary>
     /// Gets inventory item by product and location.
     /// </summary>
     public InventoryItem? GetInventoryItem(string productId, string locationId) =>
@@ -547,12 +508,6 @@ public class IdCounters
 
     [JsonPropertyName("supplier")]
     public int Supplier { get; set; }
-
-    [JsonPropertyName("employee")]
-    public int Employee { get; set; }
-
-    [JsonPropertyName("department")]
-    public int Department { get; set; }
 
     [JsonPropertyName("category")]
     public int Category { get; set; }
@@ -604,9 +559,6 @@ public class IdCounters
 
     [JsonPropertyName("receipt")]
     public int Receipt { get; set; }
-
-    [JsonPropertyName("reportTemplate")]
-    public int ReportTemplate { get; set; }
 
     [JsonPropertyName("invoiceTemplate")]
     public int InvoiceTemplate { get; set; }

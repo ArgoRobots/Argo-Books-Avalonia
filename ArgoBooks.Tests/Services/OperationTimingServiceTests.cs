@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -85,6 +86,40 @@ public class OperationTimingServiceTests : IDisposable
         var second = new OperationTimingService(_platform, new HttpClient(new StubHandler(HttpStatusCode.OK, "{}")));
         await second.InitializeAsync();
         Assert.InRange(second.Estimator.UserCalibration, first.Estimator.UserCalibration - 0.01, first.Estimator.UserCalibration + 0.01);
+    }
+
+    [Fact]
+    public async Task RefreshPriorsAsync_HttpClientTimeout_IsNotLoggedAsError()
+    {
+        // Simulate the HttpClient's own 20s timeout: a TaskCanceledException with no caller
+        // cancellation. This is best-effort startup work and must not spam the error dashboard.
+        var logger = new SpyErrorLogger();
+        var service = new OperationTimingService(_platform, new HttpClient(new TimeoutHandler()), logger);
+
+        await service.RefreshPriorsAsync(CancellationToken.None);
+
+        Assert.Equal(0, logger.ErrorCount);
+    }
+
+    private sealed class TimeoutHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => throw new TaskCanceledException("Simulated HttpClient timeout.");
+    }
+
+    private sealed class SpyErrorLogger : IErrorLogger
+    {
+        public int ErrorCount { get; private set; }
+        public void LogError(Exception exception, ErrorCategory category, string? context = null) => ErrorCount++;
+        public void LogError(string message, ErrorCategory category, string? context = null) => ErrorCount++;
+        public void LogWarning(string message, string? context = null) { }
+        public void LogInfo(string message) { }
+        public void LogDebug(string message) { }
+        public IReadOnlyList<ErrorLogEntry> GetRecentErrors(int count = 50) => [];
+        public IReadOnlyList<ErrorLogEntry> GetAllErrors() => [];
+        public Task<string> ExportErrorLogAsync() => Task.FromResult(string.Empty);
+        public void ClearLogs() { }
+        public event EventHandler<ErrorLogEntry>? ErrorLogged { add { } remove { } }
     }
 
     private sealed class StubHandler(HttpStatusCode status, string body) : HttpMessageHandler

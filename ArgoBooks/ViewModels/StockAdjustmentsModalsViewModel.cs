@@ -193,18 +193,29 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the create inventory item modal on top of the current modal.
     /// </summary>
+    // One-shot handler for the "create entity from this modal" flow. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _itemSavedHandler;
+
     [RelayCommand]
     private void OpenCreateInventoryItem()
     {
         var stockLevelsModals = App.StockLevelsModalsViewModel;
         if (stockLevelsModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            stockLevelsModals.ItemSaved -= OnSaved;
-            LoadInventoryItems();
-        }
-        stockLevelsModals.ItemSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _itemSavedHandler,
+            h => stockLevelsModals.ItemSaved += h,
+            h => stockLevelsModals.ItemSaved -= h,
+            () =>
+            {
+                LoadInventoryItems();
+
+                // Auto-select the inventory item the user just created.
+                var newItem = AvailableInventoryItems.FirstOrDefault(o => o.InventoryItem?.Id == stockLevelsModals.LastSavedItemId);
+                if (newItem != null)
+                    SelectedInventoryOption = newItem;
+            });
         stockLevelsModals.OpenAddItemModal();
     }
 
@@ -431,7 +442,10 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
             // Reverse the adjustment on inventory if item still exists
             if (inventoryItem != null)
             {
-                inventoryItem.InStock = adjustment.PreviousStock;
+                // Reverse the adjustment's net effect from the live stock. Setting InStock to
+                // PreviousStock is only correct if this is the most recent adjustment for the item;
+                // with later adjustments present, that snapshot leaves stock and the ledger inconsistent.
+                inventoryItem.InStock -= adjustment.NewStock - adjustment.PreviousStock;
                 inventoryItem.Status = inventoryItem.CalculateStatus();
                 inventoryItem.LastUpdated = DateTime.UtcNow;
             }
@@ -462,7 +476,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
                     companyData?.StockAdjustments.Remove(adjustment);
                     if (inventoryItem != null)
                     {
-                        inventoryItem.InStock = adjustment.PreviousStock;
+                        inventoryItem.InStock -= adjustment.NewStock - adjustment.PreviousStock;
                         inventoryItem.Status = inventoryItem.CalculateStatus();
                     }
                     companyData?.MarkAsModified();

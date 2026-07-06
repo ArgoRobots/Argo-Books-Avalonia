@@ -9,6 +9,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.Input;
 
@@ -29,6 +33,14 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     private ScrollViewer? _itemsScrollViewer;
     private int _highlightedIndex = -1;
     private bool _isSettingFromSelectedItem;
+
+    // Debounce typing so the fuzzy-scoring filter over the whole source list doesn't run per keystroke.
+    private const int SearchDebounceMs = 120;
+    private CancellationTokenSource? _searchDebounceCts;
+
+    // Cache the reflected DisplayMemberPath property per (item type, path) so the filter doesn't call
+    // GetProperty for every item on every keystroke.
+    private static readonly ConcurrentDictionary<(Type, string), PropertyInfo?> DisplayPropertyCache = new();
 
     #region Styled Properties
 
@@ -82,6 +94,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     public static readonly StyledProperty<ICommand?> EmptyCreateCommandProperty =
         AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(EmptyCreateCommand));
+
+    public static readonly StyledProperty<object?> AddNewCommandParameterProperty =
+        AvaloniaProperty.Register<SearchableDropdown, object?>(nameof(AddNewCommandParameter));
+
+    public static readonly StyledProperty<object?> EmptyCreateCommandParameterProperty =
+        AvaloniaProperty.Register<SearchableDropdown, object?>(nameof(EmptyCreateCommandParameter));
 
     public static readonly StyledProperty<IEnumerable?> PriorityItemsProperty =
         AvaloniaProperty.Register<SearchableDropdown, IEnumerable?>(nameof(PriorityItems));
@@ -235,6 +253,27 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Optional parameter passed to <see cref="AddNewCommand"/>. When set (e.g. the owning
+    /// line-item object in a repeated row), it is forwarded instead of the typed search text so
+    /// the consumer can auto-select the newly created entity into the row that launched the create.
+    /// </summary>
+    public object? AddNewCommandParameter
+    {
+        get => GetValue(AddNewCommandParameterProperty);
+        set => SetValue(AddNewCommandParameterProperty, value);
+    }
+
+    /// <summary>
+    /// Optional parameter passed to <see cref="EmptyCreateCommand"/> (the empty-state "create"
+    /// link). Mirrors <see cref="AddNewCommandParameter"/> for the no-items case.
+    /// </summary>
+    public object? EmptyCreateCommandParameter
+    {
+        get => GetValue(EmptyCreateCommandParameterProperty);
+        set => SetValue(EmptyCreateCommandParameterProperty, value);
+    }
+
+    /// <summary>
     /// Gets or sets the priority items shown at the top of the dropdown.
     /// </summary>
     public IEnumerable? PriorityItems
@@ -360,9 +399,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         SelectItemCommand = new RelayCommand<object>(SelectItem);
         AddNewInternalCommand = new RelayCommand(() =>
         {
-            var text = SearchText;
+            // Forward the explicit parameter (e.g. the owning line item) when the consumer set one;
+            // otherwise fall back to the typed search text, which some consumers use as the new name.
+            var parameter = AddNewCommandParameter ?? SearchText;
             IsDropdownOpen = false;
-            AddNewCommand?.Execute(text);
+            AddNewCommand?.Execute(parameter);
             // The consumer command may set SearchText (showing the pending new name),
             // which re-opens the dropdown via OnSearchTextChanged. Close it again.
             IsDropdownOpen = false;
@@ -612,6 +653,16 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
         SelectedItem = item;
         SearchText = GetDisplayText(item);
+
+        // Rebuild the filtered list synchronously before closing, cancelling any debounced pass.
+        // This is what keeps the popup's teardown safe: UpdateFilteredItems' Clear() detaches the
+        // item buttons (including the one currently being clicked) from the popup BEFORE it closes.
+        // Closing the popup while the clicked button is still attached and mid-click crashes
+        // Avalonia 12's visual-tree teardown (ArgumentOutOfRangeException in
+        // OnDetachedFromVisualTreeCore). Only the typing path is debounced; selection must be sync.
+        _searchDebounceCts?.Cancel();
+        UpdateFilteredItems();
+
         IsDropdownOpen = false;
         _highlightedIndex = -1;
         HighlightedItem = null;
@@ -619,8 +670,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     private void OnSearchTextChanged()
     {
-        UpdateFilteredItems();
-
         // Open dropdown only when the user is actually typing (search box focused), not when the
         // text is set programmatically / via binding (e.g. pre-filled rows in the bank importer).
         if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen
@@ -632,6 +681,31 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         // Reset highlight when search text changes - user must press key to navigate
         _highlightedIndex = -1;
         HighlightedItem = null;
+
+        // Debounce the expensive filter (fuzzy scoring over the whole source list). Opening the
+        // dropdown filters immediately via the IsDropdownOpen handler, so first-open feedback is
+        // instant; only subsequent keystrokes are debounced.
+        _searchDebounceCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _searchDebounceCts = cts;
+        _ = DebouncedUpdateFilteredItemsAsync(cts.Token);
+    }
+
+    private async Task DebouncedUpdateFilteredItemsAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(SearchDebounceMs, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return; // superseded by a newer keystroke
+        }
+
+        // Resumes on the UI thread's captured synchronization context, so it's safe to touch the
+        // bound collections here.
+        if (!token.IsCancellationRequested)
+            UpdateFilteredItems();
     }
 
     private void UpdateFilteredItems()
@@ -736,7 +810,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         if (string.IsNullOrEmpty(DisplayMemberPath))
             return item.ToString() ?? string.Empty;
 
-        var property = item.GetType().GetProperty(DisplayMemberPath);
+        var property = DisplayPropertyCache.GetOrAdd(
+            (item.GetType(), DisplayMemberPath!),
+            static key => key.Item1.GetProperty(key.Item2));
         return property?.GetValue(item)?.ToString() ?? item.ToString() ?? string.Empty;
     }
 }

@@ -154,9 +154,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// </summary>
     private bool IsInDateRange(DateTime date)
     {
-        if (filters.StartDate.HasValue && date < filters.StartDate.Value)
+        // Compare at day granularity: a report date range selects whole days, but a transaction
+        // carries a real time-of-day (DateTimeOffset.Now) and a custom range's end date is midnight,
+        // so a raw `date > EndDate` would drop a transaction entered later on the end day itself.
+        if (filters.StartDate.HasValue && date.Date < filters.StartDate.Value.Date)
             return false;
-        if (filters.EndDate.HasValue && date > filters.EndDate.Value)
+        if (filters.EndDate.HasValue && date.Date > filters.EndDate.Value.Date)
             return false;
         return true;
     }
@@ -167,7 +170,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// </summary>
     private bool IsOnOrBeforeEndDate(DateTime date)
     {
-        if (filters.EndDate.HasValue && date > filters.EndDate.Value)
+        if (filters.EndDate.HasValue && date.Date > filters.EndDate.Value.Date)
             return false;
         return true;
     }
@@ -234,10 +237,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         foreach (var txn in transactions)
         {
-            if (txn.LineItems.Count > 0)
+            var lineItemsTotal = txn.LineItems.Sum(li => li.Subtotal);
+
+            // Proportional allocation needs a non-zero line-item subtotal to divide by.
+            if (txn.LineItems.Count > 0 && lineItemsTotal != 0)
             {
                 // Convert line item amounts to USD using the transaction's conversion ratio
-                var lineItemsTotal = txn.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = txn.EffectiveSubtotalUSD;
 
                 foreach (var lineItem in txn.LineItems)
@@ -246,15 +251,14 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                     result.TryAdd(categoryName, 0);
                     // Proportionally allocate USD subtotal across line items, then convert at the
                     // transaction's own date.
-                    var lineItemUSD = lineItemsTotal != 0
-                        ? Math.Round(lineItem.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    var lineItemUSD = Math.Round(lineItem.Subtotal / lineItemsTotal * subtotalUSD, 2);
                     result[categoryName] += ToDisplay(lineItemUSD, txn.Date);
                 }
             }
             else
             {
-                // No line items, use the pre-tax amount converted at the transaction's own date.
+                // No line items, or every line item nets to a zero subtotal (e.g. a 100% discount):
+                // post the transaction-level pre-tax amount so the transaction is not dropped.
                 var categoryName = "Uncategorized";
                 result.TryAdd(categoryName, 0);
                 result[categoryName] += ToDisplay(txn.EffectiveSubtotalUSD, txn.Date);
@@ -437,7 +441,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         var accountsReceivable = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft)
+                        && i.Status != InvoiceStatus.Draft
+                        && IsOnOrBeforeEndDate(i.IssueDate))
             .Sum(i => ToDisplay(i.EffectiveBalanceUSD, i.IssueDate));
 
         // Inventory valued at current unit cost, using stock levels
@@ -454,7 +459,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // order date.
         var accountsPayable = companyData.PurchaseOrders
             .Where(po => po.Status != PurchaseOrderStatus.Received
-                         && po.Status != PurchaseOrderStatus.Cancelled)
+                         && po.Status != PurchaseOrderStatus.Cancelled
+                         && IsOnOrBeforeEndDate(po.OrderDate))
             .Sum(po => ToDisplay(po.EffectiveTotalUSD, po.OrderDate));
 
         // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses.
@@ -770,17 +776,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Revenue transactions (credits), all amounts in USD
         foreach (var rev in companyData.Revenues.Where(r => IsInDateRange(r.Date)))
         {
-            if (rev.LineItems.Count > 0)
+            var lineItemsTotal = rev.LineItems.Sum(li => li.Subtotal);
+            if (rev.LineItems.Count > 0 && lineItemsTotal != 0)
             {
-                var lineItemsTotal = rev.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = rev.EffectiveSubtotalUSD;
 
                 foreach (var li in rev.LineItems)
                 {
                     var catName = GetCategoryNameForProduct(li.ProductId);
-                    var lineItemUSD = lineItemsTotal != 0
-                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    var lineItemUSD = Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2);
                     AddLedgerEntry(entries, catName, new LedgerEntry
                     {
                         Date = rev.Date,
@@ -793,6 +797,8 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
             else
             {
+                // No line items, or every line item nets to a zero subtotal (e.g. a 100% discount):
+                // post the transaction-level amount so the entry is not dropped from the ledger.
                 AddLedgerEntry(entries, t.RevenueCategory, new LedgerEntry
                 {
                     Date = rev.Date,
@@ -807,17 +813,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Expense transactions (debits), all amounts in USD
         foreach (var exp in companyData.Expenses.Where(e => IsInDateRange(e.Date)))
         {
-            if (exp.LineItems.Count > 0)
+            var lineItemsTotal = exp.LineItems.Sum(li => li.Subtotal);
+            if (exp.LineItems.Count > 0 && lineItemsTotal != 0)
             {
-                var lineItemsTotal = exp.LineItems.Sum(li => li.Subtotal);
                 var subtotalUSD = exp.EffectiveSubtotalUSD;
 
                 foreach (var li in exp.LineItems)
                 {
                     var catName = GetCategoryNameForProduct(li.ProductId);
-                    var lineItemUSD = lineItemsTotal != 0
-                        ? Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2)
-                        : 0;
+                    var lineItemUSD = Math.Round(li.Subtotal / lineItemsTotal * subtotalUSD, 2);
                     AddLedgerEntry(entries, catName, new LedgerEntry
                     {
                         Date = exp.Date,
@@ -841,17 +845,20 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
         }
 
-        // Payments (credits to AR / debits to cash)
+        // Payments (credits to AR / debits to cash). Refunds are stored as negative payments; route
+        // them to the Credit column as a positive value so the amount is visible (a negative Debit
+        // renders blank), while the running balance (Debit - Credit) stays identical.
         foreach (var pmt in companyData.Payments.Where(p => IsInDateRange(p.Date)))
         {
             var customerName = companyData.GetCustomer(pmt.CustomerId)?.Name ?? "Unknown";
+            var amount = ToDisplay(pmt.EffectiveAmountUSD, pmt.Date);
             AddLedgerEntry(entries, t.PaymentsReceivedCategory, new LedgerEntry
             {
                 Date = pmt.Date,
                 Description = $"Payment from {customerName}",
                 Reference = pmt.Id,
-                Debit = ToDisplay(pmt.EffectiveAmountUSD, pmt.Date),
-                Credit = 0
+                Debit = pmt.IsRefund ? 0 : amount,
+                Credit = pmt.IsRefund ? -amount : 0
             });
         }
 
@@ -1024,13 +1031,17 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             return data;
         }
 
-        var today = DateTime.Today;
+        // Age receivables "as of" the report's end date (matching the Balance Sheet), not today.
+        var asOf = EndDateForValuation;
 
-        // Filter to unpaid, non-draft, uncancelled invoices (drafts are not real receivables)
+        // Filter to unpaid, non-draft, uncancelled invoices issued on or before the end date - the same
+        // set the Balance Sheet's Accounts Receivable uses - so a historical report doesn't leak invoices
+        // issued after its end date.
         var openInvoices = companyData.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid
                         && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft)
+                        && i.Status != InvoiceStatus.Draft
+                        && IsOnOrBeforeEndDate(i.IssueDate))
             .ToList();
 
         // Group by customer
@@ -1056,7 +1067,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
             foreach (var invoice in group)
             {
-                var daysPastDue = (today - invoice.DueDate.Date).Days;
+                var daysPastDue = (asOf - invoice.DueDate.Date).Days;
                 // Convert each open invoice's balance at its issue date (Calculations.md §3a Phase 2).
                 var balance = ToDisplay(invoice.EffectiveBalanceUSD, invoice.IssueDate);
 
@@ -1342,27 +1353,29 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         foreach (var rev in filteredRevenues)
         {
             var usdRatio = GetUSDRatio(rev);
-            if (rev.LineItems.Count > 0)
+            var anyLineItemTax = false;
+            foreach (var li in rev.LineItems)
             {
-                foreach (var li in rev.LineItems)
+                if (li.TaxRate > 0)
                 {
-                    if (li.TaxRate > 0)
-                    {
-                        var rate = Math.Round(li.TaxRate, 2);
-                        taxCollectedByRate.TryAdd(rate, 0);
-                        taxCollectedByRate[rate] +=
-                            ToDisplay(Math.Round(li.TaxAmount * usdRatio, 2), rev.Date);
-                    }
+                    anyLineItemTax = true;
+                    var rate = Math.Round(li.TaxRate, 2);
+                    taxCollectedByRate.TryAdd(rate, 0);
+                    taxCollectedByRate[rate] +=
+                        ToDisplay(Math.Round(li.TaxAmount * usdRatio, 2), rev.Date);
                 }
             }
-            else if (rev.TaxRate > 0)
+
+            // Fall back to the transaction-level tax when no line item carried a rate. Manually-entered
+            // transactions always have a line item (with TaxRate 0) but record their tax at the
+            // transaction level, so without this their collected tax would be omitted entirely.
+            if (!anyLineItemTax && rev.TaxRate > 0)
             {
-                // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
-                // convert to decimal form (0.08) to match LineItem.TaxRate for consistent grouping
+                // Transaction.TaxRate is stored as a percentage (e.g., 8 for 8%); convert to decimal
+                // form (0.08) to match LineItem.TaxRate for consistent grouping.
                 var rate = Math.Round(rev.TaxRate / 100m, 4);
-                var taxAmountUSD = rev.EffectiveTaxAmountUSD;
                 taxCollectedByRate.TryAdd(rate, 0);
-                taxCollectedByRate[rate] += ToDisplay(taxAmountUSD, rev.Date);
+                taxCollectedByRate[rate] += ToDisplay(rev.EffectiveTaxAmountUSD, rev.Date);
             }
         }
 
@@ -1376,27 +1389,28 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         foreach (var exp in filteredExpenses)
         {
             var usdRatio = GetUSDRatio(exp);
-            if (exp.LineItems.Count > 0)
+            var anyLineItemTax = false;
+            foreach (var li in exp.LineItems)
             {
-                foreach (var li in exp.LineItems)
+                if (li.TaxRate > 0)
                 {
-                    if (li.TaxRate > 0)
-                    {
-                        var rate = Math.Round(li.TaxRate, 2);
-                        taxPaidByRate.TryAdd(rate, 0);
-                        taxPaidByRate[rate] +=
-                            ToDisplay(Math.Round(li.TaxAmount * usdRatio, 2), exp.Date);
-                    }
+                    anyLineItemTax = true;
+                    var rate = Math.Round(li.TaxRate, 2);
+                    taxPaidByRate.TryAdd(rate, 0);
+                    taxPaidByRate[rate] +=
+                        ToDisplay(Math.Round(li.TaxAmount * usdRatio, 2), exp.Date);
                 }
             }
-            else if (exp.TaxRate > 0)
+
+            // Fall back to the transaction-level tax when no line item carried a rate (see the
+            // matching revenue loop above for why manually-entered transactions need this).
+            if (!anyLineItemTax && exp.TaxRate > 0)
             {
-                // Transaction.TaxRate is stored as percentage (e.g., 8 for 8%),
-                // convert to decimal form (0.08) to match LineItem.TaxRate for consistent grouping
+                // Transaction.TaxRate is stored as a percentage (e.g., 8 for 8%); convert to decimal
+                // form (0.08) to match LineItem.TaxRate for consistent grouping.
                 var rate = Math.Round(exp.TaxRate / 100m, 4);
-                var taxAmountUSD = exp.EffectiveTaxAmountUSD;
                 taxPaidByRate.TryAdd(rate, 0);
-                taxPaidByRate[rate] += ToDisplay(taxAmountUSD, exp.Date);
+                taxPaidByRate[rate] += ToDisplay(exp.EffectiveTaxAmountUSD, exp.Date);
             }
         }
 

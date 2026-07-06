@@ -252,6 +252,12 @@ public partial class SupplierModalsViewModel : ViewModelBase
 
     public event EventHandler? SupplierSaved;
     public event EventHandler? SupplierDeleted;
+
+    /// <summary>
+    /// The Id of the supplier most recently created via the Add modal. Lets a caller that
+    /// opened "create supplier" from another modal auto-select the new supplier after save.
+    /// </summary>
+    public string? LastSavedSupplierId { get; private set; }
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
 
@@ -478,6 +484,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
                 SupplierSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedSupplierId = newSupplier.Id;
         SupplierSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
     }

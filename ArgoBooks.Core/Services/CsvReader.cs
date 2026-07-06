@@ -29,19 +29,32 @@ public static class CsvReader
         while (csv.Read())
             all.Add(csv.Record ?? []);
 
-        headers = all.Count > 0 ? all[0].ToList() : [];
-        return all.Skip(1)
+        // Skip leading section-comment lines (e.g. the "# Customers" line our own CSV export writes
+        // above the header) and any blank leading rows, so the real column-header row is used as the
+        // header instead of the comment. Only LEADING lines are skipped; a later data row whose first
+        // cell happens to start with '#' is preserved.
+        var start = 0;
+        while (start < all.Count && IsCommentOrBlank(all[start]))
+            start++;
+
+        headers = start < all.Count ? all[start].ToList() : [];
+        return all.Skip(start + 1)
                   .Where(r => r.Any(f => !string.IsNullOrWhiteSpace(f)))
                   .Select(r => r.ToList())
                   .ToList();
     }
+
+    private static bool IsCommentOrBlank(string[] row)
+        => row.Length == 0
+           || row.All(string.IsNullOrWhiteSpace)
+           || row[0].TrimStart().StartsWith('#');
 
     private static char DetectDelimiter(string path)
     {
         using var reader = OpenSharedReader(path);
         string? first;
         do { first = reader.ReadLine(); }
-        while (first != null && string.IsNullOrWhiteSpace(first));
+        while (first != null && (string.IsNullOrWhiteSpace(first) || first.TrimStart().StartsWith('#')));
         return SpreadsheetAnalysisService.DetectCsvDelimiter(first ?? "");
     }
 

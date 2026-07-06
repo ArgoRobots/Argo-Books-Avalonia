@@ -46,6 +46,11 @@ public class ReceiptScanResult
     public decimal? Discount { get; set; }
 
     /// <summary>
+    /// Extracted shipping / delivery / freight cost.
+    /// </summary>
+    public decimal? Shipping { get; set; }
+
+    /// <summary>
     /// Extracted line items from the receipt.
     /// </summary>
     public List<ScannedLineItem> LineItems { get; set; } = [];

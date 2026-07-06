@@ -230,7 +230,9 @@ public abstract class Transaction
     [JsonIgnore]
     public decimal EffectiveTaxAmountUSD => IsPendingConversion ? 0
         : TaxAmountUSD > 0 ? TaxAmountUSD
-        : TotalUSD > 0 && Total > 0 ? Math.Round(TaxAmount * (TotalUSD / Total), 2)
+        // Full-precision derivation (no 2dp round) so it stays consistent with the unrounded USD base
+        // and EffectiveSubtotalUSD; display rounds at the boundary. See docs/Calculations.md Rule 3.
+        : TotalUSD > 0 && Total > 0 ? TaxAmount * (TotalUSD / Total)
         : IsUSD ? TaxAmount : 0;
 
     /// <summary>

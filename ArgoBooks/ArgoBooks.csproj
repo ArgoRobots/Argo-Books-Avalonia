@@ -17,6 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="ArgoBooks.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- Sample company data embedded resource -->
         <EmbeddedResource Include="Resources\SampleCompanyData.xlsx" />
     </ItemGroup>

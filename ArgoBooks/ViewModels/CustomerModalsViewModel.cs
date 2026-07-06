@@ -326,6 +326,12 @@ public partial class CustomerModalsViewModel : ViewModelBase
     public event EventHandler? CustomerSaved;
 
     /// <summary>
+    /// The Id of the customer most recently created via the Add modal. Lets a caller that
+    /// opened "create customer" from another modal auto-select the new customer after save.
+    /// </summary>
+    public string? LastSavedCustomerId { get; private set; }
+
+    /// <summary>
     /// Fired when a customer is deleted.
     /// </summary>
     public event EventHandler? CustomerDeleted;
@@ -485,6 +491,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 CustomerSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedCustomerId = newCustomer.Id;
         CustomerSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
     }

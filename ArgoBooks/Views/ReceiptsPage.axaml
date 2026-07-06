@@ -233,8 +233,9 @@
                                                     CornerRadius="8,8,0,0"
                                                     ClipToBounds="True">
                                                 <Panel>
-                                                    <!-- Receipt Image (if available) -->
-                                                    <Image Source="{Binding ImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                    <!-- Receipt Image (if available). ConverterParameter decodes a
+                                                         downscaled thumbnail (~card width) instead of the full-res photo. -->
+                                                    <Image Source="{Binding ImagePath, Converter={x:Static local:BoolConverters.ToImageSource}, ConverterParameter=320}"
                                                            Stretch="UniformToFill"
                                                            IsVisible="{Binding HasImage}" />
 

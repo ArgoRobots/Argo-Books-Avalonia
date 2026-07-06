@@ -15,7 +15,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Lost/Damaged page displaying lost and damaged inventory records.
 /// </summary>
-public partial class LostDamagedPageViewModel : ViewModelBase
+public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
 {
     #region Responsive Header
 
@@ -115,10 +115,11 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterItems();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterItems();
+        });
 
     #endregion
 
@@ -209,6 +210,25 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
         // Subscribe to language changes to refresh translated content
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Unsubscribes from app-level and singleton events so this page VM can be garbage collected when
+    /// the company is switched. Called by ClearPageCaches via <see cref="ICleanupViewModel"/>.
+    /// </summary>
+    public void Cleanup()
+    {
+        CancelPendingSearch();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.LostDamagedModalsViewModel != null)
+        {
+            App.LostDamagedModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.LostDamagedModalsViewModel.FiltersCleared -= OnFiltersCleared;
+            App.LostDamagedModalsViewModel.ItemUndone -= OnItemUndone;
+        }
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)

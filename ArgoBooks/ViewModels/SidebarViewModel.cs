@@ -186,10 +186,6 @@ public partial class SidebarViewModel : ViewModelBase
         InventoryItems.Add(_transfersItem);
         InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders", Icons.PurchaseOrders));
 
-        // Team Section (mockup: Employees, Departments)
-        TeamItems.Add(CreateItem("Employees", "Employees", Icons.Employees));
-        TeamItems.Add(CreateItem("Departments", "Departments", Icons.Departments));
-
         // Tracking Section (mockup: Returns, Lost/Damaged, Receipts)
         TrackingItems.Add(CreateItem("Returns", "Returns", Icons.Returns));
         TrackingItems.Add(CreateItem("Lost / Damaged", "LostDamaged", Icons.LostDamaged));

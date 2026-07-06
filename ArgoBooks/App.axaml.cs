@@ -41,6 +41,12 @@ public partial class App : Application
     public static CompanyManager? CompanyManager { get; private set; }
 
     /// <summary>
+    /// Test-only hook to inject an in-memory <see cref="Core.Services.CompanyManager"/> so unit tests
+    /// can drive ViewModels that read <c>App.CompanyManager.CompanyData</c>. Not used in production.
+    /// </summary>
+    internal static void SetCompanyManagerForTesting(CompanyManager? manager) => CompanyManager = manager;
+
+    /// <summary>
     /// Gets the global settings service instance.
     /// </summary>
     public static GlobalSettingsService? SettingsService { get; private set; }
@@ -117,11 +123,6 @@ public partial class App : Application
     /// Gets the category modals view model for shared access.
     /// </summary>
     public static CategoryModalsViewModel? CategoryModalsViewModel => _appShellViewModel?.CategoryModalsViewModel;
-
-    /// <summary>
-    /// Gets the department modals view model for shared access.
-    /// </summary>
-    public static DepartmentModalsViewModel? DepartmentModalsViewModel => _appShellViewModel?.DepartmentModalsViewModel;
 
     /// <summary>
     /// Gets the supplier modals view model for shared access.
@@ -261,9 +262,16 @@ public partial class App : Application
     /// <param name="title">The notification title.</param>
     /// <param name="message">The notification message.</param>
     /// <param name="type">The notification type.</param>
-    public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
+    public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info,
+        Action? onClick = null)
     {
-        _appShellViewModel?.AddNotification(title, message, type);
+        _appShellViewModel?.AddNotification(title, message, type, onClick);
+    }
+
+    /// <summary>Navigates to the Invoices page and selects its Recurring tab (tab index 3).</summary>
+    public static void OpenRecurringInvoicesTab()
+    {
+        NavigationService?.NavigateTo("Invoices", new Dictionary<string, object?> { ["selectedTabIndex"] = 3 });
     }
 
     /// <summary>
@@ -394,10 +402,19 @@ public partial class App : Application
             // lost on next app launch and the fee disappears again.
             if (newPayments.Count > 0 || syncResult.BackfilledRows > 0)
             {
-                try { await CompanyManager!.SavePaymentSyncAsync(); }
-                catch (Exception ex)
+                // Only auto-persist when the user has no unsaved edits. The sync flow never flags the
+                // company dirty (adding payments and setting LastSyncTime don't call MarkAsModified),
+                // so this reflects ONLY the user's own edits - including any made while the sync was in
+                // flight. If they have edits, the synced payments stay in memory and persist on the
+                // next explicit save (or are re-fetched next open via the force sync), so a background
+                // sync can't quietly commit the user's in-progress edits.
+                if (!CompanyManager!.HasUnsavedChanges)
                 {
-                    ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
+                    try { await CompanyManager!.SavePaymentSyncAsync(); }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
+                    }
                 }
 
                 // Refresh any already-instantiated page ViewModels so the UI reflects the new data
@@ -633,6 +650,8 @@ public partial class App : Application
     /// </summary>
     public static Controls.ColumnWidths.InvoicesTableColumnWidths InvoicesColumnWidths { get; } = new();
 
+    public static Controls.ColumnWidths.RecurringTableColumnWidths RecurringColumnWidths { get; } = new();
+
     /// <summary>
     /// Gets the shared column widths for the Customers table.
     /// </summary>
@@ -657,11 +676,6 @@ public partial class App : Application
     /// Gets the shared column widths for the Stock Levels table.
     /// </summary>
     public static Controls.ColumnWidths.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
-
-    /// <summary>
-    /// Gets the shared column widths for the Departments table.
-    /// </summary>
-    public static Controls.ColumnWidths.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Payments table.
@@ -735,7 +749,6 @@ public partial class App : Application
     private static CategoriesPageViewModel? _categoriesPageViewModel;
     private static CustomersPageViewModel? _customersPageViewModel;
     private static SuppliersPageViewModel? _suppliersPageViewModel;
-    private static DepartmentsPageViewModel? _departmentsPageViewModel;
     private static RentalInventoryPageViewModel? _rentalInventoryPageViewModel;
     private static RentalRecordsPageViewModel? _rentalRecordsPageViewModel;
     private static ReturnsPageViewModel? _returnsPageViewModel;
@@ -750,16 +763,19 @@ public partial class App : Application
         // Tear down each cached page VM's event subscriptions (the static LanguageChanged and
         // CurrencyChanged events, modal events, etc.) before dropping it. Without this, a company
         // switch leaves the orphaned VMs rooted by those static events and still reacting to them.
+        // Cast to ICleanupViewModel rather than SortablePageViewModelBase: the Dashboard, Analytics,
+        // and Reports VMs have Cleanup() but extend a different base, so a SortablePageViewModelBase
+        // cast silently skipped them and leaked their subscriptions on every company switch.
         foreach (var vm in new object?[]
         {
             _dashboardPageViewModel, _analyticsPageViewModel, _insightsPageViewModel, _reportsPageViewModel,
             _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel, _paymentsPageViewModel,
             _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
             _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
-            _customersPageViewModel, _suppliersPageViewModel, _departmentsPageViewModel, _rentalInventoryPageViewModel,
+            _customersPageViewModel, _suppliersPageViewModel, _rentalInventoryPageViewModel,
             _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
         })
-            (vm as SortablePageViewModelBase)?.Cleanup();
+            (vm as ICleanupViewModel)?.Cleanup();
 
         _dashboardPageViewModel = null;
         _analyticsPageViewModel = null;
@@ -778,12 +794,16 @@ public partial class App : Application
         _categoriesPageViewModel = null;
         _customersPageViewModel = null;
         _suppliersPageViewModel = null;
-        _departmentsPageViewModel = null;
         _rentalInventoryPageViewModel = null;
         _rentalRecordsPageViewModel = null;
         _returnsPageViewModel = null;
         _lostDamagedPageViewModel = null;
         _receiptsPageViewModel = null;
+
+        // The "N recurring invoices were generated" banner count is process-wide static state. Clear
+        // it on a company switch/close so a count produced for the previous company can't surface as a
+        // phantom banner on the next company (whose own generation run may have produced nothing).
+        RecurringInvoiceService.ClearPendingGenerated();
     }
 
     // File watchers for recent companies - watches directories containing recent company files
@@ -1826,6 +1846,11 @@ public partial class App : Application
                 await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open sample company.".Translate());
             }
         }
+        catch (CompanyAlreadyOpenException)
+        {
+            _mainWindowViewModel.HideLoading();
+            await ShowCompanyAlreadyOpenAsync();
+        }
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
@@ -2711,47 +2736,45 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Premium-gated PDF bank statement import: checks the license, checks usage, calls the AI
-    /// extractor, and increments usage on a successful extraction. Returns the extracted rows
-    /// (which flow into the same review path as CSV/Excel), or an empty list if gated out or
-    /// nothing could be extracted.
+    /// Shared usage gate for importing a PDF bank statement (one "bank" AI import). Available on the
+    /// free tier within the monthly limit, like the other AI imports. Shows the usage-limit prompt and
+    /// returns null when the user is out of imports. On success returns a live bank-import usage
+    /// service the CALLER owns: dispose it (with <c>using</c>) and call IncrementUsageAsync once
+    /// extraction succeeds. Shared by the Bank Matching page import and the review-modal import so the
+    /// gate lives in one place.
+    /// </summary>
+    internal static async Task<AiImportUsageService?> TryBeginBankPdfImportAsync()
+    {
+        var usage = new AiImportUsageService(LicenseService, ErrorLogger, importType: "bank");
+        var check = await usage.CheckUsageAsync();
+        if (check.CanImport) return usage;
+
+        usage.Dispose();
+        if (check.ErrorMessage != null)
+            await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
+        else
+            await UpgradePromptHelper.ShowAiImportLimitPromptAsync(check.ImportCount, check.MonthlyLimit, check.ResetsAt);
+        return null;
+    }
+
+    /// <summary>
+    /// PDF bank statement import for the Bank Matching page: checks the usage limit, calls the AI
+    /// extractor, and consumes the single bank-import credit on success. Returns the extracted rows,
+    /// or an empty list if out of imports or nothing could be extracted.
     /// </summary>
     private static async Task<List<Core.Models.BankMatching.BankStatementLine>> ImportPdfStatementAsync(string filePath)
     {
-        // Premium gate: PDF extraction is a premium-only feature.
-        if (LicenseService?.LoadLicense() != true)
-        {
-            // No bank-PDF-specific upgrade prompt exists yet; reusing the general upgrade modal.
-            // TODO: add a ShowBankPdfPremiumPromptAsync method to UpgradePromptHelper once
-            // copy is finalised.
-            App.OpenUpgradeModal();
-            return [];
-        }
+        // This path shows the rows on the Bank Matching page with no follow-up categorization, so the
+        // extraction below is the single charge.
+        using var usage = await TryBeginBankPdfImportAsync();
+        if (usage == null) return [];
+        if (PdfStatementExtractor == null) return [];
 
         // Reading the PDF is a slow network + AI round-trip; show the loading overlay for the
         // whole wait so there's instant feedback. Hide it before any dialog.
         ShowBusyOverlay("Reading PDF statement...".Translate());
         try
         {
-            // Usage gate.
-            // TODO: ReceiptUsageService is currently hard-wired to the receipt usage feature key
-            // server-side. Determine with the backend owner whether bank PDF extraction shares the
-            // receipt counter or gets its own feature key, then either keep ReceiptUsageService here
-            // or replace it with a parallel BankImportUsageService with the same shape.
-            using var usage = new ReceiptUsageService(LicenseService, ErrorLogger);
-            var check = await usage.CheckUsageAsync();
-            if (!check.CanScan)
-            {
-                HideBusyOverlay();
-                if (check.ErrorMessage != null)
-                    await UpgradePromptHelper.ShowUsageCheckFailedAsync(check.ErrorMessage);
-                else
-                    await UpgradePromptHelper.ShowReceiptScanLimitPromptAsync(check.ScanCount, check.MonthlyLimit, check.ResetsAt);
-                return [];
-            }
-
-            if (PdfStatementExtractor == null) return [];
-
             var bytes = await SharedFileReader.ReadAllBytesAsync(filePath);
             var extracted = await PdfStatementExtractor.ExtractAsync(bytes, Path.GetFileName(filePath));
             HideBusyOverlay();
@@ -2765,8 +2788,7 @@ public partial class App : Application
                 return [];
             }
 
-            // Extraction succeeded: consume one credit and return the rows, which flow into the same
-            // path CSV and Excel use (no separate PDF-only confirm step).
+            // Extraction succeeded: consume the single bank-import credit and return the rows.
             await usage.IncrementUsageAsync();
             return extracted;
         }
@@ -2784,8 +2806,6 @@ public partial class App : Application
             data.Customers,
             data.Products,
             data.Suppliers,
-            data.Employees,
-            data.Departments,
             data.Categories,
             data.Locations,
             data.Revenues,
@@ -2802,7 +2822,6 @@ public partial class App : Application
             data.Returns,
             data.LostDamaged,
             data.Receipts,
-            data.ReportTemplates,
             data.EventLog,
             data.BankImportSessions
         };
@@ -2843,8 +2862,6 @@ public partial class App : Application
                 data.IdCounters.Customer = restoredCounters.Customer;
                 data.IdCounters.Product = restoredCounters.Product;
                 data.IdCounters.Supplier = restoredCounters.Supplier;
-                data.IdCounters.Employee = restoredCounters.Employee;
-                data.IdCounters.Department = restoredCounters.Department;
                 data.IdCounters.Category = restoredCounters.Category;
                 data.IdCounters.Location = restoredCounters.Location;
                 data.IdCounters.Revenue = restoredCounters.Revenue;
@@ -2857,6 +2874,14 @@ public partial class App : Application
                 data.IdCounters.PurchaseOrder = restoredCounters.PurchaseOrder;
                 data.IdCounters.RentalItem = restoredCounters.RentalItem;
                 data.IdCounters.Rental = restoredCounters.Rental;
+                // Restore the remaining counters too, so a snapshot restore is faithful and later
+                // IDs don't drift/gap for these entity types.
+                data.IdCounters.Accountant = restoredCounters.Accountant;
+                data.IdCounters.StockTransfer = restoredCounters.StockTransfer;
+                data.IdCounters.Return = restoredCounters.Return;
+                data.IdCounters.LostDamaged = restoredCounters.LostDamaged;
+                data.IdCounters.Receipt = restoredCounters.Receipt;
+                data.IdCounters.InvoiceTemplate = restoredCounters.InvoiceTemplate;
             }
         }
 
@@ -2864,8 +2889,6 @@ public partial class App : Application
         RestoreList(data.Customers, "Customers");
         RestoreList(data.Products, "Products");
         RestoreList(data.Suppliers, "Suppliers");
-        RestoreList(data.Employees, "Employees");
-        RestoreList(data.Departments, "Departments");
         RestoreList(data.Categories, "Categories");
         RestoreList(data.Locations, "Locations");
         RestoreList(data.Revenues, "Revenues");
@@ -2882,7 +2905,6 @@ public partial class App : Application
         RestoreList(data.Returns, "Returns");
         RestoreList(data.LostDamaged, "LostDamaged");
         RestoreList(data.Receipts, "Receipts");
-        RestoreList(data.ReportTemplates, "ReportTemplates");
         RestoreList(data.EventLog, "EventLog");
         RestoreList(data.BankImportSessions, "BankImportSessions");
     }
@@ -3067,6 +3089,15 @@ public partial class App : Application
                 });
             }
         }
+        catch (CompanyAlreadyOpenException)
+        {
+            // Expected, recoverable: the company is open in another running instance. Show a
+            // friendly notice (neutral dialog, not the red error box) and leave it in recents.
+            _isOpeningCompany = false;
+            _mainWindowViewModel.HideLoading();
+            passwordModal.Close();
+            await ShowCompanyAlreadyOpenAsync();
+        }
         catch (Exception ex)
         {
             _isOpeningCompany = false;
@@ -3075,6 +3106,24 @@ public partial class App : Application
             ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open company file");
             await ShowErrorMessageBoxAsync("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Shows the friendly "this company is already open in another window" notice. Uses the neutral
+    /// confirmation dialog (not the red error box) since it's an expected, recoverable situation.
+    /// </summary>
+    private static async Task ShowCompanyAlreadyOpenAsync()
+    {
+        if (ConfirmationDialog == null) return;
+
+        await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Already Open".Translate(),
+            Message = "This company is already open in another window. Close it there first, then try again.".Translate(),
+            PrimaryButtonText = "OK".Translate(),
+            SecondaryButtonText = null,
+            CancelButtonText = null
+        });
     }
 
     /// <summary>
@@ -3124,6 +3173,13 @@ public partial class App : Application
             // Close the modal and retry recursively
             passwordModal.Close();
             return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+        }
+        catch (CompanyAlreadyOpenException)
+        {
+            _mainWindowViewModel.HideLoading();
+            passwordModal.Close();
+            await ShowCompanyAlreadyOpenAsync();
+            return false;
         }
         catch (Exception ex)
         {
@@ -3673,6 +3729,11 @@ public partial class App : Application
                 _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
                 _invoicesPageViewModel.ApplyHighlight();
             }
+            else if (param is Dictionary<string, object?> dict
+                && dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
+            {
+                _invoicesPageViewModel.SelectedTabIndex = index;
+            }
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
         navigationService.RegisterPage("Payments", param =>
@@ -3806,8 +3867,6 @@ public partial class App : Application
             }
             return new SuppliersPage { DataContext = _suppliersPageViewModel };
         });
-        navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
-        navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = _departmentsPageViewModel ??= new DepartmentsPageViewModel() });
 
         // Rentals Section
         navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = _rentalInventoryPageViewModel ??= new RentalInventoryPageViewModel() });

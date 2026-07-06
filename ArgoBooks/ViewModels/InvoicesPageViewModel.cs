@@ -44,6 +44,49 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Recurring Generation Banner
+
+    [NotifyPropertyChangedFor(nameof(GeneratedBannerText))]
+    [ObservableProperty]
+    private int _generatedBannerCount;
+
+    [ObservableProperty]
+    private bool _hasGeneratedBanner;
+
+    public string GeneratedBannerText => GeneratedBannerCount == 1
+        ? "1 invoice was generated from your recurring schedules."
+        : $"{GeneratedBannerCount} invoices were generated from your recurring schedules.";
+
+    [RelayCommand]
+    private void ReviewGenerated()
+    {
+        HasGeneratedBanner = false;
+        RecurringInvoiceService.ClearPendingGenerated();
+        SelectedTabIndex = 3; // jump to the Recurring tab, where generated drafts wait to be sent
+    }
+
+    [RelayCommand]
+    private void DismissGeneratedBanner()
+    {
+        HasGeneratedBanner = false;
+        RecurringInvoiceService.ClearPendingGenerated();
+    }
+
+    private void OnRecurringInvoicesGenerated(int count)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            GeneratedBannerCount = count;
+            HasGeneratedBanner = true;
+            LoadInvoices();
+            // Generation advances each schedule's next date (and may complete some), so refresh the
+            // schedules table too, not just the invoice/waiting lists.
+            LoadSchedules();
+        });
+    }
+
+    #endregion
+
     #region Tab Navigation
 
     [ObservableProperty]
@@ -60,7 +103,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 {
                     0 => "All",
                     1 => "Drafts",
-                    2 => "Recurring",
+                    2 => "Sent",
+                    3 => "Recurring",
                     _ => "All"
                 };
                 SelectTabInternal(tab);
@@ -73,6 +117,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private bool _isDraftsTab;
+
+    [ObservableProperty]
+    private bool _isSentTab;
 
     [ObservableProperty]
     private bool _isRecurringTab;
@@ -94,12 +141,14 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         SelectedTab = tab;
         IsAllInvoicesTab = tab == "All";
         IsDraftsTab = tab == "Drafts";
+        IsSentTab = tab == "Sent";
         IsRecurringTab = tab == "Recurring";
 
         // Update empty state messages based on tab
         EmptyStateTitle = tab switch
         {
             "Drafts" => "No Draft Invoices",
+            "Sent" => "No Sent Invoices",
             "Recurring" => "No Recurring Invoices",
             _ => "No invoices found."
         };
@@ -107,11 +156,14 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         EmptyStateMessage = tab switch
         {
             "Drafts" => "Draft invoices you're working on will appear here.",
+            "Sent" => "Invoices you've sent will appear here.",
             "Recurring" => "Set up recurring invoices to automate your billing.",
             _ => "Create your first invoice to start tracking your billing."
         };
 
         CurrentPage = 1;
+        if (tab == "Recurring")
+            LoadSchedules();
         FilterInvoices();
     }
 
@@ -218,10 +270,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterInvoices();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterInvoices();
+        });
 
     [ObservableProperty]
     private string _filterStatus = "All";
@@ -264,6 +317,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// Column widths manager for the table (shared across page navigations).
     /// </summary>
     public InvoicesTableColumnWidths ColumnWidths => App.InvoicesColumnWidths;
+
+    public RecurringTableColumnWidths RecurringColumnWidths => App.RecurringColumnWidths;
 
     [ObservableProperty]
     private bool _showIdColumn = ColumnVisibilityHelper.Load("Invoices", "Id", true);
@@ -328,6 +383,30 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     public BatchObservableCollection<InvoiceDisplayItem> Invoices { get; } = [];
 
+    /// <summary>The current page of recurring invoice schedules shown on the Recurring tab.</summary>
+    public BatchObservableCollection<RecurringScheduleDisplayItem> Schedules { get; } = [];
+
+    /// <summary>All schedules (unpaged); Schedules holds the current page slice of this.</summary>
+    private readonly List<RecurringScheduleDisplayItem> _allSchedules = [];
+
+    public bool HasSchedules => Schedules.Count > 0;
+
+    // Independent pagination for the schedules table (the base-class pagination drives the invoice list).
+    [ObservableProperty] private int _scheduleCurrentPage = 1;
+    [ObservableProperty] private int _schedulePageSize = 10;
+    [ObservableProperty] private int _scheduleTotalPages = 1;
+    [ObservableProperty] private string _schedulePaginationText = string.Empty;
+
+    /// <summary>Recurring invoices generated as drafts that still need to be sent, shown in the
+    /// "Waiting to send" section of the Recurring tab (and hidden from All/Drafts until sent).</summary>
+    public BatchObservableCollection<InvoiceDisplayItem> PendingRecurringInvoices { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPendingRecurring))]
+    private int _pendingRecurringCount;
+
+    public bool HasPendingRecurring => PendingRecurringCount > 0;
+
     public ObservableCollection<string> StatusOptions { get; } = new(InvoiceStatusExtensions.GetFilterOptions());
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
@@ -384,6 +463,15 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to plan status changes so we update when user upgrades
         App.PlanStatusChanged += OnPlanStatusChanged;
+
+        // Recurring invoices generated on company open: show a banner. Subscribe for the live case
+        // and read any pending count for the common case where generation ran before this page existed.
+        RecurringInvoiceService.InvoicesGenerated += OnRecurringInvoicesGenerated;
+        if (RecurringInvoiceService.PendingGeneratedCount > 0)
+        {
+            GeneratedBannerCount = RecurringInvoiceService.PendingGeneratedCount;
+            HasGeneratedBanner = true;
+        }
 
         // Auto-sync online payments so invoice statuses reflect portal payments
         _ = App.AutoSyncPortalPaymentsAsync();
@@ -451,11 +539,19 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
+        if (App.InvoiceModalsViewModel != null)
+        {
+            App.InvoiceModalsViewModel.InvoiceSaved -= OnInvoiceSaved;
+            App.InvoiceModalsViewModel.InvoiceDeleted -= OnInvoiceDeleted;
+            App.InvoiceModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.InvoiceModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
         CurrencyService.CurrencyChanged -= OnCurrencyChanged;
         PaymentProviderService.ProvidersChanged -= OnProvidersChanged;
         if (App.CompanyManager != null)
             App.CompanyManager.CompanyDataChanged -= OnCompanyDataChanged;
         App.PlanStatusChanged -= OnPlanStatusChanged;
+        RecurringInvoiceService.InvoicesGenerated -= OnRecurringInvoicesGenerated;
     }
 
     private bool _needsRefresh;
@@ -482,6 +578,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void OnInvoiceSaved(object? sender, EventArgs e)
     {
         LoadInvoices();
+        // Saving/sending an invoice may have created a recurring schedule, so refresh the Recurring
+        // tab too. Without this the new schedule only appeared after navigating away and back.
+        LoadSchedules();
     }
 
     private void OnInvoiceDeleted(object? sender, EventArgs e)
@@ -539,7 +638,43 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         _allInvoices.AddRange(companyData.Invoices);
         UpdateStatistics();
         FilterInvoices();
+        LoadPendingRecurring();
         UpdateSentInvoicesCount();
+    }
+
+    /// <summary>
+    /// Builds the "Waiting to send" list for the Recurring tab: recurring-generated drafts that
+    /// haven't been sent yet. Newest first. Drives the tab count badge too.
+    /// </summary>
+    private void LoadPendingRecurring()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        var items = new List<InvoiceDisplayItem>();
+        if (companyData?.Invoices != null)
+        {
+            foreach (var invoice in companyData.Invoices.Where(IsPendingRecurring).OrderByDescending(i => i.IssueDate))
+            {
+                var customer = companyData.GetCustomer(invoice.CustomerId);
+                items.Add(new InvoiceDisplayItem
+                {
+                    Id = invoice.Id,
+                    InvoiceNumber = invoice.InvoiceNumber,
+                    CustomerId = invoice.CustomerId,
+                    CustomerName = customer?.Name ?? "Unknown Customer",
+                    CustomerInitials = GetInitials(customer?.Name ?? "?"),
+                    IssueDate = invoice.IssueDate,
+                    DueDate = invoice.DueDate,
+                    Total = invoice.Total,
+                    TotalUSD = invoice.EffectiveTotalUSD,
+                    OriginalCurrency = invoice.OriginalCurrency,
+                    Status = invoice.Status,
+                    StatusDisplay = GetStatusDisplay(invoice),
+                    IsRecurring = true
+                });
+            }
+        }
+        PendingRecurringInvoices.ReplaceAll(items);
+        PendingRecurringCount = items.Count;
     }
 
     private void LoadCustomerOptions()
@@ -560,13 +695,17 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void UpdateStatistics()
     {
         var now = DateTime.Now;
-        var startOfMonth = new DateTime(now.Year, now.Month, 1);
         var endOfWeek = now.AddDays(7);
+        // Compare against a local month start: the save/send paths stamp UpdatedAt with DateTime.Now
+        // (local), which is the dominant case, so a local cutoff is consistent for it. (UpdatedAt is
+        // mixed-Kind - the portal payment path writes UtcNow - so no cutoff is perfect at the boundary.)
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Total outstanding (unpaid invoices) - calculate in USD, convert for display
-        // Convert each invoice at its OWN issue date before summing (Calculations.md §3a Phase 2).
+        // Total outstanding (unpaid invoices) - calculate in USD, convert for display. Drafts are excluded:
+        // a never-sent draft isn't money a customer owes. Convert each at its OWN issue date (Calculations.md §3a).
         TotalOutstanding = CurrencyService.FormatSumDisplayFromUSD(
-            _allInvoices.Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled),
+            _allInvoices.Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled
+                && i.Status != InvoiceStatus.Draft),
             i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
         // Paid this month
@@ -574,15 +713,16 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
             i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
 
-        // Overdue amount
+        // Overdue amount - drafts excluded (a never-sent draft past its due date isn't overdue money owed).
         OverdueAmount = CurrencyService.FormatSumDisplayFromUSD(
-            _allInvoices.Where(i => i.IsOverdue || i.Status == InvoiceStatus.Overdue),
+            _allInvoices.Where(i => (i.IsOverdue || i.Status == InvoiceStatus.Overdue) && i.Status != InvoiceStatus.Draft),
             i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
-        // Due this week
+        // Due this week - drafts excluded (not yet billed).
         DueThisWeekCount = _allInvoices
             .Count(i => i.DueDate >= now.Date && i.DueDate <= endOfWeek &&
-                       i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled);
+                       i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled &&
+                       i.Status != InvoiceStatus.Draft);
     }
 
     [RelayCommand]
@@ -592,16 +732,27 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         LoadCustomerOptions();
     }
 
+    /// <summary>
+    /// A recurring-generated invoice still sitting as an un-sent draft. These are surfaced in the
+    /// Recurring tab's "Waiting to send" list instead of the All/Drafts tabs, so the user actions
+    /// them there. Once sent they become normal Sent invoices and appear in the usual tabs.
+    /// </summary>
+    private static bool IsPendingRecurring(Invoice invoice) =>
+        invoice.Status == InvoiceStatus.Draft && !string.IsNullOrEmpty(invoice.RecurringInvoiceId);
+
     private void FilterInvoices()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        IEnumerable<Invoice> filtered = _allInvoices;
+        // Waiting-to-send recurring drafts live only in the Recurring tab, not All/Drafts.
+        IEnumerable<Invoice> filtered = _allInvoices.Where(i => !IsPendingRecurring(i));
 
         // Apply tab filter
         filtered = SelectedTab switch
         {
             "Drafts" => filtered.Where(i => i.Status == InvoiceStatus.Draft),
-            "Recurring" => filtered.Where(i => !string.IsNullOrEmpty(i.RecurringInvoiceId)),
+            // "Sent" = anything that has actually been sent, i.e. left the Draft stage (and isn't
+            // Cancelled). Matching only exactly-Sent hid invoices once they became Viewed/Partial/Paid/etc.
+            "Sent" => filtered.Where(i => i.Status != InvoiceStatus.Draft && i.Status != InvoiceStatus.Cancelled),
             _ => filtered
         };
 
@@ -909,11 +1060,201 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.InvoiceModalsViewModel?.OpenCreateModal();
     }
 
+    [RelayCommand(CanExecute = nameof(CanOpenCreateModal))]
+    private void NewRecurringInvoice()
+    {
+        App.InvoiceModalsViewModel?.OpenCreateRecurringModal();
+    }
+
+    /// <summary>Rebuilds the full Recurring-tab schedule list from CompanyData, then shows the current page.</summary>
+    private void LoadSchedules()
+    {
+        _allSchedules.Clear();
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData != null)
+        {
+            _allSchedules.AddRange(companyData.RecurringInvoices.Select(s =>
+            {
+                var customer = companyData.GetCustomer(s.CustomerId);
+                var currency = s.Template?.OriginalCurrency ?? "USD";
+                // The most recent invoice this schedule produced (occurrence #1 or a later generated one),
+                // so the row's "View invoice" action can open it.
+                var latestInvoice = companyData.Invoices
+                    .Where(i => i.RecurringInvoiceId == s.Id)
+                    .OrderByDescending(i => i.CreatedAt)
+                    .FirstOrDefault();
+                return new RecurringScheduleDisplayItem
+                {
+                    Id = s.Id,
+                    CustomerName = customer?.Name ?? "Unknown Customer",
+                    AmountFormatted = CurrencyService.FormatWithOriginal(
+                        s.Amount, currency, s.Template?.TotalUSD ?? s.Amount, s.NextInvoiceDate),
+                    FrequencyDisplay = s.Frequency.ToString(),
+                    NextInvoiceFormatted = s.NextInvoiceDate.ToString("MMM d, yyyy"),
+                    StatusDisplay = s.Status.ToString(),
+                    IsPaused = s.Status == RecurringInvoiceStatus.Paused,
+                    InvoiceId = latestInvoice?.Id ?? string.Empty
+                };
+            }));
+        }
+        RefreshSchedulesPage();
+    }
+
+    /// <summary>Slices the full schedule list into the current page and updates the pagination state.</summary>
+    private void RefreshSchedulesPage()
+    {
+        var totalCount = _allSchedules.Count;
+        ScheduleTotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / SchedulePageSize));
+        if (ScheduleCurrentPage > ScheduleTotalPages) ScheduleCurrentPage = ScheduleTotalPages;
+        if (ScheduleCurrentPage < 1) ScheduleCurrentPage = 1;
+
+        Schedules.ReplaceAll(_allSchedules
+            .Skip((ScheduleCurrentPage - 1) * SchedulePageSize)
+            .Take(SchedulePageSize));
+        SchedulePaginationText = PaginationTextHelper.FormatPaginationText(
+            totalCount, ScheduleCurrentPage, SchedulePageSize, ScheduleTotalPages, "schedule");
+        OnPropertyChanged(nameof(HasSchedules));
+    }
+
+    partial void OnScheduleCurrentPageChanged(int value) => RefreshSchedulesPage();
+
+    partial void OnSchedulePageSizeChanged(int value)
+    {
+        ScheduleCurrentPage = 1;
+        RefreshSchedulesPage();
+    }
+
+    [RelayCommand]
+    private void ScheduleGoToPreviousPage()
+    {
+        if (ScheduleCurrentPage > 1) ScheduleCurrentPage--;
+    }
+
+    [RelayCommand]
+    private void ScheduleGoToNextPage()
+    {
+        if (ScheduleCurrentPage < ScheduleTotalPages) ScheduleCurrentPage++;
+    }
+
+    [RelayCommand]
+    private void ScheduleGoToPage(int page)
+    {
+        if (page >= 1 && page <= ScheduleTotalPages && page != ScheduleCurrentPage)
+            ScheduleCurrentPage = page;
+    }
+
+    [RelayCommand]
+    private async Task PauseResumeSchedule(RecurringScheduleDisplayItem? item)
+    {
+        if (item == null) return;
+        var companyData = App.CompanyManager?.CompanyData;
+        var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
+        if (companyData == null || schedule == null) return;
+
+        var pausing = schedule.Status != RecurringInvoiceStatus.Paused;
+        // Confirm first: the buttons sit right next to each other and are easy to hit by accident.
+        var confirmed = await ConfirmScheduleActionAsync(
+            pausing ? "Pause recurring invoice?" : "Resume recurring invoice?",
+            pausing
+                ? "It will stop generating new invoices until you resume it."
+                : "It will start generating invoices again on its schedule.",
+            pausing ? "Pause" : "Resume");
+        if (!confirmed) return;
+
+        var oldStatus = schedule.Status;
+        var newStatus = pausing ? RecurringInvoiceStatus.Paused : RecurringInvoiceStatus.Active;
+        schedule.Status = newStatus;
+        companyData.MarkAsModified();
+        LoadSchedules();
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            pausing ? "Pause recurring invoice" : "Resume recurring invoice",
+            () => { schedule.Status = oldStatus; companyData.MarkAsModified(); LoadSchedules(); },
+            () => { schedule.Status = newStatus; companyData.MarkAsModified(); LoadSchedules(); }));
+    }
+
+    [RelayCommand]
+    private async Task DeleteSchedule(RecurringScheduleDisplayItem? item)
+    {
+        if (item == null) return;
+        var companyData = App.CompanyManager?.CompanyData;
+        var schedule = companyData?.RecurringInvoices.FirstOrDefault(s => s.Id == item.Id);
+        if (companyData == null || schedule == null) return;
+
+        // Unsent drafts this schedule already generated. On delete we unlink them so they become
+        // ordinary drafts (visible in the Drafts tab) rather than being stranded in "Waiting to send"
+        // with no schedule behind them.
+        var orphanedDrafts = companyData.Invoices
+            .Where(i => i.Status == InvoiceStatus.Draft && i.RecurringInvoiceId == schedule.Id)
+            .ToList();
+
+        var draftWord = orphanedDrafts.Count == 1 ? "draft" : "drafts";
+        var confirmed = await ConfirmScheduleActionAsync(
+            "Delete recurring invoice?",
+            orphanedDrafts.Count > 0
+                ? $"This stops it from generating new invoices. Its {orphanedDrafts.Count} unsent {draftWord} will move to the Drafts tab."
+                : "This stops it from generating new invoices. Invoices it already created are kept.",
+            "Delete");
+        if (!confirmed) return;
+
+        var deleted = schedule;
+        var index = companyData.RecurringInvoices.IndexOf(schedule);
+
+        void ApplyDelete()
+        {
+            companyData.RecurringInvoices.Remove(deleted);
+            foreach (var d in orphanedDrafts) d.RecurringInvoiceId = string.Empty;
+            companyData.MarkAsModified();
+            LoadInvoices();
+            LoadSchedules();
+        }
+        void UndoDelete()
+        {
+            if (!companyData.RecurringInvoices.Contains(deleted))
+            {
+                if (index >= 0 && index <= companyData.RecurringInvoices.Count)
+                    companyData.RecurringInvoices.Insert(index, deleted);
+                else
+                    companyData.RecurringInvoices.Add(deleted);
+            }
+            foreach (var d in orphanedDrafts) d.RecurringInvoiceId = deleted.Id;
+            companyData.MarkAsModified();
+            LoadInvoices();
+            LoadSchedules();
+        }
+
+        ApplyDelete();
+        App.UndoRedoManager.RecordAction(new DelegateAction("Delete recurring invoice", UndoDelete, ApplyDelete));
+    }
+
+    /// <summary>Shows a Primary/Cancel confirmation dialog; returns true only if the user confirmed.</summary>
+    private static async Task<bool> ConfirmScheduleActionAsync(string title, string message, string primaryButton)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return true;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = title,
+            Message = message,
+            PrimaryButtonText = primaryButton,
+            CancelButtonText = "Cancel"
+        });
+        return result == ConfirmationResult.Primary;
+    }
+
     [RelayCommand]
     private void ViewInvoice(InvoiceDisplayItem? item)
     {
         if (item == null) return;
         App.InvoiceModalsViewModel?.OpenViewInvoice(item.Id);
+    }
+
+    /// <summary>Opens the invoice most recently produced by a recurring schedule (the row's View action).</summary>
+    [RelayCommand]
+    private void ViewScheduleInvoice(RecurringScheduleDisplayItem? item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.InvoiceId)) return;
+        App.InvoiceModalsViewModel?.OpenViewInvoice(item.InvoiceId);
     }
 
     [RelayCommand]
@@ -1104,6 +1445,33 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     [ObservableProperty]
     private bool _isHighlighted;
+}
+
+/// <summary>
+/// Display model for a recurring invoice schedule row on the Recurring tab.
+/// </summary>
+public partial class RecurringScheduleDisplayItem : ObservableObject
+{
+    [ObservableProperty] private string _id = string.Empty;
+    [ObservableProperty] private string _customerName = string.Empty;
+    [ObservableProperty] private string _amountFormatted = string.Empty;
+    [ObservableProperty] private string _frequencyDisplay = string.Empty;
+    [ObservableProperty] private string _nextInvoiceFormatted = string.Empty;
+
+    [NotifyPropertyChangedFor(nameof(PauseResumeLabel))]
+    [ObservableProperty] private string _statusDisplay = string.Empty;
+
+    [NotifyPropertyChangedFor(nameof(PauseResumeLabel))]
+    [ObservableProperty] private bool _isPaused;
+
+    // Id of the invoice this schedule most recently produced, used by the "View invoice" action.
+    // Empty when no invoice is linked yet (the button is hidden in that case).
+    [NotifyPropertyChangedFor(nameof(HasInvoice))]
+    [ObservableProperty] private string _invoiceId = string.Empty;
+
+    public bool HasInvoice => !string.IsNullOrEmpty(InvoiceId);
+
+    public string PauseResumeLabel => IsPaused ? "Resume" : "Pause";
 }
 
 /// <summary>

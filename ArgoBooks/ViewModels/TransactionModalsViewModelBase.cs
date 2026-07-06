@@ -209,10 +209,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [ObservableProperty]
     private string _totalMismatchWarningMessage = string.Empty;
 
-    // The stored transaction total to validate the recomputed total against. Captured when the
-    // modal loads so the mismatch warning can be re-checked as the user edits quantity/price.
-    private decimal _validationStoredTotal;
-
     protected string? ReceiptFilePath;
 
     // Save error state for offline USD conversion failures
@@ -376,9 +372,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         OnPropertyChanged(nameof(FeeAmountFormatted));
         OnPropertyChanged(nameof(TotalFormatted));
 
-        // Re-check the stored-total mismatch so the warning clears (or appears) live as the
-        // user edits quantity, unit price, tax, etc. instead of staying stuck from load time.
-        ValidateTotalMismatch(_validationStoredTotal);
+        // The stored-total mismatch is a load-time data-integrity check (it flags AI-scanned or
+        // imported transactions whose stored total didn't match their line items - see the call in
+        // the edit-load path). Once the user edits, they are defining the values themselves, so
+        // re-checking the new total against the now-stale stored total just produces a false warning
+        // (e.g. changing an expense from $10 to $100 warned that $100 != the stored $10). Clear it.
+        HasTotalMismatchWarning = false;
+        TotalMismatchWarningMessage = string.Empty;
     }
 
     /// <summary>
@@ -387,7 +387,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     /// </summary>
     protected void ValidateTotalMismatch(decimal storedTotal)
     {
-        _validationStoredTotal = storedTotal;
         HasTotalMismatchWarning = false;
         TotalMismatchWarningMessage = string.Empty;
 
@@ -1104,6 +1103,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     #region Navigation Commands
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _customerSavedHandler;
+    private EventHandler? _categorySavedHandler;
+    private EventHandler? _productSavedHandler;
+
     [RelayCommand]
     protected void OpenCreateCounterparty()
     {
@@ -1112,12 +1119,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var supplierModals = App.SupplierModalsViewModel;
             if (supplierModals == null) return;
 
-            void OnSaved(object? s, EventArgs e)
-            {
-                supplierModals.SupplierSaved -= OnSaved;
-                LoadCounterpartyOptions();
-            }
-            supplierModals.SupplierSaved += OnSaved;
+            CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+                h => supplierModals.SupplierSaved += h,
+                h => supplierModals.SupplierSaved -= h,
+                () =>
+                {
+                    LoadCounterpartyOptions();
+                    SelectCounterparty(supplierModals.LastSavedSupplierId);
+                });
             supplierModals.OpenAddModal();
         }
         else
@@ -1125,14 +1134,27 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             var customerModals = App.CustomerModalsViewModel;
             if (customerModals == null) return;
 
-            void OnSaved(object? s, EventArgs e)
-            {
-                customerModals.CustomerSaved -= OnSaved;
-                LoadCounterpartyOptions();
-            }
-            customerModals.CustomerSaved += OnSaved;
+            CreateModalSubscription.RearmOnce(ref _customerSavedHandler,
+                h => customerModals.CustomerSaved += h,
+                h => customerModals.CustomerSaved -= h,
+                () =>
+                {
+                    LoadCounterpartyOptions();
+                    SelectCounterparty(customerModals.LastSavedCustomerId);
+                });
             customerModals.OpenAddModal();
         }
+    }
+
+    /// <summary>
+    /// Selects the counterparty option with the given id, if present, after the options reload.
+    /// </summary>
+    private void SelectCounterparty(string? counterpartyId)
+    {
+        if (string.IsNullOrEmpty(counterpartyId)) return;
+        var option = CounterpartyOptions.FirstOrDefault(c => c.Id == counterpartyId);
+        if (option != null)
+            SelectedCounterparty = option;
     }
 
     [RelayCommand]
@@ -1142,28 +1164,43 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         if (categoryModals == null) return;
 
         var isExpense = CategoryTypeFilter == CategoryType.Expense;
-        void OnSaved(object? s, EventArgs e)
-        {
-            categoryModals.CategorySaved -= OnSaved;
-            LoadCategoryOptions();
-        }
-        categoryModals.CategorySaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _categorySavedHandler,
+            h => categoryModals.CategorySaved += h,
+            h => categoryModals.CategorySaved -= h,
+            () =>
+            {
+                LoadCategoryOptions();
+
+                // Auto-select the category the user just created.
+                var newCategory = CategoryOptions.FirstOrDefault(c => c.Id == categoryModals.LastSavedCategoryId);
+                if (newCategory != null)
+                    SelectedCategory = newCategory;
+            });
         categoryModals.OpenAddModal(isExpense);
     }
 
     [RelayCommand]
-    protected void OpenCreateProduct()
+    protected void OpenCreateProduct(TLineItem? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
         var isExpense = CategoryTypeFilter == CategoryType.Expense;
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            LoadProductOptions();
-        }
-        productModals.ProductSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
+            {
+                LoadProductOptions();
+
+                // Auto-select the new product into the line item whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                    if (newProduct != null)
+                        lineItem.SelectedProduct = newProduct;
+                }
+            });
         productModals.OpenAddModal(isExpense);
     }
 

@@ -32,11 +32,9 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}}">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                         {{/ShowLogo}}
-                                        {{^ShowLogo}}
-                                        <span style="font-size: 24px; font-weight: bold; color: #ffffff;">{{CompanyName}}</span>
-                                        {{/ShowLogo}}
+                                        <span data-logo-slot="1" style="display: inline-block; vertical-align: middle; font-size: 24px; font-weight: bold; color: #ffffff;">{{CompanyName}}</span>
                                     </td>
                                     <td align="right" style="vertical-align: top;">
                                         <span style="font-size: 28px; font-weight: bold; color: #ffffff; letter-spacing: 1px;">{{HeaderText}}</span>
@@ -53,7 +51,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="vertical-align: top; width: 50%;">
                                         <p style="margin: 0 0 5px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Bill To</p>
-                                        <p style="margin: 0 0 5px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0 0 5px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}
                                         <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>
                                         {{/CustomerAddress}}
@@ -69,11 +67,11 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             <tr>
                                                 <td style="padding: 4px 15px 4px 0; font-size: 13px; color: #6b7280;">Issue Date</td>
-                                                <td style="padding: 4px 0; font-size: 13px; color: {{TextColor}};">{{IssueDate}}</td>
+                                                <td style="padding: 4px 0; font-size: 13px; color: {{TextColor}};"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding: 4px 15px 4px 0; font-size: 13px; color: #6b7280;">Due Date</td>
-                                                <td style="padding: 4px 0; font-size: 13px; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                                <td style="padding: 4px 0; font-size: 13px; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></td>
                                             </tr>
                                             {{#ShowDueDateProminent}}
                                             <tr>
@@ -104,12 +102,12 @@ public static class InvoiceHtmlTemplates
                                 {{#LineItems}}
                                 <tr>
                                     <td style="padding: 15px; font-size: 14px; color: {{TextColor}}; border-bottom: 1px solid {{SecondaryColor}};">
-                                        {{Description}}
+                                        <span data-field="description" data-line-index="{{Index}}">{{Description}}</span>
                                         {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 12px; color: #6b7280;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
                                     </td>
-                                    <td style="padding: 15px; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};">{{Quantity}}</td>
-                                    <td style="padding: 15px; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{UnitPrice}}</td>
-                                    <td style="padding: 15px; font-size: 14px; font-weight: 500; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{Amount}}</td>
+                                    <td style="padding: 15px; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};"><span data-field="quantity" data-line-index="{{Index}}">{{Quantity}}</span></td>
+                                    <td style="padding: 15px; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-field="rate" data-line-index="{{Index}}">{{UnitPrice}}</span></td>
+                                    <td style="padding: 15px; font-size: 14px; font-weight: 500; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-out="lineAmount" data-line-index="{{Index}}">{{Amount}}</span></td>
                                 </tr>
                                 {{/LineItems}}
                             </table>
@@ -122,14 +120,20 @@ public static class InvoiceHtmlTemplates
                             <table role="presentation" cellpadding="0" cellspacing="0" width="280" style="margin-left: auto;">
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Subtotal</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-out="subtotal">{{Subtotal}}</span></td>
                                 </tr>
-                                {{#ShowTaxBreakdown}}
+                                {{#ShowTaxRow}}
                                 <tr>
-                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                 </tr>
-                                {{/ShowTaxBreakdown}}
+                                {{/ShowTaxRow}}
+                                {{#ShowShipping}}
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Shipping</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                </tr>
+                                {{/ShowShipping}}
                                 {{#ShowSecurityDeposit}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Security Deposit</td>
@@ -139,19 +143,19 @@ public static class InvoiceHtmlTemplates
                                 {{#ShowCustomFee}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{CustomFeeLabel}}</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                 </tr>
                                 {{/ShowCustomFee}}
                                 {{#ShowDiscount}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Discount</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                 </tr>
                                 {{/ShowDiscount}}
                                 {{#ShowProcessingFee}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                 </tr>
                                 {{/ShowProcessingFee}}
                                 <tr>
@@ -160,13 +164,13 @@ public static class InvoiceHtmlTemplates
                                 {{#ShowAmountToPay}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
-                                    <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                    <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                 </tr>
                                 {{/ShowAmountToPay}}
                                 {{^ShowAmountToPay}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{TextColor}};">Total</td>
-                                    <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{Total}}</td>
+                                    <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="total">{{Total}}</span></td>
                                 </tr>
                                 {{/ShowAmountToPay}}
                                 {{#AmountPaid}}
@@ -176,7 +180,7 @@ public static class InvoiceHtmlTemplates
                                 </tr>
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">Balance Due</td>
-                                    <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: {{HeaderColor}}; text-align: right;">{{Balance}}</td>
+                                    <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="balance">{{Balance}}</span></td>
                                 </tr>
                                 {{/AmountPaid}}
                             </table>
@@ -184,7 +188,7 @@ public static class InvoiceHtmlTemplates
                     </tr>
 
                     {{#ShowNotes}}
-                    {{#Notes}}
+                    {{#ShowNotesBody}}
                     <!-- Notes -->
                     <tr>
                         <td style="padding: 0 40px 20px 40px;">
@@ -192,13 +196,13 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="padding: 15px 20px;">
                                         <p style="margin: 0 0 5px 0; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Notes</p>
-                                        <p style="margin: 0; font-size: 14px; color: {{TextColor}}; line-height: 1.5;">{{Notes}}</p>
+                                        <p style="margin: 0; font-size: 14px; color: {{TextColor}}; line-height: 1.5;"><span data-field="notes">{{Notes}}</span></p>
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
-                    {{/Notes}}
+                    {{/ShowNotesBody}}
                     {{/ShowNotes}}
 
                     {{#ShowPaymentInstructions}}
@@ -222,7 +226,7 @@ public static class InvoiceHtmlTemplates
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 25px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; font-size: 14px; color: {{TextColor}};">{{FooterText}}</p>
+                            <p style="margin: 0 0 10px 0; font-size: 14px; color: {{TextColor}};"><span data-field="notes">{{FooterOrNotes}}</span></p>
                             <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                                 {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} • {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} • {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} • {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} • {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}
                             </p>
@@ -266,11 +270,9 @@ public static class InvoiceHtmlTemplates
                                             <tr>
                                                 <td style="vertical-align: middle;">
                                                     {{#ShowLogo}}
-                                                    <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 55px;{{/LockAspectRatio}}">
+                                                    <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 55px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                                     {{/ShowLogo}}
-                                                    {{^ShowLogo}}
-                                                    <span style="font-size: 22px; font-weight: 700; color: {{TextColor}};">{{CompanyName}}</span>
-                                                    {{/ShowLogo}}
+                                                    <span data-logo-slot="1" style="display: inline-block; vertical-align: middle; font-size: 22px; font-weight: 700; color: {{TextColor}};">{{CompanyName}}</span>
                                                 </td>
                                                 <td style="text-align: right; vertical-align: middle;">
                                                     <p style="margin: 0 0 4px 0; font-size: 24px; font-weight: 700; color: {{HeaderColor}}; letter-spacing: -0.5px;">{{HeaderText}}</p>
@@ -291,7 +293,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 55%; vertical-align: top; padding-right: 20px;">
                                         <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: {{HeaderColor}}; font-weight: 600;">Bill To</p>
-                                        <p style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}<p style="margin: 0 0 2px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>{{/CustomerAddress}}
                                         {{#CustomerEmail}}<p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
@@ -302,11 +304,11 @@ public static class InvoiceHtmlTemplates
                                                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                                         <tr>
                                                             <td style="padding: 4px 0; font-size: 12px; color: #6b7280;">Issue Date</td>
-                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; color: {{TextColor}}; text-align: right;">{{IssueDate}}</td>
+                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; color: {{TextColor}}; text-align: right;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td style="padding: 4px 0; font-size: 12px; color: #6b7280;">Due Date</td>
-                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; text-align: right; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                                            <td style="padding: 4px 0; font-size: 13px; font-weight: 500; text-align: right; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></td>
                                                         </tr>
                                                         {{#ShowDueDateProminent}}
                                                         <tr>
@@ -340,12 +342,12 @@ public static class InvoiceHtmlTemplates
                                 {{#LineItems}}
                                 <tr>
                                     <td style="padding: 16px 15px; font-size: 14px; color: {{TextColor}}; border-bottom: 1px solid {{SecondaryColor}};">
-                                        {{Description}}
+                                        <span data-field="description" data-line-index="{{Index}}">{{Description}}</span>
                                         {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 12px; color: #9ca3af;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
                                     </td>
-                                    <td style="padding: 16px 10px; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};">{{Quantity}}</td>
-                                    <td style="padding: 16px 10px; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{UnitPrice}}</td>
-                                    <td style="padding: 16px 15px; font-size: 14px; font-weight: 600; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{Amount}}</td>
+                                    <td style="padding: 16px 10px; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};"><span data-field="quantity" data-line-index="{{Index}}">{{Quantity}}</span></td>
+                                    <td style="padding: 16px 10px; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-field="rate" data-line-index="{{Index}}">{{UnitPrice}}</span></td>
+                                    <td style="padding: 16px 15px; font-size: 14px; font-weight: 600; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-out="lineAmount" data-line-index="{{Index}}">{{Amount}}</span></td>
                                 </tr>
                                 {{/LineItems}}
                             </table>
@@ -359,24 +361,30 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 55%; vertical-align: top; padding-right: 30px;">
                                         {{#ShowNotes}}
-                                        {{#Notes}}
+                                        {{#ShowNotesBody}}
                                         <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: {{HeaderColor}}; font-weight: 600;">Notes</p>
-                                        <p style="margin: 0; font-size: 13px; color: {{TextColor}}; line-height: 1.6;">{{Notes}}</p>
-                                        {{/Notes}}
+                                        <p style="margin: 0; font-size: 13px; color: {{TextColor}}; line-height: 1.6;"><span data-field="notes">{{Notes}}</span></p>
+                                        {{/ShowNotesBody}}
                                         {{/ShowNotes}}
                                     </td>
                                     <td style="width: 45%;">
                                         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Subtotal</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-out="subtotal">{{Subtotal}}</span></td>
                                             </tr>
-                                            {{#ShowTaxBreakdown}}
+                                            {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
-                                            {{/ShowTaxBreakdown}}
+                                            {{/ShowTaxRow}}
+                                            {{#ShowShipping}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Shipping</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                            </tr>
+                                            {{/ShowShipping}}
                                             {{#ShowSecurityDeposit}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Security Deposit</td>
@@ -386,19 +394,19 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowCustomFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{CustomFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowCustomFee}}
                                             {{#ShowDiscount}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Discount</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowProcessingFee}}
                                             <tr>
@@ -407,13 +415,13 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowAmountToPay}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 16px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
-                                                <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                                <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                             {{^ShowAmountToPay}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 16px; font-weight: 700; color: {{TextColor}};">Total</td>
-                                                <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{Total}}</td>
+                                                <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="total">{{Total}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                             {{#AmountPaid}}
@@ -423,7 +431,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             <tr>
                                                 <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{TextColor}};">Balance Due</td>
-                                                <td style="padding: 6px 0; font-size: 17px; font-weight: 700; color: {{HeaderColor}}; text-align: right;">{{Balance}}</td>
+                                                <td style="padding: 6px 0; font-size: 17px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="balance">{{Balance}}</span></td>
                                             </tr>
                                             {{/AmountPaid}}
                                         </table>
@@ -458,7 +466,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 8px; background-color: {{PrimaryColor}};"></td>
                                     <td style="padding: 20px 35px; background-color: {{SecondaryColor}}; text-align: center;">
-                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: {{TextColor}};">{{FooterText}}</p>
+                                        <p style="margin: 0 0 6px 0; font-size: 13px; color: {{TextColor}};"><span data-field="notes">{{FooterOrNotes}}</span></p>
                                         <p style="margin: 0; font-size: 11px; color: #9ca3af;">
                                             {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} • {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} • {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} • {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} • {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}{{#ShowCompanyPhone}}{{#CompanyPhone}} • {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
                                         </p>
@@ -499,9 +507,9 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                         {{/ShowLogo}}
-                                        <p style="margin: 0; font-size: 18px; font-weight: bold; color: {{TextColor}};">{{CompanyName}}</p>
+                                        <p data-logo-slot="1" style="display: inline-block; vertical-align: middle; margin: 0; font-size: 18px; font-weight: bold; color: {{TextColor}};">{{CompanyName}}</p>
                                         {{#ShowCompanyAddress}}{{#CompanyAddress}}<p style="margin: 5px 0 0 0; font-size: 12px; color: #666666; line-height: 1.5;">{{CompanyAddress}}</p>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                                         {{#ShowCompanyCity}}{{#CompanyCity}}<p style="margin: 2px 0 0 0; font-size: 12px; color: #666666;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyCity}}{{/ShowCompanyCity}}
                                         {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<p style="margin: 2px 0 0 0; font-size: 12px; color: #666666;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{^ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}<p style="margin: 2px 0 0 0; font-size: 12px; color: #666666;">{{CompanyCountry}}</p>{{/CompanyCountry}}{{/ShowCompanyCountry}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
@@ -511,8 +519,8 @@ public static class InvoiceHtmlTemplates
                                     <td style="width: 40%; text-align: right; vertical-align: top;">
                                         <p style="margin: 0; font-size: 28px; font-weight: bold; color: {{HeaderColor}};">{{HeaderText}}</p>
                                         <p style="margin: 10px 0 0 0; font-size: 14px; color: {{TextColor}};"><strong>Invoice #:</strong> {{InvoiceNumber}}</p>
-                                        <p style="margin: 5px 0 0 0; font-size: 14px; color: {{TextColor}};"><strong>Date:</strong> {{IssueDate}}</p>
-                                        <p style="margin: 5px 0 0 0; font-size: 14px; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><strong>Due:</strong> {{DueDate}}</p>
+                                        <p style="margin: 5px 0 0 0; font-size: 14px; color: {{TextColor}};"><strong>Date:</strong> <span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></p>
+                                        <p style="margin: 5px 0 0 0; font-size: 14px; {{#IsOverdue}}color: #dc2626;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><strong>Due:</strong> <span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></p>
                                     </td>
                                 </tr>
                             </table>
@@ -526,7 +534,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         <p style="margin: 0 0 5px 0; font-size: 12px; font-weight: bold; color: {{HeaderColor}}; text-transform: uppercase;">Bill To:</p>
-                                        <p style="margin: 0; font-size: 15px; font-weight: bold; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0; font-size: 15px; font-weight: bold; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}<p style="margin: 3px 0 0 0; font-size: 13px; color: #666666;">{{CustomerAddress}}</p>{{/CustomerAddress}}
                                         {{#CustomerEmail}}<p style="margin: 3px 0 0 0; font-size: 13px; color: #666666;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
@@ -548,12 +556,12 @@ public static class InvoiceHtmlTemplates
                                 {{#LineItems}}
                                 <tr>
                                     <td style="padding: 12px 15px; font-size: 13px; color: {{TextColor}}; border: 1px solid {{SecondaryColor}};">
-                                        {{Description}}
+                                        <span data-field="description" data-line-index="{{Index}}">{{Description}}</span>
                                         {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 11px; color: #888888;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
                                     </td>
-                                    <td style="padding: 12px 10px; font-size: 13px; color: {{TextColor}}; text-align: center; border: 1px solid {{SecondaryColor}};">{{Quantity}}</td>
-                                    <td style="padding: 12px 10px; font-size: 13px; color: {{TextColor}}; text-align: right; border: 1px solid {{SecondaryColor}};">{{UnitPrice}}</td>
-                                    <td style="padding: 12px 15px; font-size: 13px; font-weight: bold; color: {{TextColor}}; text-align: right; border: 1px solid {{SecondaryColor}};">{{Amount}}</td>
+                                    <td style="padding: 12px 10px; font-size: 13px; color: {{TextColor}}; text-align: center; border: 1px solid {{SecondaryColor}};"><span data-field="quantity" data-line-index="{{Index}}">{{Quantity}}</span></td>
+                                    <td style="padding: 12px 10px; font-size: 13px; color: {{TextColor}}; text-align: right; border: 1px solid {{SecondaryColor}};"><span data-field="rate" data-line-index="{{Index}}">{{UnitPrice}}</span></td>
+                                    <td style="padding: 12px 15px; font-size: 13px; font-weight: bold; color: {{TextColor}}; text-align: right; border: 1px solid {{SecondaryColor}};"><span data-out="lineAmount" data-line-index="{{Index}}">{{Amount}}</span></td>
                                 </tr>
                                 {{/LineItems}}
                             </table>
@@ -567,24 +575,30 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%; padding: 15px; vertical-align: top;">
                                         {{#ShowNotes}}
-                                        {{#Notes}}
+                                        {{#ShowNotesBody}}
                                         <p style="margin: 0 0 5px 0; font-size: 12px; font-weight: bold; color: {{HeaderColor}};">NOTES:</p>
-                                        <p style="margin: 0; font-size: 12px; color: {{TextColor}}; line-height: 1.5;">{{Notes}}</p>
-                                        {{/Notes}}
+                                        <p style="margin: 0; font-size: 12px; color: {{TextColor}}; line-height: 1.5;"><span data-field="notes">{{Notes}}</span></p>
+                                        {{/ShowNotesBody}}
                                         {{/ShowNotes}}
                                     </td>
                                     <td style="width: 40%; border-left: 1px solid {{SecondaryColor}};">
                                         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Subtotal</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{Subtotal}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-out="subtotal">{{Subtotal}}</span></td>
                                             </tr>
-                                            {{#ShowTaxBreakdown}}
+                                            {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{TaxAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
-                                            {{/ShowTaxBreakdown}}
+                                            {{/ShowTaxRow}}
+                                            {{#ShowShipping}}
+                                            <tr>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Shipping</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                            </tr>
+                                            {{/ShowShipping}}
                                             {{#ShowSecurityDeposit}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Security Deposit</td>
@@ -594,31 +608,31 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowCustomFee}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{CustomFeeLabel}}</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{CustomFeeAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowCustomFee}}
                                             {{#ShowDiscount}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">Discount</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{DiscountAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeLabel}}</td>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeAmount}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowProcessingFee}}
                                             {{#ShowAmountToPay}}
                                             <tr style="background-color: {{PrimaryColor}};">
                                                 <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">AMOUNT TO PAY</td>
-                                                <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;">{{AmountToPay}}</td>
+                                                <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                             {{^ShowAmountToPay}}
                                             <tr style="background-color: {{PrimaryColor}};">
                                                 <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">TOTAL</td>
-                                                <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;">{{Total}}</td>
+                                                <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;"><span data-out="total">{{Total}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                         </table>
@@ -643,7 +657,7 @@ public static class InvoiceHtmlTemplates
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 15px; background-color: {{PrimaryColor}}; text-align: center;">
-                            <p style="margin: 0; font-size: 13px; color: #ffffff;">{{FooterText}}</p>
+                            <p style="margin: 0; font-size: 13px; color: #ffffff;"><span data-field="notes">{{FooterOrNotes}}</span></p>
                         </td>
                     </tr>
                 </table>
@@ -683,11 +697,9 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 60%; vertical-align: top;">
                                         {{#ShowLogo}}
-                                        <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 55px;{{/LockAspectRatio}} margin-bottom: 15px;">
+                                        <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 55px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                                         {{/ShowLogo}}
-                                        {{^ShowLogo}}
-                                        <p style="margin: 0 0 15px 0; font-size: 20px; font-weight: 600; color: {{TextColor}}; letter-spacing: -0.5px;">{{CompanyName}}</p>
-                                        {{/ShowLogo}}
+                                        <p data-logo-slot="1" style="display: inline-block; vertical-align: middle; margin: 0 0 15px 0; font-size: 20px; font-weight: 600; color: {{TextColor}}; letter-spacing: -0.5px;">{{CompanyName}}</p>
                                         {{#ShowCompanyAddress}}{{#CompanyAddress}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CompanyAddress}}</p>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                                         {{#ShowCompanyCity}}{{#CompanyCity}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyCity}}{{/ShowCompanyCity}}
                                         {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</p>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{^ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}<p style="margin: 0 0 3px 0; font-size: 13px; color: #6b7280;">{{CompanyCountry}}</p>{{/CompanyCountry}}{{/ShowCompanyCountry}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
@@ -700,11 +712,11 @@ public static class InvoiceHtmlTemplates
                                         <table role="presentation" cellpadding="0" cellspacing="0" style="margin-left: auto;">
                                             <tr>
                                                 <td style="padding: 3px 12px 3px 0; font-size: 12px; color: #9ca3af; text-align: right;">Issued</td>
-                                                <td style="padding: 3px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{IssueDate}}</td>
+                                                <td style="padding: 3px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></td>
                                             </tr>
                                             <tr>
                                                 <td style="padding: 3px 12px 3px 0; font-size: 12px; color: #9ca3af; text-align: right;">Due</td>
-                                                <td style="padding: 3px 0; font-size: 13px; text-align: right; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</td>
+                                                <td style="padding: 3px 0; font-size: 13px; text-align: right; {{#IsOverdue}}color: #dc2626; font-weight: 600;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></td>
                                             </tr>
                                         </table>
                                         {{#ShowDueDateProminent}}
@@ -727,7 +739,7 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td>
                                         <p style="margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Bill To</p>
-                                        <p style="margin: 0 0 3px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">{{CustomerName}}</p>
+                                        <p style="margin: 0 0 3px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};"><span data-field="customer">{{CustomerName}}</span></p>
                                         {{#CustomerAddress}}<p style="margin: 0 0 2px 0; font-size: 13px; color: #6b7280; line-height: 1.5;">{{CustomerAddress}}</p>{{/CustomerAddress}}
                                         {{#CustomerEmail}}<p style="margin: 0; font-size: 13px; color: #6b7280;">{{CustomerEmail}}</p>{{/CustomerEmail}}
                                     </td>
@@ -749,12 +761,12 @@ public static class InvoiceHtmlTemplates
                                 {{#LineItems}}
                                 <tr>
                                     <td style="padding: 16px 0; font-size: 14px; color: {{TextColor}}; border-bottom: 1px solid {{SecondaryColor}};">
-                                        {{Description}}
+                                        <span data-field="description" data-line-index="{{Index}}">{{Description}}</span>
                                         {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 12px; color: #9ca3af; font-style: italic;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
                                     </td>
-                                    <td style="padding: 16px 0; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};">{{Quantity}}</td>
-                                    <td style="padding: 16px 0; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{UnitPrice}}</td>
-                                    <td style="padding: 16px 0; font-size: 14px; font-weight: 500; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">{{Amount}}</td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #6b7280; text-align: center; border-bottom: 1px solid {{SecondaryColor}};"><span data-field="quantity" data-line-index="{{Index}}">{{Quantity}}</span></td>
+                                    <td style="padding: 16px 0; font-size: 14px; color: #6b7280; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-field="rate" data-line-index="{{Index}}">{{UnitPrice}}</span></td>
+                                    <td style="padding: 16px 0; font-size: 14px; font-weight: 500; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-out="lineAmount" data-line-index="{{Index}}">{{Amount}}</span></td>
                                 </tr>
                                 {{/LineItems}}
                             </table>
@@ -768,24 +780,30 @@ public static class InvoiceHtmlTemplates
                                 <tr>
                                     <td style="width: 55%; vertical-align: top; padding-right: 30px;">
                                         {{#ShowNotes}}
-                                        {{#Notes}}
+                                        {{#ShowNotesBody}}
                                         <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Notes</p>
-                                        <p style="margin: 0; font-size: 13px; color: {{TextColor}}; line-height: 1.6;">{{Notes}}</p>
-                                        {{/Notes}}
+                                        <p style="margin: 0; font-size: 13px; color: {{TextColor}}; line-height: 1.6;"><span data-field="notes">{{Notes}}</span></p>
+                                        {{/ShowNotesBody}}
                                         {{/ShowNotes}}
                                     </td>
                                     <td style="width: 45%;">
                                         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Subtotal</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{Subtotal}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-out="subtotal">{{Subtotal}}</span></td>
                                             </tr>
-                                            {{#ShowTaxBreakdown}}
+                                            {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}} ({{TaxRate}}%)</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{TaxAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
-                                            {{/ShowTaxBreakdown}}
+                                            {{/ShowTaxRow}}
+                                            {{#ShowShipping}}
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Shipping</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span></td>
+                                            </tr>
+                                            {{/ShowShipping}}
                                             {{#ShowSecurityDeposit}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Security Deposit</td>
@@ -795,19 +813,19 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowCustomFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{CustomFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{CustomFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowCustomFee}}
                                             {{#ShowDiscount}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">Discount</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{DiscountAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
                                             {{#ShowProcessingFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
-                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;">{{ProcessingFeeAmount}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowProcessingFee}}
                                             <tr>
@@ -816,13 +834,13 @@ public static class InvoiceHtmlTemplates
                                             {{#ShowAmountToPay}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Amount to Pay</td>
-                                                <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{HeaderColor}}; text-align: right;">{{AmountToPay}}</td>
+                                                <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                             {{^ShowAmountToPay}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Total Due</td>
-                                                <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{HeaderColor}}; text-align: right;">{{Total}}</td>
+                                                <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="total">{{Total}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                             {{#AmountPaid}}
@@ -832,7 +850,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             <tr>
                                                 <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{TextColor}};">Balance</td>
-                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{HeaderColor}}; text-align: right;">{{Balance}}</td>
+                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="balance">{{Balance}}</span></td>
                                             </tr>
                                             {{/AmountPaid}}
                                         </table>
@@ -863,7 +881,7 @@ public static class InvoiceHtmlTemplates
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 25px 40px; background-color: {{SecondaryColor}}; text-align: center; border-radius: 0 0 4px 4px;">
-                            <p style="margin: 0; font-size: 13px; color: {{TextColor}};">{{FooterText}}</p>
+                            <p style="margin: 0; font-size: 13px; color: {{TextColor}};"><span data-field="notes">{{FooterOrNotes}}</span></p>
                             <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
                                 {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} • {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} • {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} • {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} • {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}{{#CompanyEmail}} • {{CompanyEmail}}{{/CompanyEmail}}{{#ShowCompanyPhone}}{{#CompanyPhone}} • {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
                             </p>
@@ -953,9 +971,9 @@ public static class InvoiceHtmlTemplates
             <!-- Company Info -->
             <div style="margin-bottom: 30px;">
                 {{#ShowLogo}}
-                <img src="{{LogoSrc}}" alt="Company Logo" width="{{LogoWidth}}" style="display: block; {{#LockAspectRatio}}height: auto;{{/LockAspectRatio}}{{^LockAspectRatio}}max-height: 60px;{{/LockAspectRatio}} margin-bottom: 10px;">
+                <img src="{{LogoSrc}}" alt="Company Logo" data-logo="1" style="display: inline-block; vertical-align: middle; max-width: {{LogoWidth}}px; max-height: 60px; width: auto; height: auto; object-fit: contain; margin-right: 14px;">
                 {{/ShowLogo}}
-                <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 15px;">{{CompanyName}}</div>
+                <div data-logo-slot="1" style="display: inline-block; vertical-align: middle; font-weight: bold; color: {{HeaderColor}}; font-size: 15px;">{{CompanyName}}</div>
                 {{#ShowCompanyAddress}}{{#CompanyAddress}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyAddress}}</div>{{/CompanyAddress}}{{/ShowCompanyAddress}}
                 {{#ShowCompanyCity}}{{#CompanyCity}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}, {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</div>{{/CompanyCity}}{{/ShowCompanyCity}}
                 {{^ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}}<div style="color: #555; font-size: 14px; line-height: 1.6;">{{CompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}}, {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}</div>{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{/ShowCompanyCity}}
@@ -968,20 +986,20 @@ public static class InvoiceHtmlTemplates
                 <div style="flex: 1;">
                     <div style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Sold To</div>
                     <div style="color: {{TextColor}}; font-size: 14px; line-height: 1.6;">
-                        <strong>{{CustomerName}}</strong><br>
+                        <strong><span data-field="customer">{{CustomerName}}</span></strong><br>
                         {{#CustomerAddress}}{{CustomerAddress}}<br>{{/CustomerAddress}}
                         {{#CustomerEmail}}{{CustomerEmail}}{{/CustomerEmail}}
                     </div>
                 </div>
-                <div style="flex: 1;"></div>
-                <div style="flex: 1.2;">
+                <div style="flex: 0.2;"></div>
+                <div style="flex: 1.4;">
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 5px 20px;">
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt #</span>
-                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{InvoiceNumber}}</span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt Date</span>
-                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{IssueDate}}</span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Due Date</span>
-                        <span style="text-align: right; font-size: 14px; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}">{{DueDate}}</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; white-space: nowrap;">Receipt #</span>
+                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px; white-space: nowrap;">{{InvoiceNumber}}</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; white-space: nowrap;">Receipt Date</span>
+                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px; white-space: nowrap;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; white-space: nowrap;">Due Date</span>
+                        <span style="text-align: right; font-size: 14px; white-space: nowrap; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></span>
                     </div>
                     {{#ShowDueDateProminent}}
                     <div style="text-align: right; margin-top: 10px;">
@@ -1006,13 +1024,13 @@ public static class InvoiceHtmlTemplates
                 <tbody>
                     {{#LineItems}}
                     <tr>
-                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; text-align: center; font-weight: 600; color: {{HeaderColor}};">{{Quantity}}</td>
+                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; text-align: center; font-weight: 600; color: {{HeaderColor}};"><span data-field="quantity" data-line-index="{{Index}}">{{Quantity}}</span></td>
                         <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; color: {{TextColor}};">
-                            {{Description}}
+                            <span data-field="description" data-line-index="{{Index}}">{{Description}}</span>
                             {{#ShowItemDescriptions}}{{#ItemDescription}}<br><span style="font-size: 12px; color: #888;">{{ItemDescription}}</span>{{/ItemDescription}}{{/ShowItemDescriptions}}
                         </td>
-                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; color: {{TextColor}}; text-align: right;">{{UnitPrice}}</td>
-                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; color: {{TextColor}}; text-align: right;">{{Amount}}</td>
+                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-field="rate" data-line-index="{{Index}}">{{UnitPrice}}</span></td>
+                        <td style="padding: 16px 15px; border-bottom: 1px solid #e8e8e8; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-out="lineAmount" data-line-index="{{Index}}">{{Amount}}</span></td>
                     </tr>
                     {{/LineItems}}
                 </tbody>
@@ -1023,14 +1041,20 @@ public static class InvoiceHtmlTemplates
                 <div style="width: 280px;">
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}}; border-top: 1px solid #e0e0e0;">
                         <span>Subtotal</span>
-                        <span>{{Subtotal}}</span>
+                        <span><span data-out="subtotal">{{Subtotal}}</span></span>
                     </div>
-                    {{#ShowTaxBreakdown}}
+                    {{#ShowTaxRow}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
-                        <span>{{TaxLabel}} ({{TaxRate}}%)</span>
-                        <span>{{TaxAmount}}</span>
+                        <span>{{TaxLabel}}{{TaxRateLabel}}</span>
+                        <span><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></span>
                     </div>
-                    {{/ShowTaxBreakdown}}
+                    {{/ShowTaxRow}}
+                    {{#ShowShipping}}
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
+                        <span>Shipping</span>
+                        <span data-total="shipping" data-total-raw="{{ShippingRaw}}" data-total-symbol="{{CurrencySymbol}}">{{ShippingAmount}}</span>
+                    </div>
+                    {{/ShowShipping}}
                     {{#ShowSecurityDeposit}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>Security Deposit</span>
@@ -1040,31 +1064,31 @@ public static class InvoiceHtmlTemplates
                     {{#ShowCustomFee}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>{{CustomFeeLabel}}</span>
-                        <span>{{CustomFeeAmount}}</span>
+                        <span><span data-total="fee" data-total-raw="{{CustomFeeRaw}}" data-total-mode="{{FeeModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{CustomFeeAmount}}</span></span>
                     </div>
                     {{/ShowCustomFee}}
                     {{#ShowDiscount}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>Discount</span>
-                        <span>{{DiscountAmount}}</span>
+                        <span><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></span>
                     </div>
                     {{/ShowDiscount}}
                     {{#ShowProcessingFee}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>{{ProcessingFeeLabel}}</span>
-                        <span>{{ProcessingFeeAmount}}</span>
+                        <span><span data-out="processingFee">{{ProcessingFeeAmount}}</span></span>
                     </div>
                     {{/ShowProcessingFee}}
                     {{#ShowAmountToPay}}
                     <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{HeaderColor}}; margin-top: 10px;">
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Amount to Pay</span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;">{{AmountToPay}}</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;"><span data-out="amountToPay">{{AmountToPay}}</span></span>
                     </div>
                     {{/ShowAmountToPay}}
                     {{^ShowAmountToPay}}
                     <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{HeaderColor}}; margin-top: 10px;">
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Total</span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;">{{Total}}</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;"><span data-out="total">{{Total}}</span></span>
                     </div>
                     {{/ShowAmountToPay}}
                     {{#AmountPaid}}
@@ -1074,20 +1098,20 @@ public static class InvoiceHtmlTemplates
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">
                         <span>Balance Due</span>
-                        <span style="color: {{HeaderColor}};">{{Balance}}</span>
+                        <span style="color: {{HeaderColor}};"><span data-out="balance">{{Balance}}</span></span>
                     </div>
                     {{/AmountPaid}}
                 </div>
             </div>
 
             {{#ShowNotes}}
-            {{#Notes}}
+            {{#ShowNotesBody}}
             <!-- Notes -->
             <div style="margin-bottom: 30px; padding: 15px 20px; background-color: #f9fafb; border-radius: 6px;">
                 <div style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 5px;">Notes</div>
-                <div style="font-size: 14px; color: {{TextColor}}; line-height: 1.5;">{{Notes}}</div>
+                <div style="font-size: 14px; color: {{TextColor}}; line-height: 1.5;"><span data-field="notes">{{Notes}}</span></div>
             </div>
-            {{/Notes}}
+            {{/ShowNotesBody}}
             {{/ShowNotes}}
 
             {{#ShowPaymentInstructions}}
@@ -1102,7 +1126,7 @@ public static class InvoiceHtmlTemplates
 
             <!-- Footer -->
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                <div style="font-size: 13px; color: {{TextColor}}; margin-bottom: 6px;">{{FooterText}}</div>
+                <div style="font-size: 13px; color: {{TextColor}}; margin-bottom: 6px;"><span data-field="notes">{{FooterOrNotes}}</span></div>
                 <div style="font-size: 12px; color: #9ca3af;">
                     {{CompanyName}}{{#ShowCompanyAddress}}{{#CompanyAddress}} &bull; {{CompanyAddress}}{{/CompanyAddress}}{{/ShowCompanyAddress}}{{#ShowCompanyCity}}{{#CompanyCity}} &bull; {{CompanyCity}}{{/CompanyCity}}{{/ShowCompanyCity}}{{#ShowCompanyProvinceState}}{{#CompanyProvinceState}} &bull; {{CompanyProvinceState}}{{/CompanyProvinceState}}{{/ShowCompanyProvinceState}}{{#ShowCompanyCountry}}{{#CompanyCountry}} &bull; {{CompanyCountry}}{{/CompanyCountry}}{{/ShowCompanyCountry}}{{#CompanyEmail}} &bull; {{CompanyEmail}}{{/CompanyEmail}}{{#ShowCompanyPhone}}{{#CompanyPhone}} &bull; {{CompanyPhone}}{{/CompanyPhone}}{{/ShowCompanyPhone}}
                 </div>

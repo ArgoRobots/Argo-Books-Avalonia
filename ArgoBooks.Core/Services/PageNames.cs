@@ -13,6 +13,7 @@ public static class PageNames
     public const string Revenue = "Revenue";
     public const string Expenses = "Expenses";
     public const string Invoices = "Invoices";
+    public const string InvoiceEditor = "InvoiceEditor";
     public const string Payments = "Payments";
     public const string BankMatching = "BankMatching";
     public const string Products = "Products";
@@ -23,8 +24,6 @@ public static class PageNames
     public const string Categories = "Categories";
     public const string Customers = "Customers";
     public const string Suppliers = "Suppliers";
-    public const string Employees = "Employees";
-    public const string Departments = "Departments";
     public const string RentalInventory = "RentalInventory";
     public const string RentalRecords = "RentalRecords";
     public const string Returns = "Returns";

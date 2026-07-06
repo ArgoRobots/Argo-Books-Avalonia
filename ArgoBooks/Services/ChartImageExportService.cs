@@ -28,6 +28,31 @@ public static class ChartImageExportService
     private const int DefaultExportHeight = 400;
 
     /// <summary>
+    /// The background to paint behind an exported chart, matching the app's chart card for the
+    /// current theme (Themes/LightTheme.axaml and DarkTheme.axaml SurfaceColor). Exporting a
+    /// transparent background made a light-theme chart look like a broken dark one, because image
+    /// viewers render the transparent area as a dark canvas; a solid surface color matches the app.
+    /// </summary>
+    private static SKColor GetExportBackground()
+        => ThemeService.Instance.IsDarkTheme ? SKColor.Parse("#1F2937") : SKColors.White;
+
+    /// <summary>
+    /// Encodes a rendered chart image onto a solid, theme-matching background and writes it to disk.
+    /// LiveCharts' <c>SKChart.Background</c> is not reliably honored by <c>SaveImage</c> (it produced a
+    /// transparent PNG that looked dark in image viewers), so we composite the chart onto an explicit
+    /// background canvas to guarantee the backdrop matches the app.
+    /// </summary>
+    private static void SaveOnSolidBackground(SKImage chartImage, int width, int height, string filePath, SKEncodedImageFormat format)
+    {
+        using var surface = SKSurface.Create(new SKImageInfo(width, height));
+        surface.Canvas.Clear(GetExportBackground());
+        surface.Canvas.DrawImage(chartImage, 0, 0);
+        using var snapshot = surface.Snapshot();
+        using var data = snapshot.Encode(format, 100);
+        File.WriteAllBytes(filePath, data.ToArray());
+    }
+
+    /// <summary>
     /// Saves a CartesianChart as an image file with a file picker dialog.
     /// </summary>
     /// <param name="topLevel">The top-level control for the file picker.</param>
@@ -49,7 +74,8 @@ public static class ChartImageExportService
                 Height = height,
                 Background = SKColors.Transparent
             };
-            skChart.SaveImage(filePath, format, 100);
+            using var chartImage = skChart.GetImage();
+            SaveOnSolidBackground(chartImage, width, height, filePath, format);
             return true;
         }
         catch (Exception ex)
@@ -80,18 +106,19 @@ public static class ChartImageExportService
                 Background = SKColors.Transparent
             };
 
+            using var chartImage = skChart.GetImage();
+
             // Include the sibling PieChartLegend when present
             var legend = FindSiblingLegend(chart);
             if (legend?.Items is { Count: > 0 } legendItems)
             {
-                using var chartImage = skChart.GetImage();
                 using var composited = ComposePieChartWithLegend(chartImage, legendItems, chartWidth, chartHeight);
                 using var data = composited.Encode(format, 100);
                 File.WriteAllBytes(filePath, data.ToArray());
             }
             else
             {
-                skChart.SaveImage(filePath, format, 100);
+                SaveOnSolidBackground(chartImage, chartWidth, chartHeight, filePath, format);
             }
 
             return true;
@@ -127,7 +154,8 @@ public static class ChartImageExportService
                 Series = chart.Series ?? [],
                 MapProjection = chart.MapProjection
             };
-            skChart.SaveImage(filePath, format, 100);
+            using var chartImage = skChart.GetImage();
+            SaveOnSolidBackground(chartImage, width, height, filePath, format);
             return true;
         }
         catch (Exception ex)
@@ -250,8 +278,10 @@ public static class ChartImageExportService
 
         using var typeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
         using var font = new SKFont(typeface, fontSize);
-        using var labelPaint = new SKPaint { Color = new SKColor(0x33, 0x33, 0x33), IsAntialias = true };
-        using var percentPaint = new SKPaint { Color = new SKColor(0x88, 0x88, 0x88), IsAntialias = true };
+        // Legend text follows the theme so it stays readable on the solid export background.
+        var isDark = ThemeService.Instance.IsDarkTheme;
+        using var labelPaint = new SKPaint { Color = isDark ? new SKColor(0xF9, 0xFA, 0xFB) : new SKColor(0x33, 0x33, 0x33), IsAntialias = true };
+        using var percentPaint = new SKPaint { Color = isDark ? new SKColor(0x9C, 0xA3, 0xAF) : new SKColor(0x88, 0x88, 0x88), IsAntialias = true };
 
         // Measure text to calculate legend width
         float maxLabelWidth = 0;
@@ -270,7 +300,7 @@ public static class ChartImageExportService
 
         using var surface = SKSurface.Create(new SKImageInfo(totalWidth, totalHeight));
         var canvas = surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
+        canvas.Clear(GetExportBackground());
 
         // Draw chart on the left, centered vertically
         var chartY = (totalHeight - chartHeight) / 2f;

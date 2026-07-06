@@ -296,6 +296,12 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
     #region Events
 
     public event EventHandler? ItemSaved;
+
+    /// <summary>
+    /// The Id of the rental item most recently created via the Add modal. Lets a caller that
+    /// opened "create rental item" from another modal auto-select the new item after save.
+    /// </summary>
+    public string? LastSavedItemId { get; private set; }
     public event EventHandler? ItemDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
@@ -333,18 +339,25 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         CloseAddModal();
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _customerSavedHandler;
+
     [RelayCommand]
     private void OpenCreateSupplier()
     {
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            UpdateDropdownOptions();
-        }
-        supplierModals.SupplierSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
+            });
         supplierModals.OpenAddModal();
     }
 
@@ -354,12 +367,18 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         var customerModals = App.CustomerModalsViewModel;
         if (customerModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            customerModals.CustomerSaved -= OnSaved;
-            UpdateDropdownOptions();
-        }
-        customerModals.CustomerSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _customerSavedHandler,
+            h => customerModals.CustomerSaved += h,
+            h => customerModals.CustomerSaved -= h,
+            () =>
+            {
+                UpdateDropdownOptions();
+
+                // Auto-select the customer the user just created.
+                var newCustomer = AvailableCustomers.FirstOrDefault(c => c.Id == customerModals.LastSavedCustomerId);
+                if (newCustomer != null)
+                    RentOutCustomer = newCustomer;
+            });
         customerModals.OpenAddModal();
     }
 
@@ -413,6 +432,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             }));
 
+        LastSavedItemId = newItem.Id;
         ItemSaved?.Invoke(this, EventArgs.Empty);
         CloseAddModal();
     }

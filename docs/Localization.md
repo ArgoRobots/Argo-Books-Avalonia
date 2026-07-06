@@ -89,7 +89,7 @@ Example: `"Save Changes"` → `str_savechanges`
 Translations are downloaded from the server based on app version:
 
 ```
-https://argorobots.com/resources/downloads/versions/{version}/languages/{isoCode}.json
+https://argorobots.com/resources/downloads/{version}/languages/{isoCode}.json
 ```
 
 ### Caching

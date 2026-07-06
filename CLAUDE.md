@@ -5,6 +5,7 @@
 - **Do NOT build or run tests after every change.** Only build/test when explicitly asked.
 - **Do NOT amend commits or force push** unless explicitly told to. Always create new commits.
 - **Do NOT update the language files** like ArgoBooks.TranslationTool/languages/en.json and similar.
+- **Do NOT commit plan or spec markdown files** (e.g. anything under `docs/superpowers/`). These are local planning artifacts; keep them untracked.
 
 ## Project Overview
 
@@ -32,10 +33,10 @@ Requires .NET 10 SDK. A `.env` file with API keys must be placed at the solution
 | **ArgoBooks** | UI layer: Views (.axaml), ViewModels, Controls, UI Services |
 | **ArgoBooks.Core** | Business logic: Models, Services, Data, Security, Platform abstraction |
 | **ArgoBooks.Desktop** | Entry point for Windows/macOS/Linux |
-| **ArgoBooks.Browser** | Entry point for WebAssembly |
 | **ArgoBooks.Tests** | xUnit tests (references both ArgoBooks and ArgoBooks.Core) |
+| **ArgoBooks.TranslationTool** | Offline tool that generates language files via Azure Translator |
 
-**Dependency flow:** Desktop/Browser -> ArgoBooks -> ArgoBooks.Core
+**Dependency flow:** Desktop -> ArgoBooks -> ArgoBooks.Core
 
 ### Data Storage
 
@@ -51,7 +52,7 @@ File-based, not database. Company data lives in encrypted `.argo` files (AES-256
 
 ### Service Layer (ArgoBooks.Core/Services/)
 
-Core business services include: `CompanyManager` (file lifecycle), `EncryptionService` (AES-256), `SpreadsheetImportService`/`SpreadsheetExportService` (Excel/CSV), `GeminiService` (AI matching), `ProxyReceiptScannerService` (OCR), `InsightsService` (analytics), `ReportRenderer` (PDF via QuestPDF), `LicenseService`, `PaymentPortalService`.
+Core business services include: `CompanyManager` (file lifecycle), `EncryptionService` (AES-256), `SpreadsheetImportService`/`SpreadsheetExportService` (Excel/CSV), `GeminiService` (AI matching), `GeminiReceiptScannerService` (OCR), `InsightsService` (analytics), `ReportRenderer` (PDF via QuestPDF), `LicenseService`, `PaymentPortalService`.
 
 UI services in `ArgoBooks/Services/` handle navigation, theming, localization, undo/redo, modals, and chart loading.
 

@@ -34,24 +34,6 @@ public static class NotificationTypeConverters
     public static readonly IValueConverter IsSystem =
         new FuncValueConverter<NotificationType, bool>(type => type == NotificationType.System);
 
-    /// <summary>
-    /// Converter that returns a brush color based on notification type.
-    /// Info=Blue, Success=Green, Warning=Orange, System=Gray.
-    /// </summary>
-    public static readonly IValueConverter TypeToBrush =
-        new FuncValueConverter<NotificationType, IBrush>(type => BrushFor(type));
-
-    /// <summary>
-    /// Converter that returns a tinted background brush based on notification type.
-    /// Uses 60% opacity of the accent color.
-    /// </summary>
-    public static readonly IValueConverter TypeToBackgroundBrush =
-        new FuncValueConverter<NotificationType, IBrush>(type =>
-        {
-            var color = ColorFor(type);
-            return new SolidColorBrush(new Color(0x99, color.R, color.G, color.B));
-        });
-
     private static Color ColorFor(NotificationType type) => type switch
     {
         NotificationType.Info => Color.Parse(AppColors.Primary),

@@ -145,7 +145,9 @@ public class PaymentPortalService : IDisposable
                 Notes = invoice.Notes,
                 Status = invoice.Status.ToString().ToLowerInvariant(),
                 SendEmail = !string.IsNullOrWhiteSpace(customer.Email),
-                PassProcessingFee = template?.PassProcessingFee ?? true,
+                // Per-invoice override wins over the template's setting.
+                // Per-invoice setting (default on).
+                PassProcessingFee = invoice.PassProcessingFee ?? true,
                 LineItems = invoice.LineItems.Select(li => new PortalLineItem
                 {
                     Description = li.Description,
@@ -407,8 +409,10 @@ public class PaymentPortalService : IDisposable
                     OriginalCurrency = portalPayment.Currency,
                     AmountUSD = portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase)
                         ? portalPayment.Amount
+                        // USD base stored full-precision (no 2dp round), matching the payment path
+                        // above; display rounds at the boundary. See docs/Calculations.md Rule 3.
                         : (invoice.TotalUSD > 0 && invoice.Total > 0
-                            ? Math.Round(portalPayment.Amount * (invoice.TotalUSD / invoice.Total), 2)
+                            ? portalPayment.Amount * (invoice.TotalUSD / invoice.Total)
                             : 0m),
                     Source = PaymentSource.Online,
                     PortalPaymentId = portalPayment.Id.ToString(),
@@ -467,8 +471,9 @@ public class PaymentPortalService : IDisposable
             }
             else if (invoice.TotalUSD > 0 && invoice.Total > 0)
             {
-                // Use invoice's known USD conversion ratio
-                amountUSD = Math.Round(invoiceAmount * (invoice.TotalUSD / invoice.Total), 2);
+                // Use invoice's known USD conversion ratio. The USD base is stored full-precision (no
+                // 2dp round); display rounds at the boundary. See docs/Calculations.md Rule 3.
+                amountUSD = invoiceAmount * (invoice.TotalUSD / invoice.Total);
             }
             else
             {

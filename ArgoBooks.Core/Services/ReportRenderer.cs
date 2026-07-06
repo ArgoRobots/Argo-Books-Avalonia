@@ -87,6 +87,14 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// A single USD amount converted to the report's display currency at its own date
+    /// (docs/Calculations.md §3/§3a). Aggregate <c>Effective*USD</c> through this; never sum the
+    /// native <c>Total</c> field, which silently mixes dollars and euros.
+    /// </summary>
+    private decimal ToDisplayCurrency(decimal amountUSD, DateTime date)
+        => (decimal)ConvertFromUSD((double)amountUSD, date);
+
+    /// <summary>
     /// Resolves the best available default typeface for the current platform.
     /// Tries platform-specific fonts before falling back to SKTypeface.Default.
     /// </summary>
@@ -2598,8 +2606,6 @@ public class ReportRenderer : IDisposable
             TransactionType.Customers => Tr("Customers"),
             TransactionType.Suppliers => Tr("Suppliers"),
             TransactionType.Products => Tr("Products"),
-            TransactionType.Employees => Tr("Employees"),
-            TransactionType.Departments => Tr("Departments"),
             TransactionType.Categories => Tr("Categories"),
             TransactionType.Locations => Tr("Locations"),
             TransactionType.Accountants => Tr("Accountants"),
@@ -2675,7 +2681,7 @@ public class ReportRenderer : IDisposable
             "Unit Cost", "In Stock", "Reserved", "Available",
             "Total Qty", "Rented", "Previous", "New",
             "Capacity", "In Use", "Budget", "Salary", "Price", "Cost",
-            "Employees", "Transactions"
+            "Transactions"
         };
 
         for (int colIndex = 0; colIndex < columns.Count; colIndex++)
@@ -2691,9 +2697,16 @@ public class ReportRenderer : IDisposable
                 if (colIndex < row.Count)
                 {
                     var text = row[colIndex];
-                    // Parse currency or number - remove currency symbols and commas
-                    var cleanText = text.Replace("$", "").Replace(",", "").Replace("€", "").Replace("£", "").Trim();
-                    if (decimal.TryParse(cleanText, out var value))
+                    // Strip the company's actual currency symbol (plus the common ones) and grouping
+                    // separators, then parse invariantly. The old code only stripped $, €, and £, so a
+                    // company on any other currency (¥, ₹, CHF, ...) produced an unparseable string and
+                    // every total showed 0.
+                    var cleanText = text
+                        .Replace(_currencySymbol, "")
+                        .Replace("$", "").Replace("€", "").Replace("£", "")
+                        .Replace(",", "")
+                        .Trim();
+                    if (decimal.TryParse(cleanText, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value))
                         sum += value;
                 }
             }
@@ -2792,9 +2805,10 @@ public class ReportRenderer : IDisposable
                         "ID" => r.InvoiceNumber,
                         "Company" => r.CustomerName,
                         "Due Date" => r.DueDate.ToString("MM/dd/yyyy"),
-                        "Total" => FormatCurrency(r.Total),
-                        "Paid" => FormatCurrency(r.AmountPaid),
-                        "Balance" => FormatCurrency(r.Balance),
+                        // Amounts are USD-normalized; convert to the display currency at the invoice's date.
+                        "Total" => FormatCurrency(ToDisplayCurrency(r.Total, r.IssueDate)),
+                        "Paid" => FormatCurrency(ToDisplayCurrency(r.AmountPaid, r.IssueDate)),
+                        "Balance" => FormatCurrency(ToDisplayCurrency(r.Balance, r.IssueDate)),
                         "Status" => r.Status,
                         _ => ""
                     }).ToList());
@@ -2805,7 +2819,8 @@ public class ReportRenderer : IDisposable
                     {
                         "Date" => r.Date.ToString("MM/dd/yyyy"),
                         "Company" => r.CustomerName,
-                        "Total" => FormatCurrency(r.Amount),
+                        // USD-normalized; convert to the display currency at the payment's date.
+                        "Total" => FormatCurrency(ToDisplayCurrency(r.Amount, r.Date)),
                         "Method" => r.PaymentMethod,
                         "ID" => r.Id,
                         "Invoice" => r.InvoiceId,
@@ -2864,7 +2879,8 @@ public class ReportRenderer : IDisposable
                         "Company" => r.SupplierName,
                         "Date" => r.OrderDate.ToString("MM/dd/yyyy"),
                         "Due Date" => r.ExpectedDeliveryDate.ToString("MM/dd/yyyy"),
-                        "Total" => FormatCurrency(r.Total),
+                        // USD-normalized; convert to the display currency at the order's date.
+                        "Total" => FormatCurrency(ToDisplayCurrency(r.Total, r.OrderDate)),
                         "Status" => r.Status,
                         _ => ""
                     }).ToList());
@@ -2972,31 +2988,6 @@ public class ReportRenderer : IDisposable
                         _ => ""
                     }).ToList());
                 break;
-            case TransactionType.Employees:
-                foreach (var r in tableDataService.GetEmployeesTableData(table))
-                    result.Add(columns.Select(col => col switch
-                    {
-                        "Name" => r.FullName,
-                        "Position" => r.Position,
-                        "Department" => r.DepartmentName,
-                        "Date" => r.HireDate.ToString("MM/dd/yyyy"),
-                        "Type" => r.EmploymentType,
-                        "Salary" => FormatCurrency(r.SalaryAmount),
-                        "Status" => r.Status,
-                        _ => ""
-                    }).ToList());
-                break;
-            case TransactionType.Departments:
-                foreach (var r in tableDataService.GetDepartmentsTableData(table))
-                    result.Add(columns.Select(col => col switch
-                    {
-                        "Name" => r.Name,
-                        "Head" => r.HeadName,
-                        "Employees" => r.EmployeeCount.ToString("N0"),
-                        "Budget" => FormatCurrency(r.Budget),
-                        _ => ""
-                    }).ToList());
-                break;
             case TransactionType.Categories:
                 foreach (var r in tableDataService.GetCategoriesTableData(table))
                     result.Add(columns.Select(col => col switch
@@ -3044,7 +3035,10 @@ public class ReportRenderer : IDisposable
             "Product" => r.ProductName,
             "Qty" => r.Quantity.ToString("N0"),
             "Unit Price" => FormatCurrency(r.UnitPrice),
-            "Total" => FormatCurrency(r.Total),
+            // r.Total is USD-normalized (see ReportTableDataService); convert it to the display
+            // currency at the row's date instead of stamping the symbol on a raw dollar figure. The
+            // footer re-parses these rendered cells, so its total follows automatically.
+            "Total" => FormatCurrency(ToDisplayCurrency(r.Total, r.Date)),
             "Status" => r.Status,
             "Accountant" => r.AccountantName,
             "Shipping" => FormatCurrency(r.ShippingCost),
@@ -4062,8 +4056,6 @@ public class ReportRenderer : IDisposable
             TransactionType.Customers => ["Name", "Company", "Country", "Total", "Status"],
             TransactionType.Suppliers => ["Name", "Contact", "Country", "Terms"],
             TransactionType.Products => ["Name", "SKU", "Category", "Price", "Cost", "Status"],
-            TransactionType.Employees => ["Name", "Position", "Department", "Date", "Salary", "Status"],
-            TransactionType.Departments => ["Name", "Head", "Employees", "Budget"],
             TransactionType.Categories => ["Name", "Type"],
             TransactionType.Locations => ["Name", "Contact", "Capacity", "In Use", "Utilization"],
             TransactionType.Accountants => ["Name", "Email", "Phone", "Transactions"],
@@ -4184,16 +4176,16 @@ public class ReportRenderer : IDisposable
         {
             TransactionType.Revenue => _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total),
+                .Sum(s => ToDisplayCurrency(s.EffectiveTotalUSD, s.Date)),
             TransactionType.Expenses => _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) ,
-            _ => (_companyData.Revenues
+                .Sum(p => ToDisplayCurrency(p.EffectiveTotalUSD, p.Date)),
+            _ => _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total) ) -
-                 (_companyData.Expenses
+                .Sum(s => ToDisplayCurrency(s.EffectiveTotalUSD, s.Date)) -
+                 _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) )
+                .Sum(p => ToDisplayCurrency(p.EffectiveTotalUSD, p.Date))
         };
     }
 
@@ -4226,7 +4218,7 @@ public class ReportRenderer : IDisposable
         {
             var sales = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Select(s => s.Total);
+                .Select(s => ToDisplayCurrency(s.EffectiveTotalUSD, s.Date));
             totals.AddRange(sales);
         }
 
@@ -4234,7 +4226,7 @@ public class ReportRenderer : IDisposable
         {
             var purchases = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Select(p => p.Total);
+                .Select(p => ToDisplayCurrency(p.EffectiveTotalUSD, p.Date));
             totals.AddRange(purchases);
         }
 
@@ -4250,7 +4242,10 @@ public class ReportRenderer : IDisposable
         if (!startDate.HasValue || !endDate.HasValue)
             return 0;
 
-        var periodLength = (endDate.Value - startDate.Value).Days;
+        // +1 so the period is inclusive of both endpoints (Jan 1-31 is 31 days, not 30). Without it
+        // the previous comparison window was one day shorter than the current one, biasing growth
+        // positive (a flat business showed a few percent "growth").
+        var periodLength = (endDate.Value - startDate.Value).Days + 1;
         if (periodLength <= 0) return 0;
 
         var previousStart = startDate.Value.AddDays(-periodLength);
@@ -4258,38 +4253,40 @@ public class ReportRenderer : IDisposable
 
         decimal currentPeriod, previousPeriod;
 
+        // Growth is a ratio, so aggregate in USD (EffectiveTotalUSD): the percentage is
+        // currency-agnostic and summing native Total would mix currencies (Calculations.md §3).
         if (summary.TransactionType == TransactionType.Revenue)
         {
             currentPeriod = _companyData.Revenues
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total);
+                .Sum(s => s.EffectiveTotalUSD);
             previousPeriod = _companyData.Revenues
                 .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
-                .Sum(s => s.Total);
+                .Sum(s => s.EffectiveTotalUSD);
         }
         else if (summary.TransactionType == TransactionType.Expenses)
         {
             currentPeriod = _companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total);
+                .Sum(p => p.EffectiveTotalUSD);
             previousPeriod = _companyData.Expenses
                 .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
-                .Sum(p => p.Total);
+                .Sum(p => p.EffectiveTotalUSD);
         }
         else
         {
             currentPeriod = _companyData.Revenues
                     .Where(s => s.Date >= startDate && s.Date <= endDate)
-                    .Sum(s => s.Total) -
+                    .Sum(s => s.EffectiveTotalUSD) -
                 _companyData.Expenses
                     .Where(p => p.Date >= startDate && p.Date <= endDate)
-                    .Sum(p => p.Total);
+                    .Sum(p => p.EffectiveTotalUSD);
             previousPeriod = _companyData.Revenues
                      .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
-                     .Sum(s => s.Total) -
+                     .Sum(s => s.EffectiveTotalUSD) -
                  _companyData.Expenses
                      .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
-                     .Sum(p => p.Total);
+                     .Sum(p => p.EffectiveTotalUSD);
         }
 
         if (previousPeriod == 0)

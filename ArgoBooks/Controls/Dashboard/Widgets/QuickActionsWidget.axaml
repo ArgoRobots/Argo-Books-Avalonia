@@ -241,20 +241,6 @@
                     </StackPanel>
                 </Button>
 
-                <!-- New Department -->
-                <Button Classes="quick-action-compact" Margin="6" Width="165"
-                        Command="{Binding NewDepartmentCommand}"
-                        IsVisible="{Binding ShowNewDepartment}">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource WarningIconBgBrush}">
-                            <PathIcon Data="{x:Static local:Icons.Departments}"
-                                      Width="16" Height="16" Foreground="{DynamicResource WarningBrush}" />
-                        </Border>
-                        <TextBlock Text="{loc:Loc 'New Department'}" FontSize="12" FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-
                 <!-- New Location -->
                 <Button Classes="quick-action-compact" Margin="6" Width="165"
                         Command="{Binding NewLocationCommand}"

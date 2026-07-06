@@ -252,31 +252,6 @@ public static class ImportSchemaDefinition
                 new("Utilization", "int", "Current utilization", JsonName: "currentUtilization"),
             ],
 
-            [SpreadsheetSheetType.Departments] =
-            [
-                new("ID", "string", "Unique identifier (e.g., DEP-001)", Required: true, JsonName: "id"),
-                new("Name", "string", "Name of the department", Required: true, JsonName: "name"),
-                new("Description", "string", "Department description", JsonName: "description"),
-            ],
-
-            [SpreadsheetSheetType.Employees] =
-            [
-                new("ID", "string", "Unique identifier (e.g., EMP-001)", Required: true, JsonName: "id"),
-                new("First Name", "string", "Employee first name", Required: true, JsonName: "firstName"),
-                new("Last Name", "string", "Employee last name", Required: true, JsonName: "lastName"),
-                new("Email", "string", "Email address", JsonName: "email"),
-                new("Phone", "string", "Contact phone number", JsonName: "phone"),
-                new("Date of Birth", "datetime", "Employee's date of birth", JsonName: "dateOfBirth"),
-                new("Department ID", "string", "Department identifier", JsonName: "departmentId"),
-                new("Position", "string", "Job title or position", JsonName: "position"),
-                new("Hire Date", "datetime", "Date of hire", JsonName: "hireDate"),
-                new("Employment Type", "enum:Full-time,Part-time,Contract,Intern", "Type of employment", JsonName: "employmentType"),
-                new("Salary Type", "enum:Annual,Hourly", "Salary calculation basis", JsonName: "salaryType"),
-                new("Salary Amount", "decimal", "Salary amount per pay period", JsonName: "salaryAmount"),
-                new("Pay Frequency", "enum:Weekly,Bi-weekly,Monthly", "How often employee is paid", JsonName: "payFrequency"),
-                new("Status", "enum:Active,Inactive,OnLeave,Terminated", "Employment status", JsonName: "status"),
-            ],
-
             [SpreadsheetSheetType.RentalInventory] =
             [
                 new("ID", "string", "Unique identifier (e.g., RNT-ITM-001)", Required: true, JsonName: "id"),

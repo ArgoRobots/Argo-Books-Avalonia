@@ -97,9 +97,6 @@ public static class Icons
 
     #region Navigation - Team
 
-    /// <summary>Person icon for Employees.</summary>
-    public const string Employees = "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z";
-
     /// <summary>Building icon for Departments.</summary>
     public const string Departments = "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z";
 
@@ -404,6 +401,9 @@ public static class Icons
 
     /// <summary>Play/triangle button.</summary>
     public const string Play = "M8 5v14l11-7z";
+
+    /// <summary>Pause (two vertical bars).</summary>
+    public const string Pause = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
 
     /// <summary>Info circle (outlined).</summary>
     public const string InfoOutline = "M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z";

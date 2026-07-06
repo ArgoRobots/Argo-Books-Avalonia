@@ -139,6 +139,45 @@ public partial class App
                     // writes them back. Save paths also gate on this, so it's safe either way.
                     await CompanyManager.EnsureReceiptsLoadedAsync();
 
+                    // Generate any recurring invoices that came due while the app was closed.
+                    // Draft-first and idempotent: each schedule is keyed on its next date, so this
+                    // only produces the occurrences actually missed since the last open.
+                    if (CompanyManager.CompanyData != null)
+                    {
+                        var generatedRecurring = ArgoBooks.Core.Services.RecurringInvoiceService
+                            .GenerateDueInvoices(CompanyManager.CompanyData, DateTime.UtcNow);
+                        if (generatedRecurring.Count > 0)
+                        {
+                            await CompanyManager.SaveCompanyAsync();
+                            ArgoBooks.Core.Services.RecurringInvoiceService.RaiseGenerated(generatedRecurring.Count);
+                            var recurringCount = generatedRecurring.Count;
+                            AddNotification(
+                                "Recurring invoices",
+                                recurringCount == 1
+                                    ? "1 recurring invoice was generated and needs to be sent (Recurring tab)."
+                                    : $"{recurringCount} recurring invoices were generated and need to be sent (Recurring tab).",
+                                NotificationType.Info,
+                                OpenRecurringInvoicesTab);
+                        }
+
+                        // Remind about recurring drafts still waiting to be sent: ones generated on an
+                        // earlier open that the user hasn't sent yet. Exclude the ones just generated above
+                        // (they already got the "added to drafts" notice) so the same drafts aren't announced twice.
+                        var pendingRecurringDrafts = CompanyManager.CompanyData.Invoices.Count(
+                            i => i.Status == InvoiceStatus.Draft && !string.IsNullOrEmpty(i.RecurringInvoiceId));
+                        var awaitingSend = pendingRecurringDrafts - generatedRecurring.Count;
+                        if (awaitingSend > 0)
+                        {
+                            AddNotification(
+                                "Recurring invoices",
+                                awaitingSend == 1
+                                    ? "1 recurring invoice is waiting to be sent."
+                                    : $"{awaitingSend} recurring invoices are waiting to be sent.",
+                                NotificationType.Warning,
+                                OpenRecurringInvoicesTab);
+                        }
+                    }
+
                     // Reconcile and process any pending currency conversions
                     if (PendingConversionService != null && CompanyManager.CompanyData != null)
                     {
@@ -730,8 +769,23 @@ public partial class App
             {
                 if (!CompanyManager.IsSampleCompany)
                 {
-                    try { await CompanyManager.SaveCompanyAsync(); }
-                    catch { /* Continue even if save fails */ }
+                    try
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Don't close on a failed save: CloseCompanyAsync discards unsaved edits.
+                        // Abort the restart and keep the company open to protect the user's data.
+                        ErrorLogger?.LogWarning($"Save before tutorial restart failed: {ex.Message}", "AutoSave");
+                        if (_welcomeScreenViewModel != null)
+                            _welcomeScreenViewModel.IsTutorialMode = false;
+                        _appShellViewModel.AddNotification(
+                            "Could not restart tutorial",
+                            "Your company could not be saved, so it was left open to protect unsaved changes. Please save manually and try again.",
+                            NotificationType.Warning);
+                        return;
+                    }
                 }
                 await CompanyManager.CloseCompanyAsync();
             }
@@ -1627,7 +1681,15 @@ public partial class App
                     {
                         _mainWindowViewModel?.HideLoading();
                         ErrorLogger?.LogWarning($"Auto-save before lock failed: {ex.Message}", "AutoSave");
-                        // Continue to close even if save fails - user can reopen
+                        // Do NOT close on a failed save: CloseCompanyAsync discards the working copy and
+                        // every unsaved edit. Abort the lock and keep the session open so the user can
+                        // save manually, matching the window-close path which also refuses to discard.
+                        _appShellViewModel.AddNotification(
+                            "Auto-lock postponed",
+                            "Could not auto-save before locking, so your session stays open to protect unsaved changes. Please save manually.",
+                            NotificationType.Warning);
+                        _idleDetectionService.ResetIdleTimer();
+                        return;
                     }
                 }
 
@@ -1652,7 +1714,12 @@ public partial class App
             if (companySettings != null)
             {
                 var security = companySettings.Security;
-                _idleDetectionService.Configure(security.AutoLockEnabled, security.AutoLockMinutes);
+                // The timeout is authoritative: "Never" (0) is off, any positive value is on, and it
+                // requires a password. The separate AutoLockEnabled flag defaults to false while the
+                // default AutoLockMinutes is 5, so trusting it left auto-lock disabled even though the
+                // settings dropdown showed "5 minutes". Derive enablement from the timeout instead.
+                var autoLockOn = security.AutoLockMinutes > 0 && CompanyManager.IsEncrypted;
+                _idleDetectionService.Configure(autoLockOn, security.AutoLockMinutes);
 
                 // Sync the UI with company settings
                 var timeoutString = security.AutoLockMinutes switch

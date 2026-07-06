@@ -107,6 +107,44 @@ public partial class Invoice : ObservableObject
     public bool DiscountIsPercent { get; set; }
 
     /// <summary>
+    /// Flat shipping amount added to the taxable base.
+    /// </summary>
+    [JsonPropertyName("shippingAmount")]
+    public decimal ShippingAmount { get; set; }
+
+    /// <summary>
+    /// Whether the tax value is a flat amount rather than a percentage of the taxable base.
+    /// </summary>
+    [JsonPropertyName("taxIsFixed")]
+    public bool TaxIsFixed { get; set; }
+
+    /// <summary>Id of the template this invoice was created with, so it can be re-rendered (e.g. the
+    /// read-only viewer) with the layout the customer received. Empty for older invoices, which fall
+    /// back to the default template.</summary>
+    [JsonPropertyName("templateId")]
+    public string TemplateId { get; set; } = string.Empty;
+
+    // Per-invoice display overrides. Null = inherit the selected template's setting; a value
+    // overrides it for this invoice only, so the invoice's appearance is frozen at creation and
+    // isn't changed by later template edits.
+
+    /// <summary>Override: pass the card processing fee to the customer on online payments.</summary>
+    [JsonPropertyName("passProcessingFee")]
+    public bool? PassProcessingFee { get; set; }
+
+    /// <summary>Override: show the company address block.</summary>
+    [JsonPropertyName("showCompanyAddress")]
+    public bool? ShowCompanyAddress { get; set; }
+
+    /// <summary>Override: show the company phone number.</summary>
+    [JsonPropertyName("showCompanyPhone")]
+    public bool? ShowCompanyPhone { get; set; }
+
+    /// <summary>Override: show the prominent "due date" badge.</summary>
+    [JsonPropertyName("showDueDateProminent")]
+    public bool? ShowDueDateProminent { get; set; }
+
+    /// <summary>
     /// Total amount due.
     /// </summary>
     [JsonPropertyName("total")]

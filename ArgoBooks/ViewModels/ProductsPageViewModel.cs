@@ -143,10 +143,11 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterProducts();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterProducts();
+        });
 
     [ObservableProperty]
     private string _filterItemType = "All";
@@ -362,6 +363,26 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Subscribe to plan status changes so we update when user upgrades
         App.PlanStatusChanged += OnPlanStatusChanged;
+    }
+
+    /// <summary>
+    /// Unsubscribes from the events wired up in the constructor so the VM isn't kept alive (and
+    /// reacting) after a company switch.
+    /// </summary>
+    public override void Cleanup()
+    {
+        base.Cleanup();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ProductModalsViewModel != null)
+        {
+            App.ProductModalsViewModel.ProductSaved -= OnProductSaved;
+            App.ProductModalsViewModel.ProductDeleted -= OnProductDeleted;
+            App.ProductModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ProductModalsViewModel.FiltersCleared -= OnFiltersCleared;
+        }
+        App.PlanStatusChanged -= OnPlanStatusChanged;
     }
 
     /// <summary>

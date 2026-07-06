@@ -319,9 +319,6 @@ public class AiImportUsageService : IDisposable
         [JsonPropertyName("tier")]
         public string? Tier { get; init; }
 
-        [JsonPropertyName("usage_month")]
-        public string? UsageMonth { get; init; }
-
         [JsonPropertyName("resets_at")]
         public string? ResetsAt { get; init; }
 

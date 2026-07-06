@@ -13,7 +13,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Returns page displaying expense and customer returns.
 /// </summary>
-public partial class ReturnsPageViewModel : ViewModelBase
+public partial class ReturnsPageViewModel : ViewModelBase, ICleanupViewModel
 {
     #region Responsive Header
 
@@ -123,10 +123,11 @@ public partial class ReturnsPageViewModel : ViewModelBase
     private string? _searchQuery;
 
     partial void OnSearchQueryChanged(string? value)
-    {
-        CurrentPage = 1;
-        FilterReturns();
-    }
+        => DebounceSearch(() =>
+        {
+            CurrentPage = 1;
+            FilterReturns();
+        });
 
     #endregion
 
@@ -217,6 +218,25 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         // Subscribe to language changes to refresh translated content
         LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Unsubscribes from app-level and singleton events so this page VM can be garbage collected when
+    /// the company is switched. Called by ClearPageCaches via <see cref="ICleanupViewModel"/>.
+    /// </summary>
+    public void Cleanup()
+    {
+        CancelPendingSearch();
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+        if (App.NavigationService != null)
+            App.NavigationService.Navigated -= OnNavigated;
+        if (App.ReturnsModalsViewModel != null)
+        {
+            App.ReturnsModalsViewModel.FiltersApplied -= OnFiltersApplied;
+            App.ReturnsModalsViewModel.FiltersCleared -= OnFiltersCleared;
+            App.ReturnsModalsViewModel.ReturnUndone -= OnReturnUndone;
+        }
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
@@ -431,18 +451,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return "Unknown";
 
-        if (returnRecord.ReturnType == "Expense")
-        {
-            // For expense returns, the ProcessedBy is typically an employee
-            var employee = companyData.GetEmployee(returnRecord.ProcessedBy ?? "");
-            return employee?.FullName ?? returnRecord.ProcessedBy ?? "Unknown";
-        }
-        else
-        {
-            // For customer returns, the ProcessedBy is typically an accountant
-            var accountant = companyData.GetAccountant(returnRecord.ProcessedBy ?? "");
-            return accountant?.Name ?? returnRecord.ProcessedBy ?? "Unknown";
-        }
+        var accountant = companyData.GetAccountant(returnRecord.ProcessedBy ?? "");
+        return accountant?.Name ?? returnRecord.ProcessedBy ?? "Unknown";
     }
 
     private void UpdatePageNumbers()

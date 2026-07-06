@@ -55,8 +55,10 @@ internal static class SpreadsheetRowReader
     }
 
     public static List<List<object?>> GetDataRows(IXLWorksheet worksheet, int columnCount)
+        => GetDataRows(worksheet, columnCount, FindHeaderRow(worksheet));
+
+    public static List<List<object?>> GetDataRows(IXLWorksheet worksheet, int columnCount, int headerRow)
     {
-        var headerRow = FindHeaderRow(worksheet);
         var rows = new List<List<object?>>();
         var lastRow = worksheet.LastRowUsed()?.RowNumber() ?? 1;
 
@@ -192,9 +194,24 @@ internal static class SpreadsheetRowReader
         {
             DateTime dt => dt,
             double d => DateTime.FromOADate(d),
-            string s when DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out var result) => result,
+            string s => ParseDateString(s),
             _ => DateTime.MinValue
         };
+    }
+
+    // Day-first formats the invariant (month-first) parse rejects, e.g. UK/EU "15/03/2023" or
+    // "15.03.2023". Tried ONLY after the invariant parse fails, so a date that already parses
+    // month-first (like "03/01/2023" -> March 1) is never reinterpreted as day-first.
+    private static readonly string[] DayFirstDateFormats =
+        ["d/M/yyyy", "dd/MM/yyyy", "d.M.yyyy", "dd.MM.yyyy", "d-M-yyyy", "dd-MM-yyyy"];
+
+    private static DateTime ParseDateString(string s)
+    {
+        if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.None, out var result))
+            return result;
+        if (DateTime.TryParseExact(s, DayFirstDateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dayFirst))
+            return dayFirst;
+        return DateTime.MinValue;
     }
 
     public static DateTime? GetNullableDateTime(List<object?> row, List<string> headers, string columnName)

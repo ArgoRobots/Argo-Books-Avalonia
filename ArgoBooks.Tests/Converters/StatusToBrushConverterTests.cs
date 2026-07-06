@@ -59,36 +59,6 @@ public class StatusToBrushConverterTests
 
     #endregion
 
-    #region Pre-configured Payment Status Tests
-
-    [Theory]
-    [InlineData("Current", "#DCFCE7")]
-    [InlineData("Overdue", "#FEF3C7")]
-    [InlineData("Delinquent", "#FEE2E2")]
-    public void PaymentStatusBackground_ReturnsCorrectColor(string status, string expectedHex)
-    {
-        var converter = StatusConverters.PaymentStatusBackground;
-        var result = converter.Convert(status, typeof(IBrush), null, null!) as ISolidColorBrush;
-
-        Assert.NotNull(result);
-        Assert.Equal(Color.Parse(expectedHex), result.Color);
-    }
-
-    [Theory]
-    [InlineData("Current", "#166534")]
-    [InlineData("Overdue", "#92400E")]
-    [InlineData("Delinquent", "#DC2626")]
-    public void PaymentStatusForeground_ReturnsCorrectColor(string status, string expectedHex)
-    {
-        var converter = StatusConverters.PaymentStatusForeground;
-        var result = converter.Convert(status, typeof(IBrush), null, null!) as ISolidColorBrush;
-
-        Assert.NotNull(result);
-        Assert.Equal(Color.Parse(expectedHex), result.Color);
-    }
-
-    #endregion
-
     #region Pre-configured Transaction Status Tests
 
     [Theory]

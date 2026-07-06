@@ -277,6 +277,31 @@
         <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
     </Style>
 
+    <!-- form-combobox applied to a Button (e.g. the category icon "Choose..." picker). The selector
+         above only matches ComboBox, so such a Button fell back to the default (gray) button. Give it
+         the same surface/border form-control look, including hover, so it fits the light theme. -->
+    <Style Selector="Button.form-combobox">
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource FormControlCornerRadius}" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="MinHeight" Value="{StaticResource FormControlHeight}" />
+    </Style>
+    <Style Selector="Button.form-combobox /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    </Style>
+    <Style Selector="Button.form-combobox:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
+    </Style>
+    <Style Selector="Button.form-combobox:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
+    </Style>
+
     <!-- Form DatePicker -->
     <Style Selector="DatePicker.form-datepicker">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />

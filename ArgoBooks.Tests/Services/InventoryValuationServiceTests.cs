@@ -110,4 +110,38 @@ public class InventoryValuationServiceTests
     {
         Assert.Equal(0m, InventoryValuationService.TotalValueAsOf(new CompanyData(), new DateTime(2024, 6, 1)));
     }
+
+    // BUG: a stock adjustment made ON the as-of day (with a real time-of-day Timestamp, as every
+    // manual/rental adjustment has) must be INCLUDED in an "as of that day" valuation. The as-of date
+    // is date-only (midnight), so a 9am adjustment currently counts as "after" the as-of date and is
+    // wrongly rolled back. The Balance Sheet "ending today" therefore drops today's stock changes.
+    [Fact]
+    public void StockOnHandAsOf_SameDayTimestampAdjustment_IsIncludedNotRolledBack()
+    {
+        // +50 made at 9am today leaves InStock = 150.
+        var item = new InventoryItem { Id = "I1", InStock = 150 };
+        var adjustments = new List<StockAdjustment>
+        {
+            Adj("I1", AdjustmentType.Add, 50, 100, 150, new DateTime(2024, 6, 15, 9, 0, 0))
+        };
+        DateTime Effective(StockAdjustment a) => a.Timestamp;
+
+        // As of 2024-06-15 (the day it happened), the add should count: 150, not 100.
+        Assert.Equal(150,
+            InventoryValuationService.StockOnHandAsOf(item, adjustments, Effective, new DateTime(2024, 6, 15)));
+    }
+
+    [Fact]
+    public void TotalValueAsOf_SameDayManualAdjustment_IsIncludedInValue()
+    {
+        // A manual adjustment (no ReferenceNumber -> effective date is its Timestamp) made at 9am today.
+        var data = new CompanyData();
+        data.Inventory.Add(new InventoryItem { Id = "I1", InStock = 150, UnitCost = 2m });
+        data.StockAdjustments.Add(
+            Adj("I1", AdjustmentType.Add, 50, 100, 150, new DateTime(2024, 6, 15, 9, 0, 0)));
+
+        // Balance Sheet ending 2024-06-15 (date-only) should value 150 units * $2 = $300.
+        Assert.Equal(300m,
+            InventoryValuationService.TotalValueAsOf(data, new DateTime(2024, 6, 15)));
+    }
 }

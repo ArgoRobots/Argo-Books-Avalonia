@@ -53,13 +53,23 @@ public class CompressionService
             cancellationToken.ThrowIfCancellationRequested();
 
             var entryName = Path.GetRelativePath(basePath, filePath).Replace('\\', '/');
-            var entry = new PaxTarEntry(TarEntryType.RegularFile, entryName)
+            // PaxTarEntry does not own its DataStream, so dispose it ourselves. Use try/finally:
+            // if WriteEntryAsync throws (cancellation, I/O error) the stream must still be closed,
+            // otherwise the file handle leaks and can block deleting the temp directory afterwards.
+            var dataStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            try
             {
-                DataStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read)
-            };
+                var entry = new PaxTarEntry(TarEntryType.RegularFile, entryName)
+                {
+                    DataStream = dataStream
+                };
 
-            await tarWriter.WriteEntryAsync(entry, cancellationToken);
-            await entry.DataStream.DisposeAsync();
+                await tarWriter.WriteEntryAsync(entry, cancellationToken);
+            }
+            finally
+            {
+                await dataStream.DisposeAsync();
+            }
         }
 
         // Recursively add subdirectories

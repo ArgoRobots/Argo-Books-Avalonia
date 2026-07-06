@@ -530,7 +530,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount,
             FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee,
             UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0 && Total != 0
-                ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+                ? ConvertedTotal.AmountUSD / Total * averageUnitPrice
                 : averageUnitPrice,
             IsPendingConversion = IsPendingConversion
         };
@@ -639,7 +639,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.DiscountUSD = ConvertedDiscount?.AmountUSD ?? ModalDiscount;
         expense.FeeUSD = ConvertedFee?.AmountUSD ?? ModalFee;
         expense.UnitPriceUSD = ConvertedTotal != null && ConvertedTotal.OriginalCurrency != "USD" && Subtotal > 0 && Total != 0
-            ? Math.Round(ConvertedTotal.AmountUSD / Total * averageUnitPrice, 2)
+            ? ConvertedTotal.AmountUSD / Total * averageUnitPrice
             : averageUnitPrice;
         expense.IsPendingConversion = IsPendingConversion;
 
@@ -686,6 +686,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         var editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, expense.Id, isExpense: true);
 
         var capturedNewReceipt = newReceipt;
+        // Snapshot the NEW state so redo restores the edit itself. The old redo re-read live ViewModel
+        // fields, so once the modal had been reused or cleared, redo wrote zeros/blank values (the
+        // expense amount went to 0 and the notes were lost).
+        var edited = CaptureTransactionState(expense);
         var action = new DelegateAction(
             $"Edit expense {EditingTransactionId}",
             () =>
@@ -698,26 +702,9 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             },
             () =>
             {
-                expense.Date = ModalDate?.DateTime ?? DateTime.Now;
-                expense.SupplierId = SelectedSupplier?.Id;
-                expense.Description = description;
-                expense.LineItems = modelLineItems;
-                expense.Quantity = totalQuantity;
-                expense.UnitPrice = averageUnitPrice;
-                expense.Amount = Subtotal;
-                expense.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;
-                expense.TaxAmount = TaxAmount;
-                expense.ShippingCost = ModalShipping;
-                expense.Discount = ModalDiscount;
-                expense.Fee = ModalFee;
-                expense.Total = Total;
-                expense.PaymentMethod = pm;
-                expense.Notes = ModalNotes;
-                if (capturedNewReceipt != null)
-                {
-                    expense.ReceiptId = capturedNewReceipt.Id;
+                RestoreTransactionState(expense, edited);
+                if (capturedNewReceipt != null && !companyData.Receipts.Contains(capturedNewReceipt))
                     companyData.Receipts.Add(capturedNewReceipt);
-                }
                 editResults = AdjustInventoryForEdit(companyData, original.LineItems, modelLineItems, expense.Id, isExpense: true);
                 RaiseTransactionSaved();
             });

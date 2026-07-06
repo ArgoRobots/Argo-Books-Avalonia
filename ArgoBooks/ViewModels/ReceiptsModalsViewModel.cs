@@ -44,6 +44,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ExtractedSubtotal = "22.86",
             ExtractedTax = "2.88",
             ExtractedDiscount = "0.00",
+            ExtractedShipping = "0.00",
             ExtractedSupplier = "Independent Grocer",
             SelectedPaymentMethod = "Debit Card"
         };
@@ -435,6 +436,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string _extractedDiscount = string.Empty;
 
     [ObservableProperty]
+    private string _extractedShipping = string.Empty;
+
+    [ObservableProperty]
     private string _extractedTotal = string.Empty;
 
     [ObservableProperty]
@@ -545,6 +549,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnExtractedSubtotalChanged(string value) => ValidateTotals();
     partial void OnExtractedTaxChanged(string value) => ValidateTotals();
     partial void OnExtractedDiscountChanged(string value) => ValidateTotals();
+    partial void OnExtractedShippingChanged(string value) => ValidateTotals();
 
     partial void OnHasTotalErrorChanged(bool value)
     {
@@ -570,6 +575,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private bool _isLoadingAiSuggestions;
 
     private SupplierCategorySuggestion? _aiSuggestion;
+
+    // Bumped whenever the scan modal resets (close or a new scan starts). An in-flight AI suggestion
+    // call captures the current value and discards its result if the generation has moved on, so a
+    // late suggestion for a previous receipt can't land on the receipt now on screen (single-scan flow).
+    private int _scanGeneration;
 
     [ObservableProperty]
     private bool _showCreateSupplierSuggestion;
@@ -1334,6 +1344,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (decimal.TryParse(ExtractedTax, out var tax)) item.ScanResult.TaxAmount = tax;
         if (decimal.TryParse(ExtractedTotal, out var tot)) item.ScanResult.TotalAmount = tot;
         if (decimal.TryParse(ExtractedDiscount, out var disc)) item.ScanResult.Discount = disc;
+        if (decimal.TryParse(ExtractedShipping, out var ship)) item.ScanResult.Shipping = ship;
 
         item.ScanResult.PaymentMethod = SelectedPaymentMethod;
 
@@ -1413,6 +1424,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var subtotal = scanResult.Subtotal ?? 0;
             var taxAmount = scanResult.TaxAmount ?? 0;
             var discount = scanResult.Discount ?? 0;
+            var shipping = scanResult.Shipping ?? 0;
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
             // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
@@ -1480,6 +1492,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
                     TaxAmount = taxAmount,
                     Discount = discount,
+                    ShippingCost = shipping,
                     Total = total,
                     PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var rpm) ? rpm : PaymentMethod.Cash,
                     PaymentStatus = RevenuePaymentStatus.Paid,
@@ -1512,6 +1525,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
                     TaxAmount = taxAmount,
                     Discount = discount,
+                    ShippingCost = shipping,
                     Total = total,
                     PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var epm) ? epm : PaymentMethod.Cash,
                     Notes = notes,
@@ -1826,6 +1840,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 .Sum(item => Math.Abs(item.TotalPrice));
             ExtractedDiscount = discountTotal > 0 ? discountTotal.ToString("F2") : "0.00";
 
+            ExtractedShipping = result.Shipping is > 0 ? result.Shipping.Value.ToString("F2") : "0.00";
+
             // Line items (filter out discounts and non-product lines)
             LineItems.Clear();
             foreach (var item in result.LineItems)
@@ -2048,6 +2064,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var taxAmount);
         decimal.TryParse(ExtractedDiscount, out var discount);
+        decimal.TryParse(ExtractedShipping, out var shipping);
 
         // Create line items
         var lineItems = LineItems.Select(li =>
@@ -2085,12 +2102,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (IsRevenue)
         {
             // Create revenue transaction
-            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
+            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
         else
         {
             // Create expense transaction
-            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
+            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
 
         // The receipt was added: ownership of the auto-created supplier/category/products
@@ -2129,20 +2146,21 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         var rates = Core.Services.ExchangeRateService.Instance;
-        if (rates != null && rates.TryConvertExact(txn.Total, currency, "USD", txn.Date, out var totalUsd))
+        if (rates != null && rates.TryConvertToUsdBase(txn.Total, currency, txn.Date, out var totalUsd))
         {
             // Convert every amount, not just the total: UnitPriceUSD/DiscountUSD/etc. feed USD-based
-            // reports, COGS, and cross-currency edits, so leaving them at 0 would undercount.
+            // reports, COGS, and cross-currency edits, so leaving them at 0 would undercount. The USD
+            // base is stored full-precision (no 2dp round); display rounds. See Calculations.md Rule 3.
             txn.TotalUSD = totalUsd;
-            rates.TryConvertExact(txn.TaxAmount, currency, "USD", txn.Date, out var taxUsd);
+            rates.TryConvertToUsdBase(txn.TaxAmount, currency, txn.Date, out var taxUsd);
             txn.TaxAmountUSD = taxUsd;
-            rates.TryConvertExact(txn.ShippingCost, currency, "USD", txn.Date, out var shipUsd);
+            rates.TryConvertToUsdBase(txn.ShippingCost, currency, txn.Date, out var shipUsd);
             txn.ShippingCostUSD = shipUsd;
-            rates.TryConvertExact(txn.Discount, currency, "USD", txn.Date, out var discUsd);
+            rates.TryConvertToUsdBase(txn.Discount, currency, txn.Date, out var discUsd);
             txn.DiscountUSD = discUsd;
-            rates.TryConvertExact(txn.Fee, currency, "USD", txn.Date, out var feeUsd);
+            rates.TryConvertToUsdBase(txn.Fee, currency, txn.Date, out var feeUsd);
             txn.FeeUSD = feeUsd;
-            rates.TryConvertExact(txn.UnitPrice, currency, "USD", txn.Date, out var unitUsd);
+            rates.TryConvertToUsdBase(txn.UnitPrice, currency, txn.Date, out var unitUsd);
             txn.UnitPriceUSD = unitUsd;
             txn.IsPendingConversion = false;
             return;
@@ -2169,7 +2187,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
-        decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
+        decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
         companyData.IdCounters.Expense++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
@@ -2187,6 +2205,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
             TaxAmount = taxAmount,
             Discount = discount,
+            ShippingCost = shipping,
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = Notes,
@@ -2255,7 +2274,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     private void CreateRevenueTransaction(CompanyData companyData, string receiptId, string? fileData,
-        decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
+        decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
@@ -2274,6 +2293,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
             TaxAmount = taxAmount,
             Discount = discount,
+            ShippingCost = shipping,
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             PaymentStatus = RevenuePaymentStatus.Paid,
@@ -2342,33 +2362,54 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         App.UndoRedoManager.RecordAction(action);
     }
 
+    // One-shot handlers for the "create entity from this modal" flows. Stored so a cancelled create
+    // (which never raises the *Saved event) can be detached before the next attempt, instead of
+    // leaking onto the singleton create-modal VMs. See CreateModalSubscription.
+    private EventHandler? _supplierSavedHandler;
+    private EventHandler? _productSavedHandler;
+
     [RelayCommand]
     private void OpenCreateSupplier()
     {
         var supplierModals = App.SupplierModalsViewModel;
         if (supplierModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            supplierModals.SupplierSaved -= OnSaved;
-            LoadSupplierOptions();
-        }
-        supplierModals.SupplierSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _supplierSavedHandler,
+            h => supplierModals.SupplierSaved += h,
+            h => supplierModals.SupplierSaved -= h,
+            () =>
+            {
+                LoadSupplierOptions();
+
+                // Auto-select the supplier the user just created.
+                var newSupplier = SupplierOptions.FirstOrDefault(sup => sup.Id == supplierModals.LastSavedSupplierId);
+                if (newSupplier != null)
+                    SelectedSupplier = newSupplier;
+            });
         supplierModals.OpenAddModal();
     }
 
     [RelayCommand]
-    private void OpenCreateProduct()
+    private void OpenCreateProduct(ScannedLineItemViewModel? lineItem)
     {
         var productModals = App.ProductModalsViewModel;
         if (productModals == null) return;
 
-        void OnSaved(object? s, EventArgs e)
-        {
-            productModals.ProductSaved -= OnSaved;
-            LoadProductOptions();
-        }
-        productModals.ProductSaved += OnSaved;
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => productModals.ProductSaved += h,
+            h => productModals.ProductSaved -= h,
+            () =>
+            {
+                LoadProductOptions();
+
+                // Auto-select the new product into the line item whose dropdown launched the create.
+                if (lineItem != null)
+                {
+                    var newProduct = ProductOptions.FirstOrDefault(p => p.Id == productModals.LastSavedProductId);
+                    if (newProduct != null)
+                        lineItem.SelectedProduct = newProduct;
+                }
+            });
         productModals.OpenAddModal();
     }
 
@@ -2494,6 +2535,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         // Capture the bulk item (if any) so we can discard results if the user navigated away
         var bulkItemAtStart = CurrentBulkItem;
+        // Capture the scan generation so we can discard results if the modal was reset / a new scan
+        // started while this AI call was in flight (single-scan flow).
+        var scanGenerationAtStart = _scanGeneration;
 
         var geminiService = new GeminiService(App.ErrorLogger, App.TelemetryManager);
 
@@ -2539,7 +2583,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
             var suggestion = await geminiService.GetSupplierCategorySuggestionAsync(request);
 
-            // If in bulk review and user navigated to a different item, discard stale results
+            // Discard stale results: either the modal was reset / a new scan started (single-scan
+            // flow), or in bulk review the user navigated to a different item.
+            if (_scanGeneration != scanGenerationAtStart)
+                return;
             if (IsBulkReviewOpen && CurrentBulkItem != bulkItemAtStart)
                 return;
 
@@ -2598,20 +2645,21 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var tax);
         decimal.TryParse(ExtractedDiscount, out var discount);
+        decimal.TryParse(ExtractedShipping, out var shipping);
 
         var lineItemSum = LineItems
             .Sum(li => decimal.TryParse(li.TotalPrice, out var p) ? p : 0);
 
-        // Check line items + tax - discount against total
-        var expectedTotal = lineItemSum + tax - discount;
+        // Check line items + tax + shipping - discount against total
+        var expectedTotal = lineItemSum + tax + shipping - discount;
         var diff = Math.Abs(expectedTotal - total);
 
         if (diff > 0.02m)
         {
             HasTotalMismatchWarning = true;
             TotalMismatchWarningMessage = string.Format(
-                "Line items ({0:C}) + tax ({1:C}) - discount ({2:C}) = {3:C}, but total is {4:C}. Some items may be incorrect.".Translate(),
-                lineItemSum, tax, discount, expectedTotal, total);
+                "Line items ({0:C}) + tax ({1:C}) + shipping ({2:C}) - discount ({3:C}) = {4:C}, but total is {5:C}. Some items may be incorrect.".Translate(),
+                lineItemSum, tax, shipping, discount, expectedTotal, total);
         }
     }
 
@@ -2949,6 +2997,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ExtractedSubtotal = string.Empty;
         ExtractedTax = string.Empty;
         ExtractedDiscount = string.Empty;
+        ExtractedShipping = string.Empty;
         ExtractedTotal = string.Empty;
         ConfidenceScore = 0;
         ConfidenceText = string.Empty;
@@ -2970,7 +3019,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _currentImageData = null;
         _currentFileName = null;
 
-        // Reset AI suggestion state
+        // Reset AI suggestion state. Bump the generation so any in-flight suggestion call for the
+        // previous receipt discards its result instead of applying it to the next receipt.
+        _scanGeneration++;
         IsLoadingAiSuggestions = false;
         _aiSuggestion = null;
         ShowCreateSupplierSuggestion = false;
@@ -3036,6 +3087,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedTotal, out var total);
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var tax);
+        decimal.TryParse(ExtractedShipping, out var shipping);
 
         return new OcrData
         {
@@ -3044,6 +3096,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ExtractedAmount = total,
             ExtractedSubtotal = subtotal,
             ExtractedTaxAmount = tax,
+            ExtractedShipping = shipping,
             Confidence = ConfidenceScore,
             LineItems = LineItems.Select(li =>
             {
@@ -3072,6 +3125,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ExtractedAmount = result.TotalAmount ?? 0,
             ExtractedSubtotal = result.Subtotal ?? 0,
             ExtractedTaxAmount = result.TaxAmount ?? 0,
+            ExtractedShipping = result.Shipping ?? 0,
             Confidence = result.Confidence,
             LineItems = result.LineItems.Select(li => new OcrLineItem
             {
