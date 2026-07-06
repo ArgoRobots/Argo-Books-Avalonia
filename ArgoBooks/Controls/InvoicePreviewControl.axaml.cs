@@ -190,6 +190,26 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         catch(e) { try { window.webkit.messageHandlers.webview.postMessage(msg); } catch(e2) {} }
     }
 
+    // Restrict a numeric field to digits and a single decimal point, blocking the keystroke or paste
+    // outright so junk never lands in a price box in the first place (Preview no longer has to scrub it).
+    function attachNumericFilter(el) {
+        el.addEventListener('beforeinput', function(e) {
+            if (!e.inputType || e.inputType.indexOf('insert') !== 0) return; // deletions/formatting: allow
+            var text = e.data;
+            if (text == null && e.dataTransfer) text = e.dataTransfer.getData('text'); // paste/drop
+            if (text == null || text === '') return; // composition/unknown insert: leave to the backstop
+            if (/[^0-9.]/.test(text)) { e.preventDefault(); return; } // anything but a digit or a point
+            if (text.indexOf('.') !== -1) {
+                // Allow a point only if the field would still have at most one (accounting for a replaced selection).
+                var selText = (window.getSelection && window.getSelection().toString()) || '';
+                var curDots = ((el.textContent || '').match(/[.]/g) || []).length;
+                var selDots = (selText.match(/[.]/g) || []).length;
+                var addDots = (text.match(/[.]/g) || []).length;
+                if ((curDots - selDots) + addDots > 1) e.preventDefault();
+            }
+        });
+    }
+
     // Text fields (description, qty, rate, notes) are contenteditable. customer/dates are pickers below.
     var pickers = { customer: 1, issueDate: 1, dueDate: 1 };
     var timers = {};
@@ -207,6 +227,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         if (single) {
             el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
         }
+        if (el.dataset.field === 'quantity' || el.dataset.field === 'rate') attachNumericFilter(el);
     });
 
     // ---- shared entity dropdown: products (per line) and the customer on Bill To ----
@@ -400,6 +421,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         // Vertically center via line-height (matches the 30px box) rather than display:flex - an empty
         // contenteditable flex box renders the caret at the top instead of centered.
         val.style.cssText = 'line-height:30px;text-align:right;padding:0 6px;min-width:44px;flex:1 1 auto;outline:none;white-space:nowrap;overflow:hidden';
+        attachNumericFilter(val);
         box.appendChild(val);
 
         if (isPercent) {
