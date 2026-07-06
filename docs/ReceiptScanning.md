@@ -6,9 +6,9 @@ All AI calls route through the Argo Books server. Your device never holds a Goog
 
 ## Supported formats
 
-JPEG, PNG, PDF, BMP, TIFF.
+JPEG, PNG, WebP, PDF, BMP, TIFF.
 
-Images are pre-processed before scanning: EXIF orientation is corrected, contrast is boosted slightly, and the image is sharpened to help with faded thermal receipts. Receipts over 4 MB are progressively downscaled until they fit.
+Images are pre-processed before scanning: EXIF orientation is corrected, contrast is boosted slightly, and the image is sharpened to help with faded thermal receipts.
 
 For multi-page PDFs, the preview shows page 1, but the AI sees every page.
 

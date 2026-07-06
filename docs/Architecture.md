@@ -30,14 +30,14 @@ The application follows the [Model-View-ViewModel (MVVM)](https://docs.avaloniau
 | **ArgoBooks** | Views, ViewModels, Controls, Modals, UI Services |
 | **ArgoBooks.Core** | Models, Business Services, Data, Security, Platform |
 | **ArgoBooks.Desktop** | Desktop entry point (Windows/macOS/Linux) |
-| **ArgoBooks.Browser** | WebAssembly entry point |
 | **ArgoBooks.Tests** | Unit tests (xUnit) |
+| **ArgoBooks.TranslationTool** | Offline tool that generates language files via Azure Translator |
 
 ## Design Principles
 
 1. **MVVM Pattern** - Clear separation between Views, ViewModels, and Models
 2. **Service-Oriented** - Business logic encapsulated in dedicated services
-3. **Cross-Platform** - Single codebase targets Windows, macOS, Linux, and Web
+3. **Cross-Platform** - Single codebase targets Windows, macOS, and Linux
 4. **In-Memory Data** - Fast operations with full data loaded in memory
 5. **File-Based Storage** - Portable `.argo` files instead of database
 6. **Compiled Bindings** - Performance-optimized data binding

@@ -131,18 +131,18 @@ How an invoice's grand total is built from its parts. The Invoice model stores t
 1. Subtotal           = Σ over LineItem of (Quantity × UnitPrice − Discount)   (the stored/displayed Subtotal)
 2. invoiceDiscount    = DiscountIsPercent ? Subtotal × DiscountAmount/100 : DiscountAmount
 3. invoiceCustomFee   = CustomFeeIsPercent ? Subtotal × CustomFeeAmount/100 : CustomFeeAmount
-4. TaxableBase        = Subtotal − invoiceDiscount + invoiceCustomFee
+4. TaxableBase        = Subtotal − invoiceDiscount + invoiceCustomFee + ShippingAmount
 5. TaxAmount          = TaxableBase × TaxRate
 6. Total              = TaxableBase + TaxAmount + SecurityDeposit
-                      = Subtotal − invoiceDiscount + invoiceCustomFee + TaxAmount + SecurityDeposit
+                      = Subtotal − invoiceDiscount + invoiceCustomFee + ShippingAmount + TaxAmount + SecurityDeposit
 ```
 
 Notes:
 - **`Subtotal` is the raw line-items sum** (after any per-line discounts). It is stored on the invoice and shown as the "Subtotal" line, and it is the base a *percentage* discount or fee is taken from. The invoice-level discount and custom fee are shown as their own separate lines, not folded into `Subtotal`.
 - **Discount on a line item** reduces only that line's subtotal.
-- **Invoice-level discount** and **custom fee** adjust the *taxable base* before tax (industry standard: tax is charged on the net amount after discount, and a taxable fee is taxed). The discount lowers it; the fee raises it.
+- **Invoice-level discount**, **custom fee**, and **shipping** adjust the *taxable base* before tax (industry standard: tax is charged on the net amount after discount, and a taxable fee and shipping are taxed). The discount lowers it; the fee and shipping raise it.
 - **Security deposit** is added to the total but is *not* taxed and is *not* considered revenue earned, it's a refundable hold against damages. If the deposit is forfeited, it should be moved into revenue separately.
-- **Tax** is applied to `TaxableBase` (Subtotal − discount + fee), not to the raw `Subtotal`. Argo Books treats tax as a single flat rate; we do not support different tax rates per line item at the invoice-roll-up level (line items each carry a `TaxRate` but the invoice header rate is what's stored as the final tax).
+- **Tax** is applied to `TaxableBase` (Subtotal − discount + fee + shipping), not to the raw `Subtotal`. Argo Books treats tax as a single flat rate; we do not support different tax rates per line item at the invoice-roll-up level (line items each carry a `TaxRate` but the invoice header rate is what's stored as the final tax).
 
 ---
 

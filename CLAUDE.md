@@ -33,10 +33,10 @@ Requires .NET 10 SDK. A `.env` file with API keys must be placed at the solution
 | **ArgoBooks** | UI layer: Views (.axaml), ViewModels, Controls, UI Services |
 | **ArgoBooks.Core** | Business logic: Models, Services, Data, Security, Platform abstraction |
 | **ArgoBooks.Desktop** | Entry point for Windows/macOS/Linux |
-| **ArgoBooks.Browser** | Entry point for WebAssembly |
 | **ArgoBooks.Tests** | xUnit tests (references both ArgoBooks and ArgoBooks.Core) |
+| **ArgoBooks.TranslationTool** | Offline tool that generates language files via Azure Translator |
 
-**Dependency flow:** Desktop/Browser -> ArgoBooks -> ArgoBooks.Core
+**Dependency flow:** Desktop -> ArgoBooks -> ArgoBooks.Core
 
 ### Data Storage
 

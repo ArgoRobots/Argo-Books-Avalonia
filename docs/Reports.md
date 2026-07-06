@@ -24,6 +24,7 @@ See [Calculations](Calculations.md) for the rules governing how the numbers in e
 - General Ledger
 - Accounts Receivable Aging
 - Tax Summary
+- Sales by Product
 
 ## Creating a report
 
