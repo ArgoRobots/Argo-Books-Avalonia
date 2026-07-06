@@ -435,10 +435,16 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
                 }
                 if (!row.HasProduct && !string.IsNullOrWhiteSpace(s.NewProductName))
                 {
-                    var catName = s.ProductCategoryId != null
-                        ? data.GetCategory(s.ProductCategoryId)?.Name
-                        : s.NewProductCategoryName;
-                    row.SetNewProduct(s.NewProductName!, s.ProductCategoryId, s.NewProductCategoryName, catName);
+                    // Only trust a categoryId that resolves to a real category. The model is asked to echo
+                    // an existing id, but sometimes returns a hallucinated id or a category *name* in this
+                    // field; in that case treat the value as a new-category name so a real category gets
+                    // created rather than a dangling id landing on the product and its learned rule.
+                    var existingCat = string.IsNullOrEmpty(s.ProductCategoryId) ? null : data.GetCategory(s.ProductCategoryId);
+                    var categoryId = existingCat?.Id;
+                    var newCatName = existingCat != null
+                        ? null
+                        : (!string.IsNullOrWhiteSpace(s.NewProductCategoryName) ? s.NewProductCategoryName : s.ProductCategoryId);
+                    row.SetNewProduct(s.NewProductName!, categoryId, newCatName, existingCat?.Name ?? newCatName);
                 }
             }
 

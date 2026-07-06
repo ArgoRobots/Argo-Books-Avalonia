@@ -64,6 +64,52 @@ public class BankLineImportServiceTests
         Assert.Contains(result.CreatedEntities, e => e is Category);
     }
 
+    // A category id that doesn't exist (e.g. the AI echoed a hallucinated id or a category name) must
+    // not be stamped onto the product/rule as a dangling reference - it should resolve by name instead,
+    // otherwise the Bank import rules settings show the rule with an empty (unresolvable) category.
+    [Fact]
+    public void CreateFromLines_UnresolvableCategoryIdWithName_ResolvesByNameNotDangling()
+    {
+        var data = new CompanyData();
+        var line = new BankStatementLine { Id = "L9", Date = new DateTime(2026, 5, 1), Description = "ATM WITHDRAWAL", Amount = -20m };
+        var resolution = new BankLineResolution
+        {
+            Line = line,
+            Type = BookRecordType.Expense,
+            NewProductName = "Cash",
+            ProductCategoryId = "CAT-PUR-999",       // an id that isn't a real category
+            NewProductCategoryName = "Bank Fees"
+        };
+
+        new BankLineImportService().CreateFromLines(data, [resolution]);
+
+        var product = Assert.Single(data.Products);
+        Assert.NotEqual("CAT-PUR-999", product.CategoryId);            // not the dangling id
+        Assert.NotNull(data.GetCategory(product.CategoryId ?? ""));    // resolves to a real category
+        Assert.Equal("Bank Fees", data.GetCategory(product.CategoryId ?? "")!.Name);
+    }
+
+    // No usable category name and only an unresolvable id: the product must end up with no category
+    // rather than a dangling id (so no blank-category rule gets learned).
+    [Fact]
+    public void CreateFromLines_UnresolvableCategoryIdNoName_LeavesCategoryUnset()
+    {
+        var data = new CompanyData();
+        var line = new BankStatementLine { Id = "L10", Date = new DateTime(2026, 5, 2), Description = "ATM WITHDRAWAL", Amount = -20m };
+        var resolution = new BankLineResolution
+        {
+            Line = line,
+            Type = BookRecordType.Expense,
+            NewProductName = "Cash",
+            ProductCategoryId = "CAT-PUR-999"
+        };
+
+        new BankLineImportService().CreateFromLines(data, [resolution]);
+
+        var product = Assert.Single(data.Products);
+        Assert.True(string.IsNullOrEmpty(product.CategoryId));
+    }
+
     [Fact]
     public void CreateFromLines_DuplicateNewProduct_CreatesOnlyOne()
     {

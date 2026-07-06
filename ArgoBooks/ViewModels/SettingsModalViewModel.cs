@@ -2479,6 +2479,10 @@ public class BankCategoryRuleRow : ObservableObject
     {
         Rule = rule;
         _selectedCategory = allCategories.FirstOrDefault(c => c.Id == rule.CategoryId);
+        // The category picker is a SearchableDropdown, which shows its SearchText. Seed it with the
+        // selected category's name; without this a loaded rule renders an empty picker even though a
+        // category IS selected - which made imported rules look like they had no category.
+        _categorySearchText = _selectedCategory?.Name;
     }
 
     /// <summary>The underlying rule stored in company data.</summary>
