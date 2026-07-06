@@ -23,6 +23,7 @@ Return JSON only (no markdown code blocks), with this exact format:
   ""subtotal"": 0.00,
   ""taxes"": [{""name"": ""GST"", ""amount"": 0.00}, {""name"": ""PST"", ""amount"": 0.00}],
   ""discounts"": [{""name"": ""Member Discount"", ""amount"": 0.00}],
+  ""shipping"": 0.00,
   ""totalAmount"": 0.00,
   ""currencyCode"": ""USD"",
   ""paymentMethod"": ""Credit Card"",
@@ -40,6 +41,7 @@ Rules:
 5. CONFIDENCE: Both the overall ""confidence"" and each line item's ""confidence"" must be 0.0-1.0. Be STRICT and CONSERVATIVE with line item confidence: if the text is blurry, smudged, faded, partially obscured, wrinkled, or if ANY digit or character in the description or price required guessing, the confidence MUST be below 0.85. Use 0.5-0.7 for items where you are genuinely unsure about the price or name. Only use 0.9+ when the text is crisp and completely unambiguous. Do NOT default to high confidence, earn it.
 6. PRICES vs DISCOUNTS: When a product has two numbers near it (a price and a discount/savings below it), the product's line item should use the FULL PRICE (the larger, positive number), not the discounted price. The discount is a separate entry in the ""discounts"" array.
 7. DISCOUNTS: ANY line on the receipt with a negative amount or a minus sign is a discount. This includes lines labeled ""Member Pricing"", ""Member Discount"", ""SAVE"", ""OFF"", ""DISCOUNT"", coupons, promos, loyalty savings, price reductions, markdowns, or any other negative adjustment. Return EACH one separately in the ""discounts"" array with the label and amount as a positive number. Do NOT include discounts as line items. They belong only in the ""discounts"" array. Do NOT skip or ignore negative amounts.
+7b. SHIPPING: If the receipt has a shipping, delivery, freight, or postage charge, put its amount (a positive number) in the ""shipping"" field. This is a separate cost added to the total, NOT a line item and NOT a tax or discount. Use 0.00 if there is no shipping charge.
 8. ERROR: If the image is not a receipt or is completely unreadable, return: {""error"": ""Not a valid receipt"", ""confidence"": 0.0}
 9. DATE: YYYY-MM-DD format. Best guess if only partial date is visible.
 10. CURRENCY: Infer the currency from location clues on the receipt: store address, city, province/state, country name, language, tax labels (e.g. GST/PST = CAD, VAT/TVA = EUR/GBP, IVA = EUR/MXN), and currency symbols ($ is ambiguous, £ = GBP, € = EUR, ¥ = JPY/CNY). Map the identified country to its ISO 4217 currency code. Default to ""USD"" only if there are genuinely no location or currency clues.
@@ -208,9 +210,9 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
         // Reconcile the extracted amounts against the printed total. Line items are
         // stored as positive amounts (negatives are folded into Discount during
-        // parsing), so: total == sum(items) - discount + tax.
+        // parsing), so: total == sum(items) - discount + tax + shipping.
         var itemsSum = result.LineItems.Sum(li => li.TotalPrice);
-        var computedTotal = itemsSum - (result.Discount ?? 0m) + (result.TaxAmount ?? 0m);
+        var computedTotal = itemsSum - (result.Discount ?? 0m) + (result.TaxAmount ?? 0m) + (result.Shipping ?? 0m);
 
         // Tolerance is kept tight and biased toward verifying: a genuinely missed item
         // shifts the total by roughly its own price, which we want to catch. A few cents
@@ -389,6 +391,9 @@ If nothing was missed, return: {{""missingItems"": []}}";
                 // Fallback for single discount field
                 result.Discount = discount.GetDecimal();
             }
+
+            if (root.TryGetProperty("shipping", out var shipping) && shipping.ValueKind == JsonValueKind.Number)
+                result.Shipping = shipping.GetDecimal();
 
             if (root.TryGetProperty("currencyCode", out var currency) && currency.ValueKind != JsonValueKind.Null)
                 result.CurrencyCode = currency.GetString();

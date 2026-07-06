@@ -44,6 +44,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ExtractedSubtotal = "22.86",
             ExtractedTax = "2.88",
             ExtractedDiscount = "0.00",
+            ExtractedShipping = "0.00",
             ExtractedSupplier = "Independent Grocer",
             SelectedPaymentMethod = "Debit Card"
         };
@@ -435,6 +436,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string _extractedDiscount = string.Empty;
 
     [ObservableProperty]
+    private string _extractedShipping = string.Empty;
+
+    [ObservableProperty]
     private string _extractedTotal = string.Empty;
 
     [ObservableProperty]
@@ -545,6 +549,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     partial void OnExtractedSubtotalChanged(string value) => ValidateTotals();
     partial void OnExtractedTaxChanged(string value) => ValidateTotals();
     partial void OnExtractedDiscountChanged(string value) => ValidateTotals();
+    partial void OnExtractedShippingChanged(string value) => ValidateTotals();
 
     partial void OnHasTotalErrorChanged(bool value)
     {
@@ -1339,6 +1344,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (decimal.TryParse(ExtractedTax, out var tax)) item.ScanResult.TaxAmount = tax;
         if (decimal.TryParse(ExtractedTotal, out var tot)) item.ScanResult.TotalAmount = tot;
         if (decimal.TryParse(ExtractedDiscount, out var disc)) item.ScanResult.Discount = disc;
+        if (decimal.TryParse(ExtractedShipping, out var ship)) item.ScanResult.Shipping = ship;
 
         item.ScanResult.PaymentMethod = SelectedPaymentMethod;
 
@@ -1418,6 +1424,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var subtotal = scanResult.Subtotal ?? 0;
             var taxAmount = scanResult.TaxAmount ?? 0;
             var discount = scanResult.Discount ?? 0;
+            var shipping = scanResult.Shipping ?? 0;
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
             // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
@@ -1485,6 +1492,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
                     TaxAmount = taxAmount,
                     Discount = discount,
+                    ShippingCost = shipping,
                     Total = total,
                     PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var rpm) ? rpm : PaymentMethod.Cash,
                     PaymentStatus = RevenuePaymentStatus.Paid,
@@ -1517,6 +1525,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
                     TaxAmount = taxAmount,
                     Discount = discount,
+                    ShippingCost = shipping,
                     Total = total,
                     PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var epm) ? epm : PaymentMethod.Cash,
                     Notes = notes,
@@ -1831,6 +1840,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 .Sum(item => Math.Abs(item.TotalPrice));
             ExtractedDiscount = discountTotal > 0 ? discountTotal.ToString("F2") : "0.00";
 
+            ExtractedShipping = result.Shipping is > 0 ? result.Shipping.Value.ToString("F2") : "0.00";
+
             // Line items (filter out discounts and non-product lines)
             LineItems.Clear();
             foreach (var item in result.LineItems)
@@ -2053,6 +2064,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var taxAmount);
         decimal.TryParse(ExtractedDiscount, out var discount);
+        decimal.TryParse(ExtractedShipping, out var shipping);
 
         // Create line items
         var lineItems = LineItems.Select(li =>
@@ -2090,12 +2102,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (IsRevenue)
         {
             // Create revenue transaction
-            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
+            CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
         else
         {
             // Create expense transaction
-            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, lineItems);
+            CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
 
         // The receipt was added: ownership of the auto-created supplier/category/products
@@ -2175,7 +2187,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
-        decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
+        decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
         companyData.IdCounters.Expense++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
@@ -2193,6 +2205,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
             TaxAmount = taxAmount,
             Discount = discount,
+            ShippingCost = shipping,
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = Notes,
@@ -2261,7 +2274,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     private void CreateRevenueTransaction(CompanyData companyData, string receiptId, string? fileData,
-        decimal total, decimal subtotal, decimal taxAmount, decimal discount, List<LineItem> lineItems)
+        decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
@@ -2280,6 +2293,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             TaxRate = subtotal > 0 && taxAmount > 0 ? (taxAmount / subtotal) * 100 : 0,
             TaxAmount = taxAmount,
             Discount = discount,
+            ShippingCost = shipping,
             Total = total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             PaymentStatus = RevenuePaymentStatus.Paid,
@@ -2631,20 +2645,21 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var tax);
         decimal.TryParse(ExtractedDiscount, out var discount);
+        decimal.TryParse(ExtractedShipping, out var shipping);
 
         var lineItemSum = LineItems
             .Sum(li => decimal.TryParse(li.TotalPrice, out var p) ? p : 0);
 
-        // Check line items + tax - discount against total
-        var expectedTotal = lineItemSum + tax - discount;
+        // Check line items + tax + shipping - discount against total
+        var expectedTotal = lineItemSum + tax + shipping - discount;
         var diff = Math.Abs(expectedTotal - total);
 
         if (diff > 0.02m)
         {
             HasTotalMismatchWarning = true;
             TotalMismatchWarningMessage = string.Format(
-                "Line items ({0:C}) + tax ({1:C}) - discount ({2:C}) = {3:C}, but total is {4:C}. Some items may be incorrect.".Translate(),
-                lineItemSum, tax, discount, expectedTotal, total);
+                "Line items ({0:C}) + tax ({1:C}) + shipping ({2:C}) - discount ({3:C}) = {4:C}, but total is {5:C}. Some items may be incorrect.".Translate(),
+                lineItemSum, tax, shipping, discount, expectedTotal, total);
         }
     }
 
@@ -2982,6 +2997,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ExtractedSubtotal = string.Empty;
         ExtractedTax = string.Empty;
         ExtractedDiscount = string.Empty;
+        ExtractedShipping = string.Empty;
         ExtractedTotal = string.Empty;
         ConfidenceScore = 0;
         ConfidenceText = string.Empty;
@@ -3071,6 +3087,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedTotal, out var total);
         decimal.TryParse(ExtractedSubtotal, out var subtotal);
         decimal.TryParse(ExtractedTax, out var tax);
+        decimal.TryParse(ExtractedShipping, out var shipping);
 
         return new OcrData
         {
@@ -3079,6 +3096,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ExtractedAmount = total,
             ExtractedSubtotal = subtotal,
             ExtractedTaxAmount = tax,
+            ExtractedShipping = shipping,
             Confidence = ConfidenceScore,
             LineItems = LineItems.Select(li =>
             {
@@ -3107,6 +3125,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             ExtractedAmount = result.TotalAmount ?? 0,
             ExtractedSubtotal = result.Subtotal ?? 0,
             ExtractedTaxAmount = result.TaxAmount ?? 0,
+            ExtractedShipping = result.Shipping ?? 0,
             Confidence = result.Confidence,
             LineItems = result.LineItems.Select(li => new OcrLineItem
             {

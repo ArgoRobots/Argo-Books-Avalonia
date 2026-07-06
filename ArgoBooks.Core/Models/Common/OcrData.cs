@@ -36,6 +36,12 @@ public class OcrData
     public decimal? ExtractedTaxAmount { get; set; }
 
     /// <summary>
+    /// Shipping / delivery cost extracted from receipt.
+    /// </summary>
+    [JsonPropertyName("extractedShipping")]
+    public decimal? ExtractedShipping { get; set; }
+
+    /// <summary>
     /// Currency code extracted from receipt (e.g., "USD", "EUR").
     /// </summary>
     [JsonPropertyName("extractedCurrency")]
