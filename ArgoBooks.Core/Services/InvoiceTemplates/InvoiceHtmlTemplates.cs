@@ -991,15 +991,15 @@ public static class InvoiceHtmlTemplates
                         {{#CustomerEmail}}{{CustomerEmail}}{{/CustomerEmail}}
                     </div>
                 </div>
-                <div style="flex: 1;"></div>
-                <div style="flex: 1.2;">
+                <div style="flex: 0.2;"></div>
+                <div style="flex: 1.4;">
                     <div style="display: grid; grid-template-columns: auto 1fr; gap: 5px 20px;">
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt #</span>
-                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px;">{{InvoiceNumber}}</span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Receipt Date</span>
-                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Due Date</span>
-                        <span style="text-align: right; font-size: 14px; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; white-space: nowrap;">Receipt #</span>
+                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px; white-space: nowrap;">{{InvoiceNumber}}</span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; white-space: nowrap;">Receipt Date</span>
+                        <span style="text-align: right; color: {{TextColor}}; font-size: 14px; white-space: nowrap;"><span data-field="issueDate" data-iso="{{IssueDateIso}}">{{IssueDate}}</span></span>
+                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase; white-space: nowrap;">Due Date</span>
+                        <span style="text-align: right; font-size: 14px; white-space: nowrap; {{#IsOverdue}}color: #dc2626; font-weight: bold;{{/IsOverdue}}{{^IsOverdue}}color: {{TextColor}};{{/IsOverdue}}"><span data-field="dueDate" data-iso="{{DueDateIso}}">{{DueDate}}</span></span>
                     </div>
                     {{#ShowDueDateProminent}}
                     <div style="text-align: right; margin-top: 10px;">
