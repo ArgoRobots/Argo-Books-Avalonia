@@ -1357,6 +1357,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         // modal without saving leaves no changes (and no unsaved-changes asterisk).
         foreach (var r in data.BankCategoryRules)
             BankCategoryRules.Add(new BankCategoryRuleRow(CloneRule(r), AvailableBankCategories));
+
+        // Baseline for the unsaved-changes check, so editing a rule triggers the discard prompt.
+        _originalBankRulesSignature = ComputeBankRulesSignature();
     }
 
     /// <summary>
@@ -1455,7 +1458,16 @@ public partial class SettingsModalViewModel : ViewModelBase
         InvoiceOverdue != _originalInvoiceOverdue ||
         RentalOverdue != _originalRentalOverdue ||
         UnsavedChangesReminder != _originalUnsavedChangesReminder ||
-        UnsavedChangesReminderMinutes != _originalUnsavedChangesReminderMinutes;
+        UnsavedChangesReminderMinutes != _originalUnsavedChangesReminderMinutes ||
+        ComputeBankRulesSignature() != _originalBankRulesSignature;
+
+    // Snapshot of the bank import rules taken when the modal opens, so editing a rule's pattern or
+    // category (or adding/removing a row) counts as an unsaved change and triggers the discard prompt.
+    private string _originalBankRulesSignature = string.Empty;
+
+    private string ComputeBankRulesSignature() =>
+        string.Join("", BankCategoryRules.Select(r =>
+            $"{r.Rule.Pattern}{r.Rule.CategoryId}{r.CategorySearchText}"));
 
     /// <summary>
     /// Default constructor.
