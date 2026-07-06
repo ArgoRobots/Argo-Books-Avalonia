@@ -210,8 +210,11 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         });
     }
 
-    // Text fields (description, qty, rate, notes) are contenteditable. customer/dates are pickers below.
-    var pickers = { customer: 1, issueDate: 1, dueDate: 1 };
+    // qty, rate and notes are free-text contenteditable. customer and description are strict pickers
+    // (below): typed text only searches the dropdown and never commits as free text, so a line item can
+    // only hold a real product picked from the list (or one made via '+ Create new product'). Dates are
+    // pickers too. This keeps an invalid product from sticking, mirroring the customer field.
+    var pickers = { customer: 1, description: 1, issueDate: 1, dueDate: 1 };
     var timers = {};
     document.querySelectorAll('[data-field]').forEach(function(el) {
         if (pickers[el.dataset.field]) return;
@@ -275,10 +278,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     function filter(text) {
         var t = (text || '').toLowerCase();
         filtered = sourceItems().filter(function(p) { return (p.name || '').toLowerCase().indexOf(t) !== -1; });
-        // Description is a free-text field that also suggests products, so don't auto-highlight a match:
-        // pressing Enter should keep what the user typed. Customer is a pure picker, so keep the top match
-        // highlighted for quick Enter-to-select. Arrowing down still highlights an item in either mode.
-        hl = (mode === 'customer' && filtered.length) ? 0 : -1;
+        // Both customer and product (description) are strict pickers, so highlight the top match for
+        // quick Enter-to-select. Arrowing up/down still moves the highlight.
+        hl = filtered.length ? 0 : -1;
     }
     function openFor(el, m) {
         target = el; mode = m;
@@ -1269,7 +1271,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             foreach (var item in doc.RootElement.EnumerateArray())
             {
                 var field = item.TryGetProperty("f", out var fe) ? fe.GetString() ?? string.Empty : string.Empty;
-                if (field is not ("description" or "quantity" or "rate" or "notes"
+                // "description" is intentionally excluded: it's a strict product picker, so its DOM text is
+                // only a search query and must never be committed to the model as a free-text description.
+                if (field is not ("quantity" or "rate" or "notes"
                     or "taxValue" or "shippingValue" or "discountValue" or "feeValue"))
                     continue;
 
