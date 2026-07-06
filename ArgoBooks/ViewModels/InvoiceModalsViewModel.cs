@@ -1794,6 +1794,18 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
+        // Every line item must reference a real product (rental/revenue-derived lines are exempt). The
+        // preview path already enforced this; the send path did not, so a line with amounts but no
+        // product selected would send with no warning (unlike a missing customer or a zero total).
+        if (!IsFromExternalSource && LineItems.Any(li =>
+                li.SelectedProduct == null
+                && string.IsNullOrEmpty(li.RentalRecordId)
+                && string.IsNullOrEmpty(li.RevenueRecordId)))
+        {
+            await ShowSendErrorAsync("Please select a product for all line items.".Translate());
+            return;
+        }
+
         if (Total <= 0)
         {
             await ShowSendErrorAsync("Cannot send an invoice for {0}0 or less.".TranslateFormat(CurrencyService.CurrentSymbol));

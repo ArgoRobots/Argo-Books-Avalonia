@@ -63,6 +63,26 @@ public class InvoiceModalsViewModelTests : ModalViewModelTestBase
     }
 
     [Fact]
+    public async Task CreateAndSendInvoice_LineItemWithoutAProduct_ShowsAProductError()
+    {
+        // Customer deliberately has no email so, before the fix, the send path stops at the email check
+        // (never reaching the confirm dialog) with a non-product error; after the fix the product check
+        // fires first. Either way this stays headless-safe.
+        Company.Customers.Add(new Customer { Id = "CUST-1", Name = "Acme" });
+        var vm = new InvoiceModalsViewModel();
+        vm.OpenCreateModal();
+        vm.SelectedCustomer = vm.CustomerOptions.First(c => c.Id == "CUST-1");
+        // A line with amounts (so the total is positive) but no product selected.
+        vm.LineItems[0].Quantity = 1;
+        vm.LineItems[0].UnitPrice = 100;
+
+        await vm.CreateAndSendInvoiceCommand.ExecuteAsync(null);
+
+        Assert.True(vm.HasSendError);
+        Assert.Contains("product", vm.SendErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task SaveAsDraft_RecurringInvoice_DerivesPaymentTermsFromTheInvoiceDueDate()
     {
         Company.Customers.Add(new Customer { Id = "CUST-1", Name = "Acme" });
