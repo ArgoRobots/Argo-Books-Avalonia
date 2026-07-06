@@ -36,16 +36,30 @@ public partial class InvoiceModals : UserControl
         }
     }
 
-    private void OnTotalsModeToggled(object? sender, string which)
+    // Flush any value the user just typed on the paper into the model before an action re-renders the
+    // paper. The paper-action commands below all trigger a full paper re-render (RegeneratePaper),
+    // which rebuilds the WebView from the model; without flushing first, a value still sitting in the
+    // DOM within the ~150ms input debounce (e.g. a rate typed right before clicking "+add line") would
+    // be dropped. Same guard the Preview/Save/info-button handlers already use.
+    private async System.Threading.Tasks.Task CommitPaperEditsAsync()
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.ToggleTotalsMode(which);
+        var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
+        if (editorPreview != null)
+            await editorPreview.CommitPendingEditsAsync();
     }
 
-    private void OnDeleteLogoRequested(object? sender, EventArgs e)
+    private async void OnTotalsModeToggled(object? sender, string which)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.DeleteLogoFromPaper();
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.ToggleTotalsMode(which);
+    }
+
+    private async void OnDeleteLogoRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.DeleteLogoFromPaper();
     }
 
     // Flush any value the user just typed on the paper into the model before previewing/saving,
@@ -91,28 +105,33 @@ public partial class InvoiceModals : UserControl
         vm.ShowRecurringInfoCommand.Execute(null);
     }
 
-    private void OnCustomerPicked(object? sender, string customerId)
+    private async void OnCustomerPicked(object? sender, string customerId)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.SelectCustomerFromPaper(customerId);
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.SelectCustomerFromPaper(customerId);
     }
 
-    private void OnCreateCustomerRequested(object? sender, EventArgs e)
+    private async void OnCreateCustomerRequested(object? sender, EventArgs e)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.CreateCustomerFromPaper();
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.CreateCustomerFromPaper();
     }
 
-    private void OnDateEdited(object? sender, (string Field, string Value) e)
+    private async void OnDateEdited(object? sender, (string Field, string Value) e)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.SetDateFromPaper(e.Field, e.Value);
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.SetDateFromPaper(e.Field, e.Value);
     }
 
     // Let the user pick a logo image from the invoice paper; embed it as base64 on the template.
     private async void OnPickLogoRequested(object? sender, EventArgs e)
     {
         if (DataContext is not InvoiceModalsViewModel vm) return;
+        // Flush pending edits while the WebView is still active, before the native picker takes focus.
+        await CommitPaperEditsAsync();
         var top = TopLevel.GetTopLevel(this);
         if (top == null) return;
 
@@ -175,16 +194,18 @@ public partial class InvoiceModals : UserControl
         }
     }
 
-    private void OnAddLineRequested(object? sender, EventArgs e)
+    private async void OnAddLineRequested(object? sender, EventArgs e)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.AddLineFromPaper();
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.AddLineFromPaper();
     }
 
-    private void OnRemoveLineRequested(object? sender, int index)
+    private async void OnRemoveLineRequested(object? sender, int index)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.RemoveLineFromPaper(index);
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.RemoveLineFromPaper(index);
     }
 
     // Route an edit made directly on the invoice paper back into the view-model.
@@ -194,15 +215,17 @@ public partial class InvoiceModals : UserControl
             vm.ApplyPaperEdit(e.Field, e.Index, e.Value);
     }
 
-    private void OnProductPicked(object? sender, ProductPickEventArgs e)
+    private async void OnProductPicked(object? sender, ProductPickEventArgs e)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.SelectProductForLine(e.Index, e.ProductId);
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.SelectProductForLine(e.Index, e.ProductId);
     }
 
-    private void OnCreateProductRequested(object? sender, int index)
+    private async void OnCreateProductRequested(object? sender, int index)
     {
-        if (DataContext is InvoiceModalsViewModel vm)
-            vm.CreateProductForLine(index);
+        if (DataContext is not InvoiceModalsViewModel vm) return;
+        await CommitPaperEditsAsync();
+        vm.CreateProductForLine(index);
     }
 }
