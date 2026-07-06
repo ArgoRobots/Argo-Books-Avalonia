@@ -3076,7 +3076,8 @@ public partial class App : Application
             _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Cannot open company file: newer than running app");
+            // Not logged as an error: this is an expected, handled condition (the file was saved by a
+            // newer build) that already shows the user the "Update Argo Books" dialog below.
             if (ConfirmationDialog != null)
             {
                 await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions

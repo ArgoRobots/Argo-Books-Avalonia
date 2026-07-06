@@ -59,6 +59,12 @@ public partial class ErrorLogger : IErrorLogger
     /// <inheritdoc />
     public void LogError(Exception exception, ErrorCategory category, string? context = null)
     {
+        // A cancellation isn't a failure: a request cancelled on app close / navigation, or one that
+        // timed out, is expected. Don't record it as an error (TaskCanceledException/OperationCanceled
+        // were cluttering the error log). TaskCanceledException derives from OperationCanceledException.
+        if (exception is OperationCanceledException)
+            return;
+
         var entry = CreateLogEntry(LogLevel.Error, category, context);
         entry.ErrorCode = exception.GetType().Name;
         entry.Message = SanitizeMessage(exception.Message);
