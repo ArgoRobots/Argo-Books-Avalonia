@@ -17,49 +17,42 @@ namespace ArgoBooks.Tests.ViewModels;
 /// </summary>
 public class InvoiceModalsViewModelTests : ModalViewModelTestBase
 {
-    private InvoiceTemplate AddTemplateWithLogo(string id, string logo)
+    [Fact]
+    public void SetLogoFromPaper_AppliesTheLogoToEveryTemplate()
     {
-        var template = new InvoiceTemplate
+        // The invoice logo is a single company-wide choice, so setting it on the paper (while one
+        // template is selected) must land on every template, not just the selected one.
+        Company.InvoiceTemplates.Add(new InvoiceTemplate { Id = "tmpl-a", Name = "AAA a", ShowLogo = false });
+        Company.InvoiceTemplates.Add(new InvoiceTemplate { Id = "tmpl-b", Name = "AAB b", ShowLogo = false });
+        var vm = new InvoiceModalsViewModel();
+        vm.OpenCreateModal();
+        vm.SelectedTemplate = vm.TemplateOptions.First(t => t.Id == "tmpl-a");
+
+        vm.SetLogoFromPaper("LOGO-DATA");
+
+        Assert.All(Company.InvoiceTemplates, t =>
         {
-            Id = id,
-            Name = "AAA " + id, // sorts first so it's easy to find; selection is by Id regardless
-            LogoBase64 = logo,
-            ShowLogo = true,
-            LogoWidth = 200
-        };
-        Company.InvoiceTemplates.Add(template);
-        return template;
+            Assert.Equal("LOGO-DATA", t.LogoBase64);
+            Assert.True(t.ShowLogo);
+        });
     }
 
     [Fact]
-    public void DeleteLogoFromPaper_DoesNotMutateTheSharedPersistedTemplate()
+    public void DeleteLogoFromPaper_RemovesTheLogoFromEveryTemplate()
     {
-        var original = AddTemplateWithLogo("my-tmpl", "LOGO-DATA");
+        Company.InvoiceTemplates.Add(new InvoiceTemplate { Id = "tmpl-a", Name = "AAA a", LogoBase64 = "LOGO", ShowLogo = true });
+        Company.InvoiceTemplates.Add(new InvoiceTemplate { Id = "tmpl-b", Name = "AAB b", LogoBase64 = "LOGO", ShowLogo = true });
         var vm = new InvoiceModalsViewModel();
         vm.OpenCreateModal();
-        // Select the working copy of our template (TemplateOptions holds per-session copies keyed by Id).
-        vm.SelectedTemplate = vm.TemplateOptions.First(t => t.Id == "my-tmpl");
+        vm.SelectedTemplate = vm.TemplateOptions.First(t => t.Id == "tmpl-a");
 
         vm.DeleteLogoFromPaper();
 
-        // The shared template (reused by every other invoice and the Template Designer) is untouched.
-        Assert.Equal("LOGO-DATA", original.LogoBase64);
-        Assert.True(original.ShowLogo);
-    }
-
-    [Fact]
-    public void SetLogoFromPaper_DoesNotMutateTheSharedPersistedTemplate()
-    {
-        var original = new InvoiceTemplate { Id = "no-logo", Name = "AAA no-logo", ShowLogo = false };
-        Company.InvoiceTemplates.Add(original);
-        var vm = new InvoiceModalsViewModel();
-        vm.OpenCreateModal();
-        vm.SelectedTemplate = vm.TemplateOptions.First(t => t.Id == "no-logo");
-
-        vm.SetLogoFromPaper("NEW-LOGO-DATA");
-
-        Assert.Null(original.LogoBase64);
-        Assert.False(original.ShowLogo);
+        Assert.All(Company.InvoiceTemplates, t =>
+        {
+            Assert.Null(t.LogoBase64);
+            Assert.False(t.ShowLogo);
+        });
     }
 
     [Fact]

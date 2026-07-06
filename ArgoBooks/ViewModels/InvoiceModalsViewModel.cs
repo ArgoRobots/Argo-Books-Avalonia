@@ -398,21 +398,30 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         RegeneratePaper();
     }
 
-    // Push the session's logo choice onto the currently selected template so it survives template switches.
+    // The invoice logo is a single company-wide choice: apply it to every template (and persist) so it
+    // shows on all of them and survives closing/reopening the editor, not just the selected one.
     private void ApplyPaperLogo()
     {
-        if (SelectedTemplate == null || _paperLogo == null) return;
-        if (_paperLogo.Length == 0)
+        if (_paperLogo == null) return;
+        var remove = _paperLogo.Length == 0;
+        // TemplateOptions holds the company's actual templates, so mutating them here updates the
+        // persisted objects directly.
+        foreach (var template in TemplateOptions)
         {
-            SelectedTemplate.LogoBase64 = null;
-            SelectedTemplate.ShowLogo = false;
+            if (remove)
+            {
+                template.LogoBase64 = null;
+                template.ShowLogo = false;
+            }
+            else
+            {
+                template.LogoBase64 = _paperLogo;
+                template.LogoWidth = 150;
+                template.ShowLogo = true;
+            }
         }
-        else
-        {
-            SelectedTemplate.LogoBase64 = _paperLogo;
-            SelectedTemplate.LogoWidth = 150;
-            SelectedTemplate.ShowLogo = true;
-        }
+        // Mark dirty so the logo is saved even if the user cancels this invoice (it's a company setting).
+        App.CompanyManager?.MarkAsChanged();
     }
 
     // Preview mode shows the invoice clean (no edit outlines, no +line item, no product dropdowns) so
@@ -707,8 +716,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // (the user can then override them). In edit mode LoadFromInvoice re-applies saved overrides
         // after the template is set.
         SyncOptionsFromTemplate(value);
-        // Carry the logo the user picked on the paper onto the newly selected template.
-        ApplyPaperLogo();
         RegeneratePaper();
     }
 
@@ -1093,13 +1100,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         foreach (var template in companyData.InvoiceTemplates.OrderBy(t => t.Name))
         {
-            // Add a per-session working copy, NOT the shared object. Editing the logo on the invoice
-            // paper (add/remove) mutates the selected template; if that were the persisted instance it
-            // would silently rewrite the branding for every other invoice using it and the Template
-            // Designer. Preserve the original Id so the invoice's TemplateId still round-trips.
-            var working = template.Clone();
-            working.Id = template.Id;
-            TemplateOptions.Add(working);
+            TemplateOptions.Add(template);
         }
 
         // Select default template or first one
