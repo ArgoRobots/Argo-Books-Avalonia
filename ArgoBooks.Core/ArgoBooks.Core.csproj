@@ -56,5 +56,9 @@
         <PackageReference Include="System.Security.Cryptography.ProtectedData" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\ArgoBooks.Shared\ArgoBooks.Shared.csproj" />
+    </ItemGroup>
+
     <!-- Windows-specific packages -->
 </Project>
