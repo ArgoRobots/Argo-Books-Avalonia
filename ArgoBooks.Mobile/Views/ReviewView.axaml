@@ -1,0 +1,145 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="760"
+             x:Class="ArgoBooks.Mobile.Views.ReviewView"
+             x:DataType="vm:ReviewViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.seg">
+      <Setter Property="Background" Value="#14808080" />
+      <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="Button.seg.on">
+      <Setter Property="Background" Value="#1F8F83" />
+    </Style>
+    <Style Selector="Border.product-chip">
+      <Setter Property="CornerRadius" Value="20" />
+      <Setter Property="Padding" Value="10,4" />
+    </Style>
+  </UserControl.Styles>
+
+  <Panel>
+    <ScrollViewer Padding="16">
+      <StackPanel Spacing="10">
+
+        <TextBlock Text="Scan read successfully" FontSize="18" FontWeight="Bold" />
+
+        <!-- Expense / Revenue toggle -->
+        <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+          <Button Grid.Column="0" Classes="seg" Classes.on="{Binding IsExpense}"
+                  Content="Expense" Command="{Binding SetExpenseCommand}"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Margin="0,0,4,0" />
+          <Button Grid.Column="1" Classes="seg" Classes.on="{Binding !IsExpense}"
+                  Content="Revenue" Command="{Binding SetRevenueCommand}"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Margin="4,0,0,0" />
+        </Grid>
+
+        <!-- Supplier / Customer -->
+        <StackPanel Spacing="4" Margin="0,6,0,0">
+          <TextBlock Text="{Binding SupplierOrCustomerLabel}" FontSize="12" Opacity="0.7" />
+          <TextBox Text="{Binding SupplierOrCustomer}" />
+        </StackPanel>
+
+        <!-- Date -->
+        <StackPanel Spacing="4" Margin="0,6,0,0">
+          <TextBlock Text="Date" FontSize="12" Opacity="0.7" />
+          <TextBox Text="{Binding DateText}" />
+        </StackPanel>
+
+        <!-- Line items -->
+        <TextBlock Text="Items &amp; products" FontSize="13" FontWeight="SemiBold" Margin="0,10,0,0" />
+        <TextBlock Text="Each item maps to a product. Tap a chip to change it." FontSize="11" Opacity="0.6" Margin="0,0,0,4" />
+
+        <ItemsControl ItemsSource="{Binding LineItems}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ReviewLineItemRowViewModel">
+              <StackPanel Spacing="6" Margin="0,0,0,10">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding Description}" FontSize="14" />
+                    <TextBlock Text="{Binding QuantityAndPriceText}" FontSize="11" Opacity="0.6" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Text="{Binding TotalText}" FontWeight="Bold" VerticalAlignment="Top" />
+                </Grid>
+                <Button Command="{Binding OpenPickerCommand}"
+                        HorizontalAlignment="Left"
+                        Padding="0" Background="Transparent" BorderThickness="0">
+                  <Border Classes="product-chip" Background="#1F2FB8A8">
+                    <TextBlock Text="{Binding ChipText}" FontSize="12" />
+                  </Border>
+                </Button>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Totals -->
+        <TextBlock Text="Totals" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" />
+        <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+          <TextBlock Grid.Column="0" Text="Tax" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding TaxText}" Width="100" />
+        </Grid>
+        <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+          <TextBlock Grid.Column="0" Text="Total" FontWeight="Bold" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding TotalText}" Width="100" />
+        </Grid>
+
+        <Button Content="Add to my books"
+                Command="{Binding AddToBooksCommand}"
+                IsEnabled="{Binding !IsBusy}"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Margin="0,14,0,0" />
+        <Button Content="Rescan"
+                Command="{Binding RescanCommand}"
+                IsEnabled="{Binding !IsBusy}"
+                Background="Transparent"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                Margin="0,4,0,0" />
+        <TextBlock Text="Saves here and syncs to your desktop." FontSize="11" Opacity="0.55"
+                   TextAlignment="Center" Margin="0,8,0,16" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- Product picker sheet -->
+    <Border Background="#AA000000" IsVisible="{Binding IsProductPickerOpen}">
+      <Border Background="#0F1A25" CornerRadius="18,18,0,0" VerticalAlignment="Bottom"
+              MaxHeight="500" Padding="16">
+        <StackPanel Spacing="6">
+          <TextBlock Text="Choose a product" FontSize="15" FontWeight="Bold" />
+          <TextBlock Text="{Binding ProductPickerTargetDescription, StringFormat='For “{0}”'}"
+                     FontSize="12" Opacity="0.7" Margin="0,0,0,8" />
+
+          <ScrollViewer MaxHeight="260">
+            <ItemsControl ItemsSource="{Binding ProductChoices}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ProductChoiceViewModel">
+                  <Button Command="{Binding SelectCommand}"
+                          Content="{Binding Name}"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                          Background="Transparent" Padding="6,10" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <TextBox Text="{Binding NewProductName}" PlaceholderText="Or type a new product name"
+                   Margin="0,8,0,0" />
+          <Button Content="Create new product"
+                  Command="{Binding CreateNewProductCommand}"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Margin="0,6,0,0" />
+          <Button Content="Cancel"
+                  Command="{Binding CloseProductPickerCommand}"
+                  Background="Transparent"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Margin="0,4,0,0" />
+        </StackPanel>
+      </Border>
+    </Border>
+  </Panel>
+</UserControl>

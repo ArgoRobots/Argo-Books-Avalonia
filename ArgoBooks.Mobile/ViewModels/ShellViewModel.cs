@@ -236,7 +236,7 @@ public partial class ShellViewModel : ViewModelBase
             {
                 if (ReferenceEquals(CurrentPage, scanningViewModel))
                 {
-                    OnScanSucceeded(result);
+                    OnScanSucceeded(result, imageBytes);
                 }
             },
             onRetry: () =>
@@ -254,14 +254,29 @@ public partial class ShellViewModel : ViewModelBase
         return Task.CompletedTask;
     }
 
-    /// <summary>Task 4 replaces ReviewPlaceholderViewModel with the full editable review; for now
-    /// this just proves the scan result reaches a screen. Replaces (rather than pushes onto) the
+    /// <summary>
+    /// Pushes the editable review screen (supplier/customer, date, total/tax, and each line item's
+    /// auto-suggested product, all editable) built from the scan result plus the active company's
+    /// current snapshot (for supplier/product auto-suggest). Replaces (rather than pushes onto) the
     /// back stack entry the transient Scanning screen used, so GoBack from here returns straight to
-    /// Capture.</summary>
-    private void OnScanSucceeded(ReceiptScanResult result)
+    /// Capture.
+    /// </summary>
+    private void OnScanSucceeded(ReceiptScanResult result, byte[] imageBytes)
     {
-        CurrentPage = new ReviewPlaceholderViewModel(result, ReturnToCaptureRoot);
+        var snapshot = _snapshotStore.Current?.Snapshot;
+        CurrentPage = new ReviewViewModel(result, imageBytes, snapshot, OnReviewConfirmedAsync, ReturnToCaptureRoot);
         HeaderTitle = "Review scan";
+    }
+
+    /// <summary>
+    /// "Add to my books" callback from the review screen. Placeholder until Task 5 encrypts the
+    /// CapturedTransaction and pushes it onto the sync queue; for now this just returns to Capture
+    /// once the user has confirmed, so the flow is fully navigable end to end.
+    /// </summary>
+    private Task OnReviewConfirmedAsync(CapturedTransaction transaction)
+    {
+        ReturnToCaptureRoot();
+        return Task.CompletedTask;
     }
 
     private void ReturnToCaptureRoot() => ResetToRoot(_capture, "Scan receipt", AppTab.Capture);

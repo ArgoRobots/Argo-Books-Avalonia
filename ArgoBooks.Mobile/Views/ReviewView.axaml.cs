@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace ArgoBooks.Mobile.Views;
 
-public partial class ReviewPlaceholderView : UserControl
+public partial class ReviewView : UserControl
 {
-    public ReviewPlaceholderView()
+    public ReviewView()
     {
         InitializeComponent();
     }
