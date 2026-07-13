@@ -8,4 +8,9 @@
     <ItemGroup>
         <InternalsVisibleTo Include="ArgoBooks.Tests" />
     </ItemGroup>
+
+    <ItemGroup>
+        <!-- Receipt image preprocessing (ReceiptImageHelper): cross-platform, safe for the Android head. -->
+        <PackageReference Include="SkiaSharp" />
+    </ItemGroup>
 </Project>

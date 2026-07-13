@@ -1,18 +1,34 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Receipt scanning service using Gemini 2.5 Flash vision through the argorobots.com proxy.
+/// Lives in <c>ArgoBooks.Shared</c> so both the desktop and the mobile app can reuse the exact
+/// same scan/parse logic. Talks to <c>{baseUrl}/api/ai/completions.php</c> directly (rather than
+/// going through the desktop-only <c>GeminiService</c>, which also carries bank-categorization and
+/// supplier-suggestion features the phone doesn't need). Auth and telemetry are both seams: the
+/// desktop passes <c>LicenseApiAuth</c> (wrapping <c>LicenseAuthHelper</c>) and its real
+/// <c>ITelemetryManager</c>; the mobile app passes its own device-token auth adapter and null
+/// telemetry (both optional).
 /// </summary>
 public class GeminiReceiptScannerService(
-    LicenseService? licenseService = null,
+    string baseUrl,
+    IApiAuth? apiAuth = null,
     IErrorLogger? errorLogger = null,
-    ITelemetryManager? telemetryManager = null)
+    ITelemetryManager? telemetryManager = null,
+    HttpClient? httpClient = null,
+    Action<double, double, long, double?>? onTimingRecorded = null)
     : IReceiptScannerService, IDisposable
 {
-    private readonly GeminiService _geminiService = new(errorLogger, telemetryManager);
+    private readonly HttpClient _httpClient = httpClient ?? new HttpClient();
+    private readonly bool _ownsHttpClient = httpClient is null;
+
+    private const string DefaultModel = "gemini-2.5-flash";
 
     private const string SystemPrompt = @"You are a receipt data extraction system. You must extract EVERY item and ALL data from the receipt image into structured JSON. Be thorough, missing items is unacceptable.
 
@@ -53,7 +69,7 @@ Rules:
 16. DIGIT ACCURACY: Pay close attention to easily confused digits: 3↔8, 5↔6, 1↔7, 0↔6, swapped digits. When uncertain, look at the digit shape carefully before committing to a value.";
 
     /// <inheritdoc />
-    public bool IsConfigured => licenseService?.GetLicenseKey() != null || licenseService?.GetDeviceId() != null;
+    public bool IsConfigured => apiAuth?.IsConfigured ?? false;
 
     /// <inheritdoc />
     public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
@@ -70,9 +86,7 @@ Rules:
 
         try
         {
-            var licenseKey = licenseService?.GetLicenseKey();
-            var deviceId = licenseService?.GetDeviceId();
-            if (string.IsNullOrEmpty(licenseKey) && string.IsNullOrEmpty(deviceId))
+            if (!IsConfigured)
             {
                 return ReceiptScanResult.Failed("No active license key or device ID found.");
             }
@@ -98,15 +112,12 @@ Rules:
             var base64Image = Convert.ToBase64String(imageData);
 
             // Call Gemini 2.5 Flash vision for receipt scanning
-            var response = await _geminiService.SendVisionChatAsync(
+            var response = await SendVisionRequestAsync(
                 SystemPrompt,
                 "Extract all data from this receipt. Respond with JSON only.",
                 base64Image,
                 mimeType,
-                maxTokens: 16000,
-                temperature: 0.0,
-                model: "gemini-2.5-flash",
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             if (string.IsNullOrEmpty(response))
             {
@@ -238,22 +249,12 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
             var prompt = string.Format(VerificationPrompt, itemList);
 
-            var verifyResponse = await _geminiService.SendVisionChatAsync(
+            var verifyResponse = await SendVisionRequestAsync(
                 "You are a receipt verification system. Check if any line items were missed. Return JSON only.",
                 prompt,
                 base64Image,
                 mimeType,
-                // gemini-2.5-flash spends hidden "thinking" tokens out of this
-                // budget. At 4000 the reasoning could exhaust it before the JSON
-                // answer was written, truncating the response (finishReason
-                // MAX_TOKENS) and silently failing this best-effort verify pass.
-                // Match the main scan's budget; the verify output itself is small,
-                // so the headroom just covers thinking (billing is per token used,
-                // not per the ceiling).
-                maxTokens: 16000,
-                temperature: 0.0,
-                model: "gemini-2.5-flash",
-                cancellationToken: cancellationToken);
+                cancellationToken);
 
             if (string.IsNullOrEmpty(verifyResponse))
                 return result;
@@ -320,6 +321,79 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
         return result;
     }
+
+    /// <summary>
+    /// Posts a vision (image + prompt) request to the AI proxy and returns the extracted text
+    /// content, or null on failure. This replicates just the vision-call slice of the desktop's
+    /// <c>GeminiService</c> (which also carries bank-categorization/supplier-suggestion features
+    /// this scanner doesn't need), so Shared stays free of that larger surface.
+    /// </summary>
+    private async Task<string?> SendVisionRequestAsync(
+        string systemPrompt, string userPrompt, string base64Image, string mimeType, CancellationToken cancellationToken)
+    {
+        var wallClock = Stopwatch.StartNew();
+        long uploadBytes = (long)(base64Image.Length * 0.75);
+
+        object requestBody = new
+        {
+            systemPrompt,
+            userPrompt,
+            model = DefaultModel,
+            maxTokens = 16000,
+            temperature = 0.0,
+            base64Image,
+            mimeType,
+            operation = "receipt_scan",
+            sizeFeature = uploadBytes,
+            platform = PlatformTag
+        };
+
+        var json = JsonSerializer.Serialize(requestBody);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/api/ai/completions.php");
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        apiAuth?.AddAuthHeaders(request);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            errorLogger?.LogError($"AI proxy error {response.StatusCode}", ErrorCategory.Api, "Receipt scan completion");
+            return null;
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        wallClock.Stop();
+        using var doc = JsonDocument.Parse(responseBody);
+        var root = doc.RootElement;
+
+        // Feeds the server-measured compute time (and load factor) back to the caller so
+        // desktop-side progress estimates can self-calibrate (see App's OperationTimingService
+        // wiring). Best-effort: no-op when the response has no "timing" block.
+        if (onTimingRecorded != null && root.TryGetProperty("timing", out var timing))
+        {
+            double serverMs = timing.TryGetProperty("elapsed_ms", out var e) && e.TryGetDouble(out var ev) ? ev : 0;
+            double? loadFactor = timing.TryGetProperty("load_factor", out var lf) && lf.TryGetDouble(out var lv) ? lv : null;
+            onTimingRecorded(serverMs, wallClock.Elapsed.TotalMilliseconds, uploadBytes, loadFactor);
+        }
+
+        if (root.TryGetProperty("success", out var successProp) && successProp.GetBoolean()
+            && root.TryGetProperty("content", out var contentProp))
+        {
+            return contentProp.GetString();
+        }
+
+        return null;
+    }
+
+    /// <summary>Platform tag sent with each AI call for the server-side timing records.</summary>
+    private static readonly string PlatformTag =
+        OperatingSystem.IsAndroid() ? "android"
+        : OperatingSystem.IsIOS() ? "ios"
+        : OperatingSystem.IsWindows() ? "windows"
+        : OperatingSystem.IsMacOS() ? "macos"
+        : OperatingSystem.IsLinux() ? "linux" : "other";
 
     // IMPORTANT: Make this internal so tests can call it
     public static ReceiptScanResult ParseResponse(string response)
@@ -443,6 +517,7 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
     public void Dispose()
     {
-        _geminiService.Dispose();
+        if (_ownsHttpClient)
+            _httpClient.Dispose();
     }
 }
