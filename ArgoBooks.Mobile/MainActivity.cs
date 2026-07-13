@@ -1,6 +1,8 @@
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using ArgoBooks.Mobile.Services;
 using Avalonia.Android;
 using Microsoft.Maui.ApplicationModel;
 
@@ -42,5 +44,14 @@ public class MainActivity : AvaloniaMainActivity
     {
         base.OnResume();
         App.NotifyForegrounded();
+    }
+
+    // Collects the result of DocumentScanner.ScanAsync()'s StartIntentSenderForResult call - the
+    // ML Kit document scanner has no ActivityResultLauncher binding available, so it relies on the
+    // classic request-code + OnActivityResult path instead.
+    protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
+    {
+        base.OnActivityResult(requestCode, resultCode, data);
+        DocumentScanner.HandleActivityResult(requestCode, resultCode, data);
     }
 }
