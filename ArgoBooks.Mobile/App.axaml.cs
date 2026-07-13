@@ -180,6 +180,10 @@ public partial class App : Application
         var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore);
         await shellViewModel.InitializeAsync();
 
+        // Unpairing the last remaining company (Settings > Unpair this phone) drops back to the
+        // full pairing screen, same as a fresh install.
+        shellViewModel.RequestPairing += () => Dispatcher.UIThread.Post(ShowPairing);
+
         Dispatcher.UIThread.Post(() =>
         {
             _singleView!.MainView = new ShellView

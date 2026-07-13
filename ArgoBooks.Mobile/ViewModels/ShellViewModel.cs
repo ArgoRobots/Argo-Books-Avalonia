@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Shared.Mobile;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -67,6 +68,22 @@ public partial class ShellViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isContentVisible;
 
+    /// <summary>The active paired company's label, shown in the chip at the top of the root pages.</summary>
+    [ObservableProperty]
+    private string _activeCompanyLabel = string.Empty;
+
+    /// <summary>
+    /// True on the root Dashboard/Data/Analytics pages once a company is paired - hidden on
+    /// Settings (which has its own Companies section) and on any pushed detail/switcher/pairing
+    /// page, so the chip never floats on top of unrelated content.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCompanyChipVisible;
+
+    /// <summary>Raised when the active company was unpaired and no paired companies remain, so the
+    /// host (App.axaml.cs) should drop back to the full pairing screen.</summary>
+    public event Action? RequestPairing;
+
     // Bottom-nav highlight flags, kept in sync with ActiveTab (see OnActiveTabChanged) so the
     // XAML doesn't need an enum-comparison converter.
     [ObservableProperty]
@@ -91,6 +108,17 @@ public partial class ShellViewModel : ViewModelBase
         IsCaptureActive = value == AppTab.Capture;
         IsAnalyticsActive = value == AppTab.Analytics;
         IsSettingsActive = value == AppTab.Settings;
+        UpdateCompanyChipVisibility();
+    }
+
+    partial void OnCanGoBackChanged(bool value) => UpdateCompanyChipVisibility();
+
+    partial void OnIsNotPairedChanged(bool value) => UpdateCompanyChipVisibility();
+
+    private void UpdateCompanyChipVisibility()
+    {
+        var isRootViewingTab = ActiveTab is AppTab.Home or AppTab.Data or AppTab.Analytics;
+        IsCompanyChipVisible = isRootViewingTab && !CanGoBack && !IsNotPaired;
     }
 
     public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore)
@@ -137,7 +165,8 @@ public partial class ShellViewModel : ViewModelBase
         _analytics.UpdateSnapshot(state.Snapshot);
 
         var record = await _pairedCompanyStore.GetActiveAsync();
-        _settings.Update(record?.CompanyLabel ?? string.Empty, LastSyncedText);
+        ActiveCompanyLabel = record?.CompanyLabel ?? string.Empty;
+        _settings.Update(ActiveCompanyLabel, LastSyncedText);
     }
 
     private static string FormatLastSynced(DateTime? lastSyncedAt, bool isStale)
@@ -174,6 +203,92 @@ public partial class ShellViewModel : ViewModelBase
         // Placeholder: receipt capture (scan -> review -> add to books) is Plan 5's job.
         // Tapping this tab today just highlights it; no screen is wired up yet.
         ActiveTab = AppTab.Capture;
+    }
+
+    [RelayCommand]
+    private void OpenCompanySwitcher()
+    {
+        _backStack.Push((CurrentPage, HeaderTitle, ActiveTab));
+        CurrentPage = new CompanySwitcherViewModel(_pairedCompanyStore, SwitchCompanyFromSwitcherAsync, OpenPairingFlow);
+        HeaderTitle = "Switch company";
+        CanGoBack = true;
+    }
+
+    private async Task SwitchCompanyFromSwitcherAsync(string companyUid)
+    {
+        await SwitchCompanyAsync(companyUid);
+        ResetToRoot(_dashboard, "Dashboard", AppTab.Home);
+    }
+
+    /// <summary>
+    /// Sets <paramref name="companyUid"/> active and refreshes the snapshot, unless it's already
+    /// the active company (see <see cref="CompanySwitchDecision"/>). Shared by the company
+    /// switcher page and the Settings "Companies" section.
+    /// </summary>
+    public async Task SwitchCompanyAsync(string companyUid)
+    {
+        var active = await _pairedCompanyStore.GetActiveAsync();
+        if (!CompanySwitchDecision.ShouldSwitch(active?.CompanyUid, companyUid))
+        {
+            return;
+        }
+
+        await _pairedCompanyStore.SetActiveAsync(companyUid);
+        await RefreshCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>Pushes the pairing flow (same screen used for the very first pairing) so the user
+    /// can connect a second company. On success, refreshes and returns to the Dashboard.</summary>
+    public void OpenPairingFlow()
+    {
+        var pairingViewModel = new PairingViewModel();
+        pairingViewModel.Paired += companyLabel => Dispatcher.UIThread.Post(() => { _ = OnPairedAnotherAsync(); });
+
+        _backStack.Push((CurrentPage, HeaderTitle, ActiveTab));
+        CurrentPage = pairingViewModel;
+        HeaderTitle = "Pair another company";
+        CanGoBack = true;
+    }
+
+    private async Task OnPairedAnotherAsync()
+    {
+        await RefreshCommand.ExecuteAsync(null);
+        ResetToRoot(_dashboard, "Dashboard", AppTab.Home);
+    }
+
+    /// <summary>All paired companies, for the Settings "Companies" section.</summary>
+    public Task<List<PairedCompanyRecord>> GetCompaniesAsync() => _pairedCompanyStore.GetAllAsync();
+
+    /// <summary>The active company's UID, or null if none is active.</summary>
+    public async Task<string?> GetActiveCompanyUidAsync() => (await _pairedCompanyStore.GetActiveAsync())?.CompanyUid;
+
+    /// <summary>
+    /// Removes the active paired company (local removal only - the server-side device revoke is
+    /// handled desktop-side). If another paired company remains, it becomes active and the
+    /// snapshot refreshes. If none remain, raises <see cref="RequestPairing"/> so the host drops
+    /// back to the full pairing screen. Returns true if the shell is still usable (a company is
+    /// still active), false if the caller should stop touching this shell instance.
+    /// </summary>
+    public async Task<bool> UnpairActiveCompanyAsync()
+    {
+        var active = await _pairedCompanyStore.GetActiveAsync();
+        if (active == null)
+        {
+            return true;
+        }
+
+        await _pairedCompanyStore.RemoveAsync(active.CompanyUid);
+
+        var remaining = await _pairedCompanyStore.GetAllAsync();
+        if (remaining.Count == 0)
+        {
+            RequestPairing?.Invoke();
+            return false;
+        }
+
+        await _pairedCompanyStore.SetActiveAsync(remaining[0].CompanyUid);
+        await RefreshCommand.ExecuteAsync(null);
+        return true;
     }
 
     private void ResetToRoot(object page, string title, AppTab tab)

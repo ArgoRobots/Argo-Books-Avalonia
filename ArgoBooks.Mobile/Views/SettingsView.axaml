@@ -25,7 +25,43 @@
       <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAppLockEnabled}" VerticalAlignment="Center" />
     </Grid>
 
-    <TextBlock Text="Switching companies is coming in a later update."
-               Opacity="0.5" FontSize="12" TextWrapping="Wrap" Margin="0,20,0,0" />
+    <TextBlock Text="Companies" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="0,12,0,0" />
+    <ItemsControl ItemsSource="{Binding Companies}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:CompanyRowViewModel">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding CompanyLabel}" FontSize="14" VerticalAlignment="Center" />
+              <TextBlock Text="(active)" FontSize="11" Opacity="0.6" VerticalAlignment="Center"
+                         IsVisible="{Binding IsActive}" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Switch" FontSize="12" Padding="8,2"
+                    Command="{Binding SelectCommand}"
+                    IsVisible="{Binding !IsActive}" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <Button Content="Pair another company"
+            Command="{Binding PairAnotherCommand}"
+            HorizontalAlignment="Left" Margin="0,8,0,0" />
+
+    <Border Background="#1AB63A2A" CornerRadius="8" Padding="10" Margin="0,10,0,0"
+            IsVisible="{Binding IsConfirmingUnpair}">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Unpair this phone from the active company? You'll need to pair again from the desktop to see its data here."
+                   FontSize="12" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Content="Yes, unpair" Command="{Binding ConfirmUnpairCommand}" IsEnabled="{Binding !IsBusy}" />
+          <Button Content="Cancel" Command="{Binding CancelUnpairCommand}" IsEnabled="{Binding !IsBusy}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Button Content="Unpair this phone"
+            Command="{Binding RequestUnpairCommand}"
+            IsVisible="{Binding !IsConfirmingUnpair}"
+            HorizontalAlignment="Left" Margin="0,10,0,0" />
   </StackPanel>
 </UserControl>
