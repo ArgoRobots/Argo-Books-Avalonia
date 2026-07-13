@@ -144,8 +144,11 @@ Rules:
         finally
         {
             stopwatch.Stop();
+            // Tag as ReceiptScanProxy (not Gemini) so the admin app-stats dashboard's
+            // Receipt Scanning charts see these calls; the generic Gemini bucket is for
+            // non-receipt AI (spreadsheet analysis, bank categorize, etc.).
             _ = telemetryManager?.TrackApiCallAsync(
-                ApiName.Gemini,
+                ApiName.ReceiptScanProxy,
                 stopwatch.ElapsedMilliseconds,
                 success,
                 cancellationToken: cancellationToken);
