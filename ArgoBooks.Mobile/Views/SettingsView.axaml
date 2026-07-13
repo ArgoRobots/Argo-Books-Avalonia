@@ -15,7 +15,17 @@
     <TextBlock Text="{Binding LastSyncedText}" FontSize="14" Opacity="0.8" />
     <Button Content="Sync now" Command="{Binding RefreshCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" />
 
-    <TextBlock Text="More settings (biometric app lock, switching companies) are coming in a later update."
+    <TextBlock Text="Security" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="0,12,0,0" />
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel Grid.Column="0" Spacing="2">
+        <TextBlock Text="Biometric app lock" FontSize="15" />
+        <TextBlock Text="Require your fingerprint, face, or device PIN to open the app."
+                   FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+      </StackPanel>
+      <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAppLockEnabled}" VerticalAlignment="Center" />
+    </Grid>
+
+    <TextBlock Text="Switching companies is coming in a later update."
                Opacity="0.5" FontSize="12" TextWrapping="Wrap" Margin="0,20,0,0" />
   </StackPanel>
 </UserControl>

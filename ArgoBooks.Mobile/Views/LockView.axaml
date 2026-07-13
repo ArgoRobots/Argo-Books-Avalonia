@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             x:Class="ArgoBooks.Mobile.Views.LockView"
+             x:DataType="vm:LockViewModel">
+
+  <Grid>
+    <StackPanel Spacing="18" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="32">
+
+      <!-- Line-icon padlock (stroke only, no fill/emoji), in the app's brand teal. -->
+      <Canvas Width="64" Height="64" HorizontalAlignment="Center">
+        <Path Data="M20,28 L20,19 A12,12 0 0 1 44,19 L44,28"
+              Stroke="#2FB8A8" StrokeThickness="3.5" StrokeJoin="Round" StrokeLineCap="Round" />
+        <Rectangle Canvas.Left="13" Canvas.Top="28" Width="38" Height="27"
+                   RadiusX="5" RadiusY="5"
+                   Stroke="#2FB8A8" StrokeThickness="3.5" />
+        <Ellipse Canvas.Left="29" Canvas.Top="38" Width="6" Height="6" Fill="#2FB8A8" />
+        <Rectangle Canvas.Left="31" Canvas.Top="43" Width="2" Height="6" Fill="#2FB8A8" />
+      </Canvas>
+
+      <TextBlock Text="Argo Books is locked"
+                 FontSize="20" FontWeight="Bold"
+                 HorizontalAlignment="Center" />
+
+      <TextBlock Text="Unlock with your fingerprint, face, or device PIN to view your data."
+                 FontSize="14" Opacity="0.75"
+                 TextWrapping="Wrap" TextAlignment="Center"
+                 MaxWidth="280" />
+
+      <Button Content="Unlock"
+              Command="{Binding UnlockCommand}"
+              IsEnabled="{Binding !IsAuthenticating}"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center"
+              Margin="0,10,0,0" />
+
+      <TextBlock Text="{Binding StatusMessage}"
+                 TextWrapping="Wrap"
+                 TextAlignment="Center"
+                 Opacity="0.7"
+                 HorizontalAlignment="Center"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

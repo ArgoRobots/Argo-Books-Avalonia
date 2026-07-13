@@ -28,4 +28,19 @@ public class MainActivity : AvaloniaMainActivity
         Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
     }
+
+    // Drive the biometric app lock's "resume past grace period" check off the real Activity
+    // lifecycle: OnPause fires when the app is sent to the background (including screen-off and
+    // switching apps), OnResume fires when it comes back to the foreground.
+    protected override void OnPause()
+    {
+        base.OnPause();
+        App.NotifyBackgrounded();
+    }
+
+    protected override void OnResume()
+    {
+        base.OnResume();
+        App.NotifyForegrounded();
+    }
 }

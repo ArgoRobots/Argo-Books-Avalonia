@@ -35,6 +35,11 @@
     <!-- Turnkey full-screen scan-activity UI (no custom camera pipeline needed), the
          barcode-scanning equivalent of the DocumentScanner's GmsDocumentScanning UI above. -->
     <PackageVersion Include="Xamarin.GooglePlayServices.Code.Scanner" Version="116.1.0.16" />
+    <!-- AndroidX BiometricPrompt binding for the app lock (Task 7). Same binding family as the
+         MLKit/AndroidX packages above (plain Android binding, coexists with Avalonia). Its
+         nuspec pins AppCompat 1.7.1.4 / Fragment 1.8.9.3 / Core 1.19.0.1, which already match
+         the versions this project resolves to (see the pins above), so no new version conflicts. -->
+    <PackageVersion Include="Xamarin.AndroidX.Biometric" Version="1.1.0.33" />
     <!-- Pin transitive deps: Net.Google.MLKit.DocumentScanner pulls
          Xamarin.AndroidX.Lifecycle.ViewModelSavedState.Android 2.10.0.2, which constrains
          Xamarin.AndroidX.Lifecycle.Common.Jvm to < 2.10.1 - but Xamarin.AndroidX.Core
