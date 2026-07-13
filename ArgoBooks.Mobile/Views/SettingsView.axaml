@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             x:Class="ArgoBooks.Mobile.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <StackPanel Margin="16" Spacing="10">
+    <TextBlock Text="Company" FontSize="13" FontWeight="SemiBold" Opacity="0.75" />
+    <TextBlock Text="{Binding CompanyLabel}" FontSize="15" />
+
+    <TextBlock Text="Sync" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="0,12,0,0" />
+    <TextBlock Text="{Binding LastSyncedText}" FontSize="14" Opacity="0.8" />
+    <Button Content="Sync now" Command="{Binding RefreshCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" />
+
+    <TextBlock Text="More settings (biometric app lock, switching companies) are coming in a later update."
+               Opacity="0.5" FontSize="12" TextWrapping="Wrap" Margin="0,20,0,0" />
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             x:Class="ArgoBooks.Mobile.Views.DataSectionListView"
+             x:DataType="vm:DataSectionListViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+    <TextBlock Grid.Row="0" Text="Nothing here yet."
+               IsVisible="{Binding IsEmpty}"
+               Opacity="0.6" Margin="14,24" HorizontalAlignment="Center" />
+
+    <ScrollViewer Grid.Row="1">
+      <ItemsControl Margin="14,4,14,16" ItemsSource="{Binding Rows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:RowItemViewModel">
+            <Button Command="{Binding OpenCommand}"
+                    HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch"
+                    Background="Transparent" Padding="4,9">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="{Binding Title}" FontSize="14" />
+                  <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.6" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding Amount}" FontWeight="Bold" VerticalAlignment="Center" />
+              </Grid>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Grid>
+</UserControl>
