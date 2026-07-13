@@ -109,4 +109,34 @@ public class CaptureIngestServiceTests
         var expense = data.Expenses.Single();
         Assert.Equal(product.Id, expense.LineItems.Single().ProductId);
     }
+
+    [Fact]
+    public void Ingest_WithZeroTotal_ThrowsArgumentException()
+    {
+        var data = NewCompany();
+        var tx = NewExpenseDto();
+        tx.Total = 0;
+
+        var ex = Assert.Throws<ArgumentException>(() => CaptureIngestService.Ingest(data, tx));
+        Assert.Equal("tx", ex.ParamName);
+        Assert.StartsWith("Captured transaction total must be positive.", ex.Message);
+
+        Assert.Empty(data.Expenses);
+        Assert.Empty(data.Receipts);
+    }
+
+    [Fact]
+    public void Ingest_WithNoLineItems_ThrowsArgumentException()
+    {
+        var data = NewCompany();
+        var tx = NewExpenseDto();
+        tx.LineItems = [];
+
+        var ex = Assert.Throws<ArgumentException>(() => CaptureIngestService.Ingest(data, tx));
+        Assert.Equal("tx", ex.ParamName);
+        Assert.StartsWith("Captured transaction must have at least one line item.", ex.Message);
+
+        Assert.Empty(data.Expenses);
+        Assert.Empty(data.Receipts);
+    }
 }

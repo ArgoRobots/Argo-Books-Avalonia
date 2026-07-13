@@ -29,6 +29,12 @@ public static class CaptureIngestService
     /// </summary>
     public static string Ingest(CompanyData data, CapturedTransaction tx)
     {
+        if (tx.Total <= 0)
+            throw new ArgumentException("Captured transaction total must be positive.", nameof(tx));
+
+        if (tx.LineItems == null || tx.LineItems.Count == 0)
+            throw new ArgumentException("Captured transaction must have at least one line item.", nameof(tx));
+
         var lineItems = BuildLineItems(data, tx);
         var subtotal = tx.Total - tx.Tax;
         var amount = subtotal > 0 ? subtotal : tx.Total;
