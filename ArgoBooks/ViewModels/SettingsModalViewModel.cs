@@ -1442,6 +1442,175 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
+    #region Mobile Sync Settings
+
+    /// <summary>
+    /// QR code image encoding the current pairing payload. Null until "Connect a phone" is used.
+    /// </summary>
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.Bitmap? _qrImage;
+
+    /// <summary>
+    /// Short, human-typeable form of the pairing token, shown alongside the QR code as a fallback.
+    /// </summary>
+    [ObservableProperty]
+    private string _pairingCode = string.Empty;
+
+    /// <summary>
+    /// Phones currently paired with this company for mobile sync.
+    /// </summary>
+    public ObservableCollection<ArgoBooks.Core.Models.Tracking.PairedDevice> PairedDevices { get; } = [];
+
+    /// <summary>
+    /// True while a pairing token is being requested from the sync server.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isConnecting;
+
+    /// <summary>
+    /// True while the paired device list is being refreshed from the sync server.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isRefreshingDevices;
+
+    /// <summary>
+    /// Loads mobile sync state (paired devices) from company data. Called each time the
+    /// settings modal opens. Does not fetch a fresh QR code; that only happens when the
+    /// user explicitly clicks "Connect a phone".
+    /// </summary>
+    public void LoadMobileSync()
+    {
+        QrImage = null;
+        PairingCode = string.Empty;
+        PairedDevices.Clear();
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var device in data.PairedDevices)
+            PairedDevices.Add(device);
+    }
+
+    /// <summary>
+    /// Ensures this company has a mobile-sync identity (companyUid/syncKey), requests a
+    /// short-lived pairing token from the server, and renders it as a QR code the phone can scan.
+    /// </summary>
+    [RelayCommand]
+    private async Task ConnectPhoneAsync()
+    {
+        var companyManager = App.CompanyManager;
+        var companyData = companyManager?.CompanyData;
+        var syncService = App.SyncService;
+        if (companyManager == null || companyData == null || syncService == null) return;
+
+        IsConnecting = true;
+        try
+        {
+            var mobileSync = companyData.Settings.MobileSync;
+            mobileSync.CompanyUid ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateCompanyUid();
+            mobileSync.SyncKeyBase64 ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateSyncKey();
+            mobileSync.Enabled = true;
+            await companyManager.SaveSettingsOnlyAsync();
+
+            var companyLabel = string.IsNullOrWhiteSpace(companyData.Settings.Company.Name)
+                ? "My Company"
+                : companyData.Settings.Company.Name;
+
+            var token = await syncService.CreatePairingTokenAsync(mobileSync.CompanyUid, companyLabel, CancellationToken.None);
+            if (string.IsNullOrEmpty(token))
+            {
+                QrImage = null;
+                PairingCode = string.Empty;
+                return;
+            }
+
+            var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token!, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
+            QrImage = new QrImageService().RenderBitmap(payload);
+            PairingCode = token!.Length > 8 ? token[..8].ToUpperInvariant() : token.ToUpperInvariant();
+        }
+        catch
+        {
+            // Silently fail; the user can retry via the button, which stays enabled.
+            QrImage = null;
+            PairingCode = string.Empty;
+        }
+        finally
+        {
+            IsConnecting = false;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the paired device list from the sync server.
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshDevicesAsync()
+    {
+        var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
+        var syncService = App.SyncService;
+        if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
+
+        IsRefreshingDevices = true;
+        try
+        {
+            var list = await syncService.ListDevicesAsync(companyUid, CancellationToken.None);
+            PairedDevices.Clear();
+            foreach (var d in list)
+            {
+                PairedDevices.Add(new ArgoBooks.Core.Models.Tracking.PairedDevice
+                {
+                    Id = $"PDV-{d.Id}",
+                    ServerDeviceId = d.Id,
+                    Label = d.DeviceLabel,
+                    LastSeenAt = d.LastSeenAt
+                });
+            }
+
+            // Persist the refreshed list so it survives without another server round-trip.
+            var data = App.CompanyManager?.CompanyData;
+            if (data != null)
+            {
+                data.PairedDevices.Clear();
+                data.PairedDevices.AddRange(PairedDevices);
+            }
+        }
+        catch
+        {
+            // Silently fail; cached list stays as-is.
+        }
+        finally
+        {
+            IsRefreshingDevices = false;
+        }
+    }
+
+    /// <summary>
+    /// Revokes a paired phone's access, then refreshes the device list.
+    /// </summary>
+    [RelayCommand]
+    private async Task RevokeDeviceAsync(ArgoBooks.Core.Models.Tracking.PairedDevice? device)
+    {
+        if (device == null) return;
+
+        var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
+        var syncService = App.SyncService;
+        if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
+
+        try
+        {
+            await syncService.RevokeDeviceAsync(companyUid, device.ServerDeviceId, CancellationToken.None);
+        }
+        catch
+        {
+            // Fall through to refresh regardless; if the revoke silently failed the device
+            // will simply still be listed.
+        }
+
+        await RefreshDevicesAsync();
+    }
+
+    #endregion
+
     /// <summary>
     /// Whether there are unsaved changes in the settings.
     /// </summary>
@@ -1546,6 +1715,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         // Load bank import rules
         LoadBankRules();
+
+        // Load mobile sync state (paired devices)
+        LoadMobileSync();
 
         // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
