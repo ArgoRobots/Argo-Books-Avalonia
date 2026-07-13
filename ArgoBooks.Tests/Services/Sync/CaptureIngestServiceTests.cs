@@ -139,4 +139,53 @@ public class CaptureIngestServiceTests
         Assert.Empty(data.Expenses);
         Assert.Empty(data.Receipts);
     }
+
+    [Fact]
+    public void Ingest_SameScanUidTwice_CreatesOnlyOneTransaction()
+    {
+        var data = NewCompany();
+        var tx = NewExpenseDto();
+        tx.ScanUid = "11111111-1111-1111-1111-111111111111";
+
+        var firstId = CaptureIngestService.Ingest(data, tx);
+        var secondId = CaptureIngestService.Ingest(data, tx);
+
+        Assert.NotNull(firstId);
+        Assert.Null(secondId);
+        Assert.Single(data.Expenses);
+        Assert.Single(data.Receipts);
+        Assert.Single(data.IngestedScanUids);
+        Assert.Equal(tx.ScanUid, data.IngestedScanUids[0]);
+    }
+
+    [Fact]
+    public void Ingest_WithoutScanUid_DoesNotDeDuplicate()
+    {
+        var data = NewCompany();
+        var tx = NewExpenseDto();
+        // ScanUid left at its default (empty) - de-dupe must be a no-op so it doesn't matter which
+        // captures happen to omit it.
+
+        CaptureIngestService.Ingest(data, tx);
+        CaptureIngestService.Ingest(data, tx);
+
+        Assert.Equal(2, data.Expenses.Count);
+        Assert.Empty(data.IngestedScanUids);
+    }
+
+    [Fact]
+    public void Ingest_DifferentScanUids_CreatesBothTransactions()
+    {
+        var data = NewCompany();
+        var tx1 = NewExpenseDto();
+        tx1.ScanUid = "11111111-1111-1111-1111-111111111111";
+        var tx2 = NewExpenseDto();
+        tx2.ScanUid = "22222222-2222-2222-2222-222222222222";
+
+        CaptureIngestService.Ingest(data, tx1);
+        CaptureIngestService.Ingest(data, tx2);
+
+        Assert.Equal(2, data.Expenses.Count);
+        Assert.Equal(2, data.IngestedScanUids.Count);
+    }
 }

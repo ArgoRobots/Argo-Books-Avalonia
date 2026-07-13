@@ -24,17 +24,25 @@ namespace ArgoBooks.Core.Services.Sync;
 /// </summary>
 public static class CaptureIngestService
 {
+    /// <summary>Bound on <c>CompanyData.IngestedScanUids</c>; oldest entries are trimmed past this.</summary>
+    private const int MaxTrackedScanUids = 1000;
+
     /// <summary>
     /// Ingests a captured transaction into <paramref name="data"/>, adding the new
-    /// <c>Expense</c>/<c>Revenue</c> and its linked <c>Receipt</c>. Returns the created transaction id.
+    /// <c>Expense</c>/<c>Revenue</c> and its linked <c>Receipt</c>. Returns the created transaction id,
+    /// or <c>null</c> when <see cref="CapturedTransaction.ScanUid"/> was already ingested previously
+    /// (restart-safe de-dupe via <c>CompanyData.IngestedScanUids</c>) - in that case nothing is added.
     /// </summary>
-    public static string Ingest(CompanyData data, CapturedTransaction tx)
+    public static string? Ingest(CompanyData data, CapturedTransaction tx)
     {
         if (tx.Total <= 0)
             throw new ArgumentException("Captured transaction total must be positive.", nameof(tx));
 
         if (tx.LineItems == null || tx.LineItems.Count == 0)
             throw new ArgumentException("Captured transaction must have at least one line item.", nameof(tx));
+
+        if (!string.IsNullOrEmpty(tx.ScanUid) && data.IngestedScanUids.Contains(tx.ScanUid))
+            return null;
 
         var lineItems = BuildLineItems(data, tx);
         var subtotal = tx.Total - tx.Tax;
@@ -46,9 +54,18 @@ public static class CaptureIngestService
             ? "USD"
             : data.Settings.Localization.Currency;
 
-        return tx.Type == CapturedTransactionType.Revenue
+        var id = tx.Type == CapturedTransactionType.Revenue
             ? IngestRevenue(data, tx, lineItems, amount, taxRate, unitPrice, description, companyCurrency)
             : IngestExpense(data, tx, lineItems, amount, taxRate, unitPrice, description, companyCurrency);
+
+        if (!string.IsNullOrEmpty(tx.ScanUid))
+        {
+            data.IngestedScanUids.Add(tx.ScanUid);
+            if (data.IngestedScanUids.Count > MaxTrackedScanUids)
+                data.IngestedScanUids.RemoveRange(0, data.IngestedScanUids.Count - MaxTrackedScanUids);
+        }
+
+        return id;
     }
 
     private static string IngestExpense(

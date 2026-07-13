@@ -203,6 +203,14 @@ public class CompanyData
     [JsonPropertyName("pairedDevices")]
     public List<Models.Tracking.PairedDevice> PairedDevices { get; init; } = [];
 
+    /// <summary>
+    /// ScanUids of phone-captured transactions already ingested via <c>CaptureIngestService</c>. Lets
+    /// mobile-sync de-dupe a re-delivered capture restart-safe (not just for the current app session).
+    /// Bounded to the most recently ingested 1000 entries.
+    /// </summary>
+    [JsonPropertyName("ingestedScanUids")]
+    public List<string> IngestedScanUids { get; set; } = [];
+
     #endregion
 
     #region Invoice Templates

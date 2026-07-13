@@ -462,15 +462,6 @@ public partial class App : Application
     private static int _isMobileSyncing;
 
     /// <summary>
-    /// Ids of queue items that have been ingested into <c>CompanyData</c> this session but not yet
-    /// acked (the save was skipped or failed). Prevents a not-yet-acked item that re-delivers on a
-    /// later pull from being ingested a second time while it's still pending. Mutated only from
-    /// within <see cref="AutoMobileSyncAsync"/>, which is itself single-flighted via
-    /// <see cref="_isMobileSyncing"/>, so no additional locking is needed.
-    /// </summary>
-    private static readonly HashSet<int> _pendingMobileSyncIds = new();
-
-    /// <summary>
     /// Auto-syncs with the paired mobile app: uploads a fresh company snapshot so the phone
     /// has current data, then pulls any receipts/expenses the phone captured while offline
     /// and ingests them into the local company. Safe to call from multiple places, concurrent
@@ -507,23 +498,26 @@ public partial class App : Application
             }
 
             // PULL + INGEST: drain the phone's capture queue into local Expenses/Revenue/Receipts.
+            // CaptureIngestService de-dupes on CapturedTransaction.ScanUid via the persisted
+            // CompanyData.IngestedScanUids list, so a re-delivered-but-still-pending item is
+            // safely skipped even across app restarts (not just within this session).
             var items = await syncService.PullQueueAsync(companyUid, ct);
             var malformedIds = new List<int>();
             var ingestedIds = new List<int>();
+            var duplicateIds = new List<int>();
             foreach (var item in items)
             {
-                // Already ingested (but not yet acked) in a prior cycle this session - skip re-ingest
-                // so a re-delivered-but-still-pending item doesn't get added to CompanyData twice.
-                if (_pendingMobileSyncIds.Contains(item.Id))
-                    continue;
-
                 try
                 {
                     var plain = SyncCrypto.Decrypt(item.Ciphertext, syncKey);
                     var tx = System.Text.Json.JsonSerializer.Deserialize<CapturedTransaction>(plain);
-                    CaptureIngestService.Ingest(companyData, tx!);
-                    ingestedIds.Add(item.Id);
-                    _pendingMobileSyncIds.Add(item.Id);
+                    var newId = CaptureIngestService.Ingest(companyData, tx!);
+                    if (newId == null)
+                        // Already ingested (and its ScanUid persisted) in a prior cycle - nothing new
+                        // to save, so it's safe to ack immediately regardless of this cycle's save.
+                        duplicateIds.Add(item.Id);
+                    else
+                        ingestedIds.Add(item.Id);
                 }
                 catch (Exception ex)
                 {
@@ -536,17 +530,12 @@ public partial class App : Application
                 }
             }
 
-            // PERSIST before ACK: an item must never be acknowledged (and thus deleted server-side)
-            // before its ingested data is actually saved locally. If the save is skipped (the user has
-            // unsaved edits in memory) or throws, the ingested items must NOT be acked - they stay in
-            // the server queue (and in _pendingMobileSyncIds, so they aren't re-ingested) and will
-            // persist for real once a save actually succeeds on a later cycle.
-            //
-            // Known gap: a crash between the save below and the ack call could still cause a
-            // re-delivery (the data is saved, but the item stays in the queue and gets re-ingested
-            // on the next pull, creating a duplicate transaction). A future refinement is to have
-            // the phone assign a stable scan uid to each capture and have CaptureIngestService
-            // de-dupe on that id rather than relying purely on ack-once-processed semantics.
+            // PERSIST before ACK: an item that added new data must never be acknowledged (and thus
+            // deleted server-side) before that data is actually saved locally. If the save is skipped
+            // (the user has unsaved edits in memory) or throws, the newly-ingested items must NOT be
+            // acked - they stay in the server queue and will be re-delivered next cycle, where
+            // CaptureIngestService's ScanUid check safely no-ops the ones already saved and retries
+            // the rest.
             var saved = false;
             if (ingestedIds.Count > 0 && CompanyManager != null && !CompanyManager.HasUnsavedChanges)
             {
@@ -562,11 +551,10 @@ public partial class App : Application
             }
 
             var toAck = new List<int>(malformedIds);
+            toAck.AddRange(duplicateIds);
             if (saved)
             {
                 toAck.AddRange(ingestedIds);
-                foreach (var id in ingestedIds)
-                    _pendingMobileSyncIds.Remove(id);
             }
 
             if (toAck.Count > 0)
