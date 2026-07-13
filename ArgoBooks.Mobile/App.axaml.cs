@@ -18,9 +18,12 @@ public partial class App : Application
         // Android only uses the single-view application lifetime.
         if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
-            singleViewPlatform.MainView = new MainView
+            // PairingView is the pairing/connect-to-desktop screen (Plan 4 Task 5). A later
+            // task will branch on PairedCompanyStore.GetActiveAsync() to skip straight to the
+            // dashboard when a company is already paired; for now this is the single entry view.
+            singleViewPlatform.MainView = new PairingView
             {
-                DataContext = new MainViewModel()
+                DataContext = new PairingViewModel()
             };
         }
 

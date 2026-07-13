@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             x:Class="ArgoBooks.Mobile.Views.PairingView"
+             x:DataType="vm:PairingViewModel">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code. -->
+    <vm:PairingViewModel />
+  </Design.DataContext>
+
+  <ScrollViewer Padding="24">
+    <StackPanel Spacing="16" VerticalAlignment="Center">
+      <TextBlock Text="Connect to desktop"
+                 FontSize="22" FontWeight="Bold"
+                 HorizontalAlignment="Center" />
+
+      <TextBlock Text="Open Argo Books on your computer, go to Settings &gt; Mobile sync, and scan the QR code shown there - or paste the pairing data below."
+                 TextWrapping="Wrap"
+                 HorizontalAlignment="Center"
+                 Opacity="0.8" />
+
+      <Button Content="Scan QR code"
+              Command="{Binding ScanQrCommand}"
+              IsEnabled="{Binding !IsBusy}"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center" />
+
+      <TextBlock Text="Or paste pairing data" Opacity="0.7" HorizontalAlignment="Center" />
+
+      <TextBox Text="{Binding PastedPayload}"
+               PlaceholderText="Paste the pairing JSON from the desktop"
+               AcceptsReturn="True"
+               TextWrapping="Wrap"
+               Height="80" />
+
+      <TextBox Text="{Binding DeviceLabel}"
+               PlaceholderText="Device name" />
+
+      <Button Content="Connect"
+              Command="{Binding ConnectCommand}"
+              IsEnabled="{Binding !IsBusy}"
+              HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center" />
+
+      <TextBlock Text="{Binding StatusMessage}"
+                 TextWrapping="Wrap"
+                 HorizontalAlignment="Center"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

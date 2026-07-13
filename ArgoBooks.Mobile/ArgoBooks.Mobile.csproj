@@ -29,6 +29,8 @@
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" />
     <PackageReference Include="Microsoft.Maui.Essentials" />
     <PackageReference Include="Net.Google.MLKit.DocumentScanner" />
+    <PackageReference Include="Xamarin.Google.MLKit.BarcodeScanning" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Code.Scanner" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModelSavedState.Android" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.Common.Jvm" />
   </ItemGroup>

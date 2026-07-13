@@ -28,6 +28,13 @@
          removed: it hard-requires Microsoft.Maui.dll (the full MAUI Controls framework),
          which a pure-Avalonia Android head doesn't reference. See task-2-report.md. -->
     <PackageVersion Include="Net.Google.MLKit.DocumentScanner" Version="16.1.0" />
+    <!-- QR/barcode scanning for the pairing flow (Task 5). Same binding family as the
+         doc-scanner above (plain Android binding, no MAUI dependency) - unlike
+         ZXing.Net.MAUI (removed, see Task 2), this one is expected to coexist with Avalonia. -->
+    <PackageVersion Include="Xamarin.Google.MLKit.BarcodeScanning" Version="117.3.0.8" />
+    <!-- Turnkey full-screen scan-activity UI (no custom camera pipeline needed), the
+         barcode-scanning equivalent of the DocumentScanner's GmsDocumentScanning UI above. -->
+    <PackageVersion Include="Xamarin.GooglePlayServices.Code.Scanner" Version="116.1.0.16" />
     <!-- Pin transitive deps: Net.Google.MLKit.DocumentScanner pulls
          Xamarin.AndroidX.Lifecycle.ViewModelSavedState.Android 2.10.0.2, which constrains
          Xamarin.AndroidX.Lifecycle.Common.Jvm to < 2.10.1 - but Xamarin.AndroidX.Core
