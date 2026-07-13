@@ -17,9 +17,10 @@ namespace ArgoBooks.Core.Services.Sync;
 /// This is a plain Core service: unlike the ViewModel, it does not record an undo/redo action (that's a
 /// UI-only concern tied to <c>App.UndoRedoManager</c>) and it does not call
 /// <c>ReceiptsModalsViewModel.ApplyDisplayCurrency</c> (that reads <c>ArgoBooks.Services.CurrencyService
-/// .CurrentCurrencyCode</c>, a UI-project static Core cannot reference). Amounts are stored in
-/// <c>OriginalCurrency = "USD"</c> (the <c>Transaction</c> default), matching the same simplification
-/// <see cref="TransactionFactory"/> already makes for other Core-only transaction creation paths.
+/// .CurrentCurrencyCode</c>, a UI-project static Core cannot reference). Amounts are stamped with the
+/// company's default currency (<c>data.Settings.Localization.Currency</c>), matching the same
+/// <c>OriginalCurrency</c> stamping <see cref="BankLineImportService"/> does for its own Core-only
+/// transaction creation path.
 /// </summary>
 public static class CaptureIngestService
 {
@@ -41,15 +42,18 @@ public static class CaptureIngestService
         var taxRate = subtotal > 0 && tx.Tax > 0 ? (tx.Tax / subtotal) * 100 : 0;
         var unitPrice = lineItems.Count > 0 ? lineItems.Average(li => li.UnitPrice) : subtotal;
         var description = lineItems.Count > 0 ? lineItems[0].Description : tx.SupplierOrCustomer ?? string.Empty;
+        var companyCurrency = string.IsNullOrWhiteSpace(data.Settings.Localization.Currency)
+            ? "USD"
+            : data.Settings.Localization.Currency;
 
         return tx.Type == CapturedTransactionType.Revenue
-            ? IngestRevenue(data, tx, lineItems, amount, taxRate, unitPrice, description)
-            : IngestExpense(data, tx, lineItems, amount, taxRate, unitPrice, description);
+            ? IngestRevenue(data, tx, lineItems, amount, taxRate, unitPrice, description, companyCurrency)
+            : IngestExpense(data, tx, lineItems, amount, taxRate, unitPrice, description, companyCurrency);
     }
 
     private static string IngestExpense(
         CompanyData data, CapturedTransaction tx, List<LineItem> lineItems,
-        decimal amount, decimal taxRate, decimal unitPrice, string description)
+        decimal amount, decimal taxRate, decimal unitPrice, string description, string companyCurrency)
     {
         data.IdCounters.Expense++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{data.IdCounters.Expense:D5}";
@@ -71,6 +75,7 @@ public static class CaptureIngestService
             Total = tx.Total,
             PaymentMethod = PaymentMethod.Cash,
             ReceiptId = receiptId,
+            OriginalCurrency = companyCurrency,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
@@ -84,7 +89,7 @@ public static class CaptureIngestService
 
     private static string IngestRevenue(
         CompanyData data, CapturedTransaction tx, List<LineItem> lineItems,
-        decimal amount, decimal taxRate, decimal unitPrice, string description)
+        decimal amount, decimal taxRate, decimal unitPrice, string description, string companyCurrency)
     {
         data.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{data.IdCounters.Revenue:D5}";
@@ -108,6 +113,7 @@ public static class CaptureIngestService
             PaymentMethod = PaymentMethod.Cash,
             PaymentStatus = RevenuePaymentStatus.Paid,
             ReceiptId = receiptId,
+            OriginalCurrency = companyCurrency,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };

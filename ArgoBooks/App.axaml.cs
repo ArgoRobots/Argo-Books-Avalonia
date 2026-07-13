@@ -462,6 +462,15 @@ public partial class App : Application
     private static int _isMobileSyncing;
 
     /// <summary>
+    /// Ids of queue items that have been ingested into <c>CompanyData</c> this session but not yet
+    /// acked (the save was skipped or failed). Prevents a not-yet-acked item that re-delivers on a
+    /// later pull from being ingested a second time while it's still pending. Mutated only from
+    /// within <see cref="AutoMobileSyncAsync"/>, which is itself single-flighted via
+    /// <see cref="_isMobileSyncing"/>, so no additional locking is needed.
+    /// </summary>
+    private static readonly HashSet<int> _pendingMobileSyncIds = new();
+
+    /// <summary>
     /// Auto-syncs with the paired mobile app: uploads a fresh company snapshot so the phone
     /// has current data, then pulls any receipts/expenses the phone captured while offline
     /// and ingests them into the local company. Safe to call from multiple places, concurrent
@@ -483,24 +492,38 @@ public partial class App : Application
             var ct = CancellationToken.None;
 
             // UPLOAD: push a fresh snapshot so the phone always has current data to browse offline.
-            var snap = SnapshotBuilder.Build(companyData);
-            var bytes = SnapshotBuilder.Serialize(snap);
-            var cipher = SyncCrypto.Encrypt(bytes, syncKey);
-            await syncService.UploadSnapshotAsync(companyUid, cipher, ct);
+            // Wrapped in its own try/catch so an upload/network failure doesn't skip the pull/ingest
+            // below - the two directions are independent and one failing shouldn't block the other.
+            try
+            {
+                var snap = SnapshotBuilder.Build(companyData);
+                var bytes = SnapshotBuilder.Serialize(snap);
+                var cipher = SyncCrypto.Encrypt(bytes, syncKey);
+                await syncService.UploadSnapshotAsync(companyUid, cipher, ct);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Failed to upload mobile-sync snapshot: {ex.Message}", "MobileSync");
+            }
 
             // PULL + INGEST: drain the phone's capture queue into local Expenses/Revenue/Receipts.
             var items = await syncService.PullQueueAsync(companyUid, ct);
-            var ackIds = new List<int>();
-            var ingestedCount = 0;
+            var malformedIds = new List<int>();
+            var ingestedIds = new List<int>();
             foreach (var item in items)
             {
+                // Already ingested (but not yet acked) in a prior cycle this session - skip re-ingest
+                // so a re-delivered-but-still-pending item doesn't get added to CompanyData twice.
+                if (_pendingMobileSyncIds.Contains(item.Id))
+                    continue;
+
                 try
                 {
                     var plain = SyncCrypto.Decrypt(item.Ciphertext, syncKey);
                     var tx = System.Text.Json.JsonSerializer.Deserialize<CapturedTransaction>(plain);
                     CaptureIngestService.Ingest(companyData, tx!);
-                    ingestedCount++;
-                    ackIds.Add(item.Id);
+                    ingestedIds.Add(item.Id);
+                    _pendingMobileSyncIds.Add(item.Id);
                 }
                 catch (Exception ex)
                 {
@@ -509,36 +532,51 @@ public partial class App : Application
                     // A transient failure (e.g. this process crashing mid-loop) simply re-appears
                     // on the next pull since it was never acked.
                     ErrorLogger?.LogError(ex, ErrorCategory.Parsing, "MobileSync: failed to ingest queue item");
-                    ackIds.Add(item.Id);
+                    malformedIds.Add(item.Id);
                 }
             }
 
             // PERSIST before ACK: an item must never be acknowledged (and thus deleted server-side)
-            // before its ingested data is actually saved locally. If the app crashes between ingest
-            // and save, the item is still in the queue and will be re-pulled and re-ingested next
-            // time - safe, if slightly redundant. Acking first would risk losing the capture forever.
+            // before its ingested data is actually saved locally. If the save is skipped (the user has
+            // unsaved edits in memory) or throws, the ingested items must NOT be acked - they stay in
+            // the server queue (and in _pendingMobileSyncIds, so they aren't re-ingested) and will
+            // persist for real once a save actually succeeds on a later cycle.
             //
             // Known gap: a crash between the save below and the ack call could still cause a
             // re-delivery (the data is saved, but the item stays in the queue and gets re-ingested
             // on the next pull, creating a duplicate transaction). A future refinement is to have
             // the phone assign a stable scan uid to each capture and have CaptureIngestService
             // de-dupe on that id rather than relying purely on ack-once-processed semantics.
-            if (ingestedCount > 0 && !CompanyManager!.HasUnsavedChanges)
+            var saved = false;
+            if (ingestedIds.Count > 0 && CompanyManager != null && !CompanyManager.HasUnsavedChanges)
             {
-                try { await CompanyManager!.SavePaymentSyncAsync(); }
+                try
+                {
+                    await CompanyManager.SavePaymentSyncAsync();
+                    saved = true;
+                }
                 catch (Exception ex)
                 {
                     ErrorLogger?.LogWarning($"Failed to persist mobile-sync captures: {ex.Message}", "MobileSync");
                 }
             }
 
-            if (ackIds.Count > 0)
+            var toAck = new List<int>(malformedIds);
+            if (saved)
             {
-                await syncService.AckQueueAsync(companyUid, ackIds, ct);
+                toAck.AddRange(ingestedIds);
+                foreach (var id in ingestedIds)
+                    _pendingMobileSyncIds.Remove(id);
+            }
+
+            if (toAck.Count > 0)
+            {
+                await syncService.AckQueueAsync(companyUid, toAck, ct);
             }
 
             mobileSync.LastSyncTime = DateTime.UtcNow;
 
+            var ingestedCount = saved ? ingestedIds.Count : 0;
             if (ingestedCount > 0)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
