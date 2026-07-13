@@ -81,9 +81,10 @@ public partial class App : Application
     {
         _ = _current?.EvaluateResumeLockAsync();
 
-        // Task 6: catch up on any receipt captured while offline as soon as the app comes back to
-        // the foreground, rather than waiting for the user to pull-to-refresh.
-        _ = _current?._shellViewModel?.DrainPendingScansAsync();
+        // Task 6: refresh the "captured while offline" review prompt as soon as the app comes back
+        // to the foreground, rather than waiting for the user to pull-to-refresh. Nothing is
+        // auto-posted - the user reviews each queued receipt (see ShellViewModel.StartOfflineReviewAsync).
+        _ = _current?._shellViewModel?.RefreshOfflineQueueAsync();
     }
 
     private async Task EvaluateResumeLockAsync()

@@ -55,41 +55,63 @@ public class PendingScanOutboxTests
     }
 
     [Fact]
-    public async Task DrainAsync_CallsScanForEveryQueuedImage_AndClearsQueueOnSuccess()
+    public async Task PeekNextAsync_ReturnsAQueuedImageWithItsBytes()
     {
         var outbox = new PendingScanOutbox(new InMemoryPendingScanStorage());
-        await outbox.EnqueueAsync([1]);
-        await outbox.EnqueueAsync([2]);
+        await outbox.EnqueueAsync([1, 2, 3]);
 
-        var scannedPayloads = new List<byte[]>();
-        await outbox.DrainAsync(bytes =>
-        {
-            scannedPayloads.Add(bytes);
-            return Task.FromResult(true);
-        });
+        var next = await outbox.PeekNextAsync();
 
-        Assert.Equal(2, scannedPayloads.Count);
-        Assert.Equal(0, await outbox.GetPendingCountAsync());
+        Assert.NotNull(next);
+        Assert.Equal([1, 2, 3], next!.Image);
+        Assert.False(string.IsNullOrEmpty(next.Id));
     }
 
     [Fact]
-    public async Task DrainAsync_FailedScan_LeavesImageQueuedForNextAttempt()
+    public async Task PeekNextAsync_EmptyQueue_ReturnsNull()
     {
         var outbox = new PendingScanOutbox(new InMemoryPendingScanStorage());
-        await outbox.EnqueueAsync([9]);
 
-        await outbox.DrainAsync(_ => Task.FromResult(false));
+        Assert.Null(await outbox.PeekNextAsync());
+    }
 
+    [Fact]
+    public async Task PeekNextAsync_DoesNotRemove_SoRepeatedPeeksSeeTheSameItem()
+    {
+        // Peek must not consume: a user who backs out of review (or a failed push) has to leave the
+        // receipt queued. Removal is explicit, via RemoveAsync only after a confirmed+pushed review.
+        var outbox = new PendingScanOutbox(new InMemoryPendingScanStorage());
+        await outbox.EnqueueAsync([7]);
+
+        var first = await outbox.PeekNextAsync();
+        var second = await outbox.PeekNextAsync();
+
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(first!.Id, second!.Id);
         Assert.Equal(1, await outbox.GetPendingCountAsync());
     }
 
     [Fact]
-    public async Task DrainAsync_ThrowingScan_LeavesImageQueuedRatherThanCrashing()
+    public async Task RemoveAsync_DropsTheReviewedImage()
     {
         var outbox = new PendingScanOutbox(new InMemoryPendingScanStorage());
-        await outbox.EnqueueAsync([9]);
+        await outbox.EnqueueAsync([7]);
+        var item = await outbox.PeekNextAsync();
 
-        await outbox.DrainAsync(_ => throw new InvalidOperationException("network unavailable"));
+        await outbox.RemoveAsync(item!.Id);
+
+        Assert.Equal(0, await outbox.GetPendingCountAsync());
+        Assert.Null(await outbox.PeekNextAsync());
+    }
+
+    [Fact]
+    public async Task RemoveAsync_UnknownId_IsANoOp()
+    {
+        var outbox = new PendingScanOutbox(new InMemoryPendingScanStorage());
+        await outbox.EnqueueAsync([7]);
+
+        await outbox.RemoveAsync("does-not-exist");
 
         Assert.Equal(1, await outbox.GetPendingCountAsync());
     }

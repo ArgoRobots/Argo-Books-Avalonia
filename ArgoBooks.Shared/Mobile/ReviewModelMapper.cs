@@ -111,11 +111,17 @@ public static class ReviewModelMapper
     }
 
     /// <summary>
-    /// Builds the wire DTO Task 5 encrypts and pushes to the sync queue: a fresh
-    /// <see cref="CapturedTransaction.ScanUid"/> (idempotency key), the (possibly edited) header
-    /// fields, each line item carrying its chosen product name, and the receipt image if provided.
+    /// Builds the wire DTO Task 5 encrypts and pushes to the sync queue: an idempotency key
+    /// (<see cref="CapturedTransaction.ScanUid"/>), the (possibly edited) header fields, each line
+    /// item carrying its chosen product name, and the receipt image if provided.
     /// </summary>
-    public static CapturedTransaction BuildCapturedTransaction(ReviewModel reviewModel, string? imageBase64)
+    /// <param name="scanUid">
+    /// The idempotency key the desktop de-duplicates on. Pass a stable id (e.g. the offline outbox's
+    /// queue id) so a retry after a lost push response re-sends the same key instead of creating a
+    /// duplicate transaction; pass null for a one-shot push (the interactive review path) to mint a
+    /// fresh key.
+    /// </param>
+    public static CapturedTransaction BuildCapturedTransaction(ReviewModel reviewModel, string? imageBase64, string? scanUid = null)
     {
         if (reviewModel == null)
         {
@@ -124,7 +130,7 @@ public static class ReviewModelMapper
 
         return new CapturedTransaction
         {
-            ScanUid = Guid.NewGuid().ToString("N"),
+            ScanUid = string.IsNullOrEmpty(scanUid) ? Guid.NewGuid().ToString("N") : scanUid,
             Type = reviewModel.Type,
             SupplierOrCustomer = reviewModel.SupplierOrCustomer,
             Date = reviewModel.Date,

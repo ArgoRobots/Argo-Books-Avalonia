@@ -41,6 +41,11 @@ public partial class ShellViewModel : ViewModelBase
     private readonly PendingScanOutbox _pendingScanOutbox;
     private readonly Stack<(object Page, string Title, AppTab Tab)> _backStack = new();
 
+    // When the user is reviewing a receipt captured while offline, this holds that image's stable
+    // outbox queue id: it's reused as the pushed transaction's ScanUid (idempotency) and identifies
+    // which queued image to drop once the review is confirmed. Null during a normal online capture.
+    private string? _activeOfflineQueueId;
+
     // Shared across every scan (rather than one HttpClient per GeminiReceiptScannerService
     // instance) so repeated scans reuse connections instead of leaking a fresh HttpClient each time.
     private readonly HttpClient _scanHttpClient = new();
@@ -149,7 +154,7 @@ public partial class ShellViewModel : ViewModelBase
         _dataHub = new DataHubViewModel(OpenSection);
         _analytics = new AnalyticsViewModel(OpenItemDetail);
         _settings = new SettingsViewModel(this);
-        _capture = new CaptureViewModel(secureStore, StartScanFlowAsync, _pendingScanOutbox);
+        _capture = new CaptureViewModel(secureStore, StartScanFlowAsync, _pendingScanOutbox, StartOfflineReviewAsync);
 
         _currentPage = _dashboard;
     }
@@ -189,63 +194,44 @@ public partial class ShellViewModel : ViewModelBase
         _settings.Update(ActiveCompanyLabel, LastSyncedText);
         _capture.SetActiveCompanyLabel(ActiveCompanyLabel);
 
-        // Best-effort: if connectivity is back, catch up on anything captured while offline.
-        // Fire-and-forget - a snapshot refresh shouldn't block on draining the scan queue.
-        _ = DrainPendingScansAsync();
+        // Surface any receipts captured while offline as a "ready to review" prompt on the Capture
+        // tab. They are reviewed one at a time (see StartOfflineReviewAsync), never auto-posted.
+        await _capture.RefreshPendingOfflineCountAsync();
     }
 
     /// <summary>
-    /// Task 6's offline-capture follow-up: if there's a network now, re-runs the AI scan for every
-    /// image CaptureViewModel queued in <see cref="_pendingScanOutbox"/> while offline. A
-    /// successful scan is auto-suggested against the current snapshot (the same mapping the Review
-    /// screen uses) and pushed straight to the desktop queue - there's no user review step here,
-    /// since this can run in the background (on app foreground, not just while Capture is open).
-    /// Anything that fails (still offline, unreadable, push rejected) stays queued for the next
-    /// attempt. Called after every snapshot refresh (<see cref="ApplyAsync"/>) and from the app's
-    /// foreground hook (see App.axaml.cs).
+    /// Task 6's offline-capture follow-up, review-gated: walks the receipts captured while offline
+    /// through the SAME scan -> review -> confirm flow as an online capture, one at a time, so no
+    /// unreviewed AI extraction is ever posted to the books. Invoked from the Capture tab's "Review
+    /// now" prompt once connectivity is back (CaptureViewModel gates on network first).
     /// </summary>
-    public async Task DrainPendingScansAsync()
+    public async Task StartOfflineReviewAsync()
     {
         if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
         {
             return;
         }
 
-        if (await _pendingScanOutbox.GetPendingCountAsync() == 0)
+        await StartNextOfflineReviewAsync();
+    }
+
+    /// <summary>
+    /// Pulls the next queued offline image and drives it into the shared review flow, tagging it with
+    /// its stable outbox id (reused as the ScanUid). Returns true if a review screen was shown, false
+    /// if the queue is empty (in which case the active offline id is cleared).
+    /// </summary>
+    private async Task<bool> StartNextOfflineReviewAsync()
+    {
+        var next = await _pendingScanOutbox.PeekNextAsync();
+        if (next == null)
         {
-            return;
+            _activeOfflineQueueId = null;
+            return false;
         }
 
-        var scanner = new GeminiReceiptScannerService(MobileApiConfig.BaseUrl, _deviceApiAuth, httpClient: _scanHttpClient);
-        var coordinator = new ReceiptScanCoordinator(scanner);
-
-        await _pendingScanOutbox.DrainAsync(async imageBytes =>
-        {
-            var result = await coordinator.ScanAsync(imageBytes, "scan.jpg");
-            if (!result.IsSuccess)
-            {
-                return false;
-            }
-
-            var snapshot = _snapshotStore.Current?.Snapshot;
-            var reviewModel = ReviewModelMapper.Map(result, snapshot);
-            var imageBase64 = imageBytes.Length > 0 ? Convert.ToBase64String(imageBytes) : null;
-            var transaction = ReviewModelMapper.BuildCapturedTransaction(reviewModel, imageBase64);
-
-            var pushed = await _capturePushCoordinator.PushAsync(transaction, CancellationToken.None);
-            if (!pushed)
-            {
-                // Keep it queued rather than silently dropping a scan that read fine but didn't
-                // reach the desktop (no active company, offline again, server error).
-                return false;
-            }
-
-            await ScanUsageStore.IncrementAsync(_secureStore);
-            _capture.AddRecentScan(transaction, pushed: true);
-            return true;
-        });
-
-        await _capture.RefreshScanUsageAsync();
+        _activeOfflineQueueId = next.Id;
+        await StartScanFlowAsync(next.Image);
+        return true;
     }
 
     private static string FormatLastSynced(DateTime? lastSyncedAt, bool isStale)
@@ -281,7 +267,12 @@ public partial class ShellViewModel : ViewModelBase
     {
         ResetToRoot(_capture, "Scan receipt", AppTab.Capture);
         _ = _capture.RefreshScanUsageAsync();
+        _ = _capture.RefreshPendingOfflineCountAsync();
     }
+
+    /// <summary>Refreshes the Capture tab's "captured while offline" review prompt. Called from the
+    /// app's foreground hook (App.axaml.cs) so the prompt reflects the queue without a manual refresh.</summary>
+    public Task RefreshOfflineQueueAsync() => _capture.RefreshPendingOfflineCountAsync();
 
     /// <summary>
     /// CaptureViewModel's onImageCaptured callback: pushes the Scanning screen and kicks off the AI
@@ -344,16 +335,42 @@ public partial class ShellViewModel : ViewModelBase
     /// </summary>
     private async Task OnReviewConfirmedAsync(CapturedTransaction transaction)
     {
+        // If this scan came from the offline queue, reuse its stable queue id as the ScanUid so a
+        // lost push response can't later produce a duplicate (the desktop de-duplicates on ScanUid).
+        var offlineId = _activeOfflineQueueId;
+        if (offlineId != null)
+        {
+            transaction.ScanUid = offlineId;
+        }
+
         var pushed = await _capturePushCoordinator.PushAsync(transaction, CancellationToken.None);
         await ScanUsageStore.IncrementAsync(_secureStore);
 
         _capture.AddRecentScan(transaction, pushed);
         await _capture.RefreshScanUsageAsync();
 
+        if (offlineId != null && pushed)
+        {
+            // Consumed: drop it from the offline queue, then keep reviewing any that remain so the
+            // user clears the whole backlog in one pass.
+            await _pendingScanOutbox.RemoveAsync(offlineId);
+            await _capture.RefreshPendingOfflineCountAsync();
+            if (await StartNextOfflineReviewAsync())
+            {
+                return;
+            }
+        }
+
+        // Push failed (offline item stays queued for another attempt) or nothing left to review.
         ReturnToCaptureRoot();
     }
 
-    private void ReturnToCaptureRoot() => ResetToRoot(_capture, "Scan receipt", AppTab.Capture);
+    private void ReturnToCaptureRoot()
+    {
+        _activeOfflineQueueId = null;
+        ResetToRoot(_capture, "Scan receipt", AppTab.Capture);
+        _ = _capture.RefreshPendingOfflineCountAsync();
+    }
 
     [RelayCommand]
     private void OpenCompanySwitcher()

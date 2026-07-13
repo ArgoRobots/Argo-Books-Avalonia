@@ -28,8 +28,9 @@ namespace ArgoBooks.Mobile.ViewModels;
 /// <see cref="ScanQuota"/>) reaches the monthly limit, <see cref="IsOverLimit"/> flips and the view
 /// swaps to an upgrade prompt (<see cref="UpgradeCommand"/> opens the marketing site in the system
 /// browser - no in-app purchase). If a capture happens with no network, the cropped image is
-/// queued in <see cref="PendingScanOutbox"/> instead of starting the AI scan flow; ShellViewModel's
-/// DrainPendingScansAsync re-runs the scan for anything still queued once connectivity returns.
+/// queued in <see cref="PendingScanOutbox"/> instead of starting the AI scan flow; once online, the
+/// Capture screen shows a "N receipts ready to review" prompt (<see cref="HasPendingOfflineScans"/>)
+/// and the user walks each queued receipt through the normal review flow - nothing is auto-posted.
 /// </summary>
 public partial class CaptureViewModel : ViewModelBase
 {
@@ -38,6 +39,7 @@ public partial class CaptureViewModel : ViewModelBase
     private readonly ISecureStore _secureStore;
     private readonly Func<byte[], Task> _onImageCaptured;
     private readonly PendingScanOutbox _pendingScanOutbox;
+    private readonly Func<Task> _onReviewOfflineScans;
 
     /// <summary>Set by ShellViewModel (via <see cref="SetActiveCompanyLabel"/>) whenever the
     /// active company changes, so the "Scanning into X" bar always reflects it.</summary>
@@ -72,12 +74,50 @@ public partial class CaptureViewModel : ViewModelBase
     [ObservableProperty]
     private string _confirmationMessage = string.Empty;
 
-    public CaptureViewModel(ISecureStore secureStore, Func<byte[], Task> onImageCaptured, PendingScanOutbox pendingScanOutbox)
+    /// <summary>How many receipts were captured while offline and are waiting to be reviewed. Drives
+    /// the "N receipts ready to review" prompt (see <see cref="HasPendingOfflineScans"/>).</summary>
+    [ObservableProperty]
+    private int _pendingOfflineCount;
+
+    /// <summary>True when there's at least one offline-captured receipt waiting for review, so the
+    /// prompt only shows when there's something to do.</summary>
+    public bool HasPendingOfflineScans => PendingOfflineCount > 0;
+
+    partial void OnPendingOfflineCountChanged(int value) => OnPropertyChanged(nameof(HasPendingOfflineScans));
+
+    public CaptureViewModel(ISecureStore secureStore, Func<byte[], Task> onImageCaptured, PendingScanOutbox pendingScanOutbox, Func<Task> onReviewOfflineScans)
     {
         _secureStore = secureStore ?? throw new ArgumentNullException(nameof(secureStore));
         _onImageCaptured = onImageCaptured ?? throw new ArgumentNullException(nameof(onImageCaptured));
         _pendingScanOutbox = pendingScanOutbox ?? throw new ArgumentNullException(nameof(pendingScanOutbox));
+        _onReviewOfflineScans = onReviewOfflineScans ?? throw new ArgumentNullException(nameof(onReviewOfflineScans));
         _ = RefreshScanUsageAsync();
+        _ = RefreshPendingOfflineCountAsync();
+    }
+
+    /// <summary>Reloads the count of offline-captured receipts waiting for review. Called by
+    /// ShellViewModel after every snapshot refresh, after each offline review, and on NavigateCapture
+    /// so the prompt reflects the queue whenever the tab is shown.</summary>
+    public async Task RefreshPendingOfflineCountAsync() =>
+        PendingOfflineCount = await _pendingScanOutbox.GetPendingCountAsync();
+
+    /// <summary>
+    /// "Review now" on the offline-capture prompt: if there's a network, hands off to ShellViewModel
+    /// to walk the queued receipts through the normal review flow; if still offline, tells the user
+    /// they need a connection first (the AI scan can't run without one).
+    /// </summary>
+    [RelayCommand]
+    private async Task ReviewOfflineScansAsync()
+    {
+        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            ConfirmationMessage = "Connect to the internet to review these";
+            IsConfirmationVisible = true;
+            _ = HideConfirmationAfterDelayAsync();
+            return;
+        }
+
+        await _onReviewOfflineScans();
     }
 
     /// <summary>Updates the "Scanning into X" label. Called by ShellViewModel after every
@@ -171,6 +211,7 @@ public partial class CaptureViewModel : ViewModelBase
             if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
             {
                 await _pendingScanOutbox.EnqueueAsync(imageBytes);
+                await RefreshPendingOfflineCountAsync();
                 ShowOfflineQueuedMessage();
                 return;
             }
@@ -185,7 +226,7 @@ public partial class CaptureViewModel : ViewModelBase
 
     private void ShowOfflineQueuedMessage()
     {
-        ConfirmationMessage = "Saved - will scan when you're back online";
+        ConfirmationMessage = "Saved - review it when you're back online";
         IsConfirmationVisible = true;
         _ = HideConfirmationAfterDelayAsync();
     }

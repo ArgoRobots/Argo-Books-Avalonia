@@ -2,6 +2,7 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Views;
 using ArgoBooks.Mobile.Services;
 using Avalonia.Android;
 using Microsoft.Maui.ApplicationModel;
@@ -23,6 +24,12 @@ public class MainActivity : AvaloniaMainActivity
     {
         base.OnCreate(savedInstanceState);
         Platform.Init(this, savedInstanceState);
+
+        // This is a biometric-locked accounting app: mark the window secure so the ledger never
+        // leaks into the Android recents thumbnail or a screenshot. FLAG_SECURE also blanks the
+        // app-switcher preview, so financial data isn't visible while the app is "locked" in the
+        // background.
+        Window?.SetFlags(WindowManagerFlags.Secure, WindowManagerFlags.Secure);
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)

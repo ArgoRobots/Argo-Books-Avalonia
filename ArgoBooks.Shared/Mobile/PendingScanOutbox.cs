@@ -1,15 +1,22 @@
-using System.Threading;
-
 namespace ArgoBooks.Shared.Mobile;
+
+/// <summary>One cropped receipt waiting offline: its stable queue <see cref="Id"/> (reused as the
+/// transaction's ScanUid so a later push is idempotent) and the cropped <see cref="Image"/> bytes.</summary>
+public sealed record PendingScan(string Id, byte[] Image);
 
 /// <summary>
 /// Task 6's offline capture queue: when ML Kit crops a receipt but there's no network to run the
 /// AI scan, the cropped image bytes are enqueued here instead of calling the scanner immediately.
-/// <see cref="DrainAsync"/> is called again once connectivity returns (or the app is foregrounded -
-/// see ShellViewModel.DrainPendingScansAsync) to re-run the AI scan for each queued image. Pure
-/// logic behind the <see cref="IPendingScanStorage"/> seam, so it's unit-tested with an in-memory
-/// fake (see PendingScanOutboxTests) rather than real device file storage
-/// (<see cref="FilePendingScanStorage"/> is the real implementation).
+/// Once connectivity returns, the Capture screen surfaces a "N receipts ready to review" prompt and
+/// the user walks each queued image through the SAME scan -> review -> confirm flow as an online
+/// capture (see ShellViewModel.StartOfflineReviewAsync): nothing is auto-posted to the books without
+/// review. <see cref="PeekNextAsync"/> hands the next queued image to that flow; <see cref="RemoveAsync"/>
+/// drops it once the user has confirmed and it has pushed. The queue <see cref="PendingScan.Id"/> is
+/// reused as the transaction's ScanUid, so if a push response is lost the item stays queued and a
+/// re-review re-sends the same idempotency key (the desktop de-duplicates). Pure logic behind the
+/// <see cref="IPendingScanStorage"/> seam, so it's unit-tested with an in-memory fake (see
+/// PendingScanOutboxTests) rather than real device file storage (<see cref="FilePendingScanStorage"/>
+/// is the real implementation).
 /// </summary>
 public class PendingScanOutbox
 {
@@ -34,49 +41,35 @@ public class PendingScanOutbox
         return id;
     }
 
-    /// <summary>Number of images still queued, waiting on a scan.</summary>
+    /// <summary>Number of images still queued, waiting to be reviewed.</summary>
     public async Task<int> GetPendingCountAsync() => (await _storage.ListIdsAsync()).Count;
 
     /// <summary>
-    /// Attempts <paramref name="scanAndPush"/> for every queued image (the actual AI-scan-and-push
-    /// call is supplied by the caller, since only ShellViewModel has the scanner/push dependencies
-    /// this needs). An image is removed from the queue only when <paramref name="scanAndPush"/>
-    /// returns true; anything that fails (still offline, scan unreadable, push rejected) stays
-    /// queued for the next drain attempt rather than being lost.
+    /// Returns the next queued image (its stable id + cropped bytes) for the review flow to scan, or
+    /// null when the queue is empty. Stale entries whose bytes have gone missing are dropped in
+    /// passing rather than returned. The item is NOT removed here - the caller removes it via
+    /// <see cref="RemoveAsync"/> only once the user has confirmed the review and it has pushed, so a
+    /// user who backs out (or a failed push) leaves the receipt queued for another attempt.
     /// </summary>
-    public async Task DrainAsync(Func<byte[], Task<bool>> scanAndPush, CancellationToken cancellationToken = default)
+    public async Task<PendingScan?> PeekNextAsync()
     {
-        if (scanAndPush == null)
-        {
-            throw new ArgumentNullException(nameof(scanAndPush));
-        }
-
         foreach (var id in await _storage.ListIdsAsync())
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
             var imageBytes = await _storage.LoadAsync(id);
-            if (imageBytes == null)
+            if (imageBytes == null || imageBytes.Length == 0)
             {
-                // Nothing left under this id (already gone) - drop the stale entry.
+                // Nothing usable under this id - drop the stale entry and look at the next.
                 await _storage.DeleteAsync(id);
                 continue;
             }
 
-            bool succeeded;
-            try
-            {
-                succeeded = await scanAndPush(imageBytes);
-            }
-            catch (Exception)
-            {
-                succeeded = false;
-            }
-
-            if (succeeded)
-            {
-                await _storage.DeleteAsync(id);
-            }
+            return new PendingScan(id, imageBytes);
         }
+
+        return null;
     }
+
+    /// <summary>Drops a queued image once the user has reviewed and pushed it. Idempotent - deleting
+    /// an id that's already gone is a no-op.</summary>
+    public Task RemoveAsync(string id) => _storage.DeleteAsync(id);
 }
