@@ -179,7 +179,7 @@ public partial class App : Application
         var snapshotStore = new SnapshotStore(client, pairedCompanyStore, cache);
         var deviceApiAuth = await DeviceApiAuth.CreateAsync(secureStore);
 
-        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth);
+        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth, client);
         await shellViewModel.InitializeAsync();
 
         // Unpairing the last remaining company (Settings > Unpair this phone) drops back to the

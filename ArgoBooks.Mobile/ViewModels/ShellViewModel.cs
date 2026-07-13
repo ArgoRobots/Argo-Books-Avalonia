@@ -7,6 +7,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Mobile.Services;
 using ArgoBooks.Shared.Mobile;
+using ArgoBooks.Shared.Sync;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -33,7 +34,9 @@ public partial class ShellViewModel : ViewModelBase
 {
     private readonly SnapshotStore _snapshotStore;
     private readonly PairedCompanyStore _pairedCompanyStore;
+    private readonly ISecureStore _secureStore;
     private readonly IApiAuth _deviceApiAuth;
+    private readonly CapturePushCoordinator _capturePushCoordinator;
     private readonly Stack<(object Page, string Title, AppTab Tab)> _backStack = new();
 
     // Shared across every scan (rather than one HttpClient per GeminiReceiptScannerService
@@ -130,12 +133,14 @@ public partial class ShellViewModel : ViewModelBase
         IsCompanyChipVisible = isRootViewingTab && !CanGoBack && !IsNotPaired;
     }
 
-    public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore, ISecureStore secureStore, IApiAuth deviceApiAuth)
+    public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore, ISecureStore secureStore, IApiAuth deviceApiAuth, MobileSyncClient syncClient)
     {
         _snapshotStore = snapshotStore ?? throw new ArgumentNullException(nameof(snapshotStore));
         _pairedCompanyStore = pairedCompanyStore ?? throw new ArgumentNullException(nameof(pairedCompanyStore));
         _deviceApiAuth = deviceApiAuth ?? throw new ArgumentNullException(nameof(deviceApiAuth));
-        if (secureStore == null) throw new ArgumentNullException(nameof(secureStore));
+        _secureStore = secureStore ?? throw new ArgumentNullException(nameof(secureStore));
+        if (syncClient == null) throw new ArgumentNullException(nameof(syncClient));
+        _capturePushCoordinator = new CapturePushCoordinator(syncClient, _pairedCompanyStore);
 
         _dashboard = new DashboardViewModel(OpenItemDetail);
         _dataHub = new DataHubViewModel(OpenSection);
@@ -269,14 +274,22 @@ public partial class ShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// "Add to my books" callback from the review screen. Placeholder until Task 5 encrypts the
-    /// CapturedTransaction and pushes it onto the sync queue; for now this just returns to Capture
-    /// once the user has confirmed, so the flow is fully navigable end to end.
+    /// "Add to my books" callback from the review screen: encrypts the confirmed
+    /// <see cref="CapturedTransaction"/> with the active company's sync key and pushes it onto the
+    /// desktop's capture queue via <see cref="_capturePushCoordinator"/>, records it in Capture's
+    /// "Recent scans" list either way (push failure - no active company, offline, server error -
+    /// doesn't lose the confirmed scan, it just shows as not-yet-sent), bumps the local monthly
+    /// scan counter (<see cref="ScanUsageStore"/>), then returns to the Capture root.
     /// </summary>
-    private Task OnReviewConfirmedAsync(CapturedTransaction transaction)
+    private async Task OnReviewConfirmedAsync(CapturedTransaction transaction)
     {
+        var pushed = await _capturePushCoordinator.PushAsync(transaction, CancellationToken.None);
+        await ScanUsageStore.IncrementAsync(_secureStore);
+
+        _capture.AddRecentScan(transaction, pushed);
+        await _capture.RefreshScanUsageAsync();
+
         ReturnToCaptureRoot();
-        return Task.CompletedTask;
     }
 
     private void ReturnToCaptureRoot() => ResetToRoot(_capture, "Scan receipt", AppTab.Capture);

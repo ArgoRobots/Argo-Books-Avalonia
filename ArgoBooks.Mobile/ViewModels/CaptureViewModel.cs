@@ -1,5 +1,8 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Threading.Tasks;
+using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Mobile.Services;
 using ArgoBooks.Shared.Mobile;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,6 +17,11 @@ namespace ArgoBooks.Mobile.ViewModels;
 /// SetGalleryImportAllowed is set (see DocumentScanner's doc comment), so there's no separate
 /// gallery-only entry point to call. A captured image hands off to ShellViewModel's
 /// StartScanFlowAsync callback, which pushes the ScanningView and drives the AI call.
+/// Also owns the "Recent scans" list (see <see cref="AddRecentScan"/>): once a scan is confirmed
+/// on the review screen and Task 5's CapturePushCoordinator has (or hasn't) pushed it to the
+/// desktop queue, ShellViewModel records it here so the user has some visible confirmation - the
+/// phone has no ledger of its own and can't poll for the desktop's ingest, so this is local-only
+/// and never reconciled against what actually landed on the desktop.
 /// </summary>
 public partial class CaptureViewModel : ViewModelBase
 {
@@ -31,6 +39,19 @@ public partial class CaptureViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isBusy;
 
+    /// <summary>Most recent scan first. Populated by <see cref="AddRecentScan"/>.</summary>
+    public ObservableCollection<RecentScanViewModel> RecentScans { get; } = new();
+
+    /// <summary>True once at least one scan has been confirmed this session, so the "Recent
+    /// scans" section only shows up once there's something to show.</summary>
+    public bool HasRecentScans => RecentScans.Count > 0;
+
+    [ObservableProperty]
+    private bool _isConfirmationVisible;
+
+    [ObservableProperty]
+    private string _confirmationMessage = string.Empty;
+
     public CaptureViewModel(ISecureStore secureStore, Func<byte[], Task> onImageCaptured)
     {
         _secureStore = secureStore ?? throw new ArgumentNullException(nameof(secureStore));
@@ -45,6 +66,38 @@ public partial class CaptureViewModel : ViewModelBase
     /// <summary>Reloads the local scan counter; called on every NavigateCapture so a scan
     /// recorded while this tab wasn't visible shows up immediately.</summary>
     public async Task RefreshScanUsageAsync() => ScansUsedThisMonth = await ScanUsageStore.GetCountAsync(_secureStore);
+
+    /// <summary>
+    /// Called by ShellViewModel.OnReviewConfirmedAsync right after CapturePushCoordinator has
+    /// tried to push the confirmed <paramref name="transaction"/>. Adds a "Recent scans" row and
+    /// shows a brief confirmation banner - "sent to your desktop" if the push succeeded, or a
+    /// softer "saved, will sync once connected" message if it didn't (no active company, offline,
+    /// server error), since the scan itself was still captured and the review data isn't lost.
+    /// </summary>
+    public void AddRecentScan(CapturedTransaction transaction, bool pushed)
+    {
+        if (transaction == null) throw new ArgumentNullException(nameof(transaction));
+
+        var vendor = string.IsNullOrWhiteSpace(transaction.SupplierOrCustomer)
+            ? "Unnamed scan"
+            : transaction.SupplierOrCustomer;
+        var amountText = transaction.Total.ToString("C", CultureInfo.CurrentCulture);
+        var timeText = DateTime.Now.ToString("h:mm tt", CultureInfo.InvariantCulture);
+        var statusText = pushed ? "Sent to your desktop" : "Saved - will sync once connected";
+
+        RecentScans.Insert(0, new RecentScanViewModel(vendor, amountText, timeText, statusText));
+        OnPropertyChanged(nameof(HasRecentScans));
+
+        ConfirmationMessage = pushed ? "Added and sent to your desktop" : "Added - will sync to your desktop once connected";
+        IsConfirmationVisible = true;
+        _ = HideConfirmationAfterDelayAsync();
+    }
+
+    private async Task HideConfirmationAfterDelayAsync()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        IsConfirmationVisible = false;
+    }
 
     [RelayCommand]
     private async Task ScanAsync()
