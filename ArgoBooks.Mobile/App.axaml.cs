@@ -26,6 +26,10 @@ public partial class App : Application
     private Control? _contentBeforeLock;
     private bool _isLockShowing;
 
+    // Kept so MainActivity.OnResume (via NotifyForegrounded) can trigger draining Task 6's
+    // offline-capture outbox without rebuilding the shell - null until ShowShellAsync completes.
+    private ShellViewModel? _shellViewModel;
+
     // Guards the resume-triggered lock check against the very first OnResume, which Android
     // fires immediately after OnCreate/OnFrameworkInitializationCompleted on cold start - that
     // path is handled by TryResumeSessionAsync itself, so the resume handler no-ops until the
@@ -76,6 +80,10 @@ public partial class App : Application
     public static void NotifyForegrounded()
     {
         _ = _current?.EvaluateResumeLockAsync();
+
+        // Task 6: catch up on any receipt captured while offline as soon as the app comes back to
+        // the foreground, rather than waiting for the user to pull-to-refresh.
+        _ = _current?._shellViewModel?.DrainPendingScansAsync();
     }
 
     private async Task EvaluateResumeLockAsync()
@@ -178,13 +186,19 @@ public partial class App : Application
         var cache = new FileSnapshotCache(FileSystem.Current.AppDataDirectory);
         var snapshotStore = new SnapshotStore(client, pairedCompanyStore, cache);
         var deviceApiAuth = await DeviceApiAuth.CreateAsync(secureStore);
+        var pendingScanOutbox = new PendingScanOutbox(new FilePendingScanStorage(FileSystem.Current.AppDataDirectory));
 
-        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth, client);
+        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth, client, pendingScanOutbox);
         await shellViewModel.InitializeAsync();
+        _shellViewModel = shellViewModel;
 
         // Unpairing the last remaining company (Settings > Unpair this phone) drops back to the
         // full pairing screen, same as a fresh install.
-        shellViewModel.RequestPairing += () => Dispatcher.UIThread.Post(ShowPairing);
+        shellViewModel.RequestPairing += () => Dispatcher.UIThread.Post(() =>
+        {
+            _shellViewModel = null;
+            ShowPairing();
+        });
 
         Dispatcher.UIThread.Post(() =>
         {

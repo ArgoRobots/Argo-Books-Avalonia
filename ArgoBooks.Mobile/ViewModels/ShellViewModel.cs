@@ -11,6 +11,7 @@ using ArgoBooks.Shared.Sync;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Networking;
 
 namespace ArgoBooks.Mobile.ViewModels;
 
@@ -37,6 +38,7 @@ public partial class ShellViewModel : ViewModelBase
     private readonly ISecureStore _secureStore;
     private readonly IApiAuth _deviceApiAuth;
     private readonly CapturePushCoordinator _capturePushCoordinator;
+    private readonly PendingScanOutbox _pendingScanOutbox;
     private readonly Stack<(object Page, string Title, AppTab Tab)> _backStack = new();
 
     // Shared across every scan (rather than one HttpClient per GeminiReceiptScannerService
@@ -133,12 +135,13 @@ public partial class ShellViewModel : ViewModelBase
         IsCompanyChipVisible = isRootViewingTab && !CanGoBack && !IsNotPaired;
     }
 
-    public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore, ISecureStore secureStore, IApiAuth deviceApiAuth, MobileSyncClient syncClient)
+    public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore, ISecureStore secureStore, IApiAuth deviceApiAuth, MobileSyncClient syncClient, PendingScanOutbox pendingScanOutbox)
     {
         _snapshotStore = snapshotStore ?? throw new ArgumentNullException(nameof(snapshotStore));
         _pairedCompanyStore = pairedCompanyStore ?? throw new ArgumentNullException(nameof(pairedCompanyStore));
         _deviceApiAuth = deviceApiAuth ?? throw new ArgumentNullException(nameof(deviceApiAuth));
         _secureStore = secureStore ?? throw new ArgumentNullException(nameof(secureStore));
+        _pendingScanOutbox = pendingScanOutbox ?? throw new ArgumentNullException(nameof(pendingScanOutbox));
         if (syncClient == null) throw new ArgumentNullException(nameof(syncClient));
         _capturePushCoordinator = new CapturePushCoordinator(syncClient, _pairedCompanyStore);
 
@@ -146,7 +149,7 @@ public partial class ShellViewModel : ViewModelBase
         _dataHub = new DataHubViewModel(OpenSection);
         _analytics = new AnalyticsViewModel(OpenItemDetail);
         _settings = new SettingsViewModel(this);
-        _capture = new CaptureViewModel(secureStore, StartScanFlowAsync);
+        _capture = new CaptureViewModel(secureStore, StartScanFlowAsync, _pendingScanOutbox);
 
         _currentPage = _dashboard;
     }
@@ -185,6 +188,64 @@ public partial class ShellViewModel : ViewModelBase
         ActiveCompanyLabel = record?.CompanyLabel ?? string.Empty;
         _settings.Update(ActiveCompanyLabel, LastSyncedText);
         _capture.SetActiveCompanyLabel(ActiveCompanyLabel);
+
+        // Best-effort: if connectivity is back, catch up on anything captured while offline.
+        // Fire-and-forget - a snapshot refresh shouldn't block on draining the scan queue.
+        _ = DrainPendingScansAsync();
+    }
+
+    /// <summary>
+    /// Task 6's offline-capture follow-up: if there's a network now, re-runs the AI scan for every
+    /// image CaptureViewModel queued in <see cref="_pendingScanOutbox"/> while offline. A
+    /// successful scan is auto-suggested against the current snapshot (the same mapping the Review
+    /// screen uses) and pushed straight to the desktop queue - there's no user review step here,
+    /// since this can run in the background (on app foreground, not just while Capture is open).
+    /// Anything that fails (still offline, unreadable, push rejected) stays queued for the next
+    /// attempt. Called after every snapshot refresh (<see cref="ApplyAsync"/>) and from the app's
+    /// foreground hook (see App.axaml.cs).
+    /// </summary>
+    public async Task DrainPendingScansAsync()
+    {
+        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            return;
+        }
+
+        if (await _pendingScanOutbox.GetPendingCountAsync() == 0)
+        {
+            return;
+        }
+
+        var scanner = new GeminiReceiptScannerService(MobileApiConfig.BaseUrl, _deviceApiAuth, httpClient: _scanHttpClient);
+        var coordinator = new ReceiptScanCoordinator(scanner);
+
+        await _pendingScanOutbox.DrainAsync(async imageBytes =>
+        {
+            var result = await coordinator.ScanAsync(imageBytes, "scan.jpg");
+            if (!result.IsSuccess)
+            {
+                return false;
+            }
+
+            var snapshot = _snapshotStore.Current?.Snapshot;
+            var reviewModel = ReviewModelMapper.Map(result, snapshot);
+            var imageBase64 = imageBytes.Length > 0 ? Convert.ToBase64String(imageBytes) : null;
+            var transaction = ReviewModelMapper.BuildCapturedTransaction(reviewModel, imageBase64);
+
+            var pushed = await _capturePushCoordinator.PushAsync(transaction, CancellationToken.None);
+            if (!pushed)
+            {
+                // Keep it queued rather than silently dropping a scan that read fine but didn't
+                // reach the desktop (no active company, offline again, server error).
+                return false;
+            }
+
+            await ScanUsageStore.IncrementAsync(_secureStore);
+            _capture.AddRecentScan(transaction, pushed: true);
+            return true;
+        });
+
+        await _capture.RefreshScanUsageAsync();
     }
 
     private static string FormatLastSynced(DateTime? lastSyncedAt, bool isStale)

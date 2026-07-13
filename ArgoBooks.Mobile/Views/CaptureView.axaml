@@ -45,33 +45,51 @@
 
         <TextBlock Grid.Row="1"
                    Text="{Binding ScansUsedThisMonth, StringFormat='{}{0} scans used this month'}"
-                   FontSize="12" Opacity="0.6" Margin="2,0,0,10" />
+                   FontSize="12" Opacity="0.6" Margin="2,0,0,10"
+                   IsVisible="{Binding !IsOverLimit}" />
 
-        <Border Grid.Row="2" Classes="viewfinder" MinHeight="240">
-          <TextBlock Text="Line up the receipt in frame, then tap Scan receipt"
-                     Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
-                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="28" />
-        </Border>
+        <!-- Normal capture state: viewfinder + shutter + photo import. -->
+        <Panel Grid.Row="2" Grid.RowSpan="4" IsVisible="{Binding !IsOverLimit}">
+          <Grid RowDefinitions="*,Auto,Auto,Auto">
+            <Border Grid.Row="0" Classes="viewfinder" MinHeight="240">
+              <TextBlock Text="Line up the receipt in frame, then tap Scan receipt"
+                         Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="28" />
+            </Border>
 
-        <Button Grid.Row="3"
-                Content="Scan receipt"
-                Command="{Binding ScanCommand}"
-                IsEnabled="{Binding !IsBusy}"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Margin="0,14,0,0" />
+            <Button Grid.Row="1"
+                    Content="Scan receipt"
+                    Command="{Binding ScanCommand}"
+                    IsEnabled="{Binding !IsBusy}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Margin="0,14,0,0" />
 
-        <Button Grid.Row="4"
-                Content="Import from photos"
-                Command="{Binding ScanCommand}"
-                IsEnabled="{Binding !IsBusy}"
-                Background="Transparent"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                Margin="0,8,0,0" />
+            <Button Grid.Row="2"
+                    Content="Import from photos"
+                    Command="{Binding ScanCommand}"
+                    IsEnabled="{Binding !IsBusy}"
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Margin="0,8,0,0" />
 
-        <TextBlock Grid.Row="5"
-                   Text="Detects, crops &amp; straightens automatically."
-                   Opacity="0.5" FontSize="11" TextAlignment="Center"
-                   HorizontalAlignment="Center" Margin="0,10,0,0" />
+            <TextBlock Grid.Row="3"
+                       Text="Detects, crops &amp; straightens automatically."
+                       Opacity="0.5" FontSize="11" TextAlignment="Center"
+                       HorizontalAlignment="Center" Margin="0,10,0,0" />
+          </Grid>
+        </Panel>
+
+        <!-- Over-limit state: free monthly scans used up, link out to upgrade on the web. -->
+        <StackPanel Grid.Row="2" Grid.RowSpan="4" Spacing="10"
+                    VerticalAlignment="Center" IsVisible="{Binding IsOverLimit}">
+          <TextBlock Text="{Binding FreeScanLimit, StringFormat='You have used your {0} free scans this month'}"
+                     FontSize="17" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center" />
+          <TextBlock Text="Upgrade to Argo Premium on the web for more scans every month."
+                     Opacity="0.7" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,6" />
+          <Button Content="Upgrade on the web"
+                  Command="{Binding UpgradeCommand}"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+        </StackPanel>
 
         <!-- Recent scans -->
         <StackPanel Grid.Row="6" Spacing="6" Margin="0,18,0,0" IsVisible="{Binding HasRecentScans}">

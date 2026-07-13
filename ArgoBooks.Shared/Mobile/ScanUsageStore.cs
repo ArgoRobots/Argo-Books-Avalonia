@@ -21,7 +21,7 @@ public static class ScanUsageStore
     public static async Task<int> GetCountAsync(ISecureStore secureStore)
     {
         var storedMonth = await secureStore.GetAsync(MonthKey);
-        if (storedMonth != CurrentMonthKey())
+        if (storedMonth != ScanQuota.MonthKey(DateTime.UtcNow))
         {
             return 0;
         }
@@ -36,10 +36,8 @@ public static class ScanUsageStore
     {
         var current = await GetCountAsync(secureStore);
         var next = current + 1;
-        await secureStore.SetAsync(MonthKey, CurrentMonthKey());
+        await secureStore.SetAsync(MonthKey, ScanQuota.MonthKey(DateTime.UtcNow));
         await secureStore.SetAsync(CountKey, next.ToString());
         return next;
     }
-
-    private static string CurrentMonthKey() => DateTime.UtcNow.ToString("yyyy-MM");
 }
