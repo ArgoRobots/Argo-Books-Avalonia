@@ -12,6 +12,29 @@
     <PackageVersion Include="Avalonia.Desktop" Version="12.0.5" />
     <PackageVersion Include="Avalonia.Browser" Version="12.0.5" />
     <PackageVersion Include="Avalonia.Controls.WebView" Version="12.0.1" />
+    <!-- Mobile (Android head) -->
+    <PackageVersion Include="Avalonia.Android" Version="12.0.5" />
+    <PackageVersion Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.2.0.3" />
+    <!-- Pin transitive dep of Xamarin.AndroidX.Core.SplashScreen. Left unpinned, NuGet
+         resolves Xamarin.AndroidX.Core to 1.19.0.1 (via Avalonia.Android) but
+         Xamarin.AndroidX.Core.Core.Ktx to 1.17.0.2 (via SplashScreen); those two must move
+         in lockstep or their .aar's both ship the same generated Kotlin extension class
+         (androidx/core/animation/AnimatorKt$addListener$2) and D8/R8 fails with a duplicate
+         class error at dex time. -->
+    <PackageVersion Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.19.0.1" />
+    <!-- SecureStorage/Preferences/etc for the Android head -->
+    <PackageVersion Include="Microsoft.Maui.Essentials" Version="10.0.80" />
+    <!-- ZXing.Net.MAUI was attempted for mobile-pairing QR scanning (Task 2 Step D) and
+         removed: it hard-requires Microsoft.Maui.dll (the full MAUI Controls framework),
+         which a pure-Avalonia Android head doesn't reference. See task-2-report.md. -->
+    <PackageVersion Include="Net.Google.MLKit.DocumentScanner" Version="16.1.0" />
+    <!-- Pin transitive deps: Net.Google.MLKit.DocumentScanner pulls
+         Xamarin.AndroidX.Lifecycle.ViewModelSavedState.Android 2.10.0.2, which constrains
+         Xamarin.AndroidX.Lifecycle.Common.Jvm to < 2.10.1 - but Xamarin.AndroidX.Core
+         1.19.0.1 (needed above) requires Common.Jvm >= 2.11.0.1. Force both onto the newer
+         line to resolve the NU1107 conflict. -->
+    <PackageVersion Include="Xamarin.AndroidX.Lifecycle.ViewModelSavedState.Android" Version="2.11.0.1" />
+    <PackageVersion Include="Xamarin.AndroidX.Lifecycle.Common.Jvm" Version="2.11.0.1" />
     <!-- Pin transitive dep (required by Avalonia.FreeDesktop).
          Must match the version Avalonia.FreeDesktop was compiled against (0.92.0 for Avalonia 12.0.x).
          Newer versions of Tmds.DBus.Protocol break runtime binding of the Connection type. -->
