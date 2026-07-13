@@ -197,6 +197,12 @@ public class CompanyData
     [JsonPropertyName("receipts")]
     public List<Receipt> Receipts { get; init; } = [];
 
+    /// <summary>
+    /// Phones paired to this company for mobile sync.
+    /// </summary>
+    [JsonPropertyName("pairedDevices")]
+    public List<Models.Tracking.PairedDevice> PairedDevices { get; init; } = [];
+
     #endregion
 
     #region Invoice Templates
@@ -562,4 +568,7 @@ public class IdCounters
 
     [JsonPropertyName("invoiceTemplate")]
     public int InvoiceTemplate { get; set; }
+
+    [JsonPropertyName("pairedDevice")]
+    public int PairedDevice { get; set; }
 }
