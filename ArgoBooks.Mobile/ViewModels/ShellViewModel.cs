@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Sync;
+using ArgoBooks.Mobile.Services;
 using ArgoBooks.Shared.Mobile;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,7 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Mobile.ViewModels;
 
-/// <summary>Which bottom-nav icon is highlighted. Capture is a placeholder until Plan 5.</summary>
+/// <summary>Which bottom-nav icon is highlighted.</summary>
 public enum AppTab
 {
     Home,
@@ -30,12 +33,18 @@ public partial class ShellViewModel : ViewModelBase
 {
     private readonly SnapshotStore _snapshotStore;
     private readonly PairedCompanyStore _pairedCompanyStore;
+    private readonly IApiAuth _deviceApiAuth;
     private readonly Stack<(object Page, string Title, AppTab Tab)> _backStack = new();
+
+    // Shared across every scan (rather than one HttpClient per GeminiReceiptScannerService
+    // instance) so repeated scans reuse connections instead of leaking a fresh HttpClient each time.
+    private readonly HttpClient _scanHttpClient = new();
 
     private readonly DashboardViewModel _dashboard;
     private readonly DataHubViewModel _dataHub;
     private readonly AnalyticsViewModel _analytics;
     private readonly SettingsViewModel _settings;
+    private readonly CaptureViewModel _capture;
 
     [ObservableProperty]
     private object _currentPage;
@@ -121,15 +130,18 @@ public partial class ShellViewModel : ViewModelBase
         IsCompanyChipVisible = isRootViewingTab && !CanGoBack && !IsNotPaired;
     }
 
-    public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore)
+    public ShellViewModel(SnapshotStore snapshotStore, PairedCompanyStore pairedCompanyStore, ISecureStore secureStore, IApiAuth deviceApiAuth)
     {
         _snapshotStore = snapshotStore ?? throw new ArgumentNullException(nameof(snapshotStore));
         _pairedCompanyStore = pairedCompanyStore ?? throw new ArgumentNullException(nameof(pairedCompanyStore));
+        _deviceApiAuth = deviceApiAuth ?? throw new ArgumentNullException(nameof(deviceApiAuth));
+        if (secureStore == null) throw new ArgumentNullException(nameof(secureStore));
 
         _dashboard = new DashboardViewModel(OpenItemDetail);
         _dataHub = new DataHubViewModel(OpenSection);
         _analytics = new AnalyticsViewModel(OpenItemDetail);
         _settings = new SettingsViewModel(this);
+        _capture = new CaptureViewModel(secureStore, StartScanFlowAsync);
 
         _currentPage = _dashboard;
     }
@@ -167,6 +179,7 @@ public partial class ShellViewModel : ViewModelBase
         var record = await _pairedCompanyStore.GetActiveAsync();
         ActiveCompanyLabel = record?.CompanyLabel ?? string.Empty;
         _settings.Update(ActiveCompanyLabel, LastSyncedText);
+        _capture.SetActiveCompanyLabel(ActiveCompanyLabel);
     }
 
     private static string FormatLastSynced(DateTime? lastSyncedAt, bool isStale)
@@ -200,10 +213,58 @@ public partial class ShellViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateCapture()
     {
-        // Placeholder: receipt capture (scan -> review -> add to books) is Plan 5's job.
-        // Tapping this tab today just highlights it; no screen is wired up yet.
-        ActiveTab = AppTab.Capture;
+        ResetToRoot(_capture, "Scan receipt", AppTab.Capture);
+        _ = _capture.RefreshScanUsageAsync();
     }
+
+    /// <summary>
+    /// CaptureViewModel's onImageCaptured callback: pushes the Scanning screen and kicks off the AI
+    /// scan against the moved GeminiReceiptScannerService, authenticated with this device's own
+    /// X-Device-Id (Option A - see DeviceApiAuth). Guards against a stale ScanningViewModel still
+    /// completing in the background after the user has already navigated away from it.
+    /// </summary>
+    private Task StartScanFlowAsync(byte[] imageBytes)
+    {
+        var scanner = new GeminiReceiptScannerService(MobileApiConfig.BaseUrl, _deviceApiAuth, httpClient: _scanHttpClient);
+        var coordinator = new ReceiptScanCoordinator(scanner);
+
+        ScanningViewModel? scanningViewModel = null;
+        scanningViewModel = new ScanningViewModel(
+            imageBytes,
+            coordinator,
+            onSuccess: result =>
+            {
+                if (ReferenceEquals(CurrentPage, scanningViewModel))
+                {
+                    OnScanSucceeded(result);
+                }
+            },
+            onRetry: () =>
+            {
+                if (ReferenceEquals(CurrentPage, scanningViewModel))
+                {
+                    ReturnToCaptureRoot();
+                }
+            });
+
+        _backStack.Push((CurrentPage, HeaderTitle, ActiveTab));
+        CurrentPage = scanningViewModel;
+        HeaderTitle = "Scanning";
+        CanGoBack = true;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Task 4 replaces ReviewPlaceholderViewModel with the full editable review; for now
+    /// this just proves the scan result reaches a screen. Replaces (rather than pushes onto) the
+    /// back stack entry the transient Scanning screen used, so GoBack from here returns straight to
+    /// Capture.</summary>
+    private void OnScanSucceeded(ReceiptScanResult result)
+    {
+        CurrentPage = new ReviewPlaceholderViewModel(result, ReturnToCaptureRoot);
+        HeaderTitle = "Review scan";
+    }
+
+    private void ReturnToCaptureRoot() => ResetToRoot(_capture, "Scan receipt", AppTab.Capture);
 
     [RelayCommand]
     private void OpenCompanySwitcher()

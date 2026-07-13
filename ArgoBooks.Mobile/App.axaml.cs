@@ -173,11 +173,13 @@ public partial class App : Application
     private async Task ShowShellAsync()
     {
         var client = new MobileSyncClient(null, MobileApiConfig.BaseUrl);
-        var pairedCompanyStore = new PairedCompanyStore(new MauiSecureStore());
+        var secureStore = new MauiSecureStore();
+        var pairedCompanyStore = new PairedCompanyStore(secureStore);
         var cache = new FileSnapshotCache(FileSystem.Current.AppDataDirectory);
         var snapshotStore = new SnapshotStore(client, pairedCompanyStore, cache);
+        var deviceApiAuth = await DeviceApiAuth.CreateAsync(secureStore);
 
-        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore);
+        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth);
         await shellViewModel.InitializeAsync();
 
         // Unpairing the last remaining company (Settings > Unpair this phone) drops back to the
