@@ -1501,7 +1501,17 @@ public partial class SettingsModalViewModel : ViewModelBase
         var companyManager = App.CompanyManager;
         var companyData = companyManager?.CompanyData;
         var syncService = App.SyncService;
-        if (companyManager == null || companyData == null || syncService == null) return;
+        if (companyManager == null || companyData == null || syncService == null)
+        {
+            App.ErrorLogger?.LogError(
+                new InvalidOperationException("Mobile sync is not initialized (CompanyManager, CompanyData, or SyncService is null)."),
+                ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                "Sync.ConnectPhone.NotReady");
+            await ShowErrorDialogAsync(
+                "Couldn't Connect a Phone".Translate(),
+                "Mobile sync isn't ready yet. Please reopen the app and try again.".Translate());
+            return;
+        }
 
         IsConnecting = true;
         try
@@ -1519,8 +1529,16 @@ public partial class SettingsModalViewModel : ViewModelBase
             var token = await syncService.CreatePairingTokenAsync(mobileSync.CompanyUid, companyLabel, CancellationToken.None);
             if (string.IsNullOrEmpty(token))
             {
+                // Server responded but without a token (unexpected) - log it so the failure isn't invisible.
+                App.ErrorLogger?.LogError(
+                    new InvalidOperationException("Sync server returned no pairing_token."),
+                    ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                    "Sync.ConnectPhone.NoToken");
                 QrImage = null;
                 PairingCode = string.Empty;
+                await ShowErrorDialogAsync(
+                    "Couldn't Connect a Phone".Translate(),
+                    "The sync server didn't return a pairing code. Please try again.".Translate());
                 return;
             }
 
@@ -1528,11 +1546,17 @@ public partial class SettingsModalViewModel : ViewModelBase
             QrImage = new QrImageService().RenderBitmap(payload);
             PairingCode = token!.Length > 8 ? token[..8].ToUpperInvariant() : token.ToUpperInvariant();
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail; the user can retry via the button, which stays enabled.
+            // Log to telemetry and tell the user, instead of failing silently.
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.ConnectPhone");
             QrImage = null;
             PairingCode = string.Empty;
+
+            var message = ex is System.Net.Http.HttpRequestException
+                ? "We couldn't reach the sync server. Check your internet connection and try again.".Translate()
+                : "Something went wrong while connecting a phone. Please try again.".Translate();
+            await ShowErrorDialogAsync("Couldn't Connect a Phone".Translate(), message);
         }
         finally
         {
