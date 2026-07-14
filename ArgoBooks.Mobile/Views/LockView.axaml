@@ -14,12 +14,12 @@
       <!-- Line-icon padlock (stroke only, no fill/emoji), in the app's brand teal. -->
       <Canvas Width="64" Height="64" HorizontalAlignment="Center">
         <Path Data="M20,28 L20,19 A12,12 0 0 1 44,19 L44,28"
-              Stroke="#2FB8A8" StrokeThickness="3.5" StrokeJoin="Round" StrokeLineCap="Round" />
+              Stroke="#3B82F6" StrokeThickness="3.5" StrokeJoin="Round" StrokeLineCap="Round" />
         <Rectangle Canvas.Left="13" Canvas.Top="28" Width="38" Height="27"
                    RadiusX="5" RadiusY="5"
-                   Stroke="#2FB8A8" StrokeThickness="3.5" />
-        <Ellipse Canvas.Left="29" Canvas.Top="38" Width="6" Height="6" Fill="#2FB8A8" />
-        <Rectangle Canvas.Left="31" Canvas.Top="43" Width="2" Height="6" Fill="#2FB8A8" />
+                   Stroke="#3B82F6" StrokeThickness="3.5" />
+        <Ellipse Canvas.Left="29" Canvas.Top="38" Width="6" Height="6" Fill="#3B82F6" />
+        <Rectangle Canvas.Left="31" Canvas.Top="43" Width="2" Height="6" Fill="#3B82F6" />
       </Canvas>
 
       <TextBlock Text="Argo Books is locked"

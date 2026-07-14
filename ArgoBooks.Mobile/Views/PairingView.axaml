@@ -4,53 +4,108 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
              xmlns:conv="using:Avalonia.Data.Converters"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="820"
              x:Class="ArgoBooks.Mobile.Views.PairingView"
-             x:DataType="vm:PairingViewModel">
+             x:DataType="vm:PairingViewModel"
+             Background="{DynamicResource PageBackgroundBrush}">
   <Design.DataContext>
     <!-- This only sets the DataContext for the previewer in an IDE,
          to set the actual DataContext for runtime, set the DataContext property in code. -->
     <vm:PairingViewModel />
   </Design.DataContext>
 
-  <ScrollViewer Padding="24">
-    <StackPanel Spacing="16" VerticalAlignment="Center">
+  <UserControl.Styles>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="20" />
+      <Setter Property="BoxShadow" Value="0 8 24 0 #14000000" />
+    </Style>
+    <Style Selector="TextBlock.field-label">
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+      <Setter Property="Margin" Value="2,0,0,6" />
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="0" MaxWidth="440" Margin="24,40,24,28" HorizontalAlignment="Stretch">
+
+      <!-- Brand logo (the real Argo Books lockup) -->
+      <Image Source="avares://ArgoBooks.Mobile/Assets/logo.png"
+             Width="212" Stretch="Uniform"
+             HorizontalAlignment="Center" />
+
       <TextBlock Text="Connect to desktop"
-                 FontSize="22" FontWeight="Bold"
-                 HorizontalAlignment="Center" />
+                 FontSize="25" FontWeight="Bold"
+                 HorizontalAlignment="Center" TextAlignment="Center"
+                 Margin="0,28,0,0" />
 
-      <TextBlock Text="Open Argo Books on your computer, go to Settings &gt; Mobile sync, and scan the QR code shown there - or paste the pairing data below."
-                 TextWrapping="Wrap"
-                 HorizontalAlignment="Center"
-                 Opacity="0.8" />
+      <TextBlock Text="Open Argo Books on your computer and go to Settings &gt; Mobile sync to get your pairing code."
+                 TextWrapping="Wrap" TextAlignment="Center"
+                 FontSize="14" LineHeight="20"
+                 Foreground="{DynamicResource MutedTextBrush}"
+                 Margin="4,8,4,0" />
 
-      <Button Content="Scan QR code"
-              Command="{Binding ScanQrCommand}"
-              IsEnabled="{Binding !IsBusy}"
-              HorizontalAlignment="Stretch"
-              HorizontalContentAlignment="Center" />
+      <!-- Pairing card -->
+      <Border Classes="card" Margin="0,24,0,0">
+        <StackPanel Spacing="16">
 
-      <TextBlock Text="Or paste pairing data" Opacity="0.7" HorizontalAlignment="Center" />
+          <Button Content="Scan QR code"
+                  Classes="primary"
+                  Command="{Binding ScanQrCommand}"
+                  IsEnabled="{Binding !IsBusy}" />
 
-      <TextBox Text="{Binding PastedPayload}"
-               PlaceholderText="Paste the pairing JSON from the desktop"
-               AcceptsReturn="True"
-               TextWrapping="Wrap"
-               Height="80" />
+          <!-- or divider -->
+          <Grid ColumnDefinitions="*,Auto,*" Margin="0,2">
+            <Border Grid.Column="0" Height="1" VerticalAlignment="Center"
+                    Background="{DynamicResource DividerBrush}" />
+            <TextBlock Grid.Column="1" Text="or" Margin="14,0"
+                       FontSize="15" FontWeight="Medium"
+                       Foreground="{DynamicResource MutedTextBrush}" />
+            <Border Grid.Column="2" Height="1" VerticalAlignment="Center"
+                    Background="{DynamicResource DividerBrush}" />
+          </Grid>
 
-      <TextBox Text="{Binding DeviceLabel}"
-               PlaceholderText="Device name" />
+          <StackPanel Spacing="6">
+            <TextBlock Classes="field-label" Text="PAIRING CODE" />
+            <TextBox Text="{Binding PastedPayload}"
+                     PlaceholderText="Paste the pairing data from your desktop"
+                     AcceptsReturn="True" TextWrapping="Wrap"
+                     Height="60" VerticalContentAlignment="Top" />
+          </StackPanel>
 
-      <Button Content="Connect"
-              Command="{Binding ConnectCommand}"
-              IsEnabled="{Binding !IsBusy}"
-              HorizontalAlignment="Stretch"
-              HorizontalContentAlignment="Center" />
+          <StackPanel Spacing="6">
+            <TextBlock Classes="field-label" Text="THIS DEVICE'S NAME" />
+            <TextBox Text="{Binding DeviceLabel}"
+                     PlaceholderText="e.g. My phone" />
+          </StackPanel>
 
-      <TextBlock Text="{Binding StatusMessage}"
-                 TextWrapping="Wrap"
-                 HorizontalAlignment="Center"
-                 IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" />
+          <Button Content="Connect"
+                  Classes="primary"
+                  Command="{Binding ConnectCommand}"
+                  IsEnabled="{Binding !IsBusy}"
+                  Margin="0,2,0,0" />
+
+          <Border IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}"
+                  Background="#1FE07A7A" BorderBrush="#66E07A7A" BorderThickness="1"
+                  CornerRadius="10" Padding="12,10">
+            <TextBlock Text="{Binding StatusMessage}"
+                       TextWrapping="Wrap" TextAlignment="Center"
+                       FontSize="13" Foreground="#C0453C" />
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="No account, no password. Your books are end-to-end encrypted, so only your own devices can read them."
+                 TextWrapping="Wrap" TextAlignment="Center"
+                 FontSize="12" LineHeight="17"
+                 Foreground="{DynamicResource MutedTextBrush}"
+                 Opacity="0.85"
+                 Margin="8,20,8,0" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

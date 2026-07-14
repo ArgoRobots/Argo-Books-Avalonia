@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- In-app images (the brand logo used on the pairing screen, etc.). -->
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Android" />
     <PackageReference Include="Avalonia.Themes.Fluent" />

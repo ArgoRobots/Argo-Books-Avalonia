@@ -14,12 +14,12 @@
       <Setter Property="Padding" Value="10,8" />
     </Style>
     <Style Selector="Border.viewfinder">
-      <Setter Property="BorderBrush" Value="#2FB8A8" />
+      <Setter Property="BorderBrush" Value="#3B82F6" />
       <Setter Property="BorderThickness" Value="2" />
       <Setter Property="CornerRadius" Value="14" />
     </Style>
     <Style Selector="Border.confirmation-toast">
-      <Setter Property="Background" Value="#1F8F83" />
+      <Setter Property="Background" Value="#3B82F6" />
       <Setter Property="CornerRadius" Value="10" />
       <Setter Property="Padding" Value="12,10" />
     </Style>
@@ -29,8 +29,8 @@
       <Setter Property="Padding" Value="10,8" />
     </Style>
     <Style Selector="Border.offline-review-prompt">
-      <Setter Property="Background" Value="#1F2FB8A8" />
-      <Setter Property="BorderBrush" Value="#2FB8A8" />
+      <Setter Property="Background" Value="#1A3B82F6" />
+      <Setter Property="BorderBrush" Value="#3B82F6" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="10" />
       <Setter Property="Padding" Value="12,10" />

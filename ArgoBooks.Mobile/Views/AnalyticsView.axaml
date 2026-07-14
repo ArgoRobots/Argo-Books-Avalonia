@@ -15,7 +15,7 @@
       <Setter Property="FontSize" Value="12" />
     </Style>
     <Style Selector="Button.ana-tab.active">
-      <Setter Property="Background" Value="#1F8F83" />
+      <Setter Property="Background" Value="#3B82F6" />
     </Style>
     <Style Selector="Border.stat-card">
       <Setter Property="Background" Value="#14808080" />

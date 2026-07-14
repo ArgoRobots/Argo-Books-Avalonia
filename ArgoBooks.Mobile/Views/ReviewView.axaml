@@ -13,7 +13,7 @@
       <Setter Property="CornerRadius" Value="8" />
     </Style>
     <Style Selector="Button.seg.on">
-      <Setter Property="Background" Value="#1F8F83" />
+      <Setter Property="Background" Value="#3B82F6" />
     </Style>
     <Style Selector="Border.product-chip">
       <Setter Property="CornerRadius" Value="20" />
@@ -69,7 +69,7 @@
                 <Button Command="{Binding OpenPickerCommand}"
                         HorizontalAlignment="Left"
                         Padding="0" Background="Transparent" BorderThickness="0">
-                  <Border Classes="product-chip" Background="#1F2FB8A8">
+                  <Border Classes="product-chip" Background="#1A3B82F6">
                     <TextBlock Text="{Binding ChipText}" FontSize="12" />
                   </Border>
                 </Button>

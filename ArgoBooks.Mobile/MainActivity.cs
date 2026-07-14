@@ -28,8 +28,11 @@ public class MainActivity : AvaloniaMainActivity
         // This is a biometric-locked accounting app: mark the window secure so the ledger never
         // leaks into the Android recents thumbnail or a screenshot. FLAG_SECURE also blanks the
         // app-switcher preview, so financial data isn't visible while the app is "locked" in the
-        // background.
+        // background. Release only: FLAG_SECURE blocks screenshots/screen recording, which we need
+        // for development, demos, and support captures, so Debug builds leave it off.
+#if !DEBUG
         Window?.SetFlags(WindowManagerFlags.Secure, WindowManagerFlags.Secure);
+#endif
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
