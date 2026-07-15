@@ -23,11 +23,28 @@ public class SyncService
         return JsonDocument.Parse(text).RootElement.Clone();
     }
 
-    public async Task<string?> CreatePairingTokenAsync(string companyUid, string companyLabel, CancellationToken ct)
+    public async Task<PairingCreation?> CreatePairingAsync(string companyUid, string companyLabel, CancellationToken ct)
     {
         var r = await PostAsync("/pair/create", new { company_uid = companyUid, company_label = companyLabel }, ct);
-        return r.TryGetProperty("pairing_token", out var t) ? t.GetString() : null;
+        if (!r.TryGetProperty("pairing_token", out var t) || t.GetString() is not { } token)
+            return null;
+        var shortCode = r.TryGetProperty("short_code", out var sc) ? sc.GetString() ?? "" : "";
+        return new PairingCreation(token, shortCode);
     }
+
+    public async Task<PairingStatusResult?> GetPairingStatusAsync(string pairingToken, CancellationToken ct)
+    {
+        var r = await PostAsync("/pair/status", new { pairing_token = pairingToken }, ct);
+        if (!r.TryGetProperty("status", out var s) || s.GetString() is not { } status)
+            return null;
+        var phonePublicKey = r.TryGetProperty("phone_public_key", out var pk) && pk.ValueKind == JsonValueKind.String
+            ? pk.GetString()
+            : null;
+        return new PairingStatusResult(status, phonePublicKey);
+    }
+
+    public Task DeliverKeyAsync(string pairingToken, string encryptedSyncKey, CancellationToken ct)
+        => PostAsync("/pair/deliver", new { pairing_token = pairingToken, encrypted_sync_key = encryptedSyncKey }, ct);
 
     public Task UploadSnapshotAsync(string companyUid, string ciphertext, CancellationToken ct)
         => PostAsync("/snapshot/put", new { company_uid = companyUid, ciphertext }, ct);

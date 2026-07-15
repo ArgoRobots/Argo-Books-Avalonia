@@ -1526,8 +1526,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                 ? "My Company"
                 : companyData.Settings.Company.Name;
 
-            var token = await syncService.CreatePairingTokenAsync(mobileSync.CompanyUid, companyLabel, CancellationToken.None);
-            if (string.IsNullOrEmpty(token))
+            var pairing = await syncService.CreatePairingAsync(mobileSync.CompanyUid, companyLabel, CancellationToken.None);
+            if (pairing == null || string.IsNullOrEmpty(pairing.Token))
             {
                 // Server responded but without a token (unexpected) - log it so the failure isn't invisible.
                 App.ErrorLogger?.LogError(
@@ -1542,9 +1542,10 @@ public partial class SettingsModalViewModel : ViewModelBase
                 return;
             }
 
-            var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token!, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
+            var token = pairing.Token;
+            var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
             QrImage = new QrImageService().RenderBitmap(payload);
-            PairingCode = token!.Length > 8 ? token[..8].ToUpperInvariant() : token.ToUpperInvariant();
+            PairingCode = token.Length > 8 ? token[..8].ToUpperInvariant() : token.ToUpperInvariant();
         }
         catch (Exception ex)
         {
