@@ -1514,6 +1514,16 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Pure guard deciding whether the pairing screen is still eligible to have a QR/short code
+    /// shown or a sync key delivered to it: the in-flight request/poll wasn't cancelled AND the
+    /// pairing screen (settings modal open, Mobile app tab selected) is still visible. Extracted
+    /// as a pure function so the "never deliver the key once the screen is gone" security
+    /// property is directly unit-testable without mocking the sync service or timing a poll loop.
+    /// </summary>
+    internal static bool ShouldContinuePairing(bool isCancellationRequested, bool isModalOpen, int selectedTabIndex) =>
+        !isCancellationRequested && isModalOpen && selectedTabIndex == MobileAppTabIndex;
+
+    /// <summary>
     /// Cancels the pairing poll loop when the user navigates away from the Mobile app tab.
     /// </summary>
     partial void OnSelectedTabIndexChanged(int value)
@@ -1588,6 +1598,15 @@ public partial class SettingsModalViewModel : ViewModelBase
         CancelPairingPoll();
         IsPhoneJustPaired = false;
 
+        // Create the CTS BEFORE the CreatePairingAsync network round-trip, and pass its token
+        // in, so that a close/tab-change while that request is in flight actually cancels it
+        // (OnIsOpenChanged/OnSelectedTabIndexChanged both call CancelPairingPoll, which cancels
+        // and disposes whatever CTS is currently assigned to _pairingCts). Without this, the
+        // token wouldn't exist yet for those handlers to cancel, and the key could be delivered
+        // after the pairing screen was already closed.
+        var pairingCts = new CancellationTokenSource();
+        _pairingCts = pairingCts;
+
         IsConnecting = true;
         try
         {
@@ -1601,7 +1620,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 ? "My Company"
                 : companyData.Settings.Company.Name;
 
-            var pairing = await syncService.CreatePairingAsync(mobileSync.CompanyUid, companyLabel, CancellationToken.None);
+            var pairing = await syncService.CreatePairingAsync(mobileSync.CompanyUid, companyLabel, pairingCts.Token);
             if (pairing == null || string.IsNullOrEmpty(pairing.Token))
             {
                 // Server responded but without a token (unexpected) - log it so the failure isn't invisible.
@@ -1617,6 +1636,18 @@ public partial class SettingsModalViewModel : ViewModelBase
                 return;
             }
 
+            // The pairing screen may have been closed, navigated away from, or superseded by a
+            // fresh "Connect a phone" click while the request above was in flight. Re-check
+            // before showing the QR/short code or starting the poll: if the screen is no longer
+            // visible, the key must not be shown or delivered.
+            if (!ShouldContinuePairing(pairingCts.Token.IsCancellationRequested, IsOpen, SelectedTabIndex))
+            {
+                // Only clean up if nothing else (a fresh click, CancelPairingPoll) already did.
+                if (ReferenceEquals(_pairingCts, pairingCts))
+                    CancelPairingPoll();
+                return;
+            }
+
             var token = pairing.Token;
             var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
             QrImage = new QrImageService().RenderBitmap(payload);
@@ -1625,8 +1656,13 @@ public partial class SettingsModalViewModel : ViewModelBase
 
             // Start polling for the phone to claim this token. Cancelled on tab change, modal
             // close, or the next "Connect a phone" click (see CancelPairingPoll).
-            _pairingCts = new CancellationTokenSource();
-            _ = PollPairingAsync(token, _pairingCts.Token);
+            _ = PollPairingAsync(token, pairingCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the pairing screen was closed/navigated away from (or superseded by a
+            // fresh "Connect a phone" click) while CreatePairingAsync was in flight. The CTS was
+            // already cancelled and disposed by whichever handler triggered this; nothing to do.
         }
         catch (Exception ex)
         {
@@ -1651,8 +1687,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Once the phone's public key arrives, encrypts the company sync key to it and delivers it,
     /// then shows the "Phone connected" state and refreshes the paired device list. Runs until
     /// that happens or <paramref name="ct"/> is cancelled (tab change, modal close, or a fresh
-    /// "Connect a phone" click - see <see cref="CancelPairingPoll"/>), so the encrypted sync key
-    /// is only ever handed over while the pairing screen is visible.
+    /// "Connect a phone" click - see <see cref="CancelPairingPoll"/>), and re-checks
+    /// <see cref="ShouldContinuePairing"/> immediately before delivering, so the encrypted sync
+    /// key is only ever handed over while the pairing screen is visible.
     /// </summary>
     private async Task PollPairingAsync(string pairingToken, CancellationToken ct)
     {
@@ -1677,6 +1714,13 @@ public partial class SettingsModalViewModel : ViewModelBase
                 }
 
                 if (status?.PhonePublicKey is not { Length: > 0 } phonePublicKey) continue;
+
+                // Defense in depth: re-check the same guard used in ConnectPhoneAsync right
+                // before encrypting/delivering the key. ct is normally already cancelled by the
+                // time the screen closes (CancelPairingPoll), which would have thrown out of the
+                // Delay/GetPairingStatusAsync calls above, but this closes the gap if that ever
+                // isn't true so the key is never delivered to a screen the user can't see.
+                if (!ShouldContinuePairing(ct.IsCancellationRequested, IsOpen, SelectedTabIndex)) return;
 
                 var mobileSync = App.CompanyManager?.CompanyData?.Settings.MobileSync;
                 if (string.IsNullOrEmpty(mobileSync?.SyncKeyBase64)) return;
