@@ -21,6 +21,11 @@ public sealed class PairResult
 }
 
 /// <summary>
+/// Response from POST /api/sync/pair/claim when a short pairing code is successfully claimed.
+/// </summary>
+public sealed record ClaimResult(string DeviceToken, string CompanyUid, string CompanyLabel);
+
+/// <summary>
 /// Response from POST /api/sync/snapshot/get when the phone fetches the encrypted snapshot.
 /// </summary>
 public sealed class SnapshotResult

@@ -15,6 +15,7 @@ public class MobileSyncClientTests
         private readonly string _json;
         private readonly HttpStatusCode _statusCode;
         public HttpRequestMessage? Last;
+        public string? LastRequestBody;
 
         public CannedHandler(string json, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
@@ -25,6 +26,7 @@ public class MobileSyncClientTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             Last = request;
+            LastRequestBody = request.Content?.ReadAsStringAsync(ct).GetAwaiter().GetResult();
             return Task.FromResult(new HttpResponseMessage(_statusCode)
             { Content = new StringContent(_json, Encoding.UTF8, "application/json") });
         }
@@ -128,5 +130,115 @@ public class MobileSyncClientTests
         await client.PushCaptureAsync("device-token-123", "capture-blob-456", CancellationToken.None);
 
         Assert.EndsWith("/queue/push", handler.Last!.RequestUri!.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task ClaimPairing_parses_device_token_and_company_fields()
+    {
+        var handler = new CannedHandler(
+            "{\"success\":true,\"company_uid\":\"company-456\",\"company_label\":\"Acme Corp\",\"device_token\":\"token-abc123\"}");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.ClaimPairingAsync("123456", "pubkey-base64", "My Phone", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("token-abc123", result.DeviceToken);
+        Assert.Equal("company-456", result.CompanyUid);
+        Assert.Equal("Acme Corp", result.CompanyLabel);
+    }
+
+    [Fact]
+    public async Task ClaimPairing_posts_code_public_key_and_label_to_correct_endpoint()
+    {
+        var handler = new CannedHandler(
+            "{\"success\":true,\"company_uid\":\"company-456\",\"company_label\":\"Acme Corp\",\"device_token\":\"token-abc123\"}");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        await client.ClaimPairingAsync("123456", "pubkey-base64", "My Phone", CancellationToken.None);
+
+        Assert.EndsWith("/pair/claim", handler.Last!.RequestUri!.AbsolutePath);
+        var body = handler.LastRequestBody!;
+        Assert.Contains("\"code\":\"123456\"", body);
+        Assert.Contains("\"phone_public_key\":\"pubkey-base64\"", body);
+        Assert.Contains("\"device_label\":\"My Phone\"", body);
+    }
+
+    [Fact]
+    public async Task ClaimPairing_returns_null_on_400()
+    {
+        var handler = new CannedHandler("{\"error\":\"invalid_code\"}", HttpStatusCode.BadRequest);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.ClaimPairingAsync("bad-code", "pubkey-base64", "My Phone", CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task ClaimPairing_returns_null_on_429()
+    {
+        var handler = new CannedHandler("{\"error\":\"rate_limited\"}", HttpStatusCode.TooManyRequests);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.ClaimPairingAsync("123456", "pubkey-base64", "My Phone", CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task FetchPairingKey_returns_ciphertext_when_present()
+    {
+        var handler = new CannedHandler("{\"encrypted_sync_key\":\"encrypted-key-blob\"}");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.FetchPairingKeyAsync("device-token-123", CancellationToken.None);
+
+        Assert.Equal("encrypted-key-blob", result);
+    }
+
+    [Fact]
+    public async Task FetchPairingKey_returns_null_when_pending()
+    {
+        var handler = new CannedHandler("{\"pending\":true}");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.FetchPairingKeyAsync("device-token-123", CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task FetchPairingKey_returns_null_on_404()
+    {
+        var handler = new CannedHandler("{}", HttpStatusCode.NotFound);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.FetchPairingKeyAsync("device-token-123", CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task FetchPairingKey_sends_device_token_header()
+    {
+        var handler = new CannedHandler("{\"encrypted_sync_key\":\"encrypted-key-blob\"}");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        await client.FetchPairingKeyAsync("device-token-123", CancellationToken.None);
+
+        Assert.True(handler.Last!.Headers.Contains("X-Sync-Device-Token"));
+        var headerValues = handler.Last.Headers.GetValues("X-Sync-Device-Token");
+        Assert.Contains("device-token-123", headerValues);
+    }
+
+    [Fact]
+    public async Task FetchPairingKey_posts_to_correct_endpoint()
+    {
+        var handler = new CannedHandler("{\"encrypted_sync_key\":\"encrypted-key-blob\"}");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        await client.FetchPairingKeyAsync("device-token-123", CancellationToken.None);
+
+        Assert.EndsWith("/pair/key", handler.Last!.RequestUri!.AbsolutePath);
     }
 }

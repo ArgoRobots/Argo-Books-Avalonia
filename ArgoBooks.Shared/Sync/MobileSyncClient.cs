@@ -28,7 +28,7 @@ public class MobileSyncClient
         _baseUrl = baseUrl;
     }
 
-    private async Task<JsonElement> PostAsync(string path, object body, string? deviceToken = null, CancellationToken ct = default)
+    private async Task<(HttpStatusCode StatusCode, JsonElement Json)> PostRawAsync(string path, object body, string? deviceToken, CancellationToken ct)
     {
         var fullUrl = _baseUrl + "/api/sync" + path;
         using var req = new HttpRequestMessage(HttpMethod.Post, fullUrl)
@@ -42,16 +42,27 @@ public class MobileSyncClient
         }
 
         using var resp = await _http.SendAsync(req, ct);
+        var text = await resp.Content.ReadAsStringAsync(ct);
+        var json = string.IsNullOrEmpty(text) ? default : JsonDocument.Parse(text).RootElement.Clone();
+        return (resp.StatusCode, json);
+    }
+
+    private async Task<JsonElement> PostAsync(string path, object body, string? deviceToken = null, CancellationToken ct = default)
+    {
+        var (statusCode, json) = await PostRawAsync(path, body, deviceToken, ct);
 
         // Return null on 404 for snapshot get (no snapshot yet)
-        if (resp.StatusCode == HttpStatusCode.NotFound)
+        if (statusCode == HttpStatusCode.NotFound)
         {
             return default;
         }
 
-        var text = await resp.Content.ReadAsStringAsync(ct);
-        resp.EnsureSuccessStatusCode();
-        return JsonDocument.Parse(text).RootElement.Clone();
+        if (statusCode < HttpStatusCode.OK || statusCode >= HttpStatusCode.MultipleChoices)
+        {
+            throw new HttpRequestException($"Request to {path} failed with status code {(int)statusCode}.");
+        }
+
+        return json;
     }
 
     /// <summary>
@@ -105,5 +116,61 @@ public class MobileSyncClient
     public async Task PushCaptureAsync(string deviceToken, string ciphertext, CancellationToken ct)
     {
         await PostAsync("/queue/push", new { ciphertext }, deviceToken, ct);
+    }
+
+    /// <summary>
+    /// Claims a short pairing code (typed in on the phone) to get a device token and company info.
+    /// This call is unauthenticated (no device token yet). Returns null on a non-success status
+    /// (e.g. 400 for an invalid/expired code, 429 for rate limiting).
+    /// </summary>
+    public async Task<ClaimResult?> ClaimPairingAsync(string code, string phonePublicKeyBase64, string deviceLabel, CancellationToken ct)
+    {
+        var (statusCode, json) = await PostRawAsync(
+            "/pair/claim",
+            new { code, phone_public_key = phonePublicKeyBase64, device_label = deviceLabel },
+            deviceToken: null,
+            ct);
+
+        if (statusCode < HttpStatusCode.OK || statusCode >= HttpStatusCode.MultipleChoices)
+        {
+            return null;
+        }
+
+        return new ClaimResult(
+            DeviceToken: json.TryGetProperty("device_token", out var dt) ? (dt.GetString() ?? string.Empty) : string.Empty,
+            CompanyUid: json.TryGetProperty("company_uid", out var cu) ? (cu.GetString() ?? string.Empty) : string.Empty,
+            CompanyLabel: json.TryGetProperty("company_label", out var cl) ? (cl.GetString() ?? string.Empty) : string.Empty);
+    }
+
+    /// <summary>
+    /// Fetches the encrypted sync key once the desktop has approved a pending pairing claim.
+    /// Returns null while the pairing is still pending (server returns <c>{pending: true}</c>)
+    /// or if the claim was never made / has expired (404).
+    /// </summary>
+    public async Task<string?> FetchPairingKeyAsync(string deviceToken, CancellationToken ct)
+    {
+        var (statusCode, json) = await PostRawAsync("/pair/key", new { }, deviceToken, ct);
+
+        if (statusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        if (statusCode < HttpStatusCode.OK || statusCode >= HttpStatusCode.MultipleChoices)
+        {
+            return null;
+        }
+
+        if (json.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        if (json.TryGetProperty("pending", out var pending) && pending.ValueKind == JsonValueKind.True)
+        {
+            return null;
+        }
+
+        return json.TryGetProperty("encrypted_sync_key", out var key) ? key.GetString() : null;
     }
 }
