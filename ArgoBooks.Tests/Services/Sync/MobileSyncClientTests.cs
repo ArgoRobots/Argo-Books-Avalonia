@@ -241,4 +241,51 @@ public class MobileSyncClientTests
 
         Assert.EndsWith("/pair/key", handler.Last!.RequestUri!.AbsolutePath);
     }
+
+    // Regression tests: a non-2xx response with a non-JSON body (e.g. an Apache/htaccess HTML
+    // error page, which is realistic for these routes) must never reach JsonDocument.Parse.
+    // Existing callers must still surface HttpRequestException (not JsonException), and the
+    // newer ClaimPairing/FetchPairingKey callers must still return null (not throw).
+
+    [Fact]
+    public async Task GetSnapshot_throws_HttpRequestException_not_JsonException_on_non_json_error_body()
+    {
+        var handler = new CannedHandler("<html><body>500 Internal Server Error</body></html>", HttpStatusCode.InternalServerError);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.GetSnapshotAsync("device-token-123", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task RedeemPairing_throws_HttpRequestException_not_JsonException_on_non_json_error_body()
+    {
+        var handler = new CannedHandler("<html><body>502 Bad Gateway</body></html>", HttpStatusCode.BadGateway);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.RedeemPairingAsync("pairing-xyz", "My Phone", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ClaimPairing_returns_null_on_non_json_error_body()
+    {
+        var handler = new CannedHandler("<html><body>500 Internal Server Error</body></html>", HttpStatusCode.InternalServerError);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.ClaimPairingAsync("123456", "pubkey-base64", "My Phone", CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task FetchPairingKey_returns_null_on_non_json_error_body()
+    {
+        var handler = new CannedHandler("<html><body>500 Internal Server Error</body></html>", HttpStatusCode.InternalServerError);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+
+        var result = await client.FetchPairingKeyAsync("device-token-123", CancellationToken.None);
+
+        Assert.Null(result);
+    }
 }

@@ -28,7 +28,13 @@ public class MobileSyncClient
         _baseUrl = baseUrl;
     }
 
-    private async Task<(HttpStatusCode StatusCode, JsonElement Json)> PostRawAsync(string path, object body, string? deviceToken, CancellationToken ct)
+    /// <summary>
+    /// Sends the request and returns the raw status code + body text, without attempting any
+    /// JSON parsing. A non-2xx body (e.g. an Apache/htaccess HTML error page) is not guaranteed
+    /// to be JSON, so parsing must happen only after the caller has decided the response is one
+    /// it expects to be JSON.
+    /// </summary>
+    private async Task<(HttpStatusCode StatusCode, string Text)> SendRawAsync(string path, object body, string? deviceToken, CancellationToken ct)
     {
         var fullUrl = _baseUrl + "/api/sync" + path;
         using var req = new HttpRequestMessage(HttpMethod.Post, fullUrl)
@@ -43,13 +49,38 @@ public class MobileSyncClient
 
         using var resp = await _http.SendAsync(req, ct);
         var text = await resp.Content.ReadAsStringAsync(ct);
-        var json = string.IsNullOrEmpty(text) ? default : JsonDocument.Parse(text).RootElement.Clone();
-        return (resp.StatusCode, json);
+        return (resp.StatusCode, text);
     }
 
+    /// <summary>
+    /// Sends the request and parses the body as JSON only on success. Non-2xx bodies are never
+    /// passed to <see cref="JsonDocument.Parse(string, JsonDocumentOptions)"/>: a non-success
+    /// response returns <c>default</c> for the JSON element alongside its status code, letting
+    /// the caller decide how to react (e.g. return null vs. throw) without risking a
+    /// <see cref="JsonException"/> from a non-JSON error page.
+    /// </summary>
+    private async Task<(HttpStatusCode StatusCode, JsonElement Json)> PostRawAsync(string path, object body, string? deviceToken, CancellationToken ct)
+    {
+        var (statusCode, text) = await SendRawAsync(path, body, deviceToken, ct);
+
+        if (statusCode < HttpStatusCode.OK || statusCode >= HttpStatusCode.MultipleChoices)
+        {
+            return (statusCode, default);
+        }
+
+        var json = string.IsNullOrEmpty(text) ? default : JsonDocument.Parse(text).RootElement.Clone();
+        return (statusCode, json);
+    }
+
+    /// <summary>
+    /// Original contract used by the pre-existing callers (redeem/snapshot/queue push): resolve
+    /// the status code first, short-circuit 404, and throw <see cref="HttpRequestException"/> on
+    /// any other non-2xx status, all BEFORE ever attempting to parse the body as JSON. This keeps
+    /// those callers unaffected by non-JSON error pages.
+    /// </summary>
     private async Task<JsonElement> PostAsync(string path, object body, string? deviceToken = null, CancellationToken ct = default)
     {
-        var (statusCode, json) = await PostRawAsync(path, body, deviceToken, ct);
+        var (statusCode, text) = await SendRawAsync(path, body, deviceToken, ct);
 
         // Return null on 404 for snapshot get (no snapshot yet)
         if (statusCode == HttpStatusCode.NotFound)
@@ -62,7 +93,7 @@ public class MobileSyncClient
             throw new HttpRequestException($"Request to {path} failed with status code {(int)statusCode}.");
         }
 
-        return json;
+        return string.IsNullOrEmpty(text) ? default : JsonDocument.Parse(text).RootElement.Clone();
     }
 
     /// <summary>
