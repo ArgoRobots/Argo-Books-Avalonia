@@ -136,6 +136,49 @@ public class SettingsModalViewModelTests
 
     #endregion
 
+    #region Mobile Sync Tests
+
+    [Fact]
+    public void ToggleShortCodeRevealCommand_TogglesIsShortCodeRevealed()
+    {
+        Assert.False(_viewModel.IsShortCodeRevealed);
+
+        _viewModel.ToggleShortCodeRevealCommand.Execute(null);
+        Assert.True(_viewModel.IsShortCodeRevealed);
+
+        _viewModel.ToggleShortCodeRevealCommand.Execute(null);
+        Assert.False(_viewModel.IsShortCodeRevealed);
+    }
+
+    [Fact]
+    public void LoadMobileSync_ResetsPairingState()
+    {
+        _viewModel.ShortCodeDisplay = "ABCD-1234";
+        _viewModel.IsShortCodeRevealed = true;
+        _viewModel.IsPhoneJustPaired = true;
+
+        _viewModel.LoadMobileSync();
+
+        Assert.Null(_viewModel.QrImage);
+        Assert.Equal(string.Empty, _viewModel.ShortCodeDisplay);
+        Assert.False(_viewModel.IsShortCodeRevealed);
+        Assert.False(_viewModel.IsPhoneJustPaired);
+        Assert.Empty(_viewModel.PairedDevices);
+    }
+
+    [Fact]
+    public void SelectedTabIndex_ChangedAwayFromMobileAppTab_DoesNotThrow()
+    {
+        // Regression guard for the pairing-poll cancellation hook: navigating tabs (with or
+        // without an in-flight pairing poll) must never throw.
+        _viewModel.SelectedTabIndex = 6; // Mobile app tab
+        _viewModel.SelectedTabIndex = 0; // General tab
+
+        Assert.Equal(0, _viewModel.SelectedTabIndex);
+    }
+
+    #endregion
+
     #region SelectTimeFormat Command Tests
 
     [Fact]

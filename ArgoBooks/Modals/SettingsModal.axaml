@@ -1162,49 +1162,73 @@
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             Padding="16">
-                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
-                                            <!-- QR code preview -->
-                                            <Border Grid.Column="0"
-                                                    Width="140" Height="140"
-                                                    CornerRadius="6"
-                                                    ClipToBounds="True"
-                                                    Background="{DynamicResource SurfaceBrush}"
-                                                    IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                                <Image Source="{Binding QrImage}"
-                                                       Stretch="Uniform"
-                                                       Margin="8" />
-                                            </Border>
+                                        <Panel>
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16"
+                                                  IsVisible="{Binding !IsPhoneJustPaired}">
+                                                <!-- QR code preview -->
+                                                <Border Grid.Column="0"
+                                                        Width="140" Height="140"
+                                                        CornerRadius="6"
+                                                        ClipToBounds="True"
+                                                        Background="{DynamicResource SurfaceBrush}"
+                                                        IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                    <Image Source="{Binding QrImage}"
+                                                           Stretch="Uniform"
+                                                           Margin="8" />
+                                                </Border>
 
-                                            <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
-                                                <TextBlock Text="{loc:Loc 'Open the Argo Books mobile app and scan this code to link this computer.'}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           TextWrapping="Wrap"
-                                                           IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}" />
-
-                                                <StackPanel Orientation="Horizontal" Spacing="6"
-                                                            IsVisible="{Binding PairingCode, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                    <TextBlock Text="{loc:Loc 'Code:'}"
+                                                <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
+                                                    <TextBlock Text="{loc:Loc 'Open the Argo Books mobile app and scan this code to link this computer.'}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               VerticalAlignment="Center" />
-                                                    <TextBlock Text="{Binding PairingCode}"
-                                                               FontSize="13"
-                                                               FontWeight="SemiBold"
-                                                               FontFamily="Consolas,Menlo,monospace"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center" />
-                                                </StackPanel>
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
-                                                <Button Classes="primary-button"
-                                                        Content="{loc:Loc 'Connect a phone'}"
-                                                        Command="{Binding ConnectPhoneCommand}"
-                                                        IsEnabled="{Binding !IsConnecting}"
-                                                        Padding="12,6"
-                                                        MinHeight="0"
-                                                        HorizontalAlignment="Left" />
+                                                    <!-- Secondary reveal: enter the code by hand instead of scanning -->
+                                                    <StackPanel Spacing="6"
+                                                                IsVisible="{Binding ShortCodeDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                        <Button Classes="link-button"
+                                                                Content="{loc:Loc 'Enter a code instead'}"
+                                                                Command="{Binding ToggleShortCodeRevealCommand}"
+                                                                HorizontalAlignment="Left" />
+                                                        <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                    IsVisible="{Binding IsShortCodeRevealed}">
+                                                            <TextBlock Text="{loc:Loc 'Code:'}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding ShortCodeDisplay}"
+                                                                       FontSize="13"
+                                                                       FontWeight="SemiBold"
+                                                                       FontFamily="Consolas,Menlo,monospace"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Button Classes="primary-button"
+                                                            Content="{loc:Loc 'Connect a phone'}"
+                                                            Command="{Binding ConnectPhoneCommand}"
+                                                            IsEnabled="{Binding !IsConnecting}"
+                                                            Padding="12,6"
+                                                            MinHeight="0"
+                                                            HorizontalAlignment="Left" />
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Phone connected confirmation, shown once the encrypted sync key has been delivered -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                                        VerticalAlignment="Center"
+                                                        IsVisible="{Binding IsPhoneJustPaired}">
+                                                <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
+                                                          Width="20" Height="20"
+                                                          Foreground="{DynamicResource SuccessBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Phone connected'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource SuccessBrush}" />
                                             </StackPanel>
-                                        </Grid>
+                                        </Panel>
                                     </Border>
                                 </StackPanel>
 

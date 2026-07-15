@@ -8,10 +8,12 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Sync;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -1451,10 +1453,24 @@ public partial class SettingsModalViewModel : ViewModelBase
     private Avalonia.Media.Imaging.Bitmap? _qrImage;
 
     /// <summary>
-    /// Short, human-typeable form of the pairing token, shown alongside the QR code as a fallback.
+    /// Short, human-typeable form of the pairing code ("XXXX-XXXX"), shown behind an "Enter a
+    /// code instead" reveal as a fallback to scanning the QR code.
     /// </summary>
     [ObservableProperty]
-    private string _pairingCode = string.Empty;
+    private string _shortCodeDisplay = string.Empty;
+
+    /// <summary>
+    /// Whether the "Enter a code instead" reveal is expanded, showing <see cref="ShortCodeDisplay"/>.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isShortCodeRevealed;
+
+    /// <summary>
+    /// True once the phone has claimed the pairing token and been handed the encrypted sync key.
+    /// Drives the "Phone connected" confirmation state, replacing the QR/code pairing UI.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isPhoneJustPaired;
 
     /// <summary>
     /// Phones currently paired with this company for mobile sync.
@@ -1474,14 +1490,60 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _isRefreshingDevices;
 
     /// <summary>
+    /// The tab index of the "Mobile app" tab in the TabControl in SettingsModal.axaml. Used to
+    /// cancel the pairing poll loop as soon as the user navigates away from this tab.
+    /// </summary>
+    private const int MobileAppTabIndex = 6;
+
+    /// <summary>
+    /// Cancellation source for the background loop polling the sync server for the phone to
+    /// claim the pairing token. Cancelled as soon as the pairing screen stops being visible (tab
+    /// change, modal close, or a fresh "Connect a phone" click), so the encrypted sync key is
+    /// only ever delivered while the user can see the pairing UI.
+    /// </summary>
+    private CancellationTokenSource? _pairingCts;
+
+    /// <summary>
+    /// Cancels and clears any in-flight pairing poll loop.
+    /// </summary>
+    private void CancelPairingPoll()
+    {
+        _pairingCts?.Cancel();
+        _pairingCts?.Dispose();
+        _pairingCts = null;
+    }
+
+    /// <summary>
+    /// Cancels the pairing poll loop when the user navigates away from the Mobile app tab.
+    /// </summary>
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value != MobileAppTabIndex)
+            CancelPairingPoll();
+    }
+
+    /// <summary>
+    /// Cancels the pairing poll loop when the settings modal closes.
+    /// </summary>
+    partial void OnIsOpenChanged(bool value)
+    {
+        if (!value)
+            CancelPairingPoll();
+    }
+
+    /// <summary>
     /// Loads mobile sync state (paired devices) from company data. Called each time the
     /// settings modal opens. Does not fetch a fresh QR code; that only happens when the
     /// user explicitly clicks "Connect a phone".
     /// </summary>
     public void LoadMobileSync()
     {
+        CancelPairingPoll();
+
         QrImage = null;
-        PairingCode = string.Empty;
+        ShortCodeDisplay = string.Empty;
+        IsShortCodeRevealed = false;
+        IsPhoneJustPaired = false;
         PairedDevices.Clear();
 
         var data = App.CompanyManager?.CompanyData;
@@ -1489,6 +1551,15 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         foreach (var device in data.PairedDevices)
             PairedDevices.Add(device);
+    }
+
+    /// <summary>
+    /// Toggles the "Enter a code instead" reveal showing <see cref="ShortCodeDisplay"/>.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleShortCodeReveal()
+    {
+        IsShortCodeRevealed = !IsShortCodeRevealed;
     }
 
     /// <summary>
@@ -1513,6 +1584,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
+        // A fresh click supersedes any pairing already in flight.
+        CancelPairingPoll();
+        IsPhoneJustPaired = false;
+
         IsConnecting = true;
         try
         {
@@ -1535,7 +1610,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
                     "Sync.ConnectPhone.NoToken");
                 QrImage = null;
-                PairingCode = string.Empty;
+                ShortCodeDisplay = string.Empty;
                 await ShowErrorDialogAsync(
                     "Couldn't Connect a Phone".Translate(),
                     "The sync server didn't return a pairing code. Please try again.".Translate());
@@ -1545,14 +1620,20 @@ public partial class SettingsModalViewModel : ViewModelBase
             var token = pairing.Token;
             var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
             QrImage = new QrImageService().RenderBitmap(payload);
-            PairingCode = token.Length > 8 ? token[..8].ToUpperInvariant() : token.ToUpperInvariant();
+            ShortCodeDisplay = PairingCode.Format(pairing.ShortCode);
+            IsShortCodeRevealed = false;
+
+            // Start polling for the phone to claim this token. Cancelled on tab change, modal
+            // close, or the next "Connect a phone" click (see CancelPairingPoll).
+            _pairingCts = new CancellationTokenSource();
+            _ = PollPairingAsync(token, _pairingCts.Token);
         }
         catch (Exception ex)
         {
             // Log to telemetry and tell the user, instead of failing silently.
             App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.ConnectPhone");
             QrImage = null;
-            PairingCode = string.Empty;
+            ShortCodeDisplay = string.Empty;
 
             var message = ex is System.Net.Http.HttpRequestException
                 ? "We couldn't reach the sync server. Check your internet connection and try again.".Translate()
@@ -1562,6 +1643,64 @@ public partial class SettingsModalViewModel : ViewModelBase
         finally
         {
             IsConnecting = false;
+        }
+    }
+
+    /// <summary>
+    /// Polls the sync server every ~2s for the phone to claim <paramref name="pairingToken"/>.
+    /// Once the phone's public key arrives, encrypts the company sync key to it and delivers it,
+    /// then shows the "Phone connected" state and refreshes the paired device list. Runs until
+    /// that happens or <paramref name="ct"/> is cancelled (tab change, modal close, or a fresh
+    /// "Connect a phone" click - see <see cref="CancelPairingPoll"/>), so the encrypted sync key
+    /// is only ever handed over while the pairing screen is visible.
+    /// </summary>
+    private async Task PollPairingAsync(string pairingToken, CancellationToken ct)
+    {
+        var syncService = App.SyncService;
+        if (syncService == null) return;
+
+        try
+        {
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+
+                PairingStatusResult? status;
+                try
+                {
+                    status = await syncService.GetPairingStatusAsync(pairingToken, ct);
+                }
+                catch (Exception) when (!ct.IsCancellationRequested)
+                {
+                    // Transient network hiccup while polling; try again on the next tick.
+                    continue;
+                }
+
+                if (status?.PhonePublicKey is not { Length: > 0 } phonePublicKey) continue;
+
+                var mobileSync = App.CompanyManager?.CompanyData?.Settings.MobileSync;
+                if (string.IsNullOrEmpty(mobileSync?.SyncKeyBase64)) return;
+
+                var keyBytes = Convert.FromBase64String(mobileSync.SyncKeyBase64);
+                var ciphertext = PairingKeyExchange.EncryptSyncKey(phonePublicKey, keyBytes);
+                await syncService.DeliverKeyAsync(pairingToken, ciphertext, ct);
+
+                await Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    IsPhoneJustPaired = true;
+                    await RefreshDevicesAsync();
+                });
+                return;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the pairing screen was closed (tab change/modal close) or superseded by
+            // a fresh "Connect a phone" click before the phone finished pairing. Not an error.
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.PollPairing");
         }
     }
 
