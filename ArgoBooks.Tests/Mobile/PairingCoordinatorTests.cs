@@ -76,17 +76,27 @@ public class PairingCoordinatorTests
         private readonly HttpStatusCode _claimStatus;
         private readonly byte[]? _syncKeyBytes;
         private readonly int _keyReadyOnPollNumber;
+        private readonly int _transientFailOnPollNumber;
+        private readonly string? _keyCiphertextOverride;
 
         public string? LastClaimBody;
         public string? PhonePublicKeyBase64;
         public int KeyPollCount { get; private set; }
 
-        public CodePairingHandler(string claimJson, HttpStatusCode claimStatus, byte[]? syncKeyBytes, int keyReadyOnPollNumber)
+        public CodePairingHandler(
+            string claimJson,
+            HttpStatusCode claimStatus,
+            byte[]? syncKeyBytes,
+            int keyReadyOnPollNumber,
+            int transientFailOnPollNumber = -1,
+            string? keyCiphertextOverride = null)
         {
             _claimJson = claimJson;
             _claimStatus = claimStatus;
             _syncKeyBytes = syncKeyBytes;
             _keyReadyOnPollNumber = keyReadyOnPollNumber;
+            _transientFailOnPollNumber = transientFailOnPollNumber;
+            _keyCiphertextOverride = keyCiphertextOverride;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
@@ -109,6 +119,19 @@ public class PairingCoordinatorTests
             if (path.EndsWith("/pair/key"))
             {
                 KeyPollCount++;
+
+                if (KeyPollCount == _transientFailOnPollNumber)
+                {
+                    throw new HttpRequestException("Simulated transient network failure mid-poll.");
+                }
+
+                if (_keyCiphertextOverride != null)
+                {
+                    var overrideJson = JsonSerializer.Serialize(new { encrypted_sync_key = _keyCiphertextOverride });
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    { Content = new StringContent(overrideJson, Encoding.UTF8, "application/json") };
+                }
+
                 if (_syncKeyBytes != null && KeyPollCount >= _keyReadyOnPollNumber)
                 {
                     var ciphertext = PairingKeyExchange.EncryptSyncKey(PhonePublicKeyBase64!, _syncKeyBytes);
@@ -349,5 +372,55 @@ public class PairingCoordinatorTests
         Assert.Contains("ABCD234", handler.LastClaimBody);
         Assert.Contains("My Phone", handler.LastClaimBody);
         Assert.NotNull(handler.PhonePublicKeyBase64);
+    }
+
+    [Fact]
+    public async Task Code_TransientNetworkFailureMidPoll_IsTolerated_PairingStillSucceeds()
+    {
+        var claimJson = "{\"device_token\":\"device-tok-xyz\",\"company_uid\":\"company-uid-999\",\"company_label\":\"Beta Co\"}";
+        // Poll 1 throws HttpRequestException (simulated WiFi/cellular handoff); poll 2 succeeds.
+        var handler = new CodePairingHandler(
+            claimJson, HttpStatusCode.OK, TestSyncKeyBytes, keyReadyOnPollNumber: 2, transientFailOnPollNumber: 1);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store)
+        {
+            PollInterval = TimeSpan.FromMilliseconds(5),
+            PollTimeout = TimeSpan.FromSeconds(5)
+        };
+
+        var outcome = await coordinator.PairFromCodeAsync("ABCD-1234", "My Phone", CancellationToken.None);
+
+        Assert.True(outcome.Success);
+        Assert.Equal("Beta Co", outcome.CompanyLabel);
+        Assert.Null(outcome.Error);
+        Assert.Equal(2, handler.KeyPollCount);
+
+        var all = await store.GetAllAsync();
+        Assert.Single(all);
+        Assert.Equal(Convert.ToBase64String(TestSyncKeyBytes), all[0].SyncKeyBase64);
+    }
+
+    [Fact]
+    public async Task Code_CorruptCiphertext_ReturnsGracefulFailure_StoresNothing()
+    {
+        var claimJson = "{\"device_token\":\"device-tok-xyz\",\"company_uid\":\"company-uid-999\",\"company_label\":\"Beta Co\"}";
+        // Not valid base64 at all - exercises the FormatException path inside DecryptSyncKey.
+        var handler = new CodePairingHandler(
+            claimJson, HttpStatusCode.OK, syncKeyBytes: null, keyReadyOnPollNumber: 1,
+            keyCiphertextOverride: "not-base64!!");
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store)
+        {
+            PollInterval = TimeSpan.FromMilliseconds(5),
+            PollTimeout = TimeSpan.FromSeconds(5)
+        };
+
+        var outcome = await coordinator.PairFromCodeAsync("ABCD-1234", "My Phone", CancellationToken.None);
+
+        Assert.False(outcome.Success);
+        Assert.Equal("Something went wrong finishing the connection. Please try pairing again.", outcome.Error);
+        Assert.Empty(await store.GetAllAsync());
     }
 }

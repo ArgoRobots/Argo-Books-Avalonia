@@ -49,12 +49,12 @@ public class PairingCoordinator
     /// short-code claim. Mutable so tests can drive the poll loop quickly instead of waiting on
     /// the real-world default.
     /// </summary>
-    public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(2);
+    public TimeSpan PollInterval { get; internal set; } = TimeSpan.FromSeconds(2);
 
     /// <summary>
     /// Total time to keep polling before giving up and reporting a timeout.
     /// </summary>
-    public TimeSpan PollTimeout { get; set; } = TimeSpan.FromMinutes(2);
+    public TimeSpan PollTimeout { get; internal set; } = TimeSpan.FromMinutes(2);
 
     /// <summary>
     /// Pairs this device using a QR payload (or a manually-pasted copy of the same JSON), in the
@@ -162,7 +162,22 @@ public class PairingCoordinator
         {
             ct.ThrowIfCancellationRequested();
 
-            ciphertext = await _client.FetchPairingKeyAsync(claim.DeviceToken, ct);
+            try
+            {
+                ciphertext = await _client.FetchPairingKeyAsync(claim.DeviceToken, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                // Transient network failure mid-poll (e.g. phone switching WiFi/cellular during the
+                // up-to-2-minute wait). Don't abort pairing - keep polling until the deadline and
+                // fall back to the same timeout message as a key that never arrives.
+                ciphertext = null;
+            }
+
             if (!string.IsNullOrEmpty(ciphertext))
             {
                 break;
@@ -176,7 +191,17 @@ public class PairingCoordinator
             return PairingOutcome.Fail("Make sure Argo Books is open on your computer and the pairing screen is showing, then try again.");
         }
 
-        var syncKeyBytes = keyPair.DecryptSyncKey(ciphertext);
+        byte[] syncKeyBytes;
+        try
+        {
+            syncKeyBytes = keyPair.DecryptSyncKey(ciphertext);
+        }
+        catch (Exception)
+        {
+            // Covers FormatException (malformed base64) and CryptographicException (corrupt or
+            // foreign ciphertext) alike.
+            return PairingOutcome.Fail("Something went wrong finishing the connection. Please try pairing again.");
+        }
 
         var record = new PairedCompanyRecord
         {
