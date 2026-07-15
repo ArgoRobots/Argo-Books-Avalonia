@@ -26,7 +26,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="750"
+                Width="840"
                 MinHeight="700"
                 MaxHeight="700"
                 HorizontalAlignment="Center"
@@ -54,10 +54,16 @@
                     </Grid>
                 </Border>
 
-                <!-- Body with Tabs -->
+                <!-- Body with left navigation rail -->
                 <TabControl Grid.Row="1"
                             SelectedIndex="{Binding SelectedTabIndex}"
+                            TabStripPlacement="Left"
                             Margin="0">
+                    <TabControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Margin="12,16" />
+                        </ItemsPanelTemplate>
+                    </TabControl.ItemsPanel>
                     <!-- General Tab -->
                     <TabItem Header="{loc:Loc General}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
@@ -1031,7 +1037,7 @@
                     </TabItem>
                     <!-- Bank Import Rules Tab -->
                     <TabItem Header="{loc:Loc 'Bank import rules'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
                                 <!-- Header row: description + Add rule button -->
@@ -1051,14 +1057,14 @@
                                             VerticalAlignment="Center" />
                                 </Grid>
 
-                                <!-- Column headers -->
-                                <Grid ColumnDefinitions="*,180,40" Margin="0,0,0,-8">
+                                <!-- Column headers (columns mirror the rule rows below) -->
+                                <Grid ColumnDefinitions="1.6*,12,*,8,40" Margin="0,0,0,-8">
                                     <TextBlock Grid.Column="0"
                                                Text="{loc:Loc Pattern}"
                                                FontSize="12"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Grid.Column="1"
+                                    <TextBlock Grid.Column="2"
                                                Text="{loc:Loc Category}"
                                                FontSize="12"
                                                FontWeight="Medium"
@@ -1073,7 +1079,7 @@
                                                     CornerRadius="8"
                                                     Padding="12,10"
                                                     Margin="0,0,0,4">
-                                                <Grid ColumnDefinitions="*,12,180,8,40" RowDefinitions="Auto,Auto" VerticalAlignment="Center">
+                                                <Grid ColumnDefinitions="1.6*,12,*,8,40" RowDefinitions="Auto,Auto" VerticalAlignment="Center">
                                                     <!-- Pattern TextBox -->
                                                     <TextBox Grid.Row="0" Grid.Column="0"
                                                              Text="{Binding Pattern, Mode=TwoWay}"
@@ -1149,7 +1155,7 @@
                          loop's visibility check - if this tab is ever reordered, update that
                          constant too. -->
                     <TabItem Header="{loc:Loc 'Mobile app'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
                                 <TextBlock Text="{loc:Loc 'Capture receipts and rentals from your phone, then bring them into Argo Books here.'}"
@@ -1189,34 +1195,66 @@
                                                                IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
                                                     <!-- Secondary reveal: enter the code by hand instead of scanning -->
-                                                    <StackPanel Spacing="6"
+                                                    <StackPanel Spacing="8"
                                                                 IsVisible="{Binding ShortCodeDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                        <!-- Link hides once the code is revealed -->
                                                         <Button Classes="link-button"
                                                                 Content="{loc:Loc 'Enter a code instead'}"
                                                                 Command="{Binding ToggleShortCodeRevealCommand}"
+                                                                IsVisible="{Binding !IsShortCodeRevealed}"
                                                                 HorizontalAlignment="Left" />
-                                                        <StackPanel Orientation="Horizontal" Spacing="6"
-                                                                    IsVisible="{Binding IsShortCodeRevealed}">
-                                                            <TextBlock Text="{loc:Loc 'Code:'}"
+
+                                                        <!-- Revealed code, shown as a prominent code box -->
+                                                        <StackPanel Spacing="6" IsVisible="{Binding IsShortCodeRevealed}">
+                                                            <TextBlock Text="{loc:Loc 'Enter this code on your phone'}"
                                                                        FontSize="12"
-                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                       VerticalAlignment="Center" />
-                                                            <TextBlock Text="{Binding ShortCodeDisplay}"
-                                                                       FontSize="13"
-                                                                       FontWeight="SemiBold"
-                                                                       FontFamily="Consolas,Menlo,monospace"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center" />
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                            <Border Background="{DynamicResource SurfaceBrush}"
+                                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="8"
+                                                                    Padding="14,8"
+                                                                    HorizontalAlignment="Left">
+                                                                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding ShortCodeDisplay}"
+                                                                               FontSize="22"
+                                                                               FontWeight="SemiBold"
+                                                                               FontFamily="Consolas,Menlo,monospace"
+                                                                               LetterSpacing="3"
+                                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                               VerticalAlignment="Center" />
+                                                                    <Button Classes="copy-icon"
+                                                                            Click="OnCopyPairingCode"
+                                                                            ToolTip.Tip="{loc:Loc 'Copy code'}">
+                                                                        <PathIcon Data="{x:Static icons:Icons.Copy}"
+                                                                                  Width="15" Height="15" />
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Border>
                                                         </StackPanel>
                                                     </StackPanel>
 
-                                                    <Button Classes="primary-button"
-                                                            Content="{loc:Loc 'Connect a phone'}"
-                                                            Command="{Binding ConnectPhoneCommand}"
-                                                            IsEnabled="{Binding !IsConnecting}"
-                                                            Padding="12,6"
-                                                            MinHeight="0"
-                                                            HorizontalAlignment="Left" />
+                                                    <!-- Connect button, with an in-progress state so retries show feedback -->
+                                                    <Panel HorizontalAlignment="Center"
+                                                           Margin="0,2,0,0"
+                                                           IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNull}}">
+                                                        <Button Classes="primary-button"
+                                                                Content="{loc:Loc 'Connect a phone'}"
+                                                                Command="{Binding ConnectPhoneCommand}"
+                                                                IsVisible="{Binding !IsConnecting}"
+                                                                Padding="12,6"
+                                                                MinHeight="0" />
+                                                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                                                    VerticalAlignment="Center"
+                                                                    IsVisible="{Binding IsConnecting}">
+                                                            <controls:LoadingSpinner IsSpinning="{Binding IsConnecting}"
+                                                                                     SizePreset="Small" />
+                                                            <TextBlock Text="{loc:Loc 'Connecting...'}"
+                                                                       FontSize="13"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </Panel>
                                                 </StackPanel>
                                             </Grid>
 
@@ -1686,47 +1724,66 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
-        <!-- TabControl - remove default underline and center tabs -->
+        <!-- TabControl - left navigation rail -->
         <Style Selector="TabControl">
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="TabControl /template/ ItemsPresenter#PART_ItemsPresenter">
-            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Width" Value="190" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
         </Style>
         <Style Selector="TabControl /template/ Border#PART_InnerBorder">
             <Setter Property="BorderThickness" Value="0" />
         </Style>
+        <!-- Divider between the rail and the page content -->
+        <Style Selector="TabControl /template/ ContentPresenter#PART_SelectedContentHost">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+        </Style>
 
-        <!-- Tab Item Styling -->
+        <!-- Tab Item Styling - nav rail rows.
+             Fully retemplated so there is no selection pipe and every row keeps
+             the same height in all states (no jump when a tab is selected). -->
         <Style Selector="TabItem">
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="13.5" />
             <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Padding" Value="4,12,4,10" />
-            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="RailRow"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Name="HeaderPresenter"
+                                          Content="{TemplateBinding Header}"
+                                          ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          TextBlock.Foreground="{TemplateBinding Foreground}"
+                                          TextBlock.FontSize="{TemplateBinding FontSize}"
+                                          TextBlock.FontWeight="{TemplateBinding FontWeight}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
         </Style>
         <Style Selector="TabItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
-        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        </Style>
         <Style Selector="TabItem:selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
-        <Style Selector="TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
-            <Setter Property="IsVisible" Value="True" />
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Height" Value="2" />
-            <Setter Property="VerticalAlignment" Value="Bottom" />
-            <Setter Property="Margin" Value="0,0,0,0" />
-            <Setter Property="CornerRadius" Value="1" />
+        <Style Selector="TabItem:selected:pointerover">
+            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 
         <!-- Animated Checkbox -->
@@ -1784,6 +1841,32 @@
         <Style Selector="Button.time-format-toggle.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Opacity" Value="0.9" />
+        </Style>
+
+        <!-- Small inline copy icon button (sits beside the pairing code) -->
+        <Style Selector="Button.copy-icon">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.copy-icon /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.copy-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.copy-icon PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.copy-icon:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>
