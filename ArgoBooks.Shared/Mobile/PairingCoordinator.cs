@@ -170,7 +170,7 @@ public class PairingCoordinator
             {
                 throw;
             }
-            catch (Exception)
+            catch (HttpRequestException)
             {
                 // Transient network failure mid-poll (e.g. phone switching WiFi/cellular during the
                 // up-to-2-minute wait). Don't abort pairing - keep polling until the deadline and

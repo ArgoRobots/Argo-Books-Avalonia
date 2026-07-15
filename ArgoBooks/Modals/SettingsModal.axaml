@@ -1144,6 +1144,10 @@
                     </TabItem>
 
                     <!-- Mobile App Tab -->
+                    <!-- This is tab index 6 (0-based, count TabItems above). Must match
+                         SettingsModalViewModel.MobileAppTabIndex, which gates the pairing poll
+                         loop's visibility check - if this tab is ever reordered, update that
+                         constant too. -->
                     <TabItem Header="{loc:Loc 'Mobile app'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">

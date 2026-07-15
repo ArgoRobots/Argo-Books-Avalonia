@@ -1492,6 +1492,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// The tab index of the "Mobile app" tab in the TabControl in SettingsModal.axaml. Used to
     /// cancel the pairing poll loop as soon as the user navigates away from this tab.
+    /// MUST match the position of the Mobile app TabItem in SettingsModal.axaml - if that tab is
+    /// ever reordered, update this constant and the matching comment on the TabItem together.
     /// </summary>
     private const int MobileAppTabIndex = 6;
 
@@ -1707,7 +1709,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 {
                     status = await syncService.GetPairingStatusAsync(pairingToken, ct);
                 }
-                catch (Exception) when (!ct.IsCancellationRequested)
+                catch (System.Net.Http.HttpRequestException) when (!ct.IsCancellationRequested)
                 {
                     // Transient network hiccup while polling; try again on the next tick.
                     continue;

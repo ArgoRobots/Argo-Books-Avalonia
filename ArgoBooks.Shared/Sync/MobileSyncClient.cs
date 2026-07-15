@@ -167,6 +167,11 @@ public class MobileSyncClient
             return null;
         }
 
+        if (json.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
         return new ClaimResult(
             DeviceToken: json.TryGetProperty("device_token", out var dt) ? (dt.GetString() ?? string.Empty) : string.Empty,
             CompanyUid: json.TryGetProperty("company_uid", out var cu) ? (cu.GetString() ?? string.Empty) : string.Empty,
