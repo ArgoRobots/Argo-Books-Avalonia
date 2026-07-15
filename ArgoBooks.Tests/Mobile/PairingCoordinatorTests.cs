@@ -1,6 +1,8 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -58,6 +60,68 @@ public class PairingCoordinatorTests
         {
             _storage.Remove(key);
             return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>
+    /// Fakes the sync server's short-code endpoints: POST /pair/claim (once) and POST /pair/key
+    /// (polled repeatedly). Captures the phone's RSA public key sent with the claim and, once the
+    /// configured poll number is reached, encrypts the test's sync key to that real public key
+    /// with <see cref="PairingKeyExchange.EncryptSyncKey"/> so the coordinator's real
+    /// <c>DecryptSyncKey</c> call recovers it end-to-end.
+    /// </summary>
+    private sealed class CodePairingHandler : HttpMessageHandler
+    {
+        private readonly string _claimJson;
+        private readonly HttpStatusCode _claimStatus;
+        private readonly byte[]? _syncKeyBytes;
+        private readonly int _keyReadyOnPollNumber;
+
+        public string? LastClaimBody;
+        public string? PhonePublicKeyBase64;
+        public int KeyPollCount { get; private set; }
+
+        public CodePairingHandler(string claimJson, HttpStatusCode claimStatus, byte[]? syncKeyBytes, int keyReadyOnPollNumber)
+        {
+            _claimJson = claimJson;
+            _claimStatus = claimStatus;
+            _syncKeyBytes = syncKeyBytes;
+            _keyReadyOnPollNumber = keyReadyOnPollNumber;
+        }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            var path = request.RequestUri!.AbsolutePath;
+
+            if (path.EndsWith("/pair/claim"))
+            {
+                LastClaimBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(ct);
+                if (LastClaimBody != null)
+                {
+                    using var doc = JsonDocument.Parse(LastClaimBody);
+                    PhonePublicKeyBase64 = doc.RootElement.GetProperty("phone_public_key").GetString();
+                }
+
+                return new HttpResponseMessage(_claimStatus)
+                { Content = new StringContent(_claimJson, Encoding.UTF8, "application/json") };
+            }
+
+            if (path.EndsWith("/pair/key"))
+            {
+                KeyPollCount++;
+                if (_syncKeyBytes != null && KeyPollCount >= _keyReadyOnPollNumber)
+                {
+                    var ciphertext = PairingKeyExchange.EncryptSyncKey(PhonePublicKeyBase64!, _syncKeyBytes);
+                    var json = JsonSerializer.Serialize(new { encrypted_sync_key = ciphertext });
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                { Content = new StringContent("{\"pending\":true}", Encoding.UTF8, "application/json") };
+            }
+
+            throw new InvalidOperationException($"Unexpected request path: {path}");
         }
     }
 
@@ -172,5 +236,118 @@ public class PairingCoordinatorTests
         Assert.NotNull(handler.LastBody);
         Assert.Contains("pairing-tok-123", handler.LastBody);
         Assert.Contains("My Phone", handler.LastBody);
+    }
+
+    // --- PairFromCodeAsync (short pairing code) ---
+
+    private static readonly byte[] TestSyncKeyBytes = Encoding.UTF8.GetBytes("0123456789ABCDEF0123456789ABCDEF");
+
+    [Fact]
+    public async Task Code_EmptyAfterNormalize_ReturnsFailure_StoresNothing()
+    {
+        var handler = new CodePairingHandler("{}", HttpStatusCode.OK, syncKeyBytes: null, keyReadyOnPollNumber: 1);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store);
+
+        // "----" normalizes to empty (dashes aren't in the alphabet).
+        var outcome = await coordinator.PairFromCodeAsync("----", "My Phone", CancellationToken.None);
+
+        Assert.False(outcome.Success);
+        Assert.Equal("Enter the code shown on your computer.", outcome.Error);
+        Assert.Empty(await store.GetAllAsync());
+    }
+
+    [Fact]
+    public async Task Code_NullClaim_ReturnsGenericInvalidCodeFailure_StoresNothing()
+    {
+        var handler = new CodePairingHandler("{\"error\":\"invalid\"}", HttpStatusCode.BadRequest, syncKeyBytes: null, keyReadyOnPollNumber: 1);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store);
+
+        var outcome = await coordinator.PairFromCodeAsync("ABCD1234", "My Phone", CancellationToken.None);
+
+        Assert.False(outcome.Success);
+        Assert.Equal("That code is not valid or has expired. Generate a new one on your computer.", outcome.Error);
+        Assert.Empty(await store.GetAllAsync());
+    }
+
+    [Fact]
+    public async Task Code_KeyNeverArrives_ReturnsTimeoutFailure_StoresNothing()
+    {
+        var claimJson = "{\"device_token\":\"device-tok-xyz\",\"company_uid\":\"company-uid-999\",\"company_label\":\"Beta Co\"}";
+        var handler = new CodePairingHandler(claimJson, HttpStatusCode.OK, syncKeyBytes: null, keyReadyOnPollNumber: int.MaxValue);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store)
+        {
+            PollInterval = TimeSpan.FromMilliseconds(5),
+            PollTimeout = TimeSpan.FromMilliseconds(30)
+        };
+
+        var outcome = await coordinator.PairFromCodeAsync("ABCD1234", "My Phone", CancellationToken.None);
+
+        Assert.False(outcome.Success);
+        Assert.Equal(
+            "Make sure Argo Books is open on your computer and the pairing screen is showing, then try again.",
+            outcome.Error);
+        Assert.Empty(await store.GetAllAsync());
+        Assert.True(handler.KeyPollCount >= 1);
+    }
+
+    [Fact]
+    public async Task Code_HappyPath_KeyArrivesOnSecondPoll_StoresDecryptedKeyAndSetsActive()
+    {
+        var claimJson = "{\"device_token\":\"device-tok-xyz\",\"company_uid\":\"company-uid-999\",\"company_label\":\"Beta Co\"}";
+        var handler = new CodePairingHandler(claimJson, HttpStatusCode.OK, TestSyncKeyBytes, keyReadyOnPollNumber: 2);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store)
+        {
+            PollInterval = TimeSpan.FromMilliseconds(5),
+            PollTimeout = TimeSpan.FromSeconds(5)
+        };
+
+        var outcome = await coordinator.PairFromCodeAsync("ABCD-1234", "My Phone", CancellationToken.None);
+
+        Assert.True(outcome.Success);
+        Assert.Equal("Beta Co", outcome.CompanyLabel);
+        Assert.Null(outcome.Error);
+        Assert.Equal(2, handler.KeyPollCount);
+        Assert.NotNull(handler.PhonePublicKeyBase64);
+
+        var all = await store.GetAllAsync();
+        Assert.Single(all);
+        Assert.Equal("company-uid-999", all[0].CompanyUid);
+        Assert.Equal("Beta Co", all[0].CompanyLabel);
+        Assert.Equal("device-tok-xyz", all[0].DeviceToken);
+        Assert.Equal(Convert.ToBase64String(TestSyncKeyBytes), all[0].SyncKeyBase64);
+
+        var active = await store.GetActiveAsync();
+        Assert.NotNull(active);
+        Assert.Equal("company-uid-999", active!.CompanyUid);
+    }
+
+    [Fact]
+    public async Task Code_ClaimSendsNormalizedCodeAndPhonePublicKey()
+    {
+        var claimJson = "{\"device_token\":\"device-tok-xyz\",\"company_uid\":\"company-uid-999\",\"company_label\":\"Beta Co\"}";
+        var handler = new CodePairingHandler(claimJson, HttpStatusCode.OK, TestSyncKeyBytes, keyReadyOnPollNumber: 1);
+        var client = new MobileSyncClient(new HttpClient(handler), "http://localhost:5000");
+        var store = new PairedCompanyStore(new InMemorySecureStore());
+        var coordinator = new PairingCoordinator(client, store)
+        {
+            PollInterval = TimeSpan.FromMilliseconds(5),
+            PollTimeout = TimeSpan.FromSeconds(5)
+        };
+
+        // Lowercase + dashes + a visually-ambiguous "O" (not in the alphabet) get normalized away/uppercased.
+        await coordinator.PairFromCodeAsync("abcd-234O", "My Phone", CancellationToken.None);
+
+        Assert.NotNull(handler.LastClaimBody);
+        Assert.Contains("ABCD234", handler.LastClaimBody);
+        Assert.Contains("My Phone", handler.LastClaimBody);
+        Assert.NotNull(handler.PhonePublicKeyBase64);
     }
 }

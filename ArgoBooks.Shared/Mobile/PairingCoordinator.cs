@@ -45,6 +45,18 @@ public class PairingCoordinator
     }
 
     /// <summary>
+    /// Interval between polls of <c>/pair/key</c> while waiting for the desktop to approve a
+    /// short-code claim. Mutable so tests can drive the poll loop quickly instead of waiting on
+    /// the real-world default.
+    /// </summary>
+    public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// Total time to keep polling before giving up and reporting a timeout.
+    /// </summary>
+    public TimeSpan PollTimeout { get; set; } = TimeSpan.FromMinutes(2);
+
+    /// <summary>
     /// Pairs this device using a QR payload (or a manually-pasted copy of the same JSON), in the
     /// shape produced by <see cref="SyncCrypto.BuildQrPayload"/>: {"t":pairingToken,"u":companyUid,
     /// "l":companyLabel,"k":syncKeyBase64}.
@@ -108,5 +120,75 @@ public class PairingCoordinator
         await _store.SetActiveAsync(record.CompanyUid);
 
         return PairingOutcome.Ok(companyLabel);
+    }
+
+    /// <summary>
+    /// Pairs this device using a human-typed short pairing code shown on the desktop's sync
+    /// settings screen. Unlike the QR path, the sync key never travels in plaintext: the phone
+    /// generates a throwaway RSA keypair, sends only the public key when claiming the code, then
+    /// polls until the desktop has encrypted the sync key to that public key and the server makes
+    /// it available.
+    /// </summary>
+    public async Task<PairingOutcome> PairFromCodeAsync(string code, string deviceLabel, CancellationToken ct = default)
+    {
+        var normalizedCode = PairingCode.Normalize(code ?? string.Empty);
+        if (string.IsNullOrEmpty(normalizedCode))
+        {
+            return PairingOutcome.Fail("Enter the code shown on your computer.");
+        }
+
+        using var keyPair = PairingKeyExchange.GenerateKeyPair();
+
+        ClaimResult? claim;
+        try
+        {
+            claim = await _client.ClaimPairingAsync(normalizedCode, keyPair.PublicKeyBase64, deviceLabel, ct);
+        }
+        catch (Exception)
+        {
+            // Covers non-2xx responses and network failures alike.
+            return PairingOutcome.Fail("That code is not valid or has expired. Generate a new one on your computer.");
+        }
+
+        if (claim == null || string.IsNullOrWhiteSpace(claim.DeviceToken))
+        {
+            return PairingOutcome.Fail("That code is not valid or has expired. Generate a new one on your computer.");
+        }
+
+        var deadline = DateTime.UtcNow + PollTimeout;
+        string? ciphertext = null;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            ciphertext = await _client.FetchPairingKeyAsync(claim.DeviceToken, ct);
+            if (!string.IsNullOrEmpty(ciphertext))
+            {
+                break;
+            }
+
+            await Task.Delay(PollInterval, ct);
+        }
+
+        if (string.IsNullOrEmpty(ciphertext))
+        {
+            return PairingOutcome.Fail("Make sure Argo Books is open on your computer and the pairing screen is showing, then try again.");
+        }
+
+        var syncKeyBytes = keyPair.DecryptSyncKey(ciphertext);
+
+        var record = new PairedCompanyRecord
+        {
+            CompanyUid = claim.CompanyUid,
+            CompanyLabel = claim.CompanyLabel,
+            DeviceToken = claim.DeviceToken,
+            SyncKeyBase64 = Convert.ToBase64String(syncKeyBytes)
+        };
+
+        await _store.SaveAsync(record);
+        await _store.SetActiveAsync(record.CompanyUid);
+
+        return PairingOutcome.Ok(claim.CompanyLabel);
     }
 }
