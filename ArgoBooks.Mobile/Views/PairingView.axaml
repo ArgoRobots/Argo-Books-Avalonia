@@ -71,11 +71,13 @@
           </Grid>
 
           <StackPanel Spacing="6">
-            <TextBlock Classes="field-label" Text="PAIRING CODE" />
-            <TextBox Text="{Binding PastedPayload}"
-                     PlaceholderText="Paste the pairing data from your desktop"
-                     AcceptsReturn="True" TextWrapping="Wrap"
-                     Height="60" VerticalContentAlignment="Top" />
+            <TextBlock Classes="field-label" Text="ENTER A CODE" />
+            <TextBox Text="{Binding EnteredCode}"
+                     PlaceholderText="XXXX-XXXX"
+                     MaxLength="9"
+                     FontFamily="Consolas,Menlo,monospace"
+                     FontSize="18"
+                     HorizontalContentAlignment="Center" />
           </StackPanel>
 
           <StackPanel Spacing="6">
@@ -86,7 +88,7 @@
 
           <Button Content="Connect"
                   Classes="primary"
-                  Command="{Binding ConnectCommand}"
+                  Command="{Binding ConnectWithCodeCommand}"
                   IsEnabled="{Binding !IsBusy}"
                   Margin="0,2,0,0" />
 
