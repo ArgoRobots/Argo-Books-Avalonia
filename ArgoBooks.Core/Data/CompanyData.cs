@@ -197,6 +197,20 @@ public class CompanyData
     [JsonPropertyName("receipts")]
     public List<Receipt> Receipts { get; init; } = [];
 
+    /// <summary>
+    /// Phones paired to this company for mobile sync.
+    /// </summary>
+    [JsonPropertyName("pairedDevices")]
+    public List<Models.Tracking.PairedDevice> PairedDevices { get; init; } = [];
+
+    /// <summary>
+    /// ScanUids of phone-captured transactions already ingested via <c>CaptureIngestService</c>. Lets
+    /// mobile-sync de-dupe a re-delivered capture restart-safe (not just for the current app session).
+    /// Bounded to the most recently ingested 1000 entries.
+    /// </summary>
+    [JsonPropertyName("ingestedScanUids")]
+    public List<string> IngestedScanUids { get; set; } = [];
+
     #endregion
 
     #region Invoice Templates
@@ -562,4 +576,7 @@ public class IdCounters
 
     [JsonPropertyName("invoiceTemplate")]
     public int InvoiceTemplate { get; set; }
+
+    [JsonPropertyName("pairedDevice")]
+    public int PairedDevice { get; set; }
 }

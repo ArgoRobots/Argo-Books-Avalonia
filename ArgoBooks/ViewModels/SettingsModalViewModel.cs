@@ -8,10 +8,12 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Sync;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -1442,6 +1444,383 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
+    #region Mobile Sync Settings
+
+    /// <summary>
+    /// QR code image encoding the current pairing payload. Null until "Connect a phone" is used.
+    /// </summary>
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.Bitmap? _qrImage;
+
+    /// <summary>
+    /// Short, human-typeable form of the pairing code ("XXXX-XXXX"), shown behind an "Enter a
+    /// code instead" reveal as a fallback to scanning the QR code.
+    /// </summary>
+    [ObservableProperty]
+    private string _shortCodeDisplay = string.Empty;
+
+    /// <summary>
+    /// Whether the "Enter a code instead" reveal is expanded, showing <see cref="ShortCodeDisplay"/>.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isShortCodeRevealed;
+
+    /// <summary>
+    /// True once the phone has claimed the pairing token and been handed the encrypted sync key.
+    /// Drives the "Phone connected" confirmation state, replacing the QR/code pairing UI.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isPhoneJustPaired;
+
+    /// <summary>
+    /// Phones currently paired with this company for mobile sync.
+    /// </summary>
+    public ObservableCollection<ArgoBooks.Core.Models.Tracking.PairedDevice> PairedDevices { get; } = [];
+
+    /// <summary>
+    /// True while a pairing token is being requested from the sync server.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isConnecting;
+
+    /// <summary>
+    /// True while the paired device list is being refreshed from the sync server.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isRefreshingDevices;
+
+    /// <summary>
+    /// The tab index of the "Mobile app" tab in the TabControl in SettingsModal.axaml. Used to
+    /// cancel the pairing poll loop as soon as the user navigates away from this tab.
+    /// MUST match the position of the Mobile app TabItem in SettingsModal.axaml - if that tab is
+    /// ever reordered, update this constant and the matching comment on the TabItem together.
+    /// </summary>
+    private const int MobileAppTabIndex = 6;
+
+    /// <summary>
+    /// Cancellation source for the background loop polling the sync server for the phone to
+    /// claim the pairing token. Cancelled as soon as the pairing screen stops being visible (tab
+    /// change, modal close, or a fresh "Connect a phone" click), so the encrypted sync key is
+    /// only ever delivered while the user can see the pairing UI.
+    /// </summary>
+    private CancellationTokenSource? _pairingCts;
+
+    /// <summary>
+    /// Cancels and clears any in-flight pairing poll loop.
+    /// </summary>
+    private void CancelPairingPoll()
+    {
+        _pairingCts?.Cancel();
+        _pairingCts?.Dispose();
+        _pairingCts = null;
+    }
+
+    /// <summary>
+    /// Pure guard deciding whether the pairing screen is still eligible to have a QR/short code
+    /// shown or a sync key delivered to it: the in-flight request/poll wasn't cancelled AND the
+    /// pairing screen (settings modal open, Mobile app tab selected) is still visible. Extracted
+    /// as a pure function so the "never deliver the key once the screen is gone" security
+    /// property is directly unit-testable without mocking the sync service or timing a poll loop.
+    /// </summary>
+    internal static bool ShouldContinuePairing(bool isCancellationRequested, bool isModalOpen, int selectedTabIndex) =>
+        !isCancellationRequested && isModalOpen && selectedTabIndex == MobileAppTabIndex;
+
+    /// <summary>
+    /// Cancels the pairing poll loop when the user navigates away from the Mobile app tab.
+    /// </summary>
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value != MobileAppTabIndex)
+            CancelPairingPoll();
+    }
+
+    /// <summary>
+    /// Cancels the pairing poll loop when the settings modal closes.
+    /// </summary>
+    partial void OnIsOpenChanged(bool value)
+    {
+        if (!value)
+            CancelPairingPoll();
+    }
+
+    /// <summary>
+    /// Loads mobile sync state (paired devices) from company data. Called each time the
+    /// settings modal opens. Does not fetch a fresh QR code; that only happens when the
+    /// user explicitly clicks "Connect a phone".
+    /// </summary>
+    public void LoadMobileSync()
+    {
+        CancelPairingPoll();
+
+        QrImage = null;
+        ShortCodeDisplay = string.Empty;
+        IsShortCodeRevealed = false;
+        IsPhoneJustPaired = false;
+        PairedDevices.Clear();
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var device in data.PairedDevices)
+            PairedDevices.Add(device);
+    }
+
+    /// <summary>
+    /// Toggles the "Enter a code instead" reveal showing <see cref="ShortCodeDisplay"/>.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleShortCodeReveal()
+    {
+        IsShortCodeRevealed = !IsShortCodeRevealed;
+    }
+
+    /// <summary>
+    /// Ensures this company has a mobile-sync identity (companyUid/syncKey), requests a
+    /// short-lived pairing token from the server, and renders it as a QR code the phone can scan.
+    /// </summary>
+    [RelayCommand]
+    private async Task ConnectPhoneAsync()
+    {
+        var companyManager = App.CompanyManager;
+        var companyData = companyManager?.CompanyData;
+        var syncService = App.SyncService;
+        if (companyManager == null || companyData == null || syncService == null)
+        {
+            App.ErrorLogger?.LogError(
+                new InvalidOperationException("Mobile sync is not initialized (CompanyManager, CompanyData, or SyncService is null)."),
+                ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                "Sync.ConnectPhone.NotReady");
+            await ShowErrorDialogAsync(
+                "Couldn't Connect a Phone".Translate(),
+                "Mobile sync isn't ready yet. Please reopen the app and try again.".Translate());
+            return;
+        }
+
+        // A fresh click supersedes any pairing already in flight.
+        CancelPairingPoll();
+        IsPhoneJustPaired = false;
+
+        // Create the CTS BEFORE the CreatePairingAsync network round-trip, and pass its token
+        // in, so that a close/tab-change while that request is in flight actually cancels it
+        // (OnIsOpenChanged/OnSelectedTabIndexChanged both call CancelPairingPoll, which cancels
+        // and disposes whatever CTS is currently assigned to _pairingCts). Without this, the
+        // token wouldn't exist yet for those handlers to cancel, and the key could be delivered
+        // after the pairing screen was already closed.
+        var pairingCts = new CancellationTokenSource();
+        _pairingCts = pairingCts;
+
+        IsConnecting = true;
+        try
+        {
+            var mobileSync = companyData.Settings.MobileSync;
+            mobileSync.CompanyUid ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateCompanyUid();
+            mobileSync.SyncKeyBase64 ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateSyncKey();
+            mobileSync.Enabled = true;
+            await companyManager.SaveSettingsOnlyAsync();
+
+            var companyLabel = string.IsNullOrWhiteSpace(companyData.Settings.Company.Name)
+                ? "My Company"
+                : companyData.Settings.Company.Name;
+
+            var pairing = await syncService.CreatePairingAsync(mobileSync.CompanyUid, companyLabel, pairingCts.Token);
+            if (pairing == null || string.IsNullOrEmpty(pairing.Token))
+            {
+                // Server responded but without a token (unexpected) - log it so the failure isn't invisible.
+                App.ErrorLogger?.LogError(
+                    new InvalidOperationException("Sync server returned no pairing_token."),
+                    ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                    "Sync.ConnectPhone.NoToken");
+                QrImage = null;
+                ShortCodeDisplay = string.Empty;
+                await ShowErrorDialogAsync(
+                    "Couldn't Connect a Phone".Translate(),
+                    "The sync server didn't return a pairing code. Please try again.".Translate());
+                return;
+            }
+
+            // The pairing screen may have been closed, navigated away from, or superseded by a
+            // fresh "Connect a phone" click while the request above was in flight. Re-check
+            // before showing the QR/short code or starting the poll: if the screen is no longer
+            // visible, the key must not be shown or delivered.
+            if (!ShouldContinuePairing(pairingCts.Token.IsCancellationRequested, IsOpen, SelectedTabIndex))
+            {
+                // Only clean up if nothing else (a fresh click, CancelPairingPoll) already did.
+                if (ReferenceEquals(_pairingCts, pairingCts))
+                    CancelPairingPoll();
+                return;
+            }
+
+            var token = pairing.Token;
+            var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
+            QrImage = new QrImageService().RenderBitmap(payload);
+            ShortCodeDisplay = PairingCode.Format(pairing.ShortCode);
+            IsShortCodeRevealed = false;
+
+            // Start polling for the phone to claim this token. Cancelled on tab change, modal
+            // close, or the next "Connect a phone" click (see CancelPairingPoll).
+            _ = PollPairingAsync(token, pairingCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the pairing screen was closed/navigated away from (or superseded by a
+            // fresh "Connect a phone" click) while CreatePairingAsync was in flight. The CTS was
+            // already cancelled and disposed by whichever handler triggered this; nothing to do.
+        }
+        catch (Exception ex)
+        {
+            // Log to telemetry and tell the user, instead of failing silently.
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.ConnectPhone");
+            QrImage = null;
+            ShortCodeDisplay = string.Empty;
+
+            var message = ex is System.Net.Http.HttpRequestException
+                ? "We couldn't reach the sync server. Check your internet connection and try again.".Translate()
+                : "Something went wrong while connecting a phone. Please try again.".Translate();
+            await ShowErrorDialogAsync("Couldn't Connect a Phone".Translate(), message);
+        }
+        finally
+        {
+            IsConnecting = false;
+        }
+    }
+
+    /// <summary>
+    /// Polls the sync server every ~2s for the phone to claim <paramref name="pairingToken"/>.
+    /// Once the phone's public key arrives, encrypts the company sync key to it and delivers it,
+    /// then shows the "Phone connected" state and refreshes the paired device list. Runs until
+    /// that happens or <paramref name="ct"/> is cancelled (tab change, modal close, or a fresh
+    /// "Connect a phone" click - see <see cref="CancelPairingPoll"/>), and re-checks
+    /// <see cref="ShouldContinuePairing"/> immediately before delivering, so the encrypted sync
+    /// key is only ever handed over while the pairing screen is visible.
+    /// </summary>
+    private async Task PollPairingAsync(string pairingToken, CancellationToken ct)
+    {
+        var syncService = App.SyncService;
+        if (syncService == null) return;
+
+        try
+        {
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+
+                PairingStatusResult? status;
+                try
+                {
+                    status = await syncService.GetPairingStatusAsync(pairingToken, ct);
+                }
+                catch (System.Net.Http.HttpRequestException) when (!ct.IsCancellationRequested)
+                {
+                    // Transient network hiccup while polling; try again on the next tick.
+                    continue;
+                }
+
+                if (status?.PhonePublicKey is not { Length: > 0 } phonePublicKey) continue;
+
+                // Defense in depth: re-check the same guard used in ConnectPhoneAsync right
+                // before encrypting/delivering the key. ct is normally already cancelled by the
+                // time the screen closes (CancelPairingPoll), which would have thrown out of the
+                // Delay/GetPairingStatusAsync calls above, but this closes the gap if that ever
+                // isn't true so the key is never delivered to a screen the user can't see.
+                if (!ShouldContinuePairing(ct.IsCancellationRequested, IsOpen, SelectedTabIndex)) return;
+
+                var mobileSync = App.CompanyManager?.CompanyData?.Settings.MobileSync;
+                if (string.IsNullOrEmpty(mobileSync?.SyncKeyBase64)) return;
+
+                var keyBytes = Convert.FromBase64String(mobileSync.SyncKeyBase64);
+                var ciphertext = PairingKeyExchange.EncryptSyncKey(phonePublicKey, keyBytes);
+                await syncService.DeliverKeyAsync(pairingToken, ciphertext, ct);
+
+                await Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    IsPhoneJustPaired = true;
+                    await RefreshDevicesAsync();
+                });
+                return;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the pairing screen was closed (tab change/modal close) or superseded by
+            // a fresh "Connect a phone" click before the phone finished pairing. Not an error.
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.PollPairing");
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the paired device list from the sync server.
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshDevicesAsync()
+    {
+        var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
+        var syncService = App.SyncService;
+        if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
+
+        IsRefreshingDevices = true;
+        try
+        {
+            var list = await syncService.ListDevicesAsync(companyUid, CancellationToken.None);
+            PairedDevices.Clear();
+            foreach (var d in list)
+            {
+                PairedDevices.Add(new ArgoBooks.Core.Models.Tracking.PairedDevice
+                {
+                    Id = $"PDV-{d.Id}",
+                    ServerDeviceId = d.Id,
+                    Label = d.DeviceLabel,
+                    LastSeenAt = d.LastSeenAt
+                });
+            }
+
+            // Persist the refreshed list so it survives without another server round-trip.
+            var data = App.CompanyManager?.CompanyData;
+            if (data != null)
+            {
+                data.PairedDevices.Clear();
+                data.PairedDevices.AddRange(PairedDevices);
+            }
+        }
+        catch
+        {
+            // Silently fail; cached list stays as-is.
+        }
+        finally
+        {
+            IsRefreshingDevices = false;
+        }
+    }
+
+    /// <summary>
+    /// Revokes a paired phone's access, then refreshes the device list.
+    /// </summary>
+    [RelayCommand]
+    private async Task RevokeDeviceAsync(ArgoBooks.Core.Models.Tracking.PairedDevice? device)
+    {
+        if (device == null) return;
+
+        var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
+        var syncService = App.SyncService;
+        if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
+
+        try
+        {
+            await syncService.RevokeDeviceAsync(companyUid, device.ServerDeviceId, CancellationToken.None);
+        }
+        catch
+        {
+            // Fall through to refresh regardless; if the revoke silently failed the device
+            // will simply still be listed.
+        }
+
+        await RefreshDevicesAsync();
+    }
+
+    #endregion
+
     /// <summary>
     /// Whether there are unsaved changes in the settings.
     /// </summary>
@@ -1546,6 +1925,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         // Load bank import rules
         LoadBankRules();
+
+        // Load mobile sync state (paired devices)
+        LoadMobileSync();
 
         // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();

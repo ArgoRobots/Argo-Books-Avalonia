@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             x:Class="ArgoBooks.Mobile.Views.DataHubView"
+             x:DataType="vm:DataHubViewModel">
+
+  <ScrollViewer>
+    <StackPanel Margin="14,4,14,16" Spacing="4">
+      <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DataGroupViewModel">
+            <StackPanel Spacing="2" Margin="0,10,0,4">
+              <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="2,0,0,4" />
+              <ItemsControl ItemsSource="{Binding Items}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:DataSectionSummaryViewModel">
+                    <Button Command="{Binding OpenCommand}"
+                            HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch"
+                            Background="Transparent" Padding="4,9">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="14" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding Count}" Opacity="0.55" FontSize="13" VerticalAlignment="Center" />
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

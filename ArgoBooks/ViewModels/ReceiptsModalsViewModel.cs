@@ -3074,7 +3074,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService CreateScannerService()
     {
-        return new GeminiReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
+        return new GeminiReceiptScannerService(
+            ApiConfig.BaseUrl,
+            new LicenseApiAuth(),
+            App.ErrorLogger,
+            App.TelemetryManager,
+            onTimingRecorded: (serverMs, wallClockMs, uploadBytes, loadFactor) =>
+                OperationTimingService.Instance?.RecordResult(OperationKind.ReceiptScan, serverMs, wallClockMs, uploadBytes, loadFactor));
     }
 
     private IReceiptUsageService CreateUsageService()

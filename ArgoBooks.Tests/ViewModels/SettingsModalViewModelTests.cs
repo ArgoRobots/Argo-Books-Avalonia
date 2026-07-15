@@ -136,6 +136,94 @@ public class SettingsModalViewModelTests
 
     #endregion
 
+    #region Mobile Sync Tests
+
+    [Fact]
+    public void ToggleShortCodeRevealCommand_TogglesIsShortCodeRevealed()
+    {
+        Assert.False(_viewModel.IsShortCodeRevealed);
+
+        _viewModel.ToggleShortCodeRevealCommand.Execute(null);
+        Assert.True(_viewModel.IsShortCodeRevealed);
+
+        _viewModel.ToggleShortCodeRevealCommand.Execute(null);
+        Assert.False(_viewModel.IsShortCodeRevealed);
+    }
+
+    [Fact]
+    public void LoadMobileSync_ResetsPairingState()
+    {
+        _viewModel.ShortCodeDisplay = "ABCD-1234";
+        _viewModel.IsShortCodeRevealed = true;
+        _viewModel.IsPhoneJustPaired = true;
+
+        _viewModel.LoadMobileSync();
+
+        Assert.Null(_viewModel.QrImage);
+        Assert.Equal(string.Empty, _viewModel.ShortCodeDisplay);
+        Assert.False(_viewModel.IsShortCodeRevealed);
+        Assert.False(_viewModel.IsPhoneJustPaired);
+        Assert.Empty(_viewModel.PairedDevices);
+    }
+
+    [Fact]
+    public void SelectedTabIndex_ChangedAwayFromMobileAppTab_DoesNotThrow()
+    {
+        // Regression guard for the pairing-poll cancellation hook: navigating tabs (with or
+        // without an in-flight pairing poll) must never throw.
+        _viewModel.SelectedTabIndex = 6; // Mobile app tab
+        _viewModel.SelectedTabIndex = 0; // General tab
+
+        Assert.Equal(0, _viewModel.SelectedTabIndex);
+    }
+
+    // ShouldContinuePairing is the guard ConnectPhoneAsync/PollPairingAsync check before ever
+    // showing a pairing code or delivering the encrypted sync key. These tests pin down the
+    // security property directly: once the pairing screen is cancelled or no longer visible,
+    // the guard must say "don't proceed" so the key is never handed to a screen the user can't
+    // see, regardless of network timing.
+
+    [Fact]
+    public void ShouldContinuePairing_WhenCancelled_ReturnsFalse()
+    {
+        // Even if the modal is (still, momentarily) open on the right tab, a cancelled
+        // create/poll request must never proceed - this is the exact async-gap scenario: the
+        // modal closed while CreatePairingAsync was in flight, which cancels the token.
+        var result = SettingsModalViewModel.ShouldContinuePairing(
+            isCancellationRequested: true, isModalOpen: true, selectedTabIndex: 6);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ShouldContinuePairing_WhenModalClosed_ReturnsFalse()
+    {
+        var result = SettingsModalViewModel.ShouldContinuePairing(
+            isCancellationRequested: false, isModalOpen: false, selectedTabIndex: 6);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ShouldContinuePairing_WhenOnDifferentTab_ReturnsFalse()
+    {
+        var result = SettingsModalViewModel.ShouldContinuePairing(
+            isCancellationRequested: false, isModalOpen: true, selectedTabIndex: 0);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void ShouldContinuePairing_WhenNotCancelledModalOpenOnMobileTab_ReturnsTrue()
+    {
+        var result = SettingsModalViewModel.ShouldContinuePairing(
+            isCancellationRequested: false, isModalOpen: true, selectedTabIndex: 6);
+
+        Assert.True(result);
+    }
+
+    #endregion
+
     #region SelectTimeFormat Command Tests
 
     [Fact]

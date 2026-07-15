@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+             x:Class="ArgoBooks.Mobile.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <StackPanel Margin="16" Spacing="10">
+    <TextBlock Text="Company" FontSize="13" FontWeight="SemiBold" Opacity="0.75" />
+    <TextBlock Text="{Binding CompanyLabel}" FontSize="15" />
+
+    <TextBlock Text="Sync" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="0,12,0,0" />
+    <TextBlock Text="{Binding LastSyncedText}" FontSize="14" Opacity="0.8" />
+    <Button Content="Sync now" Command="{Binding RefreshCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" />
+
+    <TextBlock Text="Security" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="0,12,0,0" />
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel Grid.Column="0" Spacing="2">
+        <TextBlock Text="Biometric app lock" FontSize="15" />
+        <TextBlock Text="Require your fingerprint, face, or device PIN to open the app."
+                   FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+      </StackPanel>
+      <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAppLockEnabled}" VerticalAlignment="Center" />
+    </Grid>
+
+    <TextBlock Text="Companies" FontSize="13" FontWeight="SemiBold" Opacity="0.75" Margin="0,12,0,0" />
+    <ItemsControl ItemsSource="{Binding Companies}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:CompanyRowViewModel">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding CompanyLabel}" FontSize="14" VerticalAlignment="Center" />
+              <TextBlock Text="(active)" FontSize="11" Opacity="0.6" VerticalAlignment="Center"
+                         IsVisible="{Binding IsActive}" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Switch" FontSize="12" Padding="8,2"
+                    Command="{Binding SelectCommand}"
+                    IsVisible="{Binding !IsActive}" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <Button Content="Pair another company"
+            Command="{Binding PairAnotherCommand}"
+            HorizontalAlignment="Left" Margin="0,8,0,0" />
+
+    <Border Background="#1AB63A2A" CornerRadius="8" Padding="10" Margin="0,10,0,0"
+            IsVisible="{Binding IsConfirmingUnpair}">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Unpair this phone from the active company? You'll need to pair again from the desktop to see its data here."
+                   FontSize="12" TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Content="Yes, unpair" Command="{Binding ConfirmUnpairCommand}" IsEnabled="{Binding !IsBusy}" />
+          <Button Content="Cancel" Command="{Binding CancelUnpairCommand}" IsEnabled="{Binding !IsBusy}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Button Content="Unpair this phone"
+            Command="{Binding RequestUnpairCommand}"
+            IsVisible="{Binding !IsConfirmingUnpair}"
+            HorizontalAlignment="Left" Margin="0,10,0,0" />
+  </StackPanel>
+</UserControl>

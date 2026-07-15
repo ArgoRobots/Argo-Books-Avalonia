@@ -53,6 +53,8 @@ public class CompanySettings
     public PurchaseOrderEmailSettings PurchaseOrderEmail { get; set; } = new();
     [JsonPropertyName("paymentPortal")]
     public PortalSettings PaymentPortal { get; set; } = new();
+    [JsonPropertyName("mobileSync")]
+    public MobileSyncSettings MobileSync { get; set; } = new();
 
     /// <summary>
     /// Bank categorization rules for automated bank statement matching. Per company; edited in

@@ -8,6 +8,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:entities="using:ArgoBooks.Core.Models.Entities"
+             xmlns:tracking="using:ArgoBooks.Core.Models.Tracking"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -1137,6 +1138,164 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                HorizontalAlignment="Center" />
                                 </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Mobile App Tab -->
+                    <!-- This is tab index 6 (0-based, count TabItems above). Must match
+                         SettingsModalViewModel.MobileAppTabIndex, which gates the pairing poll
+                         loop's visibility check - if this tab is ever reordered, update that
+                         constant too. -->
+                    <TabItem Header="{loc:Loc 'Mobile app'}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                            <StackPanel Spacing="16">
+
+                                <TextBlock Text="{loc:Loc 'Capture receipts and rentals from your phone, then bring them into Argo Books here.'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap" />
+
+                                <!-- Pairing -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{loc:Loc 'Pair a phone'}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            Padding="16">
+                                        <Panel>
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16"
+                                                  IsVisible="{Binding !IsPhoneJustPaired}">
+                                                <!-- QR code preview -->
+                                                <Border Grid.Column="0"
+                                                        Width="140" Height="140"
+                                                        CornerRadius="6"
+                                                        ClipToBounds="True"
+                                                        Background="{DynamicResource SurfaceBrush}"
+                                                        IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                                    <Image Source="{Binding QrImage}"
+                                                           Stretch="Uniform"
+                                                           Margin="8" />
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" Spacing="10" VerticalAlignment="Center">
+                                                    <TextBlock Text="{loc:Loc 'Open the Argo Books mobile app and scan this code to link this computer.'}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding QrImage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+                                                    <!-- Secondary reveal: enter the code by hand instead of scanning -->
+                                                    <StackPanel Spacing="6"
+                                                                IsVisible="{Binding ShortCodeDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                        <Button Classes="link-button"
+                                                                Content="{loc:Loc 'Enter a code instead'}"
+                                                                Command="{Binding ToggleShortCodeRevealCommand}"
+                                                                HorizontalAlignment="Left" />
+                                                        <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                    IsVisible="{Binding IsShortCodeRevealed}">
+                                                            <TextBlock Text="{loc:Loc 'Code:'}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding ShortCodeDisplay}"
+                                                                       FontSize="13"
+                                                                       FontWeight="SemiBold"
+                                                                       FontFamily="Consolas,Menlo,monospace"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <Button Classes="primary-button"
+                                                            Content="{loc:Loc 'Connect a phone'}"
+                                                            Command="{Binding ConnectPhoneCommand}"
+                                                            IsEnabled="{Binding !IsConnecting}"
+                                                            Padding="12,6"
+                                                            MinHeight="0"
+                                                            HorizontalAlignment="Left" />
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Phone connected confirmation, shown once the encrypted sync key has been delivered -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                                        VerticalAlignment="Center"
+                                                        IsVisible="{Binding IsPhoneJustPaired}">
+                                                <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
+                                                          Width="20" Height="20"
+                                                          Foreground="{DynamicResource SuccessBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Phone connected'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource SuccessBrush}" />
+                                            </StackPanel>
+                                        </Panel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Paired devices -->
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{loc:Loc 'Paired devices'}"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1"
+                                                Classes="secondary-button"
+                                                Content="{loc:Loc Refresh}"
+                                                Command="{Binding RefreshDevicesCommand}"
+                                                IsEnabled="{Binding !IsRefreshingDevices}"
+                                                Padding="12,6"
+                                                MinHeight="0" />
+                                    </Grid>
+
+                                    <ItemsControl ItemsSource="{Binding PairedDevices}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="tracking:PairedDevice">
+                                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="8"
+                                                        Padding="16"
+                                                        Margin="0,0,0,4">
+                                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Label}"
+                                                                       FontSize="14"
+                                                                       FontWeight="Medium"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                            <TextBlock Text="{Binding LastSeenAt, StringFormat='Last seen {0}'}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1"
+                                                                Classes="danger-outline-button"
+                                                                Content="{loc:Loc Revoke}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).RevokeDeviceCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                VerticalAlignment="Center"
+                                                                Padding="12,6"
+                                                                MinHeight="0" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Empty state -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            Padding="16"
+                                            IsVisible="{Binding PairedDevices.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                        <TextBlock Text="{loc:Loc 'No phones paired yet.'}"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
+                                </StackPanel>
 
                             </StackPanel>
                         </ScrollViewer>

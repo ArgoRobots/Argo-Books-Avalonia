@@ -15,6 +15,7 @@ using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Layout;
+using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -60,6 +61,12 @@ public partial class App : Application
     /// Gets the payment portal service instance for online payment integration.
     /// </summary>
     public static PaymentPortalService? PaymentPortalService { get; private set; }
+
+    /// <summary>
+    /// Gets the mobile-sync service instance used to upload company snapshots and pull
+    /// the capture queue from the phone-pairing backend.
+    /// </summary>
+    public static SyncService? SyncService { get; private set; }
 
     /// <summary>
     /// Client for the portal refund + email-verification + email-change endpoints.
@@ -449,6 +456,141 @@ public partial class App : Application
         finally
         {
             Interlocked.Exchange(ref _isAutoSyncing, 0);
+        }
+    }
+
+    private static int _isMobileSyncing;
+
+    /// <summary>
+    /// Auto-syncs with the paired mobile app: uploads a fresh company snapshot so the phone
+    /// has current data, then pulls any receipts/expenses the phone captured while offline
+    /// and ingests them into the local company. Safe to call from multiple places, concurrent
+    /// calls are deduplicated.
+    /// </summary>
+    internal static async Task AutoMobileSyncAsync()
+    {
+        if (Interlocked.CompareExchange(ref _isMobileSyncing, 1, 0) != 0) return;
+        try
+        {
+            var syncService = SyncService;
+            var companyData = CompanyManager?.CompanyData;
+            if (syncService == null || companyData == null || !companyData.Settings.MobileSync.IsConfigured)
+                return;
+
+            var mobileSync = companyData.Settings.MobileSync;
+            var companyUid = mobileSync.CompanyUid!;
+            var syncKey = mobileSync.SyncKeyBase64!;
+            var ct = CancellationToken.None;
+
+            // UPLOAD: push a fresh snapshot so the phone always has current data to browse offline.
+            // Wrapped in its own try/catch so an upload/network failure doesn't skip the pull/ingest
+            // below - the two directions are independent and one failing shouldn't block the other.
+            try
+            {
+                var snap = SnapshotBuilder.Build(companyData);
+                var bytes = SnapshotBuilder.Serialize(snap);
+                var cipher = SyncCrypto.Encrypt(bytes, syncKey);
+                await syncService.UploadSnapshotAsync(companyUid, cipher, ct);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Failed to upload mobile-sync snapshot: {ex.Message}", "MobileSync");
+            }
+
+            // PULL + INGEST: drain the phone's capture queue into local Expenses/Revenue/Receipts.
+            // CaptureIngestService de-dupes on CapturedTransaction.ScanUid via the persisted
+            // CompanyData.IngestedScanUids list, so a re-delivered-but-still-pending item is
+            // safely skipped even across app restarts (not just within this session).
+            var items = await syncService.PullQueueAsync(companyUid, ct);
+            var malformedIds = new List<int>();
+            var ingestedIds = new List<int>();
+            var duplicateIds = new List<int>();
+            foreach (var item in items)
+            {
+                try
+                {
+                    var plain = SyncCrypto.Decrypt(item.Ciphertext, syncKey);
+                    var tx = System.Text.Json.JsonSerializer.Deserialize<CapturedTransaction>(plain);
+                    var newId = CaptureIngestService.Ingest(companyData, tx!);
+                    if (newId == null)
+                        // Already ingested (and its ScanUid persisted) in a prior cycle - nothing new
+                        // to save, so it's safe to ack immediately regardless of this cycle's save.
+                        duplicateIds.Add(item.Id);
+                    else
+                        ingestedIds.Add(item.Id);
+                }
+                catch (Exception ex)
+                {
+                    // A permanently-malformed item (bad ciphertext, unparsable JSON, invalid
+                    // transaction) must still be acked so it stops being re-delivered forever.
+                    // A transient failure (e.g. this process crashing mid-loop) simply re-appears
+                    // on the next pull since it was never acked.
+                    ErrorLogger?.LogError(ex, ErrorCategory.Parsing, "MobileSync: failed to ingest queue item");
+                    malformedIds.Add(item.Id);
+                }
+            }
+
+            // PERSIST before ACK: an item that added new data must never be acknowledged (and thus
+            // deleted server-side) before that data is actually saved locally. If the save is skipped
+            // (the user has unsaved edits in memory) or throws, the newly-ingested items must NOT be
+            // acked - they stay in the server queue and will be re-delivered next cycle, where
+            // CaptureIngestService's ScanUid check safely no-ops the ones already saved and retries
+            // the rest.
+            var saved = false;
+            if (ingestedIds.Count > 0 && CompanyManager != null && !CompanyManager.HasUnsavedChanges)
+            {
+                try
+                {
+                    await CompanyManager.SavePaymentSyncAsync();
+                    saved = true;
+                }
+                catch (Exception ex)
+                {
+                    ErrorLogger?.LogWarning($"Failed to persist mobile-sync captures: {ex.Message}", "MobileSync");
+                }
+            }
+
+            var toAck = new List<int>(malformedIds);
+            toAck.AddRange(duplicateIds);
+            if (saved)
+            {
+                toAck.AddRange(ingestedIds);
+            }
+
+            if (toAck.Count > 0)
+            {
+                await syncService.AckQueueAsync(companyUid, toAck, ct);
+            }
+
+            mobileSync.LastSyncTime = DateTime.UtcNow;
+
+            var ingestedCount = saved ? ingestedIds.Count : 0;
+            if (ingestedCount > 0)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _receiptsPageViewModel?.RefreshReceiptsCommand.Execute(null);
+                    _expensesPageViewModel?.RefreshExpensesCommand.Execute(null);
+                    _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
+
+                    if (mobileSync.NotifyOnCapture)
+                    {
+                        AddNotification(
+                            "Receipts from your phone".Translate(),
+                            "{0} receipts added from your phone".TranslateFormat(ingestedCount),
+                            NotificationType.Success);
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            // Mobile-sync failures are non-critical; log and continue.
+            ErrorLogger?.LogWarning($"Mobile sync failed: {ex.Message}", "MobileSync");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isMobileSyncing, 0);
         }
     }
 
@@ -913,6 +1055,9 @@ public partial class App : Application
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
             InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
+
+            // Initialize mobile-sync service (shares the same long-lived HttpClient)
+            SyncService = new SyncService(httpClient);
 
             // Initialize refund service (uses the same shared HttpClient)
             RefundService = new RefundService(httpClient);
@@ -3747,6 +3892,7 @@ public partial class App : Application
                 _paymentsPageViewModel.ApplyHighlight();
             }
             _ = AutoSyncPortalPaymentsAsync();
+            _ = AutoMobileSyncAsync();
             return new PaymentsPage { DataContext = _paymentsPageViewModel };
         });
 
@@ -3891,6 +4037,7 @@ public partial class App : Application
             _receiptsPageViewModel ??= new ReceiptsPageViewModel();
             // Update plan status each time (may have changed)
             _receiptsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            _ = AutoMobileSyncAsync();
             return new ReceiptsPage { DataContext = _receiptsPageViewModel };
         });
 

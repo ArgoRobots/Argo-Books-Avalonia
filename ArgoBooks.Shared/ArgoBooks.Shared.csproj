@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="ArgoBooks.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Receipt image preprocessing (ReceiptImageHelper): cross-platform, safe for the Android head. -->
+        <PackageReference Include="SkiaSharp" />
+    </ItemGroup>
+</Project>

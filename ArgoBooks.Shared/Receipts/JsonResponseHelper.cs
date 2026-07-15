@@ -3,9 +3,11 @@ using System.Text.RegularExpressions;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Shared utilities for cleaning LLM JSON responses.
+/// Shared utilities for cleaning LLM JSON responses. Public (was internal) now that it lives in
+/// ArgoBooks.Shared: several ArgoBooks.Core callers (GeminiService, ReportRenderer,
+/// SpreadsheetAnalysisService, etc.) are in a different assembly and need cross-assembly access.
 /// </summary>
-internal static partial class JsonResponseHelper
+public static partial class JsonResponseHelper
 {
     /// <summary>
     /// Matches numbers with thousand-separator commas in JSON values (e.g. 1,999 or 12,345.67).
@@ -19,7 +21,7 @@ internal static partial class JsonResponseHelper
     /// Removes thousand-separator commas from numeric values in JSON so the parser doesn't choke.
     /// For example, "totalPrice": 1,999.99 becomes "totalPrice": 1999.99.
     /// </summary>
-    internal static string SanitizeJsonNumbers(string json)
+    public static string SanitizeJsonNumbers(string json)
     {
         return ThousandSeparatorRegex().Replace(json, m => m.Value.Replace(",", ""));
     }
@@ -28,7 +30,7 @@ internal static partial class JsonResponseHelper
     /// Strips markdown code block fences (```json ... ```) from an LLM response,
     /// returning clean JSON suitable for parsing.
     /// </summary>
-    internal static string StripMarkdownCodeBlock(string response)
+    public static string StripMarkdownCodeBlock(string response)
     {
         var cleaned = response.Trim();
 

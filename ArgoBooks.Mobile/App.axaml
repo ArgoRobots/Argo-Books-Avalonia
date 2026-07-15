@@ -1,0 +1,119 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:ArgoBooks.Mobile"
+             x:Class="ArgoBooks.Mobile.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Brand palette: the same blue as the desktop app's PrimaryColor (Themes/Colors.axaml),
+                 so mobile and desktop match. -->
+            <Color x:Key="BrandColor">#3B82F6</Color>
+            <Color x:Key="BrandColorDark">#2563EB</Color>
+            <Color x:Key="BrandColorLight">#3B82F6</Color>
+            <SolidColorBrush x:Key="BrandBrush" Color="{StaticResource BrandColor}" />
+            <SolidColorBrush x:Key="BrandBrushDark" Color="{StaticResource BrandColorDark}" />
+            <SolidColorBrush x:Key="BrandBrushLight" Color="{StaticResource BrandColorLight}" />
+            <SolidColorBrush x:Key="BrandSoftBrush" Color="#1A3B82F6" />
+
+            <!-- Point Fluent's accent at the brand blue so default controls (focus rings,
+                 selection, checkboxes, etc.) match instead of the stock Fluent blue. -->
+            <Color x:Key="SystemAccentColor">#3B82F6</Color>
+            <Color x:Key="SystemAccentColorDark1">#2563EB</Color>
+            <Color x:Key="SystemAccentColorDark2">#1D4ED8</Color>
+            <Color x:Key="SystemAccentColorDark3">#1E40AF</Color>
+            <Color x:Key="SystemAccentColorLight1">#3B82F6</Color>
+            <Color x:Key="SystemAccentColorLight2">#93C5FD</Color>
+            <Color x:Key="SystemAccentColorLight3">#BFDBFE</Color>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="PageBackgroundBrush" Color="#F3F6F7" />
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="CardBorderBrush" Color="#E4E9EE" />
+                    <SolidColorBrush x:Key="MutedTextBrush" Color="#5C6B78" />
+                    <SolidColorBrush x:Key="DividerBrush" Color="#E4E9EE" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="PageBackgroundBrush" Color="#0D141D" />
+                    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#16212D" />
+                    <SolidColorBrush x:Key="CardBorderBrush" Color="#26374A" />
+                    <SolidColorBrush x:Key="MutedTextBrush" Color="#9FB0BE" />
+                    <SolidColorBrush x:Key="DividerBrush" Color="#26374A" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Primary action button: filled brand blue, white label, rounded. -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource BrandBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="MinHeight" Value="50" />
+            <Setter Property="Padding" Value="16,13" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.primary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrandBrush}" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrandBrushDark}" />
+            <Setter Property="TextBlock.Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrandBrushDark}" />
+            <Setter Property="TextBlock.Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#B8C2C9" />
+            <Setter Property="TextBlock.Foreground" Value="White" />
+        </Style>
+
+        <!-- Secondary/ghost button: outlined brand blue on a transparent fill. -->
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource BrandBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BrandBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="MinHeight" Value="50" />
+            <Setter Property="Padding" Value="16,13" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.ghost /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrandSoftBrush}" />
+            <Setter Property="TextBlock.Foreground" Value="{StaticResource BrandBrush}" />
+        </Style>
+        <Style Selector="Button.ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BrandSoftBrush}" />
+            <Setter Property="TextBlock.Foreground" Value="{StaticResource BrandBrush}" />
+        </Style>
+
+        <!-- Inputs: rounded, roomier, so they read as intentional fields not raw boxes. -->
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="MinHeight" Value="46" />
+            <Setter Property="Padding" Value="12,10" />
+        </Style>
+    </Application.Styles>
+</Application>
