@@ -31,6 +31,7 @@
     </Style>
   </UserControl.Styles>
 
+  <Grid>
   <ScrollViewer>
     <StackPanel Spacing="0" MaxWidth="440" Margin="24,40,24,28" HorizontalAlignment="Stretch">
 
@@ -73,10 +74,12 @@
           <StackPanel Spacing="6">
             <TextBlock Classes="field-label" Text="ENTER A CODE" />
             <TextBox Text="{Binding EnteredCode}"
+                     TextChanged="OnCodeTextChanged"
                      PlaceholderText="XXXX-XXXX"
                      MaxLength="9"
                      FontFamily="Consolas,Menlo,monospace"
                      FontSize="18"
+                     LetterSpacing="2"
                      HorizontalContentAlignment="Center" />
           </StackPanel>
 
@@ -92,13 +95,23 @@
                   IsEnabled="{Binding !IsBusy}"
                   Margin="0,2,0,0" />
 
-          <Border IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}"
-                  Background="#1FE07A7A" BorderBrush="#66E07A7A" BorderThickness="1"
-                  CornerRadius="10" Padding="12,10">
-            <TextBlock Text="{Binding StatusMessage}"
-                       TextWrapping="Wrap" TextAlignment="Center"
-                       FontSize="13" Foreground="#C0453C" />
-          </Border>
+          <!-- Status: green when connected, red on failure -->
+          <Panel IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+            <Border IsVisible="{Binding IsSuccess}"
+                    Background="#1F22C55E" BorderBrush="#6622C55E" BorderThickness="1"
+                    CornerRadius="10" Padding="12,10">
+              <TextBlock Text="{Binding StatusMessage}"
+                         TextWrapping="Wrap" TextAlignment="Center"
+                         FontSize="13" FontWeight="SemiBold" Foreground="#15803D" />
+            </Border>
+            <Border IsVisible="{Binding !IsSuccess}"
+                    Background="#1FE07A7A" BorderBrush="#66E07A7A" BorderThickness="1"
+                    CornerRadius="10" Padding="12,10">
+              <TextBlock Text="{Binding StatusMessage}"
+                         TextWrapping="Wrap" TextAlignment="Center"
+                         FontSize="13" Foreground="#C0453C" />
+            </Border>
+          </Panel>
         </StackPanel>
       </Border>
 
@@ -110,4 +123,19 @@
                  Margin="8,20,8,0" />
     </StackPanel>
   </ScrollViewer>
+
+  <!-- Full-screen loading state while a pairing attempt is in flight -->
+  <Panel IsVisible="{Binding IsBusy}"
+         Background="{DynamicResource PageBackgroundBrush}">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20">
+      <Image Source="avares://ArgoBooks.Mobile/Assets/logo.png"
+             Width="180" Stretch="Uniform" HorizontalAlignment="Center" />
+      <ProgressBar IsIndeterminate="True" Width="200" HorizontalAlignment="Center" />
+      <TextBlock Text="Connecting to your computer..."
+                 FontSize="15" TextAlignment="Center"
+                 Foreground="{DynamicResource MutedTextBrush}"
+                 HorizontalAlignment="Center" />
+    </StackPanel>
+  </Panel>
+  </Grid>
 </UserControl>

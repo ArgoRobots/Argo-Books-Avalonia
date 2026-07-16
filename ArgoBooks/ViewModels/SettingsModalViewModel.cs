@@ -1802,6 +1802,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         if (device == null) return;
 
+        // Revoking is destructive (the phone must be paired again to sync), so confirm first.
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Revoke Device".Translate(),
+                Message = "Are you sure you want to revoke this phone? It will no longer be able to sync with this company until you pair it again.".Translate(),
+                PrimaryButtonText = "Revoke".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+        }
+
         var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
         var syncService = App.SyncService;
         if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
@@ -1815,6 +1831,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Fall through to refresh regardless; if the revoke silently failed the device
             // will simply still be listed.
         }
+
+        // The "Phone connected" confirmation is a just-paired state; once a device is revoked
+        // it no longer applies, so clear it before refreshing the list.
+        IsPhoneJustPaired = false;
 
         await RefreshDevicesAsync();
     }

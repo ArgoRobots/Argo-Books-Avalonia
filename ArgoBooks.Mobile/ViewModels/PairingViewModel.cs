@@ -102,19 +102,6 @@ public partial class PairingViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Reformats the entered code to "XXXX-XXXX" as the user types (e.g. after pasting a
-    /// code with lowercase letters or without a dash). Guards against re-entrancy: setting
-    /// <see cref="EnteredCode"/> below re-invokes this method, but formatting an already-formatted
-    /// value is idempotent, so the second call is a no-op and the recursion stops there.</summary>
-    partial void OnEnteredCodeChanged(string value)
-    {
-        var formatted = PairingCode.Format(PairingCode.Normalize(value ?? string.Empty));
-        if (formatted != value)
-        {
-            EnteredCode = formatted;
-        }
-    }
-
     private static string DefaultDeviceLabel()
     {
         try

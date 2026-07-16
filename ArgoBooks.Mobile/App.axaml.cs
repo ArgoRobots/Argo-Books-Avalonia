@@ -190,7 +190,6 @@ public partial class App : Application
         var pendingScanOutbox = new PendingScanOutbox(new FilePendingScanStorage(FileSystem.Current.AppDataDirectory));
 
         var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth, client, pendingScanOutbox);
-        await shellViewModel.InitializeAsync();
         _shellViewModel = shellViewModel;
 
         // Unpairing the last remaining company (Settings > Unpair this phone) drops back to the
@@ -201,6 +200,11 @@ public partial class App : Application
             ShowPairing();
         });
 
+        // Navigate to the shell first so a successful pairing always lands on the dashboard. The
+        // shell has its own loading / "waiting for first sync" states, so the initial snapshot load
+        // running (or failing) after this no longer strands the user on the pairing screen with a
+        // "Connected" label - which is what happened when an exception from InitializeAsync was
+        // swallowed by the fire-and-forget caller.
         Dispatcher.UIThread.Post(() =>
         {
             _singleView!.MainView = new ShellView
@@ -208,5 +212,14 @@ public partial class App : Application
                 DataContext = shellViewModel
             };
         });
+
+        try
+        {
+            await shellViewModel.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ArgoBooks] Shell initialize failed: {ex}");
+        }
     }
 }
