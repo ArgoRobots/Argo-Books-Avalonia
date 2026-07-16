@@ -17,24 +17,6 @@
         <vm:SettingsModalViewModel />
     </Design.DataContext>
 
-    <UserControl.Resources>
-        <!-- Modal-scoped override: the muted secondary/tertiary text reads too low-contrast in
-             dark theme, so promote both to the primary text colour within the Settings modal
-             (white in dark, near-black in light). Theme-aware so light theme is unaffected. -->
-        <ResourceDictionary>
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#F9FAFB" />
-                    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#F9FAFB" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#212529" />
-                    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#212529" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
-        </ResourceDictionary>
-    </UserControl.Resources>
-
     <Panel>
         <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                                ClosingCommand="{Binding CloseCommand}">
