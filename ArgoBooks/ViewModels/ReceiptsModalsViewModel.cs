@@ -980,8 +980,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         // Pipeline: each item reads, preprocesses, generates preview, and scans
-        // in a single task. SemaphoreSlim(3) gates concurrency across all stages.
-        var semaphore = new SemaphoreSlim(3);
+        // in a single task. SemaphoreSlim(5) gates concurrency across all stages.
+        var semaphore = new SemaphoreSlim(5);
         var tasks = BulkItems
             .Select(item => ProcessAndScanItemAsync(item, semaphore, token))
             .ToList();
