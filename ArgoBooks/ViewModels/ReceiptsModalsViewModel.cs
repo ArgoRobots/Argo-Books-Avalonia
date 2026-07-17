@@ -743,6 +743,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private CancellationTokenSource? _bulkCancellationSource;
 
+    /// <summary>
+    /// Cancels the in-flight single receipt scan. Renewed for each scan/retry and cancelled when the
+    /// scan review modal closes, so an aborted scan doesn't keep its API call (and the awaiting
+    /// command chain) alive after the user has moved on.
+    /// </summary>
+    private CancellationTokenSource? _scanCancellationSource;
+
     #endregion
 
     #region Bulk Scan Commands
@@ -1692,6 +1699,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private async Task ScanReceiptAsync()
     {
+        // Renew the cancellation source so closing the modal (or a retry) aborts this scan's API
+        // call promptly instead of letting it run to completion in the background.
+        _scanCancellationSource?.Cancel();
+        _scanCancellationSource?.Dispose();
+        _scanCancellationSource = new CancellationTokenSource();
+        var token = _scanCancellationSource.Token;
+
         try
         {
             // Get or create scanner service
@@ -1758,7 +1772,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 OperationKind.ReceiptScan, pct => ScanProgress = pct,
                 sizeFeature: imageData.Length, uploadBytes: imageData.Length);
             scanTicker.Start();
-            var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true));
+            var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true, token), token);
             scanTicker.Complete();
 
             if (!result.IsSuccess)
@@ -1785,6 +1799,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             PopulateScanResults(result);
 
             HasScanResult = true;
+            IsScanning = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // Scan was cancelled (modal closed or superseded by a retry). The modal state is already
+            // reset by the caller, so just stop without surfacing an error.
             IsScanning = false;
         }
         catch (Exception ex)
@@ -1884,6 +1904,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CloseScanReviewModal()
     {
+        // Abort any in-flight scan so its API call (and the command chain awaiting it) don't keep
+        // running after the modal is dismissed, which would leave the Scan All button disabled.
+        _scanCancellationSource?.Cancel();
+
         IsScanReviewModalOpen = false;
         IsFullscreen = false;
 
