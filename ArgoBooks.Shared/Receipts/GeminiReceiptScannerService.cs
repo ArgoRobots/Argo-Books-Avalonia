@@ -339,7 +339,7 @@ If nothing was missed, return: {{""missingItems"": []}}";
             systemPrompt,
             userPrompt,
             model = DefaultModel,
-            maxTokens = 16000,
+            maxTokens = 32000,
             temperature = 0.0,
             base64Image,
             mimeType,
