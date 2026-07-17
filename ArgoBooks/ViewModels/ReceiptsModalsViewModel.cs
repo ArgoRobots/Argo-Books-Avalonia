@@ -930,7 +930,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var single = BulkItems[0];
             IsBulkDropZoneOpen = false;
             BulkItems.Clear();
-            await OpenScanModalAsync(single.FilePath);
+
+            // Launch the single-scan modal without awaiting it. This command is an
+            // AsyncRelayCommand (AllowConcurrentExecutions = false), so awaiting the whole scan
+            // here would keep the command "running" - and the Scan All button disabled - for the
+            // entire scan. Decoupling lets the command finish immediately once the modal is up, so
+            // the button re-enables right away even if the previous scan was cancelled mid-flight.
+            // OpenScanModalAsync handles its own errors and drives the modal's own state.
+            _ = OpenScanModalAsync(single.FilePath);
             return;
         }
 
@@ -1775,6 +1782,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true, token), token);
             scanTicker.Complete();
 
+            // If this scan was cancelled or superseded by a newer one while the API call was in
+            // flight, the shared modal state now belongs to that newer scan. Bail out without
+            // writing anything, otherwise a cancelled scan's late "cancelled/timed out" result
+            // would clobber the result the user is actually looking at.
+            if (token.IsCancellationRequested)
+                return;
+
             if (!result.IsSuccess)
             {
                 HasScanError = true;
@@ -1803,12 +1817,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (OperationCanceledException)
         {
-            // Scan was cancelled (modal closed or superseded by a retry). The modal state is already
-            // reset by the caller, so just stop without surfacing an error.
-            IsScanning = false;
+            // Scan was cancelled or superseded. The modal state was already reset by the caller (or
+            // is owned by the newer scan), so don't touch any shared state here.
         }
         catch (Exception ex)
         {
+            // A stale scan failing during teardown must not overwrite the current scan's state.
+            if (token.IsCancellationRequested)
+                return;
+
             HasScanError = true;
             ScanErrorMessage = "Failed to scan receipt: {0}".TranslateFormat(ex.Message);
             IsScanning = false;
