@@ -5,9 +5,11 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Integrations;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Integrations;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
@@ -1211,6 +1213,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         SquareEmail = settings.ConnectedAccounts.SquareEmail;
         CompanyEmail = App.CompanyManager?.CompanyData?.Settings.Company.Email;
 
+        LoadStripeIntegrationState();
+
         // Fetch fresh provider status from the server in the background
         _ = RefreshProviderStatusAsync();
     }
@@ -1349,6 +1353,102 @@ public partial class SettingsModalViewModel : ViewModelBase
         settings.ConnectedAccounts.PaypalEmail = PaypalEmail;
         settings.ConnectedAccounts.SquareConnected = SquareConnected;
         settings.ConnectedAccounts.SquareEmail = SquareEmail;
+    }
+
+    #endregion
+
+    #region Stripe data integration
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectStripeIntegration))]
+    private string _stripeKeyInput = string.Empty;
+
+    [ObservableProperty]
+    private bool _stripeIntegrationConnected;
+
+    [ObservableProperty]
+    private string? _stripeIntegrationAccountLabel;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectStripeIntegration))]
+    private bool _isValidatingStripe;
+
+    [ObservableProperty]
+    private string? _stripeIntegrationError;
+
+    public bool CanConnectStripeIntegration
+        => !IsValidatingStripe && !string.IsNullOrWhiteSpace(StripeKeyInput);
+
+    /// <summary>
+    /// Testable core: validates the pasted key and, on success, writes it to
+    /// <paramref name="target"/> and mirrors connection state onto the VM.
+    /// </summary>
+    public async Task<bool> TryConnectStripeAsync(StripeApiClient client, StripeIntegrationSettings target)
+    {
+        IsValidatingStripe = true;
+        StripeIntegrationError = null;
+        try
+        {
+            var result = await client.ValidateKeyAsync(StripeKeyInput);
+            if (!result.Ok)
+            {
+                StripeIntegrationError = result.ErrorMessage;
+                return false;
+            }
+
+            target.ApiKey = StripeKeyInput.Trim();
+            target.Connected = true;
+            target.AccountLabel = result.AccountLabel;
+
+            StripeIntegrationConnected = true;
+            StripeIntegrationAccountLabel = result.AccountLabel;
+            StripeKeyInput = string.Empty; // don't keep the raw key in the input box
+            return true;
+        }
+        finally
+        {
+            IsValidatingStripe = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConnectStripeIntegrationAsync()
+    {
+        if (!CanConnectStripeIntegration) return;
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        if (stripe == null || App.SharedHttpClient == null) return;
+
+        var client = new StripeApiClient(App.SharedHttpClient);
+        if (await TryConnectStripeAsync(client, stripe))
+            App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void DisconnectStripeIntegration()
+    {
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        if (stripe == null) return;
+
+        stripe.ApiKey = null;
+        stripe.Connected = false;
+        stripe.AccountLabel = null;
+        stripe.LastSyncCursor = null;
+        stripe.LastSyncTime = null;
+
+        StripeIntegrationConnected = false;
+        StripeIntegrationAccountLabel = null;
+        StripeIntegrationError = null;
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    /// <summary>Loads Stripe integration display state from company settings. Call from the settings-load path.</summary>
+    private void LoadStripeIntegrationState()
+    {
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        StripeIntegrationConnected = stripe?.Connected ?? false;
+        StripeIntegrationAccountLabel = stripe?.AccountLabel;
+        StripeKeyInput = string.Empty;
+        StripeIntegrationError = null;
     }
 
     #endregion

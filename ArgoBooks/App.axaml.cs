@@ -75,6 +75,13 @@ public partial class App : Application
     public static RefundService? RefundService { get; private set; }
 
     /// <summary>
+    /// The long-lived <see cref="HttpClient"/> shared across services created at startup
+    /// (RefundService, SyncService, telemetry, source-survey). Reuse this instead of
+    /// creating a new HttpClient per call.
+    /// </summary>
+    public static HttpClient? SharedHttpClient { get; private set; }
+
+    /// <summary>
     /// Coordinator for the refund / email-verify / email-change modals.
     /// Hosted at AppShell level so the ModalOverlay can dim the whole window.
     /// </summary>
@@ -1041,6 +1048,7 @@ public partial class App : Application
 
             // Initialize telemetry services
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            SharedHttpClient = httpClient;
             var geoLocationService = new GeoLocationService(httpClient, errorLogger);
             var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
             var appVersion = Services.AppInfo.VersionNumber;
