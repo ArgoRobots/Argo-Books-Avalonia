@@ -31,23 +31,26 @@ public class StripeApiClient
         {
             resp = await _http.SendAsync(req, ct);
         }
-        catch
+        catch (HttpRequestException)
         {
             return new StripeValidationResult(false, null,
                 "Could not reach Stripe. Check your internet connection and try again.");
         }
 
-        if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            return new StripeValidationResult(false, null,
-                "That key was rejected by Stripe. Check you pasted a valid key.");
+        using (resp)
+        {
+            if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                return new StripeValidationResult(false, null,
+                    "That key was rejected by Stripe. Check you pasted a valid key.");
 
-        if (!resp.IsSuccessStatusCode)
-            return new StripeValidationResult(false, null,
-                $"Stripe returned an unexpected error (HTTP {(int)resp.StatusCode}).");
+            if (!resp.IsSuccessStatusCode)
+                return new StripeValidationResult(false, null,
+                    $"Stripe returned an unexpected error (HTTP {(int)resp.StatusCode}).");
 
-        var body = await resp.Content.ReadAsStringAsync(ct);
-        var label = ExtractLabel(body);
-        return new StripeValidationResult(true, label, null);
+            var body = await resp.Content.ReadAsStringAsync(ct);
+            var label = ExtractLabel(body);
+            return new StripeValidationResult(true, label, null);
+        }
     }
 
     private static string? ExtractLabel(string json)
