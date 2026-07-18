@@ -778,9 +778,9 @@
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Company Name'}" />
-                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" IsVisible="{Binding IsPortalCompanyNameRequired}" />
+                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" />
                                     </StackPanel>
-                                    <TextBlock Text="{loc:Loc 'The name displayed on your customer-facing payment portal.'}"
+                                    <TextBlock Text="{loc:Loc 'Required. The name displayed on your customer-facing payment portal.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
@@ -794,40 +794,50 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="{loc:Loc 'Owner Email'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
-                                    <TextBlock Text="{loc:Loc 'Required. Used for refund verification codes and account recovery.'}"
+                                    <TextBlock Text="{loc:Loc 'Required, for refund verification and recovery. Click Set to confirm it with an emailed code.'}"
                                                FontSize="12"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
 
-                                    <!-- Empty state: editable input + Set button (initial setup) -->
-                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
-                                                IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNullOrEmpty}}">
-                                        <TextBox Text="{Binding PendingOwnerEmail, Mode=TwoWay}"
+                                    <!-- Empty state: editable input + Set button (initial setup). Full-width to
+                                         match the Company Name box, with the Set action tucked to the right. -->
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding PendingOwnerEmail, Mode=TwoWay}"
                                                  Classes="form-input"
                                                  PlaceholderText="you@example.com"
-                                                 Width="280" />
-                                        <Button Content="{loc:Loc 'Set'}"
+                                                 HorizontalAlignment="Stretch" />
+                                        <Button Grid.Column="1"
+                                                Content="{loc:Loc 'Set'}"
                                                 Classes="primary-button"
                                                 Command="{Binding SetInitialOwnerEmailCommand}"
-                                                Padding="12,6" />
-                                    </StackPanel>
+                                                Margin="8,0,0,0"
+                                                Padding="12,6"
+                                                VerticalAlignment="Stretch" />
+                                    </Grid>
 
                                     <!-- Set state: read-only display + Change button (locked, change-via-flow) -->
-                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
-                                                IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                        <Border Background="{DynamicResource AltSurfaceBrush}"
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <Border Grid.Column="0"
+                                                Background="{DynamicResource AltSurfaceBrush}"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1" CornerRadius="4"
-                                                Padding="12,0" MinWidth="280"
+                                                Padding="12,0"
+                                                HorizontalAlignment="Stretch"
                                                 MinHeight="{StaticResource FormControlHeight}">
                                             <TextBlock Text="{Binding CompanyEmail}" FontSize="13"
                                                        VerticalAlignment="Center" />
                                         </Border>
-                                        <Button Content="{loc:Loc 'Change'}"
+                                        <Button Grid.Column="1"
+                                                Content="{loc:Loc 'Change'}"
                                                 Classes="secondary-button"
                                                 Command="{Binding OpenEmailChangeModalCommand}"
-                                                Padding="12,6" />
-                                    </StackPanel>
+                                                Margin="8,0,0,0"
+                                                Padding="12,6"
+                                                VerticalAlignment="Stretch" />
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Portal Logo -->
@@ -887,6 +897,13 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
 
+                                    <!-- Gate: a provider can't be connected until both the company name and owner email are set. -->
+                                    <TextBlock Text="{loc:Loc 'Set your company name and owner email above before connecting a payment provider.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding ShowConnectRequirementsHint}" />
+
                                     <!-- Stripe -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
@@ -911,7 +928,7 @@
                                                     Content="{loc:Loc Connect}"
                                                     Command="{Binding ConnectStripeCommand}"
                                                     IsVisible="{Binding !StripeConnected}"
-                                                    IsEnabled="{Binding !IsConnectingProvider}"
+                                                    IsEnabled="{Binding CanConnectProvider}"
                                                     VerticalAlignment="Center"
                                                     Padding="12,6"
                                                     MinHeight="0" />
@@ -998,7 +1015,7 @@
                                                     Content="{loc:Loc Connect}"
                                                     Command="{Binding ConnectSquareCommand}"
                                                     IsVisible="{Binding !SquareConnected}"
-                                                    IsEnabled="{Binding !IsConnectingProvider}"
+                                                    IsEnabled="{Binding CanConnectProvider}"
                                                     VerticalAlignment="Center"
                                                     Padding="12,6"
                                                     MinHeight="0" />

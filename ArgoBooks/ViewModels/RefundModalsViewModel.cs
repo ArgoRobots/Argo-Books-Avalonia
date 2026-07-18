@@ -114,6 +114,7 @@ public partial class RefundModalsViewModel : ObservableObject
         var refundService = App.RefundService;
         if (refundService == null) return;
 
+        ActiveEmailChangeVm?.Dispose();
         ActiveEmailChangeVm = new EmailChangeModalViewModel(refundService, currentOwnerEmail, fileIsEncrypted, verifyFilePassword)
         {
             // Close runs through CloseEmailChangeModalAsync via fire-and-forget so
@@ -147,6 +148,7 @@ public partial class RefundModalsViewModel : ObservableObject
                     string.IsNullOrEmpty(confirmed) ? vm.NewEmail.Trim() : confirmed);
             }
         }
+        vm?.Dispose(); // stop the resend-cooldown timer so it doesn't keep firing after the modal closes
         ActiveEmailChangeVm = null;
         _onEmailChangeCompleted = null;
     }

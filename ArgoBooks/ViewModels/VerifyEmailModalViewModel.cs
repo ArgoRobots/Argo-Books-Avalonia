@@ -14,6 +14,9 @@ public partial class VerifyEmailModalViewModel : ObservableObject
     private readonly RefundService _refundService;
     private System.Timers.Timer? _resendCooldownTimer;
 
+    /// <summary>Seconds the Resend button stays disabled after a code is sent (on open and after each resend).</summary>
+    private const int ResendCooldownSecondsInitial = 60;
+
     /// <summary>Set by the coordinator so the in-modal X button can close it.</summary>
     public Action? RequestClose { get; set; }
 
@@ -31,6 +34,12 @@ public partial class VerifyEmailModalViewModel : ObservableObject
     {
         _refundService = refundService;
         MaskedEmail = maskedEmail;
+
+        // A code is always freshly sent right before this modal opens (registration / set-email),
+        // so start the resend button already on cooldown. Otherwise Resend is clickable the instant
+        // the modal appears, letting the user fire off a second email immediately (and re-opening
+        // the modal would reset the throttle each time).
+        StartResendCooldown(ResendCooldownSecondsInitial);
     }
 
     [ObservableProperty]
@@ -104,7 +113,7 @@ public partial class VerifyEmailModalViewModel : ObservableObject
                 ErrorMessage = result.Message ?? result.ErrorCode ?? "Could not resend code.";
                 return;
             }
-            StartResendCooldown(60);
+            StartResendCooldown(ResendCooldownSecondsInitial);
             StatusMessage = "Code re-sent.";
         }
         finally { IsBusy = false; }

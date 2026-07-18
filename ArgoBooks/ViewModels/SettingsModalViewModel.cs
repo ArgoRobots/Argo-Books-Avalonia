@@ -556,6 +556,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPortalCompanyName))]
+    [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
+    [NotifyPropertyChangedFor(nameof(ShowConnectRequirementsHint))]
     private string _portalCompanyName = string.Empty;
 
     private CancellationTokenSource? _portalCompanyNameCts;
@@ -711,6 +714,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// 4-step EmailChangeModal flow (locked to in-place edits).
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCompanyEmail))]
+    [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
+    [NotifyPropertyChangedFor(nameof(ShowConnectRequirementsHint))]
     private string? _companyEmail;
 
     [ObservableProperty]
@@ -736,7 +742,25 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     partial void OnSquareConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
 
+    /// <summary>True once the customer-facing company name has been entered.</summary>
+    public bool HasPortalCompanyName => !string.IsNullOrWhiteSpace(PortalCompanyName);
+
+    /// <summary>True once the owner email has been set (and verified) for this company.</summary>
+    public bool HasCompanyEmail => !string.IsNullOrWhiteSpace(CompanyEmail);
+
+    /// <summary>
+    /// A payment provider requires both the company name and the owner email first: the name so
+    /// the portal and receipts carry a real business name, the email so refund verification and
+    /// account recovery have somewhere to go. True only when both are set and no connect is in
+    /// flight.
+    /// </summary>
+    public bool CanConnectProvider => HasPortalCompanyName && HasCompanyEmail && !IsConnectingProvider;
+
+    /// <summary>Prompt the user to finish the required fields while either is still missing.</summary>
+    public bool ShowConnectRequirementsHint => !HasPortalCompanyName || !HasCompanyEmail;
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
     private bool _isConnectingProvider;
 
     [ObservableProperty]
@@ -755,6 +779,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectStripeAsync()
     {
+        if (!CanConnectProvider) return;
         if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("stripe");
     }
@@ -769,6 +794,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectSquareAsync()
     {
+        if (!CanConnectProvider) return;
         if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("square");
     }
@@ -2672,6 +2698,19 @@ public partial class SettingsModalViewModel : ViewModelBase
         IsSettingOwnerEmail = true;
         try
         {
+            // Setting the owner email hits an authenticated portal endpoint, so the company must
+            // already be registered (i.e. have an API key). Registration used to be triggered lazily
+            // by the first Connect, but the owner email is now required *before* connecting, so
+            // auto-register here first (same pattern as the logo upload). Without this the very first
+            // action on a fresh company fails with "Invalid or missing API key".
+            if (!PortalSettings.IsConfigured)
+            {
+                var portalService = App.PaymentPortalService;
+                if (portalService == null) return;
+                var registered = await TryRegisterPortalAsync(portalService);
+                if (!registered) return;
+            }
+
             await SetInitialOwnerEmailCoreAsync(refundService, companyData, email);
         }
         finally

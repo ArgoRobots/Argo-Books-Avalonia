@@ -129,7 +129,8 @@
                                         <TextBlock Grid.Column="0" Text="{Binding CountdownDisplay}"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
                                                    VerticalAlignment="Center" />
-                                        <Button Grid.Column="1" Content="Resend code"
+                                        <Button Grid.Column="1" Content="{Binding ResendButtonText}"
+                                                IsEnabled="{Binding CanResend}"
                                                 Command="{Binding ResendCodeCommand}" />
                                     </Grid>
                                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
@@ -331,8 +332,9 @@
                                 </StackPanel>
 
                                 <StackPanel IsVisible="{Binding IsVerified}" Spacing="10">
-                                    <TextBlock Text="✓ Email verified" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
-                                    <TextBlock TextWrapping="Wrap"
+                                    <TextBlock Text="✓ Email verified" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="#059669" TextAlignment="Center" />
+                                    <TextBlock TextWrapping="Wrap" TextAlignment="Center"
                                                Text="Refunds are now enabled for this account. You can close this dialog." />
                                 </StackPanel>
                             </StackPanel>
@@ -347,6 +349,10 @@
                                         IsVisible="{Binding !IsVerified}"
                                         IsEnabled="{Binding CanSubmit}"
                                         Command="{Binding SubmitCommand}" />
+                                <Button Grid.Column="2" Content="OK"
+                                        Classes="primary-button"
+                                        IsVisible="{Binding IsVerified}"
+                                        Command="{Binding CloseCommand}" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -402,7 +408,8 @@
                                     <TextBox Text="{Binding OldCode, Mode=TwoWay}" Classes="form-input"
                                              PlaceholderText="123456" MaxLength="6"
                                              FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
-                                    <Button Content="Resend code" HorizontalAlignment="Right"
+                                    <Button Content="{Binding ResendButtonText}" HorizontalAlignment="Right"
+                                            IsEnabled="{Binding CanResend}"
                                             Command="{Binding ResendOldCodeCommand}" />
                                 </StackPanel>
 
@@ -412,16 +419,21 @@
                                     <TextBox Text="{Binding NewCode, Mode=TwoWay}" Classes="form-input"
                                              PlaceholderText="123456" MaxLength="6"
                                              FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
-                                    <Button Content="Resend code" HorizontalAlignment="Right"
+                                    <Button Content="{Binding ResendButtonText}" HorizontalAlignment="Right"
+                                            IsEnabled="{Binding CanResend}"
                                             Command="{Binding ResendNewCodeCommand}" />
                                 </StackPanel>
 
                                 <StackPanel IsVisible="{Binding IsSuccess}" Spacing="10">
-                                    <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
+                                    <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="#059669" TextAlignment="Center" />
+                                    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" TextAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" />
                                 </StackPanel>
 
-                                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
-                                           IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                           IsVisible="{Binding ShowSharedStatusMessage}" />
                                 <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -452,6 +464,10 @@
                                             IsEnabled="{Binding CanSubmitNewCode}"
                                             Classes="primary-button"
                                             Command="{Binding SubmitNewCodeCommand}" />
+                                    <Button Content="OK"
+                                            IsVisible="{Binding IsSuccess}"
+                                            Classes="primary-button"
+                                            Command="{Binding CloseCommand}" />
                                 </StackPanel>
                             </Grid>
                         </Border>
