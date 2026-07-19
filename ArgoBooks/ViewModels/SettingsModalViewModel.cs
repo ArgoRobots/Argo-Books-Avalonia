@@ -1512,6 +1512,14 @@ public partial class SettingsModalViewModel : ViewModelBase
                 "Imported {0} payout(s) from Stripe.".TranslateFormat(result.PayoutsImported),
                 NotificationType.Success);
         }
+        catch (Exception ex)
+        {
+            // Never let a Stripe/network error crash the app; surface it instead.
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Stripe sync failed");
+            App.AddNotification("Stripe".Translate(),
+                "Sync failed: {0}".TranslateFormat(ex.Message),
+                NotificationType.Warning);
+        }
         finally
         {
             IsSyncingStripe = false;

@@ -1101,7 +1101,10 @@
                                         <TextBox Text="{Binding StripeKeyInput, Mode=TwoWay}"
                                                  Classes="form-input"
                                                  PlaceholderText="rk_live_..."
-                                                 PasswordChar="•" />
+                                                 TextWrapping="Wrap"
+                                                 AcceptsReturn="False"
+                                                 Height="52"
+                                                 VerticalContentAlignment="Top" />
 
                                         <TextBlock Text="{Binding StripeIntegrationError}" Foreground="#dc2626" FontSize="12"
                                                    TextWrapping="Wrap"
