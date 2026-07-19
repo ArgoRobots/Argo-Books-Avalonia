@@ -28,4 +28,8 @@ public class StripeIntegrationSettings
     /// <summary>Timestamp of the last successful sync.</summary>
     [JsonPropertyName("lastSyncTime")]
     public DateTime? LastSyncTime { get; set; }
+
+    /// <summary>Stripe payouts that have been imported, for deduplication during bank import.</summary>
+    [JsonPropertyName("importedPayouts")]
+    public List<StripePayoutRecord> ImportedPayouts { get; set; } = new();
 }
