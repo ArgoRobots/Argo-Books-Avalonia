@@ -6,7 +6,7 @@ namespace ArgoBooks.Tests.Services;
 public class StripeActivityMapperTests
 {
     private static StripeBalanceTransaction Tx(string id, string type, long amount, long fee)
-        => new(id, type, amount, fee, amount - fee, 1700000000, "usd", null);
+        => new(id, type, amount, fee, amount - fee, 1700000000, "usd", null, null);
 
     [Fact]
     public void Charge_EmitsGrossRevenue_AndFeeExpense()

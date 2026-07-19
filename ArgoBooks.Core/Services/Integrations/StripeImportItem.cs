@@ -12,4 +12,5 @@ public record StripeImportItem(
     decimal Amount,
     DateTime Date,
     string Description,
-    string SourceId);
+    string SourceId,
+    string? PayoutId);

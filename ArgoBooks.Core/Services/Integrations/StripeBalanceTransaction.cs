@@ -12,4 +12,5 @@ public record StripeBalanceTransaction(
     long NetCents,
     long CreatedUnix,
     string Currency,
-    string? Description);
+    string? Description,
+    string? PayoutId);

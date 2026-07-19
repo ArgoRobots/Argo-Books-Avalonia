@@ -133,6 +133,14 @@ public class StripeApiClient
             e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
         static long Num(JsonElement e, string name) =>
             e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0L;
+        static string? PayoutId(JsonElement e)
+        {
+            if (!e.TryGetProperty("payout", out var p)) return null;
+            if (p.ValueKind == JsonValueKind.String) return p.GetString();
+            if (p.ValueKind == JsonValueKind.Object && p.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
+                return id.GetString();
+            return null;
+        }
 
         return new StripeBalanceTransaction(
             Id: Str(el, "id"),
@@ -142,6 +150,7 @@ public class StripeApiClient
             NetCents: Num(el, "net"),
             CreatedUnix: Num(el, "created"),
             Currency: Str(el, "currency"),
-            Description: StrOrNull(el, "description"));
+            Description: StrOrNull(el, "description"),
+            PayoutId: PayoutId(el));
     }
 }

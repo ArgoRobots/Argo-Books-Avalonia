@@ -19,19 +19,19 @@ public class StripeActivityMapper
             switch (t.Type)
             {
                 case "charge":
-                    items.Add(new StripeImportItem(StripeItemKind.Revenue, Money(t.AmountCents), date, desc, t.Id));
+                    items.Add(new StripeImportItem(StripeItemKind.Revenue, Money(t.AmountCents), date, desc, t.Id, t.PayoutId));
                     if (t.FeeCents > 0)
-                        items.Add(new StripeImportItem(StripeItemKind.Fee, Money(t.FeeCents), date, "Stripe processing fee", t.Id));
+                        items.Add(new StripeImportItem(StripeItemKind.Fee, Money(t.FeeCents), date, "Stripe processing fee", t.Id, t.PayoutId));
                     break;
                 case "refund":
-                    items.Add(new StripeImportItem(StripeItemKind.Refund, Money(Math.Abs(t.AmountCents)), date, desc, t.Id));
+                    items.Add(new StripeImportItem(StripeItemKind.Refund, Money(Math.Abs(t.AmountCents)), date, desc, t.Id, t.PayoutId));
                     break;
                 case "payout":
-                    items.Add(new StripeImportItem(StripeItemKind.Payout, Money(Math.Abs(t.AmountCents)), date, "Stripe payout to bank", t.Id));
+                    items.Add(new StripeImportItem(StripeItemKind.Payout, Money(Math.Abs(t.AmountCents)), date, "Stripe payout to bank", t.Id, t.PayoutId));
                     break;
                 default:
                     items.Add(new StripeImportItem(StripeItemKind.Other, Money(Math.Abs(t.AmountCents)), date,
-                        $"Stripe {t.Type}", t.Id));
+                        $"Stripe {t.Type}", t.Id, t.PayoutId));
                     break;
             }
         }
