@@ -14,6 +14,8 @@ public record StripeValidationResult(bool Ok, string? AccountLabel, string? Erro
 public class StripeApiClient
 {
     private const string AccountUrl = "https://api.stripe.com/v1/account";
+    private const string BalanceTxUrl = "https://api.stripe.com/v1/balance_transactions";
+    private const int MaxPages = 20;
     private readonly HttpClient _http;
 
     public StripeApiClient(HttpClient http) => _http = http;
@@ -76,5 +78,70 @@ public class StripeApiClient
         }
         catch (JsonException) { /* fall through */ }
         return null;
+    }
+
+    public async Task<IReadOnlyList<StripeBalanceTransaction>> FetchBalanceTransactionsSinceAsync(
+        string apiKey, string? afterCursor, CancellationToken ct = default)
+    {
+        var results = new List<StripeBalanceTransaction>();
+        string? cursor = afterCursor;
+
+        for (var page = 0; page < MaxPages; page++)
+        {
+            var url = $"{BalanceTxUrl}?limit=100";
+            if (!string.IsNullOrEmpty(cursor))
+                url += $"&starting_after={Uri.EscapeDataString(cursor)}";
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
+
+            using var resp = await _http.SendAsync(req, ct);
+            resp.EnsureSuccessStatusCode();
+            var body = await resp.Content.ReadAsStringAsync(ct);
+
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            var pageCount = 0;
+            string? lastId = null;
+            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in data.EnumerateArray())
+                {
+                    var tx = ParseTransaction(el);
+                    results.Add(tx);
+                    lastId = tx.Id;
+                    pageCount++;
+                }
+            }
+
+            var hasMore = root.TryGetProperty("has_more", out var hm)
+                          && hm.ValueKind == JsonValueKind.True;
+            if (!hasMore || pageCount == 0 || lastId == null)
+                break;
+            cursor = lastId;
+        }
+
+        return results;
+    }
+
+    private static StripeBalanceTransaction ParseTransaction(JsonElement el)
+    {
+        static string Str(JsonElement e, string name) =>
+            e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : "";
+        static string? StrOrNull(JsonElement e, string name) =>
+            e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        static long Num(JsonElement e, string name) =>
+            e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0L;
+
+        return new StripeBalanceTransaction(
+            Id: Str(el, "id"),
+            Type: Str(el, "type"),
+            AmountCents: Num(el, "amount"),
+            FeeCents: Num(el, "fee"),
+            NetCents: Num(el, "net"),
+            CreatedUnix: Num(el, "created"),
+            Currency: Str(el, "currency"),
+            Description: StrOrNull(el, "description"));
     }
 }
