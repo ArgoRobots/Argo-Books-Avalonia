@@ -105,13 +105,13 @@ public class StripeDetailImporter
 
     private string? ResolveCustomer(CompanyData data, StripeChargeDetail ch)
     {
-        var key = ch.CustomerEmail ?? ch.CustomerName;
+        var key = string.IsNullOrWhiteSpace(ch.CustomerEmail) ? ch.CustomerName : ch.CustomerEmail;
         if (string.IsNullOrWhiteSpace(key)) return null;
         if (_customerCache.TryGetValue(key, out var cached)) return cached;
 
-        var existing = data.Customers.FirstOrDefault(c =>
-            (!string.IsNullOrEmpty(ch.CustomerEmail) && string.Equals(c.Email, ch.CustomerEmail, StringComparison.OrdinalIgnoreCase))
-            || string.Equals(c.Name, ch.CustomerName, StringComparison.OrdinalIgnoreCase));
+        var existing = !string.IsNullOrWhiteSpace(ch.CustomerEmail)
+            ? data.Customers.FirstOrDefault(c => string.Equals(c.Email, ch.CustomerEmail, StringComparison.OrdinalIgnoreCase))
+            : data.Customers.FirstOrDefault(c => string.Equals(c.Name, ch.CustomerName, StringComparison.OrdinalIgnoreCase));
         if (existing != null) { _customerCache[key] = existing.Id; return existing.Id; }
 
         data.IdCounters.Customer++;
