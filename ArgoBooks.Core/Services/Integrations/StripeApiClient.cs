@@ -18,6 +18,7 @@ public class StripeApiClient
 {
     private const string BalanceTxUrl = "https://api.stripe.com/v1/balance_transactions";
     private const string PayoutsUrl = "https://api.stripe.com/v1/payouts";
+    private const string ChargesUrl = "https://api.stripe.com/v1/charges";
     private const int MaxPages = 20;
     private readonly HttpClient _http;
 
@@ -185,6 +186,104 @@ public class StripeApiClient
 
         return results;
     }
+
+    /// <summary>
+    /// Fetches charges newest-first, expanded with customer/invoice/balance_transaction, stopping
+    /// when it reaches the watermark charge id (the newest charge seen at the last sync). Only
+    /// succeeded, paid charges are included. Returns the new charges, newest first.
+    /// </summary>
+    public async Task<IReadOnlyList<StripeChargeDetail>> FetchChargesUntilAsync(
+        string apiKey, string? watermarkChargeId, CancellationToken ct = default)
+    {
+        var results = new List<StripeChargeDetail>();
+        string? after = null;
+        const string expand = "&expand[]=data.customer&expand[]=data.invoice&expand[]=data.balance_transaction";
+
+        for (var page = 0; page < MaxPages; page++)
+        {
+            var url = $"{ChargesUrl}?limit=100{expand}";
+            if (!string.IsNullOrEmpty(after))
+                url += $"&starting_after={Uri.EscapeDataString(after)}";
+
+            using var doc = await GetJsonAsync(apiKey, url, ct);
+            var root = doc.RootElement;
+
+            var pageCount = 0;
+            string? lastId = null;
+            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in data.EnumerateArray())
+                {
+                    var id = PropStr(el, "id");
+                    if (!string.IsNullOrEmpty(watermarkChargeId) && id == watermarkChargeId)
+                        return results; // reached the last-synced watermark
+                    lastId = id;
+                    pageCount++;
+
+                    var isPaid = el.TryGetProperty("paid", out var p) && p.ValueKind == JsonValueKind.True;
+                    if (PropStr(el, "status") != "succeeded" || !isPaid) continue;
+                    results.Add(ParseCharge(el));
+                }
+            }
+
+            var hasMore = root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True;
+            if (!hasMore || pageCount == 0 || lastId == null) break;
+            after = lastId;
+        }
+
+        return results;
+    }
+
+    private static StripeChargeDetail ParseCharge(JsonElement el)
+    {
+        long fee = 0;
+        if (el.TryGetProperty("balance_transaction", out var bt) && bt.ValueKind == JsonValueKind.Object)
+            fee = PropNum(bt, "fee");
+
+        string? custName = null, custEmail = null;
+        if (el.TryGetProperty("customer", out var cust) && cust.ValueKind == JsonValueKind.Object)
+        {
+            custName = NullableStr(cust, "name");
+            custEmail = NullableStr(cust, "email");
+        }
+
+        string product = "Stripe sale";
+        long tax = 0, discount = 0;
+        if (el.TryGetProperty("invoice", out var inv) && inv.ValueKind == JsonValueKind.Object)
+        {
+            tax = PropNum(inv, "tax");
+            if (inv.TryGetProperty("total_discount_amounts", out var da) && da.ValueKind == JsonValueKind.Array)
+                foreach (var d in da.EnumerateArray()) discount += PropNum(d, "amount");
+            if (inv.TryGetProperty("lines", out var lines) && lines.TryGetProperty("data", out var ld)
+                && ld.ValueKind == JsonValueKind.Array && ld.GetArrayLength() > 0)
+            {
+                var first = ld[0];
+                var desc = NullableStr(first, "description");
+                if (!string.IsNullOrWhiteSpace(desc)) product = desc!;
+            }
+        }
+        if (product == "Stripe sale")
+        {
+            var chargeDesc = NullableStr(el, "description");
+            if (!string.IsNullOrWhiteSpace(chargeDesc)) product = chargeDesc!;
+        }
+
+        return new StripeChargeDetail(
+            ChargeId: PropStr(el, "id"),
+            CreatedUnix: PropNum(el, "created"),
+            GrossCents: PropNum(el, "amount"),
+            FeeCents: fee,
+            Currency: PropStr(el, "currency"),
+            CustomerName: custName,
+            CustomerEmail: custEmail,
+            ProductName: product,
+            TaxCents: tax,
+            DiscountCents: discount,
+            AmountRefundedCents: PropNum(el, "amount_refunded"));
+    }
+
+    private static string? NullableStr(JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
     private async Task<JsonDocument> GetJsonAsync(string apiKey, string url, CancellationToken ct)
     {
