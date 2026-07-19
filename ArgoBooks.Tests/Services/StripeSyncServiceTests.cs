@@ -111,4 +111,35 @@ public class StripeSyncServiceTests
         var preview = await MakeService().PreviewAsync(new CompanyData());
         Assert.False(preview.HasActivity);
     }
+
+    [Fact]
+    public async Task Import_Undo_RemovesEverything_Redo_ReAddsIt()
+    {
+        var svc = MakeService();
+        var data = ConnectedData();
+        var preview = await svc.PreviewAsync(data);
+        var creation = svc.ImportPreview(data, preview);
+
+        Assert.True(creation.AnyCreated);
+        Assert.Single(data.Revenues);
+        Assert.Single(data.Expenses);
+        var stripe = data.Settings.Integrations.Stripe;
+
+        creation.Undo(data);
+        Assert.Empty(data.Revenues);
+        Assert.Empty(data.Expenses);
+        Assert.Empty(data.Customers);
+        Assert.Empty(data.Products);
+        Assert.Empty(stripe.ImportedPayouts);
+        Assert.Null(stripe.LastSyncCursor);
+        Assert.Null(stripe.LastSyncTime);
+
+        creation.Redo(data);
+        Assert.Single(data.Revenues);
+        Assert.Single(data.Expenses);
+        Assert.Single(data.Customers);
+        Assert.Single(stripe.ImportedPayouts);
+        Assert.Equal("ch_1", stripe.LastSyncCursor);
+        Assert.NotNull(stripe.LastSyncTime);
+    }
 }

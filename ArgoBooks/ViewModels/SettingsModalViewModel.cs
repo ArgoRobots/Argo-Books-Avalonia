@@ -1505,11 +1505,16 @@ public partial class SettingsModalViewModel : ViewModelBase
             }) == ConfirmationResult.Primary;
             if (!confirmed) return;
 
-            var result = svc.ImportPreview(data, preview);
+            var creation = svc.ImportPreview(data, preview);
+            if (creation.AnyCreated)
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from Stripe".Translate(),
+                    () => { creation.Undo(data); App.CompanyManager?.MarkAsChanged(); },
+                    () => { creation.Redo(data); App.CompanyManager?.MarkAsChanged(); }));
             App.CompanyManager?.MarkAsChanged();
             RefreshStripeLastSynced(stripe);
             App.AddNotification("Stripe".Translate(),
-                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(result.RevenuesCreated, result.ExpensesCreated),
+                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
                 NotificationType.Success);
         }
         catch (Exception ex)

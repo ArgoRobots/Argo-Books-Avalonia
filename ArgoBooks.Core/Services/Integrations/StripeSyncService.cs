@@ -58,11 +58,28 @@ public class StripeSyncService
         return new StripeSyncPreview(charges, totalRevenue, totalFees, newCursor, newPayouts);
     }
 
-    public StripeDetailResult ImportPreview(CompanyData data, StripeSyncPreview preview)
+    /// <summary>
+    /// Imports the preview and returns a record of everything created, so the caller can register
+    /// a single undo/redo for the whole sync. Import only appends, so the created items are the
+    /// tail of each collection past the pre-import counts.
+    /// </summary>
+    public StripeImportCreation ImportPreview(CompanyData data, StripeSyncPreview preview)
     {
         var stripe = data.Settings.Integrations.Stripe;
+        var creation = new StripeImportCreation
+        {
+            PreviousCursor = stripe.LastSyncCursor,
+            PreviousSyncTime = stripe.LastSyncTime,
+            Pre = StripeImportCreation.CounterSnapshot.From(data.IdCounters)
+        };
+
+        int revBefore = data.Revenues.Count, expBefore = data.Expenses.Count,
+            custBefore = data.Customers.Count, prodBefore = data.Products.Count,
+            catBefore = data.Categories.Count, retBefore = data.Returns.Count,
+            payBefore = stripe.ImportedPayouts.Count;
+
         var importer = new StripeDetailImporter();
-        var result = importer.ImportCharges(data, preview.Charges);
+        importer.ImportCharges(data, preview.Charges);
         importer.ApplyRefunds(data, preview.Charges);
 
         // Remember each new payout so a later bank import auto-ignores the matching deposit.
@@ -85,7 +102,18 @@ public class StripeSyncService
             data.MarkAsModified();
         }
 
-        return result;
+        // Capture what was created (the tail of each collection) for undo/redo.
+        creation.Revenues.AddRange(data.Revenues.Skip(revBefore));
+        creation.Expenses.AddRange(data.Expenses.Skip(expBefore));
+        creation.Entities.AddRange(data.Customers.Skip(custBefore));
+        creation.Entities.AddRange(data.Products.Skip(prodBefore));
+        creation.Entities.AddRange(data.Categories.Skip(catBefore));
+        creation.Returns.AddRange(data.Returns.Skip(retBefore));
+        creation.Payouts.AddRange(stripe.ImportedPayouts.Skip(payBefore));
+        creation.NewCursor = stripe.LastSyncCursor;
+        creation.NewSyncTime = stripe.LastSyncTime;
+        creation.Post = StripeImportCreation.CounterSnapshot.From(data.IdCounters);
+        return creation;
     }
 
     private static StripeSyncPreview Empty()

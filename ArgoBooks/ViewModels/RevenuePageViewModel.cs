@@ -845,11 +845,16 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             }) == ConfirmationResult.Primary;
             if (!confirmed) return;
 
-            var result = svc.ImportPreview(data, preview);
+            var creation = svc.ImportPreview(data, preview);
+            if (creation.AnyCreated)
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from Stripe".Translate(),
+                    () => { creation.Undo(data); App.CompanyManager?.MarkAsChanged(); LoadRevenue(); },
+                    () => { creation.Redo(data); App.CompanyManager?.MarkAsChanged(); LoadRevenue(); }));
             App.CompanyManager?.MarkAsChanged();
             LoadRevenue();
             App.AddNotification("Stripe".Translate(),
-                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(result.RevenuesCreated, result.ExpensesCreated),
+                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
                 NotificationType.Success);
 
             await CheckStripePendingAsync();
