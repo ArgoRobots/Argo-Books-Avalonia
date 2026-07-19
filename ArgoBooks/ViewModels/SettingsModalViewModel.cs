@@ -1480,7 +1480,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                 return;
             }
 
-            var confirmed = App.ConfirmationDialog == null || await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
             {
                 Title = "Import from Stripe".Translate(),
                 Message = "Import {0} payout(s): {1} revenue and {2} in fees?"
