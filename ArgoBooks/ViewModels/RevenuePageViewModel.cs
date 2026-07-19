@@ -790,7 +790,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         {
             var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
             var preview = await svc.PreviewAsync(data);
-            var count = preview.Days.Count;
+            var count = preview.Charges.Count;
 
             StripePendingCount = count;
             StripeBannerVisible = count > 0;

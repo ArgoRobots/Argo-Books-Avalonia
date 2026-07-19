@@ -4,23 +4,24 @@ using ArgoBooks.Core.Models.Integrations;
 namespace ArgoBooks.Core.Services.Integrations;
 
 public record StripeSyncPreview(
-    IReadOnlyList<StripeDailyBatch> Days,
+    IReadOnlyList<StripeChargeDetail> Charges,
     decimal TotalRevenue,
     decimal TotalFees,
     string? NewCursor,
     IReadOnlyList<StripePayoutSummary> NewPayouts)
 {
     /// <summary>True when there's anything to import: new revenue/fees, or new payouts to remember.</summary>
-    public bool HasActivity => Days.Count > 0 || NewPayouts.Count > 0;
+    public bool HasActivity => Charges.Count > 0 || NewPayouts.Count > 0;
 }
 
 /// <summary>
-/// Orchestrates a Stripe sync. Revenue, fees and refunds come from balance transactions
-/// (fetched newest-first until the last-synced watermark) grouped by day. Payouts come
-/// from the payouts list and are remembered only so a later bank import can auto-ignore
-/// the matching deposit. Separating the two avoids Stripe's automatic-payout-only
-/// transaction grouping, so it works for manual payouts too. Preview is read-only;
-/// import writes the records, remembers the payouts, and advances the cursor.
+/// Orchestrates a Stripe sync. Revenue, fees and refunds come from a detailed per-charge
+/// fetch (fetched newest-first until the last-synced watermark), each charge becoming its
+/// own Revenue with product/customer/tax/discount. Payouts come from the payouts list and
+/// are remembered only so a later bank import can auto-ignore the matching deposit.
+/// Separating the two avoids Stripe's automatic-payout-only transaction grouping, so it
+/// works for manual payouts too. Preview is read-only; import writes the records, remembers
+/// the payouts, and advances the cursor.
 /// </summary>
 public class StripeSyncService
 {
@@ -33,10 +34,8 @@ public class StripeSyncService
         if (string.IsNullOrWhiteSpace(stripe.ApiKey))
             return Empty();
 
-        var txns = await _client.FetchBalanceTransactionsUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
-        var items = new StripeActivityMapper().Map(txns);
-        var days = new StripeDailyAggregator().AggregateByDay(items);
-        var newCursor = txns.Count > 0 ? txns[0].Id : stripe.LastSyncCursor;
+        var charges = await _client.FetchChargesUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
+        var newCursor = charges.Count > 0 ? charges[0].ChargeId : stripe.LastSyncCursor;
 
         var payouts = await _client.FetchPayoutsAsync(stripe.ApiKey!, ct);
         var known = new HashSet<string>(stripe.ImportedPayouts.Select(p => p.StripePayoutId), StringComparer.Ordinal);
@@ -44,13 +43,18 @@ public class StripeSyncService
             .Where(p => !known.Contains(p.Id) && p.Status is not ("canceled" or "failed"))
             .ToList();
 
-        return new StripeSyncPreview(days, days.Sum(d => d.GrossRevenue), days.Sum(d => d.Fees), newCursor, newPayouts);
+        var totalRevenue = charges.Sum(c => c.GrossCents) / 100m;
+        var totalFees = charges.Sum(c => c.FeeCents) / 100m;
+
+        return new StripeSyncPreview(charges, totalRevenue, totalFees, newCursor, newPayouts);
     }
 
-    public StripeImportResult ImportPreview(CompanyData data, StripeSyncPreview preview)
+    public StripeDetailResult ImportPreview(CompanyData data, StripeSyncPreview preview)
     {
         var stripe = data.Settings.Integrations.Stripe;
-        var result = new StripeImportService().Import(data, preview.Days);
+        var importer = new StripeDetailImporter();
+        var result = importer.ImportCharges(data, preview.Charges);
+        importer.ApplyRefunds(data, preview.Charges);
 
         // Remember each new payout so a later bank import auto-ignores the matching deposit.
         foreach (var p in preview.NewPayouts)
@@ -76,5 +80,5 @@ public class StripeSyncService
     }
 
     private static StripeSyncPreview Empty()
-        => new(Array.Empty<StripeDailyBatch>(), 0m, 0m, null, Array.Empty<StripePayoutSummary>());
+        => new(Array.Empty<StripeChargeDetail>(), 0m, 0m, null, Array.Empty<StripePayoutSummary>());
 }
