@@ -43,6 +43,13 @@ public class BankMatchingService
             if (line.MatchStatus is BankLineMatchStatus.Matched or BankLineMatchStatus.Ignored)
                 continue;
 
+            if (line.Amount > 0 && TryMatchStripePayout(line, data, options))
+            {
+                line.MatchStatus = BankLineMatchStatus.Ignored;
+                line.IgnoreReason = "Stripe payout (already imported)";
+                continue;
+            }
+
             var candidates = ScoreCandidates(line, records, options);
 
             if (candidates.Count == 0)
@@ -81,6 +88,28 @@ public class BankMatchingService
         result.UnmatchedBookRecords = stillUnmatched;
 
         return result;
+    }
+
+    /// <summary>
+    /// True when the line's amount and date match a remembered, already-imported Stripe payout
+    /// (amount within 1 cent OR 1%, date within DateWindowDays), so the deposit should be
+    /// auto-ignored instead of double-counted against a book record.
+    /// </summary>
+    private static bool TryMatchStripePayout(BankStatementLine line, CompanyData data, BankMatchingOptions options)
+    {
+        var payouts = data.Settings.Integrations.Stripe.ImportedPayouts;
+        if (payouts.Count == 0) return false;
+
+        var lineCents = (long)Math.Round(line.Amount * 100m);
+        foreach (var p in payouts)
+        {
+            var diff = Math.Abs(p.AmountCents - lineCents);
+            var within = diff <= 1 || diff <= (long)Math.Round(Math.Abs(p.AmountCents) * 0.01);
+            if (!within) continue;
+            if (Math.Abs((p.Date.Date - line.Date.Date).TotalDays) <= options.DateWindowDays)
+                return true;
+        }
+        return false;
     }
 
     /// <summary>
