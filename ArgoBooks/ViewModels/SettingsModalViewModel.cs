@@ -1488,7 +1488,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
             var preview = await svc.PreviewAsync(data);
-            if (preview.NewBatches.Count == 0)
+            if (!preview.HasActivity)
             {
                 App.AddNotification("Stripe".Translate(), "You're already up to date.".Translate());
                 return;
@@ -1498,8 +1498,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
             {
                 Title = "Import from Stripe".Translate(),
-                Message = "Import {0} payout(s): {1} revenue and {2} in fees?"
-                    .TranslateFormat(preview.NewBatches.Count, preview.TotalRevenue.ToString("C2"), preview.TotalFees.ToString("C2")),
+                Message = "Import your Stripe activity: {0} in sales and {1} in fees?"
+                    .TranslateFormat(preview.TotalRevenue.ToString("C2"), preview.TotalFees.ToString("C2")),
                 PrimaryButtonText = "Import".Translate(),
                 CancelButtonText = "Cancel".Translate()
             }) == ConfirmationResult.Primary;
@@ -1509,7 +1509,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             App.CompanyManager?.MarkAsChanged();
             RefreshStripeLastSynced(stripe);
             App.AddNotification("Stripe".Translate(),
-                "Imported {0} payout(s) from Stripe.".TranslateFormat(result.PayoutsImported),
+                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(result.RevenuesCreated, result.ExpensesCreated),
                 NotificationType.Success);
         }
         catch (Exception ex)

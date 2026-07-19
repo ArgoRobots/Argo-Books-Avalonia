@@ -1,15 +1,26 @@
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Integrations;
 
 namespace ArgoBooks.Core.Services.Integrations;
 
-public record StripeSyncPreview(IReadOnlyList<StripePayoutBatch> NewBatches, decimal TotalRevenue, decimal TotalFees);
+public record StripeSyncPreview(
+    IReadOnlyList<StripeDailyBatch> Days,
+    decimal TotalRevenue,
+    decimal TotalFees,
+    string? NewCursor,
+    IReadOnlyList<StripePayoutSummary> NewPayouts)
+{
+    /// <summary>True when there's anything to import: new revenue/fees, or new payouts to remember.</summary>
+    public bool HasActivity => Days.Count > 0 || NewPayouts.Count > 0;
+}
 
 /// <summary>
-/// Orchestrates a Stripe sync: list payouts, pull each not-yet-imported payout's
-/// transactions (via the ?payout= filter, since a balance transaction carries no
-/// payout id of its own), map and aggregate them into per-payout batches. Splits
-/// preview from import so the UI can confirm before anything is written. Idempotent:
-/// dedupe is by the ImportedPayouts memory, so re-listing payouts is safe.
+/// Orchestrates a Stripe sync. Revenue, fees and refunds come from balance transactions
+/// (fetched newest-first until the last-synced watermark) grouped by day. Payouts come
+/// from the payouts list and are remembered only so a later bank import can auto-ignore
+/// the matching deposit. Separating the two avoids Stripe's automatic-payout-only
+/// transaction grouping, so it works for manual payouts too. Preview is read-only;
+/// import writes the records, remembers the payouts, and advances the cursor.
 /// </summary>
 public class StripeSyncService
 {
@@ -20,36 +31,50 @@ public class StripeSyncService
     {
         var stripe = data.Settings.Integrations.Stripe;
         if (string.IsNullOrWhiteSpace(stripe.ApiKey))
-            return new StripeSyncPreview(Array.Empty<StripePayoutBatch>(), 0m, 0m);
+            return Empty();
+
+        var txns = await _client.FetchBalanceTransactionsUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
+        var items = new StripeActivityMapper().Map(txns);
+        var days = new StripeDailyAggregator().AggregateByDay(items);
+        var newCursor = txns.Count > 0 ? txns[0].Id : stripe.LastSyncCursor;
 
         var payouts = await _client.FetchPayoutsAsync(stripe.ApiKey!, ct);
-        var already = new HashSet<string>(stripe.ImportedPayouts.Select(p => p.StripePayoutId), StringComparer.Ordinal);
-        var mapper = new StripeActivityMapper();
-        var aggregator = new StripePayoutAggregator();
+        var known = new HashSet<string>(stripe.ImportedPayouts.Select(p => p.StripePayoutId), StringComparer.Ordinal);
+        var newPayouts = payouts
+            .Where(p => !known.Contains(p.Id) && p.Status is not ("canceled" or "failed"))
+            .ToList();
 
-        var fresh = new List<StripePayoutBatch>();
-        foreach (var p in payouts)
-        {
-            if (already.Contains(p.Id)) continue;
-            if (p.Status is "canceled" or "failed") continue; // a payout that never lands shouldn't post
-
-            var txns = await _client.FetchPayoutTransactionsAsync(stripe.ApiKey!, p.Id, ct);
-            var items = mapper.Map(txns);
-            fresh.AddRange(aggregator.Aggregate(items));
-        }
-
-        var totalRev = fresh.Sum(b => b.GrossRevenue);
-        var totalFees = fresh.Sum(b => b.Fees);
-        return new StripeSyncPreview(fresh, totalRev, totalFees);
+        return new StripeSyncPreview(days, days.Sum(d => d.GrossRevenue), days.Sum(d => d.Fees), newCursor, newPayouts);
     }
 
     public StripeImportResult ImportPreview(CompanyData data, StripeSyncPreview preview)
     {
-        var result = new StripeImportService().Import(data, preview.NewBatches);
-        if (result.PayoutsImported > 0)
-            data.Settings.Integrations.Stripe.LastSyncTime = DateTime.Now;
+        var stripe = data.Settings.Integrations.Stripe;
+        var result = new StripeImportService().Import(data, preview.Days);
+
+        // Remember each new payout so a later bank import auto-ignores the matching deposit.
+        foreach (var p in preview.NewPayouts)
+        {
+            stripe.ImportedPayouts.Add(new StripePayoutRecord
+            {
+                StripePayoutId = p.Id,
+                AmountCents = Math.Abs(p.AmountCents),
+                Date = DateTimeOffset.FromUnixTimeSeconds(p.DateUnix).LocalDateTime
+            });
+        }
+
+        if (!string.IsNullOrEmpty(preview.NewCursor))
+            stripe.LastSyncCursor = preview.NewCursor;
+
+        if (preview.HasActivity)
+        {
+            stripe.LastSyncTime = DateTime.Now;
+            data.MarkAsModified();
+        }
+
         return result;
     }
 
-    public int PendingCount(StripeSyncPreview preview) => preview.NewBatches.Count;
+    private static StripeSyncPreview Empty()
+        => new(Array.Empty<StripeDailyBatch>(), 0m, 0m, null, Array.Empty<StripePayoutSummary>());
 }

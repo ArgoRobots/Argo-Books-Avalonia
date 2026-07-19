@@ -7,8 +7,8 @@ namespace ArgoBooks.Core.Services.Integrations;
 /// <summary>Result of validating a pasted Stripe key.</summary>
 public record StripeValidationResult(bool Ok, string? AccountLabel, string? ErrorMessage);
 
-/// <summary>A Stripe payout (the net deposit that lands in the bank).</summary>
-public record StripePayoutSummary(string Id, long AmountCents, long CreatedUnix, string Status);
+/// <summary>A Stripe payout (the net deposit that lands in the bank). DateUnix is the bank arrival date.</summary>
+public record StripePayoutSummary(string Id, long AmountCents, long DateUnix, string Status);
 
 /// <summary>
 /// Minimal Stripe REST client. Validates a key by reading balance transactions
@@ -70,26 +70,24 @@ public class StripeApiClient
     private static string? ModeLabel(string key) =>
         key.Contains("_test_") ? "Test mode" : key.Contains("_live_") ? "Live account" : null;
 
-    public async Task<IReadOnlyList<StripeBalanceTransaction>> FetchBalanceTransactionsSinceAsync(
-        string apiKey, string? afterCursor, CancellationToken ct = default)
+    /// <summary>
+    /// Fetches balance transactions newest-first, stopping when it reaches the watermark id (the
+    /// newest transaction seen at the last sync). Returns the new transactions, newest first, so
+    /// incremental sync stays exact without remembering a growing set of ids.
+    /// </summary>
+    public async Task<IReadOnlyList<StripeBalanceTransaction>> FetchBalanceTransactionsUntilAsync(
+        string apiKey, string? watermarkId, CancellationToken ct = default)
     {
         var results = new List<StripeBalanceTransaction>();
-        string? cursor = afterCursor;
+        string? after = null;
 
         for (var page = 0; page < MaxPages; page++)
         {
             var url = $"{BalanceTxUrl}?limit=100";
-            if (!string.IsNullOrEmpty(cursor))
-                url += $"&starting_after={Uri.EscapeDataString(cursor)}";
+            if (!string.IsNullOrEmpty(after))
+                url += $"&starting_after={Uri.EscapeDataString(after)}";
 
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
-
-            using var resp = await _http.SendAsync(req, ct);
-            resp.EnsureSuccessStatusCode();
-            var body = await resp.Content.ReadAsStringAsync(ct);
-
-            using var doc = JsonDocument.Parse(body);
+            using var doc = await GetJsonAsync(apiKey, url, ct);
             var root = doc.RootElement;
 
             var pageCount = 0;
@@ -98,18 +96,18 @@ public class StripeApiClient
             {
                 foreach (var el in data.EnumerateArray())
                 {
-                    var tx = ParseTransaction(el);
-                    results.Add(tx);
-                    lastId = tx.Id;
+                    var id = PropStr(el, "id");
+                    if (!string.IsNullOrEmpty(watermarkId) && id == watermarkId)
+                        return results; // reached the last-synced watermark
+                    results.Add(ParseTransaction(el));
+                    lastId = id;
                     pageCount++;
                 }
             }
 
-            var hasMore = root.TryGetProperty("has_more", out var hm)
-                          && hm.ValueKind == JsonValueKind.True;
-            if (!hasMore || pageCount == 0 || lastId == null)
-                break;
-            cursor = lastId;
+            var hasMore = root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True;
+            if (!hasMore || pageCount == 0 || lastId == null) break;
+            after = lastId;
         }
 
         return results;
@@ -146,7 +144,8 @@ public class StripeApiClient
 
     /// <summary>
     /// Lists the account's payouts (newest first). A payout is the net deposit that lands in the
-    /// bank; its constituent charges/fees are fetched separately via <see cref="FetchPayoutTransactionsAsync"/>.
+    /// bank; remembered so a later bank import can auto-ignore the matching deposit (works for
+    /// manual and automatic payouts, unlike filtering balance transactions by payout).
     /// </summary>
     public async Task<IReadOnlyList<StripePayoutSummary>> FetchPayoutsAsync(string apiKey, CancellationToken ct = default)
     {
@@ -170,50 +169,11 @@ public class StripeApiClient
                 {
                     var id = PropStr(el, "id");
                     if (string.IsNullOrEmpty(id)) continue;
-                    results.Add(new StripePayoutSummary(id, PropNum(el, "amount"), PropNum(el, "created"), PropStr(el, "status")));
+                    // arrival_date is when the deposit lands in the bank (best for matching); fall back to created.
+                    var dateUnix = PropNum(el, "arrival_date");
+                    if (dateUnix == 0) dateUnix = PropNum(el, "created");
+                    results.Add(new StripePayoutSummary(id, PropNum(el, "amount"), dateUnix, PropStr(el, "status")));
                     lastId = id;
-                    count++;
-                }
-            }
-
-            var hasMore = root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True;
-            if (!hasMore || count == 0 || lastId == null) break;
-            after = lastId;
-        }
-
-        return results;
-    }
-
-    /// <summary>
-    /// Fetches the balance transactions that make up a single payout (charges, fees, refunds, and the
-    /// payout itself), using Stripe's <c>?payout=</c> filter. Stripe does not put a payout id on a
-    /// balance transaction, so the payout id is stamped onto each returned item here.
-    /// </summary>
-    public async Task<IReadOnlyList<StripeBalanceTransaction>> FetchPayoutTransactionsAsync(
-        string apiKey, string payoutId, CancellationToken ct = default)
-    {
-        var results = new List<StripeBalanceTransaction>();
-        string? after = null;
-
-        for (var page = 0; page < MaxPages; page++)
-        {
-            var url = $"{BalanceTxUrl}?limit=100&payout={Uri.EscapeDataString(payoutId)}";
-            if (!string.IsNullOrEmpty(after))
-                url += $"&starting_after={Uri.EscapeDataString(after)}";
-
-            using var doc = await GetJsonAsync(apiKey, url, ct);
-            var root = doc.RootElement;
-
-            var count = 0;
-            string? lastId = null;
-            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var el in data.EnumerateArray())
-                {
-                    // Stamp the payout id (the balance transaction itself doesn't carry it).
-                    var tx = ParseTransaction(el) with { PayoutId = payoutId };
-                    results.Add(tx);
-                    lastId = tx.Id;
                     count++;
                 }
             }
