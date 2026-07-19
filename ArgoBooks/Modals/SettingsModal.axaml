@@ -1103,7 +1103,7 @@
                                                  PlaceholderText="rk_live_..."
                                                  TextWrapping="Wrap"
                                                  AcceptsReturn="False"
-                                                 Height="52"
+                                                 MinHeight="64" Height="64"
                                                  VerticalContentAlignment="Top" />
 
                                         <TextBlock Text="{Binding StripeIntegrationError}" Foreground="#dc2626" FontSize="12"
