@@ -2,6 +2,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services.Integrations;
@@ -146,6 +147,66 @@ public class StripeDetailImporter
         data.Products.Add(product);
         _productCache[name] = product.Id;
         return product.Id;
+    }
+
+    /// <summary>
+    /// Marks refunded charges as returns against the original imported sale. Falls back
+    /// to a "Stripe refund" expense when the charge predates the integration and has no
+    /// matching Revenue.
+    /// </summary>
+    public int ApplyRefunds(CompanyData data, IReadOnlyList<StripeChargeDetail> charges)
+    {
+        var made = 0;
+        foreach (var ch in charges)
+        {
+            if (ch.AmountRefundedCents <= 0) continue;
+            var amount = ch.AmountRefundedCents / 100m;
+            var currency = string.IsNullOrWhiteSpace(ch.Currency) ? "USD" : ch.Currency.ToUpperInvariant();
+
+            var rev = data.Revenues.FirstOrDefault(r => r.ReferenceNumber == ch.ChargeId);
+            if (rev != null)
+            {
+                if (data.Returns.Any(rt => rt.OriginalTransactionId == rev.Id)) continue; // already recorded
+
+                data.IdCounters.Return++;
+                data.Returns.Add(new Return
+                {
+                    Id = $"RET-{data.IdCounters.Return:D3}",
+                    OriginalTransactionId = rev.Id,
+                    ReturnType = "Customer",
+                    CustomerId = rev.CustomerId,
+                    ReturnDate = DateTime.Now,
+                    RefundAmount = amount,
+                    Status = ReturnStatus.Completed
+                });
+                made++;
+            }
+            else
+            {
+                // Fallback: charge predates the integration, no matching sale to return against.
+                data.IdCounters.Expense++;
+                var exp = new Expense
+                {
+                    Id = $"PUR-{DateTime.Now:yyyy}-{data.IdCounters.Expense:D5}",
+                    Date = DateTime.Now,
+                    Description = "Stripe refund",
+                    Quantity = 1,
+                    UnitPrice = amount,
+                    Amount = amount,
+                    Total = amount,
+                    ReferenceNumber = ch.ChargeId,
+                    Notes = "Imported from Stripe",
+                    OriginalCurrency = currency
+                };
+                exp.TotalUSD = exp.Total;
+                exp.UnitPriceUSD = exp.UnitPrice;
+                data.Expenses.Add(exp);
+                made++;
+            }
+        }
+
+        if (made > 0) data.MarkAsModified();
+        return made;
     }
 
     private string ResolveStripeCategory(CompanyData data)
