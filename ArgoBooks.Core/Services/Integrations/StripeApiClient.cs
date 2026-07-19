@@ -7,6 +7,9 @@ namespace ArgoBooks.Core.Services.Integrations;
 /// <summary>Result of validating a pasted Stripe key.</summary>
 public record StripeValidationResult(bool Ok, string? AccountLabel, string? ErrorMessage);
 
+/// <summary>A Stripe payout (the net deposit that lands in the bank).</summary>
+public record StripePayoutSummary(string Id, long AmountCents, long CreatedUnix, string Status);
+
 /// <summary>
 /// Minimal Stripe REST client. Validates a key by reading balance transactions
 /// (the same data the sync uses) and fetches balance transactions for import.
@@ -14,6 +17,7 @@ public record StripeValidationResult(bool Ok, string? AccountLabel, string? Erro
 public class StripeApiClient
 {
     private const string BalanceTxUrl = "https://api.stripe.com/v1/balance_transactions";
+    private const string PayoutsUrl = "https://api.stripe.com/v1/payouts";
     private const int MaxPages = 20;
     private readonly HttpClient _http;
 
@@ -139,4 +143,102 @@ public class StripeApiClient
             Description: StrOrNull(el, "description"),
             PayoutId: PayoutId(el));
     }
+
+    /// <summary>
+    /// Lists the account's payouts (newest first). A payout is the net deposit that lands in the
+    /// bank; its constituent charges/fees are fetched separately via <see cref="FetchPayoutTransactionsAsync"/>.
+    /// </summary>
+    public async Task<IReadOnlyList<StripePayoutSummary>> FetchPayoutsAsync(string apiKey, CancellationToken ct = default)
+    {
+        var results = new List<StripePayoutSummary>();
+        string? after = null;
+
+        for (var page = 0; page < MaxPages; page++)
+        {
+            var url = $"{PayoutsUrl}?limit=100";
+            if (!string.IsNullOrEmpty(after))
+                url += $"&starting_after={Uri.EscapeDataString(after)}";
+
+            using var doc = await GetJsonAsync(apiKey, url, ct);
+            var root = doc.RootElement;
+
+            var count = 0;
+            string? lastId = null;
+            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in data.EnumerateArray())
+                {
+                    var id = PropStr(el, "id");
+                    if (string.IsNullOrEmpty(id)) continue;
+                    results.Add(new StripePayoutSummary(id, PropNum(el, "amount"), PropNum(el, "created"), PropStr(el, "status")));
+                    lastId = id;
+                    count++;
+                }
+            }
+
+            var hasMore = root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True;
+            if (!hasMore || count == 0 || lastId == null) break;
+            after = lastId;
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Fetches the balance transactions that make up a single payout (charges, fees, refunds, and the
+    /// payout itself), using Stripe's <c>?payout=</c> filter. Stripe does not put a payout id on a
+    /// balance transaction, so the payout id is stamped onto each returned item here.
+    /// </summary>
+    public async Task<IReadOnlyList<StripeBalanceTransaction>> FetchPayoutTransactionsAsync(
+        string apiKey, string payoutId, CancellationToken ct = default)
+    {
+        var results = new List<StripeBalanceTransaction>();
+        string? after = null;
+
+        for (var page = 0; page < MaxPages; page++)
+        {
+            var url = $"{BalanceTxUrl}?limit=100&payout={Uri.EscapeDataString(payoutId)}";
+            if (!string.IsNullOrEmpty(after))
+                url += $"&starting_after={Uri.EscapeDataString(after)}";
+
+            using var doc = await GetJsonAsync(apiKey, url, ct);
+            var root = doc.RootElement;
+
+            var count = 0;
+            string? lastId = null;
+            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in data.EnumerateArray())
+                {
+                    // Stamp the payout id (the balance transaction itself doesn't carry it).
+                    var tx = ParseTransaction(el) with { PayoutId = payoutId };
+                    results.Add(tx);
+                    lastId = tx.Id;
+                    count++;
+                }
+            }
+
+            var hasMore = root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True;
+            if (!hasMore || count == 0 || lastId == null) break;
+            after = lastId;
+        }
+
+        return results;
+    }
+
+    private async Task<JsonDocument> GetJsonAsync(string apiKey, string url, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
+        using var resp = await _http.SendAsync(req, ct);
+        resp.EnsureSuccessStatusCode();
+        var body = await resp.Content.ReadAsStringAsync(ct);
+        return JsonDocument.Parse(body);
+    }
+
+    private static string PropStr(JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : "";
+
+    private static long PropNum(JsonElement e, string name) =>
+        e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt64() : 0L;
 }

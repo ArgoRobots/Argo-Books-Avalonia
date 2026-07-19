@@ -25,17 +25,19 @@ public class SettingsStripeIntegrationTests
         var vm = new SettingsModalViewModel();
         vm.StripeKeyInput = "rk_test_abc";
         var target = new StripeIntegrationSettings();
+        // A scoped restricted key validates against balance_transactions (returns a list);
+        // the label is derived from the key's test/live mode.
         var client = new StripeApiClient(new HttpClient(
-            new StubHandler(HttpStatusCode.OK, "{\"id\":\"acct_1\",\"business_profile\":{\"name\":\"Acme Inc\"}}")));
+            new StubHandler(HttpStatusCode.OK, "{\"object\":\"list\",\"data\":[]}")));
 
         var connected = await vm.TryConnectStripeAsync(client, target);
 
         Assert.True(connected);
         Assert.True(target.Connected);
         Assert.Equal("rk_test_abc", target.ApiKey);
-        Assert.Equal("Acme Inc", target.AccountLabel);
+        Assert.Equal("Test mode", target.AccountLabel);
         Assert.True(vm.StripeIntegrationConnected);
-        Assert.Equal("Acme Inc", vm.StripeIntegrationAccountLabel);
+        Assert.Equal("Test mode", vm.StripeIntegrationAccountLabel);
         Assert.Null(vm.StripeIntegrationError);
     }
 

@@ -8,24 +8,34 @@ namespace ArgoBooks.Tests.Services;
 
 public class StripeSyncServiceTests
 {
-    private sealed class StubHandler : HttpMessageHandler
+    // Routes by URL: the payouts list, then the per-payout balance transactions.
+    private sealed class RoutingHandler : HttpMessageHandler
     {
-        private readonly string _body;
-        public StubHandler(string body) => _body = body;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
-            => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            { Content = new StringContent(_body, Encoding.UTF8, "application/json") });
+        {
+            var url = request.RequestUri!.ToString();
+            string body;
+            if (url.Contains("/v1/payouts"))
+            {
+                // One paid payout po_1, net 48.25.
+                body = "{\"has_more\":false,\"data\":[" +
+                       "{\"id\":\"po_1\",\"amount\":4825,\"created\":1700000500,\"status\":\"paid\"}" +
+                       "]}";
+            }
+            else // balance_transactions?payout=po_1: a charge (gross 50.00, fee 1.75) and the payout txn.
+            {
+                body = "{\"has_more\":false,\"data\":[" +
+                       "{\"id\":\"txn_c\",\"type\":\"charge\",\"amount\":5000,\"fee\":175,\"net\":4825,\"created\":1700000000,\"currency\":\"usd\",\"description\":\"Sub\"}," +
+                       "{\"id\":\"txn_p\",\"type\":\"payout\",\"amount\":-4825,\"fee\":0,\"net\":-4825,\"created\":1700000500,\"currency\":\"usd\",\"description\":null}" +
+                       "]}";
+            }
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+        }
     }
 
-    // One payout po_1 with a charge (gross 50.00, fee 1.75) and the payout txn (net 48.25).
-    private const string Body =
-        "{\"has_more\":false,\"data\":[" +
-        "{\"id\":\"txn_c\",\"type\":\"charge\",\"amount\":5000,\"fee\":175,\"net\":4825,\"created\":1700000000,\"currency\":\"usd\",\"description\":\"Sub\",\"payout\":\"po_1\"}," +
-        "{\"id\":\"txn_p\",\"type\":\"payout\",\"amount\":-4825,\"fee\":0,\"net\":-4825,\"created\":1700000500,\"currency\":\"usd\",\"description\":null,\"payout\":\"po_1\"}" +
-        "]}";
-
     private static StripeSyncService MakeService()
-        => new StripeSyncService(new StripeApiClient(new HttpClient(new StubHandler(Body))));
+        => new StripeSyncService(new StripeApiClient(new HttpClient(new RoutingHandler())));
 
     private static CompanyData ConnectedData()
     {
