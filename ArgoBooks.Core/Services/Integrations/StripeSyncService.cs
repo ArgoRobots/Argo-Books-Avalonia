@@ -34,8 +34,17 @@ public class StripeSyncService
         if (string.IsNullOrWhiteSpace(stripe.ApiKey))
             return Empty();
 
-        var charges = await _client.FetchChargesUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
-        var newCursor = charges.Count > 0 ? charges[0].ChargeId : stripe.LastSyncCursor;
+        var rawCharges = await _client.FetchChargesUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
+        var newCursor = rawCharges.Count > 0 ? rawCharges[0].ChargeId : stripe.LastSyncCursor;
+
+        // A charge's own expanded balance_transaction can silently yield a zero fee, so fill fees
+        // from the balance-transactions list (the reliable source), keyed by charge id.
+        var feeMap = rawCharges.Count > 0
+            ? await _client.FetchChargeFeesAsync(stripe.ApiKey!, ct)
+            : (IReadOnlyDictionary<string, long>)new Dictionary<string, long>();
+        var charges = rawCharges
+            .Select(c => feeMap.TryGetValue(c.ChargeId, out var fee) && fee > c.FeeCents ? c with { FeeCents = fee } : c)
+            .ToList();
 
         var payouts = await _client.FetchPayoutsAsync(stripe.ApiKey!, ct);
         var known = new HashSet<string>(stripe.ImportedPayouts.Select(p => p.StripePayoutId), StringComparer.Ordinal);

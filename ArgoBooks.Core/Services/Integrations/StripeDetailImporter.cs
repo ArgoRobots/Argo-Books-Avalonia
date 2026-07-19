@@ -84,13 +84,14 @@ public class StripeDetailImporter
                 {
                     Id = $"PUR-{date:yyyy}-{data.IdCounters.Expense:D5}",
                     Date = date,
-                    Description = "Stripe fees",
+                    Description = "Stripe processing fee",
                     Quantity = 1,
                     UnitPrice = feeAmount,
                     Amount = feeAmount,
                     Total = feeAmount,
+                    // Same reference as the sale's Revenue, so the fee is linked to the charge it came from.
                     ReferenceNumber = ch.ChargeId,
-                    Notes = "Imported from Stripe",
+                    Notes = $"Processing fee for Stripe sale {ch.ChargeId}",
                     OriginalCurrency = currency
                 };
                 fee.TotalUSD = fee.Total;

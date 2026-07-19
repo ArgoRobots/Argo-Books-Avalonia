@@ -22,12 +22,20 @@ public class StripeSyncServiceTests
                        "{\"id\":\"po_1\",\"amount\":4825,\"arrival_date\":1700000900,\"created\":1700000800,\"status\":\"paid\"}" +
                        "]}";
             }
-            else // /v1/charges (newest first): one succeeded charge, expanded customer/invoice/balance_transaction.
+            else if (url.Contains("/v1/balance_transactions"))
+            {
+                // The authoritative fee for ch_1 (source = charge id), $1.75.
+                body = "{\"has_more\":false,\"data\":[" +
+                       "{\"id\":\"txn_1\",\"type\":\"charge\",\"source\":\"ch_1\",\"fee\":175}" +
+                       "]}";
+            }
+            else // /v1/charges: one succeeded charge. Its inline balance_transaction fee is 0 (the
+                 // unexpanded/bug case) so the test proves the fee is filled from the list above.
             {
                 body = "{\"has_more\":false,\"data\":[{" +
                        "\"id\":\"ch_1\",\"status\":\"succeeded\",\"paid\":true,\"amount\":5000,\"amount_refunded\":0,\"currency\":\"usd\",\"created\":1700000000," +
                        "\"customer\":{\"id\":\"cus_1\",\"name\":\"Jane Doe\",\"email\":\"jane@x.com\"}," +
-                       "\"balance_transaction\":{\"id\":\"txn_1\",\"fee\":175,\"net\":4825}," +
+                       "\"balance_transaction\":{\"id\":\"txn_1\",\"fee\":0,\"net\":5000}," +
                        "\"invoice\":{\"id\":\"in_1\",\"tax\":0,\"lines\":{\"data\":[{\"description\":\"Premium Plan\"}]}}" +
                        "}]}";
             }
@@ -75,6 +83,13 @@ public class StripeSyncServiceTests
         Assert.NotEmpty(data.Revenues[0].CustomerId);
         Assert.Single(data.Customers);
         Assert.Equal("Jane Doe", data.Customers[0].Name);
+
+        // The processing fee (filled from the balance-transactions list, not the zero inline value)
+        // is posted as its own expense linked to the sale.
+        var feeExpense = Assert.Single(data.Expenses);
+        Assert.Equal("Stripe processing fee", feeExpense.Description);
+        Assert.Equal(1.75m, feeExpense.Total);
+        Assert.Equal("ch_1", feeExpense.ReferenceNumber);
 
         var stripe = data.Settings.Integrations.Stripe;
         Assert.Single(stripe.ImportedPayouts);

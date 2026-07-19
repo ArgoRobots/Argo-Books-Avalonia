@@ -213,6 +213,48 @@ public class StripeApiClient
     private static string? NullableStr(JsonElement e, string name) =>
         e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
+    /// <summary>
+    /// Maps charge id -> processing-fee cents from the balance-transactions list. A charge's own
+    /// expanded balance_transaction can come back unexpanded (a bare id string) depending on the
+    /// key/settlement, silently yielding a zero fee; the balance-transactions list carries the fee
+    /// reliably (its 'source' is the charge id), so this is the authoritative fee source.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, long>> FetchChargeFeesAsync(string apiKey, CancellationToken ct = default)
+    {
+        var map = new Dictionary<string, long>(StringComparer.Ordinal);
+        string? after = null;
+
+        for (var page = 0; page < MaxPages; page++)
+        {
+            var url = $"{BalanceTxUrl}?limit=100&type=charge";
+            if (!string.IsNullOrEmpty(after))
+                url += $"&starting_after={Uri.EscapeDataString(after)}";
+
+            using var doc = await GetJsonAsync(apiKey, url, ct);
+            var root = doc.RootElement;
+
+            var count = 0;
+            string? lastId = null;
+            if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var el in data.EnumerateArray())
+                {
+                    lastId = PropStr(el, "id");
+                    count++;
+                    var source = PropStr(el, "source"); // the charge id this balance transaction is for
+                    if (!string.IsNullOrEmpty(source))
+                        map[source] = PropNum(el, "fee");
+                }
+            }
+
+            var hasMore = root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True;
+            if (!hasMore || count == 0 || lastId == null) break;
+            after = lastId;
+        }
+
+        return map;
+    }
+
     private async Task<JsonDocument> GetJsonAsync(string apiKey, string url, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
