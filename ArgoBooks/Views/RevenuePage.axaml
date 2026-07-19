@@ -85,7 +85,7 @@
                             IsVisible="{Binding StripeBannerVisible}">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <PathIcon Grid.Column="0"
-                                      Data="{x:Static icons:Icons.ImportData}"
+                                      Data="{x:Static icons:Icons.Download}"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource PrimaryBrush}"
                                       VerticalAlignment="Center"
