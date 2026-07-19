@@ -5,9 +5,11 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Integrations;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Integrations;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
@@ -1211,6 +1213,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         SquareEmail = settings.ConnectedAccounts.SquareEmail;
         CompanyEmail = App.CompanyManager?.CompanyData?.Settings.Company.Email;
 
+        LoadStripeIntegrationState();
+
         // Fetch fresh provider status from the server in the background
         _ = RefreshProviderStatusAsync();
     }
@@ -1350,6 +1354,185 @@ public partial class SettingsModalViewModel : ViewModelBase
         settings.ConnectedAccounts.SquareConnected = SquareConnected;
         settings.ConnectedAccounts.SquareEmail = SquareEmail;
     }
+
+    #endregion
+
+    #region Stripe data integration
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectStripeIntegration))]
+    private string _stripeKeyInput = string.Empty;
+
+    [ObservableProperty]
+    private bool _stripeIntegrationConnected;
+
+    [ObservableProperty]
+    private string? _stripeIntegrationAccountLabel;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectStripeIntegration))]
+    private bool _isValidatingStripe;
+
+    [ObservableProperty]
+    private string? _stripeIntegrationError;
+
+    [ObservableProperty]
+    private bool _isSyncingStripe;
+
+    [ObservableProperty]
+    private string? _stripeLastSyncedDisplay;
+
+    public bool CanConnectStripeIntegration
+        => !IsValidatingStripe && !string.IsNullOrWhiteSpace(StripeKeyInput);
+
+    /// <summary>
+    /// Testable core: validates the pasted key and, on success, writes it to
+    /// <paramref name="target"/> and mirrors connection state onto the VM.
+    /// </summary>
+    public async Task<bool> TryConnectStripeAsync(StripeApiClient client, StripeIntegrationSettings target)
+    {
+        IsValidatingStripe = true;
+        StripeIntegrationError = null;
+        var key = StripeKeyInput.Trim();
+        try
+        {
+            var result = await client.ValidateKeyAsync(key);
+            if (!result.Ok)
+            {
+                StripeIntegrationError = result.ErrorMessage;
+                return false;
+            }
+
+            target.ApiKey = key;
+            target.Connected = true;
+            target.AccountLabel = result.AccountLabel;
+
+            StripeIntegrationConnected = true;
+            StripeIntegrationAccountLabel = result.AccountLabel;
+            StripeKeyInput = string.Empty; // don't keep the raw key in the input box
+            return true;
+        }
+        finally
+        {
+            IsValidatingStripe = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConnectStripeIntegrationAsync()
+    {
+        if (!CanConnectStripeIntegration) return;
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        if (stripe == null || App.SharedHttpClient == null) return;
+
+        var client = new StripeApiClient(App.SharedHttpClient);
+        if (await TryConnectStripeAsync(client, stripe))
+            App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void DisconnectStripeIntegration()
+    {
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        if (stripe == null) return;
+
+        stripe.ApiKey = null;
+        stripe.Connected = false;
+        stripe.AccountLabel = null;
+        stripe.LastSyncCursor = null;
+        stripe.LastSyncTime = null;
+
+        StripeIntegrationConnected = false;
+        StripeIntegrationAccountLabel = null;
+        StripeIntegrationError = null;
+        StripeLastSyncedDisplay = null;
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void OpenStripeGuide()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://argorobots.com/integrations/stripe",
+                UseShellExecute = true
+            });
+        }
+        catch { /* best-effort: opening the browser is non-critical */ }
+    }
+
+    /// <summary>Loads Stripe integration display state from company settings. Call from the settings-load path.</summary>
+    private void LoadStripeIntegrationState()
+    {
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        StripeIntegrationConnected = stripe?.Connected ?? false;
+        StripeIntegrationAccountLabel = stripe?.AccountLabel;
+        StripeKeyInput = string.Empty;
+        StripeIntegrationError = null;
+        if (stripe != null)
+            RefreshStripeLastSynced(stripe);
+    }
+
+    [RelayCommand]
+    private async Task SyncStripeIntegrationAsync()
+    {
+        if (IsSyncingStripe) return;
+        var data = App.CompanyManager?.CompanyData;
+        var stripe = data?.Settings.Integrations.Stripe;
+        if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null) return;
+
+        IsSyncingStripe = true;
+        try
+        {
+            var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            if (!preview.HasActivity)
+            {
+                App.AddNotification("Stripe".Translate(), "You're already up to date.".Translate());
+                return;
+            }
+
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from Stripe".Translate(),
+                Message = "Import your Stripe activity: {0} in sales and {1} in fees?"
+                    .TranslateFormat(preview.TotalRevenue.ToString("C2"), preview.TotalFees.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            var creation = svc.ImportPreview(data, preview);
+            if (creation.AnyCreated)
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from Stripe".Translate(),
+                    () => { creation.Undo(data); App.CompanyManager?.MarkAsChanged(); },
+                    () => { creation.Redo(data); App.CompanyManager?.MarkAsChanged(); }));
+            App.CompanyManager?.MarkAsChanged();
+            RefreshStripeLastSynced(stripe);
+            App.AddNotification("Stripe".Translate(),
+                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
+                NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            // Never let a Stripe/network error crash the app; surface it instead.
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Stripe sync failed");
+            App.AddNotification("Stripe".Translate(),
+                "Sync failed: {0}".TranslateFormat(ex.Message),
+                NotificationType.Warning);
+        }
+        finally
+        {
+            IsSyncingStripe = false;
+        }
+    }
+
+    private void RefreshStripeLastSynced(StripeIntegrationSettings stripe)
+        => StripeLastSyncedDisplay = stripe.LastSyncTime is { } t ? "Last synced {0}".TranslateFormat(t.ToString("MMM d, yyyy h:mm tt")) : null;
 
     #endregion
 
