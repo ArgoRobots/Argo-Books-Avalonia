@@ -211,7 +211,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         InitializeColumnVisibility();
         LoadRevenue();
-        _ = CheckStripePendingAsync();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -773,9 +772,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     partial void OnStripePendingCountChanged(int value) => OnPropertyChanged(nameof(StripeBannerText));
 
+    private int _lastNotifiedStripePending;
+
     /// <summary>
     /// Checks whether new Stripe activity is waiting to be imported and shows the Revenue-page
-    /// banner if so. Called from the constructor and each time the user navigates to this page.
+    /// banner if so. Called each time the user navigates to this page.
     /// Network errors are swallowed: a Stripe outage must never break loading the Revenue page.
     /// </summary>
     private async Task CheckStripePendingAsync()
@@ -789,19 +790,23 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         {
             var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
             var preview = await svc.PreviewAsync(data);
-            var wasVisible = StripeBannerVisible;
             var count = preview.NewBatches.Count;
 
             StripePendingCount = count;
             StripeBannerVisible = count > 0;
 
-            if (count > 0 && !wasVisible)
+            if (count > 0 && count != _lastNotifiedStripePending)
             {
+                _lastNotifiedStripePending = count;
                 App.AddNotification(
                     "Stripe".Translate(),
                     "{0} new transaction(s) ready to sync.".TranslateFormat(count),
                     NotificationType.Info,
                     () => App.NavigationService?.NavigateTo(PageNames.Revenue));
+            }
+            else if (count == 0)
+            {
+                _lastNotifiedStripePending = 0;
             }
         }
         catch
