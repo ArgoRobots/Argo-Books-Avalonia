@@ -1376,6 +1376,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _stripeIntegrationError;
 
+    [ObservableProperty]
+    private bool _isSyncingStripe;
+
+    [ObservableProperty]
+    private string? _stripeLastSyncedDisplay;
+
     public bool CanConnectStripeIntegration
         => !IsValidatingStripe && !string.IsNullOrWhiteSpace(StripeKeyInput);
 
@@ -1439,6 +1445,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         StripeIntegrationConnected = false;
         StripeIntegrationAccountLabel = null;
         StripeIntegrationError = null;
+        StripeLastSyncedDisplay = null;
         App.CompanyManager?.MarkAsChanged();
     }
 
@@ -1450,7 +1457,54 @@ public partial class SettingsModalViewModel : ViewModelBase
         StripeIntegrationAccountLabel = stripe?.AccountLabel;
         StripeKeyInput = string.Empty;
         StripeIntegrationError = null;
+        if (stripe != null)
+            RefreshStripeLastSynced(stripe);
     }
+
+    [RelayCommand]
+    private async Task SyncStripeIntegrationAsync()
+    {
+        if (IsSyncingStripe) return;
+        var data = App.CompanyManager?.CompanyData;
+        var stripe = data?.Settings.Integrations.Stripe;
+        if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null) return;
+
+        IsSyncingStripe = true;
+        try
+        {
+            var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            if (preview.NewBatches.Count == 0)
+            {
+                App.AddNotification("Stripe".Translate(), "You're already up to date.".Translate());
+                return;
+            }
+
+            var confirmed = App.ConfirmationDialog == null || await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from Stripe".Translate(),
+                Message = "Import {0} payout(s): {1} revenue and {2} in fees?"
+                    .TranslateFormat(preview.NewBatches.Count, preview.TotalRevenue.ToString("C2"), preview.TotalFees.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            var result = svc.ImportPreview(data, preview);
+            App.CompanyManager?.MarkAsChanged();
+            RefreshStripeLastSynced(stripe);
+            App.AddNotification("Stripe".Translate(),
+                "Imported {0} payout(s) from Stripe.".TranslateFormat(result.PayoutsImported),
+                NotificationType.Success);
+        }
+        finally
+        {
+            IsSyncingStripe = false;
+        }
+    }
+
+    private void RefreshStripeLastSynced(StripeIntegrationSettings stripe)
+        => StripeLastSyncedDisplay = stripe.LastSyncTime is { } t ? "Last synced {0}".TranslateFormat(t.ToString("MMM d, yyyy h:mm tt")) : null;
 
     #endregion
 

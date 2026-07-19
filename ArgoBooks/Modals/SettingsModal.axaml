@@ -1120,10 +1120,19 @@
                                                 <TextBlock Text="{Binding StripeIntegrationAccountLabel}" FontSize="13"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                             </StackPanel>
-                                            <Button Grid.Column="1" Classes="danger-outline-button"
-                                                    Content="{loc:Loc Disconnect}"
-                                                    Command="{Binding DisconnectStripeIntegrationCommand}"
-                                                    VerticalAlignment="Center" Padding="12,6" MinHeight="0" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding StripeLastSyncedDisplay}" FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           IsVisible="{Binding StripeLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                <Button Classes="primary-button" Content="{loc:Loc 'Sync now'}"
+                                                        Command="{Binding SyncStripeIntegrationCommand}"
+                                                        IsEnabled="{Binding !IsSyncingStripe}"
+                                                        Padding="12,6" MinHeight="0" />
+                                                <Button Classes="danger-outline-button" Content="{loc:Loc Disconnect}"
+                                                        Command="{Binding DisconnectStripeIntegrationCommand}"
+                                                        Padding="12,6" MinHeight="0" />
+                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                 </StackPanel>
