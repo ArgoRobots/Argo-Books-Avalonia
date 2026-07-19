@@ -73,6 +73,42 @@
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
 
+                <!-- Info Banners (Stripe ready-to-sync) -->
+                <table:ArgoTable.InfoBannerContent>
+                    <Border HorizontalAlignment="Center"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource PrimaryBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14,10"
+                            Margin="0,8,0,4"
+                            IsVisible="{Binding StripeBannerVisible}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <PathIcon Grid.Column="0"
+                                      Data="{x:Static icons:Icons.ImportData}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,10,0" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding StripeBannerText}"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="2"
+                                    Classes="primary-button"
+                                    Padding="10,4"
+                                    Content="{loc:Loc 'Sync now'}"
+                                    Command="{Binding SyncFromBannerCommand}"
+                                    Margin="8,0,6,0" />
+                            <Button Grid.Column="3"
+                                    Classes="secondary-button"
+                                    Padding="10,4"
+                                    Content="{loc:Loc Dismiss}"
+                                    Command="{Binding DismissStripeBannerCommand}" />
+                        </Grid>
+                    </Border>
+                </table:ArgoTable.InfoBannerContent>
+
                 <!-- Extra Buttons (Import menu) -->
                 <table:ArgoTable.ExtraButtonsContent>
                     <Button x:Name="ImportMenuButton"

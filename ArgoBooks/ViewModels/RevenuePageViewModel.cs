@@ -3,6 +3,8 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Integrations;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Helpers;
@@ -209,6 +211,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         InitializeColumnVisibility();
         LoadRevenue();
+        _ = CheckStripePendingAsync();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -299,11 +302,15 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == PageNames.Revenue && _needsRefresh)
+        if (e.PageName != PageNames.Revenue) return;
+
+        if (_needsRefresh)
         {
             _needsRefresh = false;
             LoadRevenue();
         }
+
+        _ = CheckStripePendingAsync();
     }
 
     private void OnRevenueSaved(object? sender, EventArgs e)
@@ -751,6 +758,105 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // The viewer renders all pages (PDFs) from the receipt's stored data.
         App.ReceiptViewerModal?.Show(revenue.ReceiptId, $"Receipt for {item.Id}");
     }
+
+    #endregion
+
+    #region Stripe sync banner
+
+    [ObservableProperty]
+    private bool _stripeBannerVisible;
+
+    [ObservableProperty]
+    private int _stripePendingCount;
+
+    public string StripeBannerText => "Stripe: {0} new transaction(s) ready to sync.".TranslateFormat(StripePendingCount);
+
+    partial void OnStripePendingCountChanged(int value) => OnPropertyChanged(nameof(StripeBannerText));
+
+    /// <summary>
+    /// Checks whether new Stripe activity is waiting to be imported and shows the Revenue-page
+    /// banner if so. Called from the constructor and each time the user navigates to this page.
+    /// Network errors are swallowed: a Stripe outage must never break loading the Revenue page.
+    /// </summary>
+    private async Task CheckStripePendingAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var stripe = data?.Settings.Integrations.Stripe;
+        if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null)
+            return;
+
+        try
+        {
+            var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            var wasVisible = StripeBannerVisible;
+            var count = preview.NewBatches.Count;
+
+            StripePendingCount = count;
+            StripeBannerVisible = count > 0;
+
+            if (count > 0 && !wasVisible)
+            {
+                App.AddNotification(
+                    "Stripe".Translate(),
+                    "{0} new transaction(s) ready to sync.".TranslateFormat(count),
+                    NotificationType.Info,
+                    () => App.NavigationService?.NavigateTo(PageNames.Revenue));
+            }
+        }
+        catch
+        {
+            // Stripe unreachable or key invalid: leave the banner hidden rather than
+            // surface an error on a page that isn't about Stripe connectivity.
+        }
+    }
+
+    [RelayCommand]
+    private async Task SyncFromBannerAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var stripe = data?.Settings.Integrations.Stripe;
+        if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null) return;
+
+        try
+        {
+            var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            if (preview.NewBatches.Count == 0)
+            {
+                App.AddNotification("Stripe".Translate(), "You're already up to date.".Translate());
+                await CheckStripePendingAsync();
+                return;
+            }
+
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from Stripe".Translate(),
+                Message = "Import {0} payout(s): {1} revenue and {2} in fees?"
+                    .TranslateFormat(preview.NewBatches.Count, preview.TotalRevenue.ToString("C2"), preview.TotalFees.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            var result = svc.ImportPreview(data, preview);
+            App.CompanyManager?.MarkAsChanged();
+            LoadRevenue();
+            App.AddNotification("Stripe".Translate(),
+                "Imported {0} payout(s) from Stripe.".TranslateFormat(result.PayoutsImported),
+                NotificationType.Success);
+
+            await CheckStripePendingAsync();
+        }
+        catch
+        {
+            // Leave the banner as-is; the user can retry the sync manually.
+        }
+    }
+
+    [RelayCommand]
+    private void DismissStripeBanner() => StripeBannerVisible = false;
 
     #endregion
 }
