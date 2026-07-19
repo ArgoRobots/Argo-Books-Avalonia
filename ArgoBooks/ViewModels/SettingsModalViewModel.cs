@@ -1449,6 +1449,20 @@ public partial class SettingsModalViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
     }
 
+    [RelayCommand]
+    private void OpenStripeGuide()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://argorobots.com/integrations/stripe",
+                UseShellExecute = true
+            });
+        }
+        catch { /* best-effort: opening the browser is non-critical */ }
+    }
+
     /// <summary>Loads Stripe integration display state from company settings. Call from the settings-load path.</summary>
     private void LoadStripeIntegrationState()
     {

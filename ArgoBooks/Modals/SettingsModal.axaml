@@ -1055,7 +1055,7 @@
 
                     <!-- Integrations Tab -->
                     <TabItem Header="{loc:Loc 'Integrations'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
                                 <!-- Stripe integration card -->
@@ -1087,9 +1087,14 @@
                                                 <TextBlock TextWrapping="Wrap" FontSize="12"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            Text="{loc:Loc '4. Create the key, copy it, and paste it below.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0"
-                                                           Text="{loc:Loc 'Full guide: argorobots.com/integrations/stripe'}"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{loc:Loc 'Full guide: '}" FontSize="12"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <Button Classes="link" Content="argorobots.com/integrations/stripe"
+                                                            FontSize="12" Padding="0" MinHeight="0"
+                                                            Command="{Binding OpenStripeGuideCommand}" />
+                                                </StackPanel>
                                             </StackPanel>
                                         </Expander>
 
