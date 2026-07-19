@@ -174,7 +174,7 @@ public class StripeDetailImporter
                     Id = $"RET-{data.IdCounters.Return:D3}",
                     OriginalTransactionId = rev.Id,
                     ReturnType = "Customer",
-                    CustomerId = rev.CustomerId,
+                    CustomerId = rev.CustomerId ?? string.Empty,
                     ReturnDate = DateTime.Now,
                     RefundAmount = amount,
                     Status = ReturnStatus.Completed
@@ -184,6 +184,9 @@ public class StripeDetailImporter
             else
             {
                 // Fallback: charge predates the integration, no matching sale to return against.
+                if (data.Expenses.Any(e => e.ReferenceNumber == ch.ChargeId && e.Description == "Stripe refund"))
+                    continue;
+
                 data.IdCounters.Expense++;
                 var exp = new Expense
                 {
