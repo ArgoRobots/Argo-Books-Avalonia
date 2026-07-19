@@ -1387,16 +1387,17 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         IsValidatingStripe = true;
         StripeIntegrationError = null;
+        var key = StripeKeyInput.Trim();
         try
         {
-            var result = await client.ValidateKeyAsync(StripeKeyInput);
+            var result = await client.ValidateKeyAsync(key);
             if (!result.Ok)
             {
                 StripeIntegrationError = result.ErrorMessage;
                 return false;
             }
 
-            target.ApiKey = StripeKeyInput.Trim();
+            target.ApiKey = key;
             target.Connected = true;
             target.AccountLabel = result.AccountLabel;
 
