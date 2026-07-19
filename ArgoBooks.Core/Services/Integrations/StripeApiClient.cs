@@ -231,9 +231,27 @@ public class StripeApiClient
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
         using var resp = await _http.SendAsync(req, ct);
-        resp.EnsureSuccessStatusCode();
         var body = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            // Surface Stripe's own error message instead of a bare status code.
+            var detail = ExtractStripeError(body) ?? resp.ReasonPhrase;
+            throw new HttpRequestException($"Stripe {(int)resp.StatusCode}: {detail}");
+        }
         return JsonDocument.Parse(body);
+    }
+
+    private static string? ExtractStripeError(string body)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("error", out var err) && err.ValueKind == JsonValueKind.Object
+                && err.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String)
+                return m.GetString();
+        }
+        catch (JsonException) { /* not JSON */ }
+        return null;
     }
 
     private static string PropStr(JsonElement e, string name) =>
