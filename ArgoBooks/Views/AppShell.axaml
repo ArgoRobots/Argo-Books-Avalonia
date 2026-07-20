@@ -123,20 +123,21 @@
 
         <!-- Notification Toast Popup -->
         <Border x:Name="NotificationToastBorder"
-                IsHitTestVisible="{Binding HeaderViewModel.ShowNotificationToast}"
-                Background="{Binding HeaderViewModel.ToastBackgroundBrush}"
-                BorderBrush="{Binding HeaderViewModel.ToastBorderBrush}"
+                DataContext="{Binding HeaderViewModel}"
+                IsHitTestVisible="{Binding ShowNotificationToast}"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Width="320"
+                ClipToBounds="True"
+                Width="340"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,64,20,0"
                 BoxShadow="0 4 16 0 #40000000"
-                Padding="12"
                 Opacity="0">
             <Border.RenderTransform>
-                <TranslateTransform X="340" />
+                <TranslateTransform X="360" />
             </Border.RenderTransform>
             <Border.Transitions>
                 <Transitions>
@@ -144,10 +145,41 @@
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut" />
                 </Transitions>
             </Border.Transitions>
-            <Grid ColumnDefinitions="*,Auto"
-                  DataContext="{Binding HeaderViewModel}">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <!-- Accent rail: the type color, confined to the left edge -->
+                <Border Grid.Column="0"
+                        Width="4"
+                        Background="{Binding ToastAccentBrush}" />
+
+                <!-- Type icon chip -->
+                <Border Grid.Column="1"
+                        Width="34" Height="34"
+                        CornerRadius="17"
+                        Margin="12,14,0,14"
+                        VerticalAlignment="Top"
+                        Background="{Binding ToastIconBgBrush}">
+                    <Panel>
+                        <PathIcon Data="{x:Static icons:Icons.Info}"
+                                  Width="17" Height="17"
+                                  Foreground="{Binding ToastAccentBrush}"
+                                  IsVisible="{Binding ToastType, Converter={x:Static vm:NotificationTypeConverters.IsInfo}}" />
+                        <PathIcon Data="{x:Static icons:Icons.CircleCheck}"
+                                  Width="17" Height="17"
+                                  Foreground="{Binding ToastAccentBrush}"
+                                  IsVisible="{Binding ToastType, Converter={x:Static vm:NotificationTypeConverters.IsSuccess}}" />
+                        <PathIcon Data="{x:Static icons:Icons.LostDamaged}"
+                                  Width="17" Height="17"
+                                  Foreground="{Binding ToastAccentBrush}"
+                                  IsVisible="{Binding ToastType, Converter={x:Static vm:NotificationTypeConverters.IsWarning}}" />
+                        <PathIcon Data="{x:Static icons:Icons.Settings}"
+                                  Width="17" Height="17"
+                                  Foreground="{Binding ToastAccentBrush}"
+                                  IsVisible="{Binding ToastType, Converter={x:Static vm:NotificationTypeConverters.IsSystem}}" />
+                    </Panel>
+                </Border>
+
                 <!-- Content -->
-                <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Center" Margin="12,14">
                     <TextBlock Text="{Binding ToastTitle}"
                                FontSize="13"
                                FontWeight="SemiBold"
@@ -161,7 +193,7 @@
                                TextTrimming="CharacterEllipsis" />
                 </StackPanel>
                 <!-- Close Button -->
-                <Button Grid.Column="1"
+                <Button Grid.Column="3"
                         Command="{Binding DismissNotificationToastCommand}"
                         Background="Transparent"
                         BorderThickness="0"
@@ -169,11 +201,11 @@
                         Padding="0"
                         Cursor="Hand"
                         VerticalAlignment="Top"
-                        Margin="8,0,0,0"
+                        Margin="4,10,8,0"
                         ToolTip.Tip="Dismiss">
                     <PathIcon Data="{x:Static icons:Icons.Close}"
                               Width="14" Height="14"
-                              Foreground="White" />
+                              Foreground="{DynamicResource TextTertiaryBrush}" />
                 </Button>
             </Grid>
         </Border>
