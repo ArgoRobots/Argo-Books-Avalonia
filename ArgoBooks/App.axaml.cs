@@ -88,6 +88,13 @@ public partial class App : Application
     public static RefundModalsViewModel? RefundModalsViewModel => _appShellViewModel?.RefundModalsViewModel;
 
     /// <summary>
+    /// The Company-details editor. Exposed so the portal email sync can tell
+    /// whether the owner email is being hand-edited and avoid clobbering an
+    /// in-flight edit.
+    /// </summary>
+    public static EditCompanyModalViewModel? EditCompanyModalViewModel => _appShellViewModel?.EditCompanyModalViewModel;
+
+    /// <summary>
     /// Gets the invoice usage service for tracking free-tier send limits.
     /// </summary>
     public static InvoiceUsageService? InvoiceUsageService { get; private set; }

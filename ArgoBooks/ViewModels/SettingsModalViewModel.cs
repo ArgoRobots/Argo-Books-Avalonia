@@ -1255,6 +1255,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Load portal company name and logo from server
             if (status.Success)
             {
+                // Mirror the authoritative owner email onto this device so a
+                // server-side change (e.g. the revert link) is reflected here.
+                await ReconcilePortalEmailFromStatusAsync(status);
+
                 if (!string.IsNullOrEmpty(status.Company?.Name))
                 {
                     _isLoadingPortalSettings = true;
@@ -2984,6 +2988,44 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Pulls the authoritative owner email out of a portal status response and
+    /// mirrors it into local state when it is safe to do so (see
+    /// <see cref="ShouldReconcilePortalEmail"/>). This is how a server-side
+    /// change, such as the email-change revert link, reaches this device.
+    /// </summary>
+    private async Task ReconcilePortalEmailFromStatusAsync(PortalStatusResponse status)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var serverEmail = status.Company?.OwnerEmail;
+        var localEmail = companyData.Settings.Company.Email;
+        // The Company-details editor is the only place the email is hand-edited
+        // outside the verified change flow; don't clobber an in-flight edit.
+        var isEmailBeingEdited = App.EditCompanyModalViewModel?.IsOpen == true;
+
+        if (!ShouldReconcilePortalEmail(serverEmail, localEmail, isEmailBeingEdited)) return;
+
+        await ReconcileOwnerEmailAsync(companyData, serverEmail!.Trim());
+    }
+
+    /// <summary>
+    /// "Server wins, but only when clean." Returns true only when the server
+    /// owner email is present, actually differs from the local value, and the
+    /// email is not being hand-edited. Pure so it can be unit-tested in
+    /// isolation.
+    /// </summary>
+    internal static bool ShouldReconcilePortalEmail(string? serverEmail, string? localEmail, bool isEmailBeingEdited)
+    {
+        // Protect an in-flight local edit.
+        if (isEmailBeingEdited) return false;
+        // Never wipe local with a blank (covers the pre-set / pending-change windows).
+        if (string.IsNullOrWhiteSpace(serverEmail)) return false;
+        // Only write when the value actually changed, so we don't dirty the file needlessly.
+        return !string.Equals(serverEmail.Trim(), (localEmail ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Opens the 4-step "Change owner email" modal. Bound to a button in
     /// PortalSettings.
     /// </summary>
@@ -2993,6 +3035,23 @@ public partial class SettingsModalViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         var companyManager = App.CompanyManager;
         if (companyData == null || companyManager == null) return;
+
+        // Pre-flight sync: if the settings modal was already open when the owner
+        // email changed on the server (e.g. a revert link was used), starting the
+        // change flow from the stale local value would confuse the user. Pull the
+        // authoritative email first. Best-effort: CheckStatusAsync swallows its own
+        // network errors and returns Success=false, in which case we keep local.
+        var portalService = App.PaymentPortalService;
+        if (portalService != null && PortalSettings.IsConfigured)
+        {
+            // Cap the pre-flight so a bad network can't make the button feel
+            // like it hung (the client's own timeout is 30s). On timeout the
+            // call returns Success=false and we simply keep the local value.
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+            var status = await portalService.CheckStatusAsync(cts.Token);
+            if (status.Success)
+                await ReconcilePortalEmailFromStatusAsync(status);
+        }
 
         var currentEmail = companyData.Settings.Company.Email ?? string.Empty;
         if (string.IsNullOrWhiteSpace(currentEmail))
