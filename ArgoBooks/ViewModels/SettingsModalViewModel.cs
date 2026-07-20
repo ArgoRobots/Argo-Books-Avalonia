@@ -1707,8 +1707,10 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// cancel the pairing poll loop as soon as the user navigates away from this tab.
     /// MUST match the position of the Mobile app TabItem in SettingsModal.axaml - if that tab is
     /// ever reordered, update this constant and the matching comment on the TabItem together.
+    /// Tab order: General(0), Notifications(1), Appearance(2), Security(3), Payment Portal(4),
+    /// Integrations(5), Bank import rules(6), Mobile app(7).
     /// </summary>
-    private const int MobileAppTabIndex = 6;
+    internal const int MobileAppTabIndex = 7;
 
     /// <summary>
     /// Cancellation source for the background loop polling the sync server for the phone to
@@ -2317,7 +2319,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Block the save and surface the errors if any bank import rule is incomplete.
         if (!ValidateBankRules())
         {
-            SelectedTabIndex = 5; // Bank import rules tab
+            SelectedTabIndex = 6; // Bank import rules tab
             return;
         }
 

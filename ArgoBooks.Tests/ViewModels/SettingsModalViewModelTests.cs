@@ -171,7 +171,7 @@ public class SettingsModalViewModelTests
     {
         // Regression guard for the pairing-poll cancellation hook: navigating tabs (with or
         // without an in-flight pairing poll) must never throw.
-        _viewModel.SelectedTabIndex = 6; // Mobile app tab
+        _viewModel.SelectedTabIndex = SettingsModalViewModel.MobileAppTabIndex; // Mobile app tab
         _viewModel.SelectedTabIndex = 0; // General tab
 
         Assert.Equal(0, _viewModel.SelectedTabIndex);
@@ -190,7 +190,7 @@ public class SettingsModalViewModelTests
         // create/poll request must never proceed - this is the exact async-gap scenario: the
         // modal closed while CreatePairingAsync was in flight, which cancels the token.
         var result = SettingsModalViewModel.ShouldContinuePairing(
-            isCancellationRequested: true, isModalOpen: true, selectedTabIndex: 6);
+            isCancellationRequested: true, isModalOpen: true, selectedTabIndex: SettingsModalViewModel.MobileAppTabIndex);
 
         Assert.False(result);
     }
@@ -199,7 +199,7 @@ public class SettingsModalViewModelTests
     public void ShouldContinuePairing_WhenModalClosed_ReturnsFalse()
     {
         var result = SettingsModalViewModel.ShouldContinuePairing(
-            isCancellationRequested: false, isModalOpen: false, selectedTabIndex: 6);
+            isCancellationRequested: false, isModalOpen: false, selectedTabIndex: SettingsModalViewModel.MobileAppTabIndex);
 
         Assert.False(result);
     }
@@ -217,7 +217,7 @@ public class SettingsModalViewModelTests
     public void ShouldContinuePairing_WhenNotCancelledModalOpenOnMobileTab_ReturnsTrue()
     {
         var result = SettingsModalViewModel.ShouldContinuePairing(
-            isCancellationRequested: false, isModalOpen: true, selectedTabIndex: 6);
+            isCancellationRequested: false, isModalOpen: true, selectedTabIndex: SettingsModalViewModel.MobileAppTabIndex);
 
         Assert.True(result);
     }
