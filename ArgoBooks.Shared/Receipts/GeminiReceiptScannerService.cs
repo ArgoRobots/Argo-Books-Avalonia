@@ -339,7 +339,8 @@ If nothing was missed, return: {{""missingItems"": []}}";
             systemPrompt,
             userPrompt,
             model = DefaultModel,
-            maxTokens = 32000,
+            // No maxTokens: the server sets the receipt-scan output budget authoritatively
+            // from RECEIPT_SCAN_MAX_OUTPUT_TOKENS (.env) and ignores any client value here.
             temperature = 0.0,
             base64Image,
             mimeType,
