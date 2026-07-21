@@ -36,6 +36,19 @@ public partial class PairingViewModel : ViewModelBase
     /// <summary>Raised after a successful pairing, with the paired company's label.</summary>
     public event Action<string>? Paired;
 
+    /// <summary>
+    /// Called by the host when pairing succeeded but the dashboard failed to open, so the user
+    /// sees why instead of being stranded on the "Connected" message with no feedback.
+    /// </summary>
+    public void ReportShellOpenFailed(string? detail)
+    {
+        IsBusy = false;
+        IsSuccess = false;
+        StatusMessage = string.IsNullOrWhiteSpace(detail)
+            ? "Connected, but the dashboard couldn't open. Please reopen the app and try again."
+            : $"Connected, but the dashboard couldn't open: {detail}";
+    }
+
     public PairingViewModel()
         : this(new PairingCoordinator(new MobileSyncClient(null, MobileApiConfig.BaseUrl), new PairedCompanyStore(new MauiSecureStore())))
     {

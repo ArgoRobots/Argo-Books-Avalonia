@@ -20,6 +20,11 @@ public partial class App : Application
 
     private ISingleViewApplicationLifetime? _singleView;
 
+    // Avalonia's Android host captures ISingleViewApplicationLifetime.MainView once at startup, so
+    // reassigning MainView later is silently ignored (nothing navigates). Instead MainView is set
+    // ONCE to this persistent container and every Show* swaps its Content.
+    private ContentControl? _rootView;
+
     // The lock screen is an overlay: swapping MainView back to whatever was showing before the
     // lock (rather than always rebuilding the shell) keeps the shell's navigation state intact
     // across a resume-triggered lock/unlock.
@@ -52,6 +57,15 @@ public partial class App : Application
         if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
             _singleView = singleViewPlatform;
+
+            // Set the persistent root ONCE; all later navigation swaps its Content (see _rootView).
+            _rootView = new ContentControl
+            {
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Stretch,
+            };
+            _singleView.MainView = _rootView;
+
             ShowPairing();
 
             // If a company is already paired (returning user), skip straight to the shell -
@@ -114,9 +128,9 @@ public partial class App : Application
     private void ShowPairing()
     {
         var pairingViewModel = new PairingViewModel();
-        pairingViewModel.Paired += companyLabel => Dispatcher.UIThread.Post(() => { _ = ShowShellAsync(); });
+        pairingViewModel.Paired += companyLabel => Dispatcher.UIThread.Post(() => { _ = ShowShellAsync(pairingViewModel); });
 
-        _singleView!.MainView = new PairingView
+        _rootView!.Content = new PairingView
         {
             DataContext = pairingViewModel
         };
@@ -157,7 +171,7 @@ public partial class App : Application
 
         Dispatcher.UIThread.Post(() =>
         {
-            _singleView!.MainView = new LockView { DataContext = lockViewModel };
+            _rootView!.Content = new LockView { DataContext = lockViewModel };
         });
     }
 
@@ -165,31 +179,47 @@ public partial class App : Application
     private void ShowLockOverlay()
     {
         _isLockShowing = true;
-        _contentBeforeLock = _singleView!.MainView;
+        _contentBeforeLock = _rootView!.Content as Control;
 
         var lockViewModel = new LockViewModel(new AppLockService());
         lockViewModel.Unlocked += () => Dispatcher.UIThread.Post(() =>
         {
             AppLockSettings.RecordUnlocked();
             _isLockShowing = false;
-            _singleView!.MainView = _contentBeforeLock ?? _singleView.MainView;
+            _rootView!.Content = _contentBeforeLock ?? _rootView.Content;
             _contentBeforeLock = null;
         });
 
-        _singleView!.MainView = new LockView { DataContext = lockViewModel };
+        _rootView!.Content = new LockView { DataContext = lockViewModel };
     }
 
-    private async Task ShowShellAsync()
+    private async Task ShowShellAsync(PairingViewModel? pairingViewModel = null)
     {
-        var client = new MobileSyncClient(null, MobileApiConfig.BaseUrl);
-        var secureStore = new MauiSecureStore();
-        var pairedCompanyStore = new PairedCompanyStore(secureStore);
-        var cache = new FileSnapshotCache(FileSystem.Current.AppDataDirectory);
-        var snapshotStore = new SnapshotStore(client, pairedCompanyStore, cache);
-        var deviceApiAuth = await DeviceApiAuth.CreateAsync(secureStore);
-        var pendingScanOutbox = new PendingScanOutbox(new FilePendingScanStorage(FileSystem.Current.AppDataDirectory));
+        ShellViewModel shellViewModel;
+        try
+        {
+            var client = new MobileSyncClient(null, MobileApiConfig.BaseUrl);
+            var secureStore = new MauiSecureStore();
+            var pairedCompanyStore = new PairedCompanyStore(secureStore);
+            var cache = new FileSnapshotCache(FileSystem.Current.AppDataDirectory);
+            var snapshotStore = new SnapshotStore(client, pairedCompanyStore, cache);
+            var deviceApiAuth = await DeviceApiAuth.CreateAsync(secureStore);
+            var pendingScanOutbox = new PendingScanOutbox(new FilePendingScanStorage(FileSystem.Current.AppDataDirectory));
 
-        var shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth, client, pendingScanOutbox);
+            shellViewModel = new ShellViewModel(snapshotStore, pairedCompanyStore, secureStore, deviceApiAuth, client, pendingScanOutbox);
+        }
+        catch (Exception ex)
+        {
+            // Building the shell (secure-store reads, app-data paths, sync client) can fail. Without
+            // this guard the fire-and-forget caller would swallow it, stranding the user on the
+            // pairing screen's "Connected" label with no feedback. Log it and, on the pairing path,
+            // surface it so the failure is visible instead of a dead screen.
+            Android.Util.Log.Error("ArgoBooks", $"Shell setup failed: {ex}");
+            if (pairingViewModel != null)
+                Dispatcher.UIThread.Post(() => pairingViewModel.ReportShellOpenFailed(ex.Message));
+            return;
+        }
+
         _shellViewModel = shellViewModel;
 
         // Unpairing the last remaining company (Settings > Unpair this phone) drops back to the
@@ -207,10 +237,20 @@ public partial class App : Application
         // swallowed by the fire-and-forget caller.
         Dispatcher.UIThread.Post(() =>
         {
-            _singleView!.MainView = new ShellView
+            try
             {
-                DataContext = shellViewModel
-            };
+                _rootView!.Content = new ShellView
+                {
+                    DataContext = shellViewModel
+                };
+            }
+            catch (Exception ex)
+            {
+                // A binding/resource error while building ShellView would otherwise be swallowed by
+                // the dispatcher, leaving the user on the pairing screen's "Connected" label.
+                Android.Util.Log.Error("ArgoBooks", $"Shell view creation failed: {ex}");
+                pairingViewModel?.ReportShellOpenFailed(ex.Message);
+            }
         });
 
         try
@@ -219,7 +259,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[ArgoBooks] Shell initialize failed: {ex}");
+            Android.Util.Log.Error("ArgoBooks", $"Shell initialize failed: {ex}");
         }
     }
 }
