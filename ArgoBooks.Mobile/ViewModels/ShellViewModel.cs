@@ -168,13 +168,52 @@ public partial class ShellViewModel : ViewModelBase
         IsRefreshing = true;
         try
         {
-            var state = await _snapshotStore.RefreshAsync(CancellationToken.None);
-            await ApplyAsync(state);
+            await LoadSnapshotAsync();
         }
         finally
         {
             IsRefreshing = false;
         }
+    }
+
+    /// <summary>
+    /// Fetches and applies the active company's snapshot. If the server reports this device was
+    /// revoked, drops the paired company instead (see <see cref="DropRevokedActiveCompanyAsync"/>).
+    /// </summary>
+    private async Task LoadSnapshotAsync()
+    {
+        var state = await _snapshotStore.RefreshAsync(CancellationToken.None);
+        if (state.Status == SnapshotStatus.Revoked)
+        {
+            await DropRevokedActiveCompanyAsync();
+            return;
+        }
+
+        await ApplyAsync(state);
+    }
+
+    /// <summary>
+    /// Handles a desktop-side revocation of the active company: removes it locally, then activates
+    /// another paired company if one remains (loading its snapshot), or raises
+    /// <see cref="RequestPairing"/> so the host returns to the pairing screen.
+    /// </summary>
+    private async Task DropRevokedActiveCompanyAsync()
+    {
+        var active = await _pairedCompanyStore.GetActiveAsync();
+        if (active != null)
+        {
+            await _pairedCompanyStore.RemoveAsync(active.CompanyUid);
+        }
+
+        var remaining = await _pairedCompanyStore.GetAllAsync();
+        if (remaining.Count == 0)
+        {
+            RequestPairing?.Invoke();
+            return;
+        }
+
+        await _pairedCompanyStore.SetActiveAsync(remaining[0].CompanyUid);
+        await LoadSnapshotAsync();
     }
 
     private async Task ApplyAsync(SnapshotState state)

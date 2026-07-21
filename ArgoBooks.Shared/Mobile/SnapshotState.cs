@@ -13,6 +13,10 @@ public enum SnapshotStatus
 
     /// <summary>A snapshot is available (either freshly fetched or served from the offline cache).</summary>
     Loaded,
+
+    /// <summary>The server rejected this device's token (revoked desktop-side). The phone should
+    /// drop the paired company and return to pairing.</summary>
+    Revoked,
 }
 
 /// <summary>
@@ -36,4 +40,6 @@ public sealed class SnapshotState
     public string? Error { get; init; }
 
     public static SnapshotState NotPaired() => new() { Status = SnapshotStatus.NotPaired };
+
+    public static SnapshotState Revoked() => new() { Status = SnapshotStatus.Revoked };
 }

@@ -56,6 +56,13 @@ public class SnapshotStore
         {
             result = await _client.GetSnapshotAsync(record.DeviceToken, ct);
         }
+        catch (SyncUnauthorizedException)
+        {
+            // This device was revoked desktop-side; the token is dead. Signal the shell to drop the
+            // paired company rather than quietly serving stale cached data.
+            Current = SnapshotState.Revoked();
+            return Current;
+        }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or OperationCanceledException)
         {
             Current = await BuildFromCacheOrWaitingAsync(record, "Couldn't reach the server. Showing your last synced data.");

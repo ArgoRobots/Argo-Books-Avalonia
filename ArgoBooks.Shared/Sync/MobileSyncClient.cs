@@ -88,6 +88,14 @@ public class MobileSyncClient
             return default;
         }
 
+        // A 401/403 on an authenticated call means this device's token was revoked desktop-side.
+        // Surface it as a distinct type (not HttpRequestException) so callers disconnect instead of
+        // falling back to cached data like they would for a transient network error.
+        if (deviceToken != null && (statusCode == HttpStatusCode.Unauthorized || statusCode == HttpStatusCode.Forbidden))
+        {
+            throw new SyncUnauthorizedException($"Request to {path} was rejected with status code {(int)statusCode} (device revoked).");
+        }
+
         if (statusCode < HttpStatusCode.OK || statusCode >= HttpStatusCode.MultipleChoices)
         {
             throw new HttpRequestException($"Request to {path} failed with status code {(int)statusCode}.");

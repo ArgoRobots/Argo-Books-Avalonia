@@ -95,6 +95,10 @@ public partial class App : Application
     {
         _ = _current?.EvaluateResumeLockAsync();
 
+        // Refresh on foreground so returning to the app picks up new data and detects a desktop-side
+        // revocation (which drops back to the pairing screen) without waiting for a manual pull.
+        _ = _current?._shellViewModel?.RefreshCommand.ExecuteAsync(null);
+
         // Task 6: refresh the "captured while offline" review prompt as soon as the app comes back
         // to the foreground, rather than waiting for the user to pull-to-refresh. Nothing is
         // auto-posted - the user reviews each queued receipt (see ShellViewModel.StartOfflineReviewAsync).
