@@ -1948,6 +1948,13 @@ public partial class SettingsModalViewModel : ViewModelBase
 
                 await Dispatcher.UIThread.InvokeAsync(async () =>
                 {
+                    // The pairing token has now been consumed, so drop the QR/short code. If it were
+                    // kept, it would reappear the moment IsPhoneJustPaired is cleared later (e.g. when
+                    // the paired device is revoked), instead of falling back to the "Connect a phone"
+                    // default.
+                    QrImage = null;
+                    ShortCodeDisplay = string.Empty;
+                    IsShortCodeRevealed = false;
                     IsPhoneJustPaired = true;
                     await RefreshDevicesAsync();
                 });
