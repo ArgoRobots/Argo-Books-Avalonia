@@ -33,8 +33,32 @@ public partial class PairingViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSuccess;
 
+    /// <summary>
+    /// False on the welcome screen (Scan QR + a de-emphasized "enter a code" link); true on the
+    /// second screen that holds the manual code + device-name fields. QR scanning is the primary
+    /// path, so the code entry lives one step back.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showCodeEntry;
+
     /// <summary>Raised after a successful pairing, with the paired company's label.</summary>
     public event Action<string>? Paired;
+
+    /// <summary>Welcome screen -> manual code entry screen.</summary>
+    [RelayCommand]
+    private void OpenCodeEntry()
+    {
+        StatusMessage = null;
+        ShowCodeEntry = true;
+    }
+
+    /// <summary>Manual code entry screen -> welcome screen.</summary>
+    [RelayCommand]
+    private void BackToScan()
+    {
+        StatusMessage = null;
+        ShowCodeEntry = false;
+    }
 
     /// <summary>
     /// Called by the host when pairing succeeded but the dashboard failed to open, so the user
@@ -66,7 +90,7 @@ public partial class PairingViewModel : ViewModelBase
         var payload = await QrScanner.ScanAsync();
         if (string.IsNullOrWhiteSpace(payload))
         {
-            StatusMessage = "Scan cancelled. You can also enter the code below.";
+            StatusMessage = "Scan cancelled. You can enter a code instead.";
             return;
         }
 
@@ -78,7 +102,7 @@ public partial class PairingViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(EnteredCode))
         {
-            StatusMessage = "Enter the code shown on your computer's sync settings.";
+            StatusMessage = "Enter the code shown on your computer, under Settings > Mobile app.";
             return;
         }
 
