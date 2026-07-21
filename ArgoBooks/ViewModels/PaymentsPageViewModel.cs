@@ -194,7 +194,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenPortalSettings()
     {
-        App.SettingsModalViewModel?.OpenWithTab(4);
+        App.SettingsModalViewModel?.OpenWithTab(SettingsTab.PaymentPortal);
     }
 
     /// <summary>

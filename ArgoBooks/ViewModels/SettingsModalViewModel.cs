@@ -1703,14 +1703,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _isRefreshingDevices;
 
     /// <summary>
-    /// The tab index of the "Mobile app" tab in the TabControl in SettingsModal.axaml. Used to
-    /// cancel the pairing poll loop as soon as the user navigates away from this tab.
-    /// MUST match the position of the Mobile app TabItem in SettingsModal.axaml - if that tab is
-    /// ever reordered, update this constant and the matching comment on the TabItem together.
-    /// Tab order: General(0), Notifications(1), Appearance(2), Security(3), Payment Portal(4),
-    /// Integrations(5), Bank import rules(6), Mobile app(7).
+    /// The tab index of the "Mobile app" tab, used to cancel the pairing poll loop as soon as the
+    /// user navigates away from it. Derived from <see cref="SettingsTab"/> so the position lives in
+    /// one place (that enum must mirror the TabItem order in SettingsModal.axaml).
     /// </summary>
-    internal const int MobileAppTabIndex = 7;
+    internal const int MobileAppTabIndex = (int)SettingsTab.MobileApp;
 
     /// <summary>
     /// Cancellation source for the background loop polling the sync server for the phone to
@@ -2110,13 +2107,16 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
-        OpenWithTab(0);
+        OpenWithTab(SettingsTab.General);
     }
+
+    /// <summary>Opens the settings modal with a specific tab selected (by name).</summary>
+    internal void OpenWithTab(SettingsTab tab) => OpenWithTab((int)tab);
 
     /// <summary>
     /// Opens the settings modal with a specific tab selected.
     /// </summary>
-    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
+    /// <param name="tabIndex">The tab index to select; prefer the <see cref="OpenWithTab(SettingsTab)"/> overload.</param>
     public void OpenWithTab(int tabIndex)
     {
         // Reset portal authentication, require re-auth each time settings opens
@@ -2326,7 +2326,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Block the save and surface the errors if any bank import rule is incomplete.
         if (!ValidateBankRules())
         {
-            SelectedTabIndex = 6; // Bank import rules tab
+            SelectedTabIndex = (int)SettingsTab.BankImportRules;
             return;
         }
 

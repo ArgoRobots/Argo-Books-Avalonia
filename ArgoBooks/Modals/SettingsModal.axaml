@@ -1053,102 +1053,6 @@
                         </ScrollViewer>
                     </TabItem>
 
-                    <!-- Integrations Tab -->
-                    <TabItem Header="{loc:Loc 'Integrations'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
-                            <StackPanel Spacing="16">
-
-                                <!-- Stripe integration card -->
-                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
-                                    <TextBlock Text="Stripe" FontSize="14" FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{loc:Loc 'Import your Stripe payouts, charges, fees and refunds into your books.'}"
-                                               FontSize="12" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-
-                                    <!-- Not-connected state: key input + guidance -->
-                                    <StackPanel Spacing="8" IsVisible="{Binding !StripeIntegrationConnected}">
-                                        <TextBlock Text="{loc:Loc 'Paste a restricted, read-only Stripe secret key. Argo uses it only to read your payouts and charges. It cannot move money or change anything.'}"
-                                                   FontSize="12" TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-
-                                        <!-- Collapsible how-to guidance -->
-                                        <Expander Header="{loc:Loc 'How do I get this key?'}">
-                                            <StackPanel Spacing="4" Margin="0,8,0,0">
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '1. In your Stripe dashboard, open Developers, then API keys.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '2. Click Create restricted key.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '3. Grant Read access to Balance transactions, Charges, and Payouts. Leave everything else at None.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '4. Create the key, copy it, and paste it below.'}" />
-                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                    <TextBlock Text="{loc:Loc 'Full guide: '}" FontSize="12"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                    <Button Classes="link" Content="argorobots.com/integrations/stripe"
-                                                            FontSize="12" Padding="0" MinHeight="0"
-                                                            Command="{Binding OpenStripeGuideCommand}" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Expander>
-
-                                        <TextBox Text="{Binding StripeKeyInput, Mode=TwoWay}"
-                                                 Classes="form-input"
-                                                 PlaceholderText="rk_live_..."
-                                                 TextWrapping="Wrap"
-                                                 AcceptsReturn="False"
-                                                 MinHeight="64" Height="64"
-                                                 VerticalContentAlignment="Top" />
-
-                                        <TextBlock Text="{Binding StripeIntegrationError}" Foreground="#dc2626" FontSize="12"
-                                                   TextWrapping="Wrap"
-                                                   IsVisible="{Binding StripeIntegrationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-
-                                        <Button Content="{loc:Loc Connect}"
-                                                Classes="primary-button"
-                                                HorizontalAlignment="Left"
-                                                IsEnabled="{Binding CanConnectStripeIntegration}"
-                                                Command="{Binding ConnectStripeIntegrationCommand}"
-                                                Padding="12,6" MinHeight="0" />
-                                    </StackPanel>
-
-                                    <!-- Connected state -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
-                                            IsVisible="{Binding StripeIntegrationConnected}">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{loc:Loc 'Connected'}" FontSize="12"
-                                                           Foreground="{DynamicResource SuccessBrush}" />
-                                                <TextBlock Text="{Binding StripeIntegrationAccountLabel}" FontSize="13"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding StripeLastSyncedDisplay}" FontSize="11"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           VerticalAlignment="Center"
-                                                           IsVisible="{Binding StripeLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                                                <Button Classes="primary-button" Content="{loc:Loc 'Sync now'}"
-                                                        Command="{Binding SyncStripeIntegrationCommand}"
-                                                        IsEnabled="{Binding !IsSyncingStripe}"
-                                                        Padding="12,6" MinHeight="0" />
-                                                <Button Classes="danger-outline-button" Content="{loc:Loc Disconnect}"
-                                                        Command="{Binding DisconnectStripeIntegrationCommand}"
-                                                        Padding="12,6" MinHeight="0" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </StackPanel>
-
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
-
                     <!-- Bank Import Rules Tab -->
                     <TabItem Header="{loc:Loc 'Bank import rules'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
@@ -1264,10 +1168,10 @@
                     </TabItem>
 
                     <!-- Mobile App Tab -->
-                    <!-- This is tab index 7 (0-based, count TabItems above: General, Notifications,
-                         Appearance, Security, Payment Portal, Integrations, Bank import rules,
-                         Mobile app). Must match SettingsModalViewModel.MobileAppTabIndex, which
-                         gates the pairing poll loop's visibility check - if this tab is ever
+                    <!-- This is tab index 6 (0-based, count TabItems above: General, Notifications,
+                         Appearance, Security, Payment Portal, Bank import rules, Mobile app).
+                         Integrations is kept last. Must match SettingsModalViewModel.MobileAppTabIndex,
+                         which gates the pairing poll loop's visibility check - if this tab is ever
                          reordered, update that constant too. -->
                     <TabItem Header="{loc:Loc 'Mobile app'}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
@@ -1447,6 +1351,102 @@
                                                    FontSize="13"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center" />
+                                    </Border>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Integrations Tab (kept last so it's the bottom-most tab) -->
+                    <TabItem Header="{loc:Loc 'Integrations'}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                            <StackPanel Spacing="16">
+
+                                <!-- Stripe integration card -->
+                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
+                                    <TextBlock Text="Stripe" FontSize="14" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Import your Stripe payouts, charges, fees and refunds into your books.'}"
+                                               FontSize="12" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                    <!-- Not-connected state: key input + guidance -->
+                                    <StackPanel Spacing="8" IsVisible="{Binding !StripeIntegrationConnected}">
+                                        <TextBlock Text="{loc:Loc 'Paste a restricted, read-only Stripe secret key. Argo uses it only to read your payouts and charges. It cannot move money or change anything.'}"
+                                                   FontSize="12" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                        <!-- Collapsible how-to guidance -->
+                                        <Expander Header="{loc:Loc 'How do I get this key?'}">
+                                            <StackPanel Spacing="4" Margin="0,8,0,0">
+                                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Text="{loc:Loc '1. In your Stripe dashboard, open Developers, then API keys.'}" />
+                                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Text="{loc:Loc '2. Click Create restricted key.'}" />
+                                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Text="{loc:Loc '3. Grant Read access to Balance transactions, Charges, and Payouts. Leave everything else at None.'}" />
+                                                <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Text="{loc:Loc '4. Create the key, copy it, and paste it below.'}" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{loc:Loc 'Full guide: '}" FontSize="12"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <Button Classes="link" Content="argorobots.com/integrations/stripe"
+                                                            FontSize="12" Padding="0" MinHeight="0"
+                                                            Command="{Binding OpenStripeGuideCommand}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Expander>
+
+                                        <TextBox Text="{Binding StripeKeyInput, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 PlaceholderText="rk_live_..."
+                                                 TextWrapping="Wrap"
+                                                 AcceptsReturn="False"
+                                                 MinHeight="64" Height="64"
+                                                 VerticalContentAlignment="Top" />
+
+                                        <TextBlock Text="{Binding StripeIntegrationError}" Foreground="#dc2626" FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   IsVisible="{Binding StripeIntegrationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                        <Button Content="{loc:Loc Connect}"
+                                                Classes="primary-button"
+                                                HorizontalAlignment="Left"
+                                                IsEnabled="{Binding CanConnectStripeIntegration}"
+                                                Command="{Binding ConnectStripeIntegrationCommand}"
+                                                Padding="12,6" MinHeight="0" />
+                                    </StackPanel>
+
+                                    <!-- Connected state -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                            IsVisible="{Binding StripeIntegrationConnected}">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc 'Connected'}" FontSize="12"
+                                                           Foreground="{DynamicResource SuccessBrush}" />
+                                                <TextBlock Text="{Binding StripeIntegrationAccountLabel}" FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding StripeLastSyncedDisplay}" FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           IsVisible="{Binding StripeLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                <Button Classes="primary-button" Content="{loc:Loc 'Sync now'}"
+                                                        Command="{Binding SyncStripeIntegrationCommand}"
+                                                        IsEnabled="{Binding !IsSyncingStripe}"
+                                                        Padding="12,6" MinHeight="0" />
+                                                <Button Classes="danger-outline-button" Content="{loc:Loc Disconnect}"
+                                                        Command="{Binding DisconnectStripeIntegrationCommand}"
+                                                        Padding="12,6" MinHeight="0" />
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </StackPanel>
 

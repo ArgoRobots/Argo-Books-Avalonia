@@ -1045,7 +1045,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenPortalSettings()
     {
-        App.SettingsModalViewModel?.OpenWithTab(4);
+        App.SettingsModalViewModel?.OpenWithTab(SettingsTab.PaymentPortal);
     }
 
     #endregion
