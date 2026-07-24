@@ -37,5 +37,9 @@ public enum FeatureName
 
     // Settings
     ThemeChanged,
-    LanguageChanged
+    LanguageChanged,
+
+    // Onboarding
+    OnboardingCompleted,
+    OnboardingSkipped
 }

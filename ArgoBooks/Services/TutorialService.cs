@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.Services;
@@ -289,8 +290,14 @@ public class TutorialService
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
+            var wasSkipped = settings.Tutorial.HasSkippedTutorial;
             settings.Tutorial.HasSkippedTutorial = true;
             SaveSettings();
+            // Anonymous onboarding telemetry: the user opted out of guided setup.
+            if (!wasSkipped)
+            {
+                _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingSkipped);
+            }
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -324,6 +331,15 @@ public class TutorialService
         settings.Tutorial.CompletedChecklistItems.Add(itemId);
         SaveSettings();
         ChecklistItemCompleted?.Invoke(this, itemId);
+
+        // Anonymous onboarding telemetry: VisitAnalytics is the last required
+        // step (order: CreateCategory -> AddProduct -> RecordExpense ->
+        // VisitAnalytics), and the Contains guard above means it's added once,
+        // so this fires exactly once when guided setup is finished.
+        if (itemId == ChecklistItems.VisitAnalytics)
+        {
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingCompleted);
+        }
 
         // Only show completion guidance if tutorial is active on current company
         if (ShouldShowTutorialOnCurrentCompany())
