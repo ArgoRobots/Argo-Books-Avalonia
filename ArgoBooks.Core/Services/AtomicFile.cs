@@ -18,6 +18,40 @@ public static class AtomicFile
     private const int MaxAttempts = 4;
 
     /// <summary>
+    /// A scratch path unique to the calling process, for callers that write-then-replace a
+    /// file shared by every running instance (global settings, telemetry).
+    /// <para>
+    /// Multiple instances are supported deliberately, so a user can work in two companies at
+    /// once. That means a predictable "&lt;file&gt;.tmp" is written concurrently by every
+    /// instance: one opens it exclusively while another is mid-write, or renames it away
+    /// before another gets to its own rename. Those surface as IOException on create and
+    /// FileNotFoundException on move, the latter of which
+    /// <see cref="ReplaceAsync"/> deliberately does not retry because it normally means the
+    /// file was quarantined. Giving each process its own scratch name removes the collision
+    /// rather than papering over it.
+    /// </para>
+    /// </summary>
+    public static string TempPathFor(string finalPath) =>
+        $"{finalPath}.{Environment.ProcessId}.tmp";
+
+    /// <summary>
+    /// Best-effort cleanup of a scratch file left behind by a failed write.
+    /// </summary>
+    public static void TryDeleteTemp(string tempPath)
+    {
+        try
+        {
+            if (File.Exists(tempPath))
+                File.Delete(tempPath);
+        }
+        catch
+        {
+            // Nothing useful to do: the file is either locked or already gone, and the caller
+            // is already handling a failure.
+        }
+    }
+
+    /// <summary>
     /// Moves <paramref name="tempPath"/> onto <paramref name="finalPath"/>, retrying with a
     /// short async backoff when the destination is transiently locked, then giving up and
     /// rethrowing if the lock persists.
