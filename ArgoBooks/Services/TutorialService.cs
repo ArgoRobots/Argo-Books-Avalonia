@@ -349,7 +349,8 @@ public class TutorialService
         if (ShouldShowTutorialOnCurrentCompany())
         {
             // Show completion guidance for main tutorial tasks
-            if (itemId == ChecklistItems.CreateCategory ||
+            if (itemId == ChecklistItems.ScanReceipt ||
+                itemId == ChecklistItems.CreateCategory ||
                 itemId == ChecklistItems.AddProduct ||
                 itemId == ChecklistItems.RecordExpense)
             {
@@ -407,7 +408,8 @@ public class TutorialService
     public bool AreAllChecklistItemsCompleted()
     {
         var completed = Settings.CompletedChecklistItems;
-        return completed.Contains(ChecklistItems.CreateCategory) &&
+        return completed.Contains(ChecklistItems.ScanReceipt) &&
+               completed.Contains(ChecklistItems.CreateCategory) &&
                completed.Contains(ChecklistItems.AddProduct) &&
                completed.Contains(ChecklistItems.RecordExpense) &&
                completed.Contains(ChecklistItems.VisitAnalytics);
