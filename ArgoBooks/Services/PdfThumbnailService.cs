@@ -206,10 +206,22 @@ public sealed class PdfThumbnailService
         _webView = new NativeWebView();
         _offscreenWindow.Content = _webView;
 
+        // Move it off-screen BEFORE showing it. Setting the position only in Opened leaves the
+        // window on screen for the frame between being mapped and the handler running, and
+        // because this window is undecorated and cached for the rest of the session, a single
+        // slip leaves the faint edge of an 800x600 rectangle floating above every other
+        // application until Argo Books is minimised or closed.
+        var offscreen = new PixelPoint(-30000, -30000);
+        _offscreenWindow.Position = offscreen;
+
+        // Re-assert once the platform window actually exists, since a position set before then
+        // can be ignored, and a large negative value can be clamped to the virtual desktop
+        // bounds on multi-monitor or fractional-DPI setups.
         _offscreenWindow.Opened += (_, _) =>
         {
-            _offscreenWindow.Position = new PixelPoint(-30000, -30000);
+            _offscreenWindow.Position = offscreen;
         };
+
         _offscreenWindow.Show();
 
         var navTcs = new TaskCompletionSource<bool>();
