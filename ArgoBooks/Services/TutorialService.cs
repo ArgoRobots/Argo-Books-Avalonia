@@ -23,6 +23,7 @@ public class TutorialService
     /// </summary>
     public static class ChecklistItems
     {
+        public const string ScanReceipt = "scan_receipt";
         public const string CreateCategory = "create_category";
         public const string RecordExpense = "record_expense";
         public const string RecordRevenue = "record_revenue";
@@ -376,7 +377,12 @@ public class TutorialService
         // Define the required order: each item requires all previous items to be completed
         return itemId switch
         {
-            ChecklistItems.CreateCategory => true, // First item, no prerequisites
+            // Scanning a receipt is the first step and the fastest path to a visible
+            // result. It has no prerequisites, and it is deliberately NOT a
+            // prerequisite for anything else: someone who came for invoicing must
+            // still be able to work the manual path without scanning anything.
+            ChecklistItems.ScanReceipt => true,
+            ChecklistItems.CreateCategory => true, // No prerequisites
             ChecklistItems.AddProduct => completedItems.Contains(ChecklistItems.CreateCategory),
             ChecklistItems.RecordExpense => completedItems.Contains(ChecklistItems.CreateCategory) &&
                                             completedItems.Contains(ChecklistItems.AddProduct),

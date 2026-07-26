@@ -80,6 +80,17 @@ public partial class SetupChecklistViewModel : ViewModelBase
     private void InitializeItems()
     {
         Items.Clear();
+        // Scanning is first: it is the fastest path to a visible result, and a single
+        // scan creates the category, product and transaction behind it, so it ticks
+        // several of the steps below without the user filling in a form.
+        Items.Add(new ChecklistItemViewModel
+        {
+            Id = TutorialService.ChecklistItems.ScanReceipt,
+            Title = "Scan a receipt",
+            Description = "Let Argo Books fill in the details",
+            Icon = Icons.ScanReceipt,
+            NavigationTarget = TutorialService.Pages.Receipts
+        });
         Items.Add(new ChecklistItemViewModel
         {
             Id = TutorialService.ChecklistItems.CreateCategory,
@@ -205,10 +216,17 @@ public partial class SetupChecklistViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToItem(ChecklistItemViewModel? item)
     {
-        if (item != null && !string.IsNullOrEmpty(item.NavigationTarget))
-        {
-            NavigationRequested?.Invoke(this, item.NavigationTarget);
-        }
+        if (item == null || string.IsNullOrEmpty(item.NavigationTarget))
+            return;
+
+        NavigationRequested?.Invoke(this, item.NavigationTarget);
+
+        // The scan step opens its own workflow rather than just landing the user on a page.
+        // Seeing a scan happen is the whole point of the step, and a brand-new user has no
+        // receipt to pick, so the sample is offered directly. If the sample can't be
+        // produced this is a no-op and they simply stay on the Receipts page.
+        if (item.Id == TutorialService.ChecklistItems.ScanReceipt)
+            _ = App.ReceiptsModalsViewModel.OpenScanModalWithSampleAsync();
     }
 
     [RelayCommand]
