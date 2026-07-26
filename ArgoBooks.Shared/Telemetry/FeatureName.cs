@@ -46,6 +46,7 @@ public enum FeatureName
 
     // Onboarding
     CompanyCreated,
+    ChecklistStepCompleted,
     OnboardingCompleted,
     OnboardingSkipped
 }

@@ -24,11 +24,9 @@ public class TutorialService
     public static class ChecklistItems
     {
         public const string CreateCategory = "create_category";
-        public const string AddPaymentMethod = "add_payment_method";
         public const string RecordExpense = "record_expense";
         public const string RecordRevenue = "record_revenue";
         public const string AddProduct = "add_product";
-        public const string AddCustomer = "add_customer";
         public const string ExploreDashboard = "explore_dashboard";
         public const string VisitAnalytics = "visit_analytics";
     }
@@ -331,6 +329,11 @@ public class TutorialService
         settings.Tutorial.CompletedChecklistItems.Add(itemId);
         SaveSettings();
         ChecklistItemCompleted?.Invoke(this, itemId);
+
+        // Anonymous onboarding telemetry: report which step was finished, so the
+        // setup funnel shows where users stop rather than only who reached the
+        // end. The Contains guard above means each step reports at most once.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ChecklistStepCompleted, itemId);
 
         // Anonymous onboarding telemetry: VisitAnalytics is the last required
         // step (order: CreateCategory -> AddProduct -> RecordExpense ->
