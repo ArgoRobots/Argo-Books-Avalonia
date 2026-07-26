@@ -21,6 +21,22 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private static readonly string LicenseRedeemUrl = $"{ApiConfig.BaseUrl}/api/license/redeem.php";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private static readonly string PricingApiUrl = $"{ApiConfig.BaseUrl}/api/pricing/plans.php";
+
+    /// <summary>
+    /// Free-tier limits as last reported by the server, for any screen that needs to quote
+    /// them. The defaults match the server's own fallbacks and apply only before the first
+    /// successful fetch, or when offline.
+    /// </summary>
+    public static int FreeInvoiceMonthlyLimit { get; private set; } = 25;
+
+    /// <inheritdoc cref="FreeInvoiceMonthlyLimit"/>
+    public static int FreeReceiptScanMonthlyLimit { get; private set; } = 10;
+
+    /// <summary>
+    /// Raised once the free-tier limits have been refreshed from the server, so anything
+    /// already rendered with the fallback values can re-read them.
+    /// </summary>
+    public static event EventHandler? FreeLimitsChanged;
     private static readonly string PremiumUpgradeUrl = $"{ApiConfig.BaseUrl}/pricing/";
     private static readonly string CancelSubscriptionUrl = $"{ApiConfig.BaseUrl}/community/users/subscription.php";
 
@@ -547,6 +563,13 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 RefreshFeatureDisplay();
             }
 
+            if (apiResponse?.Limits != null)
+            {
+                FreeInvoiceMonthlyLimit = apiResponse.Limits.FreeInvoiceMonthlyLimit ?? FreeInvoiceMonthlyLimit;
+                FreeReceiptScanMonthlyLimit = apiResponse.Limits.FreeReceiptScanMonthlyLimit ?? FreeReceiptScanMonthlyLimit;
+                FreeLimitsChanged?.Invoke(null, EventArgs.Empty);
+            }
+
             _hasFetchedPlans = true;
             OnPropertyChanged(nameof(ShowPlans));
         }
@@ -580,6 +603,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         [JsonPropertyName("pricing")]
         public PricingData? Pricing { get; init; }
+
+        [JsonPropertyName("limits")]
+        public LimitsData? Limits { get; init; }
+    }
+
+    private class LimitsData
+    {
+        [JsonPropertyName("free_invoice_monthly_limit")]
+        public int? FreeInvoiceMonthlyLimit { get; init; }
+
+        [JsonPropertyName("free_receipt_scan_monthly_limit")]
+        public int? FreeReceiptScanMonthlyLimit { get; init; }
     }
 
     private class PlansData
