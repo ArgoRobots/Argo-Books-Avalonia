@@ -261,10 +261,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     // undo action instead of being rolled back when the modal closes.
     private bool _createdEntitiesCommitted;
 
-    // Set while the bundled sample receipt is being used, so the scan is simulated rather
-    // than sent to the API and the resulting telemetry can be told apart from a real scan.
-    private bool _isSampleScan;
-
     private const string SampleReceiptFileName = "sample-receipt.png";
 
     [ObservableProperty]
@@ -1732,7 +1728,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         ResetScanModal();
 
-        _isSampleScan = true;
         _currentImageData = imageData;
         _currentFileName = SampleReceiptFileName;
 
@@ -3285,7 +3280,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasScanError = false;
         HasScanResult = false;
         IsFullscreen = false;
-        _isSampleScan = false;
         ScanErrorMessage = string.Empty;
         SetScanPreview();
         ExtractedSupplier = string.Empty;
