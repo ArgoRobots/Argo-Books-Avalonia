@@ -453,6 +453,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
 
         companyData.LostDamaged.Add(lostDamaged);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.LostDamagedRecorded);
         return lostDamaged;
     }
 
@@ -486,6 +487,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
 
         companyData.Returns.Add(returnRecord);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReturnRecorded);
         return returnRecord;
     }
 

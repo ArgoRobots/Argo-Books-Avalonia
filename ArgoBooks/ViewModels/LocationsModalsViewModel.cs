@@ -3,6 +3,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -270,6 +271,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         };
 
         companyData.Locations.Add(newLocation);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.LocationCreated);
         companyData.MarkAsModified();
 
         // Record undo action

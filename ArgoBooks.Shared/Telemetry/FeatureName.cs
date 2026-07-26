@@ -21,11 +21,16 @@ public enum FeatureName
     ExpenseCreated,
     RevenueCreated,
     PaymentRecorded,
+    BankMatchConfirmed,
 
     // Inventory
     ProductCreated,
+    CategoryCreated,
+    LocationCreated,
     StockAdjusted,
     PurchaseOrderCreated,
+    ReturnRecorded,
+    LostDamagedRecorded,
 
     // Contacts
     CustomerCreated,
@@ -40,6 +45,7 @@ public enum FeatureName
     LanguageChanged,
 
     // Onboarding
+    CompanyCreated,
     OnboardingCompleted,
     OnboardingSkipped
 }

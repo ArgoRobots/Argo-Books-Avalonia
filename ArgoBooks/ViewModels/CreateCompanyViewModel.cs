@@ -1,5 +1,6 @@
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
@@ -330,6 +331,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         };
 
         CompanyCreated?.Invoke(this, args);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.CompanyCreated);
         IsOpen = false;
         Reset();
     }

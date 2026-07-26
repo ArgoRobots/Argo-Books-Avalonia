@@ -473,6 +473,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         companyData.LostDamaged.Add(lostDamaged);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.LostDamagedRecorded);
         return lostDamaged;
     }
 
@@ -507,6 +508,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         companyData.Returns.Add(returnRecord);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReturnRecorded);
         return returnRecord;
     }
 

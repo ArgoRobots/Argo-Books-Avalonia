@@ -4,6 +4,7 @@ using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
@@ -681,6 +682,7 @@ public partial class BankMatchingPageViewModel : SortablePageViewModelBase
 
         var before = CaptureMatchState(line);
         _matcher.ConfirmMatch(line, candidate, data);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.BankMatchConfirmed);
         _candidatesByLineId.Remove(line.Id);
         var after = CaptureMatchState(line);
 

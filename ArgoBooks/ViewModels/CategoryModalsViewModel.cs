@@ -5,6 +5,7 @@ using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Telemetry;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -222,6 +223,7 @@ public partial class CategoryModalsViewModel : ViewModelBase
         };
 
         companyData.Categories.Add(newCategory);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.CategoryCreated);
         companyData.MarkAsModified();
 
         var categoryToUndo = newCategory;
