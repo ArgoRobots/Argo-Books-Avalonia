@@ -51,14 +51,13 @@
          Must match the version Avalonia.FreeDesktop was compiled against (0.92.0 for Avalonia 12.0.x).
          Newer versions of Tmds.DBus.Protocol break runtime binding of the Connection type. -->
     <PackageVersion Include="Tmds.DBus.Protocol" Version="0.92.0" />
-    <!-- Pin transitive dep (patches GHSA-37gx-xxp4-5rgx / GHSA-w3x6-4m5h-cxqf in 10.0.0) -->
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.9" />
     <!-- MVVM -->
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <!-- Dependency Injection -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
     <!-- Windows-specific (DPAPI for secure credential storage) -->
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <!-- Charts (pinned to Avalonia 12-specific preview; stable 2.0.4 is built against
          Avalonia 11 and crashes at chart-control construction on Avalonia 12.0.3) -->
     <PackageVersion Include="LiveChartsCore.SkiaSharpView" Version="2.0.1-av12.1" />

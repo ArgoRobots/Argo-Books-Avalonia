@@ -48,7 +48,12 @@
         <!-- CSV parsing (RFC 4180) -->
         <PackageReference Include="CsvHelper" />
 
-        <!-- Pinned to patch vulnerability in transitive 10.0.0 (pulled in via ClosedXML/OpenXML) -->
+        <!-- Not referenced by our code. EPPlus and NPOI both depend on
+             System.Security.Cryptography.Xml at a version carrying known high-severity
+             advisories, so this pins the resolved version forward to a patched one.
+             Must stay outside any TargetFramework condition, or the non-Windows target
+             silently falls back to the vulnerable version. Drop it once both packages
+             depend on a patched version themselves. -->
         <PackageReference Include="System.Security.Cryptography.Xml" />
     </ItemGroup>
 
