@@ -2404,21 +2404,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // transfers to the undo action, so don't roll them back when the modal closes.
         _createdEntitiesCommitted = true;
 
-        // Credit the setup checklist for what this scan actually did. One scan can create
-        // the category, the product and the transaction, so it advances several steps at
-        // once without the user filling in a single form. This fires at the commit point
-        // rather than where the entities are created, because a review that gets cancelled
-        // rolls those entities back and must not leave the checklist ticked.
-        // Order matters: CanCompleteChecklistItem silently rejects out-of-order calls.
-        var tutorial = TutorialService.Instance;
-        tutorial.CompleteChecklistItem(TutorialService.ChecklistItems.ScanReceipt);
-        if (_createdCategoryForUndo != null)
-            tutorial.CompleteChecklistItem(TutorialService.ChecklistItems.CreateCategory);
-        if (_createdProductsForUndo.Count > 0)
-            tutorial.CompleteChecklistItem(TutorialService.ChecklistItems.AddProduct);
-        tutorial.CompleteChecklistItem(IsRevenue
-            ? TutorialService.ChecklistItems.RecordRevenue
-            : TutorialService.ChecklistItems.RecordExpense);
+        // Credit the scan step.
+        // This fires at the commit point rather than where the entities are created, because a
+        // review that gets cancelled rolls those entities back and must not leave a step ticked.
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ScanReceipt);
 
         App.CompanyManager?.MarkAsChanged();
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
