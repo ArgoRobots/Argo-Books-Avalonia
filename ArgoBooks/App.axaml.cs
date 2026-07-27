@@ -1044,6 +1044,31 @@ public partial class App : Application
             // entries as breadcrumbs.
             CrashReporter.SetBreadcrumbSource(errorLogger);
 
+            // Show a splash straight away. Avalonia only shows MainWindow once this method
+            // returns, and everything below builds the service graph first, so without this
+            // the screen stays empty for several seconds. Users read that as a failed launch
+            // and click the shortcut again, which is how we end up with concurrent instances.
+            //
+            // Wrapped defensively: the splash is a nicety and must never be able to stop the
+            // app from starting.
+            SplashWindow? splash = null;
+            try
+            {
+                splash = new SplashWindow();
+                splash.Show();
+
+                // Show() only queues the window. Without pumping the dispatcher the UI thread
+                // goes straight into the construction below, so layout and render never run and
+                // the window stays blank: present and marked visible to the OS, but showing
+                // nothing. Force those jobs through now, while there is still a gap to do it in.
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            }
+            catch (Exception ex)
+            {
+                errorLogger.LogWarning($"Failed to show splash window: {ex.Message}", "Startup");
+                splash = null;
+            }
+
             // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
@@ -1314,6 +1339,24 @@ public partial class App : Application
             {
                 DataContext = _mainWindowViewModel
             };
+
+            // Close the splash only once the main window is actually on screen. ShutdownMode
+            // is left at its default of OnLastWindowClose, so closing the splash while the
+            // main window is still unshown would leave zero windows open and exit the app.
+            if (splash != null)
+            {
+                desktop.MainWindow.Opened += (_, _) =>
+                {
+                    try
+                    {
+                        splash.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        errorLogger.LogWarning($"Failed to close splash window: {ex.Message}", "Startup");
+                    }
+                };
+            }
 
             // Process pending conversions when window is activated (e.g., user returns after going offline)
             desktop.MainWindow.Activated += async (_, _) =>
