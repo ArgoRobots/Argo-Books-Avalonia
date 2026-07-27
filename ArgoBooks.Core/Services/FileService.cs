@@ -301,7 +301,11 @@ public class FileService(
             CompanyName = GetCompanyNameFromDirectory(tempDirectory, cachedSettings),
             Accountants = await GetAccountantNamesAsync(tempDirectory, cancellationToken),
             ModifiedAt = DateTime.UtcNow,
-            BiometricEnabled = GetBiometricEnabledFromDirectory(cachedSettings),
+            // Biometric unlock substitutes for typing the password, so it is meaningless
+            // without one. A file recovered by support comes back with no password but may
+            // still carry the old setting inside the archive; refusing to advertise it here
+            // stops the open screen offering an unlock that cannot work.
+            BiometricEnabled = !string.IsNullOrEmpty(password) && GetBiometricEnabledFromDirectory(cachedSettings),
             LogoThumbnail = GenerateLogoThumbnail(tempDirectory)
         };
 

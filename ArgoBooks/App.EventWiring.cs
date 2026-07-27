@@ -1048,6 +1048,35 @@ public partial class App
             };
         }
 
+        // Biometric unlock works by storing the password itself in the operating system's
+        // protected store, so any change to the password leaves that copy stale. Without this,
+        // changing a password silently broke fingerprint unlock, removing one left the old
+        // password stored, and a file returned by support recovery still advertised a
+        // biometric option that could never succeed.
+        void SyncBiometricEnrolment(string? newPassword, bool keepEnrolment)
+        {
+            if (CompanyManager?.CurrentFilePath == null)
+                return;
+
+            var fileId = GetBiometricFileId(CompanyManager.CurrentFilePath);
+            var platformService = PlatformServiceFactory.GetPlatformService();
+            var security = CompanyManager.CurrentCompanySettings?.Security;
+
+            // Keep an existing enrolment working across a password change by re-storing the
+            // new password. Anything else clears it, so the user opts in again deliberately
+            // rather than inheriting an enrolment they never made for this password.
+            if (keepEnrolment && !string.IsNullOrEmpty(newPassword) && security?.BiometricEnabled == true)
+            {
+                platformService.StorePasswordForBiometric(fileId, newPassword);
+                return;
+            }
+
+            platformService.ClearPasswordForBiometric(fileId);
+            if (security != null)
+                security.BiometricEnabled = false;
+            settings.SetBiometricLoginWithoutAuth(false);
+        }
+
         // Add password
         settings.AddPasswordRequested += async (_, args) =>
         {
@@ -1056,6 +1085,11 @@ public partial class App
             try
             {
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
+
+                // The file had no password until now, so any enrolment still on disk belongs
+                // to an older password. Start clean and let the user re-enable biometrics.
+                SyncBiometricEnrolment(args.NewPassword, keepEnrolment: false);
+
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been set.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
@@ -1081,6 +1115,11 @@ public partial class App
             try
             {
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
+
+                // Re-store so fingerprint or face unlock keeps working with the new password
+                // instead of quietly failing on the next open.
+                SyncBiometricEnrolment(args.NewPassword, keepEnrolment: true);
+
                 settings.OnPasswordChanged();
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been changed.".Translate(), NotificationType.Success);
             }
@@ -1107,6 +1146,11 @@ public partial class App
             try
             {
                 await CompanyManager.ChangePasswordAsync(null);
+
+                // With no password there is nothing for biometrics to unlock, so drop the
+                // stored credential rather than leaving the old password on disk.
+                SyncBiometricEnrolment(null, keepEnrolment: false);
+
                 settings.OnPasswordRemoved();
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been removed.".Translate(), NotificationType.Success);
             }

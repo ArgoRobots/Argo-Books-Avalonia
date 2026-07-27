@@ -220,6 +220,45 @@ public class FileServiceEnvelopeTests : IDisposable
         Assert.False(File.Exists(filePath), "A file must not be left behind when encryption is unavailable.");
     }
 
+    [Fact]
+    public async Task Save_WithoutPassword_DoesNotAdvertiseBiometricUnlock()
+    {
+        // A file returned by support recovery has no password but still carries the old
+        // biometric setting inside its archive. The footer must not offer an unlock that
+        // cannot possibly succeed.
+        var filePath = await SaveWithBiometricSettingAsync(password: null, "recovered-bio.argo");
+
+        var footer = await _footerService.ReadFooterAsync(filePath);
+
+        Assert.False(footer!.IsEncrypted);
+        Assert.False(footer.BiometricEnabled);
+    }
+
+    [Fact]
+    public async Task Save_WithPassword_KeepsBiometricSetting()
+    {
+        var filePath = await SaveWithBiometricSettingAsync(Password, "password-bio.argo");
+
+        var footer = await _footerService.ReadFooterAsync(filePath);
+
+        Assert.True(footer!.IsEncrypted);
+        Assert.True(footer.BiometricEnabled);
+    }
+
+    private async Task<string> SaveWithBiometricSettingAsync(string? password, string fileName)
+    {
+        var sourceDirectory = Path.Combine(_workDirectory, $"bio-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(sourceDirectory);
+        await File.WriteAllTextAsync(Path.Combine(sourceDirectory, PayloadFileName), PayloadContents);
+        await File.WriteAllTextAsync(
+            Path.Combine(sourceDirectory, "appSettings.json"),
+            """{"security":{"biometricEnabled":true}}""");
+
+        var filePath = Path.Combine(_workDirectory, fileName);
+        await _fileService.SaveCompanyAsync(filePath, sourceDirectory, password);
+        return filePath;
+    }
+
     #endregion
 
     #region Backward compatibility
