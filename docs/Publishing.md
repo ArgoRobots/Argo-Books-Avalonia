@@ -9,17 +9,25 @@
 
 ### Build
 
-In Rider, set the configuration to **Release** and the target to **Desktop (Windows)**, then build.
+**Use `dotnet publish`, not a Rider build.** The project sets `PublishReadyToRun`, which precompiles IL to native code and cuts cold start from about 6.5 seconds to about 3.7 seconds. That property applies only to `publish`; a plain Rider Release build ignores it and ships the slower output.
 
-Alternatively from the command line:
+Run it from the solution root (`Argo-Books-Avalonia`), since `-o` is relative to the current directory, not to the project:
 
 ```bash
 dotnet publish ArgoBooks.Desktop -c Release -f net10.0-windows10.0.17763.0 -r win-x64 --self-contained -o publish/win-x64
 ```
 
+Output lands at `Argo-Books-Avalonia\publish\win-x64` (already gitignored).
+
+A Rider Release build is still fine for local testing, it just won't have the startup improvement.
+
 ### Package
 
-The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/). Point it at the `ArgoBooks.Desktop\bin\Release\net10.0-windows10.0.17763.0` output folder.
+The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/). Point its synchronized folder at `Argo-Books-Avalonia\publish\win-x64`.
+
+Note this is the **publish** output, not `bin\Release\...`. Pointing it back at `bin\Release` still produces a working installer, so the mistake is silent: the only symptom is users waiting an extra 2.5 seconds on every launch.
+
+The publish output is roughly 100MB larger than a plain build (about 508MB versus 400MB uncompressed) because of the precompiled native code. It also contains fewer files, since publish drops build artefacts that aren't needed at runtime.
 
 ## Linux
 

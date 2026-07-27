@@ -8,6 +8,15 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <SelfContained>true</SelfContained>
 
+        <!-- Precompile IL to native at publish time. Without it the runtime JIT-compiles the
+             whole dependency graph (Avalonia, Skia, LiveCharts, ML, EPPlus, NPOI, QuestPDF)
+             on every cold start. Measured on an 11th-gen i7: 6.5s to first window without,
+             ~3.7s with. Costs roughly 100MB of output.
+
+             This only applies to `dotnet publish`, NOT to a plain build, so the Windows
+             installer has to be produced from a publish output. See docs/Publishing.md. -->
+        <PublishReadyToRun>true</PublishReadyToRun>
+
         <AssemblyName>Argo Books</AssemblyName>
         <Title>Argo Books</Title>
         <Product>Argo Books</Product>
