@@ -13,10 +13,56 @@ public class FileFooter
     public string Version { get; set; } = "1.0.0";
 
     /// <summary>
+    /// Layout version of this footer and of the encryption envelope.
+    ///
+    /// Absent in files written before envelope encryption existed, and System.Text.Json
+    /// leaves it at the default of 1 for those, which is exactly the intended reading:
+    /// no value means version 1.
+    ///
+    /// Version 1: the archive is encrypted directly with a key derived from the password.
+    /// Version 2: the archive is encrypted with a random data key, which is itself stored
+    /// wrapped in <see cref="WrappedKey"/> and optionally <see cref="RecoveryBlob"/>.
+    /// </summary>
+    [JsonPropertyName("formatVersion")]
+    public int FormatVersion { get; set; } = 1;
+
+    /// <summary>
     /// Whether the file contents are encrypted.
     /// </summary>
     [JsonPropertyName("isEncrypted")]
     public bool IsEncrypted { get; set; }
+
+    /// <summary>
+    /// The file's data encryption key, wrapped under a key derived from the user's password
+    /// (Base64 encoded). Format version 2 and later only.
+    /// </summary>
+    [JsonPropertyName("wrappedKey")]
+    public string? WrappedKey { get; set; }
+
+    /// <summary>
+    /// Nonce used when wrapping <see cref="WrappedKey"/> (Base64 encoded).
+    /// Distinct from <see cref="Iv"/>, which belongs to the archive itself.
+    /// Format version 2 and later only.
+    /// </summary>
+    [JsonPropertyName("keyWrapNonce")]
+    public string? KeyWrapNonce { get; set; }
+
+    /// <summary>
+    /// The same data encryption key, wrapped under the Argo Books recovery public key
+    /// (Base64 encoded). Lets support recover a file whose password has been lost.
+    ///
+    /// Null when the build had no recovery key configured. The file is still valid and
+    /// opens normally with its password; it simply has no recovery path.
+    /// </summary>
+    [JsonPropertyName("recoveryBlob")]
+    public string? RecoveryBlob { get; set; }
+
+    /// <summary>
+    /// Identifies which recovery key pair <see cref="RecoveryBlob"/> was wrapped under,
+    /// so the correct private key can be selected after a rotation.
+    /// </summary>
+    [JsonPropertyName("recoveryKeyId")]
+    public string? RecoveryKeyId { get; set; }
 
     /// <summary>
     /// Salt used for password-based key derivation (Base64 encoded).
@@ -91,9 +137,19 @@ public static class FileFormatConstants
     public static readonly byte[] MagicBytes = "ARGO"u8.ToArray();
 
     /// <summary>
-    /// Current file format version.
+    /// File format version written by this build.
+    ///
+    /// 1: archive encrypted directly with the password-derived key.
+    /// 2: envelope encryption, archive encrypted with a random data key that is stored
+    ///    wrapped under the password and, when configured, under the recovery key.
     /// </summary>
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
+
+    /// <summary>
+    /// Oldest format version this build can still read. Files at any version between this
+    /// and <see cref="FormatVersion"/> open normally.
+    /// </summary>
+    public const int MinimumSupportedFormatVersion = 1;
 
     /// <summary>
     /// File extension for company files.

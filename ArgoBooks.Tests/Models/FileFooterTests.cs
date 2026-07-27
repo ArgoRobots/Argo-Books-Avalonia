@@ -35,9 +35,18 @@ public class FileFooterTests
     }
 
     [Fact]
-    public void FileFormatConstants_FormatVersion_IsOne()
+    public void FileFormatConstants_FormatVersion_IsTwo()
     {
-        Assert.Equal(1, FileFormatConstants.FormatVersion);
+        // Version 2 introduced envelope encryption. Bumping this is a breaking change for
+        // older builds, which cannot read the newer envelope, so it should not move without
+        // a matching change to how files are written.
+        Assert.Equal(2, FileFormatConstants.FormatVersion);
+    }
+
+    [Fact]
+    public void FileFormatConstants_StillReadsTheOriginalFormat()
+    {
+        Assert.Equal(1, FileFormatConstants.MinimumSupportedFormatVersion);
     }
 
     [Fact]

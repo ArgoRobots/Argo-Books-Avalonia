@@ -56,6 +56,30 @@ public interface IEncryptionService
     /// <exception cref="System.Security.Cryptography.CryptographicException">Thrown if password is incorrect or data is tampered.</exception>
     byte[] Decrypt(byte[] encryptedData, string password, string salt, string iv);
 
+    /// <summary>
+    /// Encrypts data with an already-derived key using AES-256-GCM.
+    ///
+    /// Used by envelope encryption (file format version 2 and later), where the archive is
+    /// encrypted with a random data key rather than one derived from the password.
+    /// </summary>
+    /// <param name="data">Data to encrypt.</param>
+    /// <param name="key">32-byte encryption key.</param>
+    /// <param name="nonce">12-byte nonce, never reused with this key.</param>
+    /// <returns>Encrypted data with authentication tag appended.</returns>
+    byte[] EncryptWithKey(byte[] data, byte[] key, byte[] nonce);
+
+    /// <summary>
+    /// Decrypts data produced by <see cref="EncryptWithKey"/>.
+    /// </summary>
+    /// <param name="encryptedData">Encrypted data with authentication tag.</param>
+    /// <param name="key">The same 32-byte key used to encrypt.</param>
+    /// <param name="nonce">The same nonce used to encrypt.</param>
+    /// <returns>Decrypted data.</returns>
+    /// <exception cref="System.Security.Cryptography.CryptographicException">
+    /// Thrown if the key is wrong or the data has been tampered with.
+    /// </exception>
+    byte[] DecryptWithKey(byte[] encryptedData, byte[] key, byte[] nonce);
+
     #endregion
 
     #region Encryption (Streams)
