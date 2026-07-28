@@ -1,4 +1,4 @@
-# Argo Books
+-0yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy!+ # Argo Books
 
 ## Introduction
 
@@ -39,4 +39,52 @@ After building the solution, press F5 to run the application in Debug mode, or `
 
 ## Publishing
 
-See [docs/Publishing.md](docs/publishing.md) for platform-specific build and packaging instructions.
+See [Publishing](docs/Publishing.md) for platform-specific build and packaging instructions.
+
+## Documentation
+
+Reference docs live in [docs/](docs/). Start with [Architecture](docs/Architecture.md) for a map
+of the codebase.
+
+### Architecture and data
+
+| Document | Read it when |
+|---|---|
+| [Architecture](docs/Architecture.md) | Getting oriented in the projects and how they fit together |
+| [Data Storage](docs/DataStorage.md) | Working with `.argo` files, the archive format, or saving and loading |
+| [Calculations](docs/Calculations.md) | Touching any money figure. The single source of truth for revenue, profit, tax and refunds |
+| [Security](docs/Security.md) | Changing encryption, key handling, passwords or biometric unlock |
+
+### Features
+
+| Document | Read it when |
+|---|---|
+| [Receipt Scanning](docs/ReceiptScanning.md) | Working on scanning, extraction, or supplier and category matching |
+| [AI Spreadsheet Import](docs/AISpreadsheetImport.md) | Working on spreadsheet import, column mapping or entity detection |
+| [Reports](docs/Reports.md) | Adding or changing report templates, PDF or image output |
+| [Insights](docs/Insights.md) | Working on forecasting, anomaly detection or recommendations |
+| [Payment Portal](docs/PaymentPortal.md) | Working on the online invoice payment flow |
+| [Localization](docs/Localization.md) | Adding translatable strings or changing language handling |
+| [License Key](docs/LicenseKey.md) | Working on licensing, activation or premium gating |
+
+### Setup and integrations
+
+| Document | Read it when |
+|---|---|
+| [Integrations](docs/Integrations.md) | Wiring up an external service |
+| [Azure Setup](docs/setup/AzureSetup.md) | Setting up Azure from scratch for builds and signing |
+| [Advanced Installer project setup](docs/Advanced%20Installer%20project%20setup.md) | Rebuilding or repairing the Windows installer project |
+
+### Operations
+
+| Document | Read it when |
+|---|---|
+| [Publishing](docs/Publishing.md) | Building and packaging a release for Windows, Linux or macOS, and signing it |
+| [Password recovery](docs/Password%20recovery.md) | A customer has lost their company file password. Internal, not for customers |
+
+### Sub-projects
+
+| Document | Read it when |
+|---|---|
+| [ArgoBooks.Mobile](ArgoBooks.Mobile/README.md) | Working on the Android companion app |
+| [ArgoBooks.TranslationTool](ArgoBooks.TranslationTool/README.md) | Working on the translation tooling |
