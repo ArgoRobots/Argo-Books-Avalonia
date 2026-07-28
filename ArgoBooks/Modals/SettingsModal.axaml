@@ -1504,7 +1504,7 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0"
                                              Text="{Binding NewPassword}"
-                                             RevealPassword="{Binding IsNewPasswordVisible}"
+                                             PasswordChar="{Binding NewPasswordMaskChar}"
                                              Classes="password-field"
                                              MaxLength="64" />
                                     <Button Grid.Column="1"
@@ -1563,7 +1563,7 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0"
                                              Text="{Binding ConfirmPassword}"
-                                             RevealPassword="{Binding IsConfirmPasswordVisible}"
+                                             PasswordChar="{Binding ConfirmPasswordMaskChar}"
                                              Classes="password-field"
                                              MaxLength="64" />
                                     <Button Grid.Column="1"
@@ -1614,7 +1614,7 @@
                                     <TextBox Grid.Column="0"
                                              x:Name="ChangeCurrentPasswordTextBox"
                                              Text="{Binding CurrentPassword}"
-                                             RevealPassword="{Binding IsCurrentPasswordVisible}"
+                                             PasswordChar="{Binding CurrentPasswordMaskChar}"
                                              Classes="password-field"
                                              MaxLength="64" />
                                     <Button Grid.Column="1"
@@ -1634,7 +1634,7 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0"
                                              Text="{Binding NewPassword}"
-                                             RevealPassword="{Binding IsNewPasswordVisible}"
+                                             PasswordChar="{Binding NewPasswordMaskChar}"
                                              Classes="password-field"
                                              MaxLength="64" />
                                     <Button Grid.Column="1"
@@ -1693,7 +1693,7 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0"
                                              Text="{Binding ConfirmPassword}"
-                                             RevealPassword="{Binding IsConfirmPasswordVisible}"
+                                             PasswordChar="{Binding ConfirmPasswordMaskChar}"
                                              Classes="password-field"
                                              MaxLength="64" />
                                     <Button Grid.Column="1"
@@ -1746,7 +1746,7 @@
                                     <TextBox Grid.Column="0"
                                              x:Name="RemoveCurrentPasswordTextBox"
                                              Text="{Binding CurrentPassword}"
-                                             RevealPassword="{Binding IsCurrentPasswordVisible}"
+                                             PasswordChar="{Binding CurrentPasswordMaskChar}"
                                              Classes="password-field"
                                              MaxLength="64" />
                                     <Button Grid.Column="1"
@@ -1781,7 +1781,7 @@
             <Setter Property="Padding" Value="12,10" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="PasswordChar" Value="*" />
+            <!-- PasswordChar is bound per field, not set here, so revealing can clear it. -->
         </Style>
         <Style Selector="TextBox.password-field /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="Transparent" />
