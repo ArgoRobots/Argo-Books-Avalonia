@@ -1197,6 +1197,60 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
         return markers;
     }
 
+    // Assigns every non-structural row to a (type, category) group using the outline markers.
+    // Type comes from the nearest preceding section; category from the nearest preceding Category
+    // header within that section (falling back to the section name). Structural rows (sections,
+    // categories, subtotals) and any rows before the first section are excluded.
+    internal static Dictionary<(SpreadsheetSheetType Type, string Category), List<int>> BucketMixedRows(
+        int rowCount, IReadOnlyList<MixedRowMarker> markers)
+    {
+        var byIndex = markers.ToDictionary(m => m.RowIndex);
+        var buckets = new Dictionary<(SpreadsheetSheetType, string), List<int>>();
+
+        SpreadsheetSheetType? currentType = null;
+        string? currentSection = null;
+        string? currentCategory = null;
+
+        for (int i = 0; i < rowCount; i++)
+        {
+            if (byIndex.TryGetValue(i, out var marker))
+            {
+                switch (marker.Kind)
+                {
+                    case MixedRowKind.IncomeSection:
+                        currentType = SpreadsheetSheetType.Revenue;
+                        currentSection = marker.Text;
+                        currentCategory = null;
+                        break;
+                    case MixedRowKind.ExpenseSection:
+                        currentType = SpreadsheetSheetType.Expenses;
+                        currentSection = marker.Text;
+                        currentCategory = null;
+                        break;
+                    case MixedRowKind.Category:
+                        currentCategory = marker.Text;
+                        break;
+                    case MixedRowKind.Subtotal:
+                        break; // skip; category context is unchanged
+                }
+                continue; // structural rows are never data
+            }
+
+            if (currentType is not { } type) continue; // before any section
+
+            var category = !string.IsNullOrWhiteSpace(currentCategory)
+                ? currentCategory!
+                : (currentSection ?? "Uncategorized");
+
+            var key = (type, category);
+            if (!buckets.TryGetValue(key, out var list))
+                buckets[key] = list = [];
+            list.Add(i);
+        }
+
+        return buckets;
+    }
+
     /// <summary>
     /// Backup import path: when normal analysis could not recognize a file, read every sheet raw and,
     /// per sheet, either extract records into a supported type or record a rejection reason. Reuses the

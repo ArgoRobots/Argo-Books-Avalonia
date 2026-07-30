@@ -305,4 +305,59 @@ public class ImportRescueTests
         Assert.Single(markers);
         Assert.Equal(MixedRowKind.Category, markers[0].Kind);
     }
+
+    private static Dictionary<(SpreadsheetSheetType, string), List<int>> InvokeBucket(
+        int rowCount, List<MixedRowMarker> markers)
+    {
+        var m = typeof(ArgoBooks.Core.Services.SpreadsheetAnalysisService).GetMethod(
+            "BucketMixedRows",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        return (Dictionary<(SpreadsheetSheetType, string), List<int>>)m.Invoke(null, [rowCount, markers])!;
+    }
+
+    [Fact]
+    public void BucketMixedRows_AssignsTypeAndCategoryBySection()
+    {
+        // rows: 0..11
+        // 0 IncomeSection, 1 Category(Design), [2,3] data, 4 Subtotal,
+        // 5 Category(Landscaping), [6] data, 7 ExpenseSection, 8 Category(Advertising), [9,10] data, 11 Subtotal
+        var markers = new List<MixedRowMarker>
+        {
+            new(0, MixedRowKind.IncomeSection, "Income"),
+            new(1, MixedRowKind.Category, "Design income"),
+            new(4, MixedRowKind.Subtotal, "Total for Design income"),
+            new(5, MixedRowKind.Category, "Landscaping Services"),
+            new(7, MixedRowKind.ExpenseSection, "Expenses"),
+            new(8, MixedRowKind.Category, "Advertising"),
+            new(11, MixedRowKind.Subtotal, "Total for Advertising"),
+        };
+        var buckets = InvokeBucket(12, markers);
+
+        Assert.Equal([2, 3], buckets[(SpreadsheetSheetType.Revenue, "Design income")]);
+        Assert.Equal([6], buckets[(SpreadsheetSheetType.Revenue, "Landscaping Services")]);
+        Assert.Equal([9, 10], buckets[(SpreadsheetSheetType.Expenses, "Advertising")]);
+        // Subtotal rows (4, 11) and structural rows are never bucketed.
+        Assert.DoesNotContain(buckets.Values.SelectMany(v => v), i => i == 4 || i == 11);
+    }
+
+    [Fact]
+    public void BucketMixedRows_DropsRowsBeforeAnySection()
+    {
+        var markers = new List<MixedRowMarker> { new(2, MixedRowKind.IncomeSection, "Income") };
+        var buckets = InvokeBucket(5, markers);
+        // rows 0,1 are before any section -> dropped; rows 3,4 -> Revenue, category falls back to section
+        Assert.False(buckets.Values.SelectMany(v => v).Any(i => i is 0 or 1 or 2));
+        Assert.Equal([3, 4], buckets[(SpreadsheetSheetType.Revenue, "Income")]);
+    }
+
+    [Fact]
+    public void BucketMixedRows_CategoryFallsBackToSectionName()
+    {
+        var markers = new List<MixedRowMarker>
+        {
+            new(0, MixedRowKind.ExpenseSection, "Expenses"),
+        };
+        var buckets = InvokeBucket(3, markers);
+        Assert.Equal([1, 2], buckets[(SpreadsheetSheetType.Expenses, "Expenses")]);
+    }
 }
