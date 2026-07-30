@@ -344,11 +344,12 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
         if (FilterStatus != "All")
         {
             var isActive = FilterStatus == "Active";
-            // Locations don't have a status field, so we assume all are active for now
-            // In a real implementation, you'd add a Status field to Location
+            // Location has no Status field, so every location counts as active and
+            // selecting "Inactive" always yields nothing. The branch is kept so the filter
+            // starts working on its own if a Status field is added.
             if (!isActive)
             {
-                filtered = []; // No inactive locations for now
+                filtered = [];
             }
         }
 

@@ -109,9 +109,10 @@ public partial class SetupChecklistViewModel : ViewModelBase
     private void InitializeItems()
     {
         Items.Clear();
-        // Scanning is first: it is the fastest path to a visible result, and a single
-        // scan creates the category, product and transaction behind it, so it ticks
-        // several of the steps below without the user filling in a form.
+        // Scanning is first: it is the fastest path to a visible result. A scan does create
+        // the category, product and transaction behind the scenes, but it credits only this
+        // step. Crediting the others was removed on purpose: the checklist teaches where
+        // each record lives, so every flow below is still walked by hand.
         Items.Add(new ChecklistItemViewModel
         {
             Id = TutorialService.ChecklistItems.ScanReceipt,

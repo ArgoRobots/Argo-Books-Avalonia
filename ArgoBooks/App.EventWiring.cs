@@ -1795,8 +1795,8 @@ public partial class App
 
     /// <summary>
     /// When the user finishes the setup checklist, opens the "Where did you hear about
-    /// Argo Books?" survey. Deferred until any in-flight completion guidance card
-    /// (which fires simultaneously for the final VisitAnalytics step) has been dismissed.
+    /// Argo Books?" survey. Deferred until any in-flight completion guidance card, which
+    /// the last completed step raises in the same call-stack, has been dismissed.
     /// </summary>
     private static bool _surveyPendingAfterGuidance;
 
@@ -1807,9 +1807,10 @@ public partial class App
             if (!TutorialService.Instance.ShouldShowSourceSurvey())
                 return;
 
-            // If the Analytics completion guidance just opened in the same
-            // call-stack (VisitAnalytics is the last checklist item), wait for
-            // the user to dismiss it before showing the survey on top.
+            // Whichever step finished the checklist raised its own guidance card in this
+            // same call-stack. Which card that is varies: ScanReceipt is not a prerequisite
+            // for VisitAnalytics, so either one can be the step that completes the list.
+            // Wait for it to be dismissed rather than stacking the survey on top of it.
             if (TutorialService.Instance.ShowCompletionGuidance)
             {
                 _surveyPendingAfterGuidance = true;

@@ -21,7 +21,9 @@ public class MobileSyncClient
     /// Creates a new mobile sync client.
     /// </summary>
     /// <param name="http">HttpClient to use for requests (or null for a default instance).</param>
-    /// <param name="baseUrl">Base URL of the sync server (e.g. http://localhost:5000 or https://api.argorobots.com).</param>
+    /// <param name="baseUrl">Base URL of the sync server. In the app this is always
+    /// MobileApiConfig.BaseUrl, i.e. https://argorobots.com or https://dev.argorobots.com;
+    /// tests pass a local stub such as http://localhost:5000.</param>
     public MobileSyncClient(HttpClient? http, string baseUrl)
     {
         _http = http ?? new HttpClient();

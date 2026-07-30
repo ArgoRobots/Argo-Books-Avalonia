@@ -1314,7 +1314,9 @@ public class ReportRenderer : IDisposable
         // Determine if we have negative values
         var hasNegatives = minValue < 0;
 
-        // Add 20% padding to both ends for better visual appearance
+        // 20% headroom above the max so the tallest point isn't flush with the top edge.
+        // The floor stays pinned at 0 unless the data goes negative, in which case the
+        // bottom gets the same 20%.
         var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
         var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
 
@@ -1429,7 +1431,9 @@ public class ReportRenderer : IDisposable
         // Determine if we have negative values
         var hasNegatives = minValue < 0;
 
-        // Add 20% padding to both ends for better visual appearance
+        // 20% headroom above the max so the tallest point isn't flush with the top edge.
+        // The floor stays pinned at 0 unless the data goes negative, in which case the
+        // bottom gets the same 20%.
         var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
         var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
 
@@ -1756,7 +1760,9 @@ public class ReportRenderer : IDisposable
         // Determine if we have negative values
         var hasNegatives = minValue < 0;
 
-        // Add 20% padding to both ends for better visual appearance
+        // 20% headroom above the max so the tallest point isn't flush with the top edge.
+        // The floor stays pinned at 0 unless the data goes negative, in which case the
+        // bottom gets the same 20%.
         var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
         var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
 
@@ -1886,7 +1892,9 @@ public class ReportRenderer : IDisposable
         // Determine if we have negative values
         var hasNegatives = minValue < 0;
 
-        // Add 20% padding to both ends for better visual appearance
+        // 20% headroom above the max so the tallest point isn't flush with the top edge.
+        // The floor stays pinned at 0 unless the data goes negative, in which case the
+        // bottom gets the same 20%.
         var paddedMaxValue = maxValue > 0 ? maxValue * 1.2 : maxValue;
         var paddedMinValue = hasNegatives ? minValue * 1.2 : 0;
 

@@ -10,7 +10,9 @@ namespace ArgoBooks.Core.Services;
 
 /// <summary>
 /// Central manager for company file operations and state.
-/// Coordinates between FileService, EncryptionService, and SettingsService.
+/// Coordinates FileService (read/write), GlobalSettingsService (device-wide settings),
+/// FooterService (recent-companies list) and CompanyInstanceLock (stops two instances
+/// holding the same .argo file). Encryption is applied inside FileService, not here.
 /// </summary>
 public class CompanyManager : IDisposable
 {

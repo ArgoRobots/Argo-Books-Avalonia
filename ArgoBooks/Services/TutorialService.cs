@@ -310,8 +310,13 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Marks a checklist item as completed.
-    /// Items must be completed in order: CreateCategory -> AddProduct -> RecordExpense -> VisitAnalytics
+    /// Marks a checklist item as completed. Out-of-order calls are silently ignored.
+    /// <para>
+    /// The gated chain is CreateCategory -> AddProduct -> RecordExpense -> VisitAnalytics.
+    /// ScanReceipt is shown first but sits outside that chain: it has no prerequisites and
+    /// is not a prerequisite for anything, so it can be completed at any point, including
+    /// last. Items that aren't on the setup checklist are never gated.
+    /// </para>
     /// </summary>
     public void CompleteChecklistItem(string itemId)
     {
@@ -336,10 +341,14 @@ public class TutorialService
         // end. The Contains guard above means each step reports at most once.
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ChecklistStepCompleted, itemId);
 
-        // Anonymous onboarding telemetry: VisitAnalytics is the last required
-        // step (order: CreateCategory -> AddProduct -> RecordExpense ->
-        // VisitAnalytics), and the Contains guard above means it's added once,
-        // so this fires exactly once when guided setup is finished.
+        // Anonymous onboarding telemetry: VisitAnalytics closes the gated chain, and the
+        // Contains guard above means it is added once, so this fires at most once.
+        //
+        // This is NOT the same as the checklist being finished.
+        // AreAllChecklistItemsCompleted() also requires ScanReceipt, which is deliberately
+        // not a prerequisite for VisitAnalytics, so someone who never scans fires this
+        // while the checklist is still on screen. Read the metric as "worked through the
+        // manual chain", not "finished setup": it runs ahead of the latter.
         if (itemId == ChecklistItems.VisitAnalytics)
         {
             _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingCompleted);
