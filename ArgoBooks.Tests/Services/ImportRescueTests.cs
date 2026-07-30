@@ -1,4 +1,7 @@
 using System.IO;
+using System.Linq;
+using System.Text.Json;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Services;
@@ -359,5 +362,40 @@ public class ImportRescueTests
         };
         var buckets = InvokeBucket(3, markers);
         Assert.Equal([1, 2], buckets[(SpreadsheetSheetType.Expenses, "Expenses")]);
+    }
+
+    [Fact]
+    public void ImportProcessedEntities_MixedWithCategory_CategorizesByReportGroup()
+    {
+        var svc = new SpreadsheetImportService();
+        var company = new CompanyData();
+
+        var revenue = new LlmProcessedData
+        {
+            EntityType = SpreadsheetSheetType.Revenue,
+            Entities =
+            {
+                JsonDocument.Parse("""{"id":"SAL-1","date":"2026-06-09","description":"Custom Design","total":300,"categoryName":"Design income"}""").RootElement.Clone(),
+            }
+        };
+        var expense = new LlmProcessedData
+        {
+            EntityType = SpreadsheetSheetType.Expenses,
+            Entities =
+            {
+                JsonDocument.Parse("""{"id":"PUR-1","date":"2026-06-16","description":"Newspaper Ad","total":50,"categoryName":"Advertising"}""").RootElement.Clone(),
+            }
+        };
+
+        var result = svc.ImportProcessedEntities(company, [revenue, expense], "P&L Detail");
+
+        Assert.Equal(2, result.Inserted);
+        Assert.Single(company.Revenues);
+        Assert.Single(company.Expenses);
+        // Each transaction's linked product is categorized by the report group.
+        var revProduct = company.Products.First(p => p.Id == company.Revenues[0].LineItems[0].ProductId);
+        var expProduct = company.Products.First(p => p.Id == company.Expenses[0].LineItems[0].ProductId);
+        Assert.Equal("Design income", company.Categories.First(c => c.Id == revProduct.CategoryId).Name);
+        Assert.Equal("Advertising", company.Categories.First(c => c.Id == expProduct.CategoryId).Name);
     }
 }
