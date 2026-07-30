@@ -1072,7 +1072,7 @@ IMPORTANT:
         return @"You are a data import assistant for a bookkeeping app called Argo Books. The normal importer could not recognize this sheet. Decide ONE of two things:
 
 1. EXTRACT - the sheet is a list of individual records (one record per row) that matches an Argo Books data type. Respond:
-   {""action"":""extract"",""entityType"":""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged>""}
+   {""action"":""extract"",""entityType"":""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged, BankStatement>""}
 
 2. REJECT - the sheet cannot be imported as individual records. Respond:
    {""action"":""reject"",""reason"":""<one of the reason codes below>""}
@@ -1163,6 +1163,9 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
+            // Deliberate UX choice: a read failure here (corrupt/locked/unreadable file) surfaces as a
+            // friendly rejection instead of throwing and crashing the import flow. The error is still
+            // logged via errorLogger so it's not silently swallowed.
             errorLogger?.LogError(ex, ErrorCategory.Import, "Rescue import: failed to read the file");
             return new ImportRescueResult
             {

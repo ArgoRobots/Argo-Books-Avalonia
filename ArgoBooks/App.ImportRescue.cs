@@ -47,11 +47,14 @@ public partial class App
             "Trying to organize the file...".Translate(),
             0, rescueCts, ConfirmCancelAsync);
 
-        // RescueAsync reports the row total once, up front. Use it to warn the user when a file is large
-        // (but still within the hard cap) before the AI calls begin.
+        // RescueAsync reports the row total once, up front (the file total), and then per-sheet totals
+        // during extraction. Capture the first report's total (the stable file-wide figure) so the large
+        // file warning doesn't flip back off once a multi-sheet file's smaller per-sheet totals arrive.
+        int? fileTotal = null;
         var rescueProgress = new Progress<(int processed, int total)>(p =>
         {
-            var detail = p.total > SpreadsheetAnalysisService.RescueLargeFileWarnRows
+            fileTotal ??= p.total;
+            var detail = fileTotal > SpreadsheetAnalysisService.RescueLargeFileWarnRows
                 ? "This is a large file, this may take a while...".Translate()
                 : "Trying to organize the file...".Translate();
             _mainWindowViewModel?.ShowLoading(
