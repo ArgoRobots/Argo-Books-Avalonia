@@ -106,6 +106,37 @@ The LLM is instructed to:
 
 After import completes, any products that lack a category are sent through AI categorization. The LLM infers appropriate category names from the product name and description (e.g., "Industrial Drill Press" → "Power Tools").
 
+## Fallback: AI Rescue for Unrecognized Files
+
+When Step 1 analysis cannot classify a file at all (it returns no usable sheets), the import no longer dead-ends. It automatically runs a heavier whole-file rescue pass (`SpreadsheetAnalysisService.RescueAsync`) that either extracts records or explains, in vetted wording, why the file cannot be imported.
+
+Unlike Step 1, which samples ~13 rows to classify, the rescue reads every sheet in full and asks the LLM, per sheet, to make one of two decisions:
+
+- **Extract:** the sheet holds individual, one-per-row records. The LLM picks the single best-fit entity type (any supported `SpreadsheetSheetType`, including bank statements), and the sheet is normalized through the existing Tier 2 path and committed. Bank statement rows route to Bank Matching, exactly as in the normal flow.
+- **Reject:** the sheet cannot be represented as Argo Books records. The LLM returns a fixed reason code, never free text, so the user always sees curated copy.
+
+**Rejection reason codes**
+
+| Code | Shown when |
+|------|-----------|
+| `SummaryOrReport` | The file is a summary or report of category totals (e.g. a QuickBooks Profit and Loss statement), not individual records |
+| `NotArgoData` | Nothing in the file matches data Argo Books tracks |
+| `UnsupportedStructure` | It looks like records but the layout cannot be mapped (also the default for an unrecognized code) |
+| `EmptyOrUnreadable` | No readable data rows |
+| `TooLarge` | Over the row cap (see Limits below); set by a row-count guard, not by the AI |
+
+The application owns the user-facing text (`ImportRescueMessages.ForReason`); an unrecognized or malformed AI response falls back to the `UnsupportedStructure` message. A file read failure is reported as a friendly `EmptyOrUnreadable` rejection (and still logged) rather than surfacing a raw exception.
+
+**Limits**
+
+Because rows are processed in batches, file size is an operational limit (time and number of AI calls), not a model limit:
+
+- **Hard cap: 10,000 total rows.** Over the cap, the file is rejected as `TooLarge` before any AI call is made.
+- **Warning over 1,000 rows.** Large but allowed files show a "this may take a while" message before the AI runs.
+- **Width-aware batching.** For wide sheets, the extraction batch shrinks below 100 rows (targeting roughly 2,500 cells per batch) so a response is not truncated.
+
+**Usage:** a rescue counts as one AI import only when it actually extracts records; a rejected file is not charged. The normal monthly quota check still runs before the rescue.
+
 ## Rate Limiting
 
 AI imports are rate-limited via a server-side monthly quota.
