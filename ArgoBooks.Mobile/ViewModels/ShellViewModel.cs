@@ -57,6 +57,9 @@ public partial class ShellViewModel : ViewModelBase
     private readonly CaptureViewModel _capture;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageVisible))]
+    [NotifyPropertyChangedFor(nameof(IsWaitingPanelVisible))]
+    [NotifyPropertyChangedFor(nameof(IsNotPairedPanelVisible))]
     private object _currentPage;
 
     [ObservableProperty]
@@ -72,9 +75,11 @@ public partial class ShellViewModel : ViewModelBase
     private bool _isRefreshing;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotPairedPanelVisible))]
     private bool _isNotPaired;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWaitingPanelVisible))]
     private bool _isWaitingForSync;
 
     [ObservableProperty]
@@ -85,7 +90,29 @@ public partial class ShellViewModel : ViewModelBase
 
     /// <summary>True once a snapshot (fresh or cached) is loaded, so the root pages can render.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageVisible))]
     private bool _isContentVisible;
+
+    /// <summary>
+    /// Pages that render from their own state instead of the synced snapshot. They must stay
+    /// visible in the NotPaired and WaitingForFirstSync states, because those states otherwise
+    /// swap a placeholder in over the whole content area and strand the user: tapping the company
+    /// chip pushes the switcher, but the switcher never renders, so there is no way to change
+    /// company, pair a different one, or reach Settings until a snapshot happens to arrive.
+    /// </summary>
+    private bool IsSnapshotIndependentPage =>
+        CurrentPage is CompanySwitcherViewModel or PairingViewModel or SettingsViewModel;
+
+    /// <summary>True when the current page should render: a snapshot is loaded, or the page does
+    /// not need one.</summary>
+    public bool IsPageVisible => IsContentVisible || IsSnapshotIndependentPage;
+
+    /// <summary>The "waiting for first sync" placeholder. Suppressed while a snapshot-independent
+    /// page is showing so it cannot cover the switcher, pairing, or Settings pages.</summary>
+    public bool IsWaitingPanelVisible => IsWaitingForSync && !IsSnapshotIndependentPage;
+
+    /// <summary>The "no desktop connected" placeholder. Suppressed for the same reason.</summary>
+    public bool IsNotPairedPanelVisible => IsNotPaired && !IsSnapshotIndependentPage;
 
     /// <summary>The active paired company's label, shown in the chip at the top of the root pages.</summary>
     [ObservableProperty]

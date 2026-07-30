@@ -63,7 +63,7 @@
     <Panel Grid.Row="3" Margin="0">
 
       <!-- Not paired -->
-      <StackPanel IsVisible="{Binding IsNotPaired}"
+      <StackPanel IsVisible="{Binding IsNotPairedPanelVisible}"
                   VerticalAlignment="Center" HorizontalAlignment="Center"
                   Spacing="10" Margin="30">
         <TextBlock Text="No desktop connected" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center" />
@@ -72,7 +72,7 @@
       </StackPanel>
 
       <!-- Waiting for first sync -->
-      <StackPanel IsVisible="{Binding IsWaitingForSync}"
+      <StackPanel IsVisible="{Binding IsWaitingPanelVisible}"
                   VerticalAlignment="Center" HorizontalAlignment="Center"
                   Spacing="10" Margin="30">
         <TextBlock Text="Waiting for your desktop to sync" FontSize="17" FontWeight="Bold"
@@ -86,7 +86,7 @@
       </StackPanel>
 
       <!-- Loaded content -->
-      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding IsContentVisible}" />
+      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding IsPageVisible}" />
     </Panel>
 
     <!-- Bottom nav (icon-only) -->

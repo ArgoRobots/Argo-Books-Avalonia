@@ -1986,6 +1986,13 @@ public partial class SettingsModalViewModel : ViewModelBase
                     IsPhoneJustPaired = true;
                     await RefreshDevicesAsync();
                 });
+
+                // Push the first snapshot immediately. The phone polls /snapshot and shows
+                // "Waiting for your desktop to sync" until one exists, and the only other uploader
+                // (App.AutoMobileSyncAsync) is triggered by desktop navigation to the Payments or
+                // Receipts page. Without this, a successful pairing leaves the phone stuck on that
+                // placeholder until the user happens to open one of those two pages.
+                await App.AutoMobileSyncAsync();
                 return;
             }
         }
