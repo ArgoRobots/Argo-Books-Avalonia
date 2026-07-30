@@ -44,8 +44,9 @@ public enum ImportRescueOutcome
 }
 
 /// <summary>
-/// The AI's per-sheet decision: either a type to extract into, or a rejection reason.
-/// Exactly one of the two properties is non-null.
+/// The AI's per-sheet decision: one of three mutually exclusive states: a single entity type to
+/// extract into (<see cref="EntityType"/>), a rejection reason (<see cref="Reason"/>), or a mixed
+/// income/expense report (<see cref="IsMixedIncomeExpense"/>).
 /// </summary>
 public sealed class RescueClassification
 {

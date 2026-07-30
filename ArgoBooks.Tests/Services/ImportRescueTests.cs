@@ -365,6 +365,23 @@ public class ImportRescueTests
     }
 
     [Fact]
+    public void BucketMixedRows_DuplicateRowIndex_DoesNotThrow()
+    {
+        // The outline is untrusted model output; a repeated row index must not throw
+        // (last marker for that row wins) instead of defeating the "never throws" contract.
+        var markers = new List<MixedRowMarker>
+        {
+            new(0, MixedRowKind.IncomeSection, "Income"),
+            new(0, MixedRowKind.IncomeSection, "Income (duplicate)"),
+            new(1, MixedRowKind.Category, "Design income"),
+        };
+
+        var buckets = InvokeBucket(4, markers);
+
+        Assert.Equal([2, 3], buckets[(SpreadsheetSheetType.Revenue, "Design income")]);
+    }
+
+    [Fact]
     public void ImportProcessedEntities_MixedWithCategory_CategorizesByReportGroup()
     {
         var svc = new SpreadsheetImportService();

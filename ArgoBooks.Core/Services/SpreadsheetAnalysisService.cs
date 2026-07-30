@@ -1093,10 +1093,10 @@ IMPORTANT:
 1. EXTRACT - the sheet is a list of individual records (one record per row) that matches an Argo Books data type. Respond:
    {""action"":""extract"",""entityType"":""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged, BankStatement>""}
 
-3. MIXED - the sheet is a single report that lists individual transactions under BOTH an Income section and an Expenses section (for example a Profit and Loss Detail). Respond:
+2. MIXED - the sheet is a single report that lists individual transactions under BOTH an Income section and an Expenses section (for example a Profit and Loss Detail). Respond:
    {""action"":""mixed""}
 
-4. REJECT - the sheet cannot be imported as individual records. Respond:
+3. REJECT - the sheet cannot be imported as individual records. Respond:
    {""action"":""reject"",""reason"":""<one of the reason codes below>""}
 
 Reason codes:
@@ -1193,7 +1193,9 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
         }
         catch (Exception)
         {
-            return markers;
+            // A mid-parse exception must not surface a partial outline: return nothing so the
+            // caller treats this the same as a fully unparseable response.
+            return [];
         }
         return markers;
     }
@@ -1205,7 +1207,9 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
     internal static Dictionary<(SpreadsheetSheetType Type, string Category), List<int>> BucketMixedRows(
         int rowCount, IReadOnlyList<MixedRowMarker> markers)
     {
-        var byIndex = markers.ToDictionary(m => m.RowIndex);
+        // The outline is untrusted model output, so a repeated row index must not throw here;
+        // last marker for a given row wins.
+        var byIndex = markers.GroupBy(m => m.RowIndex).ToDictionary(g => g.Key, g => g.Last());
         var buckets = new Dictionary<(SpreadsheetSheetType, string), List<int>>();
 
         SpreadsheetSheetType? currentType = null;
@@ -1324,9 +1328,13 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
     // Returns a copy of the entity JSON with categoryName set (rescue mixed-report grouping).
     private static JsonElement InjectCategoryName(JsonElement entity, string categoryName)
     {
-        var node = JsonNode.Parse(entity.GetRawText())!.AsObject();
-        node["categoryName"] = categoryName;
-        return JsonSerializer.SerializeToElement(node);
+        var node = JsonNode.Parse(entity.GetRawText());
+        if (node is JsonObject obj)
+        {
+            obj["categoryName"] = categoryName;
+            return JsonSerializer.SerializeToElement(obj);
+        }
+        return entity;
     }
 
     /// <summary>
