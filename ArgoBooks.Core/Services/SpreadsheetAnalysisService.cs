@@ -38,6 +38,10 @@ public class SpreadsheetAnalysisService(
     // threshold; a bounded retry re-rolls that wobble instead of rejecting the sheet outright.
     private const int MaxAnalysisAttempts = 2;
 
+    // The rescue classify call only needs enough rows to judge shape/type, not the whole sheet
+    // (the full sheet is sent later during extraction). Bounding it keeps the classify response small.
+    private const int RescueClassifySampleRows = 40;
+
     #region Analysis Phase
 
     /// <summary>
@@ -1032,6 +1036,111 @@ IMPORTANT:
 
         fields.Add(current.ToString().Trim());
         return fields;
+    }
+
+    #endregion
+
+    #region Rescue Fallback
+
+    /// <summary>
+    /// Whole-file rescue used when normal analysis could not classify a file. Asks the LLM, per sheet,
+    /// to either classify it into a supported entity type or return a fixed rejection reason code.
+    /// </summary>
+    public async Task<RescueClassification> ClassifyOrRejectAsync(
+        List<string> headers,
+        List<List<string>> rows,
+        string sheetName,
+        CancellationToken cancellationToken = default)
+    {
+        var systemPrompt = BuildRescueClassifySystemPrompt();
+        var sample = rows.Count > RescueClassifySampleRows ? rows.Take(RescueClassifySampleRows).ToList() : rows;
+        var userPrompt = BuildRescueClassifyUserPrompt(sheetName, headers, sample, rows.Count);
+
+        var response = await geminiService.SendChatAsync(
+            systemPrompt, userPrompt, maxTokens: 1000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: headers.Count);
+
+        if (string.IsNullOrEmpty(response))
+            return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
+
+        return ParseRescueClassification(response);
+    }
+
+    private static string BuildRescueClassifySystemPrompt()
+    {
+        return @"You are a data import assistant for a bookkeeping app called Argo Books. The normal importer could not recognize this sheet. Decide ONE of two things:
+
+1. EXTRACT - the sheet is a list of individual records (one record per row) that matches an Argo Books data type. Respond:
+   {""action"":""extract"",""entityType"":""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged>""}
+
+2. REJECT - the sheet cannot be imported as individual records. Respond:
+   {""action"":""reject"",""reason"":""<one of the reason codes below>""}
+
+Reason codes:
+- SummaryOrReport: a summary or report with category totals and subtotals (e.g. a Profit and Loss statement), not individual records.
+- NotArgoData: the content is unrelated to anything a bookkeeping app tracks.
+- UnsupportedStructure: it looks like records but the layout (pivoted, cross-tab, multiple stacked tables) cannot be read as one record per row.
+- EmptyOrUnreadable: there is no usable data.
+
+Choose EXTRACT only when you are confident real per-row records are present. When unsure, REJECT with the closest reason. Respond with a single JSON object only, no markdown.";
+    }
+
+    private string BuildRescueClassifyUserPrompt(
+        string sheetName, List<string> headers, List<List<string>> sampleRows, int totalRows)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"Sheet name: \"{sheetName}\" ({totalRows} data rows). Sample rows:");
+        sb.AppendLine();
+
+        sb.Append("| ").Append(string.Join(" | ", headers)).AppendLine(" |");
+        sb.Append("| ").Append(string.Join(" | ", headers.Select(_ => "---"))).AppendLine(" |");
+        foreach (var row in sampleRows)
+        {
+            var cells = new List<string>(row);
+            while (cells.Count < headers.Count) cells.Add("");
+            sb.Append("| ").Append(string.Join(" | ", cells.Select(c => c.Replace("|", "\\|")))).AppendLine(" |");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("Argo Books data types and their fields:");
+        sb.AppendLine(ImportSchemaDefinition.FormatSchemaForPrompt(country));
+        return sb.ToString();
+    }
+
+    internal static RescueClassification ParseRescueClassification(string response)
+    {
+        try
+        {
+            var clean = CleanJsonResponse(response);
+            using var doc = JsonDocument.Parse(clean);
+            var root = doc.RootElement;
+
+            var action = GetString(root, "action");
+            if (string.Equals(action, "extract", StringComparison.OrdinalIgnoreCase))
+            {
+                var typeStr = GetString(root, "entityType");
+                if (Enum.TryParse<SpreadsheetSheetType>(typeStr, ignoreCase: true, out var type)
+                    && type != SpreadsheetSheetType.Unknown)
+                {
+                    return new RescueClassification { EntityType = type };
+                }
+
+                // "extract" without a usable type is contradictory: treat as unmappable.
+                return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
+            }
+
+            // Any non-extract action is a rejection. Unknown/blank reason codes default to UnsupportedStructure.
+            var reasonStr = GetString(root, "reason");
+            var reason = Enum.TryParse<ImportRescueRejectionReason>(reasonStr, ignoreCase: true, out var parsed)
+                ? parsed
+                : ImportRescueRejectionReason.UnsupportedStructure;
+            return new RescueClassification { Reason = reason };
+        }
+        catch (Exception)
+        {
+            // Unparseable/empty AI output must not crash the rescue; surface a clean, safe reason.
+            return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
+        }
     }
 
     #endregion

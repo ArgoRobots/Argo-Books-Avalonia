@@ -75,4 +75,51 @@ public class ImportRescueTests
         Assert.Equal(ImportRescueOutcome.Rejected, result.Outcome);
         Assert.Equal(ImportRescueRejectionReason.UnsupportedStructure, result.ReasonCode);
     }
+
+    private static RescueClassification InvokeParse(string response)
+    {
+        var method = typeof(ArgoBooks.Core.Services.SpreadsheetAnalysisService).GetMethod(
+            "ParseRescueClassification",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        return (RescueClassification)method.Invoke(null, [response])!;
+    }
+
+    [Fact]
+    public void ParseRescueClassification_Extract_ReturnsType()
+    {
+        var r = InvokeParse("""{"action":"extract","entityType":"Expenses"}""");
+        Assert.Equal(SpreadsheetSheetType.Expenses, r.EntityType);
+        Assert.Null(r.Reason);
+    }
+
+    [Fact]
+    public void ParseRescueClassification_ExtractUnknownType_FallsBackToUnsupported()
+    {
+        var r = InvokeParse("""{"action":"extract","entityType":"Unknown"}""");
+        Assert.Null(r.EntityType);
+        Assert.Equal(ImportRescueRejectionReason.UnsupportedStructure, r.Reason);
+    }
+
+    [Fact]
+    public void ParseRescueClassification_Reject_ReturnsReason()
+    {
+        var r = InvokeParse("""{"action":"reject","reason":"SummaryOrReport"}""");
+        Assert.Null(r.EntityType);
+        Assert.Equal(ImportRescueRejectionReason.SummaryOrReport, r.Reason);
+    }
+
+    [Fact]
+    public void ParseRescueClassification_UnknownReason_FallsBackToUnsupported()
+    {
+        var r = InvokeParse("""{"action":"reject","reason":"WeirdMadeUpCode"}""");
+        Assert.Equal(ImportRescueRejectionReason.UnsupportedStructure, r.Reason);
+    }
+
+    [Fact]
+    public void ParseRescueClassification_Malformed_FallsBackToUnsupported()
+    {
+        var r = InvokeParse("this is not json");
+        Assert.Null(r.EntityType);
+        Assert.Equal(ImportRescueRejectionReason.UnsupportedStructure, r.Reason);
+    }
 }
