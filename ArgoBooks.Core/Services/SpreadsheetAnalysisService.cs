@@ -1054,7 +1054,11 @@ IMPORTANT:
         CancellationToken cancellationToken = default)
     {
         var systemPrompt = BuildRescueClassifySystemPrompt();
-        var sample = rows.Count > RescueClassifySampleRows ? rows.Take(RescueClassifySampleRows).ToList() : rows;
+        // Sample across the whole sheet (beginning, middle, end) so a mixed report's later
+        // Expenses section is visible to the classifier, not just the leading Income rows.
+        var sample = rows.Count > RescueClassifySampleRows
+            ? SpreadSample(rows, RescueClassifySampleRows)
+            : rows;
         var userPrompt = BuildRescueClassifyUserPrompt(sheetName, headers, sample, rows.Count);
 
         var response = await geminiService.SendChatAsync(
@@ -1067,14 +1071,31 @@ IMPORTANT:
         return ParseRescueClassification(response);
     }
 
+    // Evenly spaced sample across all rows (always includes the first and last row),
+    // so classification sees every section of a long report, not just the top.
+    internal static List<List<string>> SpreadSample(List<List<string>> rows, int count)
+    {
+        if (rows.Count <= count) return rows;
+        var picked = new List<List<string>>(count);
+        for (int i = 0; i < count; i++)
+        {
+            var idx = (int)((long)i * (rows.Count - 1) / (count - 1));
+            picked.Add(rows[idx]);
+        }
+        return picked;
+    }
+
     private static string BuildRescueClassifySystemPrompt()
     {
-        return @"You are a data import assistant for a bookkeeping app called Argo Books. The normal importer could not recognize this sheet. Decide ONE of two things:
+        return @"You are a data import assistant for a bookkeeping app called Argo Books. The normal importer could not recognize this sheet. Decide ONE of the following:
 
 1. EXTRACT - the sheet is a list of individual records (one record per row) that matches an Argo Books data type. Respond:
    {""action"":""extract"",""entityType"":""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged, BankStatement>""}
 
-2. REJECT - the sheet cannot be imported as individual records. Respond:
+3. MIXED - the sheet is a single report that lists individual transactions under BOTH an Income section and an Expenses section (for example a Profit and Loss Detail). Respond:
+   {""action"":""mixed""}
+
+4. REJECT - the sheet cannot be imported as individual records. Respond:
    {""action"":""reject"",""reason"":""<one of the reason codes below>""}
 
 Reason codes:
@@ -1117,6 +1138,11 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
             var root = doc.RootElement;
 
             var action = GetString(root, "action");
+            if (string.Equals(action, "mixed", StringComparison.OrdinalIgnoreCase))
+            {
+                return new RescueClassification { IsMixedIncomeExpense = true };
+            }
+
             if (string.Equals(action, "extract", StringComparison.OrdinalIgnoreCase))
             {
                 var typeStr = GetString(root, "entityType");

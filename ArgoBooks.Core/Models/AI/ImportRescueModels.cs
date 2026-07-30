@@ -39,6 +39,12 @@ public sealed class RescueClassification
 {
     public SpreadsheetSheetType? EntityType { get; init; }
     public ImportRescueRejectionReason? Reason { get; init; }
+
+    /// <summary>
+    /// True when the AI judged the sheet a mixed income+expense transaction report
+    /// (e.g. a Profit and Loss Detail). When set, EntityType and Reason are both null.
+    /// </summary>
+    public bool IsMixedIncomeExpense { get; init; }
 }
 
 /// <summary>

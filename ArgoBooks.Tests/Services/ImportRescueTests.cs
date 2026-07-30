@@ -125,6 +125,23 @@ public class ImportRescueTests
         Assert.Equal(ImportRescueRejectionReason.UnsupportedStructure, r.Reason);
     }
 
+    [Fact]
+    public void ParseRescueClassification_Mixed_SetsMixedFlag()
+    {
+        var r = InvokeParse("""{"action":"mixed"}""");
+        Assert.True(r.IsMixedIncomeExpense);
+        Assert.Null(r.EntityType);
+        Assert.Null(r.Reason);
+    }
+
+    [Fact]
+    public void ParseRescueClassification_Extract_IsNotMixed()
+    {
+        var r = InvokeParse("""{"action":"extract","entityType":"Expenses"}""");
+        Assert.False(r.IsMixedIncomeExpense);
+        Assert.Equal(SpreadsheetSheetType.Expenses, r.EntityType);
+    }
+
     // Mock that returns different payloads for the classify call vs the Tier-2 extraction call,
     // distinguished by a stable marker in the rescue classify system prompt.
     private sealed class BranchingMockGeminiService : IGeminiService
@@ -144,7 +161,7 @@ public class ImportRescueTests
             CancellationToken cancellationToken = default,
             OperationKind operation = OperationKind.Completion, long? sizeFeature = null)
         {
-            var isClassify = systemPrompt.Contains("Decide ONE of two things", StringComparison.Ordinal);
+            var isClassify = systemPrompt.Contains("Decide ONE", StringComparison.Ordinal);
             return Task.FromResult<string?>(isClassify ? _classifyJson : _entitiesJson);
         }
 
