@@ -2273,10 +2273,13 @@ public partial class App : Application
             await Task.Yield();
             _mainWindowViewModel?.HideLoading();
 
-            if (analysis == null || analysis.Sheets.Count == 0)
+            // Fall back to the whole-file AI rescue when normal analysis produced nothing importable:
+            // either it returned no result/sheets at all, or it returned sheets but classified every one
+            // as Unknown/unsupported (e.g. a Profit and Loss report). Both are dead-ends on the normal
+            // path, so hand them to the rescue, which either extracts records or explains, in vetted copy,
+            // why the file cannot be imported.
+            if (analysis == null || analysis.Sheets.Count == 0 || analysis.Sheets.All(s => !s.IsIncluded))
             {
-                // Normal analysis could not recognize the file. Fall back to the whole-file AI rescue,
-                // which either extracts records or explains, in vetted copy, why it cannot be imported.
                 await TryRescueImportAsync(
                     filePath, isCsv, companyData, analysisService, importService, originalFileName, usageService);
                 return;
