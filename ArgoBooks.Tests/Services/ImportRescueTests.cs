@@ -264,4 +264,45 @@ public class ImportRescueTests
     [InlineData(0, 100)]    // guard against divide-by-zero
     public void RescueChunkSize_ScalesWithWidth(int columns, int expected)
         => Assert.Equal(expected, SpreadsheetAnalysisService.RescueChunkSize(columns));
+
+    private static List<MixedRowMarker> InvokeParseOutline(string response)
+    {
+        var m = typeof(ArgoBooks.Core.Services.SpreadsheetAnalysisService).GetMethod(
+            "ParseMixedOutline",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        return (List<MixedRowMarker>)m.Invoke(null, [response])!;
+    }
+
+    [Fact]
+    public void ParseMixedOutline_ParsesKindsAndRows()
+    {
+        var json = """
+        {"markers":[
+          {"row":4,"kind":"IncomeSection","text":"Income"},
+          {"row":5,"kind":"Category","text":"Design income"},
+          {"row":9,"kind":"Subtotal","text":"Total for Design income"},
+          {"row":40,"kind":"ExpenseSection","text":"Expenses"}
+        ]}
+        """;
+        var markers = InvokeParseOutline(json);
+        Assert.Equal(4, markers.Count);
+        Assert.Equal(MixedRowKind.IncomeSection, markers[0].Kind);
+        Assert.Equal(4, markers[0].RowIndex);
+        Assert.Equal(MixedRowKind.ExpenseSection, markers[3].Kind);
+    }
+
+    [Fact]
+    public void ParseMixedOutline_Malformed_ReturnsEmpty()
+    {
+        Assert.Empty(InvokeParseOutline("not json"));
+    }
+
+    [Fact]
+    public void ParseMixedOutline_SkipsUnknownKinds()
+    {
+        var json = """{"markers":[{"row":1,"kind":"Wat","text":"x"},{"row":2,"kind":"Category","text":"y"}]}""";
+        var markers = InvokeParseOutline(json);
+        Assert.Single(markers);
+        Assert.Equal(MixedRowKind.Category, markers[0].Kind);
+    }
 }

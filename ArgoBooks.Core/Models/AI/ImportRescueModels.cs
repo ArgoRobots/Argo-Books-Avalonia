@@ -2,6 +2,18 @@ using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Models.AI;
 
+/// <summary>Kind of a structural (non-transaction) row in a mixed income/expense report.</summary>
+public enum MixedRowKind
+{
+    IncomeSection,
+    ExpenseSection,
+    Category,
+    Subtotal
+}
+
+/// <summary>A structural row the AI identified in a mixed report, by its row index.</summary>
+public sealed record MixedRowMarker(int RowIndex, MixedRowKind Kind, string Text);
+
 /// <summary>
 /// Why the AI rescue pass judged a file impossible to import. The application maps each
 /// code to vetted, user-facing copy; the AI never writes the message itself.

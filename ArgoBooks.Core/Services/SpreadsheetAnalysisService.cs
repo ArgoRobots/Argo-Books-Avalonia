@@ -1170,6 +1170,33 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
         }
     }
 
+    internal static List<MixedRowMarker> ParseMixedOutline(string response)
+    {
+        var markers = new List<MixedRowMarker>();
+        try
+        {
+            var clean = CleanJsonResponse(response);
+            using var doc = JsonDocument.Parse(clean);
+            if (!doc.RootElement.TryGetProperty("markers", out var arr) || arr.ValueKind != JsonValueKind.Array)
+                return markers;
+
+            foreach (var el in arr.EnumerateArray())
+            {
+                if (!el.TryGetProperty("row", out var rowEl) || rowEl.ValueKind != JsonValueKind.Number)
+                    continue;
+                var kindStr = GetString(el, "kind");
+                if (!Enum.TryParse<MixedRowKind>(kindStr, ignoreCase: true, out var kind))
+                    continue;
+                markers.Add(new MixedRowMarker(rowEl.GetInt32(), kind, GetString(el, "text")));
+            }
+        }
+        catch (Exception)
+        {
+            return markers;
+        }
+        return markers;
+    }
+
     /// <summary>
     /// Backup import path: when normal analysis could not recognize a file, read every sheet raw and,
     /// per sheet, either extract records into a supported type or record a rejection reason. Reuses the
