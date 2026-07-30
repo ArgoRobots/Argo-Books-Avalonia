@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Nodes;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Telemetry;
@@ -1251,6 +1252,83 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
         return buckets;
     }
 
+    private async Task<List<MixedRowMarker>> OutlineMixedReportAsync(
+        List<List<string>> rows, CancellationToken cancellationToken)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("You are outlining a Profit and Loss Detail report. Identify only the structural rows:");
+        sb.AppendLine("- IncomeSection: the header that begins the income section (e.g. \"Income\")");
+        sb.AppendLine("- ExpenseSection: the header that begins the expenses section (e.g. \"Expenses\")");
+        sb.AppendLine("- Category: a category/group header (e.g. \"Design income\", \"Advertising\")");
+        sb.AppendLine("- Subtotal: a total/subtotal row (e.g. \"Total for ...\")");
+        sb.AppendLine("Transaction rows are NOT structural; do not list them.");
+        sb.AppendLine("Respond with JSON only: {\"markers\":[{\"row\":<index>,\"kind\":\"IncomeSection|ExpenseSection|Category|Subtotal\",\"text\":\"...\"}]}");
+        sb.AppendLine();
+        sb.AppendLine("Rows (index: first non-empty cell):");
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var first = rows[i].FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? "";
+            sb.AppendLine($"{i}: {first}");
+        }
+
+        var response = await geminiService.SendChatAsync(
+            "You outline the structural rows of a financial report.", sb.ToString(),
+            maxTokens: 8000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: rows.Count);
+
+        return string.IsNullOrEmpty(response) ? [] : ParseMixedOutline(response);
+    }
+
+    /// <summary>
+    /// Extracts a mixed income/expense report into Revenue and Expense entities. Outlines the report
+    /// structure, buckets rows into (type, category) groups, normalizes each group with the existing
+    /// single-type extraction, and injects the report category onto every entity.
+    /// </summary>
+    public async Task<List<LlmProcessedData>> ExtractMixedAsync(
+        List<string> headers,
+        List<List<string>> rows,
+        IProgress<(int processed, int total)>? progress,
+        CancellationToken cancellationToken)
+    {
+        var markers = await OutlineMixedReportAsync(rows, cancellationToken);
+        var buckets = BucketMixedRows(rows.Count, markers);
+        if (buckets.Count == 0)
+            return [];
+
+        var results = new List<LlmProcessedData>();
+        foreach (var ((type, category), rowIndices) in buckets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var groupRows = rowIndices.Select(i => rows[i]).ToList();
+            if (groupRows.Count == 0) continue;
+
+            var sheetAnalysis = new SheetAnalysis { SourceSheetName = category, DetectedType = type };
+            var processed = await ProcessAllChunksAsync(
+                headers, groupRows, sheetAnalysis, progress, cancellationToken, RescueChunkSize(headers.Count));
+
+            foreach (var chunk in processed)
+            {
+                var withCategory = new LlmProcessedData
+                {
+                    EntityType = chunk.EntityType,
+                    SourceRowsProcessed = chunk.SourceRowsProcessed
+                };
+                foreach (var entity in chunk.Entities)
+                    withCategory.Entities.Add(InjectCategoryName(entity, category));
+                results.Add(withCategory);
+            }
+        }
+        return results;
+    }
+
+    // Returns a copy of the entity JSON with categoryName set (rescue mixed-report grouping).
+    private static JsonElement InjectCategoryName(JsonElement entity, string categoryName)
+    {
+        var node = JsonNode.Parse(entity.GetRawText())!.AsObject();
+        node["categoryName"] = categoryName;
+        return JsonSerializer.SerializeToElement(node);
+    }
+
     /// <summary>
     /// Backup import path: when normal analysis could not recognize a file, read every sheet raw and,
     /// per sheet, either extract records into a supported type or record a rejection reason. Reuses the
@@ -1306,6 +1384,17 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
             }
 
             var classification = await ClassifyOrRejectAsync(headers, rows, name, cancellationToken);
+
+            if (classification.IsMixedIncomeExpense)
+            {
+                var mixed = await ExtractMixedAsync(headers, rows, progress, cancellationToken);
+                var mixedCount = mixed.Sum(p => p.Entities.Count);
+                perSheet.Add(mixedCount > 0
+                    ? new RescueSheetResult { SheetName = name, ProcessedData = mixed }
+                    : new RescueSheetResult { SheetName = name, Reason = ImportRescueRejectionReason.UnsupportedStructure });
+                continue;
+            }
+
             if (classification.EntityType is not { } type)
             {
                 perSheet.Add(new RescueSheetResult

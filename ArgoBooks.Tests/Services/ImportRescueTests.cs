@@ -398,4 +398,68 @@ public class ImportRescueTests
         Assert.Equal("Design income", company.Categories.First(c => c.Id == revProduct.CategoryId).Name);
         Assert.Equal("Advertising", company.Categories.First(c => c.Id == expProduct.CategoryId).Name);
     }
+
+    // Returns a mixed classify verdict, a fixed outline for the outline call, and a single-entity
+    // array for every extraction call. Distinguished by stable markers in each system prompt.
+    private sealed class MixedMockGeminiService : IGeminiService
+    {
+        private readonly string _outlineJson;
+        public MixedMockGeminiService(string outlineJson) => _outlineJson = outlineJson;
+
+        public bool IsConfigured => true;
+
+        public Task<string?> SendChatAsync(
+            string systemPrompt, string userPrompt, int maxTokens = 4000, double temperature = 0.1,
+            CancellationToken cancellationToken = default,
+            OperationKind operation = OperationKind.Completion, long? sizeFeature = null)
+        {
+            if (systemPrompt.Contains("Decide ONE", StringComparison.Ordinal))
+                return Task.FromResult<string?>("""{"action":"mixed"}""");
+            if (systemPrompt.Contains("structural rows", StringComparison.Ordinal))
+                return Task.FromResult<string?>(_outlineJson);
+            // extraction: one entity, echoing a plausible transaction
+            return Task.FromResult<string?>("""[{"id":"T1","date":"2026-06-09","description":"Item","total":100}]""");
+        }
+
+        public Task<string?> SendVisionChatAsync(string systemPrompt, string userPrompt, string base64Image,
+            string mimeType, int maxTokens = 4000, double temperature = 0.1, string? model = null,
+            CancellationToken cancellationToken = default, OperationKind operation = OperationKind.ReceiptScan)
+            => Task.FromResult<string?>(null);
+        public Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
+            ReceiptAnalysisRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult<SupplierCategorySuggestion?>(null);
+        public Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
+            BankLineCategorizationRequest request, CancellationToken cancellationToken = default)
+            => Task.FromResult<List<BankLineSuggestion>?>(null);
+    }
+
+    [Fact]
+    public async Task RescueAsync_MixedReport_ExtractsRevenueAndExpenses()
+    {
+        // Outline: mark an Income section + category near the top and an Expenses section + category
+        // partway down, using row indices that fall inside the fixture's data range.
+        var outline = """
+        {"markers":[
+          {"row":0,"kind":"IncomeSection","text":"Income"},
+          {"row":1,"kind":"Category","text":"Design income"},
+          {"row":60,"kind":"ExpenseSection","text":"Expenses"},
+          {"row":61,"kind":"Category","text":"Advertising"}
+        ]}
+        """;
+        var mock = new MixedMockGeminiService(outline);
+        var service = new SpreadsheetAnalysisService(mock);
+        var path = Path.Combine(RepoRoot(), "TestData", "MainImporter", "quickbooks_profit_and_loss_detail.xlsx");
+        Assert.True(File.Exists(path), $"fixture missing: {path}");
+
+        var result = await service.RescueAsync(path, isCsv: false);
+
+        Assert.Equal(ImportRescueOutcome.Extracted, result.Outcome);
+        var data = result.Extractions.SelectMany(e => e.ProcessedData).ToList();
+        Assert.Contains(data, d => d.EntityType == SpreadsheetSheetType.Revenue);
+        Assert.Contains(data, d => d.EntityType == SpreadsheetSheetType.Expenses);
+        // Every extracted entity carries the report category injected in Pass B.
+        var withCategory = data.SelectMany(d => d.Entities)
+            .Count(e => e.TryGetProperty("categoryName", out var c) && !string.IsNullOrEmpty(c.GetString()));
+        Assert.True(withCategory > 0);
+    }
 }
