@@ -52,6 +52,26 @@ down dependencies); later builds are fast.
 dropdown, and press Run. If the device shows as "unavailable", the emulator is not booted yet, start
 it first (step 1).
 
+### 3. Relaunch it without rebuilding
+
+If you close the app while the emulator is still running, it is still installed, so there is nothing
+to redeploy. Start it again with:
+
+```
+"C:\Users\evand\AppData\Local\Android\Sdk\platform-tools\adb.exe" shell monkey -p com.argorobots.argobooks -c android.intent.category.LAUNCHER 1
+```
+
+`monkey` with the LAUNCHER category is used here because it does not need the activity name, which
+for a .NET Android build is a generated `crc64...` class rather than something stable you can type.
+
+Confirm it came up:
+
+```
+"C:\Users\evand\AppData\Local\Android\Sdk\platform-tools\adb.exe" shell pidof com.argorobots.argobooks
+```
+
+A PID means it is running. No output means it is not.
+
 ## Environment (which server it talks to)
 
 The server base URL is chosen by build config in `Services/MobileApiConfig.cs`:
