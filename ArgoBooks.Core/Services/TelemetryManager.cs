@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
 
@@ -8,10 +9,28 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class TelemetryManager : ITelemetryManager
 {
+    /// <summary>
+    /// How often the session sentinel is stamped. Also the tick that drives the periodic
+    /// upload below, so it doubles as the granularity of a recovered session's duration.
+    /// </summary>
+    private const int HeartbeatIntervalSeconds = 60;
+
+    /// <summary>
+    /// Heartbeats between periodic uploads, i.e. one flush every 20 minutes.
+    /// <para>
+    /// Sized against the server's free-tier ceiling of 6 uploads per hour per device: at
+    /// most 3 periodic flushes, plus the startup flush and the one on close, leaves
+    /// headroom. Quiet ticks are free because UploadPendingDataAsync returns without a
+    /// request when nothing is pending.
+    /// </para>
+    /// </summary>
+    private const int HeartbeatsPerUpload = 20;
+
     private readonly ITelemetryStorageService _storageService;
     private readonly ITelemetryUploadService _uploadService;
     private readonly IGeoLocationService _geoLocationService;
     private readonly IErrorLogger _errorLogger;
+    private readonly IPlatformService _platformService;
 
     private readonly string _appVersion;
     private readonly string _platform;
@@ -22,6 +41,11 @@ public class TelemetryManager : ITelemetryManager
     private GeoLocationData? _cachedGeoLocation;
     private bool _isInitialized;
 
+    private SessionSentinel? _sentinel;
+    private System.Threading.Timer? _heartbeatTimer;
+    private int _heartbeatTicks;
+    private int _uploadInFlight;
+
     /// <summary>
     /// Initializes a new instance of the TelemetryManager.
     /// </summary>
@@ -30,12 +54,14 @@ public class TelemetryManager : ITelemetryManager
         ITelemetryUploadService uploadService,
         IGeoLocationService geoLocationService,
         IErrorLogger errorLogger,
-        string? appVersion = null)
+        string? appVersion = null,
+        IPlatformService? platformService = null)
     {
         _storageService = storageService;
         _uploadService = uploadService;
         _geoLocationService = geoLocationService;
         _errorLogger = errorLogger;
+        _platformService = platformService ?? PlatformServiceFactory.GetPlatformService();
 
         _appVersion = appVersion ?? AppInfo.VersionNumber;
         _platform = GetPlatform();
@@ -78,10 +104,19 @@ public class TelemetryManager : ITelemetryManager
                     }
                 }, cancellationToken);
 
+                // Close out any previous run that died without recording its own end.
+                // Done before this session's start so the recovered events, which carry
+                // their original timestamps, read in order against it.
+                await RecoverUncleanSessionsAsync(cancellationToken);
+
+                _sentinel = SessionSentinel.Begin(_platformService, _sessionStartTime, _appVersion, _errorLogger);
+
                 // Record session start
                 var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
                 sessionEvent.Action = SessionAction.SessionStart;
                 await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
+
+                StartHeartbeat();
             }
             catch (Exception ex)
             {
@@ -100,6 +135,9 @@ public class TelemetryManager : ITelemetryManager
         if (!_isInitialized)
             return;
 
+        // Stopped first so a heartbeat can't race the sentinel's removal below.
+        StopHeartbeat();
+
         try
         {
             var duration = (long)(DateTime.UtcNow - _sessionStartTime).TotalSeconds;
@@ -107,7 +145,15 @@ public class TelemetryManager : ITelemetryManager
             var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
             sessionEvent.Action = SessionAction.SessionEnd;
             sessionEvent.DurationSeconds = duration;
+            sessionEvent.Clean = true;
             await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
+
+            // Only now is the session provably accounted for. Dropping the sentinel any
+            // earlier would lose the session outright if the record above threw; dropping
+            // it later would mean a failed upload got it reported as an unclean exit, even
+            // though the event is safely stored for the next launch to deliver.
+            _sentinel?.Complete();
+            _sentinel = null;
 
             // Attempt to upload pending data on shutdown - must await to ensure upload completes before app closes
             await _uploadService.UploadPendingDataAsync(cancellationToken);
@@ -115,6 +161,96 @@ public class TelemetryManager : ITelemetryManager
         catch (Exception ex)
         {
             _errorLogger.LogError(ex, ErrorCategory.Unknown, "Failed to end telemetry session");
+        }
+        finally
+        {
+            // Releases the handle without deleting, so a shutdown that never got as far as
+            // Complete() is reported as the unclean exit it was.
+            _sentinel?.Dispose();
+            _sentinel = null;
+        }
+    }
+
+    /// <summary>
+    /// Turns sentinels left by runs that never shut down cleanly into the SessionEnd events
+    /// those runs could not record for themselves.
+    /// </summary>
+    private async Task RecoverUncleanSessionsAsync(CancellationToken cancellationToken)
+    {
+        foreach (var orphan in SessionSentinel.CollectOrphans(_platformService, _errorLogger))
+        {
+            var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
+            sessionEvent.Timestamp = orphan.LastHeartbeatUtc;
+            sessionEvent.Action = SessionAction.SessionEnd;
+            sessionEvent.DurationSeconds = orphan.DurationSeconds;
+            sessionEvent.Clean = false;
+
+            // The dead run may have been an older build, so attribute it to the version
+            // that actually ran rather than the one doing the recovering.
+            if (!string.IsNullOrEmpty(orphan.AppVersion))
+            {
+                sessionEvent.AppVersion = orphan.AppVersion;
+            }
+
+            await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
+        }
+    }
+
+    private void StartHeartbeat()
+    {
+        var period = TimeSpan.FromSeconds(HeartbeatIntervalSeconds);
+        _heartbeatTimer = new System.Threading.Timer(OnHeartbeat, null, period, period);
+    }
+
+    private void StopHeartbeat()
+    {
+        var timer = Interlocked.Exchange(ref _heartbeatTimer, null);
+        timer?.Dispose();
+    }
+
+    /// <summary>
+    /// Stamps the sentinel every tick, and every <see cref="HeartbeatsPerUpload"/> ticks
+    /// also flushes pending events. The flush is what makes a session that never closes
+    /// cleanly still worth something: without it, a user who force-quits and never reopens
+    /// the app takes every event on their machine with them.
+    /// </summary>
+    private void OnHeartbeat(object? state)
+    {
+        try
+        {
+            _sentinel?.Heartbeat(DateTime.UtcNow);
+
+            if (Interlocked.Increment(ref _heartbeatTicks) % HeartbeatsPerUpload != 0)
+            {
+                return;
+            }
+
+            // Skip rather than queue when a flush is still running. A slow or retrying
+            // upload must not stack requests up behind it and burn the hourly allowance.
+            if (Interlocked.CompareExchange(ref _uploadInFlight, 1, 0) != 0)
+            {
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _uploadService.UploadPendingDataAsync();
+                }
+                catch (Exception ex)
+                {
+                    _errorLogger.LogDebug($"Periodic telemetry upload failed: {ex.Message}");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _uploadInFlight, 0);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _errorLogger.LogDebug($"Telemetry heartbeat failed: {ex.Message}");
         }
     }
 
