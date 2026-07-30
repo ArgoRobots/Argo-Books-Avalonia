@@ -417,14 +417,15 @@ public class SpreadsheetAnalysisService(
         List<List<string>> allRows,
         SheetAnalysis sheetAnalysis,
         IProgress<(int processed, int total)>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int chunkSize = Tier2ChunkSize)
     {
         var total = allRows.Count;
 
         // Build all chunks upfront
         var chunks = new List<(int Index, List<List<string>> Rows)>();
-        for (int i = 0; i < total; i += Tier2ChunkSize)
-            chunks.Add((i, allRows.Skip(i).Take(Tier2ChunkSize).ToList()));
+        for (int i = 0; i < total; i += chunkSize)
+            chunks.Add((i, allRows.Skip(i).Take(chunkSize).ToList()));
 
         // Process chunks in parallel with concurrency limit
         using var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
@@ -1141,6 +1142,133 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
             // Unparseable/empty AI output must not crash the rescue; surface a clean, safe reason.
             return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
         }
+    }
+
+    /// <summary>
+    /// Backup import path: when normal analysis could not recognize a file, read every sheet raw and,
+    /// per sheet, either extract records into a supported type or record a rejection reason. Reuses the
+    /// Tier-2 extraction (ProcessAllChunksAsync) and returns an aggregate outcome for the whole file.
+    /// </summary>
+    public async Task<ImportRescueResult> RescueAsync(
+        string filePath,
+        bool isCsv,
+        IProgress<(int processed, int total)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        List<(string Name, List<string> Headers, List<List<string>> Rows)> sheets;
+        try
+        {
+            sheets = ReadAllSheetsRaw(filePath, isCsv);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            errorLogger?.LogError(ex, ErrorCategory.Import, "Rescue import: failed to read the file");
+            return new ImportRescueResult
+            {
+                Outcome = ImportRescueOutcome.Rejected,
+                ReasonCode = ImportRescueRejectionReason.EmptyOrUnreadable
+            };
+        }
+
+        // Hard cap: past this many rows the rescue would mean too many AI calls / too long a wait.
+        // Reject up front without making a single AI call so the user gets an instant, clear answer.
+        var totalRows = sheets.Sum(s => s.Rows.Count);
+        if (totalRows > RescueMaxTotalRows)
+            return new ImportRescueResult
+            {
+                Outcome = ImportRescueOutcome.Rejected,
+                ReasonCode = ImportRescueRejectionReason.TooLarge
+            };
+
+        // Report the total once up front so the UI can warn on large (but allowed) files before the AI runs.
+        progress?.Report((0, totalRows));
+
+        var perSheet = new List<RescueSheetResult>();
+        foreach (var (name, headers, rows) in sheets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (headers.Count == 0 || rows.Count == 0)
+            {
+                perSheet.Add(new RescueSheetResult { SheetName = name, Reason = ImportRescueRejectionReason.EmptyOrUnreadable });
+                continue;
+            }
+
+            var classification = await ClassifyOrRejectAsync(headers, rows, name, cancellationToken);
+            if (classification.EntityType is not { } type)
+            {
+                perSheet.Add(new RescueSheetResult
+                {
+                    SheetName = name,
+                    Reason = classification.Reason ?? ImportRescueRejectionReason.UnsupportedStructure
+                });
+                continue;
+            }
+
+            var sheetAnalysis = new SheetAnalysis
+            {
+                SourceSheetName = name,
+                DetectedType = type,
+                Tier = ProcessingTier.Tier2_LlmProcessing
+            };
+
+            var processed = await ProcessAllChunksAsync(
+                headers, rows, sheetAnalysis, progress, cancellationToken, RescueChunkSize(headers.Count));
+            var entityCount = processed.Sum(p => p.Entities.Count);
+
+            perSheet.Add(entityCount > 0
+                ? new RescueSheetResult { SheetName = name, ProcessedData = processed }
+                : new RescueSheetResult { SheetName = name, Reason = ImportRescueRejectionReason.UnsupportedStructure });
+        }
+
+        return ImportRescueResult.Aggregate(perSheet);
+    }
+
+    /// <summary>
+    /// Reads headers + all data rows for every sheet (or the single CSV) without any analysis,
+    /// for the rescue path. Mirrors the readers used by ProcessAllChunksAsync.
+    /// </summary>
+    private static List<(string Name, List<string> Headers, List<List<string>> Rows)> ReadAllSheetsRaw(
+        string filePath, bool isCsv)
+    {
+        var result = new List<(string Name, List<string> Headers, List<List<string>> Rows)>();
+
+        if (isCsv)
+        {
+            var rows = CsvReader.ReadAllRows(filePath, out var headers);
+            var name = Path.GetFileNameWithoutExtension(filePath);
+            result.Add((name, headers, rows));
+            return result;
+        }
+
+        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var workbook = new XLWorkbook(fileStream);
+        foreach (var worksheet in workbook.Worksheets)
+        {
+            var headers = GetHeaders(worksheet);
+            if (headers.Count == 0) continue;
+            var rows = GetAllRowsAsStrings(worksheet, headers.Count);
+            result.Add((worksheet.Name, headers, rows));
+        }
+
+        return result;
+    }
+
+    // Operational limits for the rescue path (time and number of AI calls), NOT model limits:
+    // rows are processed in batches, so a larger file just means more calls.
+    public const int RescueMaxTotalRows = 10_000;
+    public const int RescueLargeFileWarnRows = 1_000;
+
+    /// <summary>
+    /// Batch size for rescue extraction. Wide sheets emit more JSON per row, so shrink the batch as the
+    /// column count grows to keep an AI response from being truncated. Targets ~2,500 cells per batch,
+    /// clamped to [20, 100]. A zero/negative column count falls back to the default 100.
+    /// </summary>
+    public static int RescueChunkSize(int columnCount)
+    {
+        if (columnCount <= 0) return 100;
+        return Math.Clamp(2500 / columnCount, 20, 100);
     }
 
     #endregion
