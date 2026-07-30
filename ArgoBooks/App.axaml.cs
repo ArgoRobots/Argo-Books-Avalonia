@@ -2275,9 +2275,10 @@ public partial class App : Application
 
             if (analysis == null || analysis.Sheets.Count == 0)
             {
-                await ShowErrorMessageBoxAsync(
-                    "Analysis Failed".Translate(),
-                    "Could not analyze the file. The spreadsheet may be empty, or the AI response was incomplete. Please try importing again.".Translate());
+                // Normal analysis could not recognize the file. Fall back to the whole-file AI rescue,
+                // which either extracts records or explains, in vetted copy, why it cannot be imported.
+                await TryRescueImportAsync(
+                    filePath, isCsv, companyData, analysisService, importService, originalFileName, usageService);
                 return;
             }
 
