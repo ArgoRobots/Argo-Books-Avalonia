@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
@@ -36,6 +38,34 @@ public partial class SettingsModal : UserControl
         {
             vm.FocusPasswordRequested -= OnFocusPasswordRequested;
             _eventsSubscribed = false;
+        }
+    }
+
+    private async void OnCopyPairingCode(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not SettingsModalViewModel vm) return;
+
+        var code = vm.ShortCodeDisplay;
+        if (string.IsNullOrEmpty(code)) return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null) return;
+
+        await clipboard.SetTextAsync(code);
+
+        // Briefly swap the copy glyph for a checkmark to confirm the copy.
+        if (sender is Button { Content: PathIcon icon })
+        {
+            var original = icon.Data;
+            icon.Data = Geometry.Parse(ArgoBooks.Icons.Check);
+            try
+            {
+                await Task.Delay(1200);
+            }
+            finally
+            {
+                icon.Data = original;
+            }
         }
     }
 

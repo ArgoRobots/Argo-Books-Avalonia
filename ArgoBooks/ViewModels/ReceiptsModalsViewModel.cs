@@ -13,6 +13,7 @@ using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SkiaSharp;
 
 using ArgoBooks.Core.Models.Telemetry;
 
@@ -259,6 +260,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     // Set once a transaction is created so the auto-created entities are handed off to the
     // undo action instead of being rolled back when the modal closes.
     private bool _createdEntitiesCommitted;
+
+    private const string SampleReceiptFileName = "sample-receipt.png";
 
     [ObservableProperty]
     private bool _isScanReviewModalOpen;
@@ -743,6 +746,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private CancellationTokenSource? _bulkCancellationSource;
 
+    /// <summary>
+    /// Cancels the in-flight single receipt scan. Renewed for each scan/retry and cancelled when the
+    /// scan review modal closes, so an aborted scan doesn't keep its API call (and the awaiting
+    /// command chain) alive after the user has moved on.
+    /// </summary>
+    private CancellationTokenSource? _scanCancellationSource;
+
     #endregion
 
     #region Bulk Scan Commands
@@ -923,7 +933,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var single = BulkItems[0];
             IsBulkDropZoneOpen = false;
             BulkItems.Clear();
-            await OpenScanModalAsync(single.FilePath);
+
+            // Launch the single-scan modal without awaiting it. This command is an
+            // AsyncRelayCommand (AllowConcurrentExecutions = false), so awaiting the whole scan
+            // here would keep the command "running" - and the Scan All button disabled - for the
+            // entire scan. Decoupling lets the command finish immediately once the modal is up, so
+            // the button re-enables right away even if the previous scan was cancelled mid-flight.
+            // OpenScanModalAsync handles its own errors and drives the modal's own state.
+            _ = OpenScanModalAsync(single.FilePath);
             return;
         }
 
@@ -966,8 +983,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         // Pipeline: each item reads, preprocesses, generates preview, and scans
-        // in a single task. SemaphoreSlim(3) gates concurrency across all stages.
-        var semaphore = new SemaphoreSlim(3);
+        // in a single task. SemaphoreSlim(5) gates concurrency across all stages.
+        var semaphore = new SemaphoreSlim(5);
         var tasks = BulkItems
             .Select(item => ProcessAndScanItemAsync(item, semaphore, token))
             .ToList();
@@ -1690,8 +1707,256 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         await ScanReceiptAsync();
     }
 
+    /// <summary>
+    /// Opens the scan review modal with the bundled sample receipt and simulates a scan.
+    /// Backs the "Scan a receipt" setup step so a brand-new user can see the scanner work
+    /// without having a receipt to hand.
+    ///
+    /// The parse is canned rather than a real API call, which keeps it off the monthly scan
+    /// quota, working offline, and immune to a scanning failure ruining a first run. What it
+    /// produces is NOT fake: the user still reviews and confirms, and the category, product
+    /// and transaction created are real records.
+    ///
+    /// Returns false when the sample asset is missing, so the caller can fall back to the
+    /// normal file picker instead of dead-ending the checklist step.
+    /// </summary>
+    public async Task<bool> OpenScanModalWithSampleAsync()
+    {
+        var imageData = TryRenderSampleReceipt();
+        if (imageData == null)
+            return false;
+
+        ResetScanModal();
+
+        _currentImageData = imageData;
+        _currentFileName = SampleReceiptFileName;
+
+        IsScanReviewModalOpen = true;
+        IsScanning = true;
+        HasScanError = false;
+        HasScanResult = false;
+
+        // Yield so the modal and spinner render before the simulated work starts.
+        await Task.Delay(1);
+
+        LoadSupplierOptions();
+        LoadProductOptions();
+
+        _ = LoadPreviewPagesAsync(imageData, SampleReceiptFileName, isPdf: false, "ScanPreview");
+
+        await SimulateSampleScanAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// The sample receipt's contents. This is the single source of truth: both the drawn
+    /// image and the canned scan result are built from it, so the receipt on screen and the
+    /// extracted values can never disagree.
+    ///
+    /// It also exists because the date has to move. A static image ages, and a tutorial that
+    /// files an expense from over a year ago drops a stale transaction into the user's books.
+    /// Drawing the receipt at runtime keeps it a few days old forever.
+    /// </summary>
+    private sealed record SampleReceiptData(
+        string SupplierName,
+        string AddressLine,
+        string CityLine,
+        DateTime Date,
+        IReadOnlyList<(string Name, decimal Price)> Items,
+        decimal Subtotal,
+        decimal Tax,
+        decimal Total,
+        decimal TaxRate);
+
+    private static SampleReceiptData BuildSampleReceiptData()
+    {
+        // Office supplies rather than groceries: unambiguously a business expense, plausible
+        // for any industry, and the category and products it creates are ones a real user
+        // would be content to keep rather than having to clean up.
+        (string Name, decimal Price)[] items =
+        [
+            ("Printer Paper, 500 sheets", 12.99m),
+            ("Ink Cartridge, Black", 34.50m),
+            ("Notebooks, pack of 5", 8.75m),
+            ("Ballpoint Pens, box of 12", 4.25m)
+        ];
+
+        const decimal taxRate = 0.13m;
+        var subtotal = items.Sum(i => i.Price);
+        var tax = Math.Round(subtotal * taxRate, 2, MidpointRounding.AwayFromZero);
+
+        return new SampleReceiptData(
+            "Riverside Office Supply",
+            "48 Riverside Drive",
+            "Hamilton, ON  L8P 1A2",
+            DateTime.Today.AddDays(-3),
+            items,
+            subtotal,
+            tax,
+            subtotal + tax,
+            taxRate);
+    }
+
+    /// <summary>
+    /// Draws the sample receipt to a PNG at runtime. Returns null on any failure rather than
+    /// throwing into a first-run experience.
+    /// </summary>
+    private static byte[]? TryRenderSampleReceipt()
+    {
+        try
+        {
+            var data = BuildSampleReceiptData();
+
+            const int width = 720;
+            const int margin = 56;
+            const float body = 26f;
+            const float lineGap = 42f;
+
+            var height = (int)(600 + data.Items.Count * lineGap);
+
+            using var surface = SKSurface.Create(new SKImageInfo(width, height));
+            var canvas = surface.Canvas;
+            canvas.Clear(SKColors.White);
+
+            using var ink = new SKPaint { Color = new SKColor(0x22, 0x22, 0x22), IsAntialias = true };
+            using var rule = new SKPaint
+            {
+                Color = new SKColor(0xBB, 0xBB, 0xBB),
+                IsAntialias = true,
+                StrokeWidth = 2,
+                Style = SKPaintStyle.Stroke
+            };
+
+            using var headerFont = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold), 42f);
+            using var bodyFont = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal), body);
+            using var totalFont = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold), 34f);
+
+            var mid = width / 2f;
+            const float left = margin;
+            const float right = width - margin;
+            var y = (float)margin + 42f;
+
+            canvas.DrawText(data.SupplierName.ToUpperInvariant(), mid, y, SKTextAlign.Center, headerFont, ink);
+            y += lineGap;
+            canvas.DrawText(data.AddressLine, mid, y, SKTextAlign.Center, bodyFont, ink);
+            y += lineGap * 0.8f;
+            canvas.DrawText(data.CityLine, mid, y, SKTextAlign.Center, bodyFont, ink);
+            y += lineGap * 0.9f;
+
+            canvas.DrawLine(left, y, right, y, rule);
+            y += lineGap;
+
+            canvas.DrawText(data.Date.ToString("MMM d, yyyy"), left, y, SKTextAlign.Left, bodyFont, ink);
+            canvas.DrawText("2:14 PM", right, y, SKTextAlign.Right, bodyFont, ink);
+            y += lineGap * 0.5f;
+            canvas.DrawLine(left, y, right, y, rule);
+            y += lineGap;
+
+            foreach (var (name, price) in data.Items)
+            {
+                canvas.DrawText(name, left, y, SKTextAlign.Left, bodyFont, ink);
+                canvas.DrawText(price.ToString("0.00"), right, y, SKTextAlign.Right, bodyFont, ink);
+                y += lineGap;
+            }
+
+            canvas.DrawLine(left, y - lineGap * 0.55f, right, y - lineGap * 0.55f, rule);
+
+            canvas.DrawText("Subtotal", left, y, SKTextAlign.Left, bodyFont, ink);
+            canvas.DrawText(data.Subtotal.ToString("0.00"), right, y, SKTextAlign.Right, bodyFont, ink);
+            y += lineGap * 0.9f;
+
+            canvas.DrawText($"Tax ({data.TaxRate:P0})", left, y, SKTextAlign.Left, bodyFont, ink);
+            canvas.DrawText(data.Tax.ToString("0.00"), right, y, SKTextAlign.Right, bodyFont, ink);
+            y += lineGap * 0.9f;
+
+            canvas.DrawLine(left, y, right, y, rule);
+            y += lineGap;
+
+            canvas.DrawText("TOTAL", left, y, SKTextAlign.Left, totalFont, ink);
+            canvas.DrawText($"${data.Total:0.00}", right, y, SKTextAlign.Right, totalFont, ink);
+            y += lineGap * 1.3f;
+
+            canvas.DrawText("Thank you for your business", mid, y, SKTextAlign.Center, bodyFont, ink);
+
+            using var image = surface.Snapshot();
+            using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+            return encoded?.ToArray();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Drives the scan progress UI for the sample receipt, then applies the canned result.
+    /// The delay is deliberate: watching the scan work is the point of the step, and a result
+    /// that appeared instantly would read as a mock-up rather than the product.
+    /// </summary>
+    private async Task SimulateSampleScanAsync()
+    {
+        ScanningMessage = "Scanning receipt...".Translate();
+        ScanProgress = 0;
+        ShowScanProgress = true;
+
+        const int totalMs = 3200;
+        const int steps = 32;
+        for (var step = 1; step <= steps; step++)
+        {
+            await Task.Delay(totalMs / steps);
+            ScanProgress = (double)step / steps * 100;
+        }
+
+        // Tracked separately from real scans via the context, so sample runs can be counted
+        // (or filtered out) without polluting genuine scan numbers.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, "sample");
+
+        PopulateScanResults(BuildSampleScanResult());
+
+        HasScanResult = true;
+        IsScanning = false;
+    }
+
+    /// <summary>
+    /// The canned parse for the sample receipt, built from the same data the image is drawn
+    /// from so the two cannot drift apart.
+    /// </summary>
+    private static ReceiptScanResult BuildSampleScanResult()
+    {
+        var data = BuildSampleReceiptData();
+
+        return new ReceiptScanResult
+        {
+            IsSuccess = true,
+            SupplierName = data.SupplierName,
+            TransactionDate = data.Date,
+            Subtotal = data.Subtotal,
+            TaxAmount = data.Tax,
+            TotalAmount = data.Total,
+            Discount = 0m,
+            Shipping = 0m,
+            Confidence = 0.97,
+            PaymentMethod = "Card",
+            LineItems = [.. data.Items.Select(item => new ScannedLineItem
+            {
+                Description = item.Name,
+                Quantity = 1,
+                UnitPrice = item.Price,
+                TotalPrice = item.Price,
+                Confidence = 0.97
+            })]
+        };
+    }
+
     private async Task ScanReceiptAsync()
     {
+        // Renew the cancellation source so closing the modal (or a retry) aborts this scan's API
+        // call promptly instead of letting it run to completion in the background.
+        _scanCancellationSource?.Cancel();
+        _scanCancellationSource?.Dispose();
+        _scanCancellationSource = new CancellationTokenSource();
+        var token = _scanCancellationSource.Token;
+
         try
         {
             // Get or create scanner service
@@ -1758,8 +2023,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 OperationKind.ReceiptScan, pct => ScanProgress = pct,
                 sizeFeature: imageData.Length, uploadBytes: imageData.Length);
             scanTicker.Start();
-            var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true));
+            var result = await Task.Run(() => _scannerService.ScanReceiptAsync(imageData, fileName, skipPreprocessing: true, token), token);
             scanTicker.Complete();
+
+            // If this scan was cancelled or superseded by a newer one while the API call was in
+            // flight, the shared modal state now belongs to that newer scan. Bail out without
+            // writing anything, otherwise a cancelled scan's late "cancelled/timed out" result
+            // would clobber the result the user is actually looking at.
+            if (token.IsCancellationRequested)
+                return;
 
             if (!result.IsSuccess)
             {
@@ -1787,8 +2059,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             HasScanResult = true;
             IsScanning = false;
         }
+        catch (OperationCanceledException)
+        {
+            // Scan was cancelled or superseded. The modal state was already reset by the caller (or
+            // is owned by the newer scan), so don't touch any shared state here.
+        }
         catch (Exception ex)
         {
+            // A stale scan failing during teardown must not overwrite the current scan's state.
+            if (token.IsCancellationRequested)
+                return;
+
             HasScanError = true;
             ScanErrorMessage = "Failed to scan receipt: {0}".TranslateFormat(ex.Message);
             IsScanning = false;
@@ -1884,6 +2165,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void CloseScanReviewModal()
     {
+        // Abort any in-flight scan so its API call (and the command chain awaiting it) don't keep
+        // running after the modal is dismissed, which would leave the Scan All button disabled.
+        _scanCancellationSource?.Cancel();
+
         IsScanReviewModalOpen = false;
         IsFullscreen = false;
 
@@ -2113,6 +2398,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // The receipt was added: ownership of the auto-created supplier/category/products
         // transfers to the undo action, so don't roll them back when the modal closes.
         _createdEntitiesCommitted = true;
+
+        // Credit the scan step.
+        // This fires at the commit point rather than where the entities are created, because a
+        // review that gets cancelled rolls those entities back and must not leave a step ticked.
+        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ScanReceipt);
 
         App.CompanyManager?.MarkAsChanged();
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
@@ -3074,7 +3364,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService CreateScannerService()
     {
-        return new GeminiReceiptScannerService(App.LicenseService, App.ErrorLogger, App.TelemetryManager);
+        return new GeminiReceiptScannerService(
+            ApiConfig.BaseUrl,
+            new LicenseApiAuth(),
+            App.ErrorLogger,
+            App.TelemetryManager,
+            onTimingRecorded: (serverMs, wallClockMs, uploadBytes, loadFactor) =>
+                OperationTimingService.Instance?.RecordResult(OperationKind.ReceiptScan, serverMs, wallClockMs, uploadBytes, loadFactor));
     }
 
     private IReceiptUsageService CreateUsageService()

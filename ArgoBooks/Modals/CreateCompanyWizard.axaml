@@ -14,6 +14,74 @@
         <vm:CreateCompanyViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <!-- Password field with a reveal button, matching Settings > Security. The TextBox
+             sits inside a bordered Grid alongside the button, so it draws no border itself. -->
+        <Style Selector="TextBox.password-field">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <!-- PasswordChar is bound per field, not set here, so revealing can clear it. -->
+        </Style>
+        <Style Selector="TextBox.password-field /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="Button.eye-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,6,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="Button.eye-toggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.eye-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.eye-toggle PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Strength meter. A ProgressBar rather than a fixed-width bar, so it fills whatever
+             width the wizard gives it instead of needing a hardcoded pixel count. -->
+        <Style Selector="ProgressBar.strength-meter">
+            <Setter Property="Height" Value="4" />
+            <Setter Property="MinHeight" Value="4" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="ProgressBar.strength-meter /template/ Border#PART_Indicator">
+            <Setter Property="CornerRadius" Value="2" />
+        </Style>
+        <Style Selector="ProgressBar.strength-weak /template/ Border#PART_Indicator">
+            <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+        <Style Selector="ProgressBar.strength-fair /template/ Border#PART_Indicator">
+            <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="ProgressBar.strength-strong /template/ Border#PART_Indicator">
+            <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.strength-weak">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+        <Style Selector="TextBlock.strength-fair">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.strength-strong">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
         <controls:ModalOverlay IsOpen="{Binding IsOpen}"
                                ClosingCommand="{Binding CloseCommand}">
@@ -308,11 +376,51 @@
                                                        FontSize="13"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <TextBox Text="{Binding Password, Mode=TwoWay}"
-                                                     Classes="form-input"
-                                                     PasswordChar="*"
-                                                     PlaceholderText="{loc:Loc 'Enter password'}"
-                                                     MaxLength="128" />
+                                            <Border Background="{DynamicResource SurfaceBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox Grid.Column="0"
+                                                             Text="{Binding Password, Mode=TwoWay}"
+                                                             PasswordChar="{Binding PasswordMaskChar}"
+                                                             Classes="password-field"
+                                                             PlaceholderText="{loc:Loc 'Enter password'}"
+                                                             MaxLength="128" />
+                                                    <Button Grid.Column="1"
+                                                            Classes="eye-toggle"
+                                                            Command="{Binding TogglePasswordVisibilityCommand}">
+                                                        <PathIcon Data="{Binding PasswordVisibilityIcon}" Width="16" Height="16" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding ShowPasswordStrength}">
+                                                <ProgressBar Grid.Column="0"
+                                                             Minimum="0" Maximum="100"
+                                                             Value="{Binding PasswordStrengthScore}"
+                                                             VerticalAlignment="Center"
+                                                             Classes="strength-meter"
+                                                             Classes.strength-weak="{Binding IsStrengthWeak}"
+                                                             Classes.strength-fair="{Binding IsStrengthFair}"
+                                                             Classes.strength-strong="{Binding IsStrengthStrong}" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding PasswordStrengthText}"
+                                                           FontSize="11"
+                                                           Margin="8,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           Classes.strength-weak="{Binding IsStrengthWeak}"
+                                                           Classes.strength-fair="{Binding IsStrengthFair}"
+                                                           Classes.strength-strong="{Binding IsStrengthStrong}" />
+                                            </Grid>
+                                            <TextBlock Text="{loc:Loc 'At least 8 characters, including a letter and a number.'}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding PasswordRequirementError}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource DangerBrush}"
+                                                       IsVisible="{Binding ShowPasswordRequirementError}" />
                                         </StackPanel>
 
                                         <StackPanel Spacing="6">
@@ -320,11 +428,24 @@
                                                        FontSize="13"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
-                                                     Classes="form-input"
-                                                     PasswordChar="*"
-                                                     PlaceholderText="{loc:Loc 'Confirm password'}"
-                                                     MaxLength="128" />
+                                            <Border Background="{DynamicResource SurfaceBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBox Grid.Column="0"
+                                                             Text="{Binding ConfirmPassword, Mode=TwoWay}"
+                                                             PasswordChar="{Binding ConfirmPasswordMaskChar}"
+                                                             Classes="password-field"
+                                                             PlaceholderText="{loc:Loc 'Confirm password'}"
+                                                             MaxLength="128" />
+                                                    <Button Grid.Column="1"
+                                                            Classes="eye-toggle"
+                                                            Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
+                                                        <PathIcon Data="{Binding ConfirmPasswordVisibilityIcon}" Width="16" Height="16" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
                                             <TextBlock Text="{loc:Loc 'Passwords do not match'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource DangerBrush}"

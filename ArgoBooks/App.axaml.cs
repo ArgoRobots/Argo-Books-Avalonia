@@ -15,6 +15,7 @@ using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Layout;
+using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -62,16 +63,36 @@ public partial class App : Application
     public static PaymentPortalService? PaymentPortalService { get; private set; }
 
     /// <summary>
+    /// Gets the mobile-sync service instance used to upload company snapshots and pull
+    /// the capture queue from the phone-pairing backend.
+    /// </summary>
+    public static SyncService? SyncService { get; private set; }
+
+    /// <summary>
     /// Client for the portal refund + email-verification + email-change endpoints.
     /// Created once at startup; reads the active per-company API key on each call.
     /// </summary>
     public static RefundService? RefundService { get; private set; }
 
     /// <summary>
+    /// The long-lived <see cref="HttpClient"/> shared across services created at startup
+    /// (RefundService, SyncService, telemetry, source-survey). Reuse this instead of
+    /// creating a new HttpClient per call.
+    /// </summary>
+    public static HttpClient? SharedHttpClient { get; private set; }
+
+    /// <summary>
     /// Coordinator for the refund / email-verify / email-change modals.
     /// Hosted at AppShell level so the ModalOverlay can dim the whole window.
     /// </summary>
     public static RefundModalsViewModel? RefundModalsViewModel => _appShellViewModel?.RefundModalsViewModel;
+
+    /// <summary>
+    /// The Company-details editor. Exposed so the portal email sync can tell
+    /// whether the owner email is being hand-edited and avoid clobbering an
+    /// in-flight edit.
+    /// </summary>
+    public static EditCompanyModalViewModel? EditCompanyModalViewModel => _appShellViewModel?.EditCompanyModalViewModel;
 
     /// <summary>
     /// Gets the invoice usage service for tracking free-tier send limits.
@@ -449,6 +470,141 @@ public partial class App : Application
         finally
         {
             Interlocked.Exchange(ref _isAutoSyncing, 0);
+        }
+    }
+
+    private static int _isMobileSyncing;
+
+    /// <summary>
+    /// Auto-syncs with the paired mobile app: uploads a fresh company snapshot so the phone
+    /// has current data, then pulls any receipts/expenses the phone captured while offline
+    /// and ingests them into the local company. Safe to call from multiple places, concurrent
+    /// calls are deduplicated.
+    /// </summary>
+    internal static async Task AutoMobileSyncAsync()
+    {
+        if (Interlocked.CompareExchange(ref _isMobileSyncing, 1, 0) != 0) return;
+        try
+        {
+            var syncService = SyncService;
+            var companyData = CompanyManager?.CompanyData;
+            if (syncService == null || companyData == null || !companyData.Settings.MobileSync.IsConfigured)
+                return;
+
+            var mobileSync = companyData.Settings.MobileSync;
+            var companyUid = mobileSync.CompanyUid!;
+            var syncKey = mobileSync.SyncKeyBase64!;
+            var ct = CancellationToken.None;
+
+            // UPLOAD: push a fresh snapshot so the phone always has current data to browse offline.
+            // Wrapped in its own try/catch so an upload/network failure doesn't skip the pull/ingest
+            // below - the two directions are independent and one failing shouldn't block the other.
+            try
+            {
+                var snap = SnapshotBuilder.Build(companyData);
+                var bytes = SnapshotBuilder.Serialize(snap);
+                var cipher = SyncCrypto.Encrypt(bytes, syncKey);
+                await syncService.UploadSnapshotAsync(companyUid, cipher, ct);
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger?.LogWarning($"Failed to upload mobile-sync snapshot: {ex.Message}", "MobileSync");
+            }
+
+            // PULL + INGEST: drain the phone's capture queue into local Expenses/Revenue/Receipts.
+            // CaptureIngestService de-dupes on CapturedTransaction.ScanUid via the persisted
+            // CompanyData.IngestedScanUids list, so a re-delivered-but-still-pending item is
+            // safely skipped even across app restarts (not just within this session).
+            var items = await syncService.PullQueueAsync(companyUid, ct);
+            var malformedIds = new List<int>();
+            var ingestedIds = new List<int>();
+            var duplicateIds = new List<int>();
+            foreach (var item in items)
+            {
+                try
+                {
+                    var plain = SyncCrypto.Decrypt(item.Ciphertext, syncKey);
+                    var tx = System.Text.Json.JsonSerializer.Deserialize<CapturedTransaction>(plain);
+                    var newId = CaptureIngestService.Ingest(companyData, tx!);
+                    if (newId == null)
+                        // Already ingested (and its ScanUid persisted) in a prior cycle - nothing new
+                        // to save, so it's safe to ack immediately regardless of this cycle's save.
+                        duplicateIds.Add(item.Id);
+                    else
+                        ingestedIds.Add(item.Id);
+                }
+                catch (Exception ex)
+                {
+                    // A permanently-malformed item (bad ciphertext, unparsable JSON, invalid
+                    // transaction) must still be acked so it stops being re-delivered forever.
+                    // A transient failure (e.g. this process crashing mid-loop) simply re-appears
+                    // on the next pull since it was never acked.
+                    ErrorLogger?.LogError(ex, ErrorCategory.Parsing, "MobileSync: failed to ingest queue item");
+                    malformedIds.Add(item.Id);
+                }
+            }
+
+            // PERSIST before ACK: an item that added new data must never be acknowledged (and thus
+            // deleted server-side) before that data is actually saved locally. If the save is skipped
+            // (the user has unsaved edits in memory) or throws, the newly-ingested items must NOT be
+            // acked - they stay in the server queue and will be re-delivered next cycle, where
+            // CaptureIngestService's ScanUid check safely no-ops the ones already saved and retries
+            // the rest.
+            var saved = false;
+            if (ingestedIds.Count > 0 && CompanyManager != null && !CompanyManager.HasUnsavedChanges)
+            {
+                try
+                {
+                    await CompanyManager.SavePaymentSyncAsync();
+                    saved = true;
+                }
+                catch (Exception ex)
+                {
+                    ErrorLogger?.LogWarning($"Failed to persist mobile-sync captures: {ex.Message}", "MobileSync");
+                }
+            }
+
+            var toAck = new List<int>(malformedIds);
+            toAck.AddRange(duplicateIds);
+            if (saved)
+            {
+                toAck.AddRange(ingestedIds);
+            }
+
+            if (toAck.Count > 0)
+            {
+                await syncService.AckQueueAsync(companyUid, toAck, ct);
+            }
+
+            mobileSync.LastSyncTime = DateTime.UtcNow;
+
+            var ingestedCount = saved ? ingestedIds.Count : 0;
+            if (ingestedCount > 0)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _receiptsPageViewModel?.RefreshReceiptsCommand.Execute(null);
+                    _expensesPageViewModel?.RefreshExpensesCommand.Execute(null);
+                    _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
+
+                    if (mobileSync.NotifyOnCapture)
+                    {
+                        AddNotification(
+                            "Receipts from your phone".Translate(),
+                            "{0} receipts added from your phone".TranslateFormat(ingestedCount),
+                            NotificationType.Success);
+                    }
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            // Mobile-sync failures are non-critical; log and continue.
+            ErrorLogger?.LogWarning($"Mobile sync failed: {ex.Message}", "MobileSync");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isMobileSyncing, 0);
         }
     }
 
@@ -888,6 +1044,31 @@ public partial class App : Application
             // entries as breadcrumbs.
             CrashReporter.SetBreadcrumbSource(errorLogger);
 
+            // Show a splash straight away. Avalonia only shows MainWindow once this method
+            // returns, and everything below builds the service graph first, so without this
+            // the screen stays empty for several seconds. Users read that as a failed launch
+            // and click the shortcut again, which is how we end up with concurrent instances.
+            //
+            // Wrapped defensively: the splash is a nicety and must never be able to stop the
+            // app from starting.
+            SplashWindow? splash = null;
+            try
+            {
+                splash = new SplashWindow();
+                splash.Show();
+
+                // Show() only queues the window. Without pumping the dispatcher the UI thread
+                // goes straight into the construction below, so layout and render never run and
+                // the window stays blank: present and marked visible to the OS, but showing
+                // nothing. Force those jobs through now, while there is still a gap to do it in.
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+            }
+            catch (Exception ex)
+            {
+                errorLogger.LogWarning($"Failed to show splash window: {ex.Message}", "Startup");
+                splash = null;
+            }
+
             // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
@@ -899,6 +1080,7 @@ public partial class App : Application
 
             // Initialize telemetry services
             var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            SharedHttpClient = httpClient;
             var geoLocationService = new GeoLocationService(httpClient, errorLogger);
             var telemetryStorageService = new TelemetryStorageService(errorLogger: errorLogger);
             var appVersion = Services.AppInfo.VersionNumber;
@@ -913,6 +1095,9 @@ public partial class App : Application
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
             InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
+
+            // Initialize mobile-sync service (shares the same long-lived HttpClient)
+            SyncService = new SyncService(httpClient);
 
             // Initialize refund service (uses the same shared HttpClient)
             RefundService = new RefundService(httpClient);
@@ -1154,6 +1339,24 @@ public partial class App : Application
             {
                 DataContext = _mainWindowViewModel
             };
+
+            // Close the splash only once the main window is actually on screen. ShutdownMode
+            // is left at its default of OnLastWindowClose, so closing the splash while the
+            // main window is still unshown would leave zero windows open and exit the app.
+            if (splash != null)
+            {
+                desktop.MainWindow.Opened += (_, _) =>
+                {
+                    try
+                    {
+                        splash.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        errorLogger.LogWarning($"Failed to close splash window: {ex.Message}", "Startup");
+                    }
+                };
+            }
 
             // Process pending conversions when window is activated (e.g., user returns after going offline)
             desktop.MainWindow.Activated += async (_, _) =>
@@ -2070,11 +2273,15 @@ public partial class App : Application
             await Task.Yield();
             _mainWindowViewModel?.HideLoading();
 
-            if (analysis == null || analysis.Sheets.Count == 0)
+            // Fall back to the whole-file AI rescue when normal analysis produced nothing importable:
+            // either it returned no result/sheets at all, or it returned sheets but classified every one
+            // as Unknown/unsupported (e.g. a Profit and Loss report). Both are dead-ends on the normal
+            // path, so hand them to the rescue, which either extracts records or explains, in vetted copy,
+            // why the file cannot be imported.
+            if (analysis == null || analysis.Sheets.Count == 0 || analysis.Sheets.All(s => !s.IsIncluded))
             {
-                await ShowErrorMessageBoxAsync(
-                    "Analysis Failed".Translate(),
-                    "Could not analyze the file. The spreadsheet may be empty, or the AI response was incomplete. Please try importing again.".Translate());
+                await TryRescueImportAsync(
+                    filePath, isCsv, companyData, analysisService, importService, originalFileName, usageService);
                 return;
             }
 
@@ -3076,7 +3283,8 @@ public partial class App : Application
             _isOpeningCompany = false;
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Cannot open company file: newer than running app");
+            // Not logged as an error: this is an expected, handled condition (the file was saved by a
+            // newer build) that already shows the user the "Update Argo Books" dialog below.
             if (ConfirmationDialog != null)
             {
                 await ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
@@ -3746,6 +3954,7 @@ public partial class App : Application
                 _paymentsPageViewModel.ApplyHighlight();
             }
             _ = AutoSyncPortalPaymentsAsync();
+            _ = AutoMobileSyncAsync();
             return new PaymentsPage { DataContext = _paymentsPageViewModel };
         });
 
@@ -3890,6 +4099,7 @@ public partial class App : Application
             _receiptsPageViewModel ??= new ReceiptsPageViewModel();
             // Update plan status each time (may have changed)
             _receiptsPageViewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            _ = AutoMobileSyncAsync();
             return new ReceiptsPage { DataContext = _receiptsPageViewModel };
         });
 

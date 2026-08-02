@@ -63,6 +63,10 @@ public class BankStatementLine
     [JsonPropertyName("matchConfidence")]
     public double MatchConfidence { get; set; }
 
+    /// <summary>When Ignored, an optional human reason (e.g. an auto-ignored Stripe payout).</summary>
+    [JsonPropertyName("ignoreReason")]
+    public string? IgnoreReason { get; set; }
+
     /// <summary>Zero-based source row index in the imported file (for diagnostics only).</summary>
     [JsonIgnore]
     public int SourceRowIndex { get; set; }

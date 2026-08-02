@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Nodes;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Telemetry;
@@ -37,6 +38,10 @@ public class SpreadsheetAnalysisService(
     // for structurally ambiguous sheets (e.g. cross-tabs) whose confidence lands near the
     // threshold; a bounded retry re-rolls that wobble instead of rejecting the sheet outright.
     private const int MaxAnalysisAttempts = 2;
+
+    // The rescue classify call only needs enough rows to judge shape/type, not the whole sheet
+    // (the full sheet is sent later during extraction). Bounding it keeps the classify response small.
+    private const int RescueClassifySampleRows = 40;
 
     #region Analysis Phase
 
@@ -413,14 +418,15 @@ public class SpreadsheetAnalysisService(
         List<List<string>> allRows,
         SheetAnalysis sheetAnalysis,
         IProgress<(int processed, int total)>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int chunkSize = Tier2ChunkSize)
     {
         var total = allRows.Count;
 
         // Build all chunks upfront
         var chunks = new List<(int Index, List<List<string>> Rows)>();
-        for (int i = 0; i < total; i += Tier2ChunkSize)
-            chunks.Add((i, allRows.Skip(i).Take(Tier2ChunkSize).ToList()));
+        for (int i = 0; i < total; i += chunkSize)
+            chunks.Add((i, allRows.Skip(i).Take(chunkSize).ToList()));
 
         // Process chunks in parallel with concurrency limit
         using var semaphore = new SemaphoreSlim(MaxConcurrentChunks);
@@ -1032,6 +1038,444 @@ IMPORTANT:
 
         fields.Add(current.ToString().Trim());
         return fields;
+    }
+
+    #endregion
+
+    #region Rescue Fallback
+
+    /// <summary>
+    /// Whole-file rescue used when normal analysis could not classify a file. Asks the LLM, per sheet,
+    /// to either classify it into a supported entity type or return a fixed rejection reason code.
+    /// </summary>
+    public async Task<RescueClassification> ClassifyOrRejectAsync(
+        List<string> headers,
+        List<List<string>> rows,
+        string sheetName,
+        CancellationToken cancellationToken = default)
+    {
+        var systemPrompt = BuildRescueClassifySystemPrompt();
+        // Sample across the whole sheet (beginning, middle, end) so a mixed report's later
+        // Expenses section is visible to the classifier, not just the leading Income rows.
+        var sample = rows.Count > RescueClassifySampleRows
+            ? SpreadSample(rows, RescueClassifySampleRows)
+            : rows;
+        var userPrompt = BuildRescueClassifyUserPrompt(sheetName, headers, sample, rows.Count);
+
+        var response = await geminiService.SendChatAsync(
+            systemPrompt, userPrompt, maxTokens: 1000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: headers.Count);
+
+        if (string.IsNullOrEmpty(response))
+            return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
+
+        return ParseRescueClassification(response);
+    }
+
+    // Evenly spaced sample across all rows (always includes the first and last row),
+    // so classification sees every section of a long report, not just the top.
+    internal static List<List<string>> SpreadSample(List<List<string>> rows, int count)
+    {
+        if (rows.Count <= count) return rows;
+        var picked = new List<List<string>>(count);
+        for (int i = 0; i < count; i++)
+        {
+            var idx = (int)((long)i * (rows.Count - 1) / (count - 1));
+            picked.Add(rows[idx]);
+        }
+        return picked;
+    }
+
+    private static string BuildRescueClassifySystemPrompt()
+    {
+        return @"You are a data import assistant for a bookkeeping app called Argo Books. The normal importer could not recognize this sheet. Decide ONE of the following:
+
+1. EXTRACT - the sheet is a list of individual records (one record per row) that matches an Argo Books data type. Respond:
+   {""action"":""extract"",""entityType"":""<one of: Customers, Suppliers, Products, Categories, Locations, Invoices, Expenses, Inventory, Payments, Revenue, RentalInventory, RentalRecords, RecurringInvoices, StockAdjustments, PurchaseOrders, PurchaseOrderLineItems, Returns, LostDamaged, BankStatement>""}
+
+2. MIXED - the sheet is a single report that lists individual transactions under BOTH an Income section and an Expenses section (for example a Profit and Loss Detail). Respond:
+   {""action"":""mixed""}
+
+3. REJECT - the sheet cannot be imported as individual records. Respond:
+   {""action"":""reject"",""reason"":""<one of the reason codes below>""}
+
+Reason codes:
+- SummaryOrReport: a summary or report with category totals and subtotals (e.g. a Profit and Loss statement), not individual records.
+- NotArgoData: the content is unrelated to anything a bookkeeping app tracks.
+- UnsupportedStructure: it looks like records but the layout (pivoted, cross-tab, multiple stacked tables) cannot be read as one record per row.
+- EmptyOrUnreadable: there is no usable data.
+
+Choose EXTRACT only when you are confident real per-row records are present. When unsure, REJECT with the closest reason. Respond with a single JSON object only, no markdown.";
+    }
+
+    private string BuildRescueClassifyUserPrompt(
+        string sheetName, List<string> headers, List<List<string>> sampleRows, int totalRows)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"Sheet name: \"{sheetName}\" ({totalRows} data rows). Sample rows:");
+        sb.AppendLine();
+
+        sb.Append("| ").Append(string.Join(" | ", headers)).AppendLine(" |");
+        sb.Append("| ").Append(string.Join(" | ", headers.Select(_ => "---"))).AppendLine(" |");
+        foreach (var row in sampleRows)
+        {
+            var cells = new List<string>(row);
+            while (cells.Count < headers.Count) cells.Add("");
+            sb.Append("| ").Append(string.Join(" | ", cells.Select(c => c.Replace("|", "\\|")))).AppendLine(" |");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("Argo Books data types and their fields:");
+        sb.AppendLine(ImportSchemaDefinition.FormatSchemaForPrompt(country));
+        return sb.ToString();
+    }
+
+    internal static RescueClassification ParseRescueClassification(string response)
+    {
+        try
+        {
+            var clean = CleanJsonResponse(response);
+            using var doc = JsonDocument.Parse(clean);
+            var root = doc.RootElement;
+
+            var action = GetString(root, "action");
+            if (string.Equals(action, "mixed", StringComparison.OrdinalIgnoreCase))
+            {
+                return new RescueClassification { IsMixedIncomeExpense = true };
+            }
+
+            if (string.Equals(action, "extract", StringComparison.OrdinalIgnoreCase))
+            {
+                var typeStr = GetString(root, "entityType");
+                if (Enum.TryParse<SpreadsheetSheetType>(typeStr, ignoreCase: true, out var type)
+                    && type != SpreadsheetSheetType.Unknown)
+                {
+                    return new RescueClassification { EntityType = type };
+                }
+
+                // "extract" without a usable type is contradictory: treat as unmappable.
+                return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
+            }
+
+            // Any non-extract action is a rejection. Unknown/blank reason codes default to UnsupportedStructure.
+            var reasonStr = GetString(root, "reason");
+            var reason = Enum.TryParse<ImportRescueRejectionReason>(reasonStr, ignoreCase: true, out var parsed)
+                ? parsed
+                : ImportRescueRejectionReason.UnsupportedStructure;
+            return new RescueClassification { Reason = reason };
+        }
+        catch (Exception)
+        {
+            // Unparseable/empty AI output must not crash the rescue; surface a clean, safe reason.
+            return new RescueClassification { Reason = ImportRescueRejectionReason.UnsupportedStructure };
+        }
+    }
+
+    internal static List<MixedRowMarker> ParseMixedOutline(string response)
+    {
+        var markers = new List<MixedRowMarker>();
+        try
+        {
+            var clean = CleanJsonResponse(response);
+            using var doc = JsonDocument.Parse(clean);
+            if (!doc.RootElement.TryGetProperty("markers", out var arr) || arr.ValueKind != JsonValueKind.Array)
+                return markers;
+
+            foreach (var el in arr.EnumerateArray())
+            {
+                if (!el.TryGetProperty("row", out var rowEl) || rowEl.ValueKind != JsonValueKind.Number)
+                    continue;
+                var kindStr = GetString(el, "kind");
+                if (!Enum.TryParse<MixedRowKind>(kindStr, ignoreCase: true, out var kind))
+                    continue;
+                markers.Add(new MixedRowMarker(rowEl.GetInt32(), kind, GetString(el, "text")));
+            }
+        }
+        catch (Exception)
+        {
+            // A mid-parse exception must not surface a partial outline: return nothing so the
+            // caller treats this the same as a fully unparseable response.
+            return [];
+        }
+        return markers;
+    }
+
+    // Assigns every non-structural row to a (type, category) group using the outline markers.
+    // Type comes from the nearest preceding section; category from the nearest preceding Category
+    // header within that section (falling back to the section name). Structural rows (sections,
+    // categories, subtotals) and any rows before the first section are excluded.
+    internal static Dictionary<(SpreadsheetSheetType Type, string Category), List<int>> BucketMixedRows(
+        int rowCount, IReadOnlyList<MixedRowMarker> markers)
+    {
+        // The outline is untrusted model output, so a repeated row index must not throw here;
+        // last marker for a given row wins.
+        var byIndex = markers.GroupBy(m => m.RowIndex).ToDictionary(g => g.Key, g => g.Last());
+        var buckets = new Dictionary<(SpreadsheetSheetType, string), List<int>>();
+
+        SpreadsheetSheetType? currentType = null;
+        string? currentSection = null;
+        string? currentCategory = null;
+
+        for (int i = 0; i < rowCount; i++)
+        {
+            if (byIndex.TryGetValue(i, out var marker))
+            {
+                switch (marker.Kind)
+                {
+                    case MixedRowKind.IncomeSection:
+                        currentType = SpreadsheetSheetType.Revenue;
+                        currentSection = marker.Text;
+                        currentCategory = null;
+                        break;
+                    case MixedRowKind.ExpenseSection:
+                        currentType = SpreadsheetSheetType.Expenses;
+                        currentSection = marker.Text;
+                        currentCategory = null;
+                        break;
+                    case MixedRowKind.Category:
+                        currentCategory = marker.Text;
+                        break;
+                    case MixedRowKind.Subtotal:
+                        break; // skip; category context is unchanged
+                }
+                continue; // structural rows are never data
+            }
+
+            if (currentType is not { } type) continue; // before any section
+
+            var category = !string.IsNullOrWhiteSpace(currentCategory)
+                ? currentCategory!
+                : (currentSection ?? "Uncategorized");
+
+            var key = (type, category);
+            if (!buckets.TryGetValue(key, out var list))
+                buckets[key] = list = [];
+            list.Add(i);
+        }
+
+        return buckets;
+    }
+
+    private async Task<List<MixedRowMarker>> OutlineMixedReportAsync(
+        List<List<string>> rows, CancellationToken cancellationToken)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("You are outlining a Profit and Loss Detail report. Identify only the structural rows:");
+        sb.AppendLine("- IncomeSection: the header that begins the income section (e.g. \"Income\")");
+        sb.AppendLine("- ExpenseSection: the header that begins the expenses section (e.g. \"Expenses\")");
+        sb.AppendLine("- Category: a category/group header (e.g. \"Design income\", \"Advertising\")");
+        sb.AppendLine("- Subtotal: a total/subtotal row (e.g. \"Total for ...\")");
+        sb.AppendLine("Transaction rows are NOT structural; do not list them.");
+        sb.AppendLine("Respond with JSON only: {\"markers\":[{\"row\":<index>,\"kind\":\"IncomeSection|ExpenseSection|Category|Subtotal\",\"text\":\"...\"}]}");
+        sb.AppendLine();
+        sb.AppendLine("Rows (index: first non-empty cell):");
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var first = rows[i].FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? "";
+            sb.AppendLine($"{i}: {first}");
+        }
+
+        var response = await geminiService.SendChatAsync(
+            "You outline the structural rows of a financial report.", sb.ToString(),
+            maxTokens: 8000, temperature: 0.0, cancellationToken,
+            operation: OperationKind.SpreadsheetAnalysis, sizeFeature: rows.Count);
+
+        return string.IsNullOrEmpty(response) ? [] : ParseMixedOutline(response);
+    }
+
+    /// <summary>
+    /// Extracts a mixed income/expense report into Revenue and Expense entities. Outlines the report
+    /// structure, buckets rows into (type, category) groups, normalizes each group with the existing
+    /// single-type extraction, and injects the report category onto every entity.
+    /// </summary>
+    public async Task<List<LlmProcessedData>> ExtractMixedAsync(
+        List<string> headers,
+        List<List<string>> rows,
+        IProgress<(int processed, int total)>? progress,
+        CancellationToken cancellationToken)
+    {
+        var markers = await OutlineMixedReportAsync(rows, cancellationToken);
+        var buckets = BucketMixedRows(rows.Count, markers);
+        if (buckets.Count == 0)
+            return [];
+
+        var results = new List<LlmProcessedData>();
+        foreach (var ((type, category), rowIndices) in buckets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var groupRows = rowIndices.Select(i => rows[i]).ToList();
+            if (groupRows.Count == 0) continue;
+
+            var sheetAnalysis = new SheetAnalysis { SourceSheetName = category, DetectedType = type };
+            var processed = await ProcessAllChunksAsync(
+                headers, groupRows, sheetAnalysis, progress, cancellationToken, RescueChunkSize(headers.Count));
+
+            foreach (var chunk in processed)
+            {
+                var withCategory = new LlmProcessedData
+                {
+                    EntityType = chunk.EntityType,
+                    SourceRowsProcessed = chunk.SourceRowsProcessed
+                };
+                foreach (var entity in chunk.Entities)
+                    withCategory.Entities.Add(InjectCategoryName(entity, category));
+                results.Add(withCategory);
+            }
+        }
+        return results;
+    }
+
+    // Returns a copy of the entity JSON with categoryName set (rescue mixed-report grouping).
+    private static JsonElement InjectCategoryName(JsonElement entity, string categoryName)
+    {
+        var node = JsonNode.Parse(entity.GetRawText());
+        if (node is JsonObject obj)
+        {
+            obj["categoryName"] = categoryName;
+            return JsonSerializer.SerializeToElement(obj);
+        }
+        return entity;
+    }
+
+    /// <summary>
+    /// Backup import path: when normal analysis could not recognize a file, read every sheet raw and,
+    /// per sheet, either extract records into a supported type or record a rejection reason. Reuses the
+    /// Tier-2 extraction (ProcessAllChunksAsync) and returns an aggregate outcome for the whole file.
+    /// </summary>
+    public async Task<ImportRescueResult> RescueAsync(
+        string filePath,
+        bool isCsv,
+        IProgress<(int processed, int total)>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        List<(string Name, List<string> Headers, List<List<string>> Rows)> sheets;
+        try
+        {
+            sheets = ReadAllSheetsRaw(filePath, isCsv);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            // Deliberate UX choice: a read failure here (corrupt/locked/unreadable file) surfaces as a
+            // friendly rejection instead of throwing and crashing the import flow. The error is still
+            // logged via errorLogger so it's not silently swallowed.
+            errorLogger?.LogError(ex, ErrorCategory.Import, "Rescue import: failed to read the file");
+            return new ImportRescueResult
+            {
+                Outcome = ImportRescueOutcome.Rejected,
+                ReasonCode = ImportRescueRejectionReason.EmptyOrUnreadable
+            };
+        }
+
+        // Hard cap: past this many rows the rescue would mean too many AI calls / too long a wait.
+        // Reject up front without making a single AI call so the user gets an instant, clear answer.
+        var totalRows = sheets.Sum(s => s.Rows.Count);
+        if (totalRows > RescueMaxTotalRows)
+            return new ImportRescueResult
+            {
+                Outcome = ImportRescueOutcome.Rejected,
+                ReasonCode = ImportRescueRejectionReason.TooLarge
+            };
+
+        // Report the total once up front so the UI can warn on large (but allowed) files before the AI runs.
+        progress?.Report((0, totalRows));
+
+        var perSheet = new List<RescueSheetResult>();
+        foreach (var (name, headers, rows) in sheets)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (headers.Count == 0 || rows.Count == 0)
+            {
+                perSheet.Add(new RescueSheetResult { SheetName = name, Reason = ImportRescueRejectionReason.EmptyOrUnreadable });
+                continue;
+            }
+
+            var classification = await ClassifyOrRejectAsync(headers, rows, name, cancellationToken);
+
+            if (classification.IsMixedIncomeExpense)
+            {
+                var mixed = await ExtractMixedAsync(headers, rows, progress, cancellationToken);
+                var mixedCount = mixed.Sum(p => p.Entities.Count);
+                perSheet.Add(mixedCount > 0
+                    ? new RescueSheetResult { SheetName = name, ProcessedData = mixed }
+                    : new RescueSheetResult { SheetName = name, Reason = ImportRescueRejectionReason.UnsupportedStructure });
+                continue;
+            }
+
+            if (classification.EntityType is not { } type)
+            {
+                perSheet.Add(new RescueSheetResult
+                {
+                    SheetName = name,
+                    Reason = classification.Reason ?? ImportRescueRejectionReason.UnsupportedStructure
+                });
+                continue;
+            }
+
+            var sheetAnalysis = new SheetAnalysis
+            {
+                SourceSheetName = name,
+                DetectedType = type,
+                Tier = ProcessingTier.Tier2_LlmProcessing
+            };
+
+            var processed = await ProcessAllChunksAsync(
+                headers, rows, sheetAnalysis, progress, cancellationToken, RescueChunkSize(headers.Count));
+            var entityCount = processed.Sum(p => p.Entities.Count);
+
+            perSheet.Add(entityCount > 0
+                ? new RescueSheetResult { SheetName = name, ProcessedData = processed }
+                : new RescueSheetResult { SheetName = name, Reason = ImportRescueRejectionReason.UnsupportedStructure });
+        }
+
+        return ImportRescueResult.Aggregate(perSheet);
+    }
+
+    /// <summary>
+    /// Reads headers + all data rows for every sheet (or the single CSV) without any analysis,
+    /// for the rescue path. Mirrors the readers used by ProcessAllChunksAsync.
+    /// </summary>
+    private static List<(string Name, List<string> Headers, List<List<string>> Rows)> ReadAllSheetsRaw(
+        string filePath, bool isCsv)
+    {
+        var result = new List<(string Name, List<string> Headers, List<List<string>> Rows)>();
+
+        if (isCsv)
+        {
+            var rows = CsvReader.ReadAllRows(filePath, out var headers);
+            var name = Path.GetFileNameWithoutExtension(filePath);
+            result.Add((name, headers, rows));
+            return result;
+        }
+
+        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var workbook = new XLWorkbook(fileStream);
+        foreach (var worksheet in workbook.Worksheets)
+        {
+            var headers = GetHeaders(worksheet);
+            if (headers.Count == 0) continue;
+            var rows = GetAllRowsAsStrings(worksheet, headers.Count);
+            result.Add((worksheet.Name, headers, rows));
+        }
+
+        return result;
+    }
+
+    // Operational limits for the rescue path (time and number of AI calls), NOT model limits:
+    // rows are processed in batches, so a larger file just means more calls.
+    public const int RescueMaxTotalRows = 10_000;
+    public const int RescueLargeFileWarnRows = 1_000;
+
+    /// <summary>
+    /// Batch size for rescue extraction. Wide sheets emit more JSON per row, so shrink the batch as the
+    /// column count grows to keep an AI response from being truncated. Targets ~2,500 cells per batch,
+    /// clamped to [20, 100]. A zero/negative column count falls back to the default 100.
+    /// </summary>
+    public static int RescueChunkSize(int columnCount)
+    {
+        if (columnCount <= 0) return 100;
+        return Math.Clamp(2500 / columnCount, 20, 100);
     }
 
     #endregion

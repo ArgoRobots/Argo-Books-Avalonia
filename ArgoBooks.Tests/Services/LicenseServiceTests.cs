@@ -299,6 +299,25 @@ public class LicenseServiceTests
             throw new System.Security.Cryptography.CryptographicException("Data not found");
         }
 
+        public byte[] EncryptWithKey(byte[] data, byte[] key, byte[] nonce)
+        {
+            var handle = Convert.ToBase64String(nonce);
+            _encryptedData[handle] = data;
+            return System.Text.Encoding.UTF8.GetBytes(handle);
+        }
+
+        public byte[] DecryptWithKey(byte[] encryptedData, byte[] key, byte[] nonce)
+        {
+            if (ThrowOnDecrypt)
+                throw new System.Security.Cryptography.CryptographicException("Mock decryption failure");
+
+            var handle = Convert.ToBase64String(nonce);
+            if (_encryptedData.TryGetValue(handle, out var data))
+                return data;
+
+            throw new System.Security.Cryptography.CryptographicException("Data not found");
+        }
+
         public Task<MemoryStream> EncryptAsync(Stream inputStream, string password, string salt, string iv)
         {
             using var ms = new MemoryStream();

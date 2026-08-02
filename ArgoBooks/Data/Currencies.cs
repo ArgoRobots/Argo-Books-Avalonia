@@ -35,6 +35,7 @@ public static class Currencies
         "EUR - Euro (€)",
         "GBP - British Pound (£)",
         "HUF - Hungarian Forint (Ft)",
+        "INR - Indian Rupee (₹)",
         "ISK - Icelandic Króna (kr)",
         "JPY - Japanese Yen (¥)",
         "KRW - South Korean Won (₩)",

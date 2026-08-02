@@ -124,7 +124,7 @@ public class GlobalSettingsService : IGlobalSettingsService
             // Write atomically: write to temp, then move. A crash mid-write would
             // otherwise leave a truncated settings.json and lose recent companies,
             // theme, and language on next launch.
-            var tempPath = settingsPath + ".tmp";
+            var tempPath = AtomicFile.TempPathFor(settingsPath);
             try
             {
                 await using (var fileStream = new FileStream(

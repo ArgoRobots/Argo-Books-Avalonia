@@ -188,8 +188,9 @@
                             </StackPanel>
 
                             <!-- Free Tier Info -->
-                            <StackPanel Spacing="8" HorizontalAlignment="Center">
-                                <TextBlock Text="{loc:Loc 'You can use Argo Books for free: all core features, plus 25 invoices and 5 AI receipt scans every month.'}"
+                            <StackPanel Spacing="8" HorizontalAlignment="Center"
+                                        IsVisible="{Binding !HasPremium}">
+                                <TextBlock Text="{Binding FreeTierSummary}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            TextWrapping="Wrap"

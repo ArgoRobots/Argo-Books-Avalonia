@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -473,6 +472,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         companyData.LostDamaged.Add(lostDamaged);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.LostDamagedRecorded);
         return lostDamaged;
     }
 
@@ -507,6 +507,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         companyData.Returns.Add(returnRecord);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReturnRecorded);
         return returnRecord;
     }
 

@@ -71,7 +71,7 @@ public partial class AppShell : UserControl
             Dispatcher.UIThread.Post(() =>
             {
                 NotificationToastBorder.Opacity = 0;
-                NotificationToastBorder.RenderTransform = new TranslateTransform(340, 0);
+                NotificationToastBorder.RenderTransform = new TranslateTransform(360, 0);
             }, DispatcherPriority.Background);
         }
     }

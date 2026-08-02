@@ -1,4 +1,3 @@
-using System.Linq;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.ViewModels;

@@ -1,9 +1,5 @@
-using System;
 using System.Net;
-using System.Net.Http;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;

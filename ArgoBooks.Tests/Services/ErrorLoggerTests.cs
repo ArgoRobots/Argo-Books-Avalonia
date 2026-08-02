@@ -30,6 +30,16 @@ public class ErrorLoggerTests
     }
 
     [Fact]
+    public void LogError_WithCancellation_IsNotRecorded()
+    {
+        // Cancellations aren't failures and shouldn't clutter the error log.
+        _errorLogger.LogError(new TaskCanceledException(), ErrorCategory.Network, "cancelled request");
+        _errorLogger.LogError(new OperationCanceledException(), ErrorCategory.Network);
+
+        Assert.Empty(_errorLogger.GetAllErrors());
+    }
+
+    [Fact]
     public void LogError_WithMessage_CreatesLogEntry()
     {
         _errorLogger.LogError("Custom error message", ErrorCategory.Network, "Network context");

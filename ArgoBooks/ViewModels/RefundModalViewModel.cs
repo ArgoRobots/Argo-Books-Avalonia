@@ -1,11 +1,7 @@
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Net.Http;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
-using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -35,6 +31,10 @@ public partial class RefundModalViewModel : ObservableObject
     private long _requestId;
     private CancellationTokenSource? _pollCts;
     private System.Timers.Timer? _countdownTimer;
+    private System.Timers.Timer? _resendCooldownTimer;
+
+    /// <summary>Seconds the Resend button stays disabled after a code is sent (initial send and each resend).</summary>
+    private const int ResendCooldownSecondsInitial = 60;
 
     /// <summary>
     /// Set by the coordinator (RefundModalsViewModel) so the in-modal X button
@@ -174,11 +174,28 @@ public partial class RefundModalViewModel : ObservableObject
 
     public bool CanSubmitCode => Code.Length == 6 && Code.All(char.IsDigit) && !IsBusy;
 
+    [ObservableProperty]
+    private int _resendCooldownSeconds;
+
+    /// <summary>Resend is allowed only when the cooldown has elapsed and no request is in flight.</summary>
+    public bool CanResend => !IsBusy && ResendCooldownSeconds == 0;
+
+    public string ResendButtonText => ResendCooldownSeconds > 0
+        ? $"Resend code ({ResendCooldownSeconds}s)"
+        : "Resend code";
+
+    partial void OnResendCooldownSecondsChanged(int value)
+    {
+        OnPropertyChanged(nameof(CanResend));
+        OnPropertyChanged(nameof(ResendButtonText));
+    }
+
     partial void OnCodeChanged(string value) => OnPropertyChanged(nameof(CanSubmitCode));
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanSubmitCode));
         OnPropertyChanged(nameof(ShowRefundFooter));
+        OnPropertyChanged(nameof(CanResend));
     }
 
     // ---------- step 3: polling / cooling-off ----------
@@ -516,6 +533,7 @@ public partial class RefundModalViewModel : ObservableObject
             CodeExpiresInSeconds = result.ExpiresInSeconds;
             CurrentStep = Step.EnterCode;
             StartCountdown();
+            StartResendCooldown(ResendCooldownSecondsInitial); // a code was just sent
         }
         finally
         {
@@ -642,7 +660,7 @@ public partial class RefundModalViewModel : ObservableObject
     [RelayCommand]
     private async Task ResendCodeAsync()
     {
-        if (_requestId == 0) return;
+        if (_requestId == 0 || !CanResend) return;
         IsBusy = true;
         ErrorMessage = null;
         try
@@ -655,6 +673,7 @@ public partial class RefundModalViewModel : ObservableObject
             }
             CodeExpiresInSeconds = 600;
             StartCountdown();
+            StartResendCooldown(ResendCooldownSecondsInitial);
             StatusMessage = "Code re-sent.";
         }
         finally
@@ -700,6 +719,29 @@ public partial class RefundModalViewModel : ObservableObject
         _countdownTimer?.Stop();
         _countdownTimer?.Dispose();
         _countdownTimer = null;
+    }
+
+    private void StartResendCooldown(int seconds)
+    {
+        StopResendCooldown();
+        ResendCooldownSeconds = seconds;
+        _resendCooldownTimer = new System.Timers.Timer(1000) { AutoReset = true };
+        _resendCooldownTimer.Elapsed += (_, _) =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (ResendCooldownSeconds > 0) ResendCooldownSeconds--;
+                if (ResendCooldownSeconds == 0) StopResendCooldown();
+            });
+        };
+        _resendCooldownTimer.Start();
+    }
+
+    private void StopResendCooldown()
+    {
+        _resendCooldownTimer?.Stop();
+        _resendCooldownTimer?.Dispose();
+        _resendCooldownTimer = null;
     }
 
     private void UpdateCountdownDisplay()
@@ -762,6 +804,7 @@ public partial class RefundModalViewModel : ObservableObject
     public void Dispose()
     {
         StopCountdown();
+        StopResendCooldown();
         StopPolling();
     }
 }

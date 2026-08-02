@@ -11,9 +11,9 @@ public class GeminiReceiptScannerServiceTests
     #region IsConfigured Tests
 
     [Fact]
-    public void IsConfigured_WithoutLicenseService_ReturnsFalse()
+    public void IsConfigured_WithoutApiAuth_ReturnsFalse()
     {
-        var service = new GeminiReceiptScannerService();
+        var service = new GeminiReceiptScannerService("https://example.com");
 
         Assert.False(service.IsConfigured);
     }
@@ -23,9 +23,9 @@ public class GeminiReceiptScannerServiceTests
     #region ValidateConfiguration Tests
 
     [Fact]
-    public async Task ValidateConfigurationAsync_WithoutLicenseService_ReturnsFalse()
+    public async Task ValidateConfigurationAsync_WithoutApiAuth_ReturnsFalse()
     {
-        var service = new GeminiReceiptScannerService();
+        var service = new GeminiReceiptScannerService("https://example.com");
 
         var result = await service.ValidateConfigurationAsync();
 
@@ -39,7 +39,7 @@ public class GeminiReceiptScannerServiceTests
     [Fact]
     public async Task ScanReceiptFromFileAsync_FileNotFound_ReturnsFailedResult()
     {
-        var service = new GeminiReceiptScannerService();
+        var service = new GeminiReceiptScannerService("https://example.com");
 
         var result = await service.ScanReceiptFromFileAsync("/nonexistent/file.jpg");
 

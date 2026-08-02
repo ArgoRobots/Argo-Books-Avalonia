@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.ViewModels;
 using Xunit;

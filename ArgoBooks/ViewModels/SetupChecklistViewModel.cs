@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Platform;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -70,16 +71,56 @@ public partial class SetupChecklistViewModel : ViewModelBase
     /// </summary>
     public event EventHandler<string>? NavigationRequested;
 
+    /// <summary>
+    /// Hides the free-tier summary and upgrade prompt on the completion card. A paying
+    /// customer has no use for either.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    /// <summary>
+    /// Free-tier summary on the completion card, composed from the limits the server
+    /// reports. Same source as the upgrade modal.
+    /// </summary>
+    public string FreeTierSummary =>
+        "You can use Argo Books for free: all core features, plus {0} invoices and {1} AI receipt scans every month."
+            .TranslateFormat(
+                UpgradeModalViewModel.FreeInvoiceMonthlyLimit,
+                UpgradeModalViewModel.FreeReceiptScanMonthlyLimit);
+
     public SetupChecklistViewModel()
     {
         InitializeItems();
         TutorialService.Instance.ChecklistItemCompleted += OnChecklistItemCompleted;
         TutorialService.Instance.TutorialStateChanged += OnTutorialStateChanged;
+
+        // The card may already be on screen with the fallback limits when the plans fetch
+        // lands, so re-read them when the server answers.
+        UpgradeModalViewModel.FreeLimitsChanged += (_, _) => OnPropertyChanged(nameof(FreeTierSummary));
+
+        App.PlanStatusChanged += OnPlanStatusChanged;
+    }
+
+    private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
+    {
+        HasPremium = e.HasPremium;
     }
 
     private void InitializeItems()
     {
         Items.Clear();
+        // Scanning is first: it is the fastest path to a visible result. A scan does create
+        // the category, product and transaction behind the scenes, but it credits only this
+        // step. Crediting the others was removed on purpose: the checklist teaches where
+        // each record lives, so every flow below is still walked by hand.
+        Items.Add(new ChecklistItemViewModel
+        {
+            Id = TutorialService.ChecklistItems.ScanReceipt,
+            Title = "Scan a receipt",
+            Description = "Let Argo Books fill in the details",
+            Icon = Icons.ScanReceipt,
+            NavigationTarget = TutorialService.Pages.Receipts
+        });
         Items.Add(new ChecklistItemViewModel
         {
             Id = TutorialService.ChecklistItems.CreateCategory,
@@ -205,10 +246,17 @@ public partial class SetupChecklistViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToItem(ChecklistItemViewModel? item)
     {
-        if (item != null && !string.IsNullOrEmpty(item.NavigationTarget))
-        {
-            NavigationRequested?.Invoke(this, item.NavigationTarget);
-        }
+        if (item == null || string.IsNullOrEmpty(item.NavigationTarget))
+            return;
+
+        NavigationRequested?.Invoke(this, item.NavigationTarget);
+
+        // The scan step opens its own workflow rather than just landing the user on a page.
+        // Seeing a scan happen is the whole point of the step, and a brand-new user has no
+        // receipt to pick, so the sample is offered directly. If the sample can't be
+        // produced this is a no-op and they simply stay on the Receipts page.
+        if (item.Id == TutorialService.ChecklistItems.ScanReceipt)
+            _ = App.ReceiptsModalsViewModel?.OpenScanModalWithSampleAsync();
     }
 
     [RelayCommand]

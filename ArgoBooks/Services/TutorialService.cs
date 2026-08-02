@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.Services;
@@ -22,12 +23,11 @@ public class TutorialService
     /// </summary>
     public static class ChecklistItems
     {
+        public const string ScanReceipt = "scan_receipt";
         public const string CreateCategory = "create_category";
-        public const string AddPaymentMethod = "add_payment_method";
         public const string RecordExpense = "record_expense";
         public const string RecordRevenue = "record_revenue";
         public const string AddProduct = "add_product";
-        public const string AddCustomer = "add_customer";
         public const string ExploreDashboard = "explore_dashboard";
         public const string VisitAnalytics = "visit_analytics";
     }
@@ -289,8 +289,14 @@ public class TutorialService
         var settings = _globalSettingsService?.GetSettings();
         if (settings?.Tutorial != null)
         {
+            var wasSkipped = settings.Tutorial.HasSkippedTutorial;
             settings.Tutorial.HasSkippedTutorial = true;
             SaveSettings();
+            // Anonymous onboarding telemetry: the user opted out of guided setup.
+            if (!wasSkipped)
+            {
+                _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingSkipped);
+            }
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -304,8 +310,13 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Marks a checklist item as completed.
-    /// Items must be completed in order: CreateCategory -> AddProduct -> RecordExpense -> VisitAnalytics
+    /// Marks a checklist item as completed. Out-of-order calls are silently ignored.
+    /// <para>
+    /// The gated chain is CreateCategory -> AddProduct -> RecordExpense -> VisitAnalytics.
+    /// ScanReceipt is shown first but sits outside that chain: it has no prerequisites and
+    /// is not a prerequisite for anything, so it can be completed at any point, including
+    /// last. Items that aren't on the setup checklist are never gated.
+    /// </para>
     /// </summary>
     public void CompleteChecklistItem(string itemId)
     {
@@ -325,11 +336,30 @@ public class TutorialService
         SaveSettings();
         ChecklistItemCompleted?.Invoke(this, itemId);
 
+        // Anonymous onboarding telemetry: report which step was finished, so the
+        // setup funnel shows where users stop rather than only who reached the
+        // end. The Contains guard above means each step reports at most once.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ChecklistStepCompleted, itemId);
+
+        // Anonymous onboarding telemetry: VisitAnalytics closes the gated chain, and the
+        // Contains guard above means it is added once, so this fires at most once.
+        //
+        // This is NOT the same as the checklist being finished.
+        // AreAllChecklistItemsCompleted() also requires ScanReceipt, which is deliberately
+        // not a prerequisite for VisitAnalytics, so someone who never scans fires this
+        // while the checklist is still on screen. Read the metric as "worked through the
+        // manual chain", not "finished setup": it runs ahead of the latter.
+        if (itemId == ChecklistItems.VisitAnalytics)
+        {
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingCompleted);
+        }
+
         // Only show completion guidance if tutorial is active on current company
         if (ShouldShowTutorialOnCurrentCompany())
         {
             // Show completion guidance for main tutorial tasks
-            if (itemId == ChecklistItems.CreateCategory ||
+            if (itemId == ChecklistItems.ScanReceipt ||
+                itemId == ChecklistItems.CreateCategory ||
                 itemId == ChecklistItems.AddProduct ||
                 itemId == ChecklistItems.RecordExpense)
             {
@@ -357,7 +387,12 @@ public class TutorialService
         // Define the required order: each item requires all previous items to be completed
         return itemId switch
         {
-            ChecklistItems.CreateCategory => true, // First item, no prerequisites
+            // Scanning a receipt is the first step and the fastest path to a visible
+            // result. It has no prerequisites, and it is deliberately NOT a
+            // prerequisite for anything else: someone who came for invoicing must
+            // still be able to work the manual path without scanning anything.
+            ChecklistItems.ScanReceipt => true,
+            ChecklistItems.CreateCategory => true, // No prerequisites
             ChecklistItems.AddProduct => completedItems.Contains(ChecklistItems.CreateCategory),
             ChecklistItems.RecordExpense => completedItems.Contains(ChecklistItems.CreateCategory) &&
                                             completedItems.Contains(ChecklistItems.AddProduct),
@@ -382,7 +417,8 @@ public class TutorialService
     public bool AreAllChecklistItemsCompleted()
     {
         var completed = Settings.CompletedChecklistItems;
-        return completed.Contains(ChecklistItems.CreateCategory) &&
+        return completed.Contains(ChecklistItems.ScanReceipt) &&
+               completed.Contains(ChecklistItems.CreateCategory) &&
                completed.Contains(ChecklistItems.AddProduct) &&
                completed.Contains(ChecklistItems.RecordExpense) &&
                completed.Contains(ChecklistItems.VisitAnalytics);

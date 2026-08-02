@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             x:Class="ArgoBooks.Mobile.Views.CaptureView"
+             x:DataType="vm:CaptureViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Border.company-chip">
+      <Setter Property="Background" Value="#14808080" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="10,8" />
+    </Style>
+    <Style Selector="Border.viewfinder">
+      <Setter Property="BorderBrush" Value="#3B82F6" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="CornerRadius" Value="14" />
+    </Style>
+    <Style Selector="Border.confirmation-toast">
+      <Setter Property="Background" Value="#3B82F6" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="12,10" />
+    </Style>
+    <Style Selector="Border.recent-scan-row">
+      <Setter Property="Background" Value="#14808080" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="10,8" />
+    </Style>
+    <Style Selector="Border.offline-review-prompt">
+      <Setter Property="Background" Value="#1A3B82F6" />
+      <Setter Property="BorderBrush" Value="#3B82F6" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="12,10" />
+    </Style>
+  </UserControl.Styles>
+
+  <Panel>
+    <ScrollViewer>
+      <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto,Auto">
+
+        <Border Grid.Row="0" Classes="company-chip" Margin="0,0,0,10">
+          <Grid ColumnDefinitions="Auto,*">
+            <TextBlock Grid.Column="0" Text="Scanning into" FontSize="12" Opacity="0.7" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="{Binding ActiveCompanyLabel}"
+                       FontSize="12" FontWeight="SemiBold"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+          </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="1"
+                   Text="{Binding ScansUsedThisMonth, StringFormat='{}{0} scans used this month'}"
+                   FontSize="12" Opacity="0.6" Margin="2,0,0,10"
+                   IsVisible="{Binding !IsOverLimit}" />
+
+        <!-- Receipts captured while offline, waiting to be reviewed (never auto-posted). -->
+        <Border Grid.Row="2" Classes="offline-review-prompt" Margin="0,0,0,10"
+                IsVisible="{Binding HasPendingOfflineScans}">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding PendingOfflineCount, StringFormat='{}{0} captured offline'}"
+                         FontSize="13" FontWeight="SemiBold" />
+              <TextBlock Text="Review them to add to your books"
+                         FontSize="11" Opacity="0.7" Margin="0,1,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Review now"
+                    Command="{Binding ReviewOfflineScansCommand}"
+                    VerticalAlignment="Center" Margin="10,0,0,0" />
+          </Grid>
+        </Border>
+
+        <!-- Normal capture state: viewfinder + shutter + photo import. -->
+        <Panel Grid.Row="3" Grid.RowSpan="4" IsVisible="{Binding !IsOverLimit}">
+          <Grid RowDefinitions="*,Auto,Auto,Auto">
+            <Border Grid.Row="0" Classes="viewfinder" MinHeight="240">
+              <TextBlock Text="Line up the receipt in frame, then tap Scan receipt"
+                         Opacity="0.6" TextWrapping="Wrap" TextAlignment="Center"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="28" />
+            </Border>
+
+            <Button Grid.Row="1"
+                    Content="Scan receipt"
+                    Command="{Binding ScanCommand}"
+                    IsEnabled="{Binding !IsBusy}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Margin="0,14,0,0" />
+
+            <Button Grid.Row="2"
+                    Content="Import from photos"
+                    Command="{Binding ScanCommand}"
+                    IsEnabled="{Binding !IsBusy}"
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Margin="0,8,0,0" />
+
+            <TextBlock Grid.Row="3"
+                       Text="Detects, crops &amp; straightens automatically."
+                       Opacity="0.5" FontSize="11" TextAlignment="Center"
+                       HorizontalAlignment="Center" Margin="0,10,0,0" />
+          </Grid>
+        </Panel>
+
+        <!-- Over-limit state: free monthly scans used up, link out to upgrade on the web. -->
+        <StackPanel Grid.Row="3" Grid.RowSpan="4" Spacing="10"
+                    VerticalAlignment="Center" IsVisible="{Binding IsOverLimit}">
+          <TextBlock Text="{Binding FreeScanLimit, StringFormat='You have used your {0} free scans this month'}"
+                     FontSize="17" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center" />
+          <TextBlock Text="Upgrade to Argo Premium on the web for more scans every month."
+                     Opacity="0.7" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,6" />
+          <Button Content="Upgrade on the web"
+                  Command="{Binding UpgradeCommand}"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+        </StackPanel>
+
+        <!-- Recent scans -->
+        <StackPanel Grid.Row="7" Spacing="6" Margin="0,18,0,0" IsVisible="{Binding HasRecentScans}">
+          <TextBlock Text="Recent scans" FontSize="13" FontWeight="SemiBold" />
+          <ItemsControl ItemsSource="{Binding RecentScans}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:RecentScanViewModel">
+                <Border Classes="recent-scan-row" Margin="0,0,0,6">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0">
+                      <TextBlock Text="{Binding VendorText}" FontSize="14" />
+                      <TextBlock Text="{Binding TimeText}" FontSize="11" Opacity="0.6" />
+                      <TextBlock Text="{Binding StatusText}" FontSize="11" Opacity="0.75" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding AmountText}" FontWeight="Bold" VerticalAlignment="Top" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Grid>
+    </ScrollViewer>
+
+    <!-- Confirmation toast -->
+    <Border Classes="confirmation-toast" IsVisible="{Binding IsConfirmationVisible}"
+            VerticalAlignment="Top" HorizontalAlignment="Stretch"
+            Margin="16,10,16,0">
+      <TextBlock Text="{Binding ConfirmationMessage}" FontSize="13" TextAlignment="Center" TextWrapping="Wrap" />
+    </Border>
+  </Panel>
+</UserControl>

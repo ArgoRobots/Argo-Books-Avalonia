@@ -1,0 +1,180 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="820"
+             x:Class="ArgoBooks.Mobile.Views.PairingView"
+             x:DataType="vm:PairingViewModel"
+             Background="{DynamicResource PageBackgroundBrush}">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE,
+         to set the actual DataContext for runtime, set the DataContext property in code. -->
+    <vm:PairingViewModel />
+  </Design.DataContext>
+
+  <UserControl.Styles>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="18" />
+      <Setter Property="Padding" Value="20" />
+      <Setter Property="BoxShadow" Value="0 8 24 0 #14000000" />
+    </Style>
+    <Style Selector="TextBlock.field-label">
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+      <Setter Property="Margin" Value="2,0,0,6" />
+    </Style>
+    <!-- De-emphasized text button ("Enter a code instead", "Back") - deliberately quiet so the
+         primary Scan QR path stays the obvious choice. -->
+    <Style Selector="Button.subtle-link">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="8,8" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.subtle-link /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.subtle-link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid>
+  <ScrollViewer>
+    <StackPanel Spacing="0" MaxWidth="440" Margin="24,40,24,28" HorizontalAlignment="Stretch">
+
+      <!-- Brand logo (the real Argo Books lockup) -->
+      <Image Source="avares://ArgoBooks.Mobile/Assets/logo.png"
+             Width="212" Stretch="Uniform"
+             HorizontalAlignment="Center" />
+
+      <!-- ===== Welcome screen: scanning the QR code is the main path ===== -->
+      <StackPanel Spacing="0" IsVisible="{Binding !ShowCodeEntry}">
+        <TextBlock Text="Connect to desktop"
+                   FontSize="25" FontWeight="Bold"
+                   HorizontalAlignment="Center" TextAlignment="Center"
+                   Margin="0,28,0,0" />
+
+        <TextBlock Text="Open Argo Books on your computer, go to Settings &gt; Mobile app, and scan the code shown there."
+                   TextWrapping="Wrap" TextAlignment="Center"
+                   FontSize="14" LineHeight="20"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="4,8,4,0" />
+
+        <Border Classes="card" Margin="0,24,0,0">
+          <StackPanel Spacing="8">
+            <Button Content="Scan QR code"
+                    Classes="primary"
+                    Command="{Binding ScanQrCommand}"
+                    IsEnabled="{Binding !IsBusy}" />
+            <Button Content="Enter a code instead"
+                    Classes="subtle-link"
+                    Command="{Binding OpenCodeEntryCommand}"
+                    IsEnabled="{Binding !IsBusy}" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- ===== Secondary screen: manual code + device name ===== -->
+      <StackPanel Spacing="0" IsVisible="{Binding ShowCodeEntry}">
+        <Button Content="&#8592;  Back"
+                Classes="subtle-link"
+                Command="{Binding BackToScanCommand}"
+                IsEnabled="{Binding !IsBusy}"
+                HorizontalAlignment="Left"
+                Margin="0,16,0,0" />
+
+        <TextBlock Text="Enter your code"
+                   FontSize="25" FontWeight="Bold"
+                   HorizontalAlignment="Center" TextAlignment="Center"
+                   Margin="0,8,0,0" />
+
+        <TextBlock Text="On your computer, open Settings &gt; Mobile app, choose &quot;Enter a code instead&quot;, and type the code shown there."
+                   TextWrapping="Wrap" TextAlignment="Center"
+                   FontSize="14" LineHeight="20"
+                   Foreground="{DynamicResource MutedTextBrush}"
+                   Margin="4,8,4,0" />
+
+        <Border Classes="card" Margin="0,24,0,0">
+          <StackPanel Spacing="16">
+            <StackPanel Spacing="6">
+              <TextBlock Classes="field-label" Text="ENTER A CODE" />
+              <TextBox Text="{Binding EnteredCode}"
+                       TextChanged="OnCodeTextChanged"
+                       PlaceholderText="XXXX-XXXX"
+                       MaxLength="9"
+                       FontFamily="Consolas,Menlo,monospace"
+                       FontSize="18"
+                       LetterSpacing="2"
+                       HorizontalContentAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+              <TextBlock Classes="field-label" Text="THIS DEVICE'S NAME" />
+              <TextBox Text="{Binding DeviceLabel}"
+                       PlaceholderText="e.g. My phone" />
+            </StackPanel>
+
+            <Button Content="Connect"
+                    Classes="primary"
+                    Command="{Binding ConnectWithCodeCommand}"
+                    IsEnabled="{Binding !IsBusy}"
+                    Margin="0,2,0,0" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- Shared status: green when connected, red on failure/cancel -->
+      <Panel Margin="0,16,0,0"
+             IsVisible="{Binding StatusMessage, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+        <Border IsVisible="{Binding IsSuccess}"
+                Background="#1F22C55E" BorderBrush="#6622C55E" BorderThickness="1"
+                CornerRadius="10" Padding="12,10">
+          <TextBlock Text="{Binding StatusMessage}"
+                     TextWrapping="Wrap" TextAlignment="Center"
+                     FontSize="13" FontWeight="SemiBold" Foreground="#15803D" />
+        </Border>
+        <Border IsVisible="{Binding !IsSuccess}"
+                Background="#1FE07A7A" BorderBrush="#66E07A7A" BorderThickness="1"
+                CornerRadius="10" Padding="12,10">
+          <TextBlock Text="{Binding StatusMessage}"
+                     TextWrapping="Wrap" TextAlignment="Center"
+                     FontSize="13" Foreground="#C0453C" />
+        </Border>
+      </Panel>
+
+      <TextBlock Text="No account, no password. Your books are end-to-end encrypted, so only your own devices can read them."
+                 TextWrapping="Wrap" TextAlignment="Center"
+                 FontSize="12" LineHeight="17"
+                 Foreground="{DynamicResource MutedTextBrush}"
+                 Opacity="0.85"
+                 Margin="8,20,8,0" />
+    </StackPanel>
+  </ScrollViewer>
+
+  <!-- Full-screen loading state while a pairing attempt is in flight -->
+  <Panel IsVisible="{Binding IsBusy}"
+         Background="{DynamicResource PageBackgroundBrush}">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20">
+      <Image Source="avares://ArgoBooks.Mobile/Assets/logo.png"
+             Width="180" Stretch="Uniform" HorizontalAlignment="Center" />
+      <ProgressBar IsIndeterminate="True" Width="200" HorizontalAlignment="Center" />
+      <TextBlock Text="Connecting to your computer..."
+                 FontSize="15" TextAlignment="Center"
+                 Foreground="{DynamicResource MutedTextBrush}"
+                 HorizontalAlignment="Center" />
+    </StackPanel>
+  </Panel>
+  </Grid>
+</UserControl>

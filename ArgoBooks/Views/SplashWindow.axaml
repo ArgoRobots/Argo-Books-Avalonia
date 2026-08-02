@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="240"
+        x:Class="ArgoBooks.Views.SplashWindow"
+        Title="Argo Books"
+        Icon="/Assets/argo-logo.png"
+        Width="420"
+        Height="240"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None"
+        Background="Transparent">
+
+    <!-- Fixed colours rather than theme resources: this window is shown before the saved
+         theme has been read from settings, so a DynamicResource lookup here would flash the
+         wrong palette. Dark navy reads correctly against both themes. -->
+    <Border Background="#111827"
+            BorderBrush="#3B82F6"
+            BorderThickness="1"
+            CornerRadius="10">
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="16">
+            <Image Source="/Assets/argo-logo.png"
+                   Width="64"
+                   Height="64"
+                   HorizontalAlignment="Center" />
+            <TextBlock Text="Argo Books"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Foreground="#F9FAFB"
+                       HorizontalAlignment="Center" />
+            <!-- Static text rather than an animated progress bar. The UI thread is fully
+                 occupied building the service graph for the few seconds this is on screen, so
+                 nothing here can animate. A frozen spinner reads as a hang; plain text does not. -->
+            <TextBlock Text="Starting..."
+                       FontSize="13"
+                       Foreground="#9CA3AF"
+                       HorizontalAlignment="Center" />
+        </StackPanel>
+    </Border>
+</Window>

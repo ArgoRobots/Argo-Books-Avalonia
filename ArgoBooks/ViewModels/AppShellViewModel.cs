@@ -780,7 +780,7 @@ public partial class AppShellViewModel : ViewModelBase
         HeaderViewModel.OpenFileMenuRequested += (_, _) => FileMenuPanelViewModel.ToggleCommand.Execute(null);
 
         // Wire up notification panel's settings to open settings modal at notifications tab
-        NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(1);
+        NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(SettingsTab.Notifications);
 
         // Wire up settings modal's upgrade request to open upgrade modal
         SettingsModalViewModel.UpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);

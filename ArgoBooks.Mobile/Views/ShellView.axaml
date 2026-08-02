@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             xmlns:conv="using:ArgoBooks.Mobile.Converters"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="800"
+             x:Class="ArgoBooks.Mobile.Views.ShellView"
+             x:DataType="vm:ShellViewModel">
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+
+    <!-- Header -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="12,10,12,4">
+      <Button Grid.Column="0"
+              Content="‹"
+              FontSize="24"
+              Padding="6,0"
+              Background="Transparent"
+              BorderThickness="0"
+              Command="{Binding GoBackCommand}"
+              IsVisible="{Binding CanGoBack}" />
+      <TextBlock Grid.Column="1"
+                 Text="{Binding HeaderTitle}"
+                 FontSize="18" FontWeight="Bold"
+                 VerticalAlignment="Center"
+                 Margin="6,0" />
+      <Button Grid.Column="2"
+              Background="Transparent"
+              BorderThickness="0"
+              Command="{Binding RefreshCommand}"
+              IsEnabled="{Binding !IsRefreshing}">
+        <TextBlock Text="{Binding LastSyncedText}" FontSize="11" Opacity="0.7" />
+      </Button>
+    </Grid>
+
+    <!-- Active company chip: tap to switch companies -->
+    <Button Grid.Row="1"
+            IsVisible="{Binding IsCompanyChipVisible}"
+            Command="{Binding OpenCompanySwitcherCommand}"
+            Background="#1A2AB6A0"
+            BorderThickness="0"
+            HorizontalAlignment="Left"
+            Margin="12,0,12,8"
+            Padding="10,5">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <TextBlock Text="{Binding ActiveCompanyLabel}" FontSize="12" FontWeight="SemiBold" />
+        <TextBlock Text="⌄" FontSize="10" Opacity="0.7" VerticalAlignment="Center" />
+      </StackPanel>
+    </Button>
+
+    <!-- Offline/stale banner -->
+    <Border Grid.Row="2"
+            IsVisible="{Binding IsStale}"
+            Background="#332AB6A0"
+            CornerRadius="8"
+            Margin="12,0,12,8"
+            Padding="8,6">
+      <TextBlock Text="You're viewing the last data synced from your desktop." FontSize="11" TextWrapping="Wrap" />
+    </Border>
+
+    <!-- Content -->
+    <Panel Grid.Row="3" Margin="0">
+
+      <!-- Not paired -->
+      <StackPanel IsVisible="{Binding IsNotPairedPanelVisible}"
+                  VerticalAlignment="Center" HorizontalAlignment="Center"
+                  Spacing="10" Margin="30">
+        <TextBlock Text="No desktop connected" FontSize="17" FontWeight="Bold" HorizontalAlignment="Center" />
+        <TextBlock Text="Pair this phone with Argo Books on your computer to see your data here."
+                   TextWrapping="Wrap" TextAlignment="Center" Opacity="0.7" />
+      </StackPanel>
+
+      <!-- Waiting for first sync -->
+      <StackPanel IsVisible="{Binding IsWaitingPanelVisible}"
+                  VerticalAlignment="Center" HorizontalAlignment="Center"
+                  Spacing="10" Margin="30">
+        <TextBlock Text="Waiting for your desktop to sync" FontSize="17" FontWeight="Bold"
+                   HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+        <TextBlock Text="Open Argo Books on your computer and make sure mobile sync is on. This updates automatically once it uploads your first snapshot."
+                   TextWrapping="Wrap" TextAlignment="Center" Opacity="0.7" />
+        <Button Content="Check again"
+                Command="{Binding RefreshCommand}"
+                IsEnabled="{Binding !IsRefreshing}"
+                HorizontalAlignment="Center" Margin="0,8,0,0" />
+      </StackPanel>
+
+      <!-- Loaded content -->
+      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding IsPageVisible}" />
+    </Panel>
+
+    <!-- Bottom nav (icon-only) -->
+    <Grid Grid.Row="4" Height="64" ColumnDefinitions="*,*,Auto,*,*" Margin="4,0">
+
+      <Button Grid.Column="0" Command="{Binding NavigateHomeCommand}"
+              Background="Transparent" BorderThickness="0" HorizontalAlignment="Center">
+        <Panel Width="26" Height="26">
+          <Path Data="M3,10 L13,2 L23,10 L23,22 L3,22 Z" Stroke="{Binding IsHomeActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" StrokeThickness="2" />
+        </Panel>
+      </Button>
+
+      <Button Grid.Column="1" Command="{Binding NavigateDataCommand}"
+              Background="Transparent" BorderThickness="0" HorizontalAlignment="Center">
+        <Panel Width="26" Height="26">
+          <Path Data="M4,2 L16,2 L22,8 L22,24 L4,24 Z" Stroke="{Binding IsDataActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" StrokeThickness="2" />
+          <Path Data="M9,13 L18,13 M9,18 L18,18" Stroke="{Binding IsDataActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" StrokeThickness="1.5" />
+        </Panel>
+      </Button>
+
+      <Button Grid.Column="2" Command="{Binding NavigateCaptureCommand}"
+              Background="Transparent" BorderThickness="0"
+              HorizontalAlignment="Center" Margin="6,-14,6,0">
+        <Ellipse Width="54" Height="54" Fill="#3B82F6" />
+      </Button>
+
+      <Button Grid.Column="3" Command="{Binding NavigateAnalyticsCommand}"
+              Background="Transparent" BorderThickness="0" HorizontalAlignment="Center">
+        <Grid Width="26" Height="26" ColumnDefinitions="*,*,*" VerticalAlignment="Bottom">
+          <Rectangle Grid.Column="0" Width="5" Height="12" VerticalAlignment="Bottom"
+                     Fill="{Binding IsAnalyticsActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" />
+          <Rectangle Grid.Column="1" Width="5" Height="20" VerticalAlignment="Bottom"
+                     Fill="{Binding IsAnalyticsActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" />
+          <Rectangle Grid.Column="2" Width="5" Height="8" VerticalAlignment="Bottom"
+                     Fill="{Binding IsAnalyticsActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" />
+        </Grid>
+      </Button>
+
+      <Button Grid.Column="4" Command="{Binding NavigateSettingsCommand}"
+              Background="Transparent" BorderThickness="0" HorizontalAlignment="Center">
+        <Panel Width="26" Height="26">
+          <Ellipse Width="24" Height="24" Stroke="{Binding IsSettingsActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" StrokeThickness="2" />
+          <Ellipse Width="9" Height="9" Fill="{Binding IsSettingsActive, Converter={x:Static conv:BoolToNavBrushConverter.Instance}}" />
+        </Panel>
+      </Button>
+
+    </Grid>
+  </Grid>
+</UserControl>

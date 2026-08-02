@@ -3,7 +3,6 @@ using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using CommunityToolkit.Mvvm.ComponentModel;

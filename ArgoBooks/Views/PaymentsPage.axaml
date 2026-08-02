@@ -184,7 +184,7 @@
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{loc:Loc 'Enable the payment portal to let customers pay invoices online via Stripe, PayPal, or Square.'}"
+                            <TextBlock Text="{loc:Loc 'Enable the payment portal to let customers pay invoices online via Stripe or Square.'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextWrapping="Wrap" />

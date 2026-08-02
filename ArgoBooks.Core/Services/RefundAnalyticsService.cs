@@ -1,5 +1,4 @@
 using ArgoBooks.Core.Data;
-using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 

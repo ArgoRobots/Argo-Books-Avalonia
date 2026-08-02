@@ -1720,8 +1720,10 @@ public class SpreadsheetImportService
                     var expProductName = expense.Description;
                     if (!string.IsNullOrEmpty(expProductName))
                     {
+                        // Report category (mixed-report rescue emits this; normal rows omit it).
+                        var expCategory = entityJson.TryGetProperty("categoryName", out var ec) ? ec.GetString() : null;
                         var expProduct = FindProductByName(data, expProductName, CategoryType.Expense)
-                                         ?? AutoCreateProduct(data, expProductName, expense.UnitPrice, CategoryType.Expense);
+                                         ?? AutoCreateProduct(data, expProductName, expense.UnitPrice, CategoryType.Expense, expCategory);
 
                         if (expense.LineItems.Count == 0)
                         {
@@ -1788,8 +1790,9 @@ public class SpreadsheetImportService
                     var productName = revenue.Description;
                     if (!string.IsNullOrEmpty(productName))
                     {
+                        var revCategory = entityJson.TryGetProperty("categoryName", out var rc) ? rc.GetString() : null;
                         var revenueProduct = FindProductByName(data, productName, CategoryType.Revenue)
-                                             ?? AutoCreateProduct(data, productName, revenue.UnitPrice, CategoryType.Revenue);
+                                             ?? AutoCreateProduct(data, productName, revenue.UnitPrice, CategoryType.Revenue, revCategory);
 
                         // Ensure line items reference the product
                         if (revenue.LineItems.Count == 0)
@@ -3913,7 +3916,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// Auto-creates a product from revenue/expense data when no matching product exists.
     /// Uses the product name from the transaction description and sets a sensible unit price.
     /// </summary>
-    private Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type)
+    private Product AutoCreateProduct(CompanyData data, string name, decimal unitPrice, CategoryType type, string? categoryName = null)
     {
         data.IdCounters.Product++;
         var newId = $"PRD-IMP-{data.IdCounters.Product:D3}";
@@ -3926,8 +3929,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             ItemType = "Product"
         };
 
-        // Always assign a category so no product is left uncategorized
-        var category = FindOrCreateCategory(data, name, type);
+        // Prefer an explicit category (e.g. from a report's grouping); otherwise fall back to the
+        // product name so no product is left uncategorized.
+        var categoryLabel = !string.IsNullOrWhiteSpace(categoryName) ? categoryName! : name;
+        var category = FindOrCreateCategory(data, categoryLabel, type);
         product.CategoryId = category.Id;
 
         data.Products.Add(product);

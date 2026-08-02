@@ -9,17 +9,32 @@
 
 ### Build
 
-In Rider, set the configuration to **Release** and the target to **Desktop (Windows)**, then build.
+**Use `dotnet publish`, not a Rider build.** The project sets `PublishReadyToRun`, which precompiles IL to native code and cuts cold start from about 6.5 seconds to about 3.7 seconds. That property applies only to `publish`; a plain Rider Release build ignores it and ships the slower output.
 
-Alternatively from the command line:
+Run it from the solution root (`Argo-Books-Avalonia`):
 
 ```bash
 dotnet publish ArgoBooks.Desktop -c Release -f net10.0-windows10.0.17763.0 -r win-x64 --self-contained -o publish/win-x64
 ```
 
+Output lands at `Argo-Books-Avalonia\publish\win-x64` (already gitignored).
+
+A Rider Release build is still fine for local testing, it just won't have the startup improvement.
+
 ### Package
 
-The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/). Point it at the `ArgoBooks.Desktop\bin\Release\net10.0-windows10.0.17763.0` output folder.
+The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/).
+
+1. Open `Argo Books.aip` Advanced Installer.
+2. In the **Product Details** tab, update the version number.
+3. Click any other tab. A "Generate new product code?" message box appears: choose **Generate New**.
+4. Click **Build** in the top left.
+
+The project's synchronized folder is already pointed at `Argo-Books-Avalonia\publish\win-x64`, so it picks up whatever `dotnet publish` last wrote there.
+
+Note that folder is the **publish** output, not `bin\Release\...`. Pointing it back at `bin\Release` still produces a working installer, so the mistake is silent: the only symptom is users waiting an extra 2.5 seconds on every launch.
+
+The publish output is roughly 100MB larger than a plain build (about 508MB versus 400MB uncompressed) because of the precompiled native code. It also contains fewer files, since publish drops build artefacts that aren't needed at runtime.
 
 ## Linux
 
@@ -30,7 +45,7 @@ The Linux distribution is packaged as an [AppImage](https://appimage.org/). The 
 1. Make sure the version branch with your changes is pushed to GitHub.
 2. Go to the repo's **Actions** tab on github.com and select **Build Linux AppImage** in the left sidebar.
 3. Click **Run workflow**, choose the branch to build from, and click the green **Run workflow** button.
-4. Wait for the run to finish (about 5 minutes), then open the run's **Summary** page (not the job log) and scroll to the **Artifacts** section at the bottom. The artifact is a `.zip`; extract it to get `ArgoBooks-X.X.X-linux-x64.AppImage`.
+4. Wait for the run to finish (about 5 minutes), then open the run's **Summary** page (not the job log) and scroll to the **Artifacts** section at the bottom. The artifact is a `.zip`; download then extract it to get `ArgoBooks-X.X.X-linux-x64.AppImage`.
 5. To test it on a Linux VM, first make it executable:
 
    ```bash
@@ -38,7 +53,6 @@ The Linux distribution is packaged as an [AppImage](https://appimage.org/). The 
    ```
 
    Without this, double-clicking does nothing (silently). This only affects local testing; end users always have to mark downloaded AppImages executable regardless of how we build them, since browser downloads never preserve the executable bit.
-6. Upload the AppImage to the website (e.g. via FileZilla) as usual.
 
 The workflow reads the version number from `Directory.Build.props` automatically.
 
@@ -110,11 +124,11 @@ The macOS `.dmg` installer is created using [create-dmg](https://github.com/crea
 
 The app verifies an Ed25519 signature on every update it downloads, and refuses to install files that are unsigned or don't match. Every file referenced by the appcast must therefore be signed with our private key.
 
-### One-time setup (already done)
+### One-time setup
 
-- The signing key pair lives at `C:\Users\evand\AppData\Local\netsparkle`. **Back this folder up** (e.g. in a password manager). If the private key is lost, shipped versions of the app can't verify future updates; if it leaks, someone who also compromised the website could forge updates. It must never be committed to a repo.
+- The signing key pair needs to be added to `C:\Users\evand\AppData\Local\netsparkle`. **Back this folder up**. If the private key is lost, shipped versions of the app can't verify future updates; if it leaks, someone who also compromised the website could forge updates. It must never be committed to a repo.
 - The matching public key is embedded in the app at `NetSparkleUpdateService.UpdatePublicKey`.
-- The signing tool (already installed): `dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator`
+- Intall the signing tool: `dotnet tool install --global NetSparkleUpdater.Tools.AppCastGenerator`
 
 ### Each release
 
@@ -127,24 +141,43 @@ The app verifies an Ed25519 signature on every update it downloads, and refuses 
 
    Each command prints a base64 signature string.
 
-2. In the website repo, update `avalonia-update.xml`:
-   - The version numbers
-   - On each `<enclosure>`, add/update `sparkle:edSignature="<that file's signature>"`. The signature is the long base64 string that step 1's `--generate-signature` command printed for that file: the `.exe`'s signature goes on the `sparkle:os="windows"` enclosure, the `.AppImage`'s on the `sparkle:os="linux"` one.
+2. In the website repo, update `avalonia-update.xml`
+   - On each `<enclosure>`, update `sparkle:edSignature`. The signature is the long base64 string printed in step 1. The `.exe`'s signature goes on the `sparkle:os="windows"` enclosure, the `.AppImage`'s on the `sparkle:os="linux"` one.
+   - All the version numbers in the file. For example, do a replace all for `2.0.11` and update it to `2.0.12`, or whatever the version is.
 
-   (The `length` attribute can stay `0`; the download server reports the real size automatically.)
+3. Regenerate the translations for the new version's strings (see `ArgoBooks.TranslationTool/README.md`):
 
-3. Push the website repo so the appcast deploys, and upload the matching `.exe`/`.AppImage` via FileZilla.
+   ```powershell
+   $env:AZURE_TRANSLATOR_REGION = "canadacentral"
+   $env:AZURE_TRANSLATOR_KEY = "your-api-key"
+   cd ArgoBooks.TranslationTool
+   dotnet run -- --translate
+   ```
 
-**Important:** the signature covers the file's exact bytes. If a file is rebuilt for any reason, re-sign it and update the appcast. Signing the wrong build is equivalent to not signing at all: users' updates will be rejected.
+   The JSON files land in `ArgoBooks.TranslationTool/languages/`, ready to upload in step 7.
 
-To double-check a file before publishing, run `--verify` with that same file's signature string (the long base64 text printed by `--generate-signature`, not the public key):
+4. In the website repo, add an entry for the new version to the What's New page (`whats-new/index.php`).
+
+5. Before going live, run the freshly built Argo Books on all operating systems and test a couple of major features such as the receipt scanner to ensure things work.
+
+6. Commit and push to `main` in Git so the `avalonia-update.xml` and What's New changes deploy.
+
+7. Upload the release files via FileZilla into a new `resources/downloads/<version>/` folder on the server, matching the layout of the previous version:
+
+   - `Argo Books Installer V.<version>.exe`
+   - `ArgoBooks-<version>-linux-x64.AppImage`
+   - a `languages/` subfolder holding the JSON files from step 3
+
+   The filenames matter: `get_avalonia_installer.php` builds the download links from those exact patterns, and the app fetches translations from `/resources/downloads/{version}/languages/{iso}.json` (`LanguageService.DownloadUrlTemplate`).
+
+The release is now live. The website download buttons serve the new version, and existing installs will show the "A new version is available" banner the next time they check for updates. Test the auto-update by opening the previous version of the app and letting it update, then confirm that the old version was uninstalled and the new one is installed. Once that works, the release is done.
+
+## Notes
+
+The signature covers the file's exact bytes. If an installer file is rebuilt for any reason, re-sign it and update `avalonia-update.xml`.
+
+If you want to double-check an installer file before publishing, run `--verify` with that same file's signature string (the text printed by step 1):
 
 ```powershell
 netsparkle-generate-appcast --verify "C:\path\to\ArgoBooks-2.0.8-linux-x64.AppImage" --signature "t4lRf5lP...8O9zCQ=="
 ```
-
-## Before Going Live
-
-After building the installers/AppImage (steps above) but before uploading them to the website to make the release live:
-
-1. Run the freshly built Argo Books on all operating systems and test a couple major features such as the AI receipt scanner to ensure things work.

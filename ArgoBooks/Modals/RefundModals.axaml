@@ -9,6 +9,42 @@
              x:Class="ArgoBooks.Modals.RefundModals"
              x:DataType="vm:RefundModalsViewModel">
 
+    <UserControl.Styles>
+        <!-- Password field with a reveal button, matching Settings > Security. The TextBox
+             sits inside a bordered Grid alongside the button, so it draws no border itself. -->
+        <Style Selector="TextBox.password-field">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.password-field /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="Button.eye-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,6,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="Button.eye-toggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.eye-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.eye-toggle PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
 
         <!-- ============================================================ -->
@@ -129,7 +165,8 @@
                                         <TextBlock Grid.Column="0" Text="{Binding CountdownDisplay}"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
                                                    VerticalAlignment="Center" />
-                                        <Button Grid.Column="1" Content="Resend code"
+                                        <Button Grid.Column="1" Content="{Binding ResendButtonText}"
+                                                IsEnabled="{Binding CanResend}"
                                                 Command="{Binding ResendCodeCommand}" />
                                     </Grid>
                                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
@@ -331,8 +368,9 @@
                                 </StackPanel>
 
                                 <StackPanel IsVisible="{Binding IsVerified}" Spacing="10">
-                                    <TextBlock Text="✓ Email verified" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
-                                    <TextBlock TextWrapping="Wrap"
+                                    <TextBlock Text="✓ Email verified" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="#059669" TextAlignment="Center" />
+                                    <TextBlock TextWrapping="Wrap" TextAlignment="Center"
                                                Text="Refunds are now enabled for this account. You can close this dialog." />
                                 </StackPanel>
                             </StackPanel>
@@ -347,6 +385,10 @@
                                         IsVisible="{Binding !IsVerified}"
                                         IsEnabled="{Binding CanSubmit}"
                                         Command="{Binding SubmitCommand}" />
+                                <Button Grid.Column="2" Content="OK"
+                                        Classes="primary-button"
+                                        IsVisible="{Binding IsVerified}"
+                                        Command="{Binding CloseCommand}" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -393,7 +435,22 @@
 
                                 <StackPanel IsVisible="{Binding IsEnterPassword}" Spacing="10">
                                     <TextBlock Text="Enter your .argo file password to confirm you control this company file." TextWrapping="Wrap" />
-                                    <TextBox Text="{Binding FilePassword, Mode=TwoWay}" Classes="form-input" PasswordChar="•" />
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox Grid.Column="0"
+                                                     Text="{Binding FilePassword, Mode=TwoWay}"
+                                                     PasswordChar="{Binding FilePasswordMaskChar}"
+                                                     Classes="password-field" />
+                                            <Button Grid.Column="1"
+                                                    Classes="eye-toggle"
+                                                    Command="{Binding ToggleFilePasswordVisibilityCommand}">
+                                                <PathIcon Data="{Binding FilePasswordVisibilityIcon}" Width="16" Height="16" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
 
                                 <StackPanel IsVisible="{Binding IsEnterOldCode}" Spacing="10">
@@ -402,7 +459,8 @@
                                     <TextBox Text="{Binding OldCode, Mode=TwoWay}" Classes="form-input"
                                              PlaceholderText="123456" MaxLength="6"
                                              FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
-                                    <Button Content="Resend code" HorizontalAlignment="Right"
+                                    <Button Content="{Binding ResendButtonText}" HorizontalAlignment="Right"
+                                            IsEnabled="{Binding CanResend}"
                                             Command="{Binding ResendOldCodeCommand}" />
                                 </StackPanel>
 
@@ -412,16 +470,21 @@
                                     <TextBox Text="{Binding NewCode, Mode=TwoWay}" Classes="form-input"
                                              PlaceholderText="123456" MaxLength="6"
                                              FontSize="22" FontWeight="SemiBold" HorizontalContentAlignment="Center" />
-                                    <Button Content="Resend code" HorizontalAlignment="Right"
+                                    <Button Content="{Binding ResendButtonText}" HorizontalAlignment="Right"
+                                            IsEnabled="{Binding CanResend}"
                                             Command="{Binding ResendNewCodeCommand}" />
                                 </StackPanel>
 
                                 <StackPanel IsVisible="{Binding IsSuccess}" Spacing="10">
-                                    <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold" Foreground="#059669" />
+                                    <TextBlock Text="✓ Email changed" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="#059669" TextAlignment="Center" />
+                                    <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" TextAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" />
                                 </StackPanel>
 
-                                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
-                                           IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
+                                           IsVisible="{Binding ShowSharedStatusMessage}" />
                                 <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -452,6 +515,10 @@
                                             IsEnabled="{Binding CanSubmitNewCode}"
                                             Classes="primary-button"
                                             Command="{Binding SubmitNewCodeCommand}" />
+                                    <Button Content="OK"
+                                            IsVisible="{Binding IsSuccess}"
+                                            Classes="primary-button"
+                                            Command="{Binding CloseCommand}" />
                                 </StackPanel>
                             </Grid>
                         </Border>

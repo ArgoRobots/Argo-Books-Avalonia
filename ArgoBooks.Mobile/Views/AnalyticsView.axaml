@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.Mobile.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="700"
+             x:Class="ArgoBooks.Mobile.Views.AnalyticsView"
+             x:DataType="vm:AnalyticsViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.ana-tab">
+      <Setter Property="Background" Value="#14808080" />
+      <Setter Property="CornerRadius" Value="16" />
+      <Setter Property="Padding" Value="12,6" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.ana-tab.active">
+      <Setter Property="Background" Value="#3B82F6" />
+    </Style>
+    <Style Selector="Border.stat-card">
+      <Setter Property="Background" Value="#14808080" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="10" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,*" Margin="14,4,14,16">
+
+    <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,10">
+      <ItemsControl ItemsSource="{Binding Tabs}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="8" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:AnalyticsTabViewModel">
+            <Button Classes="ana-tab" Classes.active="{Binding IsSelected}"
+                    Content="{Binding Name}" Command="{Binding SelectCommand}" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <ContentControl Grid.Row="1" Content="{Binding SelectedTab}">
+      <ContentControl.ContentTemplate>
+        <DataTemplate x:DataType="vm:AnalyticsTabViewModel">
+          <ScrollViewer>
+            <StackPanel Spacing="12">
+
+              <ItemsControl ItemsSource="{Binding Kpis}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid Columns="2" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:AnalyticsKpiViewModel">
+                    <Border Classes="stat-card" Margin="3">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Value}" FontSize="17" FontWeight="Bold" />
+                        <TextBlock Text="{Binding Label}" FontSize="11" Opacity="0.65" />
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <StackPanel IsVisible="{Binding HasData}" Spacing="4">
+                <TextBlock Text="{Binding RowsTitle}" FontSize="13" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding Rows}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RowItemViewModel">
+                      <Grid ColumnDefinitions="*,Auto" Margin="2,5">
+                        <StackPanel Grid.Column="0">
+                          <TextBlock Text="{Binding Title}" FontSize="14" />
+                          <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.6" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding Amount}" FontWeight="Bold" VerticalAlignment="Center" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <TextBlock Text="This analytics view isn't available on mobile yet."
+                         IsVisible="{Binding !HasData}"
+                         Opacity="0.6" FontSize="13" TextWrapping="Wrap" Margin="4,20,4,0" />
+
+            </StackPanel>
+          </ScrollViewer>
+        </DataTemplate>
+      </ContentControl.ContentTemplate>
+    </ContentControl>
+  </Grid>
+</UserControl>

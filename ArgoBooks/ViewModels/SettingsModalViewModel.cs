@@ -5,13 +5,17 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Integrations;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.Integrations;
+using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Core.Validation;
 using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Sync;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -339,6 +343,23 @@ public partial class SettingsModalViewModel : ViewModelBase
     public string CurrentPasswordVisibilityIcon => IsCurrentPasswordVisible ? Icons.EyeOff : Icons.Eye;
 
     /// <summary>
+    /// Mask characters for the password boxes, cleared while a password is revealed.
+    ///
+    /// Revealing is done by dropping the mask character rather than by setting
+    /// RevealPassword, because Avalonia 12.0.5 treats any box with a mask character as a
+    /// password box and silently disables Ctrl+Arrow word movement, Ctrl+Shift+Arrow
+    /// selection and Ctrl+Backspace, regardless of RevealPassword. Clearing the character
+    /// makes it an ordinary text box again, so those shortcuts work while it is revealed.
+    /// </summary>
+    public char NewPasswordMaskChar => IsNewPasswordVisible ? '\0' : '*';
+
+    /// <inheritdoc cref="NewPasswordMaskChar" />
+    public char ConfirmPasswordMaskChar => IsConfirmPasswordVisible ? '\0' : '*';
+
+    /// <inheritdoc cref="NewPasswordMaskChar" />
+    public char CurrentPasswordMaskChar => IsCurrentPasswordVisible ? '\0' : '*';
+
+    /// <summary>
     /// Width in pixels for the strength bar, scaled to fit the password modal content area.
     /// </summary>
     public double PasswordStrengthBarWidth => PasswordStrengthScore / 100.0 * 290;
@@ -378,9 +399,23 @@ public partial class SettingsModalViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsStrengthStrong));
     }
 
-    partial void OnIsNewPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(NewPasswordVisibilityIcon));
-    partial void OnIsConfirmPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
-    partial void OnIsCurrentPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(CurrentPasswordVisibilityIcon));
+    partial void OnIsNewPasswordVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(NewPasswordVisibilityIcon));
+        OnPropertyChanged(nameof(NewPasswordMaskChar));
+    }
+
+    partial void OnIsConfirmPasswordVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
+        OnPropertyChanged(nameof(ConfirmPasswordMaskChar));
+    }
+
+    partial void OnIsCurrentPasswordVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CurrentPasswordVisibilityIcon));
+        OnPropertyChanged(nameof(CurrentPasswordMaskChar));
+    }
 
     // Flag to prevent firing AutoLockSettingsChanged when syncing UI with company settings
     private bool _isLoadingAutoLock;
@@ -554,6 +589,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPortalCompanyName))]
+    [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
+    [NotifyPropertyChangedFor(nameof(ShowConnectRequirementsHint))]
     private string _portalCompanyName = string.Empty;
 
     private CancellationTokenSource? _portalCompanyNameCts;
@@ -709,6 +747,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// 4-step EmailChangeModal flow (locked to in-place edits).
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCompanyEmail))]
+    [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
+    [NotifyPropertyChangedFor(nameof(ShowConnectRequirementsHint))]
     private string? _companyEmail;
 
     [ObservableProperty]
@@ -734,7 +775,25 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     partial void OnSquareConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
 
+    /// <summary>True once the customer-facing company name has been entered.</summary>
+    public bool HasPortalCompanyName => !string.IsNullOrWhiteSpace(PortalCompanyName);
+
+    /// <summary>True once the owner email has been set (and verified) for this company.</summary>
+    public bool HasCompanyEmail => !string.IsNullOrWhiteSpace(CompanyEmail);
+
+    /// <summary>
+    /// A payment provider requires both the company name and the owner email first: the name so
+    /// the portal and receipts carry a real business name, the email so refund verification and
+    /// account recovery have somewhere to go. True only when both are set and no connect is in
+    /// flight.
+    /// </summary>
+    public bool CanConnectProvider => HasPortalCompanyName && HasCompanyEmail && !IsConnectingProvider;
+
+    /// <summary>Prompt the user to finish the required fields while either is still missing.</summary>
+    public bool ShowConnectRequirementsHint => !HasPortalCompanyName || !HasCompanyEmail;
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
     private bool _isConnectingProvider;
 
     [ObservableProperty]
@@ -753,6 +812,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectStripeAsync()
     {
+        if (!CanConnectProvider) return;
         if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("stripe");
     }
@@ -767,6 +827,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectSquareAsync()
     {
+        if (!CanConnectProvider) return;
         if (!await EnsurePortalAuthenticatedAsync()) return;
         await ConnectProviderAsync("square");
     }
@@ -1183,6 +1244,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         SquareEmail = settings.ConnectedAccounts.SquareEmail;
         CompanyEmail = App.CompanyManager?.CompanyData?.Settings.Company.Email;
 
+        LoadStripeIntegrationState();
+
         // Fetch fresh provider status from the server in the background
         _ = RefreshProviderStatusAsync();
     }
@@ -1223,6 +1286,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Load portal company name and logo from server
             if (status.Success)
             {
+                // Mirror the authoritative owner email onto this device so a
+                // server-side change (e.g. the revert link) is reflected here.
+                await ReconcilePortalEmailFromStatusAsync(status);
+
                 if (!string.IsNullOrEmpty(status.Company?.Name))
                 {
                     _isLoadingPortalSettings = true;
@@ -1322,6 +1389,185 @@ public partial class SettingsModalViewModel : ViewModelBase
         settings.ConnectedAccounts.SquareConnected = SquareConnected;
         settings.ConnectedAccounts.SquareEmail = SquareEmail;
     }
+
+    #endregion
+
+    #region Stripe data integration
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectStripeIntegration))]
+    private string _stripeKeyInput = string.Empty;
+
+    [ObservableProperty]
+    private bool _stripeIntegrationConnected;
+
+    [ObservableProperty]
+    private string? _stripeIntegrationAccountLabel;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnectStripeIntegration))]
+    private bool _isValidatingStripe;
+
+    [ObservableProperty]
+    private string? _stripeIntegrationError;
+
+    [ObservableProperty]
+    private bool _isSyncingStripe;
+
+    [ObservableProperty]
+    private string? _stripeLastSyncedDisplay;
+
+    public bool CanConnectStripeIntegration
+        => !IsValidatingStripe && !string.IsNullOrWhiteSpace(StripeKeyInput);
+
+    /// <summary>
+    /// Testable core: validates the pasted key and, on success, writes it to
+    /// <paramref name="target"/> and mirrors connection state onto the VM.
+    /// </summary>
+    public async Task<bool> TryConnectStripeAsync(StripeApiClient client, StripeIntegrationSettings target)
+    {
+        IsValidatingStripe = true;
+        StripeIntegrationError = null;
+        var key = StripeKeyInput.Trim();
+        try
+        {
+            var result = await client.ValidateKeyAsync(key);
+            if (!result.Ok)
+            {
+                StripeIntegrationError = result.ErrorMessage;
+                return false;
+            }
+
+            target.ApiKey = key;
+            target.Connected = true;
+            target.AccountLabel = result.AccountLabel;
+
+            StripeIntegrationConnected = true;
+            StripeIntegrationAccountLabel = result.AccountLabel;
+            StripeKeyInput = string.Empty; // don't keep the raw key in the input box
+            return true;
+        }
+        finally
+        {
+            IsValidatingStripe = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConnectStripeIntegrationAsync()
+    {
+        if (!CanConnectStripeIntegration) return;
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        if (stripe == null || App.SharedHttpClient == null) return;
+
+        var client = new StripeApiClient(App.SharedHttpClient);
+        if (await TryConnectStripeAsync(client, stripe))
+            App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void DisconnectStripeIntegration()
+    {
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        if (stripe == null) return;
+
+        stripe.ApiKey = null;
+        stripe.Connected = false;
+        stripe.AccountLabel = null;
+        stripe.LastSyncCursor = null;
+        stripe.LastSyncTime = null;
+
+        StripeIntegrationConnected = false;
+        StripeIntegrationAccountLabel = null;
+        StripeIntegrationError = null;
+        StripeLastSyncedDisplay = null;
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void OpenStripeGuide()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://argorobots.com/integrations/stripe",
+                UseShellExecute = true
+            });
+        }
+        catch { /* best-effort: opening the browser is non-critical */ }
+    }
+
+    /// <summary>Loads Stripe integration display state from company settings. Call from the settings-load path.</summary>
+    private void LoadStripeIntegrationState()
+    {
+        var stripe = App.CompanyManager?.CompanyData?.Settings.Integrations.Stripe;
+        StripeIntegrationConnected = stripe?.Connected ?? false;
+        StripeIntegrationAccountLabel = stripe?.AccountLabel;
+        StripeKeyInput = string.Empty;
+        StripeIntegrationError = null;
+        if (stripe != null)
+            RefreshStripeLastSynced(stripe);
+    }
+
+    [RelayCommand]
+    private async Task SyncStripeIntegrationAsync()
+    {
+        if (IsSyncingStripe) return;
+        var data = App.CompanyManager?.CompanyData;
+        var stripe = data?.Settings.Integrations.Stripe;
+        if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null) return;
+
+        IsSyncingStripe = true;
+        try
+        {
+            var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            if (!preview.HasActivity)
+            {
+                App.AddNotification("Stripe".Translate(), "You're already up to date.".Translate());
+                return;
+            }
+
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from Stripe".Translate(),
+                Message = "Import your Stripe activity: {0} in sales and {1} in fees?"
+                    .TranslateFormat(preview.TotalRevenue.ToString("C2"), preview.TotalFees.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            var creation = svc.ImportPreview(data, preview);
+            if (creation.AnyCreated)
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from Stripe".Translate(),
+                    () => { creation.Undo(data); App.CompanyManager?.MarkAsChanged(); },
+                    () => { creation.Redo(data); App.CompanyManager?.MarkAsChanged(); }));
+            App.CompanyManager?.MarkAsChanged();
+            RefreshStripeLastSynced(stripe);
+            App.AddNotification("Stripe".Translate(),
+                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
+                NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            // Never let a Stripe/network error crash the app; surface it instead.
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Stripe sync failed");
+            App.AddNotification("Stripe".Translate(),
+                "Sync failed: {0}".TranslateFormat(ex.Message),
+                NotificationType.Warning);
+        }
+        finally
+        {
+            IsSyncingStripe = false;
+        }
+    }
+
+    private void RefreshStripeLastSynced(StripeIntegrationSettings stripe)
+        => StripeLastSyncedDisplay = stripe.LastSyncTime is { } t ? "Last synced {0}".TranslateFormat(t.ToString("MMM d, yyyy h:mm tt")) : null;
 
     #endregion
 
@@ -1442,6 +1688,416 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
+    #region Mobile Sync Settings
+
+    /// <summary>
+    /// QR code image encoding the current pairing payload. Null until "Connect a phone" is used.
+    /// </summary>
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.Bitmap? _qrImage;
+
+    /// <summary>
+    /// Short, human-typeable form of the pairing code ("XXXX-XXXX"), shown behind an "Enter a
+    /// code instead" reveal as a fallback to scanning the QR code.
+    /// </summary>
+    [ObservableProperty]
+    private string _shortCodeDisplay = string.Empty;
+
+    /// <summary>
+    /// Whether the "Enter a code instead" reveal is expanded, showing <see cref="ShortCodeDisplay"/>.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isShortCodeRevealed;
+
+    /// <summary>
+    /// True once the phone has claimed the pairing token and been handed the encrypted sync key.
+    /// Drives the "Phone connected" confirmation state, replacing the QR/code pairing UI.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isPhoneJustPaired;
+
+    /// <summary>
+    /// Phones currently paired with this company for mobile sync.
+    /// </summary>
+    public ObservableCollection<ArgoBooks.Core.Models.Tracking.PairedDevice> PairedDevices { get; } = [];
+
+    /// <summary>
+    /// True while a pairing token is being requested from the sync server.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isConnecting;
+
+    /// <summary>
+    /// True while the paired device list is being refreshed from the sync server.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isRefreshingDevices;
+
+    /// <summary>
+    /// The tab index of the "Mobile app" tab, used to cancel the pairing poll loop as soon as the
+    /// user navigates away from it. Derived from <see cref="SettingsTab"/> so the position lives in
+    /// one place (that enum must mirror the TabItem order in SettingsModal.axaml).
+    /// </summary>
+    internal const int MobileAppTabIndex = (int)SettingsTab.MobileApp;
+
+    /// <summary>
+    /// Cancellation source for the background loop polling the sync server for the phone to
+    /// claim the pairing token. Cancelled as soon as the pairing screen stops being visible (tab
+    /// change, modal close, or a fresh "Connect a phone" click), so the encrypted sync key is
+    /// only ever delivered while the user can see the pairing UI.
+    /// </summary>
+    private CancellationTokenSource? _pairingCts;
+
+    /// <summary>
+    /// Cancels and clears any in-flight pairing poll loop.
+    /// </summary>
+    private void CancelPairingPoll()
+    {
+        _pairingCts?.Cancel();
+        _pairingCts?.Dispose();
+        _pairingCts = null;
+    }
+
+    /// <summary>
+    /// Pure guard deciding whether the pairing screen is still eligible to have a QR/short code
+    /// shown or a sync key delivered to it: the in-flight request/poll wasn't cancelled AND the
+    /// pairing screen (settings modal open, Mobile app tab selected) is still visible. Extracted
+    /// as a pure function so the "never deliver the key once the screen is gone" security
+    /// property is directly unit-testable without mocking the sync service or timing a poll loop.
+    /// </summary>
+    internal static bool ShouldContinuePairing(bool isCancellationRequested, bool isModalOpen, int selectedTabIndex) =>
+        !isCancellationRequested && isModalOpen && selectedTabIndex == MobileAppTabIndex;
+
+    /// <summary>
+    /// Cancels the pairing poll loop when the user navigates away from the Mobile app tab.
+    /// </summary>
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value != MobileAppTabIndex)
+            CancelPairingPoll();
+    }
+
+    /// <summary>
+    /// Cancels the pairing poll loop when the settings modal closes.
+    /// </summary>
+    partial void OnIsOpenChanged(bool value)
+    {
+        if (!value)
+            CancelPairingPoll();
+    }
+
+    /// <summary>
+    /// Loads mobile sync state (paired devices) from company data. Called each time the
+    /// settings modal opens. Does not fetch a fresh QR code; that only happens when the
+    /// user explicitly clicks "Connect a phone".
+    /// </summary>
+    public void LoadMobileSync()
+    {
+        CancelPairingPoll();
+
+        QrImage = null;
+        ShortCodeDisplay = string.Empty;
+        IsShortCodeRevealed = false;
+        IsPhoneJustPaired = false;
+        PairedDevices.Clear();
+
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var device in data.PairedDevices)
+            PairedDevices.Add(device);
+    }
+
+    /// <summary>
+    /// Toggles the "Enter a code instead" reveal showing <see cref="ShortCodeDisplay"/>.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleShortCodeReveal()
+    {
+        IsShortCodeRevealed = !IsShortCodeRevealed;
+    }
+
+    /// <summary>
+    /// Ensures this company has a mobile-sync identity (companyUid/syncKey), requests a
+    /// short-lived pairing token from the server, and renders it as a QR code the phone can scan.
+    /// </summary>
+    [RelayCommand]
+    private async Task ConnectPhoneAsync()
+    {
+        var companyManager = App.CompanyManager;
+        var companyData = companyManager?.CompanyData;
+        var syncService = App.SyncService;
+        if (companyManager == null || companyData == null || syncService == null)
+        {
+            App.ErrorLogger?.LogError(
+                new InvalidOperationException("Mobile sync is not initialized (CompanyManager, CompanyData, or SyncService is null)."),
+                ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                "Sync.ConnectPhone.NotReady");
+            await ShowErrorDialogAsync(
+                "Couldn't Connect a Phone".Translate(),
+                "Mobile sync isn't ready yet. Please reopen the app and try again.".Translate());
+            return;
+        }
+
+        // A fresh click supersedes any pairing already in flight.
+        CancelPairingPoll();
+        IsPhoneJustPaired = false;
+
+        // Create the CTS BEFORE the CreatePairingAsync network round-trip, and pass its token
+        // in, so that a close/tab-change while that request is in flight actually cancels it
+        // (OnIsOpenChanged/OnSelectedTabIndexChanged both call CancelPairingPoll, which cancels
+        // and disposes whatever CTS is currently assigned to _pairingCts). Without this, the
+        // token wouldn't exist yet for those handlers to cancel, and the key could be delivered
+        // after the pairing screen was already closed.
+        var pairingCts = new CancellationTokenSource();
+        _pairingCts = pairingCts;
+
+        IsConnecting = true;
+        try
+        {
+            var mobileSync = companyData.Settings.MobileSync;
+            mobileSync.CompanyUid ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateCompanyUid();
+            mobileSync.SyncKeyBase64 ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateSyncKey();
+            mobileSync.Enabled = true;
+            await companyManager.SaveSettingsOnlyAsync();
+
+            var companyLabel = string.IsNullOrWhiteSpace(companyData.Settings.Company.Name)
+                ? "My Company"
+                : companyData.Settings.Company.Name;
+
+            var pairing = await syncService.CreatePairingAsync(mobileSync.CompanyUid, companyLabel, pairingCts.Token);
+            if (pairing == null || string.IsNullOrEmpty(pairing.Token))
+            {
+                // Server responded but without a token (unexpected) - log it so the failure isn't invisible.
+                App.ErrorLogger?.LogError(
+                    new InvalidOperationException("Sync server returned no pairing_token."),
+                    ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                    "Sync.ConnectPhone.NoToken");
+                QrImage = null;
+                ShortCodeDisplay = string.Empty;
+                await ShowErrorDialogAsync(
+                    "Couldn't Connect a Phone".Translate(),
+                    "The sync server didn't return a pairing code. Please try again.".Translate());
+                return;
+            }
+
+            // The pairing screen may have been closed, navigated away from, or superseded by a
+            // fresh "Connect a phone" click while the request above was in flight. Re-check
+            // before showing the QR/short code or starting the poll: if the screen is no longer
+            // visible, the key must not be shown or delivered.
+            if (!ShouldContinuePairing(pairingCts.Token.IsCancellationRequested, IsOpen, SelectedTabIndex))
+            {
+                // Only clean up if nothing else (a fresh click, CancelPairingPoll) already did.
+                if (ReferenceEquals(_pairingCts, pairingCts))
+                    CancelPairingPoll();
+                return;
+            }
+
+            var token = pairing.Token;
+            var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
+            QrImage = new QrImageService().RenderBitmap(payload);
+            ShortCodeDisplay = PairingCode.Format(pairing.ShortCode);
+            IsShortCodeRevealed = false;
+
+            // Start polling for the phone to claim this token. Cancelled on tab change, modal
+            // close, or the next "Connect a phone" click (see CancelPairingPoll).
+            _ = PollPairingAsync(token, pairingCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the pairing screen was closed/navigated away from (or superseded by a
+            // fresh "Connect a phone" click) while CreatePairingAsync was in flight. The CTS was
+            // already cancelled and disposed by whichever handler triggered this; nothing to do.
+        }
+        catch (Exception ex)
+        {
+            // Log to telemetry and tell the user, instead of failing silently.
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.ConnectPhone");
+            QrImage = null;
+            ShortCodeDisplay = string.Empty;
+
+            var message = ex is System.Net.Http.HttpRequestException
+                ? "We couldn't reach the sync server. Check your internet connection and try again.".Translate()
+                : "Something went wrong while connecting a phone. Please try again.".Translate();
+            await ShowErrorDialogAsync("Couldn't Connect a Phone".Translate(), message);
+        }
+        finally
+        {
+            IsConnecting = false;
+        }
+    }
+
+    /// <summary>
+    /// Polls the sync server every ~2s for the phone to claim <paramref name="pairingToken"/>.
+    /// Once the phone's public key arrives, encrypts the company sync key to it and delivers it,
+    /// then shows the "Phone connected" state and refreshes the paired device list. Runs until
+    /// that happens or <paramref name="ct"/> is cancelled (tab change, modal close, or a fresh
+    /// "Connect a phone" click - see <see cref="CancelPairingPoll"/>), and re-checks
+    /// <see cref="ShouldContinuePairing"/> immediately before delivering, so the encrypted sync
+    /// key is only ever handed over while the pairing screen is visible.
+    /// </summary>
+    private async Task PollPairingAsync(string pairingToken, CancellationToken ct)
+    {
+        var syncService = App.SyncService;
+        if (syncService == null) return;
+
+        try
+        {
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), ct);
+
+                PairingStatusResult? status;
+                try
+                {
+                    status = await syncService.GetPairingStatusAsync(pairingToken, ct);
+                }
+                catch (System.Net.Http.HttpRequestException) when (!ct.IsCancellationRequested)
+                {
+                    // Transient network hiccup while polling; try again on the next tick.
+                    continue;
+                }
+
+                if (status?.PhonePublicKey is not { Length: > 0 } phonePublicKey) continue;
+
+                // Defense in depth: re-check the same guard used in ConnectPhoneAsync right
+                // before encrypting/delivering the key. ct is normally already cancelled by the
+                // time the screen closes (CancelPairingPoll), which would have thrown out of the
+                // Delay/GetPairingStatusAsync calls above, but this closes the gap if that ever
+                // isn't true so the key is never delivered to a screen the user can't see.
+                if (!ShouldContinuePairing(ct.IsCancellationRequested, IsOpen, SelectedTabIndex)) return;
+
+                var mobileSync = App.CompanyManager?.CompanyData?.Settings.MobileSync;
+                if (string.IsNullOrEmpty(mobileSync?.SyncKeyBase64)) return;
+
+                var keyBytes = Convert.FromBase64String(mobileSync.SyncKeyBase64);
+                var ciphertext = PairingKeyExchange.EncryptSyncKey(phonePublicKey, keyBytes);
+                await syncService.DeliverKeyAsync(pairingToken, ciphertext, ct);
+
+                await Dispatcher.UIThread.InvokeAsync(async () =>
+                {
+                    // The pairing token has now been consumed, so drop the QR/short code. If it were
+                    // kept, it would reappear the moment IsPhoneJustPaired is cleared later (e.g. when
+                    // the paired device is revoked), instead of falling back to the "Connect a phone"
+                    // default.
+                    QrImage = null;
+                    ShortCodeDisplay = string.Empty;
+                    IsShortCodeRevealed = false;
+                    IsPhoneJustPaired = true;
+                    await RefreshDevicesAsync();
+                });
+
+                // Push the first snapshot immediately. The phone polls /snapshot and shows
+                // "Waiting for your desktop to sync" until one exists, and the only other uploader
+                // (App.AutoMobileSyncAsync) is triggered by desktop navigation to the Payments or
+                // Receipts page. Without this, a successful pairing leaves the phone stuck on that
+                // placeholder until the user happens to open one of those two pages.
+                await App.AutoMobileSyncAsync();
+                return;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the pairing screen was closed (tab change/modal close) or superseded by
+            // a fresh "Connect a phone" click before the phone finished pairing. Not an error.
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.PollPairing");
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the paired device list from the sync server.
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshDevicesAsync()
+    {
+        var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
+        var syncService = App.SyncService;
+        if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
+
+        IsRefreshingDevices = true;
+        try
+        {
+            var list = await syncService.ListDevicesAsync(companyUid, CancellationToken.None);
+            PairedDevices.Clear();
+            foreach (var d in list)
+            {
+                PairedDevices.Add(new ArgoBooks.Core.Models.Tracking.PairedDevice
+                {
+                    Id = $"PDV-{d.Id}",
+                    ServerDeviceId = d.Id,
+                    Label = d.DeviceLabel,
+                    LastSeenAt = d.LastSeenAt
+                });
+            }
+
+            // Persist the refreshed list so it survives without another server round-trip.
+            var data = App.CompanyManager?.CompanyData;
+            if (data != null)
+            {
+                data.PairedDevices.Clear();
+                data.PairedDevices.AddRange(PairedDevices);
+            }
+        }
+        catch
+        {
+            // Silently fail; cached list stays as-is.
+        }
+        finally
+        {
+            IsRefreshingDevices = false;
+        }
+    }
+
+    /// <summary>
+    /// Revokes a paired phone's access, then refreshes the device list.
+    /// </summary>
+    [RelayCommand]
+    private async Task RevokeDeviceAsync(ArgoBooks.Core.Models.Tracking.PairedDevice? device)
+    {
+        if (device == null) return;
+
+        // Revoking is destructive (the phone must be paired again to sync), so confirm first.
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Revoke Device".Translate(),
+                Message = "Are you sure you want to revoke this phone? It will no longer be able to sync with this company until you pair it again.".Translate(),
+                PrimaryButtonText = "Revoke".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary) return;
+        }
+
+        var companyUid = App.CompanyManager?.CompanyData?.Settings.MobileSync.CompanyUid;
+        var syncService = App.SyncService;
+        if (string.IsNullOrEmpty(companyUid) || syncService == null) return;
+
+        try
+        {
+            await syncService.RevokeDeviceAsync(companyUid, device.ServerDeviceId, CancellationToken.None);
+        }
+        catch
+        {
+            // Fall through to refresh regardless; if the revoke silently failed the device
+            // will simply still be listed.
+        }
+
+        // The "Phone connected" confirmation is a just-paired state; once a device is revoked
+        // it no longer applies, so clear it before refreshing the list.
+        IsPhoneJustPaired = false;
+
+        await RefreshDevicesAsync();
+    }
+
+    #endregion
+
     /// <summary>
     /// Whether there are unsaved changes in the settings.
     /// </summary>
@@ -1489,13 +2145,16 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
-        OpenWithTab(0);
+        OpenWithTab(SettingsTab.General);
     }
+
+    /// <summary>Opens the settings modal with a specific tab selected (by name).</summary>
+    internal void OpenWithTab(SettingsTab tab) => OpenWithTab((int)tab);
 
     /// <summary>
     /// Opens the settings modal with a specific tab selected.
     /// </summary>
-    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security, 4=Payment Portal).</param>
+    /// <param name="tabIndex">The tab index to select; prefer the <see cref="OpenWithTab(SettingsTab)"/> overload.</param>
     public void OpenWithTab(int tabIndex)
     {
         // Reset portal authentication, require re-auth each time settings opens
@@ -1546,6 +2205,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         // Load bank import rules
         LoadBankRules();
+
+        // Load mobile sync state (paired devices)
+        LoadMobileSync();
 
         // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
@@ -1702,7 +2364,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Block the save and surface the errors if any bank import rule is incomplete.
         if (!ValidateBankRules())
         {
-            SelectedTabIndex = 5; // Bank import rules tab
+            SelectedTabIndex = (int)SettingsTab.BankImportRules;
             return;
         }
 
@@ -2270,6 +2932,19 @@ public partial class SettingsModalViewModel : ViewModelBase
         IsSettingOwnerEmail = true;
         try
         {
+            // Setting the owner email hits an authenticated portal endpoint, so the company must
+            // already be registered (i.e. have an API key). Registration used to be triggered lazily
+            // by the first Connect, but the owner email is now required *before* connecting, so
+            // auto-register here first (same pattern as the logo upload). Without this the very first
+            // action on a fresh company fails with "Invalid or missing API key".
+            if (!PortalSettings.IsConfigured)
+            {
+                var portalService = App.PaymentPortalService;
+                if (portalService == null) return;
+                var registered = await TryRegisterPortalAsync(portalService);
+                if (!registered) return;
+            }
+
             await SetInitialOwnerEmailCoreAsync(refundService, companyData, email);
         }
         finally
@@ -2360,6 +3035,44 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Pulls the authoritative owner email out of a portal status response and
+    /// mirrors it into local state when it is safe to do so (see
+    /// <see cref="ShouldReconcilePortalEmail"/>). This is how a server-side
+    /// change, such as the email-change revert link, reaches this device.
+    /// </summary>
+    private async Task ReconcilePortalEmailFromStatusAsync(PortalStatusResponse status)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        var serverEmail = status.Company?.OwnerEmail;
+        var localEmail = companyData.Settings.Company.Email;
+        // The Company-details editor is the only place the email is hand-edited
+        // outside the verified change flow; don't clobber an in-flight edit.
+        var isEmailBeingEdited = App.EditCompanyModalViewModel?.IsOpen == true;
+
+        if (!ShouldReconcilePortalEmail(serverEmail, localEmail, isEmailBeingEdited)) return;
+
+        await ReconcileOwnerEmailAsync(companyData, serverEmail!.Trim());
+    }
+
+    /// <summary>
+    /// "Server wins, but only when clean." Returns true only when the server
+    /// owner email is present, actually differs from the local value, and the
+    /// email is not being hand-edited. Pure so it can be unit-tested in
+    /// isolation.
+    /// </summary>
+    internal static bool ShouldReconcilePortalEmail(string? serverEmail, string? localEmail, bool isEmailBeingEdited)
+    {
+        // Protect an in-flight local edit.
+        if (isEmailBeingEdited) return false;
+        // Never wipe local with a blank (covers the pre-set / pending-change windows).
+        if (string.IsNullOrWhiteSpace(serverEmail)) return false;
+        // Only write when the value actually changed, so we don't dirty the file needlessly.
+        return !string.Equals(serverEmail.Trim(), (localEmail ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Opens the 4-step "Change owner email" modal. Bound to a button in
     /// PortalSettings.
     /// </summary>
@@ -2369,6 +3082,23 @@ public partial class SettingsModalViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         var companyManager = App.CompanyManager;
         if (companyData == null || companyManager == null) return;
+
+        // Pre-flight sync: if the settings modal was already open when the owner
+        // email changed on the server (e.g. a revert link was used), starting the
+        // change flow from the stale local value would confuse the user. Pull the
+        // authoritative email first. Best-effort: CheckStatusAsync swallows its own
+        // network errors and returns Success=false, in which case we keep local.
+        var portalService = App.PaymentPortalService;
+        if (portalService != null && PortalSettings.IsConfigured)
+        {
+            // Cap the pre-flight so a bad network can't make the button feel
+            // like it hung (the client's own timeout is 30s). On timeout the
+            // call returns Success=false and we simply keep the local value.
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+            var status = await portalService.CheckStatusAsync(cts.Token);
+            if (status.Success)
+                await ReconcilePortalEmailFromStatusAsync(status);
+        }
 
         var currentEmail = companyData.Settings.Company.Email ?? string.Empty;
         if (string.IsNullOrWhiteSpace(currentEmail))

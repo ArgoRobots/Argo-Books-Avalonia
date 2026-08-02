@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Integrations;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Portal;
@@ -53,6 +54,10 @@ public class CompanySettings
     public PurchaseOrderEmailSettings PurchaseOrderEmail { get; set; } = new();
     [JsonPropertyName("paymentPortal")]
     public PortalSettings PaymentPortal { get; set; } = new();
+    [JsonPropertyName("integrations")]
+    public IntegrationsSettings Integrations { get; set; } = new();
+    [JsonPropertyName("mobileSync")]
+    public MobileSyncSettings MobileSync { get; set; } = new();
 
     /// <summary>
     /// Bank categorization rules for automated bank statement matching. Per company; edited in

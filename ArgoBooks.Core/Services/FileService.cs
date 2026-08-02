@@ -1,6 +1,8 @@
+using System.Security.Cryptography;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Security;
 using SkiaSharp;
 
 namespace ArgoBooks.Core.Services;
@@ -8,10 +10,19 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Service for handling .argo company file operations.
 /// </summary>
+/// <param name="recoveryPublicKeyPem">
+/// Recovery public key to wrap each file's data key under. Overridable so tests can verify
+/// the recovery path end to end without depending on a configured build.
+///
+/// Null means use the key embedded in this build, which is the normal case. An empty string
+/// means write no recovery path at all, which is how a test reproduces an unconfigured build
+/// even when this build does have a key.
+/// </param>
 public class FileService(
     CompressionService compressionService,
     FooterService footerService,
-    IEncryptionService? encryptionService = null)
+    IEncryptionService? encryptionService = null,
+    string? recoveryPublicKeyPem = null)
     : IFileService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -95,6 +106,12 @@ public class FileService(
         var footer = await footerService.ReadFooterAsync(filePath, cancellationToken)
             ?? throw new InvalidDataException("Invalid file format or corrupted file.");
 
+        // Guard: a file written by a newer build may use an envelope layout this build
+        // doesn't understand. Check before touching the crypto, otherwise the failure
+        // surfaces as a bogus "wrong password" instead of "your app is out of date".
+        if (footer.FormatVersion > FileFormatConstants.FormatVersion)
+            throw new CompanyFileTooNewException(footer.Version, AppInfo.VersionNumber);
+
         // Guard: encrypted files need a password and the encryption service.
         // This is a cheap check, no key derivation yet.
         if (footer.IsEncrypted)
@@ -109,14 +126,15 @@ public class FileService(
         // Read content (excluding footer)
         await using var contentStream = await footerService.ReadContentAsync(filePath, cancellationToken);
 
-        // Verify the password and decrypt in a single PBKDF2 pass. The hash is
-        // checked (constant-time) before the AES pass, so a wrong password still
-        // fails fast and throws UnauthorizedAccessException, as before.
         Stream dataStream = contentStream;
         if (footer.IsEncrypted && encryptionService != null)
         {
-            dataStream = await encryptionService.DecryptWithVerificationAsync(
-                contentStream, password!, footer.Salt!, footer.Iv!, footer.PasswordHash!);
+            dataStream = footer.FormatVersion >= 2
+                ? DecryptEnvelope(contentStream, password!, footer)
+                // Format version 1: the archive was encrypted directly with the
+                // password-derived key. Verify and decrypt in a single PBKDF2 pass.
+                : await encryptionService.DecryptWithVerificationAsync(
+                    contentStream, password!, footer.Salt!, footer.Iv!, footer.PasswordHash!);
         }
 
         // Decompress GZip
@@ -127,6 +145,70 @@ public class FileService(
         await compressionService.ExtractTarArchiveAsync(decompressedStream, tempDirectory, cancellationToken);
 
         return tempDirectory;
+    }
+
+    /// <summary>
+    /// Opens a format version 2 envelope: verify the password, use it to unwrap the file's
+    /// data key, then decrypt the archive with that data key.
+    /// </summary>
+    /// <exception cref="UnauthorizedAccessException">The password is wrong.</exception>
+    /// <exception cref="InvalidDataException">Envelope fields are missing or malformed.</exception>
+    private Stream DecryptEnvelope(Stream contentStream, string password, FileFooter footer)
+    {
+        if (string.IsNullOrEmpty(footer.Salt) ||
+            string.IsNullOrEmpty(footer.Iv) ||
+            string.IsNullOrEmpty(footer.PasswordHash) ||
+            string.IsNullOrEmpty(footer.WrappedKey) ||
+            string.IsNullOrEmpty(footer.KeyWrapNonce))
+        {
+            throw new InvalidDataException("This encrypted file is missing its key envelope data.");
+        }
+
+        var saltBytes = Convert.FromBase64String(footer.Salt);
+        KeyDerivation.DeriveKeyAndHash(password, saltBytes, out var kek, out var verifyHash);
+
+        byte[]? dataKey = null;
+        try
+        {
+            // Constant-time check first, so a wrong password reports itself as a wrong
+            // password rather than as a GCM tag mismatch, which the caller could not tell
+            // apart from a corrupt file.
+            var expected = Convert.FromBase64String(footer.PasswordHash);
+            if (!CryptographicOperations.FixedTimeEquals(verifyHash, expected))
+                throw new UnauthorizedAccessException("Invalid password.");
+
+            dataKey = KeyEnvelope.Unwrap(
+                Convert.FromBase64String(footer.WrappedKey),
+                kek,
+                Convert.FromBase64String(footer.KeyWrapNonce));
+
+            var plaintext = encryptionService!.DecryptWithKey(
+                ReadAllBytes(contentStream), dataKey, Convert.FromBase64String(footer.Iv));
+
+            return new MemoryStream(plaintext);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(kek);
+            CryptographicOperations.ZeroMemory(verifyHash);
+            if (dataKey != null)
+                CryptographicOperations.ZeroMemory(dataKey);
+        }
+    }
+
+    /// <summary>
+    /// Reads a stream fully into a byte array.
+    /// </summary>
+    private static byte[] ReadAllBytes(Stream stream)
+    {
+        if (stream is MemoryStream memoryStream)
+            return memoryStream.ToArray();
+
+        using var buffer = new MemoryStream();
+        if (stream.CanSeek)
+            stream.Position = 0;
+        stream.CopyTo(buffer);
+        return buffer.ToArray();
     }
 
     /// <inheritdoc />
@@ -144,18 +226,62 @@ public class FileService(
         await using var compressedStream = await compressionService.CompressGZipAsync(
             tarStream, cancellationToken: cancellationToken);
 
-        // Encrypt if password provided
+        // Encrypt if password provided.
+        //
+        // From format version 2 the archive is encrypted with a randomly generated data key
+        // instead of directly with the password-derived key. The data key is then stored
+        // wrapped under the password, and additionally under the recovery public key when
+        // this build has one configured. That gives support a way to open a file whose
+        // password has been lost, while the password itself stays unrecoverable.
         Stream contentStream = compressedStream;
         string? salt = null;
         string? iv = null;
         string? passwordHash = null;
+        string? wrappedKey = null;
+        string? keyWrapNonce = null;
+        string? recoveryBlob = null;
+        string? recoveryKeyId = null;
 
-        if (!string.IsNullOrEmpty(password) && encryptionService != null)
+        // Guard: the footer records IsEncrypted purely from whether a password was given, so
+        // a password with no encryption service would write the archive in the clear while
+        // claiming to be encrypted, producing a file that can never be opened again. Refuse
+        // rather than silently destroying the user's data.
+        if (!string.IsNullOrEmpty(password) && encryptionService == null)
+            throw new InvalidOperationException("Encryption service not available.");
+
+        if (!string.IsNullOrEmpty(password))
         {
-            salt = encryptionService.GenerateSalt();
-            iv = encryptionService.GenerateIv();
-            passwordHash = encryptionService.HashPassword(password, salt);
-            contentStream = await encryptionService.EncryptAsync(compressedStream, password, salt, iv);
+            var saltBytes = KeyDerivation.GenerateSalt();
+            var dataNonce = KeyDerivation.GenerateIv();
+            var wrapNonce = KeyEnvelope.GenerateWrapNonce();
+
+            // One PBKDF2 pass yields both the key that wraps the data key and the hash
+            // used to tell a wrong password apart from a corrupt file.
+            KeyDerivation.DeriveKeyAndHash(password, saltBytes, out var kek, out var verifyHash);
+            var dataKey = KeyEnvelope.GenerateDataKey();
+            try
+            {
+                salt = Convert.ToBase64String(saltBytes);
+                iv = Convert.ToBase64String(dataNonce);
+                passwordHash = Convert.ToBase64String(verifyHash);
+                keyWrapNonce = Convert.ToBase64String(wrapNonce);
+                wrappedKey = Convert.ToBase64String(KeyEnvelope.Wrap(dataKey, kek, wrapNonce));
+
+                // Null when no recovery key is configured for this build. The file is
+                // still valid, it just has no recovery path.
+                recoveryBlob = RecoveryKeyProvider.TryWrapDataKey(dataKey, recoveryPublicKeyPem);
+                recoveryKeyId = recoveryBlob is null ? null : RecoveryKeyProvider.CurrentKeyId;
+
+                var plaintext = ReadAllBytes(compressedStream);
+                contentStream = new MemoryStream(
+                    encryptionService!.EncryptWithKey(plaintext, dataKey, dataNonce));
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(kek);
+                CryptographicOperations.ZeroMemory(verifyHash);
+                CryptographicOperations.ZeroMemory(dataKey);
+            }
         }
 
         // Create footer, read settings once and share across footer fields
@@ -163,14 +289,23 @@ public class FileService(
         var footer = new FileFooter
         {
             Version = GetAppVersionFromDirectory(tempDirectory, cachedSettings),
+            FormatVersion = FileFormatConstants.FormatVersion,
             IsEncrypted = !string.IsNullOrEmpty(password),
             Salt = salt,
             Iv = iv,
             PasswordHash = passwordHash,
+            WrappedKey = wrappedKey,
+            KeyWrapNonce = keyWrapNonce,
+            RecoveryBlob = recoveryBlob,
+            RecoveryKeyId = recoveryKeyId,
             CompanyName = GetCompanyNameFromDirectory(tempDirectory, cachedSettings),
             Accountants = await GetAccountantNamesAsync(tempDirectory, cancellationToken),
             ModifiedAt = DateTime.UtcNow,
-            BiometricEnabled = GetBiometricEnabledFromDirectory(cachedSettings),
+            // Biometric unlock substitutes for typing the password, so it is meaningless
+            // without one. A file recovered by support comes back with no password but may
+            // still carry the old setting inside the archive; refusing to advertise it here
+            // stops the open screen offering an unlock that cannot work.
+            BiometricEnabled = !string.IsNullOrEmpty(password) && GetBiometricEnabledFromDirectory(cachedSettings),
             LogoThumbnail = GenerateLogoThumbnail(tempDirectory)
         };
 

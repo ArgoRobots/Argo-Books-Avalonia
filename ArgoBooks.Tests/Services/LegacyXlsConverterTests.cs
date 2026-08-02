@@ -1,7 +1,6 @@
 using ArgoBooks.Core.Services;
 using ClosedXML.Excel;
 using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
 using Xunit;
 
 namespace ArgoBooks.Tests.Services;

@@ -211,6 +211,107 @@ public class CreateCompanyViewModelTests
         Assert.True(_viewModel.IsStep2Valid);
     }
 
+    [Theory]
+    [InlineData("short1", "too short")]
+    [InlineData("passwordonly", "no digit")]
+    [InlineData("12345678", "no letter")]
+    public void IsStep2Valid_WithWeakPassword_ReturnsFalse(string password, string reason)
+    {
+        // Creating a company must apply the same rules as Settings > Security, otherwise a
+        // password could be set here that the app would refuse if changed later.
+        _viewModel.EnablePassword = true;
+        _viewModel.Password = password;
+        _viewModel.ConfirmPassword = password;
+
+        Assert.False(_viewModel.IsStep2Valid, $"Password '{password}' should be rejected: {reason}.");
+        Assert.NotNull(_viewModel.PasswordRequirementError);
+        Assert.True(_viewModel.ShowPasswordRequirementError);
+    }
+
+    [Fact]
+    public void IsStep2Valid_WithAcceptablePassword_ReturnsTrue()
+    {
+        _viewModel.EnablePassword = true;
+        _viewModel.Password = "CorrectHorse1";
+        _viewModel.ConfirmPassword = "CorrectHorse1";
+
+        Assert.True(_viewModel.IsStep2Valid);
+        Assert.Null(_viewModel.PasswordRequirementError);
+        Assert.False(_viewModel.ShowPasswordRequirementError);
+    }
+
+    [Fact]
+    public void PasswordRequirementError_BeforeTyping_StaysHidden()
+    {
+        // The field should not open already showing an error.
+        _viewModel.EnablePassword = true;
+
+        Assert.Null(_viewModel.PasswordRequirementError);
+        Assert.False(_viewModel.ShowPasswordRequirementError);
+    }
+
+    [Fact]
+    public void PasswordRequirementError_WhenPasswordDisabled_StaysHidden()
+    {
+        _viewModel.EnablePassword = false;
+        _viewModel.Password = "a";
+
+        Assert.Null(_viewModel.PasswordRequirementError);
+        Assert.True(_viewModel.IsStep2Valid);
+    }
+
+    [Fact]
+    public void PasswordStrength_IsHiddenUntilSomethingIsTyped()
+    {
+        Assert.False(_viewModel.ShowPasswordStrength);
+
+        _viewModel.Password = "CorrectHorse1";
+        Assert.True(_viewModel.ShowPasswordStrength);
+
+        _viewModel.Password = "";
+        Assert.False(_viewModel.ShowPasswordStrength);
+        Assert.Equal(0, _viewModel.PasswordStrengthScore);
+    }
+
+    [Fact]
+    public void PasswordStrength_RatesAStrongPasswordAboveAWeakOne()
+    {
+        _viewModel.Password = "abc";
+        var weakScore = _viewModel.PasswordStrengthScore;
+        Assert.True(_viewModel.IsStrengthWeak);
+
+        _viewModel.Password = "T2rq#vLm9!pXw4Zs";
+        Assert.True(_viewModel.PasswordStrengthScore > weakScore);
+        Assert.True(_viewModel.IsStrengthStrong);
+        Assert.False(_viewModel.IsStrengthWeak);
+        Assert.NotEmpty(_viewModel.PasswordStrengthText);
+    }
+
+    [Fact]
+    public void TogglePasswordVisibility_FlipsTheFieldAndTheIcon()
+    {
+        var hiddenIcon = _viewModel.PasswordVisibilityIcon;
+        Assert.False(_viewModel.IsPasswordVisible);
+
+        _viewModel.TogglePasswordVisibilityCommand.Execute(null);
+
+        Assert.True(_viewModel.IsPasswordVisible);
+        Assert.NotEqual(hiddenIcon, _viewModel.PasswordVisibilityIcon);
+
+        _viewModel.TogglePasswordVisibilityCommand.Execute(null);
+        Assert.False(_viewModel.IsPasswordVisible);
+        Assert.Equal(hiddenIcon, _viewModel.PasswordVisibilityIcon);
+    }
+
+    [Fact]
+    public void ToggleConfirmPasswordVisibility_FlipsIndependentlyOfThePasswordField()
+    {
+        _viewModel.ToggleConfirmPasswordVisibilityCommand.Execute(null);
+
+        Assert.True(_viewModel.IsConfirmPasswordVisible);
+        Assert.False(_viewModel.IsPasswordVisible);
+    }
+
     [Fact]
     public void PasswordsMatch_WhenBothMatch_ReturnsTrue()
     {

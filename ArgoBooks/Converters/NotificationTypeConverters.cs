@@ -51,12 +51,13 @@ public static class NotificationTypeConverters
         new(ColorFor(type));
 
     /// <summary>
-    /// Returns the tinted background brush (60% opacity) for a notification type.
+    /// Returns the soft accent tint (~14% opacity) used behind a notification's type
+    /// icon. Sits quietly on the neutral surface so the color reads without shouting.
     /// </summary>
-    public static SolidColorBrush BackgroundBrushFor(NotificationType type)
+    public static SolidColorBrush IconTintBrushFor(NotificationType type)
     {
         var color = ColorFor(type);
-        return new SolidColorBrush(new Color(0x99, color.R, color.G, color.B));
+        return new SolidColorBrush(new Color(0x24, color.R, color.G, color.B));
     }
 
     /// <summary>

@@ -170,7 +170,6 @@ public class EventLogService
     /// <param name="description">Human-readable description of the change.</param>
     /// <param name="auditAction">The type of action (Added, Modified, Deleted).</param>
     /// <param name="entityType">The entity type (e.g., "Customer", "Expense").</param>
-    /// <param name="entityId">The entity's unique ID.</param>
     /// <param name="entityName">The entity's display name.</param>
     /// <param name="changes">Optional field-level changes for edit operations.</param>
     /// <returns>The created audit event.</returns>

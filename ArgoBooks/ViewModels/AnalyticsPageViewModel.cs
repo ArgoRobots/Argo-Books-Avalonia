@@ -9,7 +9,6 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
-using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;

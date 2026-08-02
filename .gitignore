@@ -318,10 +318,6 @@ paket-files/
 __pycache__/
 *.pyc
 
-# Cake - Uncomment if you are using it
-# tools/**
-# !tools/packages.config
-
 # Tabs Studio
 *.tss
 
@@ -363,11 +359,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-
-##
-## Visual studio for Mac
-##
-
 
 # globs
 Makefile.in
@@ -444,18 +435,14 @@ $RECYCLE.BIN/
 .idea/
 *.sln.iml
 
-##
 ## Visual Studio Code
-##
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-##
 ## Environment files (contains secrets)
-##
 .env
 .env.local
 .env.*.local
@@ -470,3 +457,10 @@ $RECYCLE.BIN/
 
 # Local planning/spec artifacts (never committed)
 docs/superpowers/
+
+# Private key material (see docs/Password recovery.md)
+*.pem
+*.key
+*.pfx
+*.p12
+argo-recovery-private*

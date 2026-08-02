@@ -249,6 +249,14 @@ public class PortalCompanyInfo
 
     [JsonPropertyName("logo_url")]
     public string? LogoUrl { get; set; }
+
+    /// <summary>
+    /// The authoritative portal owner email as the server currently has it.
+    /// The desktop mirrors this into Settings.Company.Email so a server-side
+    /// change (e.g. the email-change revert link) reaches this device.
+    /// </summary>
+    [JsonPropertyName("owner_email")]
+    public string? OwnerEmail { get; set; }
 }
 
 /// <summary>

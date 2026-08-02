@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.ViewModels;

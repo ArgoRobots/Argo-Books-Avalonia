@@ -235,13 +235,23 @@ public class TelemetryStorageService : ITelemetryStorageService
         var path = GetEventsFilePath();
         EnsureDirectoryExists(path);
 
+        // The events file is device-global: every running instance writes it, and the
+        // SemaphoreSlim above only serialises callers inside this process. Write to a
+        // per-process scratch file and swap it in, so concurrent instances never contend
+        // on the same handle.
+        var tempPath = AtomicFile.TempPathFor(path);
         try
         {
-            await using var stream = File.Create(path);
-            await JsonSerializer.SerializeAsync(stream, _events, _jsonOptions, cancellationToken);
+            await using (var stream = File.Create(tempPath))
+            {
+                await JsonSerializer.SerializeAsync(stream, _events, _jsonOptions, cancellationToken);
+            }
+
+            await AtomicFile.ReplaceAsync(tempPath, path, overwrite: true, cancellationToken);
         }
         catch (Exception ex)
         {
+            AtomicFile.TryDeleteTemp(tempPath);
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save telemetry events");
         }
     }
@@ -273,13 +283,20 @@ public class TelemetryStorageService : ITelemetryStorageService
         var path = GetUploadStatePath();
         EnsureDirectoryExists(path);
 
+        // Device-global like the events file above; same per-process scratch treatment.
+        var tempPath = AtomicFile.TempPathFor(path);
         try
         {
-            await using var stream = File.Create(path);
-            await JsonSerializer.SerializeAsync(stream, _uploadState, _jsonOptions, cancellationToken);
+            await using (var stream = File.Create(tempPath))
+            {
+                await JsonSerializer.SerializeAsync(stream, _uploadState, _jsonOptions, cancellationToken);
+            }
+
+            await AtomicFile.ReplaceAsync(tempPath, path, overwrite: true, cancellationToken);
         }
         catch (Exception ex)
         {
+            AtomicFile.TryDeleteTemp(tempPath);
             _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save upload state");
         }
     }
@@ -476,19 +493,4 @@ public interface ITelemetryStorageService
     /// </summary>
     /// <returns>The path to the saved backup file, or null if there was nothing to save.</returns>
     Task<string?> SaveBackupFileAsync(CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Statistics about stored telemetry data.
-/// </summary>
-public class TelemetryStatistics
-{
-    public int TotalEvents { get; set; }
-    public int PendingEvents { get; set; }
-    public int UploadedEvents { get; set; }
-    public Dictionary<TelemetryDataType, int> EventsByType { get; set; } = new();
-    public DateTime? OldestEventTime { get; set; }
-    public DateTime? NewestEventTime { get; set; }
-    public DateTime? LastUploadTime { get; set; }
-    public int TotalEventsEverUploaded { get; set; }
 }

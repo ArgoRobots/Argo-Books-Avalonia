@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Reflection;
-using System.Threading;
 using ArgoBooks.Services;
 using Xunit;
 

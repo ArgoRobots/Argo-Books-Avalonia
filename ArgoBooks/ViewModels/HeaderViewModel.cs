@@ -106,8 +106,9 @@ public partial class HeaderViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ToastTitle))]
     [NotifyPropertyChangedFor(nameof(ToastMessage))]
-    [NotifyPropertyChangedFor(nameof(ToastBackgroundBrush))]
-    [NotifyPropertyChangedFor(nameof(ToastBorderBrush))]
+    [NotifyPropertyChangedFor(nameof(ToastType))]
+    [NotifyPropertyChangedFor(nameof(ToastAccentBrush))]
+    [NotifyPropertyChangedFor(nameof(ToastIconBgBrush))]
     private NotificationItem? _toastNotification;
 
     /// <summary>
@@ -122,17 +123,25 @@ public partial class HeaderViewModel : ViewModelBase
     public string ToastMessage => ToastNotification?.Message ?? string.Empty;
 
     /// <summary>
-    /// Pre-resolved background brush for the toast popup. Returns Transparent when no toast is active.
+    /// Pre-resolved type for the toast popup. Drives which type icon is shown.
+    /// Falls back to System when no toast is active so bindings never traverse null.
     /// </summary>
-    public IBrush ToastBackgroundBrush => ToastNotification != null
-        ? NotificationTypeConverters.BackgroundBrushFor(ToastNotification.Type)
+    public NotificationType ToastType => ToastNotification?.Type ?? NotificationType.System;
+
+    /// <summary>
+    /// Pre-resolved accent brush (solid type color) for the toast's left rail and icon glyph.
+    /// Returns Transparent when no toast is active.
+    /// </summary>
+    public IBrush ToastAccentBrush => ToastNotification != null
+        ? NotificationTypeConverters.BrushFor(ToastNotification.Type)
         : Brushes.Transparent;
 
     /// <summary>
-    /// Pre-resolved border brush for the toast popup.
+    /// Pre-resolved soft tint brush for the toast's icon chip background.
+    /// Returns Transparent when no toast is active.
     /// </summary>
-    public IBrush ToastBorderBrush => ToastNotification != null
-        ? NotificationTypeConverters.BrushFor(ToastNotification.Type)
+    public IBrush ToastIconBgBrush => ToastNotification != null
+        ? NotificationTypeConverters.IconTintBrushFor(ToastNotification.Type)
         : Brushes.Transparent;
 
     private CancellationTokenSource? _toastCancellationTokenSource;
@@ -368,6 +377,8 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenNotifications()
     {
+        // Opening the panel supersedes the toast popup, so hide it.
+        HideToast();
         OpenNotificationsRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -603,6 +614,27 @@ public partial class HeaderViewModel : ViewModelBase
         // Delay clearing so the slide-out animation finishes
         await Task.Delay(350);
         ToastNotification = null;
+    }
+
+    /// <summary>
+    /// Hides the toast popup without changing the notification's read state.
+    /// Used when another surface (such as the notifications panel) supersedes it.
+    /// </summary>
+    private async void HideToast()
+    {
+        if (!ShowNotificationToast)
+            return;
+
+        _toastCancellationTokenSource?.Cancel();
+        _toastCancellationTokenSource?.Dispose();
+        _toastCancellationTokenSource = null;
+
+        ShowNotificationToast = false;
+        // Delay clearing so the slide-out animation finishes
+        await Task.Delay(350, CancellationToken.None);
+        // Leave the current toast alone if a new one arrived during the animation.
+        if (!ShowNotificationToast)
+            ToastNotification = null;
     }
 
     /// <summary>

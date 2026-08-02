@@ -1,23 +1,15 @@
-using System.Reflection;
-using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
-using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Portal;
-using ArgoBooks.Core.Models.Inventory;
-using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
-using ArgoBooks.Views;
 
 namespace ArgoBooks;
 
@@ -1048,6 +1040,35 @@ public partial class App
             };
         }
 
+        // Biometric unlock works by storing the password itself in the operating system's
+        // protected store, so any change to the password leaves that copy stale. Without this,
+        // changing a password silently broke fingerprint unlock, removing one left the old
+        // password stored, and a file returned by support recovery still advertised a
+        // biometric option that could never succeed.
+        void SyncBiometricEnrolment(string? newPassword, bool keepEnrolment)
+        {
+            if (CompanyManager?.CurrentFilePath == null)
+                return;
+
+            var fileId = GetBiometricFileId(CompanyManager.CurrentFilePath);
+            var platformService = PlatformServiceFactory.GetPlatformService();
+            var security = CompanyManager.CurrentCompanySettings?.Security;
+
+            // Keep an existing enrolment working across a password change by re-storing the
+            // new password. Anything else clears it, so the user opts in again deliberately
+            // rather than inheriting an enrolment they never made for this password.
+            if (keepEnrolment && !string.IsNullOrEmpty(newPassword) && security?.BiometricEnabled == true)
+            {
+                platformService.StorePasswordForBiometric(fileId, newPassword);
+                return;
+            }
+
+            platformService.ClearPasswordForBiometric(fileId);
+            if (security != null)
+                security.BiometricEnabled = false;
+            settings.SetBiometricLoginWithoutAuth(false);
+        }
+
         // Add password
         settings.AddPasswordRequested += async (_, args) =>
         {
@@ -1056,6 +1077,11 @@ public partial class App
             try
             {
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
+
+                // The file had no password until now, so any enrolment still on disk belongs
+                // to an older password. Start clean and let the user re-enable biometrics.
+                SyncBiometricEnrolment(args.NewPassword, keepEnrolment: false);
+
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been set.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
@@ -1081,6 +1107,11 @@ public partial class App
             try
             {
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
+
+                // Re-store so fingerprint or face unlock keeps working with the new password
+                // instead of quietly failing on the next open.
+                SyncBiometricEnrolment(args.NewPassword, keepEnrolment: true);
+
                 settings.OnPasswordChanged();
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been changed.".Translate(), NotificationType.Success);
             }
@@ -1107,6 +1138,11 @@ public partial class App
             try
             {
                 await CompanyManager.ChangePasswordAsync(null);
+
+                // With no password there is nothing for biometrics to unlock, so drop the
+                // stored credential rather than leaving the old password on disk.
+                SyncBiometricEnrolment(null, keepEnrolment: false);
+
                 settings.OnPasswordRemoved();
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been removed.".Translate(), NotificationType.Success);
             }
@@ -1751,8 +1787,8 @@ public partial class App
 
     /// <summary>
     /// When the user finishes the setup checklist, opens the "Where did you hear about
-    /// Argo Books?" survey. Deferred until any in-flight completion guidance card
-    /// (which fires simultaneously for the final VisitAnalytics step) has been dismissed.
+    /// Argo Books?" survey. Deferred until any in-flight completion guidance card, which
+    /// the last completed step raises in the same call-stack, has been dismissed.
     /// </summary>
     private static bool _surveyPendingAfterGuidance;
 
@@ -1763,9 +1799,10 @@ public partial class App
             if (!TutorialService.Instance.ShouldShowSourceSurvey())
                 return;
 
-            // If the Analytics completion guidance just opened in the same
-            // call-stack (VisitAnalytics is the last checklist item), wait for
-            // the user to dismiss it before showing the survey on top.
+            // Whichever step finished the checklist raised its own guidance card in this
+            // same call-stack. Which card that is varies: ScanReceipt is not a prerequisite
+            // for VisitAnalytics, so either one can be the step that completes the list.
+            // Wait for it to be dismissed rather than stacking the survey on top of it.
             if (TutorialService.Instance.ShowCompletionGuidance)
             {
                 _surveyPendingAfterGuidance = true;

@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.ViewModels;
