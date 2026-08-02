@@ -267,8 +267,14 @@ public class TelemetryUploadService : ITelemetryUploadService
             dataId = err.DataId,
             timestamp = err.Timestamp,
             dataType = "Error",
+            // The server keys errors vs warnings off this. Older builds omit it, and the
+            // dashboard reads a missing severity as "Error".
+            severity = err.Severity.ToString(),
             errorCategory = err.ErrorCategory.ToString(),
             errorCode = err.ErrorCode,
+            // Already PII-scrubbed and length-capped by ErrorLogger.SanitizeMessage.
+            // Warnings need it: their code alone rarely says what actually happened.
+            message = err.Message,
             sourceFile = err.SourceFile,
             lineNumber = err.LineNumber,
             methodName = err.MethodName,

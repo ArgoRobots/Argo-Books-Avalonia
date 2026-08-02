@@ -313,6 +313,9 @@ public class TelemetryManager : ITelemetryManager
         try
         {
             var errorEvent = await CreateEventAsync<ErrorEvent>(cancellationToken);
+            // Anything below Warning never reaches here (see ErrorLogger.AddEntry), so
+            // the only values that travel are Warning and Error.
+            errorEvent.Severity = errorEntry.Level == LogLevel.Warning ? LogLevel.Warning : LogLevel.Error;
             errorEvent.ErrorCode = errorEntry.ErrorCode ?? "Unknown";
             errorEvent.ErrorCategory = errorEntry.Category;
             errorEvent.Message = errorEntry.Message;
