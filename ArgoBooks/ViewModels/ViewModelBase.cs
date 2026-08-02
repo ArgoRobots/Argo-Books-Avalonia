@@ -1,4 +1,3 @@
-using System.Threading;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;

@@ -3,7 +3,6 @@ using System.Text;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;

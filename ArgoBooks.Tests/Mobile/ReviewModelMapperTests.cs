@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Shared.Mobile;

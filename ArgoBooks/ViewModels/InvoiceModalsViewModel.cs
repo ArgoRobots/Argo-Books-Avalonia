@@ -5,7 +5,6 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Models.Portal;

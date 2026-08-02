@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace ArgoBooks.Core.Models;
 
 /// <summary>Per-company mobile sync settings. Persisted in appSettings.json inside the .argo file.</summary>

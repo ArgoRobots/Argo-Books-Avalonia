@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;

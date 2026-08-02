@@ -11,8 +11,6 @@ using Avalonia.Data;
 using Avalonia.Input;
 using System.Collections.Concurrent;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.Input;
 

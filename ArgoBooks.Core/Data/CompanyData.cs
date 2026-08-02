@@ -5,7 +5,6 @@ using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Rentals;
-using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 

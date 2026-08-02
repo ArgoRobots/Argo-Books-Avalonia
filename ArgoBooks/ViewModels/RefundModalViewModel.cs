@@ -1,11 +1,7 @@
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Net.Http;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
-using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 

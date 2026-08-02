@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace ArgoBooks.Core.Models.Tracking;
 
 /// <summary>A phone paired to this company for mobile sync.</summary>

@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Threading;
 using ArgoBooks.Core.Services;
 using Xunit;
 

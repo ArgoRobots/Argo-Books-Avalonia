@@ -1,7 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Sync;

@@ -1,5 +1,4 @@
 using ArgoBooks.Core.Models.Transactions;
-using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 

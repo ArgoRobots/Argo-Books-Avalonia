@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Shared.Mobile;
 using Xunit;

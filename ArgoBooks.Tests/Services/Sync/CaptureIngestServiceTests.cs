@@ -1,4 +1,3 @@
-using System.Linq;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Services.Sync;
 using Xunit;

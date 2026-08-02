@@ -1,8 +1,5 @@
 using System.Globalization;
 using ArgoBooks.Core.Data;
-using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Core.Models.Transactions;
-using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.Core.Services.Sync;
 

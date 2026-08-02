@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Models.Telemetry;
 
 namespace ArgoBooks.Core.Services.Layout;

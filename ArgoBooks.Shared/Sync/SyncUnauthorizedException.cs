@@ -1,5 +1,3 @@
-using System;
-
 namespace ArgoBooks.Shared.Sync;
 
 /// <summary>
