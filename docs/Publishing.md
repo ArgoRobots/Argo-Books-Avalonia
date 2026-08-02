@@ -170,11 +170,13 @@ The app verifies an Ed25519 signature on every update it downloads, and refuses 
 
    The filenames matter: `get_avalonia_installer.php` builds the download links from those exact patterns, and the app fetches translations from `/resources/downloads/{version}/languages/{iso}.json` (`LanguageService.DownloadUrlTemplate`).
 
-The release is now live. The website download buttons serve the new version, and existing installs will show the "A new version is available" banner the next time they check for updates.
+The release is now live. The website download buttons serve the new version, and existing installs will show the "A new version is available" banner the next time they check for updates. Test the auto-update by opening the previous version of the app and letting it update, then confirm that the old version was uninstalled and the new one is installed. Once that works, the release is done.
 
-**Important:** the signature covers the file's exact bytes. If a file is rebuilt for any reason, re-sign it and update the appcast. Signing the wrong build is equivalent to not signing at all: users' updates will be rejected.
+## Notes
 
-To double-check a file before publishing, run `--verify` with that same file's signature string (the long base64 text printed by `--generate-signature`, not the public key):
+The signature covers the file's exact bytes. If an installer file is rebuilt for any reason, re-sign it and update `avalonia-update.xml`.
+
+If you want to double-check an installer file before publishing, run `--verify` with that same file's signature string (the text printed by step 1):
 
 ```powershell
 netsparkle-generate-appcast --verify "C:\path\to\ArgoBooks-2.0.8-linux-x64.AppImage" --signature "t4lRf5lP...8O9zCQ=="
