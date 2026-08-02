@@ -91,39 +91,54 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     #region Pricing
 
+    // The headline figure only, without a currency symbol: the "$" is a separate,
+    // smaller run in the card so the layout matches the website's price block.
+    // Holds the monthly price or the yearly-billed per-month equivalent depending
+    // on the selected cycle, so a single price block serves both.
     [ObservableProperty]
-    private string _premiumMonthlyPrice = "";
+    private string _premiumAmountDisplay = "";
 
     [ObservableProperty]
     private string _premiumBillingPeriod = "";
 
+    // Struck-out monthly price (e.g. "$15/month") shown above the amount on yearly.
     [ObservableProperty]
-    private string _premiumYearlyPrice = "";
+    private string _premiumStrikeText = "";
+
+    // "Billed monthly" or "Billed annually at $150 CAD", below the amount.
+    [ObservableProperty]
+    private string _premiumBilledText = "";
+
+    // "Save $30" pill on the annual toggle option. The dollar figure, not a
+    // percentage, so it matches the website's toggle.
+    [ObservableProperty]
+    private string _yearlySavingsDisplay = "";
+
+    // One-line plan pitches above the price, matching the website cards. These
+    // live here rather than the plans API because the website hardcodes them too.
+    [ObservableProperty]
+    private string _freePlanPitch = "";
 
     [ObservableProperty]
-    private string _premiumYearlySavings = "";
+    private string _premiumPlanPitch = "";
 
-    // New: yearly billed-per-month price (e.g., "$8.33 CAD") shown when yearly is selected
+    // Uppercase plan chips ("FREE" / "PREMIUM") beside the word "Plan".
     [ObservableProperty]
-    private string _premiumYearlyPerMonth = "";
+    private string _freeChip = "";
 
-    // New: strikethrough monthly price (e.g., "$10/month") shown above the yearly-per-month
     [ObservableProperty]
-    private string _premiumMonthlyStrike = "";
+    private string _premiumChip = "";
 
-    // New: "Save 17%" pill shown on the yearly toggle option
+    // Billing-cycle toggle state. Monthly is the default, as on the website.
     [ObservableProperty]
-    private string _yearlySavingsPercentDisplay = "";
-
-    // New: billing-cycle toggle state. Yearly is the default.
-    [ObservableProperty]
-    private bool _isYearlyBilling = true;
+    private bool _isYearlyBilling;
 
     public bool IsMonthlyBilling => !IsYearlyBilling;
 
     partial void OnIsYearlyBillingChanged(bool value)
     {
         OnPropertyChanged(nameof(IsMonthlyBilling));
+        RefreshCycleDisplay();
     }
 
     [ObservableProperty]
@@ -241,53 +256,62 @@ public partial class UpgradeModalViewModel : ViewModelBase
             ? "/" + monthWord
             : _rawCurrency + "/" + monthWord;
 
-        if (_rawPremiumYearlyPriceDisplay is not null && _rawPremiumYearlySavingsDisplay is not null)
-        {
-            PremiumYearlyPrice = "or {0}/year".TranslateFormat(_rawPremiumYearlyPriceDisplay);
-            // Parens are added separately so Azure can translate the bare phrase reliably,
-            // it leaves "(save {0})" unchanged for several languages (mt, nl, sk).
-            PremiumYearlySavings = "(" + "save {0}".TranslateFormat(_rawPremiumYearlySavingsDisplay) + ")";
-        }
-        else
-        {
+        FreePlanPitch = "Just starting out, or you only need the basics? This is the place.".Translate();
+        PremiumPlanPitch = "Want unlimited invoicing, bigger monthly limits, and forecasts you can act on? Go Premium.".Translate();
+        FreeChip = "Free".Translate().ToUpperInvariant();
+        PremiumChip = "Premium".Translate().ToUpperInvariant();
+
+        YearlySavingsDisplay = _rawPremiumYearlySavingsDisplay is not null
+            ? "Save {0}".TranslateFormat(_rawPremiumYearlySavingsDisplay)
             // Clear stale text from a prior fetch, otherwise an API response that omits
-            // the yearly fields would leave the previous yearly pricing visible.
-            PremiumYearlyPrice = string.Empty;
-            PremiumYearlySavings = string.Empty;
-        }
+            // the yearly fields would leave the previous savings figure visible.
+            : string.Empty;
 
-        // Rebuild the big-number strings from the raw numeric prices so the currency
-        // sits with the period text rather than next to the dollar amount.
-        if (_rawMonthlyPrice > 0 && _rawYearlyPrice > 0)
-        {
-            PremiumMonthlyPrice = string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
-                "${0:0}",
-                _rawMonthlyPrice);
-
-            var perMonth = _rawYearlyPrice / 12.0;
-            PremiumYearlyPerMonth = string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
-                "${0:0.00}",
-                perMonth);
-            PremiumMonthlyStrike = string.Format(
+        // Struck-out reference price, from the raw numeric so the currency stays with
+        // the period text rather than sitting next to the dollar amount.
+        PremiumStrikeText = _rawMonthlyPrice > 0
+            ? string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 "${0:0}/month",
-                _rawMonthlyPrice);
+                _rawMonthlyPrice)
+            : string.Empty;
 
-            var savingsPct = (int)Math.Round((1 - _rawYearlyPrice / (_rawMonthlyPrice * 12)) * 100);
-            // Keep the % glued to the number rather than in the format string,
-            // some translation passes strip lone '%' characters.
-            var savingsPctText = savingsPct.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%";
-            YearlySavingsPercentDisplay = "Save {0}".TranslateFormat(savingsPctText);
+        RefreshCycleDisplay();
+    }
+
+    /// <summary>
+    /// Rebuilds the parts of the price block that depend on the selected billing
+    /// cycle. One block serves both cycles, so switching only changes text.
+    /// </summary>
+    private void RefreshCycleDisplay()
+    {
+        if (_rawMonthlyPrice <= 0 || _rawYearlyPrice <= 0)
+        {
+            PremiumAmountDisplay = string.Empty;
+            PremiumBilledText = string.Empty;
+            return;
+        }
+
+        if (IsYearlyBilling)
+        {
+            // The headline figure is the per-month equivalent so it compares
+            // like-for-like against the monthly plan, but the amount actually
+            // charged today has to be stated or checkout comes as a surprise.
+            PremiumAmountDisplay = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "{0:0.00}",
+                _rawYearlyPrice / 12.0);
+            PremiumBilledText = _rawPremiumYearlyPriceDisplay is not null
+                ? "Billed annually at {0}".TranslateFormat(_rawPremiumYearlyPriceDisplay)
+                : "Billed annually".Translate();
         }
         else
         {
-            // Leave PremiumMonthlyPrice as set by the caller (the API display string) so we
-            // don't blank out the price when only display strings are available.
-            PremiumYearlyPerMonth = string.Empty;
-            PremiumMonthlyStrike = string.Empty;
-            YearlySavingsPercentDisplay = string.Empty;
+            PremiumAmountDisplay = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "{0:0}",
+                _rawMonthlyPrice);
+            PremiumBilledText = "Billed monthly".Translate();
         }
     }
 
@@ -547,7 +571,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (apiResponse?.Pricing != null)
             {
-                PremiumMonthlyPrice = apiResponse.Pricing.PremiumPriceDisplay;
                 _rawPremiumYearlyPriceDisplay = apiResponse.Pricing.PremiumYearlyPriceDisplay;
                 _rawPremiumYearlySavingsDisplay = apiResponse.Pricing.PremiumYearlySavingsDisplay;
                 _rawMonthlyPrice = apiResponse.Pricing.PremiumMonthlyPriceNumeric;
