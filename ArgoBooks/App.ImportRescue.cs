@@ -145,14 +145,17 @@ public partial class App
 
         await usageService.IncrementUsageAsync();
 
-        var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
-        await resultDialog.ShowAsync(
-            originalFileName,
-            sheetResults,
-            totalImported, totalUpdated, totalSkipped,
-            allSkipReasons, allWarnings,
-            totalProcessed > 0 || totalBankRouted > 0,
-            allUnimported);
+        var resultDialog = _appShellViewModel?.ImportResultDialogViewModel;
+        if (resultDialog != null)
+        {
+            await resultDialog.ShowAsync(
+                originalFileName,
+                sheetResults,
+                totalImported, totalUpdated, totalSkipped,
+                allSkipReasons, allWarnings,
+                totalProcessed > 0 || totalBankRouted > 0,
+                allUnimported);
+        }
 
         Avalonia.Threading.Dispatcher.UIThread.Post(
             () => NavigationService?.RefreshCurrentPage(),
