@@ -144,12 +144,33 @@ The app verifies an Ed25519 signature on every update it downloads, and refuses 
 2. In the website repo, update `avalonia-update.xml`
    - On each `<enclosure>`, update `sparkle:edSignature`. The signature is the long base64 string printed in step 1. The `.exe`'s signature goes on the `sparkle:os="windows"` enclosure, the `.AppImage`'s on the `sparkle:os="linux"` one.
    - All the version numbers in the file. For example, do a replace all for `2.0.11` and update it to `2.0.12`, or whatever the version is.
-   
-3. Before going live, run the freshly built Argo Books on all operating systems and test a couple of major features such as the receipt scanner to ensure things work.
+
+3. Regenerate the translations for the new version's strings (see `ArgoBooks.TranslationTool/README.md`):
+
+   ```powershell
+   $env:AZURE_TRANSLATOR_REGION = "canadacentral"
+   $env:AZURE_TRANSLATOR_KEY = "your-api-key"
+   cd ArgoBooks.TranslationTool
+   dotnet run -- --translate
+   ```
+
+   The JSON files land in `ArgoBooks.TranslationTool/languages/`, ready to upload in step 7.
 
 4. In the website repo, add an entry for the new version to the What's New page (`whats-new/index.php`).
 
-5. Commit and push to `main` in Git so the `avalonia-update.xml` deploys, then upload the matching `.exe` and `.AppImage` via FileZilla.
+5. Before going live, run the freshly built Argo Books on all operating systems and test a couple of major features such as the receipt scanner to ensure things work.
+
+6. Commit and push to `main` in Git so the `avalonia-update.xml` and What's New changes deploy.
+
+7. Upload the release files via FileZilla into a new `resources/downloads/<version>/` folder on the server, matching the layout of the previous version:
+
+   - `Argo Books Installer V.<version>.exe`
+   - `ArgoBooks-<version>-linux-x64.AppImage`
+   - a `languages/` subfolder holding the JSON files from step 3
+
+   The filenames matter: `get_avalonia_installer.php` builds the download links from those exact patterns, and the app fetches translations from `/resources/downloads/{version}/languages/{iso}.json` (`LanguageService.DownloadUrlTemplate`).
+
+The release is now live. The website download buttons serve the new version, and existing installs will show the "A new version is available" banner the next time they check for updates.
 
 **Important:** the signature covers the file's exact bytes. If a file is rebuilt for any reason, re-sign it and update the appcast. Signing the wrong build is equivalent to not signing at all: users' updates will be rejected.
 
