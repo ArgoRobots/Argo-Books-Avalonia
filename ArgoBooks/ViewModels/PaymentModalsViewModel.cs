@@ -802,6 +802,13 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var invoice = companyData.GetInvoice(invoiceId);
         if (invoice == null) return;
         InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
+
+        // Every add / edit / delete of a payment funnels through here, and so do
+        // the undo and redo lambdas, so this one call covers them all. Without
+        // it the portal keeps believing a cash-paid invoice is unpaid and the
+        // reminder cron chases a customer who has already paid. Debounced and
+        // best-effort; the periodic reconcile catches anything dropped.
+        App.PortalBalanceSyncService?.Queue(invoiceId);
     }
 
     #endregion

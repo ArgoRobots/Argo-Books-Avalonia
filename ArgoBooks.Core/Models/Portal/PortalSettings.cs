@@ -67,10 +67,49 @@ public class PortalSettings
     public int AutoSyncIntervalMinutes { get; set; } = 5;
 
     /// <summary>
-    /// Whether to show a notification when new online payments are received.
+    /// Whether to show an in-app notification when new online payments are received.
+    /// Local only: this fires when the app polls, so it needs the app running.
+    /// The email equivalent is <see cref="EmailOwnerOnPayment"/>.
     /// </summary>
     [JsonPropertyName("notifyOnPayment")]
     public bool NotifyOnPayment { get; set; } = true;
+
+    /// <summary>
+    /// Whether the server emails the business owner when a customer pays.
+    /// </summary>
+    /// <remarks>
+    /// A cache of server state, not the source of truth: the payment webhooks
+    /// read the server's copy while this app is closed. The server wins on load
+    /// (see the status endpoint's preferences block).
+    ///
+    /// Deliberately separate from <see cref="NotifyOnPayment"/>. Muting an
+    /// in-app popup is not consent to stop receiving email, and the two travel
+    /// differently: the popup needs the app open, the email does not.
+    ///
+    /// Also requires a verified owner email server-side, so this being true is
+    /// necessary but not sufficient.
+    /// </remarks>
+    [JsonPropertyName("emailOwnerOnPayment")]
+    public bool EmailOwnerOnPayment { get; set; } = true;
+
+    /// <summary>
+    /// Whether the server sends automatic overdue reminders to customers at 3,
+    /// 7 and 14 days past an invoice's due date.
+    /// </summary>
+    /// <remarks>
+    /// Opt-in, so it defaults to false: turning this on emails real customers,
+    /// which is never a safe default to inherit. Also a cache of server state.
+    /// </remarks>
+    [JsonPropertyName("sendPaymentReminders")]
+    public bool SendPaymentReminders { get; set; }
+
+    /// <summary>
+    /// When reminders were last switched on, as reported by the server. Only
+    /// invoices falling due after this are ever chased, so switching reminders
+    /// on never releases a backlog of already-overdue invoices. Display only.
+    /// </summary>
+    [JsonPropertyName("remindersEnabledAt")]
+    public DateTime? RemindersEnabledAt { get; set; }
 
     /// <summary>
     /// The customer-facing portal URL for this company (returned by the server during setup).

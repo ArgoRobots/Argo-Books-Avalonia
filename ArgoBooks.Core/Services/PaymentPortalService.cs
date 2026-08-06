@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using ArgoBooks.Core.Data;
@@ -748,6 +749,186 @@ public class PaymentPortalService : IDisposable
         {
             return new PortalCompanyNameResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
         }
+    }
+
+    #endregion
+
+    #region Preferences
+
+    /// <summary>
+    /// Updates this company's server-side email preferences. Both arguments are
+    /// optional; only the ones supplied are sent, so one toggle can be pushed
+    /// without knowing the state of the other.
+    /// </summary>
+    /// <remarks>
+    /// These live on the server because the jobs that act on them (the reminder
+    /// cron and the payment webhooks) run while this app is closed.
+    /// </remarks>
+    public async Task<PortalPreferencesResponse> UpdatePreferencesAsync(
+        bool? sendPaymentReminders = null,
+        bool? emailOwnerOnPayment = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalPreferencesResponse { Success = false, Message = "Portal not configured." };
+        }
+
+        if (sendPaymentReminders == null && emailOwnerOnPayment == null)
+        {
+            return new PortalPreferencesResponse { Success = false, Message = "Nothing to update." };
+        }
+
+        try
+        {
+            // Built as a dictionary rather than an anonymous type so an omitted
+            // toggle is genuinely absent from the JSON. SerializeOptions has no
+            // DefaultIgnoreCondition, so a nullable property would serialize as
+            // null and the server could not tell "leave alone" from "set false".
+            var payload = new Dictionary<string, object>();
+            if (sendPaymentReminders != null)
+            {
+                payload["sendPaymentReminders"] = sendPaymentReminders.Value;
+            }
+            if (emailOwnerOnPayment != null)
+            {
+                payload["emailOwnerOnPayment"] = emailOwnerOnPayment.Value;
+            }
+
+            var json = JsonSerializer.Serialize(payload, SerializeOptions);
+            using var request = CreateRequest(HttpMethod.Put, "/preferences");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalPreferencesResponse>(content)
+                       ?? new PortalPreferencesResponse { Success = true, Message = "Preferences updated." };
+            }
+
+            var errorResponse = DeserializeResponse<PortalPreferencesResponse>(content);
+            return errorResponse ?? new PortalPreferencesResponse
+            {
+                Success = false,
+                Message = $"Update failed with status {(int)response.StatusCode}"
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalPreferencesResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException)
+        {
+            return new PortalPreferencesResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
+        }
+    }
+
+    #endregion
+
+    #region Invoice Balance Sync
+
+    /// <summary>
+    /// Pushes locally-known invoice balances to the server so it can tell which
+    /// invoices are genuinely unpaid.
+    /// </summary>
+    /// <remarks>
+    /// Without this the server never learns about payments taken outside the
+    /// portal, so the reminder cron would chase customers who already paid.
+    /// The server applies a relative delta, which makes a repeat push with
+    /// unchanged numbers a no-op; that is what makes this safe to fire
+    /// speculatively and to retry.
+    /// </remarks>
+    public async Task<PortalBalanceSyncResponse> SyncInvoiceBalancesAsync(
+        IReadOnlyList<PortalBalanceSyncItem> items,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            return new PortalBalanceSyncResponse { Success = false, Message = "Portal not configured." };
+        }
+
+        if (items.Count == 0)
+        {
+            return new PortalBalanceSyncResponse { Success = true, Message = "Nothing to sync." };
+        }
+
+        try
+        {
+            var json = JsonSerializer.Serialize(new { invoices = items }, SerializeOptions);
+            using var request = CreateRequest(HttpMethod.Post, "/invoices/balance");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return DeserializeResponse<PortalBalanceSyncResponse>(content)
+                       ?? new PortalBalanceSyncResponse { Success = true, Message = "Balances synced." };
+            }
+
+            var errorResponse = DeserializeResponse<PortalBalanceSyncResponse>(content);
+            return errorResponse ?? new PortalBalanceSyncResponse
+            {
+                Success = false,
+                Message = $"Balance sync failed with status {(int)response.StatusCode}"
+            };
+        }
+        catch (TaskCanceledException)
+        {
+            return new PortalBalanceSyncResponse { Success = false, Message = "Request timed out." };
+        }
+        catch (HttpRequestException)
+        {
+            return new PortalBalanceSyncResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync() };
+        }
+    }
+
+    /// <summary>
+    /// Builds the sync item for one invoice from the company's payment rows.
+    /// Kept here so the "what counts as externally paid" rule lives in exactly
+    /// one place.
+    /// </summary>
+    /// <remarks>
+    /// Only manual, non-refund, positive payments count. Portal payments are
+    /// excluded because the server recorded those itself, and including them
+    /// would subtract the same money twice. Currency is matched the same way
+    /// <see cref="InvoiceTotalsService"/> does, treating a blank code as USD so
+    /// older rows written before multi-currency still line up.
+    /// </remarks>
+    public static PortalBalanceSyncItem BuildBalanceSyncItem(Invoice invoice, IEnumerable<Payment> allPayments)
+    {
+        string invoiceCurrency = string.IsNullOrWhiteSpace(invoice.OriginalCurrency)
+            ? "USD"
+            : invoice.OriginalCurrency;
+
+        decimal externalPaid = 0m;
+        foreach (Payment payment in allPayments)
+        {
+            if (payment.InvoiceId != invoice.Id) continue;
+            if (payment.Source != PaymentSource.Manual) continue;
+            if (payment.IsRefund) continue;
+            if (payment.Amount <= 0) continue;
+
+            string paymentCurrency = string.IsNullOrWhiteSpace(payment.OriginalCurrency)
+                ? "USD"
+                : payment.OriginalCurrency;
+            if (!string.Equals(paymentCurrency, invoiceCurrency, StringComparison.OrdinalIgnoreCase)) continue;
+
+            externalPaid += payment.Amount;
+        }
+
+        return new PortalBalanceSyncItem
+        {
+            InvoiceId = invoice.Id,
+            TotalAmount = invoice.Total,
+            ExternalPaid = externalPaid,
+            Currency = invoiceCurrency,
+            DueDate = invoice.DueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            Cancelled = invoice.Status == InvoiceStatus.Cancelled,
+        };
     }
 
     #endregion

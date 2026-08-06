@@ -2520,6 +2520,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         CreateRecurringScheduleIfNeeded(invoice, companyData, idGenerator);
 
+        // Editing an already-published invoice changes what the customer owes,
+        // so the portal needs the new total or it would chase the old one. A
+        // no-op for invoices that were never published, and for brand-new ones
+        // the publish path sends the full record anyway.
+        App.PortalBalanceSyncService?.Queue(invoice.Id);
+
         LastSavedInvoiceId = invoice.Id;
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
         CloseCreateEditModal();

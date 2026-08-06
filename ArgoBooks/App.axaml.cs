@@ -63,6 +63,12 @@ public partial class App : Application
     public static PaymentPortalService? PaymentPortalService { get; private set; }
 
     /// <summary>
+    /// Pushes locally-recorded invoice payments up to the portal, so the server
+    /// stops treating cash-paid invoices as unpaid and chasing the customer.
+    /// </summary>
+    public static PortalBalanceSyncService? PortalBalanceSyncService { get; private set; }
+
+    /// <summary>
     /// Gets the mobile-sync service instance used to upload company snapshots and pull
     /// the capture queue from the phone-pairing backend.
     /// </summary>
@@ -397,6 +403,19 @@ public partial class App : Application
 
             // Always advance the sync timestamp on success to avoid re-querying the same window
             portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
+
+            // Sweep locally-recorded balances up to the server while we already
+            // have it on the line, so payments taken in cash (or on another
+            // machine, or while this one was offline) stop the reminder cron
+            // chasing an invoice that is already settled.
+            //
+            // Deliberately ABOVE the no-new-payments return below: having
+            // nothing to pull down is the common case, and it says nothing
+            // about whether we have something to push up.
+            if (PortalBalanceSyncService != null)
+            {
+                await PortalBalanceSyncService.ReconcileAsync();
+            }
 
             if (syncResponse.Payments.Count == 0)
                 return;
@@ -1099,6 +1118,12 @@ public partial class App : Application
 
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
+            // Resolves the company lazily: this is built once at startup but the
+            // open company changes over the session.
+            PortalBalanceSyncService = new PortalBalanceSyncService(
+                PaymentPortalService,
+                () => CompanyManager?.CompanyData,
+                errorLogger);
             InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
 
             // Initialize mobile-sync service (shares the same long-lived HttpClient)

@@ -700,6 +700,134 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Whether the server emails the owner when a customer pays. Separate from
+    /// <see cref="PortalNotifyOnPayment"/>, which is only the in-app popup.
+    /// </summary>
+    [ObservableProperty]
+    private bool _portalEmailOwnerOnPayment = true;
+
+    /// <summary>
+    /// Whether the server chases unpaid invoices at 3, 7 and 14 days past due.
+    /// Opt-in: turning this on emails real customers.
+    /// </summary>
+    [ObservableProperty]
+    private bool _portalSendPaymentReminders;
+
+    /// <summary>
+    /// Whether the owner's email is verified server-side. The server refuses to
+    /// send payment notifications without it, so the toggle is disabled and
+    /// explained rather than silently doing nothing.
+    /// </summary>
+    [ObservableProperty]
+    private bool _portalOwnerEmailVerified;
+
+    /// <summary>
+    /// When reminders were switched on. Only invoices due after this are ever
+    /// chased, which the UI explains so nobody expects old invoices to go out.
+    /// </summary>
+    [ObservableProperty]
+    private DateTime? _portalRemindersEnabledAt;
+
+    partial void OnPortalEmailOwnerOnPaymentChanged(bool value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (HasPassword && !_isPortalAuthenticated)
+        {
+            _ = RevertAndAuthPortalEmailOwnerAsync(value);
+            return;
+        }
+
+        // The server is authoritative here (the payment webhooks read it while
+        // this app is closed), so push immediately rather than waiting for Save.
+        _ = PushPortalPreferencesAsync(emailOwnerOnPayment: value);
+    }
+
+    private async Task RevertAndAuthPortalEmailOwnerAsync(bool attemptedValue)
+    {
+        _isLoadingPortalSettings = true;
+        PortalEmailOwnerOnPayment = !attemptedValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalEmailOwnerOnPayment = attemptedValue;
+            _isLoadingPortalSettings = false;
+            await PushPortalPreferencesAsync(emailOwnerOnPayment: attemptedValue);
+        }
+    }
+
+    partial void OnPortalSendPaymentRemindersChanged(bool value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (HasPassword && !_isPortalAuthenticated)
+        {
+            _ = RevertAndAuthPortalRemindersAsync(value);
+            return;
+        }
+
+        _ = PushPortalPreferencesAsync(sendPaymentReminders: value);
+    }
+
+    private async Task RevertAndAuthPortalRemindersAsync(bool attemptedValue)
+    {
+        _isLoadingPortalSettings = true;
+        PortalSendPaymentReminders = !attemptedValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalSendPaymentReminders = attemptedValue;
+            _isLoadingPortalSettings = false;
+            await PushPortalPreferencesAsync(sendPaymentReminders: attemptedValue);
+        }
+    }
+
+    /// <summary>
+    /// Sends one or both preference toggles to the server and adopts whatever
+    /// it echoes back, which includes the reminder cutoff it just armed.
+    /// </summary>
+    private async Task PushPortalPreferencesAsync(
+        bool? sendPaymentReminders = null,
+        bool? emailOwnerOnPayment = null)
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        try
+        {
+            var result = await portalService.UpdatePreferencesAsync(sendPaymentReminders, emailOwnerOnPayment);
+            if (result.Success && result.Preferences != null)
+            {
+                ApplyPortalPreferences(result.Preferences);
+                SavePortalSettings();
+            }
+        }
+        catch
+        {
+            // Best-effort. The local toggle still reflects the user's intent and
+            // RefreshProviderStatusAsync reconciles against the server on the
+            // next open, so a dropped push self-heals rather than needing a retry.
+        }
+    }
+
+    /// <summary>
+    /// Copies server-reported preferences onto the ViewModel. Fenced with
+    /// <c>_isLoadingPortalSettings</c> so adopting them does not re-trigger the
+    /// change handlers and push straight back to the server.
+    /// </summary>
+    private void ApplyPortalPreferences(PortalPreferences preferences)
+    {
+        _isLoadingPortalSettings = true;
+        PortalSendPaymentReminders = preferences.SendPaymentReminders;
+        PortalEmailOwnerOnPayment = preferences.EmailOwnerOnPayment;
+        PortalRemindersEnabledAt = preferences.RemindersEnabledAt;
+        PortalOwnerEmailVerified = preferences.OwnerEmailVerified;
+        _isLoadingPortalSettings = false;
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSyncIntervalNumeric))]
     private string _portalSyncInterval = "5";
@@ -1227,6 +1355,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         _isLoadingPortalSettings = true;
         PortalCompanyName = string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
+        // Cached values only. RefreshProviderStatusAsync below overwrites these
+        // from the server, which is authoritative because the reminder cron and
+        // the payment webhooks read its copy while this app is closed.
+        PortalEmailOwnerOnPayment = settings.EmailOwnerOnPayment;
+        PortalSendPaymentReminders = settings.SendPaymentReminders;
+        PortalRemindersEnabledAt = settings.RemindersEnabledAt;
+        PortalOwnerEmailVerified = false;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
             ? "Manual"
             : settings.AutoSyncIntervalMinutes.ToString();
@@ -1286,6 +1421,17 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Load portal company name and logo from server
             if (status.Success)
             {
+                // Server wins for the email preferences: it is what the cron and
+                // the webhooks actually read. This is also what restores them
+                // after a reinstall or on a second machine. Null when talking to
+                // a server that predates the preferences block, in which case
+                // the cached local values stand.
+                if (status.Preferences != null)
+                {
+                    ApplyPortalPreferences(status.Preferences);
+                    SavePortalSettings();
+                }
+
                 // Mirror the authoritative owner email onto this device so a
                 // server-side change (e.g. the revert link) is reflected here.
                 await ReconcilePortalEmailFromStatusAsync(status);
@@ -1375,6 +1521,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         settings.NotifyOnPayment = PortalNotifyOnPayment;
+        settings.EmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+        settings.SendPaymentReminders = PortalSendPaymentReminders;
+        settings.RemindersEnabledAt = PortalRemindersEnabledAt;
         settings.AutoSyncIntervalMinutes = PortalSyncInterval == "Manual"
             ? 0
             : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;

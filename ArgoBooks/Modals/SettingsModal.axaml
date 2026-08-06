@@ -320,6 +320,34 @@
                                     </Grid>
                                 </Border>
 
+                                <!-- Payment Emails (sent by the server, so they arrive with the app closed) -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Sends an email to your business email address each time an online payment comes in, even when Argo Books is closed'}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource WarningBrush}"
+                                                       IsVisible="{Binding !PortalOwnerEmailVerified}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding PortalEmailOwnerOnPayment}"
+                                                      IsEnabled="{Binding PortalOwnerEmailVerified}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
                                 <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1030,6 +1058,36 @@
                                         </Grid>
                                     </Border>
                                 </StackPanel>
+
+                                <!-- Automatic overdue reminders (sent by the server on a fixed cadence) -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,8,0,0"
+                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc 'Automatic payment reminders'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Email customers 3, 7 and 14 days after an invoice becomes overdue. Reminders stop as soon as the invoice is paid or cancelled.'}"
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding PortalSendPaymentReminders}"
+                                                          VerticalAlignment="Center" />
+                                        </Grid>
+                                        <TextBlock Text="{loc:Loc 'Only invoices that fall due from now on are chased, so turning this on will not email anyone about invoices that are already overdue. Record payments you take in cash or by cheque so those customers are not chased.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   IsVisible="{Binding PortalSendPaymentReminders}" />
+                                    </StackPanel>
+                                </Border>
 
                                 <!-- Sync Interval -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">

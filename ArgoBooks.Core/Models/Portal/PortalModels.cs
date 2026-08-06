@@ -235,6 +235,115 @@ public class PortalStatusResponse
     [JsonPropertyName("connectedProviders")]
     public ConnectedPaymentAccounts? ConnectedProviders { get; set; }
 
+    /// <summary>
+    /// Server-side email preferences. The server is authoritative for these
+    /// because the reminder cron and the payment webhooks read them while this
+    /// app is closed, so the local copy converges on whatever arrives here.
+    /// Null when talking to a server that predates the preferences block.
+    /// </summary>
+    [JsonPropertyName("preferences")]
+    public PortalPreferences? Preferences { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+}
+
+/// <summary>
+/// Per-company email preferences held on the server.
+/// </summary>
+public class PortalPreferences
+{
+    /// <summary>Whether the server chases unpaid invoices at 3/7/14 days past due.</summary>
+    [JsonPropertyName("sendPaymentReminders")]
+    public bool SendPaymentReminders { get; set; }
+
+    /// <summary>
+    /// When reminders were last switched on. Only invoices due after this are
+    /// ever chased, so enabling never releases a backlog.
+    /// </summary>
+    [JsonPropertyName("remindersEnabledAt")]
+    public DateTime? RemindersEnabledAt { get; set; }
+
+    /// <summary>Whether the server emails the owner when a customer pays.</summary>
+    [JsonPropertyName("emailOwnerOnPayment")]
+    public bool EmailOwnerOnPayment { get; set; }
+
+    /// <summary>
+    /// Whether the owner's email has been verified. The server refuses to send
+    /// payment notifications without this, so the UI has to surface it or the
+    /// toggle looks broken.
+    /// </summary>
+    [JsonPropertyName("ownerEmailVerified")]
+    public bool OwnerEmailVerified { get; set; }
+}
+
+/// <summary>
+/// Response from the portal preferences update endpoint.
+/// </summary>
+public class PortalPreferencesResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    /// <summary>The resolved server-side state, including any cutoff just armed.</summary>
+    [JsonPropertyName("preferences")]
+    public PortalPreferences? Preferences { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [JsonPropertyName("errorCode")]
+    public string? ErrorCode { get; set; }
+}
+
+/// <summary>
+/// One invoice's locally-known payment state, pushed to the server so it can
+/// tell which invoices are genuinely still unpaid.
+/// </summary>
+public class PortalBalanceSyncItem
+{
+    /// <summary>Matches portal_invoices.invoice_id, which is the local Invoice.Id.</summary>
+    [JsonPropertyName("invoiceId")]
+    public string InvoiceId { get; set; } = string.Empty;
+
+    [JsonPropertyName("totalAmount")]
+    public decimal TotalAmount { get; set; }
+
+    /// <summary>
+    /// Total recorded against this invoice OUTSIDE the portal (cash, cheque,
+    /// bank transfer). Portal payments are excluded: the server already owns
+    /// those and counting them here would double-apply them.
+    /// </summary>
+    [JsonPropertyName("externalPaid")]
+    public decimal ExternalPaid { get; set; }
+
+    [JsonPropertyName("currency")]
+    public string? Currency { get; set; }
+
+    [JsonPropertyName("dueDate")]
+    public string? DueDate { get; set; }
+
+    [JsonPropertyName("cancelled")]
+    public bool Cancelled { get; set; }
+}
+
+/// <summary>
+/// Response from the invoice balance reconciliation endpoint.
+/// </summary>
+public class PortalBalanceSyncResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("updated")]
+    public int Updated { get; set; }
+
+    [JsonPropertyName("notFound")]
+    public int NotFound { get; set; }
+
+    [JsonPropertyName("rejected")]
+    public int Rejected { get; set; }
+
     [JsonPropertyName("message")]
     public string? Message { get; set; }
 }
