@@ -1044,6 +1044,11 @@ public partial class App : Application
             // entries as breadcrumbs.
             CrashReporter.SetBreadcrumbSource(errorLogger);
 
+            // A web view that cannot start throws from an async void attach handler, which
+            // lands on the dispatcher as an unhandled exception and ends the process. Install
+            // the guard before any window exists so the first attach is already covered.
+            WebViewEnvironment.InstallDispatcherGuard(errorLogger);
+
             // Show a splash straight away. Avalonia only shows MainWindow once this method
             // returns, and everything below builds the service graph first, so without this
             // the screen stays empty for several seconds. Users read that as a failed launch
