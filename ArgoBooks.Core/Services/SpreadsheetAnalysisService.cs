@@ -108,7 +108,7 @@ public class SpreadsheetAnalysisService(
             if (headers.Count == 0)
                 return null;
 
-            // Require at least one data row (equivalent to the old lines.Length < 2 guard)
+            // Require at least one data row
             if (allDataRows.Count == 0)
                 return null;
 
@@ -143,8 +143,8 @@ public class SpreadsheetAnalysisService(
         var batches = SplitIntoAnalysisBatches(sheetsData);
 
         // The visible progress bar is driven by the UI layer from the learned duration estimate
-        // (see EstimatedProgressTicker), so this no longer fakes a timer. We just report the status
-        // text; percent -1 signals "no real fraction here" so nothing shows a misleading number.
+        // (see EstimatedProgressTicker), so this only reports the status text; percent -1 signals
+        // "no real fraction here" so nothing shows a misleading number.
         progress?.Report(("Analyzing...", -1));
 
         // Analyze batches concurrently; each batch is an independent LLM call.

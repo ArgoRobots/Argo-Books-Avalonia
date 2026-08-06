@@ -13,7 +13,6 @@ namespace ArgoBooks.Core.Services;
 /// company's canonical path. Because the lock *is* the open handle (not merely the file's
 /// existence), it is self-healing: an instance that crashes without releasing leaves no open
 /// handle, so the next launch acquires cleanly. A leftover lock file with no handle never blocks.
-/// This is the cross-platform equivalent of the old WinForms build's named-mutex approach.
 /// </summary>
 public sealed class CompanyInstanceLock : IDisposable
 {

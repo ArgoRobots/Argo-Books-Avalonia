@@ -6,7 +6,6 @@ namespace ArgoBooks.Services;
 
 /// <summary>
 /// Renders PDF first pages as JPEG thumbnails using a hidden NativeWebView with pdf.js.
-/// Replaces the PDFtoImage library with the cross-platform Avalonia WebView.
 /// Uses postMessage callbacks for reliable async communication between JS and C#.
 /// </summary>
 public sealed class PdfThumbnailService

@@ -18,8 +18,8 @@ public static class Converters
     /// </summary>
     public static readonly IValueConverter BoolToFinishNext = new BoolToFixedStringConverter("Finish", "Next");
 
-    // Note: the AI-import tier/confidence badge colors are no longer computed here. They come
-    // from per-theme DynamicResource brushes (Confidence*/Tier* in DarkTheme.axaml / LightTheme.axaml)
-    // applied via style classes in ImportMappingDialog.axaml, so they are always correct for the
-    // active theme without any runtime theme detection.
+    // The AI-import tier/confidence badge colors come from per-theme DynamicResource brushes
+    // (Confidence*/Tier* in DarkTheme.axaml / LightTheme.axaml) applied via style classes in
+    // ImportMappingDialog.axaml, so they are always correct for the active theme without any
+    // runtime theme detection.
 }
