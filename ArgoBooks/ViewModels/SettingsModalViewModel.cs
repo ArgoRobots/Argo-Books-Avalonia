@@ -231,6 +231,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanEditPaymentReminders))]
+    [NotifyPropertyChangedFor(nameof(ShowConnectRequirementsHint))]
     private bool _isSampleCompany;
 
     [ObservableProperty]
@@ -941,8 +942,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public bool CanConnectProvider => HasPortalCompanyName && HasCompanyEmail && !IsConnectingProvider;
 
-    /// <summary>Prompt the user to finish the required fields while either is still missing.</summary>
-    public bool ShowConnectRequirementsHint => !HasPortalCompanyName || !HasCompanyEmail;
+    /// <summary>
+    /// Prompt the user to finish the required fields while either is still missing. Never
+    /// shown for the sample company, where the fields it points at are disabled anyway.
+    /// </summary>
+    public bool ShowConnectRequirementsHint =>
+        !IsSampleCompany && (!HasPortalCompanyName || !HasCompanyEmail);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
