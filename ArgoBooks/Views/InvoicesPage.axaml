@@ -356,6 +356,16 @@
                                                                   Width="16" Height="16" />
                                                     </Button>
                                                     <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Resend Invoice'}"
+                                                            AutomationProperties.Name="Resend Invoice"
+                                                            IsVisible="{Binding CanSend}"
+                                                            IsEnabled="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).CanResendInvoice}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ResendInvoiceCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Send}"
+                                                                  Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'View History'}"
                                                             AutomationProperties.Name="View History"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"

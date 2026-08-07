@@ -274,7 +274,6 @@ public partial class InvoiceHtmlRenderer
         // column has to reconcile a gross Amount Paid against a forward-looking
         // Amount to Pay, so showing only one of the two would never add up.
         var displayProcessingFee = actualProcessingFee + estimatedProcessingFee;
-        var grossPaid = invoice.AmountPaid + actualProcessingFee;
         // In the editor, keep the fee row present whenever the fee applies so the
         // live recompute can fill it in as the user types (even from a $0 start).
         var showProcessingFeeRow = displayProcessingFee > 0 || (editable && feesActive);
@@ -372,10 +371,10 @@ public partial class InvoiceHtmlRenderer
             ["DiscountRaw"] = invoice.DiscountAmount.ToString("0.##"),
             ["DiscountModeRaw"] = invoice.DiscountIsPercent ? "percent" : "fixed",
             ["Total"] = $"{currencySymbol}{Money(invoice.Total)}{CurrencyCodeSuffix(invoice)}",
-            // Gross of what actually left the customer, invoice portion plus any
-            // processing fee they were charged on top. Using the invoice portion
-            // alone would leave the fee unaccounted for and the column short.
-            ["AmountPaid"] = grossPaid > 0 ? $"{currencySymbol}{Money(grossPaid)}" : null,
+            // Already gross: portal payments are stored at the amount the customer
+            // was actually charged, fee included (see PaymentPortalService). Adding
+            // the fee again here double-counts it.
+            ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{Money(invoice.AmountPaid)}" : null,
             ["Balance"] = $"{currencySymbol}{Money(invoice.Balance)}{CurrencyCodeSuffix(invoice)}",
 
             // Every fee touching this invoice: already charged, plus the estimate

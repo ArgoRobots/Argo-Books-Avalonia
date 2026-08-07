@@ -1,10 +1,16 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Invoices;
 using ArgoBooks.Core.Models.Portal;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Core.Services.InvoiceTemplates;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Views;
@@ -181,6 +187,15 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private bool _hasPremium;
+
+    /// <summary>
+    /// Whether the sample company is open. Read live rather than cached, since the
+    /// page view model outlives a company switch.
+    /// </summary>
+    public bool IsSampleCompany => App.CompanyManager?.IsSampleCompany == true;
+
+    /// <summary>Bound to the resend button's IsEnabled.</summary>
+    public bool CanResendInvoice => !IsSampleCompany;
 
     [ObservableProperty]
     private int _sentInvoicesThisMonthCount;
@@ -1327,6 +1342,128 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void OpenTemplateDesigner()
     {
         App.InvoiceTemplateDesignerViewModel?.OpenTemplateList();
+    }
+
+    /// <summary>
+    /// Re-sends an already-sent invoice to its customer.
+    /// </summary>
+    /// <remarks>
+    /// Free-tier usage is deliberately not checked or incremented: the customer
+    /// already received this invoice once, so a resend is usually a delivery
+    /// failure rather than new billable activity.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ResendInvoice(InvoiceDisplayItem? item)
+    {
+        if (item == null || IsSampleCompany) return;
+
+        CompanyData? companyData = App.CompanyManager?.CompanyData;
+        Invoice? invoice = companyData?.GetInvoice(item.Id);
+        if (companyData == null || invoice == null) return;
+
+        Customer? customer = companyData.GetCustomer(invoice.CustomerId);
+        string? customerEmail = customer?.Email;
+        if (string.IsNullOrWhiteSpace(customerEmail))
+        {
+            await ShowResendMessageAsync(
+                "No email address",
+                "This invoice's customer has no email address, so there is nowhere to send it.",
+                isError: true);
+            return;
+        }
+
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop
+            || desktop.MainWindow is not MainWindow mainWindow
+            || mainWindow.MessageBoxService is not { } mbox)
+        {
+            return;
+        }
+
+        bool confirmed = await mbox.ConfirmAsync(
+            "Resend invoice".Translate(),
+            "Send invoice {0} to {1} again?".TranslateFormat(invoice.InvoiceNumber, customerEmail),
+            "Send".Translate(),
+            "Cancel".Translate());
+        if (!confirmed) return;
+
+        // Same layout the customer was originally sent, matching the view and
+        // publish paths, rather than whatever template is default today.
+        InvoiceTemplate? template = (!string.IsNullOrEmpty(invoice.TemplateId)
+                ? companyData.InvoiceTemplates.FirstOrDefault(t => t.Id == invoice.TemplateId)
+                : null)
+            ?? companyData.InvoiceTemplates.FirstOrDefault(t => t.IsDefault);
+        if (template == null)
+        {
+            List<InvoiceTemplate> defaults = InvoiceTemplateFactory.CreateDefaultTemplates();
+            template = defaults.FirstOrDefault(t => t.IsDefault) ?? defaults.FirstOrDefault();
+        }
+        if (template == null) return;
+
+        string currencySymbol = CurrencyService.GetSymbol(invoice.OriginalCurrency);
+        string failure = string.Empty;
+
+        try
+        {
+            // Mirrors the original send: the portal delivers the email when it is
+            // configured, otherwise the desktop sends it directly.
+            if (PortalSettings.IsConfigured && App.PaymentPortalService is { } portalService)
+            {
+                PortalPublishResponse response = await portalService.PublishInvoiceAsync(
+                    invoice, companyData, template, currencySymbol);
+                if (!response.Success)
+                {
+                    failure = response.Message ?? "The payment portal rejected the request.";
+                }
+            }
+            else
+            {
+                var emailService = new InvoiceEmailService();
+                InvoiceEmailResponse response = await emailService.SendInvoiceAsync(
+                    invoice, template, companyData, companyData.Settings.InvoiceEmail, currencySymbol);
+                if (!response.Success)
+                {
+                    failure = response.Message;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            failure = ex.Message;
+        }
+
+        if (!string.IsNullOrEmpty(failure))
+        {
+            await ShowResendMessageAsync("Failed to resend invoice", failure, isError: true);
+            return;
+        }
+
+        invoice.History.Add(new InvoiceHistoryEntry
+        {
+            Action = "Resent",
+            Details = $"Invoice re-sent to {customerEmail}",
+            Timestamp = DateTime.UtcNow
+        });
+        App.CompanyManager?.MarkAsChanged();
+
+        LoadInvoices();
+
+        // Same success screen the original send shows, rather than a toast.
+        App.InvoiceModalsViewModel?.ShowSentSuccess(customer?.Name ?? item.CustomerName, customerEmail);
+    }
+
+    private static async Task ShowResendMessageAsync(string title, string message, bool isError)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop
+            || desktop.MainWindow is not MainWindow mainWindow
+            || mainWindow.MessageBoxService is not { } mbox)
+        {
+            return;
+        }
+
+        if (isError)
+        {
+            await mbox.ShowErrorAsync(title.Translate(), message.Translate());
+        }
     }
 
     #endregion

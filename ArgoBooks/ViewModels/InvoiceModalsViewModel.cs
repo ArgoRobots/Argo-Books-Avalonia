@@ -2318,6 +2318,23 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #region Save Invoice
 
+    /// <summary>
+    /// Opens the invoice modal on its "sent" success screen only, with no form
+    /// behind it. Lets the resend action on the invoices page report the same way
+    /// a first send does.
+    /// </summary>
+    public void ShowSentSuccess(string customerName, string customerEmail)
+    {
+        // ResetForm clears the success fields, so it has to run first.
+        ResetForm();
+        IsViewOnly = false;
+        IsShowingPreview = false;
+        SuccessTitle = "Invoice Sent!".Translate();
+        SuccessMessage = "Your invoice has been sent to {0} at {1}".TranslateFormat(customerName, customerEmail);
+        IsShowingSuccess = true;
+        IsCreateEditModalOpen = true;
+    }
+
     [RelayCommand]
     private void CloseCreateEditModal()
     {
