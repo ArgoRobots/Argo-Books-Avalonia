@@ -785,7 +785,7 @@
                                 <!-- Portal Company Name -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Company Name'}" />
-                                    <TextBlock Text="{loc:Loc 'Required. The name displayed on your customer-facing payment portal.'}"
+                                    <TextBlock Text="{loc:Loc 'The name displayed on your customer-facing payment portal.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
@@ -797,10 +797,18 @@
                                 <!-- Portal Owner Email -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Owner Email'}" />
-                                    <TextBlock Text="{loc:Loc 'Required, for refund verification and recovery. Click Set to confirm it with an emailed code.'}"
+                                    <!-- Empty state copy: points at the Set button below. -->
+                                    <TextBlock Text="{loc:Loc 'Used for refund verification and recovery. Click Set to confirm it with an emailed code.'}"
                                                FontSize="12"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+                                    <!-- Set state copy: points at the Change button below. -->
+                                    <TextBlock Text="{loc:Loc 'Used for refund verification and recovery. Click Change to update it with an emailed code.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                                     <!-- Empty state: editable input + Set button (initial setup). Full-width to
                                          match the Company Name box, with the Set action tucked to the right. -->
