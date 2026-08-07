@@ -442,7 +442,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void BackToEditor() => IsEditorPreviewing = false;
+    private void BackToEditor()
+    {
+        IsEditorPreviewing = false;
+        // Re-render so the editable rows (zero-value shipping/discount) come back.
+        RegeneratePaper();
+    }
 
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
@@ -1680,7 +1685,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             // Preview reflects the invoice's selected currency, not the user's display setting.
             var currencySymbol = CurrencyService.GetSymbol(SelectedCurrencyCode);
-            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, editable: true);
+            // Preview mode renders non-editable so zero-value shipping/discount rows drop
+            // out and the paper matches what the customer receives.
+            PreviewHtml = renderer.RenderInvoice(
+                previewInvoice, template, companyData, currencySymbol, editable: !IsEditorPreviewing);
         }
         else
         {

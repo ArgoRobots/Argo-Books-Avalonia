@@ -517,6 +517,10 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             var balance = total;
             var procFee = (portal && passFee && balance > 0) ? Math.round((balance * 2.9 / 100 + 0.30) * 100) / 100 : 0;
 
+            // The (x%) suffix on the tax label is server-rendered, so it has to be
+            // rewritten here or it keeps showing the rate the paper loaded with.
+            // Trims trailing zeros to match the C# ""0.##"" format.
+            setOut('taxRateLabel', taxMode === 'fixed' ? '' : ' (' + String(parseFloat(tax.toFixed(2))) + '%)');
             setOut('subtotal', money(subtotal));
             setOut('total', due(total));
             setOut('processingFee', money(procFee));
