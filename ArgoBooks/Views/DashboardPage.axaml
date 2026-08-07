@@ -87,6 +87,7 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                         <TextBlock Text="{Binding WelcomeSubtitle}"
                                    FontSize="14"
+                                   TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
 
