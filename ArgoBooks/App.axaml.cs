@@ -1068,6 +1068,21 @@ public partial class App : Application
             // the guard before any window exists so the first attach is already covered.
             WebViewEnvironment.InstallDispatcherGuard(errorLogger);
 
+            // Before any window exists: RequestedThemeVariant is "Default" (follows the OS)
+            // until the saved theme is applied, so applying it late flashes the wrong palette.
+            // Both calls are cheap and synchronous.
+            SettingsService = new GlobalSettingsService(errorLogger);
+            try
+            {
+                SettingsService.LoadGlobalSettings();
+                ThemeService.Instance.SetGlobalSettingsService(SettingsService);
+                ThemeService.Instance.Initialize();
+            }
+            catch (Exception ex)
+            {
+                errorLogger.LogWarning($"Failed to apply saved theme during startup: {ex.Message}", "Startup");
+            }
+
             // Show a splash straight away. Avalonia only shows MainWindow once this method
             // returns, and everything below builds the service graph first, so without this
             // the screen stays empty for several seconds. Users read that as a failed launch
@@ -1098,7 +1113,7 @@ public partial class App : Application
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             _fileService = new FileService(compressionService, footerService, encryptionService);
-            SettingsService = new GlobalSettingsService(errorLogger);
+            // SettingsService is built and loaded above; re-creating it would discard those settings.
             LicenseService = new LicenseService(encryptionService, SettingsService, errorLogger);
             CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
 
@@ -1343,22 +1358,7 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
-            // Load settings synchronously: sidebar state, theme, and language depend on them.
-            // Direct sync read avoids the thread-pool marshaling cost of sync-over-async;
-            // the settings file is small (<10KB). Recent companies are loaded asynchronously
-            // in InitializeAsync after the window is shown.
-            try
-            {
-                SettingsService?.LoadGlobalSettings();
-            }
-            catch (Exception ex)
-            {
-                ErrorLogger.LogWarning($"Failed to load settings during startup: {ex.Message}", "Startup");
-            }
-
             // Apply saved sidebar collapsed state after settings are loaded from disk.
-            // The SidebarViewModel was created before settings were loaded, so its constructor
-            // read the default value. Re-apply the persisted state now.
             var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
             if (savedCollapsed)
             {
