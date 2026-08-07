@@ -230,6 +230,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     #region Security Settings
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanEditPaymentReminders))]
     private bool _isSampleCompany;
 
     [ObservableProperty]
@@ -898,15 +899,33 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string? _squareEmail;
 
     /// <summary>
+    /// Whether at least one payment provider is connected.
+    /// </summary>
+    public bool IsAnyPaymentProviderConnected => StripeConnected || PaypalConnected || SquareConnected;
+
+    /// <summary>
     /// The portal company name is required while a payment provider is connected.
     /// </summary>
-    public bool IsPortalCompanyNameRequired => StripeConnected || PaypalConnected || SquareConnected;
+    public bool IsPortalCompanyNameRequired => IsAnyPaymentProviderConnected;
 
-    partial void OnStripeConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+    /// <summary>
+    /// Whether the overdue reminders toggle can be used. Needs a connected provider,
+    /// since the reminder sends the customer to the portal to pay.
+    /// </summary>
+    public bool CanEditPaymentReminders => IsAnyPaymentProviderConnected && !IsSampleCompany;
 
-    partial void OnPaypalConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+    private void NotifyProviderConnectionChanged()
+    {
+        OnPropertyChanged(nameof(IsAnyPaymentProviderConnected));
+        OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+        OnPropertyChanged(nameof(CanEditPaymentReminders));
+    }
 
-    partial void OnSquareConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+    partial void OnStripeConnectedChanged(bool value) => NotifyProviderConnectionChanged();
+
+    partial void OnPaypalConnectedChanged(bool value) => NotifyProviderConnectionChanged();
+
+    partial void OnSquareConnectedChanged(bool value) => NotifyProviderConnectionChanged();
 
     /// <summary>True once the customer-facing company name has been entered.</summary>
     public bool HasPortalCompanyName => !string.IsNullOrWhiteSpace(PortalCompanyName);
