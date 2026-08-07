@@ -897,15 +897,23 @@ public class PaymentPortalService : IDisposable
     /// would subtract the same money twice. Currency is matched the same way
     /// <see cref="InvoiceTotalsService"/> does, treating a blank code as USD so
     /// older rows written before multi-currency still line up.
+    ///
+    /// Re-renders the invoice HTML once anything has been paid. The portal
+    /// displays a snapshot taken at publish time, so a part-paid invoice
+    /// otherwise keeps showing its original totals with no Amount Paid row
+    /// while the payment section below it shows the real balance. Rendering
+    /// uses the invoice's own TemplateId, the layout the customer was
+    /// originally sent, so this does not restyle old invoices when the
+    /// merchant's default template changes.
     /// </remarks>
-    public static PortalBalanceSyncItem BuildBalanceSyncItem(Invoice invoice, IEnumerable<Payment> allPayments)
+    public static PortalBalanceSyncItem BuildBalanceSyncItem(Invoice invoice, CompanyData companyData)
     {
         string invoiceCurrency = string.IsNullOrWhiteSpace(invoice.OriginalCurrency)
             ? "USD"
             : invoice.OriginalCurrency;
 
         decimal externalPaid = 0m;
-        foreach (Payment payment in allPayments)
+        foreach (Payment payment in companyData.Payments)
         {
             if (payment.InvoiceId != invoice.Id) continue;
             if (payment.Source != PaymentSource.Manual) continue;
@@ -928,7 +936,50 @@ public class PaymentPortalService : IDisposable
             Currency = invoiceCurrency,
             DueDate = invoice.DueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             Cancelled = invoice.Status == InvoiceStatus.Cancelled,
+            // Only worth sending once something has been paid. An untouched
+            // invoice's stored snapshot is still accurate, and the HTML is by
+            // far the largest thing in this payload.
+            CustomInvoiceHtml = invoice.AmountPaid > 0
+                ? RenderInvoiceHtml(invoice, companyData, invoiceCurrency)
+                : null,
         };
+    }
+
+    /// <summary>
+    /// Renders an invoice with the template it was created with, matching the
+    /// resolution used by the desktop preview and the original publish, so a
+    /// re-render reproduces the layout the customer already received.
+    /// </summary>
+    private static string? RenderInvoiceHtml(Invoice invoice, CompanyData companyData, string currencyCode)
+    {
+        try
+        {
+            InvoiceTemplate? template = (!string.IsNullOrEmpty(invoice.TemplateId)
+                    ? companyData.InvoiceTemplates.FirstOrDefault(t => t.Id == invoice.TemplateId)
+                    : null)
+                ?? companyData.InvoiceTemplates.FirstOrDefault(t => t.IsDefault);
+
+            if (template == null)
+            {
+                List<InvoiceTemplate> defaults = InvoiceTemplateFactory.CreateDefaultTemplates();
+                template = defaults.FirstOrDefault(t => t.IsDefault) ?? defaults.FirstOrDefault();
+            }
+
+            if (template == null)
+            {
+                return null;
+            }
+
+            var renderer = new InvoiceHtmlRenderer();
+            return renderer.RenderInvoice(invoice, template, companyData, CurrencyInfo.GetSymbol(currencyCode));
+        }
+        catch
+        {
+            // A render failure must not stop the balance itself from syncing:
+            // a stale-looking invoice is a cosmetic problem, a stale balance
+            // gets the customer chased for money they already paid.
+            return null;
+        }
     }
 
     #endregion

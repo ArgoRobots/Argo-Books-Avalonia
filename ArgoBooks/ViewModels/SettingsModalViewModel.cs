@@ -738,9 +738,11 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // The server is authoritative here (the payment webhooks read it while
-        // this app is closed), so push immediately rather than waiting for Save.
-        _ = PushPortalPreferencesAsync(emailOwnerOnPayment: value);
+        // Nothing is pushed here on purpose. These sit among the other
+        // Notifications toggles, which all apply on Save, so pushing on toggle
+        // would make Close-without-saving silently keep the change and skip the
+        // unsaved-changes prompt. SaveAsync sends them.
+        OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
     private async Task RevertAndAuthPortalEmailOwnerAsync(bool attemptedValue)
@@ -754,7 +756,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             _isLoadingPortalSettings = true;
             PortalEmailOwnerOnPayment = attemptedValue;
             _isLoadingPortalSettings = false;
-            await PushPortalPreferencesAsync(emailOwnerOnPayment: attemptedValue);
+            OnPropertyChanged(nameof(HasUnsavedChanges));
         }
     }
 
@@ -767,7 +769,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        _ = PushPortalPreferencesAsync(sendPaymentReminders: value);
+        OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
     private async Task RevertAndAuthPortalRemindersAsync(bool attemptedValue)
@@ -781,24 +783,23 @@ public partial class SettingsModalViewModel : ViewModelBase
             _isLoadingPortalSettings = true;
             PortalSendPaymentReminders = attemptedValue;
             _isLoadingPortalSettings = false;
-            await PushPortalPreferencesAsync(sendPaymentReminders: attemptedValue);
+            OnPropertyChanged(nameof(HasUnsavedChanges));
         }
     }
 
     /// <summary>
-    /// Sends one or both preference toggles to the server and adopts whatever
-    /// it echoes back, which includes the reminder cutoff it just armed.
+    /// Sends both preference toggles to the server and adopts whatever it echoes
+    /// back, which includes the reminder cutoff it just armed. Called from Save.
     /// </summary>
-    private async Task PushPortalPreferencesAsync(
-        bool? sendPaymentReminders = null,
-        bool? emailOwnerOnPayment = null)
+    private async Task PushPortalPreferencesAsync()
     {
         var portalService = App.PaymentPortalService;
         if (portalService == null || !PortalSettings.IsConfigured) return;
 
         try
         {
-            var result = await portalService.UpdatePreferencesAsync(sendPaymentReminders, emailOwnerOnPayment);
+            var result = await portalService.UpdatePreferencesAsync(
+                PortalSendPaymentReminders, PortalEmailOwnerOnPayment);
             if (result.Success && result.Preferences != null)
             {
                 ApplyPortalPreferences(result.Preferences);
@@ -807,16 +808,16 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch
         {
-            // Best-effort. The local toggle still reflects the user's intent and
-            // RefreshProviderStatusAsync reconciles against the server on the
-            // next open, so a dropped push self-heals rather than needing a retry.
+            // Best-effort. RefreshProviderStatusAsync reconciles against the
+            // server on the next open, so a dropped push self-heals.
         }
     }
 
     /// <summary>
     /// Copies server-reported preferences onto the ViewModel. Fenced with
     /// <c>_isLoadingPortalSettings</c> so adopting them does not re-trigger the
-    /// change handlers and push straight back to the server.
+    /// change handlers. Also re-baselines the originals, since state that came
+    /// from the server is by definition not an unsaved local edit.
     /// </summary>
     private void ApplyPortalPreferences(PortalPreferences preferences)
     {
@@ -826,6 +827,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         PortalRemindersEnabledAt = preferences.RemindersEnabledAt;
         PortalOwnerEmailVerified = preferences.OwnerEmailVerified;
         _isLoadingPortalSettings = false;
+
+        _originalPortalSendPaymentReminders = PortalSendPaymentReminders;
+        _originalPortalEmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+        OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
     [ObservableProperty]
@@ -2264,7 +2269,15 @@ public partial class SettingsModalViewModel : ViewModelBase
         RentalOverdue != _originalRentalOverdue ||
         UnsavedChangesReminder != _originalUnsavedChangesReminder ||
         UnsavedChangesReminderMinutes != _originalUnsavedChangesReminderMinutes ||
+        PortalSendPaymentReminders != _originalPortalSendPaymentReminders ||
+        PortalEmailOwnerOnPayment != _originalPortalEmailOwnerOnPayment ||
         ComputeBankRulesSignature() != _originalBankRulesSignature;
+
+    // Baselines for the two server-side email preferences. They live among the
+    // Notifications toggles, so they take part in the same unsaved-changes
+    // prompt rather than applying the instant they are flipped.
+    private bool _originalPortalSendPaymentReminders;
+    private bool _originalPortalEmailOwnerOnPayment = true;
 
     // Snapshot of the bank import rules taken when the modal opens, so editing a rule's pattern or
     // category (or adding/removing a row) counts as an unsaved change and triggers the discard prompt.
@@ -2375,6 +2388,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalRentalOverdue = RentalOverdue;
         _originalUnsavedChangesReminder = UnsavedChangesReminder;
         _originalUnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
+        _originalPortalSendPaymentReminders = PortalSendPaymentReminders;
+        _originalPortalEmailOwnerOnPayment = PortalEmailOwnerOnPayment;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
     }
@@ -2544,6 +2559,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalRentalOverdue = RentalOverdue;
         _originalUnsavedChangesReminder = UnsavedChangesReminder;
         _originalUnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
+        _originalPortalSendPaymentReminders = PortalSendPaymentReminders;
+        _originalPortalEmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+
+        // The server owns these two, so Save is what actually applies them.
+        // Fire-and-forget: the reconcile on next open corrects a dropped push,
+        // and blocking Save on a network round trip would be worse.
+        _ = PushPortalPreferencesAsync();
 
         // Save language, date format and currency to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;

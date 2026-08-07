@@ -64,6 +64,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// When true, all fields except Notes are read-only.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRevenueLinkVisible))]
     private bool _isPortalPayment;
 
     [ObservableProperty]
@@ -217,7 +218,19 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// Selected invoice option for modal.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRevenueLinkVisible))]
     private InvoiceOption? _selectedInvoice;
+
+    /// <summary>
+    /// Whether to offer the "Revenue (if not linked to an invoice)" picker.
+    /// </summary>
+    /// <remarks>
+    /// Hidden once an invoice is chosen. The two links are mutually exclusive
+    /// (<see cref="OnSelectedInvoiceChanged"/> clears the revenue), so leaving
+    /// it on screen reads as though the payment could be attached to both, and
+    /// its label then contradicts the invoice picked directly above it.
+    /// </remarks>
+    public bool IsRevenueLinkVisible => SelectedInvoice == null && !IsPortalPayment;
 
     partial void OnSelectedInvoiceChanged(InvoiceOption? value)
     {

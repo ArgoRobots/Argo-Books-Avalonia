@@ -26,8 +26,12 @@ public sealed class PortalBalanceSyncService : IDisposable
     /// <summary>Matches the debounce used for the portal company-name push.</summary>
     private const int DebounceMilliseconds = 1500;
 
-    /// <summary>Server-side cap on one batch; keep the two in step.</summary>
-    private const int MaxBatchSize = 200;
+    /// <summary>
+    /// Cap on one batch. Well under the server's limit of 200 because a
+    /// part-paid invoice carries its re-rendered HTML, which dwarfs everything
+    /// else in the payload. Anything trimmed is picked up by the next sweep.
+    /// </summary>
+    private const int MaxBatchSize = 25;
 
     /// <summary>
     /// History marker written when an invoice is published to the portal. Only
@@ -126,7 +130,7 @@ public sealed class PortalBalanceSyncService : IDisposable
             if (invoice == null) continue;
             if (!IsPublishedToPortal(invoice)) continue;
 
-            items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData.Payments));
+            items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData));
             if (items.Count >= MaxBatchSize) break;
         }
 
@@ -160,7 +164,7 @@ public sealed class PortalBalanceSyncService : IDisposable
             // chasing it, even though nothing is owed.
             if (invoice.Balance <= 0 && invoice.Status != InvoiceStatus.Cancelled) continue;
 
-            items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData.Payments));
+            items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData));
             if (items.Count >= MaxBatchSize) break;
         }
 

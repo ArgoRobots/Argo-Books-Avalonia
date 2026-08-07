@@ -3972,6 +3972,15 @@ public partial class App : Application
             {
                 _invoicesPageViewModel.SelectedTabIndex = index;
             }
+            // The ViewModel is cached across navigations, so without this the page
+            // shows whatever it held when it was first built. Refresh reads the
+            // current CompanyData, and the portal sync pulls in online payments
+            // that landed since, which is what flips an invoice to Paid. The sync
+            // refreshes these ViewModels again when it completes, so an invoice
+            // paid on the portal shows up on arriving here rather than only after
+            // visiting Payments or waiting out the 5-minute timer.
+            _invoicesPageViewModel.RefreshInvoicesCommand.Execute(null);
+            _ = AutoSyncPortalPaymentsAsync();
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
         navigationService.RegisterPage("Payments", param =>

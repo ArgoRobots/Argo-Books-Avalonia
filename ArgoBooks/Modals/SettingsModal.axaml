@@ -194,7 +194,10 @@
 
                     <!-- Notifications Tab -->
                     <TabItem Header="{loc:Loc Notifications}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <!-- Horizontal scrolling disabled so the viewport width is finite. Left on
+                             the default, cards get infinite width during measure and TextWrapping
+                             never kicks in, so longer descriptions run past the toggle. -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
                                 <!-- Sample company notice -->
                                 <Border Background="{DynamicResource WarningLightBrush}"
@@ -335,11 +338,23 @@
                                                        FontSize="12"
                                                        TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
-                                                       FontSize="12"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource WarningBrush}"
-                                                       IsVisible="{Binding !PortalOwnerEmailVerified}" />
+                                            <!-- Amber-on-amber pill rather than amber text: the plain
+                                                 WarningBrush (#F59E0B) has poor contrast against the
+                                                 light-theme SurfaceAlt (#E9ECEF), and the Warning
+                                                 brushes are theme-invariant so no single foreground
+                                                 reads well on both. Matches the sample-company notice
+                                                 at the top of this tab. -->
+                                            <Border Background="{DynamicResource WarningLightBrush}"
+                                                    CornerRadius="6"
+                                                    Padding="8,6"
+                                                    Margin="0,4,0,0"
+                                                    HorizontalAlignment="Left"
+                                                    IsVisible="{Binding !PortalOwnerEmailVerified}">
+                                                <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource WarningTextBrush}" />
+                                            </Border>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding PortalEmailOwnerOnPayment}"

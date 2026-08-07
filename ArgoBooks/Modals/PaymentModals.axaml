@@ -71,8 +71,8 @@
                                            IsVisible="{Binding ModalInvoiceError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
-                            <!-- Revenue (alternative link to an invoice) -->
-                            <StackPanel Spacing="6">
+                            <!-- Revenue (alternative link), hidden once an invoice is chosen -->
+                            <StackPanel Spacing="6" IsVisible="{Binding IsRevenueLinkVisible}">
                                 <TextBlock Text="{loc:Loc 'Revenue (if not linked to an invoice)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding RevenueOptions}"
                                                             SelectedItem="{Binding SelectedRevenue}"
@@ -212,8 +212,8 @@
                                                             EmptyCreateCommand="{Binding OpenCreateInvoiceCommand}" />
                             </StackPanel>
 
-                            <!-- Revenue (alternative link), hidden for portal payments -->
-                            <StackPanel Spacing="6" IsVisible="{Binding !IsPortalPayment}">
+                            <!-- Revenue (alternative link), hidden for portal payments and once an invoice is chosen -->
+                            <StackPanel Spacing="6" IsVisible="{Binding IsRevenueLinkVisible}">
                                 <TextBlock Text="{loc:Loc 'Revenue (if not linked to an invoice)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding RevenueOptions}"
                                                             SelectedItem="{Binding SelectedRevenue}"

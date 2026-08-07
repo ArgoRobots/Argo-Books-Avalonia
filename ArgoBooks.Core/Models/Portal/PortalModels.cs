@@ -325,6 +325,16 @@ public class PortalBalanceSyncItem
 
     [JsonPropertyName("cancelled")]
     public bool Cancelled { get; set; }
+
+    /// <summary>
+    /// Freshly rendered invoice HTML, sent only when the stored copy would be
+    /// wrong. The portal shows a snapshot taken when the invoice was published,
+    /// so once anything has been paid it keeps showing the original totals with
+    /// no Amount Paid row. Null leaves the stored copy untouched.
+    /// </summary>
+    [JsonPropertyName("customInvoiceHtml")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CustomInvoiceHtml { get; set; }
 }
 
 /// <summary>
