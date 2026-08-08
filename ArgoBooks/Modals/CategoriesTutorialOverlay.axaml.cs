@@ -99,20 +99,11 @@ public partial class CategoriesTutorialOverlay : UserControl
         Rect? bounds;
         CornerRadius cornerRadius;
 
-        if (highlightArea == "tabs")
-        {
-            // Compute tight bounding box around actual TabItem elements
-            bounds = TutorialHighlightHelper.GetTabItemsBounds(this, window, "CategoriesPageTabs");
-            cornerRadius = new CornerRadius(8);
-        }
-        else
-        {
-            var element = TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent");
-            bounds = element != null
-                ? TutorialHighlightHelper.GetHighlightBounds(this, element)
-                : null;
-            cornerRadius = new CornerRadius(8);
-        }
+        var element = TutorialHighlightHelper.FindElementByName<Control>(window, "AppContent");
+        bounds = element != null
+            ? TutorialHighlightHelper.GetHighlightBounds(this, element)
+            : null;
+        cornerRadius = new CornerRadius(8);
 
         if (bounds == null)
         {

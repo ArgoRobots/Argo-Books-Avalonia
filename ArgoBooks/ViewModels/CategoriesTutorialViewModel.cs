@@ -16,20 +16,20 @@ public partial class CategoriesTutorialViewModel : ViewModelBase
     [
         new()
         {
-            Title = "Expense & Revenue Categories",
-            Description = "Use the tabs above to switch between Expense categories (costs like supplies, utilities, rent) and Revenue categories (income sources like sales, services, consulting).",
-            HighlightArea = "tabs"
+            Title = "Categories",
+            Description = "A category is a label for the money you spend, like supplies, rent or fuel. Every expense gets one.",
+            HighlightArea = "none"
         },
         new()
         {
-            Title = "Organize Your Products",
-            Description = "Categories help you group similar products and services. This makes it easier to track spending patterns and generate reports.",
+            Title = "Why they help",
+            Description = "Once your spending is labelled, your reports can show you what you are actually spending the most on.",
             HighlightArea = "content"
         },
         new()
         {
-            Title = "Example Categories",
-            Description = "A bakery might use expense categories like 'Ingredients', 'Packaging', and 'Equipment'. For revenue: 'Cakes', 'Bread', 'Catering'.\n\nYou can nest categories too - like 'Ingredients > Flour' or 'Cakes > Wedding Cakes'.",
+            Title = "Some examples",
+            Description = "A bakery might use Ingredients, Packaging and Equipment.\n\nYou can put a category inside another one too, like Flour inside Ingredients.",
             HighlightArea = "none"
         }
     ];
