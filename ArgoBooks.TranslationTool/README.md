@@ -10,10 +10,11 @@ cd ArgoBooks.TranslationTool
 
 ## Commands
 
-**Collect strings only (no API call):**
+**Rebuild `en.json` only (no API call, no key needed):**
 ```
-dotnet run -- --collect
+dotnet run -- --languages en
 ```
+English is skipped by the translation loop, so this rewrites `en.json` from the source strings and stops. Run it after changing any English text, or the change will not appear in the app.
 
 **Translate to all languages:**
 ```
