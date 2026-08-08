@@ -2167,9 +2167,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
                 // Push the first snapshot immediately. The phone polls /snapshot and shows
                 // "Waiting for your desktop to sync" until one exists, and the only other uploader
-                // (App.AutoMobileSyncAsync) is triggered by desktop navigation to the Payments or
-                // Receipts page. Without this, a successful pairing leaves the phone stuck on that
-                // placeholder until the user happens to open one of those two pages.
+                // (App.AutoMobileSyncAsync) is triggered by desktop navigation to the Receipts
+                // page. Without this, a successful pairing leaves the phone stuck on that
+                // placeholder until the user happens to open that page.
                 await App.AutoMobileSyncAsync();
                 return;
             }

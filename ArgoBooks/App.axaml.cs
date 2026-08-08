@@ -460,7 +460,6 @@ public partial class App : Application
                 // Refresh any already-instantiated page ViewModels so the UI reflects the new data
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    _paymentsPageViewModel?.RefreshPaymentsCommand.Execute(null);
                     _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
 
@@ -853,11 +852,6 @@ public partial class App : Application
     public static Controls.ColumnWidths.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
 
     /// <summary>
-    /// Gets the shared column widths for the Payments table.
-    /// </summary>
-    public static Controls.ColumnWidths.PaymentsTableColumnWidths PaymentsColumnWidths { get; } = new();
-
-    /// <summary>
     /// Gets the shared column widths for the Receipts table.
     /// </summary>
     public static Controls.ColumnWidths.ReceiptsTableColumnWidths ReceiptsColumnWidths { get; } = new();
@@ -914,7 +908,6 @@ public partial class App : Application
     private static RevenuePageViewModel? _revenuePageViewModel;
     private static ExpensesPageViewModel? _expensesPageViewModel;
     private static InvoicesPageViewModel? _invoicesPageViewModel;
-    private static PaymentsPageViewModel? _paymentsPageViewModel;
     private static BankMatchingPageViewModel? _bankMatchingPageViewModel;
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
@@ -944,7 +937,7 @@ public partial class App : Application
         foreach (var vm in new object?[]
         {
             _dashboardPageViewModel, _analyticsPageViewModel, _insightsPageViewModel, _reportsPageViewModel,
-            _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel, _paymentsPageViewModel,
+            _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel,
             _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
             _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
             _customersPageViewModel, _suppliersPageViewModel, _rentalInventoryPageViewModel,
@@ -959,7 +952,6 @@ public partial class App : Application
         _revenuePageViewModel = null;
         _expensesPageViewModel = null;
         _invoicesPageViewModel = null;
-        _paymentsPageViewModel = null;
         _bankMatchingPageViewModel = null;
         _productsPageViewModel = null;
         _stockLevelsPageViewModel = null;
@@ -3983,20 +3975,6 @@ public partial class App : Application
             _ = AutoSyncPortalPaymentsAsync();
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
-        navigationService.RegisterPage("Payments", param =>
-        {
-            _paymentsPageViewModel ??= new PaymentsPageViewModel();
-            _paymentsPageViewModel.HighlightTransactionId = null;
-            if (param is TransactionNavigationParameter navParam)
-            {
-                _paymentsPageViewModel.HighlightTransactionId = navParam.TransactionId;
-                _paymentsPageViewModel.ApplyHighlight();
-            }
-            _ = AutoSyncPortalPaymentsAsync();
-            _ = AutoMobileSyncAsync();
-            return new PaymentsPage { DataContext = _paymentsPageViewModel };
-        });
-
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
         {

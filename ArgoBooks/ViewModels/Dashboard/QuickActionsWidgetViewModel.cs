@@ -251,7 +251,9 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     [RelayCommand]
     private void RecordPayment()
     {
-        App.NavigationService?.NavigateTo("Payments");
+        // Payments belong to invoices now, so this lands on the invoices list
+        // with the modal open and an invoice still to pick.
+        App.NavigationService?.NavigateTo("Invoices");
         App.PaymentModalsViewModel?.OpenAddModal();
     }
 

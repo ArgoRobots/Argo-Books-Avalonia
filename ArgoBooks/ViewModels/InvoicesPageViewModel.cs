@@ -449,6 +449,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         LoadInvoices();
         LoadCustomerOptions();
 
+        InitializePortalState();
+        UpdateOnlineStatistics();
+        _ = CheckPortalStatusAsync();
+
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         if (App.NavigationService != null)
@@ -1342,6 +1346,189 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private void OpenTemplateDesigner()
     {
         App.InvoiceTemplateDesignerViewModel?.OpenTemplateList();
+    }
+
+    #region Payment Portal
+
+    [ObservableProperty]
+    private string _lastSyncTime = "Never";
+
+    [ObservableProperty]
+    private bool _isPortalConnected;
+
+    // IsPortalConfigured is declared in the Portal Configuration region above.
+
+    [ObservableProperty]
+    private bool _isSyncing;
+
+    [ObservableProperty]
+    private string _onlineReceivedThisMonth = "$0.00";
+
+    private void InitializePortalState()
+    {
+        var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        var hasKey = PortalSettings.IsConfigured;
+        var hasConnectedProvider = PaymentProviderService.GetConnectedMethods().Count > 0;
+        IsPortalConfigured = hasKey && hasConnectedProvider;
+        // Assume connected until the async check says otherwise, to avoid
+        // a brief flash of the "not configured" warning banner.
+        IsPortalConnected = IsPortalConfigured;
+
+        if (portalSettings?.LastSyncTime.HasValue == true)
+        {
+            LastSyncTime = FormatTimeSince(portalSettings.LastSyncTime.Value);
+        }
+    }
+
+    private async Task CheckPortalStatusAsync()
+    {
+        if (!PortalSettings.IsConfigured)
+        {
+            IsPortalConnected = false;
+            IsPortalConfigured = false;
+            return;
+        }
+
+        var portalService = App.PaymentPortalService;
+        if (portalService == null) return;
+
+        var status = await portalService.CheckStatusAsync();
+        IsPortalConnected = status.Connected;
+
+        var portalSettings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        if (portalSettings != null && status.ConnectedProviders != null)
+        {
+            portalSettings.ConnectedAccounts = status.ConnectedProviders;
+        }
+
+        // Require at least one connected provider to consider the portal configured
+        IsPortalConfigured = PaymentProviderService.GetConnectedMethods().Count > 0;
+    }
+
+    /// <summary>
+    /// Pulls new online payments from the server.
+    /// </summary>
+    [RelayCommand]
+    private async Task SyncPortal()
+    {
+        if (IsSyncing) return;
+
+        var portalService = App.PaymentPortalService;
+        var companyData = App.CompanyManager?.CompanyData;
+        if (portalService == null || companyData == null) return;
+
+        if (!PortalSettings.IsConfigured)
+        {
+            IsPortalConnected = false;
+            return;
+        }
+
+        IsSyncing = true;
+        try
+        {
+            var portalSettings = companyData.Settings.PaymentPortal;
+
+            // force=true recovers payments confirmed server-side but never saved locally.
+            var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
+
+            if (!syncResponse.Success)
+            {
+                IsPortalConnected = false;
+                return;
+            }
+
+            IsPortalConnected = true;
+
+            if (syncResponse.Payments.Count > 0)
+            {
+                var syncResult = PaymentPortalService.ProcessSyncedPayments(
+                    syncResponse.Payments, companyData);
+                var newPayments = syncResult.NewPayments;
+
+                // Only confirm payments that were actually processed locally. Skipped
+                // ones (e.g. invoice not found) stay unconfirmed so the server returns
+                // them next time.
+                var processedPortalIds = newPayments
+                    .Where(p => p.PortalPaymentId != null)
+                    .Select(p => int.Parse(p.PortalPaymentId!))
+                    .ToList();
+                if (processedPortalIds.Count > 0)
+                {
+                    await portalService.ConfirmSyncAsync(processedPortalIds);
+                }
+
+                // Also save when only existing rows were backfilled, or the in-memory
+                // ProcessingFee update is lost on restart. Only auto-persist when the
+                // user has no unsaved edits, so a sync can't quietly commit their
+                // in-progress work.
+                if ((newPayments.Count > 0 || syncResult.BackfilledRows > 0) && !(App.CompanyManager?.HasUnsavedChanges ?? false))
+                {
+                    try { await App.CompanyManager!.SavePaymentSyncAsync(); }
+                    catch { /* non-fatal */ }
+                }
+            }
+
+            portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
+            LastSyncTime = "Just now";
+
+            LoadInvoices();
+            UpdateOnlineStatistics();
+        }
+        catch (Exception)
+        {
+            IsPortalConnected = false;
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
+    }
+
+    private void UpdateOnlineStatistics()
+    {
+        var now = DateTime.Now;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var payments = App.CompanyManager?.CompanyData?.Payments ?? [];
+
+        // Convert each payment at its OWN date before summing (Calculations.md §3a Phase 2).
+        OnlineReceivedThisMonth = CurrencyService.FormatSumDisplayFromUSD(
+            payments.Where(p => p.Date >= startOfMonth && p.Source == PaymentSource.Online && p.Amount > 0),
+            p => p.Amount, p => p.OriginalCurrency, p => p.AmountUSD, p => p.Date);
+    }
+
+    private static string FormatTimeSince(DateTime utcTime)
+    {
+        var elapsed = DateTime.UtcNow - utcTime;
+
+        if (elapsed.TotalMinutes < 1) return "Just now";
+        if (elapsed.TotalMinutes < 60) return $"{(int)elapsed.TotalMinutes} min ago";
+        if (elapsed.TotalHours < 24) return $"{(int)elapsed.TotalHours}h ago";
+        return $"{(int)elapsed.TotalDays}d ago";
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Records a payment against this invoice, with the invoice already chosen.
+    /// </summary>
+    [RelayCommand]
+    private void RecordPayment(InvoiceDisplayItem? item)
+    {
+        if (item == null || IsSampleCompany) return;
+
+        PaymentModalsViewModel? payments = App.PaymentModalsViewModel;
+        if (payments == null) return;
+
+        // Refresh the list once the payment lands so the invoice's status and
+        // balance reflect it without waiting for a navigation.
+        void OnSaved(object? _, EventArgs __)
+        {
+            payments.PaymentSaved -= OnSaved;
+            LoadInvoices();
+        }
+
+        payments.PaymentSaved += OnSaved;
+        payments.OpenAddModalForInvoice(item.Id);
     }
 
     /// <summary>

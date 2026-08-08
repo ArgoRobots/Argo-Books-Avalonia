@@ -1547,6 +1547,46 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #region History Modal
 
+    /// <summary>
+    /// Opens a payment from the history timeline for editing. Payments live only
+    /// under their invoice, so this is the way in.
+    /// </summary>
+    [RelayCommand]
+    private void EditHistoryPayment(InvoiceHistoryDisplayItem? entry)
+    {
+        if (string.IsNullOrEmpty(entry?.PaymentId)) return;
+
+        App.PaymentModalsViewModel?.OpenEditModal(BuildPaymentDisplayItem(entry.PaymentId));
+    }
+
+    [RelayCommand]
+    private void DeleteHistoryPayment(InvoiceHistoryDisplayItem? entry)
+    {
+        if (string.IsNullOrEmpty(entry?.PaymentId)) return;
+
+        App.PaymentModalsViewModel?.OpenDeleteConfirm(BuildPaymentDisplayItem(entry.PaymentId));
+    }
+
+    /// <summary>
+    /// Both payment modals take a display item and re-look-up the Payment by Id, so this
+    /// only fills the fields their confirmation text actually reads.
+    /// </summary>
+    private static PaymentDisplayItem? BuildPaymentDisplayItem(string paymentId)
+    {
+        Payment? payment = App.CompanyManager?.CompanyData?.Payments
+            .FirstOrDefault(p => p.Id == paymentId);
+        if (payment == null) return null;
+
+        return new PaymentDisplayItem
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            AmountUSD = payment.AmountUSD,
+            OriginalCurrency = payment.OriginalCurrency,
+            Date = payment.Date,
+        };
+    }
+
     public void OpenHistoryModal(InvoiceDisplayItem? item)
     {
         if (item == null) return;
@@ -1580,7 +1620,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 ActionType = "Payment",
                 Description = $"Payment of {CurrencyService.Format(payment.Amount)} received via {payment.PaymentMethod}",
-                DateTime = payment.Date
+                DateTime = payment.Date,
+                PaymentId = payment.Id,
+                CanEditPayment = payment.Source != PaymentSource.Online
             });
         }
 
@@ -2845,6 +2887,15 @@ public class InvoiceHistoryDisplayItem
     public string Description { get; set; } = string.Empty;
     public DateTime DateTime { get; set; }
     public bool IsLast { get; set; }
+
+    /// <summary>
+    /// Set on payment rows so they can be edited or deleted from here. Payments are
+    /// only reachable through their invoice, so this timeline is where they are managed.
+    /// </summary>
+    public string? PaymentId { get; set; }
+
+    /// <summary>Portal payments are read-only, matching the payment modal's own rule.</summary>
+    public bool CanEditPayment { get; set; }
 
     public string DateTimeFormatted => TimeZoneService.FormatDateTime(DateTime);
 }

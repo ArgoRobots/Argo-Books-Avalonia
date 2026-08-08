@@ -39,9 +39,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
     private string? _modalInvoiceId;
 
     [ObservableProperty]
-    private string? _modalRevenueId;
-
-    [ObservableProperty]
     private string? _modalCustomerId;
 
     [ObservableProperty]
@@ -64,15 +61,10 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// When true, all fields except Notes are read-only.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsRevenueLinkVisible))]
     private bool _isPortalPayment;
 
     [ObservableProperty]
     private string? _modalInvoiceError;
-
-    /// <summary>Error shown when the payment isn't linked to an invoice or a revenue.</summary>
-    [ObservableProperty]
-    private string? _modalLinkError;
 
     [ObservableProperty]
     private string? _modalAmountError;
@@ -84,7 +76,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
 
     // Original values for change detection in edit mode
     private string? _originalInvoiceId;
-    private string? _originalRevenueId;
     private string _originalAmount = string.Empty;
     private string _originalPaymentMethod = "Cash";
     private string _originalReferenceNumber = string.Empty;
@@ -95,7 +86,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// </summary>
     public bool HasAddModalEnteredData =>
         !string.IsNullOrEmpty(ModalInvoiceId) ||
-        !string.IsNullOrEmpty(ModalRevenueId) ||
         !string.IsNullOrWhiteSpace(ModalAmount) ||
         !string.IsNullOrWhiteSpace(ModalReferenceNumber) ||
         !string.IsNullOrWhiteSpace(ModalNotes);
@@ -105,7 +95,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// </summary>
     public bool HasEditModalChanges =>
         ModalInvoiceId != _originalInvoiceId ||
-        ModalRevenueId != _originalRevenueId ||
         ModalAmount != _originalAmount ||
         ModalPaymentMethod != _originalPaymentMethod ||
         ModalReferenceNumber != _originalReferenceNumber ||
@@ -218,31 +207,16 @@ public partial class PaymentModalsViewModel : ViewModelBase
     /// Selected invoice option for modal.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsRevenueLinkVisible))]
     private InvoiceOption? _selectedInvoice;
-
-    /// <summary>
-    /// Whether to offer the "Revenue (if not linked to an invoice)" picker.
-    /// </summary>
-    /// <remarks>
-    /// Hidden once an invoice is chosen. The two links are mutually exclusive
-    /// (<see cref="OnSelectedInvoiceChanged"/> clears the revenue), so leaving
-    /// it on screen reads as though the payment could be attached to both, and
-    /// its label then contradicts the invoice picked directly above it.
-    /// </remarks>
-    public bool IsRevenueLinkVisible => SelectedInvoice == null && !IsPortalPayment;
 
     partial void OnSelectedInvoiceChanged(InvoiceOption? value)
     {
         ModalInvoiceId = value?.Id;
         // Clear errors when user selects an invoice
         ModalInvoiceError = null;
-        ModalLinkError = null;
         // Auto-fill customer when invoice is selected
         if (value?.Id != null)
         {
-            // An invoice and a revenue are mutually exclusive links.
-            SelectedRevenue = null;
             var companyData = App.CompanyManager?.CompanyData;
             var invoice = companyData?.GetInvoice(value.Id);
             if (invoice != null)
@@ -260,33 +234,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
                         ModalAmount = remaining.ToString("F2");
                     }
                 }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Selected revenue option for the modal (for payments recorded directly against a revenue
-    /// rather than an invoice).
-    /// </summary>
-    [ObservableProperty]
-    private RevenueOption? _selectedRevenue;
-
-    public ObservableCollection<RevenueOption> RevenueOptions { get; } = [];
-
-    partial void OnSelectedRevenueChanged(RevenueOption? value)
-    {
-        ModalRevenueId = value?.Id;
-        ModalLinkError = null;
-        if (value?.Id != null)
-        {
-            // An invoice and a revenue are mutually exclusive links.
-            SelectedInvoice = null;
-            if (!string.IsNullOrEmpty(value.CustomerId))
-                ModalCustomerId = value.CustomerId;
-            if (string.IsNullOrEmpty(ModalAmount) || ModalAmount == "0")
-            {
-                if (value.Total > 0)
-                    ModalAmount = value.Total.ToString("F2");
             }
         }
     }
@@ -325,9 +272,23 @@ public partial class PaymentModalsViewModel : ViewModelBase
         _editingPayment = null;
         ClearModalFields();
         LoadInvoiceOptions();
-        LoadRevenueOptions();
         LoadCustomerOptionsForFilter();
         IsAddModalOpen = true;
+    }
+
+    /// <summary>
+    /// Opens the add-payment modal with an invoice already chosen, for recording a
+    /// payment from the invoices page.
+    /// </summary>
+    /// <remarks>
+    /// Selecting the option (rather than setting ModalInvoiceId) runs
+    /// OnSelectedInvoiceChanged, which fills in the customer and the remaining
+    /// balance, so this behaves exactly as if the user had picked it by hand.
+    /// </remarks>
+    public void OpenAddModalForInvoice(string invoiceId)
+    {
+        OpenAddModal();
+        SelectedInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == invoiceId);
     }
 
     [RelayCommand]
@@ -396,12 +357,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             if (invoice != null && !string.IsNullOrEmpty(invoice.OriginalCurrency))
                 return invoice.OriginalCurrency;
         }
-        if (!string.IsNullOrEmpty(ModalRevenueId))
-        {
-            var revenue = companyData.Revenues.FirstOrDefault(r => r.Id == ModalRevenueId);
-            if (revenue != null && !string.IsNullOrEmpty(revenue.OriginalCurrency))
-                return revenue.OriginalCurrency;
-        }
         return CurrencyService.CurrentCurrencyCode;
     }
 
@@ -446,7 +401,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         {
             Id = newId,
             InvoiceId = ModalInvoiceId ?? string.Empty,
-            RevenueId = ModalRevenueId ?? string.Empty,
             CustomerId = ModalCustomerId ?? string.Empty,
             Date = paymentDate,
             Amount = parsedAmount,
@@ -505,13 +459,10 @@ public partial class PaymentModalsViewModel : ViewModelBase
 
         _editingPayment = payment;
         LoadInvoiceOptions();
-        LoadRevenueOptions();
         LoadCustomerOptionsForFilter();
 
         ModalInvoiceId = payment.InvoiceId;
         SelectedInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == payment.InvoiceId);
-        ModalRevenueId = string.IsNullOrEmpty(payment.RevenueId) ? null : payment.RevenueId;
-        SelectedRevenue = RevenueOptions.FirstOrDefault(r => r.Id == ModalRevenueId);
         ModalCustomerId = payment.CustomerId;
         ModalAmount = payment.Amount.ToString("F2");
         ModalDate = new DateTimeOffset(payment.Date);
@@ -522,7 +473,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
 
         // Store original values for change detection
         _originalInvoiceId = ModalInvoiceId;
-        _originalRevenueId = ModalRevenueId;
         _originalAmount = ModalAmount;
         _originalPaymentMethod = ModalPaymentMethod;
         _originalReferenceNumber = ModalReferenceNumber;
@@ -611,7 +561,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             return;
 
         var oldInvoiceId = _editingPayment.InvoiceId;
-        var oldRevenueId = _editingPayment.RevenueId;
         var oldCustomerId = _editingPayment.CustomerId;
         var oldDate = _editingPayment.Date;
         var oldAmount = _editingPayment.Amount;
@@ -620,7 +569,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var oldNotesVal = _editingPayment.Notes;
 
         var newInvoiceId = ModalInvoiceId ?? string.Empty;
-        var newRevenueId = ModalRevenueId ?? string.Empty;
         var newCustomerId = ModalCustomerId ?? string.Empty;
         var newDate = ModalDate?.DateTime ?? DateTime.Today;
         var newAmount = decimal.Parse(ModalAmount);
@@ -649,7 +597,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
 
         // Check if anything actually changed
         var hasChanges = oldInvoiceId != newInvoiceId ||
-                         oldRevenueId != newRevenueId ||
                          oldCustomerId != newCustomerId ||
                          oldDate != newDate ||
                          oldAmount != newAmount ||
@@ -676,7 +623,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         var oldAmountUSD = paymentToEdit2.AmountUSD;
 
         paymentToEdit2.InvoiceId = newInvoiceId;
-        paymentToEdit2.RevenueId = newRevenueId;
         paymentToEdit2.CustomerId = newCustomerId;
         paymentToEdit2.Date = newDate;
         paymentToEdit2.Amount = newAmount;
@@ -698,7 +644,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             () =>
             {
                 paymentToEdit2.InvoiceId = oldInvoiceId;
-                paymentToEdit2.RevenueId = oldRevenueId;
                 paymentToEdit2.CustomerId = oldCustomerId;
                 paymentToEdit2.Date = oldDate;
                 paymentToEdit2.Amount = oldAmount;
@@ -716,7 +661,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
             () =>
             {
                 paymentToEdit2.InvoiceId = newInvoiceId;
-                paymentToEdit2.RevenueId = newRevenueId;
                 paymentToEdit2.CustomerId = newCustomerId;
                 paymentToEdit2.Date = newDate;
                 paymentToEdit2.Amount = newAmount;
@@ -914,36 +858,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Loads revenues that are not already linked to an invoice, so a payment can be recorded
-    /// directly against a direct (non-invoice) revenue.
-    /// </summary>
-    private void LoadRevenueOptions()
-    {
-        RevenueOptions.Clear();
-        RevenueOptions.Add(new RevenueOption { Id = null, Display = "No Revenue" });
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Revenues == null)
-            return;
-
-        foreach (var revenue in companyData.Revenues
-                     .Where(r => string.IsNullOrEmpty(r.InvoiceId))
-                     .OrderByDescending(r => r.Date))
-        {
-            var customer = string.IsNullOrEmpty(revenue.CustomerId) ? null : companyData.GetCustomer(revenue.CustomerId);
-            var label = string.IsNullOrWhiteSpace(revenue.Description) ? revenue.Id : revenue.Description;
-            var who = customer != null ? $" - {customer.Name}" : "";
-            RevenueOptions.Add(new RevenueOption
-            {
-                Id = revenue.Id,
-                Display = $"{label}{who} (${revenue.Total:N2})",
-                CustomerId = revenue.CustomerId,
-                Total = revenue.Total
-            });
-        }
-    }
-
     private void LoadCustomerOptionsForFilter()
     {
         CustomerOptions.Clear();
@@ -979,8 +893,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
     {
         ModalInvoiceId = null;
         SelectedInvoice = null;
-        ModalRevenueId = null;
-        SelectedRevenue = null;
         ModalCustomerId = null;
         ModalAmount = string.Empty;
         ModalDate = DateTimeOffset.Now;
@@ -994,7 +906,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
     private void ClearModalErrors()
     {
         ModalInvoiceError = null;
-        ModalLinkError = null;
         ModalAmountError = null;
     }
 
@@ -1014,10 +925,11 @@ public partial class PaymentModalsViewModel : ViewModelBase
         ClearModalErrors();
         var isValid = true;
 
-        // A payment must be linked to either an invoice or a revenue.
-        if (string.IsNullOrEmpty(ModalInvoiceId) && string.IsNullOrEmpty(ModalRevenueId))
+        // Payments belong to an invoice. Money taken without one is recorded as a
+        // Revenue instead, which already counts as income on its own.
+        if (string.IsNullOrEmpty(ModalInvoiceId))
         {
-            ModalLinkError = "Link this payment to an invoice or a revenue.".Translate();
+            ModalInvoiceError = "Choose the invoice this payment is for.".Translate();
             isValid = false;
         }
 
@@ -1037,4 +949,105 @@ public partial class PaymentModalsViewModel : ViewModelBase
     }
 
     #endregion
+}
+
+
+/// <summary>
+/// Display model for payments in the UI.
+/// </summary>
+public partial class PaymentDisplayItem : ObservableObject
+{
+    [ObservableProperty]
+    private string _id = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInvoiceId))]
+    private string _invoiceId = string.Empty;
+
+    [ObservableProperty]
+    private string _invoiceDisplay = string.Empty;
+
+    /// <summary>
+    /// True when this payment has a linked invoice, drives the Invoice
+    /// column's hyperlink visibility. Manual payments without an invoice
+    /// fall back to a "-" placeholder.
+    /// </summary>
+    public bool HasInvoiceId => !string.IsNullOrEmpty(InvoiceId);
+
+    [ObservableProperty]
+    private string _customerId = string.Empty;
+
+    [ObservableProperty]
+    private string _customerName = string.Empty;
+
+    [ObservableProperty]
+    private DateTime _date;
+
+    [ObservableProperty]
+    private PaymentMethod _paymentMethod;
+
+    [ObservableProperty]
+    private string _paymentMethodDisplay = string.Empty;
+
+    [ObservableProperty]
+    private decimal _amount;
+
+    [ObservableProperty]
+    private decimal _amountUSD;
+
+    [ObservableProperty]
+    private string _originalCurrency = "USD";
+
+    [ObservableProperty]
+    private string _status = "Completed";
+
+    [ObservableProperty]
+    private string? _referenceNumber;
+
+    [ObservableProperty]
+    private string _notes = string.Empty;
+
+    [ObservableProperty]
+    private bool _isFromPortal;
+
+    /// <summary>
+    /// Gets the formatted date.
+    /// </summary>
+    public string DateFormatted => Date.ToString("MMM d, yyyy");
+
+    /// <summary>
+    /// Gets the formatted amount.
+    /// </summary>
+    public string AmountFormatted => AmountUSD < 0
+        ? $"-{CurrencyService.FormatWithOriginal(Math.Abs(Amount), OriginalCurrency, Math.Abs(AmountUSD), Date)}"
+        : CurrencyService.FormatWithOriginal(Amount, OriginalCurrency, AmountUSD, Date);
+
+    /// <summary>
+    /// True when the amount is showing the pending-conversion marker (its display-currency value
+    /// isn't available yet). Drives the info glyph + tooltip next to the "Pending" text.
+    /// </summary>
+    public bool IsAmountPending => AmountFormatted == CurrencyService.PendingMarker;
+
+    /// <summary>Friendly explanation shown in the info tooltip when <see cref="IsAmountPending"/>.</summary>
+    public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Amount, OriginalCurrency, Date);
+
+    /// <summary>
+    /// Gets whether the amount is negative (refund).
+    /// </summary>
+    public bool IsRefund => Amount < 0;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
+}
+
+/// <summary>
+/// Invoice option for dropdown.
+/// </summary>
+public class InvoiceOption
+{
+    public string? Id { get; set; }
+    public string Display { get; set; } = string.Empty;
+    public decimal AmountDue { get; set; }
+
+    public override string ToString() => Display;
 }

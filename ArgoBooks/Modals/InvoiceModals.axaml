@@ -537,15 +537,40 @@
                                                         IsVisible="{Binding !IsLast}" />
                                             </StackPanel>
 
-                                            <!-- Content -->
-                                            <StackPanel Grid.Column="2" Spacing="4">
-                                                <TextBlock Text="{Binding Description}"
-                                                           FontSize="14"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding DateTimeFormatted}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </StackPanel>
+                                            <!-- Content. Payment rows carry edit/delete: payments are
+                                                 only reachable through their invoice, so this is where
+                                                 they get managed. -->
+                                            <Grid Grid.Column="2" ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="4">
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="14"
+                                                               TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding DateTimeFormatted}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1"
+                                                            Orientation="Horizontal"
+                                                            Spacing="4"
+                                                            VerticalAlignment="Top"
+                                                            IsVisible="{Binding CanEditPayment}">
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Edit Payment'}"
+                                                            AutomationProperties.Name="Edit Payment"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).EditHistoryPaymentCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Edit}" Width="14" Height="14" />
+                                                    </Button>
+                                                    <Button Classes="icon-button danger"
+                                                            ToolTip.Tip="{loc:Loc 'Delete Payment'}"
+                                                            AutomationProperties.Name="Delete Payment"
+                                                            Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).DeleteHistoryPaymentCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Delete}" Width="14" Height="14" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

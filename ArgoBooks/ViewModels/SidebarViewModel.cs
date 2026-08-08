@@ -80,7 +80,6 @@ public partial class SidebarViewModel : ViewModelBase
     #region Premium Feature Items
 
     private SidebarItemModel? _invoicesItem;
-    private SidebarItemModel? _paymentsItem;
 
     #endregion
 
@@ -155,15 +154,12 @@ public partial class SidebarViewModel : ViewModelBase
         MainItems.Add(CreateItem("Insights", "Insights", Icons.Insights));
         MainItems.Add(CreateItem("Reports", "Reports", Icons.Reports));
 
-        // Transactions Section (mockup: Expenses, Revenue, Invoices, Payments)
+        // Transactions Section (Expenses, Revenue, Invoices)
         TransactionItems.Add(CreateItem("Expenses", "Expenses", Icons.Expenses));
         TransactionItems.Add(CreateItem("Revenue", "Revenue", Icons.Revenue));
         _invoicesItem = CreateItem("Invoices", "Invoices", Icons.Invoices);
         _invoicesItem.IsVisible = true; // Available on free tier (with send limits)
         TransactionItems.Add(_invoicesItem);
-        _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
-        _paymentsItem.IsVisible = true; // Available on free tier (online payments via portal)
-        TransactionItems.Add(_paymentsItem);
         TransactionItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Bank));
 
         // Rentals Section (mockup: Rental Inventory, Rental Records)
