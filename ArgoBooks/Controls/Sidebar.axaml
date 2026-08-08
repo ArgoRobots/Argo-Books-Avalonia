@@ -206,14 +206,6 @@
                                          Items="{Binding RentalItems}"
                                          IsVisible="{Binding ShowRentals}" />
 
-                <!-- Team Section -->
-                <controls:SidebarSection Title="{loc:Loc Team}"
-                                         SectionKey="Team"
-                                         IsCollapsed="{Binding IsCollapsed}"
-                                         IsCollapsible="True"
-                                         Items="{Binding TeamItems}"
-                                         IsVisible="{Binding ShowTeam}" />
-
                 <!-- Tracking Section -->
                 <controls:SidebarSection Title="{loc:Loc Tracking}"
                                          SectionKey="Tracking"

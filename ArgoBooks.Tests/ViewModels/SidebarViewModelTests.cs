@@ -272,49 +272,29 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void Constructor_DefaultState_ShowPayrollIsTrue()
-    {
-        Assert.True(_viewModel.ShowPayroll);
-    }
-
-    [Fact]
-    public void Constructor_DefaultState_ShowTeamIsFalse()
-    {
-        Assert.False(_viewModel.ShowTeam);
-    }
-
-    [Fact]
     public void Constructor_DefaultState_HasPremiumIsFalse()
     {
         Assert.False(_viewModel.HasPremium);
     }
 
     [Fact]
-    public void Constructor_DefaultState_HasEnterpriseIsFalse()
-    {
-        Assert.False(_viewModel.HasEnterprise);
-    }
-
-    [Fact]
     public void UpdateFeatureVisibility_SetsAllFlags()
     {
-        _viewModel.UpdateFeatureVisibility(false, false, false, false);
+        _viewModel.UpdateFeatureVisibility(false, false, false);
 
         Assert.False(_viewModel.ShowTransactions);
         Assert.False(_viewModel.ShowInventory);
         Assert.False(_viewModel.ShowRentals);
-        Assert.False(_viewModel.ShowPayroll);
     }
 
     [Fact]
     public void UpdateFeatureVisibility_IndividualFlags_SetCorrectly()
     {
-        _viewModel.UpdateFeatureVisibility(true, false, true, false);
+        _viewModel.UpdateFeatureVisibility(true, false, true);
 
         Assert.True(_viewModel.ShowTransactions);
         Assert.False(_viewModel.ShowInventory);
         Assert.True(_viewModel.ShowRentals);
-        Assert.False(_viewModel.ShowPayroll);
     }
 
     #endregion
@@ -341,23 +321,6 @@ public class SidebarViewModelTests
         var insightsItem = _viewModel.MainItems.FirstOrDefault(i => i.PageName == "Insights");
         Assert.NotNull(insightsItem);
         Assert.Null(insightsItem.BadgeText);
-    }
-
-    [Fact]
-    public void HasEnterprise_WhenSetToTrue_ShowsTeamSection()
-    {
-        _viewModel.HasEnterprise = true;
-
-        Assert.True(_viewModel.ShowTeam);
-    }
-
-    [Fact]
-    public void HasEnterprise_WhenSetToFalse_HidesTeamSection()
-    {
-        _viewModel.HasEnterprise = true;
-        _viewModel.HasEnterprise = false;
-
-        Assert.False(_viewModel.ShowTeam);
     }
 
     #endregion

@@ -64,29 +64,13 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showRentals = true;
 
     [ObservableProperty]
-    private bool _showPayroll = true;
-
-    [ObservableProperty]
-    private bool _showTeam; // Hidden until enterprise plan
-
-    [ObservableProperty]
     private bool _hasPremium; // Premium plan
-
-    [ObservableProperty]
-    private bool _hasEnterprise; // Enterprise plan (always false for now)
 
     #endregion
 
     #region Premium Feature Items
 
     private SidebarItemModel? _invoicesItem;
-
-    #endregion
-
-    #region Enterprise Feature Items
-
-    private SidebarItemModel? _locationsItem;
-    private SidebarItemModel? _transfersItem;
 
     #endregion
 
@@ -100,7 +84,6 @@ public partial class SidebarViewModel : ViewModelBase
     public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
     public ObservableCollection<SidebarItemModel> ManagementItems { get; } = [];
     public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
-    public ObservableCollection<SidebarItemModel> TeamItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TrackingItems { get; } = [];
 
     #endregion
@@ -172,14 +155,10 @@ public partial class SidebarViewModel : ViewModelBase
         ManagementItems.Add(CreateItem("Categories", "Categories", Icons.Categories));
         ManagementItems.Add(CreateItem("Suppliers", "Suppliers", Icons.Suppliers));
 
-        // Inventory Section (mockup: Stock Levels, Adjustments, Locations, Transfers, Purchase Orders)
+        // Inventory Section
         InventoryItems.Add(CreateItem("Stock Levels", "StockLevels", Icons.StockLevels));
         InventoryItems.Add(CreateItem("Adjustments", "StockAdjustments", Icons.Adjustments));
-        _locationsItem = CreateItem("Locations", "Locations", Icons.Locations);
-        InventoryItems.Add(_locationsItem);
-        _transfersItem = CreateItem("Transfers", "Transfers", Icons.Transfers);
-        _transfersItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
-        InventoryItems.Add(_transfersItem);
+        InventoryItems.Add(CreateItem("Locations", "Locations", Icons.Locations));
         InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders", Icons.PurchaseOrders));
 
         // Tracking Section (mockup: Returns, Lost/Damaged, Receipts)
@@ -234,16 +213,6 @@ public partial class SidebarViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Updates enterprise feature visibility when enterprise status changes.
-    /// </summary>
-    partial void OnHasEnterpriseChanged(bool value)
-    {
-        ShowTeam = value;
-        _locationsItem?.IsVisible = value;
-        _transfersItem?.IsVisible = value;
-    }
-
-    /// <summary>
     /// Updates collapsed state on all items.
     /// </summary>
     private void UpdateItemsCollapsedState(bool isCollapsed)
@@ -253,7 +222,6 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in RentalItems) item.IsCollapsed = isCollapsed;
         foreach (var item in ManagementItems) item.IsCollapsed = isCollapsed;
         foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
-        foreach (var item in TeamItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TrackingItems) item.IsCollapsed = isCollapsed;
     }
 
@@ -311,19 +279,17 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in RentalItems) item.IsActive = item.PageName == pageName;
         foreach (var item in ManagementItems) item.IsActive = item.PageName == pageName;
         foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
-        foreach (var item in TeamItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TrackingItems) item.IsActive = item.PageName == pageName;
     }
 
     /// <summary>
     /// Updates feature visibility based on settings.
     /// </summary>
-    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals, bool showPayroll)
+    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals)
     {
         ShowTransactions = showTransactions;
         ShowInventory = showInventory;
         ShowRentals = showRentals;
-        ShowPayroll = showPayroll;
     }
 
     /// <summary>
