@@ -4070,6 +4070,32 @@ public partial class App : Application
             return new CategoriesPage { DataContext = _categoriesPageViewModel };
         });
 
+        // The sidebar lists each side of the categories and products pages separately.
+        // Both sides are still one page and one view model, entered on the matching tab,
+        // so these registrations only preset the tab. The pages have no tab bar.
+        navigationService.RegisterPage("ExpenseCategories", _ => CategoriesPageForTab(0));
+        navigationService.RegisterPage("RevenueCategories", _ => CategoriesPageForTab(1));
+        navigationService.RegisterPage("ExpenseProducts", _ => ProductsPageForTab(0));
+        navigationService.RegisterPage("RevenueProducts", _ => ProductsPageForTab(1));
+
+        CategoriesPage CategoriesPageForTab(int tabIndex)
+        {
+            _categoriesPageViewModel ??= new CategoriesPageViewModel();
+            _categoriesPageViewModel.IsAddModalOpen = false;
+            _categoriesPageViewModel.SelectedTabIndex = tabIndex;
+            return new CategoriesPage { DataContext = _categoriesPageViewModel };
+        }
+
+        ProductsPage ProductsPageForTab(int tabIndex)
+        {
+            _productsPageViewModel ??= new ProductsPageViewModel();
+            _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            _productsPageViewModel.IsAddModalOpen = false;
+            _productsPageViewModel.HighlightTransactionId = null;
+            _productsPageViewModel.SelectedTabIndex = tabIndex;
+            return new ProductsPage { DataContext = _productsPageViewModel };
+        }
+
         // Contacts Section
         navigationService.RegisterPage("Customers", param =>
         {

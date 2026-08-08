@@ -17,23 +17,10 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid RowDefinitions="Auto,*">
-        <!-- Tab Bar -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,0,0,1">
-            <TabControl x:Name="CategoriesPageTabs"
-                        SelectedIndex="{Binding SelectedTabIndex}"
-                        Margin="0"
-                        Classes="page-tabs">
-                <TabItem Header="{loc:Loc 'Expense Categories'}" />
-                <TabItem Header="{loc:Loc 'Revenue Categories'}" />
-            </TabControl>
-        </Border>
-
-        <!-- Main Content -->
-        <Grid Grid.Row="1" RowDefinitions="*" Margin="24">
+    <Grid RowDefinitions="*">
+        <!-- Main Content. The expense and revenue sides are separate sidebar entries,
+             so there is no tab bar; SelectedTabIndex is set by the navigation target. -->
+        <Grid Grid.Row="0" RowDefinitions="*" Margin="24">
             <!-- Main Content Card using ArgoTable -->
             <table:ArgoTable Grid.Row="0"
                                 Title="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpenseOrRevenueCategories}}"
