@@ -69,7 +69,7 @@
                Placement="Bottom"
                PlacementGravity="BottomLeft"
                IsLightDismissEnabled="True"
-               WindowManagerAddShadowHint="True">
+               WindowManagerAddShadowHint="False">
 
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
