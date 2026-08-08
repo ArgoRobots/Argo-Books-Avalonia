@@ -185,20 +185,6 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Record Payment -->
-                <Button Classes="quick-action-compact" Margin="6" Width="165"
-                        Command="{Binding RecordPaymentCommand}"
-                        IsVisible="{Binding ShowRecordPayment}">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Border Width="32" Height="32" CornerRadius="6" Background="{DynamicResource SuccessIconBgBrush}">
-                            <PathIcon Data="{x:Static local:Icons.Payments}"
-                                      Width="16" Height="16" Foreground="{DynamicResource SuccessBrush}" />
-                        </Border>
-                        <TextBlock Text="{loc:Loc 'Record Payment'}" FontSize="12" FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-
                 <!-- New Rental Item -->
                 <Button Classes="quick-action-compact" Margin="6" Width="165"
                         Command="{Binding NewRentalItemCommand}"

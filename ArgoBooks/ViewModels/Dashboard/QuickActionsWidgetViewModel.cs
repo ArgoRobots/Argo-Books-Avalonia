@@ -54,11 +54,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
     [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
-    private bool _showRecordPayment;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasVisibleQuickActions))]
-    [NotifyPropertyChangedFor(nameof(HasNoVisibleQuickActions))]
     private bool _showNewRentalItem;
 
     [ObservableProperty]
@@ -89,7 +84,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     public bool HasVisibleQuickActions =>
         ShowNewInvoice || ShowNewExpense || ShowNewRevenue || ShowScanReceipt ||
         ShowImportBankStatement ||
-        ShowNewCustomer || ShowNewSupplier || ShowNewProduct || ShowRecordPayment ||
+        ShowNewCustomer || ShowNewSupplier || ShowNewProduct ||
         ShowNewRentalItem || ShowNewRentalRecord ||
         ShowNewCategory || ShowNewLocation ||
         ShowNewPurchaseOrder || ShowNewStockAdjustment;
@@ -135,7 +130,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             ShowNewCustomer = qa.ShowNewCustomer;
             ShowNewSupplier = qa.ShowNewSupplier;
             ShowNewProduct = qa.ShowNewProduct;
-            ShowRecordPayment = qa.ShowRecordPayment;
             ShowNewRentalItem = qa.ShowNewRentalItem;
             ShowNewRentalRecord = qa.ShowNewRentalRecord;
             ShowNewCategory = qa.ShowNewCategory;
@@ -157,7 +151,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
             ["ShowNewCustomer"] = ShowNewCustomer.ToString(),
             ["ShowNewSupplier"] = ShowNewSupplier.ToString(),
             ["ShowNewProduct"] = ShowNewProduct.ToString(),
-            ["ShowRecordPayment"] = ShowRecordPayment.ToString(),
             ["ShowNewRentalItem"] = ShowNewRentalItem.ToString(),
             ["ShowNewRentalRecord"] = ShowNewRentalRecord.ToString(),
             ["ShowNewCategory"] = ShowNewCategory.ToString(),
@@ -177,7 +170,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
         if (config.TryGetValue("ShowNewCustomer", out v)) ShowNewCustomer = v == "True";
         if (config.TryGetValue("ShowNewSupplier", out v)) ShowNewSupplier = v == "True";
         if (config.TryGetValue("ShowNewProduct", out v)) ShowNewProduct = v == "True";
-        if (config.TryGetValue("ShowRecordPayment", out v)) ShowRecordPayment = v == "True";
         if (config.TryGetValue("ShowNewRentalItem", out v)) ShowNewRentalItem = v == "True";
         if (config.TryGetValue("ShowNewRentalRecord", out v)) ShowNewRentalRecord = v == "True";
         if (config.TryGetValue("ShowNewCategory", out v)) ShowNewCategory = v == "True";
@@ -246,15 +238,6 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     {
         App.NavigationService?.NavigateTo("Products");
         App.ProductModalsViewModel?.OpenAddModal();
-    }
-
-    [RelayCommand]
-    private void RecordPayment()
-    {
-        // Payments belong to invoices now, so this lands on the invoices list
-        // with the modal open and an invoice still to pick.
-        App.NavigationService?.NavigateTo("Invoices");
-        App.PaymentModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
