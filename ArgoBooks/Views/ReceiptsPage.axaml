@@ -146,7 +146,7 @@
                         <Button Classes="view-toggle-button"
                                 Classes.selected="{Binding IsListView}"
                                 Command="{Binding SetListViewCommand}"
-                                ToolTip.Tip="{loc:Loc 'List View'}">
+                                ToolTip.Tip="{loc:Loc 'List view'}">
                             <PathIcon Data="{x:Static icons:Icons.ListBullet}"
                                       Width="16" Height="16" />
                         </Button>
@@ -163,7 +163,7 @@
                                       VerticalAlignment="Center" />
                         </Panel>
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'Receipt #'}" ColumnName="Id"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Receipt'}" ColumnName="Id"
                                                    ColumnWidth="{Binding ColumnWidths.IdColumnWidth}"
                                                    IsColumnVisible="{Binding ShowIdColumn}"
                                                    IsSortable="False" ColumnWidths="{Binding ColumnWidths}" />
@@ -490,7 +490,7 @@
                                     ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'Receipt #'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'Receipt'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc 'Supplier'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc 'Date'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc 'Type'}" Classes="column-toggle" />

@@ -114,7 +114,7 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <Button Grid.Column="0"
-                                    Content="{loc:Loc 'Clear Filters'}"
+                                    Content="{loc:Loc 'Clear filters'}"
                                     Classes="secondary-button"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ClearFiltersCommand}" />

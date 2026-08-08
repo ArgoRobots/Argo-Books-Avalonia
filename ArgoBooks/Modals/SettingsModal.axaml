@@ -1159,7 +1159,7 @@
                                                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
                                                         SearchText="{Binding CategorySearchText, Mode=TwoWay}"
                                                         DisplayMemberPath="Name"
-                                                        Placeholder="{loc:Loc 'Category...'}"
+                                                        Placeholder="{loc:Loc 'Select category...'}"
                                                         ShowAddNew="True"
                                                         AddNewText="{loc:Loc 'Create one'}"
                                                         AddNewCommand="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).OpenCreateCategoryCommand}"
@@ -1627,7 +1627,7 @@
                             </Grid>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="{loc:Loc 'Confirm Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Confirm password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"

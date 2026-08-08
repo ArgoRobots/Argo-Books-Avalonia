@@ -374,7 +374,7 @@
                 <!-- Table Header Content - Using ArgoTableHeader for reduced boilerplate -->
                 <table:ArgoTable.HeaderContent>
                     <StackPanel Orientation="Horizontal">
-                        <table:ArgoTableHeader Header="{loc:Loc 'Invoice #'}" ColumnName="Id" SortProperty="Id"
+                        <table:ArgoTableHeader Header="{loc:Loc 'Invoice'}" ColumnName="Id" SortProperty="Id"
                                                    ColumnWidth="{Binding ColumnWidths.IdColumnWidth}"
                                                    IsColumnVisible="{Binding ShowIdColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -749,7 +749,7 @@
                                     ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'Invoice #'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'Invoice'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="{loc:Loc Customer}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowIssueDateColumn}" Content="{loc:Loc 'Issue Date'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="{loc:Loc 'Due Date'}" Classes="column-toggle" />

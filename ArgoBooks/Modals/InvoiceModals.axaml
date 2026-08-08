@@ -461,7 +461,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
                                     Classes="secondary-button"
-                                    Content="{loc:Loc 'Clear Filters'}"
+                                    Content="{loc:Loc 'Clear filters'}"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="2"
                                     Classes="secondary-button"

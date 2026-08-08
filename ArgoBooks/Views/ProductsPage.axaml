@@ -74,7 +74,7 @@
                     <Panel>
                         <!-- Table Header - Expenses Tab (8 columns) -->
                         <StackPanel Orientation="Horizontal" IsVisible="{Binding IsExpensesTabSelected}">
-                            <table:ArgoTableHeader Header="{loc:Loc 'Product Name'}" ColumnName="Name" SortProperty="Name"
+                            <table:ArgoTableHeader Header="{loc:Loc 'Product name'}" ColumnName="Name" SortProperty="Name"
                                                        ColumnWidth="{Binding ColumnWidths.NameColumnWidth}"
                                                        IsColumnVisible="{Binding ShowNameColumn}"
                                                        SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -126,7 +126,7 @@
 
                         <!-- Table Header - Revenue Tab (5 columns) -->
                         <StackPanel Orientation="Horizontal" IsVisible="{Binding IsRevenueTabSelected}">
-                            <table:ArgoTableHeader Header="{loc:Loc 'Product Name'}" ColumnName="Name" SortProperty="Name"
+                            <table:ArgoTableHeader Header="{loc:Loc 'Product name'}" ColumnName="Name" SortProperty="Name"
                                                        ColumnWidth="{Binding ColumnWidths.NameColumnWidth}"
                                                        IsColumnVisible="{Binding ShowNameColumn}"
                                                        SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -338,7 +338,7 @@
                                     ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Product Name'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Product name'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCategoryColumn}" Content="{loc:Loc Category}" Classes="column-toggle" />

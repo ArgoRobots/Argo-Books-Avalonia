@@ -145,7 +145,7 @@
                                                              AddNewText="{loc:Loc 'Create new product'}"
                                                              AddNewCommand="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              AddNewCommandParameter="{Binding}"
-                                                             EmptyMessage="{loc:Loc 'No products found.'}"
+                                                             EmptyMessage="{loc:Loc 'No products found'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:PurchaseOrdersModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              EmptyCreateCommandParameter="{Binding}"
@@ -569,7 +569,7 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
-                                    Content="{loc:Loc 'Clear Filters'}"
+                                    Content="{loc:Loc 'Clear filters'}"
                                     Classes="secondary-button"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ClearFiltersCommand}" />

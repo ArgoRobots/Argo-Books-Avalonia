@@ -48,7 +48,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Delete Template'}"
+                                       Text="{loc:Loc 'Delete template'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -117,7 +117,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="{loc:Loc 'Rename Template'}"
+                                       Text="{loc:Loc 'Rename template'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -136,7 +136,7 @@
                                    FontSize="14"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                         <TextBox Text="{Binding RenameTemplateNewName}"
-                                 PlaceholderText="{loc:Loc 'Template name...'}"
+                                 PlaceholderText="{loc:Loc 'Template name'}"
                                  Classes="form-input"
                                  x:Name="RenameTemplateTextBox"
                                  KeyDown="OnRenameTemplateKeyDown"

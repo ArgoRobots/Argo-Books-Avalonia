@@ -100,19 +100,11 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
-                                        <TextBlock Grid.Row="0" Grid.Column="0"
-                                                   Text="{loc:Loc 'From:'}"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="0" Grid.Column="0" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"><Run Text="{loc:Loc 'From'}" /><Run Text=":" /></TextBlock>
                                         <DatePicker Grid.Row="0" Grid.Column="1"
                                                     SelectedDate="{Binding StartDate}"
                                                     Classes="form-date" />
-                                        <TextBlock Grid.Row="1" Grid.Column="0"
-                                                   Text="{loc:Loc 'To:'}"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"><Run Text="{loc:Loc 'To'}" /><Run Text=":" /></TextBlock>
                                         <DatePicker Grid.Row="1" Grid.Column="1"
                                                     SelectedDate="{Binding EndDate}"
                                                     Classes="form-date" />

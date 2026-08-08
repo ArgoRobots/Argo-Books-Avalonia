@@ -235,7 +235,7 @@
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc ID}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc Product}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowSupplierCustomerColumn}" Content="{loc:Loc 'Supplier/Customer'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowSupplierCustomerColumn}" Content="{loc:Loc 'Supplier / Customer'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc Date}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowReasonColumn}" Content="{loc:Loc Reason}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowRefundColumn}" Content="{loc:Loc Refund}" Classes="column-toggle" />

@@ -157,7 +157,7 @@
                                     HorizontalAlignment="Center">
                             <Button Classes="icon-button"
                                     Click="ZoomOut_Click"
-                                    ToolTip.Tip="{loc:Loc 'Zoom Out (-)'}">
+                                    ToolTip.Tip="{loc:Loc 'Zoom Out'}">
                                 <!-- Magnifying glass with minus -->
                                 <PathIcon Data="{x:Static icons:Icons.ZoomOut}"
                                           Width="16" Height="16" />
@@ -170,7 +170,7 @@
                                     ValueChanged="ZoomSlider_ValueChanged" />
                             <Button Classes="icon-button"
                                     Click="ZoomIn_Click"
-                                    ToolTip.Tip="{loc:Loc 'Zoom In (+)'}">
+                                    ToolTip.Tip="{loc:Loc 'Zoom In'}">
                                 <!-- Magnifying glass with plus -->
                                 <PathIcon Data="{x:Static icons:Icons.ZoomIn}"
                                           Width="16" Height="16" />

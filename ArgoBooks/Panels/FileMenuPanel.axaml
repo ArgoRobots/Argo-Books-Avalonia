@@ -65,7 +65,7 @@
                                   Data="{x:Static local:Icons.Folder}"
                                   Width="18" Height="18"
                                   Margin="0,0,12,0" />
-                        <TextBlock Grid.Column="1" Text="{loc:Loc 'Open Company...'}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center"><Run Text="{loc:Loc 'Open Company'}" /><Run Text="..." /></TextBlock>
                     </Grid>
                 </Button>
 
@@ -166,7 +166,7 @@
                                   Data="{x:Static local:Icons.ExportData}"
                                   Width="18" Height="18"
                                   Margin="0,0,12,0" />
-                        <TextBlock Grid.Column="1" Text="{loc:Loc 'Export As...'}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center"><Run Text="{loc:Loc 'Export As'}" /><Run Text="..." /></TextBlock>
                     </Grid>
                 </Button>
 
@@ -250,7 +250,7 @@
                                   Data="{x:Static local:Icons.Delete}"
                                   Width="16" Height="16"
                                   Margin="0,0,12,0" />
-                        <TextBlock Grid.Column="1" Text="{loc:Loc 'Clear Recent'}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{loc:Loc 'Clear recent'}" VerticalAlignment="Center" />
                     </Grid>
                 </Button>
             </StackPanel>
