@@ -1919,6 +1919,23 @@ public partial class SettingsModalViewModel : ViewModelBase
     internal const int MobileAppTabIndex = (int)SettingsTab.MobileApp;
 
     /// <summary>
+    /// Whether the "Mobile app" tab is shown at all. The mobile app is not released yet, and the
+    /// tab offers a QR code to pair a phone with, so in a shipped build it invites customers to
+    /// open an app they cannot install. Debug builds keep it so it can still be worked on.
+    ///
+    /// Hiding rather than removing the tab keeps every later tab at the index
+    /// <see cref="SettingsTab"/> gives it, so <see cref="MobileAppTabIndex"/> stays correct.
+    ///
+    /// Delete this and its binding in SettingsModal.axaml when the mobile app ships.
+    /// </summary>
+    public bool IsMobileAppTabVisible =>
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
+    /// <summary>
     /// Cancellation source for the background loop polling the sync server for the phone to
     /// claim the pairing token. Cancelled as soon as the pairing screen stops being visible (tab
     /// change, modal close, or a fresh "Connect a phone" click), so the encrypted sync key is

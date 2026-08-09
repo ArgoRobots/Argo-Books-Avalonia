@@ -1221,7 +1221,8 @@
                          Integrations is kept last. Must match SettingsModalViewModel.MobileAppTabIndex,
                          which gates the pairing poll loop's visibility check - if this tab is ever
                          reordered, update that constant too. -->
-                    <TabItem Header="{loc:Loc 'Mobile app'}">
+                    <TabItem Header="{loc:Loc 'Mobile app'}"
+                             IsVisible="{Binding IsMobileAppTabVisible}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
