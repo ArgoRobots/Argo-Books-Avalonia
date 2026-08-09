@@ -38,6 +38,30 @@ public interface ITelemetryManager
     Task TrackErrorAsync(ErrorLogEntry errorEntry, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Records the business behind the company that is open. Personal data, unlike every
+    /// other call here: see <see cref="CompanyProfileEvent"/>. Ignores repeat calls for the
+    /// same company within a session, so callers can fire it on every open without
+    /// producing duplicates.
+    /// </summary>
+    Task TrackCompanyProfileAsync(
+        string? companyName,
+        string? businessType,
+        string? industry,
+        string? country,
+        string? currency,
+        bool isSample,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Records how long this launch took. Called once, when the main window opens.
+    /// </summary>
+    Task TrackStartupAsync(
+        long? toFirstPaintMs,
+        long? toReadyMs,
+        bool coldStart,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Uploads all pending telemetry data to the server.
     /// </summary>
     Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default);

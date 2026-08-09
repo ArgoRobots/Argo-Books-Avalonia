@@ -99,8 +99,7 @@ public sealed class SourceSurveyOptionsService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network,
-                context: "SourceSurveyOptionsService.GetOptionsAsync");
+            NetworkFailure.Report(_errorLogger, ex, "SourceSurveyOptionsService.GetOptionsAsync");
             return DefaultOptions;
         }
     }

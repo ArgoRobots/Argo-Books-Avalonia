@@ -111,7 +111,7 @@ public sealed class OperationTimingService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network, "OperationTimingService.RefreshPriorsAsync");
+            NetworkFailure.Report(_errorLogger, ex, "OperationTimingService.RefreshPriorsAsync");
         }
     }
 

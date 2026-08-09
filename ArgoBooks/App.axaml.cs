@@ -1093,6 +1093,11 @@ public partial class App : Application
                 // the window stays blank: present and marked visible to the OS, but showing
                 // nothing. Force those jobs through now, while there is still a gap to do it in.
                 Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+                // Marked after RunJobs, not after Show(), because Show() alone only queues the
+                // window. This is the first moment the user has something to look at, which is
+                // what the measurement is for.
+                StartupTimeline.MarkFirstPaint();
             }
             catch (Exception ex)
             {
@@ -1380,6 +1385,22 @@ public partial class App : Application
                 };
             }
 
+            // Record how long this launch took, once the main window is genuinely on screen.
+            // Separate from the splash handler above so it still runs on the path where the
+            // splash failed to open, which is exactly the launch worth knowing about.
+            desktop.MainWindow.Opened += (_, _) =>
+            {
+                if (!StartupTimeline.TryClaimReport())
+                {
+                    return;
+                }
+
+                _ = TelemetryManager?.TrackStartupAsync(
+                    StartupTimeline.ToFirstPaintMs,
+                    StartupTimeline.ToReadyMs(),
+                    StartupTimeline.IsColdStart);
+            };
+
             // Process pending conversions when window is activated (e.g., user returns after going offline)
             desktop.MainWindow.Activated += async (_, _) =>
             {
@@ -1537,7 +1558,7 @@ public partial class App : Application
                         }
                         catch (Exception ex)
                         {
-                            ErrorLogger?.LogError(ex, ErrorCategory.Network, "Translation cache refresh failed");
+                            NetworkFailure.Report(ErrorLogger, ex, "Translation cache refresh failed");
                         }
                     });
                 }
@@ -2062,6 +2083,12 @@ public partial class App : Application
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
+
+                // Exploring in the sample company looks identical to real use on the
+                // dashboard otherwise: the same CustomerCreated and ProductCreated events
+                // arrive with no CompanyCreated before them, which reads as lost telemetry
+                // rather than as someone evaluating with the demo data.
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.SampleCompanyOpened);
 
                 await LoadRecentCompaniesAsync();
             }

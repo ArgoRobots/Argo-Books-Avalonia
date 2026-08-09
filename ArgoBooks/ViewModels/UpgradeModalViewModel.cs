@@ -499,13 +499,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 VerificationError = response?.Message ?? "Invalid license key";
             }
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            VerificationError = (await ConnectivityMessage.ResolveAsync(_connectivityService)).Translate();
+            // Someone trying to redeem a licence and failing is the most expensive network
+            // failure in the app, so it is worth knowing whether it was their connection or
+            // ours. The probe was already running to choose the message.
+            VerificationError = (await NetworkFailure.ResolveAndReportAsync(
+                App.ErrorLogger, ex, "License redemption network error", _connectivityService)).Translate();
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || ex.CancellationToken != default)
         {
-            VerificationError = (await ConnectivityMessage.ResolveAsync(_connectivityService)).Translate();
+            VerificationError = (await NetworkFailure.ResolveAndReportAsync(
+                App.ErrorLogger, ex, "License redemption timeout", _connectivityService)).Translate();
         }
         catch (TaskCanceledException)
         {
@@ -608,7 +613,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
             else
             {
                 HasLoadError = true;
-                App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch plans from API");
+                // isConnectivityError already ruled out the offline case above, so anything
+                // reaching here failed with a working connection and is ours.
+                NetworkFailure.Report(App.ErrorLogger, ex, "Failed to fetch plans from API");
             }
         }
         finally

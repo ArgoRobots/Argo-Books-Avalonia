@@ -8,6 +8,8 @@ namespace ArgoBooks.Core.Models.Telemetry;
 [JsonDerivedType(typeof(ApiUsageEvent))]
 [JsonDerivedType(typeof(ErrorEvent))]
 [JsonDerivedType(typeof(FeatureUsageEvent))]
+[JsonDerivedType(typeof(CompanyProfileEvent))]
+[JsonDerivedType(typeof(StartupEvent))]
 public abstract class TelemetryEvent
 {
     /// <summary>

@@ -118,7 +118,10 @@ public class TelemetryUploadService : ITelemetryUploadService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network, "Failed to upload telemetry data");
+            // Silent background work: a user whose connection dropped must not read as a
+            // defect, and probing to find out would cost five seconds on a retry nobody
+            // is waiting for. The events stay pending and go up on the next flush.
+            NetworkFailure.Report(_errorLogger, ex, "Failed to upload telemetry data");
             result.Success = false;
             result.ErrorMessage = ex.Message;
             // Save backup on failure
