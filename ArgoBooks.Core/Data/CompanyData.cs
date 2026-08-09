@@ -271,23 +271,6 @@ public class CompanyData
     #region Helper Methods
 
     /// <summary>
-    /// Gets the earliest transaction date across revenues, expenses, and payments only.
-    /// Returns DateTime.Today if no transactions exist.
-    /// Prefer <see cref="GetEarliestDate"/> when you need the earliest date across all data.
-    /// </summary>
-    public DateTime GetEarliestTransactionDate()
-    {
-        // Use year 1900 as minimum to avoid DateTime arithmetic overflow from default/unset dates
-        var minValid = new DateTime(1900, 1, 1);
-        var dates = new List<DateTime>();
-        if (Revenues.Count > 0) dates.Add(Revenues.Where(r => r.Date >= minValid).Select(r => r.Date).DefaultIfEmpty(DateTime.Today).Min());
-        if (Expenses.Count > 0) dates.Add(Expenses.Where(e => e.Date >= minValid).Select(e => e.Date).DefaultIfEmpty(DateTime.Today).Min());
-        if (Payments.Count > 0) dates.Add(Payments.Where(p => p.Date >= minValid).Select(p => p.Date).DefaultIfEmpty(DateTime.Today).Min());
-
-        return dates.Count > 0 ? dates.Min() : DateTime.Today;
-    }
-
-    /// <summary>
     /// Gets the earliest date across all dated collections (revenues, expenses, payments,
     /// invoices, stock adjustments, purchase orders, and rental records).
     /// Returns DateTime.Today if no dated records exist.
@@ -472,22 +455,10 @@ public class CompanyData
     }
 
     /// <summary>
-    /// Gets inventory item by product and location.
-    /// </summary>
-    public InventoryItem? GetInventoryItem(string productId, string locationId) =>
-        Inventory.FirstOrDefault(i => i.ProductId == productId && i.LocationId == locationId);
-
-    /// <summary>
     /// Gets an invoice template by ID.
     /// </summary>
     public InvoiceTemplate? GetInvoiceTemplate(string id) =>
         InvoiceTemplates.FirstOrDefault(t => t.Id == id);
-
-    /// <summary>
-    /// Gets the default invoice template, or null if none is set.
-    /// </summary>
-    public InvoiceTemplate? GetDefaultInvoiceTemplate() =>
-        InvoiceTemplates.FirstOrDefault(t => t.IsDefault) ?? InvoiceTemplates.FirstOrDefault();
 
     /// <summary>
     /// Marks the data as modified.

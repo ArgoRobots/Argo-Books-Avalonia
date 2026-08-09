@@ -495,20 +495,6 @@ public class SpreadsheetImportService
         return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
     }
 
-    /// <summary>
-    /// Imports AI-processed entities and then runs AI categorization for any uncategorized products.
-    /// </summary>
-    public async Task<SheetImportResult> ImportProcessedEntitiesAsync(
-        CompanyData companyData,
-        List<LlmProcessedData> processedData,
-        string sheetName,
-        ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        _ = cancellationToken; // reserved for future use
-        return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
-    }
-
     private SheetImportResult ImportProcessedEntitiesCore(
         CompanyData companyData,
         List<LlmProcessedData> processedData,

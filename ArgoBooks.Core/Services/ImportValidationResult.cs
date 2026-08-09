@@ -155,25 +155,6 @@ public class ImportValidationResult
     }
 
     /// <summary>
-    /// Get a formatted summary of missing references for display.
-    /// </summary>
-    public string GetMissingReferencesSummary()
-    {
-        if (!HasMissingReferences) return string.Empty;
-
-        var lines = new List<string>();
-        foreach (var (type, ids) in MissingReferences)
-        {
-            var count = ids.Count;
-            var examples = string.Join(", ", ids.Take(3));
-            if (count > 3)
-                examples += $", ... (+{count - 3} more)";
-            lines.Add($"• {type}: {examples}");
-        }
-        return string.Join("\n", lines);
-    }
-
-    /// <summary>
     /// Get total count of missing references.
     /// </summary>
     public int TotalMissingReferences => MissingReferences.Values.Sum(s => s.Count);

@@ -104,27 +104,6 @@ public static class TimeZoneService
     }
 
     /// <summary>
-    /// Formats a time with seconds using the user's preferred time format (12h or 24h).
-    /// </summary>
-    /// <param name="dateTime">The DateTime to format.</param>
-    /// <returns>Formatted time string with seconds (e.g., "2:30:45 PM" or "14:30:45").</returns>
-    public static string FormatTimeWithSeconds(DateTime dateTime)
-    {
-        return Is24HourFormat
-            ? dateTime.ToString("HH:mm:ss")
-            : dateTime.ToString("h:mm:ss tt");
-    }
-
-    /// <summary>
-    /// Gets the time format pattern for the user's preference.
-    /// </summary>
-    /// <returns>Format pattern string (e.g., "HH:mm" or "h:mm tt").</returns>
-    public static string GetTimeFormatPattern()
-    {
-        return Is24HourFormat ? "HH:mm" : "h:mm tt";
-    }
-
-    /// <summary>
     /// Formats a date and time using the user's preferred time format (12h or 24h).
     /// </summary>
     /// <param name="dateTime">The DateTime to format.</param>

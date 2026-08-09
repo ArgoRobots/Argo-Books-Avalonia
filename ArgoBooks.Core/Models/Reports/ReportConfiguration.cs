@@ -412,10 +412,6 @@ public static class PageDimensions
     /// </summary>
     public const int Margin = 40;
 
-    /// <summary>
-    /// Separator height in pixels.
-    /// </summary>
-    public const int SeparatorHeight = 5;
 
     /// <summary>
     /// Render scale for high-quality export.

@@ -14,11 +14,6 @@ public static class GoogleCredentialsManager
     private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     /// <summary>
-    /// Checks if Google API access is configured (always true, free feature).
-    /// </summary>
-    public static bool AreCredentialsConfigured() => true;
-
-    /// <summary>
     /// Initiates the Google OAuth flow by requesting an auth URL from the server.
     /// The user should be directed to open this URL in their browser.
     /// </summary>
@@ -75,29 +70,6 @@ public static class GoogleCredentialsManager
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Revokes the Google OAuth connection for this user.
-    /// </summary>
-    public static async Task<bool> RevokeAuthAsync(CancellationToken cancellationToken = default)
-    {
-        var requestBody = new { action = "revoke" };
-        var json = JsonSerializer.Serialize(requestBody);
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, AuthEndpoint);
-        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-        AddAuthHeaders(request);
-
-        var response = await SharedHttpClient.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return false;
-
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        using var doc = JsonDocument.Parse(responseBody);
-        var root = doc.RootElement;
-
-        return root.TryGetProperty("success", out var success) && success.GetBoolean();
     }
 
     /// <summary>

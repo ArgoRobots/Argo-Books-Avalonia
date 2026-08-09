@@ -104,29 +104,4 @@ public static class UpgradePromptHelper
         }
     }
 
-    /// <summary>
-    /// Shows a compelling upgrade prompt when the product limit is reached.
-    /// </summary>
-    /// <param name="limit">The product limit per category on the free plan.</param>
-    public static async Task ShowProductLimitPromptAsync(int limit)
-    {
-        var dialog = App.ConfirmationDialog;
-        if (dialog == null) return;
-
-        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
-        {
-            Title = "Product Limit Reached".Translate(),
-            Message = string.Format(
-                "You've added all {0} products included in your free plan.\n\nUpgrade to Premium for unlimited products, AI receipt scanning, predictive analytics, and priority support.".Translate(),
-                limit),
-            PrimaryButtonText = "Upgrade Now".Translate(),
-            CancelButtonText = "Maybe Later".Translate(),
-            SecondaryButtonText = null
-        });
-
-        if (result == ConfirmationResult.Primary)
-        {
-            App.OpenUpgradeModal();
-        }
-    }
 }

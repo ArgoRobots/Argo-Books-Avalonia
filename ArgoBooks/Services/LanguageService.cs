@@ -618,28 +618,6 @@ public partial class LanguageService
         }
     }
 
-    /// <summary>
-    /// Clears all cached translations.
-    /// </summary>
-    public void ClearCache()
-    {
-        _englishCache.Clear();
-        _currentLanguageCache.Clear();
-        _currentLoadedIsoCode = "";
-
-        try
-        {
-            foreach (var file in Directory.GetFiles(_cacheDirectory, "*.json"))
-            {
-                File.Delete(file);
-            }
-        }
-        catch (Exception ex)
-        {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to clear translation cache files");
-        }
-    }
-
 }
 
 /// <summary>

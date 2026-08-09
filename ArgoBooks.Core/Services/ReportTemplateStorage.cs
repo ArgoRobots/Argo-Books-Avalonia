@@ -279,42 +279,6 @@ public class ReportTemplateStorage
     }
 
     /// <summary>
-    /// Copies an image to the template images directory.
-    /// </summary>
-    public string CopyImageToStorage(string sourcePath)
-    {
-        if (string.IsNullOrEmpty(sourcePath) || !File.Exists(sourcePath))
-            return sourcePath;
-
-        try
-        {
-            var imagesDir = GetImagesDirectory();
-            var fileName = Path.GetFileName(sourcePath);
-            var destPath = Path.Combine(imagesDir, fileName);
-
-            // Generate unique filename if needed
-            int counter = 1;
-            var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-            var extension = Path.GetExtension(fileName);
-
-            while (File.Exists(destPath))
-            {
-                fileName = $"{nameWithoutExt}_{counter}{extension}";
-                destPath = Path.Combine(imagesDir, fileName);
-                counter++;
-            }
-
-            File.Copy(sourcePath, destPath, false);
-            return fileName;
-        }
-        catch (Exception ex)
-        {
-            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to copy image to template storage");
-            return sourcePath;
-        }
-    }
-
-    /// <summary>
     /// Resolves an image path (handles both relative and absolute paths).
     /// </summary>
     public string ResolveImagePath(string imagePath)

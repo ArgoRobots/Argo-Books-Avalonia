@@ -161,9 +161,5 @@ public static class FileFormatConstants
     /// </summary>
     public const string BackupFileExtension = ".argobk";
 
-    /// <summary>
-    /// File extension for report templates.
-    /// </summary>
-    public const string TemplateFileExtension = ".argotemplate";
 
 }
