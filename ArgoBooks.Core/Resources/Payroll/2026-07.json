@@ -1,0 +1,73 @@
+{
+  "editionId": "2026-07",
+  "effectiveFrom": "2026-07-01T00:00:00",
+  "effectiveTo": "2026-12-31T00:00:00",
+
+  "_source": "CRA T4127 Payroll Deductions Formulas, 123rd edition effective July 1 2026. CPP, CPP2 and EI from the CRA rate pages. Every value below was returned independently by two retrievals that agreed exactly, and the derived maximums reproduce from their own rates: CPP 4230.45 = (74600-3500)*0.0595, CPP2 416.00 = (85000-74600)*0.04, EI 1123.07 = 68900*0.0163.",
+  "_verification": "The federal bracket constants reproduce CRA's published worked example to the cent: T3 = 0.14*A - K1 - K2 - K4 gives 4758.06 and 4434.52 against CRA's stated figures, with K1 = 0.14*16452 = 2303.28 and K4 = 0.14*1501 = 210.14.",
+  "_provinces_note": "Only Alberta is present. Alberta has no surtax, no tax reduction, no health premium, a fixed basic personal amount and no mid-year proration, which is why it is first. Adding a province is data plus test fixtures, not code.",
+
+  "federal": {
+    "brackets": [
+      { "upTo": 58523,  "rate": 0.1400, "constantK": 0 },
+      { "upTo": 117045, "rate": 0.2050, "constantK": 3804 },
+      { "upTo": 181440, "rate": 0.2600, "constantK": 10241 },
+      { "upTo": 258482, "rate": 0.2900, "constantK": 15685 },
+      { "upTo": null,   "rate": 0.3300, "constantK": 26024 }
+    ],
+    "basicPersonalAmount": {
+      "maximum": 16452,
+      "minimum": 14829,
+      "phaseoutStart": 181440,
+      "phaseoutEnd": 258482
+    },
+    "canadaEmploymentAmount": 1501,
+    "lowestRateForCredits": 0.14
+  },
+
+  "cpp": {
+    "rateEmployee": 0.0595,
+    "rateEmployer": 0.0595,
+    "basicExemptionAnnual": 3500,
+    "ympeCeiling": 74600,
+    "maxContributionEmployee": 4230.45
+  },
+
+  "cpp2": {
+    "rateEmployee": 0.04,
+    "rateEmployer": 0.04,
+    "yampeCeiling": 85000,
+    "maxContributionEmployee": 416.00
+  },
+
+  "ei": {
+    "rateEmployee": 0.0163,
+    "employerMultiplier": 1.4,
+    "maxInsurableEarnings": 68900,
+    "maxPremiumEmployee": 1123.07,
+    "quebecRateEmployee": 0.0130,
+    "quebecEmployerMultiplier": 1.4
+  },
+
+  "provinces": {
+    "AB": {
+      "brackets": [
+        { "upTo": 61200,  "rate": 0.0800, "constantK": 0 },
+        { "upTo": 154259, "rate": 0.1000, "constantK": 1224 },
+        { "upTo": 185111, "rate": 0.1200, "constantK": 4309 },
+        { "upTo": 246813, "rate": 0.1300, "constantK": 6160 },
+        { "upTo": 370220, "rate": 0.1400, "constantK": 8628 },
+        { "upTo": null,   "rate": 0.1500, "constantK": 12331 }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 22769,
+        "minimum": 22769,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    }
+  }
+}

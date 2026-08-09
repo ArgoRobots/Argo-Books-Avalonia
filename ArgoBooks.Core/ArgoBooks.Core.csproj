@@ -17,6 +17,13 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- CRA payroll rate tables, one file per edition. Embedded so a fresh install can
+             calculate offline; PayrollRateService prefers a newer copy from the cache
+             directory, so a rate change can be delivered without a release. -->
+        <EmbeddedResource Include="Resources\Payroll\*.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
         <!-- MVVM -->
