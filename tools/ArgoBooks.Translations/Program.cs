@@ -26,7 +26,7 @@ var retrySame = args.Contains("--retry-same");
 var skipConfirmation = args.Contains("--yes") || args.Contains("-y");
 var specificLanguages = new List<string>();
 var outputDir = "./languages";
-var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "ArgoBooks"));
+var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..", "ArgoBooks"));
 var allowlistPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "translation-allowlist.json"));
 
 for (int i = 0; i < args.Length; i++)

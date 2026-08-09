@@ -1,11 +1,14 @@
 # Translation Tool
 
+Finds every translatable string in the app and builds the language files, sending anything new
+to Azure Translator.
+
 ## Setup
 ```powershell
 $env:AZURE_TRANSLATOR_REGION = "canadacentral"
 $env:AZURE_TRANSLATOR_KEY = "your-api-key"
 
-cd ArgoBooks.TranslationTool
+cd tools/ArgoBooks.Translations
 ```
 
 ## Commands

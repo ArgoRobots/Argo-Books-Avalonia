@@ -56,7 +56,7 @@ builds, so `FileService` checks the footer's format version **before** attemptin
 and reports an out-of-date app rather than a misleading wrong-password error.
 
 See [Security](Security.md) for the key derivation and envelope details, and
-[Password recovery](Password%20recovery.md) for the support-side unlock path.
+[Password recovery](../tools/ArgoBooks.Recovery/README.md) for the support-side unlock path.
 
 ### Footer contents
 

@@ -115,7 +115,7 @@ Translations are generated using the `TranslationGenerator` class and the **Azur
 
 ### Running the Translation Tool
 
-In **JetBrains Rider**, set the startup project to `ArgoBooks.TranslationTool`, then run it.
+In **JetBrains Rider**, set the startup project to `ArgoBooks.Translations`, then run it.
 
 Or use the command line:
 
@@ -124,7 +124,7 @@ Or use the command line:
 $env:AZURE_TRANSLATOR_REGION = "canadacentral"
 $env:AZURE_TRANSLATOR_KEY = "your-api-key"
 
-cd ArgoBooks.TranslationTool
+cd tools/ArgoBooks.Translations
 ```
 
 | Command | Description |

@@ -4,7 +4,7 @@
 
 - **Do NOT build or run tests after every change.** Only build/test when explicitly asked.
 - **Do NOT amend commits or force push** unless explicitly told to. Always create new commits.
-- **Do NOT update the language files** like ArgoBooks.TranslationTool/languages/en.json and similar.
+- **Do NOT update the language files** like tools/ArgoBooks.Translations/languages/en.json and similar.
 - **Do NOT commit plan or spec markdown files** (e.g. anything under `docs/superpowers/`). These are local planning artifacts; keep them untracked.
 
 ## Project Overview
@@ -34,7 +34,7 @@ Requires .NET 10 SDK. A `.env` file with API keys must be placed at the solution
 | **ArgoBooks.Core** | Business logic: Models, Services, Data, Security, Platform abstraction |
 | **ArgoBooks.Desktop** | Entry point for Windows/macOS/Linux |
 | **ArgoBooks.Tests** | xUnit tests (references both ArgoBooks and ArgoBooks.Core) |
-| **ArgoBooks.TranslationTool** | Offline tool that generates language files via Azure Translator |
+| **ArgoBooks.Translations** | Offline tool that generates language files via Azure Translator |
 
 **Dependency flow:** Desktop -> ArgoBooks -> ArgoBooks.Core
 
