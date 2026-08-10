@@ -902,7 +902,8 @@ public partial class App : Application
     private static BankMatchingPageViewModel? _bankMatchingPageViewModel;
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
-    private static LocationsPageViewModel? _locationsPageViewModel;
+    private static LocationsPageViewModel? _locationsPageViewModel;
+
     private static EmployeesPageViewModel? _employeesPageViewModel;
     private static StockAdjustmentsPageViewModel? _stockAdjustmentsPageViewModel;
     private static PurchaseOrdersPageViewModel? _purchaseOrdersPageViewModel;
