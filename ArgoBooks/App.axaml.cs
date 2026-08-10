@@ -200,7 +200,8 @@ public partial class App : Application
     /// </summary>
     public static LocationsModalsViewModel? LocationsModalsViewModel => _appShellViewModel?.LocationsModalsViewModel;
     public static PayrollModalsViewModel? PayrollModalsViewModel => _appShellViewModel?.PayrollModalsViewModel;
-    public static SidebarViewModel? SidebarViewModel => _appShellViewModel?.SidebarViewModel;
+
+    public static PayRunModalsViewModel? PayRunModalsViewModel => _appShellViewModel?.PayRunModalsViewModel;
 
     /// <summary>
     /// Gets the stock adjustments modals view model for shared access.
@@ -871,6 +872,8 @@ public partial class App : Application
     public static Controls.ColumnWidths.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
     public static Controls.ColumnWidths.EmployeesTableColumnWidths EmployeesColumnWidths { get; } = new();
 
+    public static Controls.ColumnWidths.PayRunsTableColumnWidths PayRunsColumnWidths { get; } = new();
+
     /// <summary>
     /// Gets the shared column widths for the Stock Adjustments table.
     /// </summary>
@@ -903,8 +906,8 @@ public partial class App : Application
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
     private static LocationsPageViewModel? _locationsPageViewModel;
-
     private static EmployeesPageViewModel? _employeesPageViewModel;
+    private static PayRunsPageViewModel? _payRunsPageViewModel;
     private static StockAdjustmentsPageViewModel? _stockAdjustmentsPageViewModel;
     private static PurchaseOrdersPageViewModel? _purchaseOrdersPageViewModel;
     private static CategoriesPageViewModel? _categoriesPageViewModel;
@@ -4063,6 +4066,18 @@ public partial class App : Application
             _employeesPageViewModel ??= new EmployeesPageViewModel();
             _employeesPageViewModel.Load();
             return new EmployeesPage { DataContext = _employeesPageViewModel };
+        });
+
+        navigationService.RegisterPage("PayRuns", _ =>
+        {
+            if (_payRunsPageViewModel == null)
+            {
+                _payRunsPageViewModel = new PayRunsPageViewModel();
+                _payRunsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
+            }
+            _payRunsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            _payRunsPageViewModel.Load();
+            return new PayRunsPage { DataContext = _payRunsPageViewModel };
         });
 
         // Contacts Section

@@ -179,6 +179,7 @@ public partial class SidebarViewModel : ViewModelBase
 
         // Payroll Section
         PayrollItems.Add(CreateItem("Employees", "Employees", Icons.Customers));
+        PayrollItems.Add(CreateItem("Pay Runs", "PayRuns", Icons.Payments));
 
         // Inventory Section (mockup: Stock Levels, Adjustments, Locations, Transfers, Purchase Orders)
         InventoryItems.Add(CreateItem("Stock Levels", "StockLevels", Icons.StockLevels));

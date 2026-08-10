@@ -294,6 +294,7 @@
         <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
         <modals:PayrollModals DataContext="{Binding PayrollModalsViewModel}" />
+        <modals:PayRunModals DataContext="{Binding PayRunModalsViewModel}" />
 
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />

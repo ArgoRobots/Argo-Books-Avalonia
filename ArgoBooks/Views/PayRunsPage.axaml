@@ -1,0 +1,215 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.PayRunsPage"
+             x:DataType="vm:PayRunsPageViewModel">
+
+    <Design.DataContext>
+        <vm:PayRunsPageViewModel />
+    </Design.DataContext>
+
+    <Panel>
+    <Grid RowDefinitions="*">
+        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                <controls:StatCard Label="{loc:Loc 'Pay runs this year'}"
+                                   Value="{Binding ApprovedCount}"
+                                   Icon="{x:Static icons:Icons.Payments}"
+                                   IconColor="Primary" />
+                <controls:StatCard Label="{loc:Loc 'Gross paid this year'}"
+                                   Value="{Binding YearToDateGross}"
+                                   Icon="{x:Static icons:Icons.Dollar}"
+                                   IconColor="Success" />
+                <!-- What is owed to CRA for the year so far, employee and employer sides
+                     together. The Payroll Remittance report breaks it down by period. -->
+                <controls:StatCard Label="{loc:Loc 'Remittance this year'}"
+                                   Value="{Binding YearToDateRemittance}"
+                                   Icon="{x:Static icons:Icons.BarChart}"
+                                   IconColor="Warning" />
+            </controls:StatCardsRow>
+
+            <table:ArgoTable Grid.Row="1"
+                             Title="{loc:Loc 'Pay runs'}"
+                             ItemsSource="{Binding PayRuns}"
+                             SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                             SearchPlaceholder="{loc:Loc 'Search pay runs...'}"
+                             SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                             SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                             SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                             HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                             HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                             IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                             IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                             ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                             ShowFilterButton="False"
+                             AddCommand="{Binding RunPayrollCommand}"
+                             AddButtonText="{loc:Loc 'Run payroll'}"
+                             AddButtonTooltip="{loc:Loc 'Run payroll'}"
+                             ColumnWidthsManager="{Binding ColumnWidths}"
+                             CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                             TotalPages="{Binding TotalPages}"
+                             PageSize="{Binding PageSize, Mode=TwoWay}"
+                             PaginationText="{Binding PaginationText}"
+                             GoToPageCommand="{Binding GoToPageCommand}"
+                             GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                             GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                             ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                             EmptyIcon="{x:Static icons:Icons.Payments}"
+                             EmptyTitle="{loc:Loc 'No pay runs yet'}"
+                             EmptyMessage="{loc:Loc 'Run payroll to work out deductions, produce pay stubs and record the wages.'}"
+                             BorderSizeChanged="OnHeaderSizeChanged"
+                             TableGridSizeChanged="OnTableSizeChanged">
+
+                <!-- The page stays visible on the free plan. An owner with staff seeing what
+                     it does is the conversion lever; only running a payroll is blocked. -->
+                <table:ArgoTable.InfoBannerContent>
+                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                            Padding="24,14"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            IsVisible="{Binding ShowPayrollUpgradePrompt}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:Loc 'Payroll is a premium feature'}" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Work out CPP, EI and tax, produce pay stubs, and record the wages in your books.'}"
+                                           FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="primary-button" VerticalAlignment="Center"
+                                    Content="{loc:Loc Upgrade}"
+                                    Command="{Binding UpgradeCommand}" />
+                        </Grid>
+                    </Border>
+                </table:ArgoTable.InfoBannerContent>
+
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="{loc:Loc 'Pay date'}" ColumnName="PayDate" SortProperty="PayDate"
+                                               ColumnWidth="{Binding ColumnWidths.PayDateColumnWidth}"
+                                               IsColumnVisible="{Binding ShowPayDateColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Period}" ColumnName="Period" IsSortable="False"
+                                               ColumnWidth="{Binding ColumnWidths.PeriodColumnWidth}"
+                                               IsColumnVisible="{Binding ShowPeriodColumn}"
+                                               ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Employees}" ColumnName="Employees" IsSortable="False"
+                                               ColumnWidth="{Binding ColumnWidths.EmployeesColumnWidth}"
+                                               IsColumnVisible="{Binding ShowEmployeesColumn}"
+                                               ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Gross}" ColumnName="Gross" IsSortable="False"
+                                               ColumnWidth="{Binding ColumnWidths.GrossColumnWidth}"
+                                               IsColumnVisible="{Binding ShowGrossColumn}"
+                                               ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Net}" ColumnName="Net" IsSortable="False"
+                                               ColumnWidth="{Binding ColumnWidths.NetColumnWidth}"
+                                               IsColumnVisible="{Binding ShowNetColumn}"
+                                               ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Status}" ColumnName="Status" IsSortable="False"
+                                               ColumnWidth="{Binding ColumnWidths.StatusColumnWidth}"
+                                               IsColumnVisible="{Binding ShowStatusColumn}"
+                                               ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions" IsSortable="False"
+                                               ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                               ColumnWidths="{Binding ColumnWidths}" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
+
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding PayRuns}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:PayRunDisplayItem">
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="52">
+                                    <StackPanel Orientation="Horizontal">
+                                        <table:ArgoTableCell Text="{Binding PayDate}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.PayDateColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ShowPayDateColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Period}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.PeriodColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ShowPeriodColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Employees}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.EmployeesColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ShowEmployeesColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Gross}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.GrossColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ShowGrossColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Net}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.NetColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ShowNetColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ShowStatusColumn}" />
+
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                             ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
+                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Download pay stubs'}"
+                                                            IsEnabled="{Binding IsApproved}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).DownloadStubsCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Download}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <!-- Void writes a reversing run rather than deleting: a stub may
+                                                         already be in someone's hands. -->
+                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Void'}"
+                                                            IsEnabled="{Binding IsApproved}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).VoidRunCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Close}" Width="16" Height="16" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
+        </Grid>
+    </Grid>
+
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                   MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                   MenuY="{Binding ColumnWidths.ColumnMenuY}"
+                                   CloseCommand="{Binding CloseColumnMenuCommand}"
+                                   ResetCommand="{Binding ResetColumnVisibilityCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowPayDateColumn}" Content="{loc:Loc 'Pay date'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPeriodColumn}" Content="{loc:Loc Period}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowEmployeesColumn}" Content="{loc:Loc Employees}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowGrossColumn}" Content="{loc:Loc Gross}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowNetColumn}" Content="{loc:Loc Net}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
+    </Panel>
+
+</UserControl>
