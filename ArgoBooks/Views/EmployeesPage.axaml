@@ -49,6 +49,7 @@
                              IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
                              IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
                              ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                             FilterCommand="{Binding OpenFilterModalCommand}"
                              AddCommand="{Binding AddEmployeeCommand}"
                              AddButtonText="{loc:Loc 'Add employee'}"
                              AddButtonTooltip="{loc:Loc 'Add employee'}"
@@ -112,10 +113,12 @@
                 </table:ArgoTable.HeaderContent>
 
                 <table:ArgoTable.RowsContent>
-                    <ItemsControl ItemsSource="{Binding Employees}">
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Employees}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:EmployeeDisplayItem">
-                                <Border Background="Transparent"
+                                <!-- Padding matches the header border in ArgoTable, otherwise every
+                                     column separator sits 24px left of its header. -->
+                                <Border Padding="24,0"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1"
                                         MinHeight="52">

@@ -43,16 +43,23 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private string _searchQuery = string.Empty;
 
+    /// <summary>
+    /// Mirrors of the filter modal's state. The page keeps its own copy so cancelling the
+    /// modal cannot change what the list shows.
+    /// </summary>
     [ObservableProperty]
-    private bool _showArchived;
+    private string _filterStatus = "Active";
+
+    [ObservableProperty]
+    private string _filterProvince = "All";
+
+    [ObservableProperty]
+    private string _filterPayType = "All";
+
+    [ObservableProperty]
+    private string _filterFrequency = "All";
 
     partial void OnSearchQueryChanged(string value) => Filter();
-
-    partial void OnShowArchivedChanged(bool value)
-    {
-        Filter();
-        OnPropertyChanged(nameof(HasNoEmployees));
-    }
 
     #endregion
 
@@ -76,10 +83,39 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
         if (App.PayrollModalsViewModel is { } modals)
         {
             modals.EmployeeSaved += OnEmployeeSaved;
+            modals.FiltersApplied += OnFiltersApplied;
+            modals.FiltersCleared += OnFiltersCleared;
         }
     }
 
     private void OnEmployeeSaved(object? sender, EventArgs e) => Load();
+
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        if (App.PayrollModalsViewModel is { } modals)
+        {
+            FilterStatus = modals.FilterStatus;
+            FilterProvince = modals.FilterProvince;
+            FilterPayType = modals.FilterPayType;
+            FilterFrequency = modals.FilterFrequency;
+        }
+
+        CurrentPage = 1;
+        Filter();
+    }
+
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        FilterStatus = "Active";
+        FilterProvince = "All";
+        FilterPayType = "All";
+        FilterFrequency = "All";
+        CurrentPage = 1;
+        Filter();
+    }
+
+    [RelayCommand]
+    private void OpenFilterModal() => App.PayrollModalsViewModel?.OpenFilterModal();
 
     #region Column visibility
 
@@ -173,17 +209,34 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
             return;
         }
 
-        employee.IsArchived = !employee.IsArchived;
-        employee.UpdatedAt = DateTime.UtcNow;
-        App.CompanyManager?.MarkAsChanged();
-        Load();
+        bool wasArchived = employee.IsArchived;
+        DateTime previousUpdate = employee.UpdatedAt;
+
+        Apply(!wasArchived, DateTime.UtcNow);
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            wasArchived ? $"Restore employee '{employee.Name}'" : $"Archive employee '{employee.Name}'",
+            () => Apply(wasArchived, previousUpdate),
+            () => Apply(!wasArchived, DateTime.UtcNow)));
+
+        void Apply(bool archived, DateTime updatedAt)
+        {
+            employee.IsArchived = archived;
+            employee.UpdatedAt = updatedAt;
+            App.CompanyManager?.MarkAsChanged();
+            Load();
+        }
     }
 
     [RelayCommand]
     private void ClearFilters()
     {
         SearchQuery = string.Empty;
-        ShowArchived = false;
+        FilterStatus = "Active";
+        FilterProvince = "All";
+        FilterPayType = "All";
+        FilterFrequency = "All";
+        Filter();
     }
 
     #endregion
@@ -230,7 +283,28 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     {
         Employees.Clear();
 
-        IEnumerable<Employee> filtered = _all.Where(e => ShowArchived || !e.IsArchived);
+        IEnumerable<Employee> filtered = FilterStatus switch
+        {
+            "Archived" => _all.Where(e => e.IsArchived),
+            "All" => _all,
+            _ => _all.Where(e => !e.IsArchived),
+        };
+
+        if (FilterProvince != "All")
+        {
+            filtered = filtered.Where(e => e.Province == FilterProvince);
+        }
+
+        if (FilterPayType != "All")
+        {
+            PayType wanted = FilterPayType == "Hourly" ? PayType.Hourly : PayType.Salary;
+            filtered = filtered.Where(e => e.PayType == wanted);
+        }
+
+        if (FilterFrequency != "All")
+        {
+            filtered = filtered.Where(e => e.PayFrequency.DisplayName() == FilterFrequency);
+        }
 
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {

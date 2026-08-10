@@ -4,9 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
              x:Class="ArgoBooks.Modals.PayrollModals"
              x:DataType="vm:PayrollModalsViewModel">
@@ -95,8 +95,13 @@
                                         <RadioButton GroupName="PayType" Content="{loc:Loc 'Hourly'}"
                                                      IsChecked="{Binding !IsSalaried}" />
                                     </StackPanel>
-                                    <TextBox Text="{Binding PayRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                             Classes="form-input" />
+                                    <TextBox Text="{Binding PayRate, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             PlaceholderText="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="13" />
+                                    <TextBlock Text="{Binding PayRateHint}" FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Text="{Binding PayRateError}" FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding PayRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -115,14 +120,20 @@
                                             <StackPanel Grid.Column="0" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Federal TD1'}" FontSize="12"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBox Text="{Binding FederalClaimAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                         Classes="form-input" />
+                                                <TextBox Text="{Binding FederalClaimAmount, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         PlaceholderText="0.00"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Provincial TD1'}" FontSize="12"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBox Text="{Binding ProvincialClaimAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
-                                                         Classes="form-input" />
+                                                <TextBox Text="{Binding ProvincialClaimAmount, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         PlaceholderText="0.00"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -167,6 +178,118 @@
                                 <Button Classes="primary-button" Content="{loc:Loc Save}"
                                         Command="{Binding SaveEmployeeCommand}" />
                             </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- ============================ FILTER ============================ -->
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding CloseFilterModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="450"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,20"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Filter employees'}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="icon-button"
+                                        Command="{Binding CloseFilterModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="24" Spacing="20">
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding StatusOptions}"
+                                              SelectedItem="{Binding FilterStatus}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc Province}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding ProvinceFilterOptions}"
+                                              SelectedItem="{Binding FilterProvince}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Pay type'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding PayTypeOptions}"
+                                              SelectedItem="{Binding FilterPayType}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc Frequency}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FrequencyOptions}"
+                                              SelectedItem="{Binding FilterFrequency}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Button Grid.Column="0" Classes="secondary-button"
+                                        Content="{loc:Loc 'Clear filters'}"
+                                        Command="{Binding ClearFiltersCommand}" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="secondary-button" Content="{loc:Loc Cancel}"
+                                            Command="{Binding CloseFilterModalCommand}" />
+                                    <Button Classes="primary-button" Content="{loc:Loc Apply}"
+                                            Command="{Binding ApplyFiltersCommand}" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Border>
