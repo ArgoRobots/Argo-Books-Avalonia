@@ -1741,6 +1741,28 @@ public partial class SettingsModalViewModel : ViewModelBase
     internal const int MobileAppTabIndex = (int)SettingsTab.MobileApp;
 
     /// <summary>
+    /// Shows the Payroll section in the sidebar. Off by default because most companies have
+    /// no employees. Applied and saved as soon as it is toggled, so the section appears
+    /// without closing settings.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showPayroll = App.SettingsService?.GlobalSettings.Ui.ShowPayroll ?? false;
+
+    partial void OnShowPayrollChanged(bool value)
+    {
+        if (App.SettingsService?.GlobalSettings is { } settings)
+        {
+            settings.Ui.ShowPayroll = value;
+            _ = App.SettingsService.SaveGlobalSettingsAsync();
+        }
+
+        if (App.SidebarViewModel is { } sidebar)
+        {
+            sidebar.ShowPayroll = value;
+        }
+    }
+
+    /// <summary>
     /// Cancellation source for the background loop polling the sync server for the phone to
     /// claim the pairing token. Cancelled as soon as the pairing screen stops being visible (tab
     /// change, modal close, or a fresh "Connect a phone" click), so the encrypted sync key is

@@ -200,6 +200,7 @@ public partial class App : Application
     /// </summary>
     public static LocationsModalsViewModel? LocationsModalsViewModel => _appShellViewModel?.LocationsModalsViewModel;
     public static PayrollModalsViewModel? PayrollModalsViewModel => _appShellViewModel?.PayrollModalsViewModel;
+    public static SidebarViewModel? SidebarViewModel => _appShellViewModel?.SidebarViewModel;
 
     /// <summary>
     /// Gets the stock adjustments modals view model for shared access.
@@ -1337,6 +1338,11 @@ public partial class App : Application
             {
                 _appShellViewModel.SidebarViewModel.IsCollapsed = true;
             }
+
+            // Same reason for the Payroll section: the sidebar was built before settings
+            // were read from disk.
+            _appShellViewModel.SidebarViewModel.ShowPayroll =
+                SettingsService?.GlobalSettings.Ui.ShowPayroll ?? false;
 
             desktop.MainWindow = new MainWindow
             {
