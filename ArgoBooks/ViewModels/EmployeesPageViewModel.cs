@@ -3,6 +3,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Services;
 using ArgoBooks.Helpers;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -68,7 +69,71 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     public EmployeesPageViewModel()
     {
         Load();
+
+        // The modal lives on the shell rather than on this page, so a save has to tell the
+        // list to refresh. Without this a newly added employee only appears after navigating
+        // away and back.
+        if (App.PayrollModalsViewModel is { } modals)
+        {
+            modals.EmployeeSaved += OnEmployeeSaved;
+        }
     }
+
+    private void OnEmployeeSaved(object? sender, EventArgs e) => Load();
+
+    #region Column visibility
+
+    [ObservableProperty]
+    private string _paginationText = "0 employees";
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private bool _showEmployeeColumn = ColumnVisibilityHelper.Load("Employees", "Employee", true);
+
+    [ObservableProperty]
+    private bool _showProvinceColumn = ColumnVisibilityHelper.Load("Employees", "Province", true);
+
+    [ObservableProperty]
+    private bool _showPayTypeColumn = ColumnVisibilityHelper.Load("Employees", "PayType", true);
+
+    [ObservableProperty]
+    private bool _showPayRateColumn = ColumnVisibilityHelper.Load("Employees", "PayRate", true);
+
+    [ObservableProperty]
+    private bool _showFrequencyColumn = ColumnVisibilityHelper.Load("Employees", "Frequency", true);
+
+    [ObservableProperty]
+    private bool _showStatusColumn = ColumnVisibilityHelper.Load("Employees", "Status", true);
+
+    partial void OnShowEmployeeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Employee", value); ColumnVisibilityHelper.Save("Employees", "Employee", value); }
+    partial void OnShowProvinceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Province", value); ColumnVisibilityHelper.Save("Employees", "Province", value); }
+    partial void OnShowPayTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("PayType", value); ColumnVisibilityHelper.Save("Employees", "PayType", value); }
+    partial void OnShowPayRateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("PayRate", value); ColumnVisibilityHelper.Save("Employees", "PayRate", value); }
+    partial void OnShowFrequencyColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Frequency", value); ColumnVisibilityHelper.Save("Employees", "Frequency", value); }
+    partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Employees", "Status", value); }
+
+    [RelayCommand]
+    private void ToggleColumnMenu() => IsColumnMenuOpen = !IsColumnMenuOpen;
+
+    [RelayCommand]
+    private void CloseColumnMenu() => IsColumnMenuOpen = false;
+
+    [RelayCommand]
+    private void ResetColumnVisibility()
+    {
+        ColumnWidths.ResetWidths();
+        ColumnVisibilityHelper.ResetPage("Employees");
+        ShowEmployeeColumn = true;
+        ShowProvinceColumn = true;
+        ShowPayTypeColumn = true;
+        ShowPayRateColumn = true;
+        ShowFrequencyColumn = true;
+        ShowStatusColumn = true;
+    }
+
+    #endregion
 
     #region Commands
 
@@ -175,11 +240,25 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
                 || e.EmployeeNumber.Contains(q, StringComparison.OrdinalIgnoreCase));
         }
 
-        foreach (Employee e in filtered.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
+        List<Employee> ordered = filtered
+            .OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)ordered.Count / PageSize));
+        if (CurrentPage > TotalPages)
+        {
+            CurrentPage = TotalPages;
+        }
+
+        foreach (Employee e in ordered.Skip((CurrentPage - 1) * PageSize).Take(PageSize))
         {
             Employees.Add(EmployeeDisplayItem.From(e));
         }
 
+        PaginationText = PaginationTextHelper.FormatPaginationText(
+            ordered.Count, CurrentPage, PageSize, TotalPages, "employee", "employees");
+
+        NotifyPaginationChanged();
         OnPropertyChanged(nameof(HasNoMatches));
     }
 }

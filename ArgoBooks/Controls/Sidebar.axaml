@@ -190,6 +190,14 @@
                                          IsCollapsible="True"
                                          Items="{Binding ManagementItems}" />
 
+                <!-- Payroll Section -->
+                <controls:SidebarSection Title="{loc:Loc Payroll}"
+                                         SectionKey="Payroll"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
+                                         Items="{Binding PayrollItems}"
+                                         IsVisible="{Binding ShowPayroll}" />
+
                 <!-- Inventory Section -->
                 <controls:SidebarSection Title="{loc:Loc Inventory}"
                                          SectionKey="Inventory"

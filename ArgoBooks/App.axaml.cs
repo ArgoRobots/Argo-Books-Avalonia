@@ -901,7 +901,8 @@ public partial class App : Application
     private static BankMatchingPageViewModel? _bankMatchingPageViewModel;
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
-    private static LocationsPageViewModel? _locationsPageViewModel;
+    private static LocationsPageViewModel? _locationsPageViewModel;
+    private static EmployeesPageViewModel? _employeesPageViewModel;
     private static StockAdjustmentsPageViewModel? _stockAdjustmentsPageViewModel;
     private static PurchaseOrdersPageViewModel? _purchaseOrdersPageViewModel;
     private static CategoriesPageViewModel? _categoriesPageViewModel;
@@ -4053,6 +4054,13 @@ public partial class App : Application
                 }
             }
             return new CategoriesPage { DataContext = _categoriesPageViewModel };
+        });
+
+        navigationService.RegisterPage("Employees", _ =>
+        {
+            _employeesPageViewModel ??= new EmployeesPageViewModel();
+            _employeesPageViewModel.Load();
+            return new EmployeesPage { DataContext = _employeesPageViewModel };
         });
 
         // Contacts Section

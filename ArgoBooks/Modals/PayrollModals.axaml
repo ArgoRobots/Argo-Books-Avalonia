@@ -1,0 +1,177 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
+             x:Class="ArgoBooks.Modals.PayrollModals"
+             x:DataType="vm:PayrollModalsViewModel">
+
+    <Design.DataContext>
+        <vm:PayrollModalsViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- ======================= ADD / EDIT EMPLOYEE ======================= -->
+        <controls:ModalOverlay IsOpen="{Binding IsEmployeeModalOpen}"
+                               ClosingCommand="{Binding CloseEmployeeModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="640" MaxHeight="700"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding ModalTitle}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="icon-button"
+                                        Command="{Binding CloseEmployeeModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="18">
+
+                                <Grid ColumnDefinitions="*,16,*">
+                                    <StackPanel Grid.Column="0" Spacing="6">
+                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
+                                        <TextBox Text="{Binding Name, Mode=TwoWay}" Classes="form-input" />
+                                        <TextBlock Text="{Binding NameError}" FontSize="12"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   IsVisible="{Binding NameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Employee number'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBox Text="{Binding EmployeeNumber, Mode=TwoWay}" Classes="form-input" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*,16,*">
+                                    <StackPanel Grid.Column="0" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Province of employment'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding SupportedProvinces}"
+                                                  SelectedItem="{Binding Province, Mode=TwoWay}"
+                                                  Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                        <!-- Only provinces the loaded rate table covers are offered, so an
+                                             employee can never be created that a pay run would refuse. -->
+                                        <TextBlock Text="{loc:Loc 'Where they work, which may differ from where they live.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Pay frequency'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding Frequencies}"
+                                                  SelectedItem="{Binding PayFrequency, Mode=TwoWay}"
+                                                  Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{loc:Loc 'Pay'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                        <RadioButton GroupName="PayType" Content="{loc:Loc 'Salary'}"
+                                                     IsChecked="{Binding IsSalaried, Mode=TwoWay}" />
+                                        <RadioButton GroupName="PayType" Content="{loc:Loc 'Hourly'}"
+                                                     IsChecked="{Binding !IsSalaried}" />
+                                    </StackPanel>
+                                    <TextBox Text="{Binding PayRate, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                             Classes="form-input" />
+                                    <TextBlock Text="{Binding PayRateError}" FontSize="12"
+                                               Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding PayRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="{loc:Loc 'Tax credits'}" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <!-- Left blank, the basic personal amount is used. An employer applies
+                                             whatever the employee wrote on their TD1. -->
+                                        <TextBlock Text="{loc:Loc 'Leave blank to use the basic personal amount. Enter the totals from the employee''s TD1 forms if they claim more.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Grid ColumnDefinitions="*,16,*">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Federal TD1'}" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding FederalClaimAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                                         Classes="form-input" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Provincial TD1'}" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ProvincialClaimAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
+                                                         Classes="form-input" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Spacing="8">
+                                    <CheckBox IsChecked="{Binding IsCppExempt, Mode=TwoWay}"
+                                              Content="{loc:Loc 'Exempt from CPP'}" />
+                                    <TextBlock Text="{loc:Loc 'Under 18, over 70, or already receiving a CPP retirement pension.'}"
+                                               FontSize="11" Margin="28,0,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <CheckBox IsChecked="{Binding IsEiExempt, Mode=TwoWay}"
+                                              Content="{loc:Loc 'Exempt from EI'}" />
+                                    <TextBlock Text="{loc:Loc 'Usually an owner controlling more than 40% of the voting shares.'}"
+                                               FontSize="11" Margin="28,0,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Start date'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay}"
+                                                Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding Notes, Mode=TwoWay}" Classes="form-input"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" MaxLength="500" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                                <Button Classes="secondary-button" Content="{loc:Loc Cancel}"
+                                        Command="{Binding CloseEmployeeModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc Save}"
+                                        Command="{Binding SaveEmployeeCommand}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+
+</UserControl>

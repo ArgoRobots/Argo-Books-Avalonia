@@ -64,7 +64,9 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showRentals = true;
 
     [ObservableProperty]
-    private bool _showPayroll = true;
+    // Off unless the company actually pays people. Most users have no employees,
+    // so an empty Payroll section would just be clutter.
+    private bool _showPayroll;
 
     [ObservableProperty]
     private bool _showTeam; // Hidden until enterprise plan
@@ -101,6 +103,7 @@ public partial class SidebarViewModel : ViewModelBase
     public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
     public ObservableCollection<SidebarItemModel> ManagementItems { get; } = [];
     public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> PayrollItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TeamItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TrackingItems { get; } = [];
 
@@ -175,6 +178,9 @@ public partial class SidebarViewModel : ViewModelBase
         ManagementItems.Add(CreateItem("Products / Services", "Products", Icons.Products));
         ManagementItems.Add(CreateItem("Categories", "Categories", Icons.Categories));
         ManagementItems.Add(CreateItem("Suppliers", "Suppliers", Icons.Suppliers));
+
+        // Payroll Section
+        PayrollItems.Add(CreateItem("Employees", "Employees", Icons.Customers));
 
         // Inventory Section (mockup: Stock Levels, Adjustments, Locations, Transfers, Purchase Orders)
         InventoryItems.Add(CreateItem("Stock Levels", "StockLevels", Icons.StockLevels));
@@ -257,6 +263,7 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in RentalItems) item.IsCollapsed = isCollapsed;
         foreach (var item in ManagementItems) item.IsCollapsed = isCollapsed;
         foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in PayrollItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TeamItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TrackingItems) item.IsCollapsed = isCollapsed;
     }
@@ -315,6 +322,7 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in RentalItems) item.IsActive = item.PageName == pageName;
         foreach (var item in ManagementItems) item.IsActive = item.PageName == pageName;
         foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in PayrollItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TeamItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TrackingItems) item.IsActive = item.PageName == pageName;
     }
