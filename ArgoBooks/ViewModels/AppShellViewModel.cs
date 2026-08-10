@@ -34,6 +34,7 @@ public partial class AppShellViewModel : ViewModelBase
     private RevenueModalsViewModel? _revenueModalsViewModel;
     private StockLevelsModalsViewModel? _stockLevelsModalsViewModel;
     private LocationsModalsViewModel? _locationsModalsViewModel;
+    private PayrollModalsViewModel? _payrollModalsViewModel;
     private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
     private BankMatchingModalsViewModel? _bankMatchingModalsViewModel;
     private BankStatementImportModalViewModel? _bankStatementImportModalViewModel;
@@ -444,6 +445,22 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _locationsModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the payroll modals view model.
+    /// </summary>
+    public PayrollModalsViewModel PayrollModalsViewModel
+    {
+        get
+        {
+            if (_payrollModalsViewModel == null)
+            {
+                _payrollModalsViewModel = new PayrollModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _payrollModalsViewModel;
         }
     }
 

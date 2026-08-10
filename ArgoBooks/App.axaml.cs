@@ -199,6 +199,7 @@ public partial class App : Application
     /// Gets the locations modals view model for shared access.
     /// </summary>
     public static LocationsModalsViewModel? LocationsModalsViewModel => _appShellViewModel?.LocationsModalsViewModel;
+    public static PayrollModalsViewModel? PayrollModalsViewModel => _appShellViewModel?.PayrollModalsViewModel;
 
     /// <summary>
     /// Gets the stock adjustments modals view model for shared access.
@@ -867,6 +868,7 @@ public partial class App : Application
     /// Gets the shared column widths for the Locations table.
     /// </summary>
     public static Controls.ColumnWidths.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.EmployeesTableColumnWidths EmployeesColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Stock Adjustments table.
