@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Payroll;
+using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
@@ -159,9 +160,8 @@ public class PayrollService(PayrollRateService? rateService = null)
     }
 
     /// <summary>
-    /// Locks a run. Recording the stubs and expenses is the caller's job, since that touches
-    /// the UI layer, but the run must be marked approved first so a later run's year-to-date
-    /// figures include it.
+    /// Locks a run without touching the books. Use <see cref="ApproveAndRecord"/> for the
+    /// normal path; this exists so the lock and the bookkeeping can be reasoned about apart.
     /// </summary>
     public void Approve(PayRun run)
     {
@@ -172,6 +172,50 @@ public class PayrollService(PayrollRateService? rateService = null)
 
         run.Status = PayRunStatus.Approved;
         run.ApprovedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Locks a run and records the wages in the books.
+    ///
+    /// One expense per employee at NET pay, not gross. The employer makes two separate
+    /// withdrawals, the net pay now and the CRA remittance later, and both need somewhere to
+    /// land. Recording gross here and the remittance again later would count the deductions
+    /// twice. Separate rather than combined because a small employer e-transfers each person
+    /// individually, so the bank statement shows separate lines and bank matching has to line
+    /// up with them.
+    /// </summary>
+    /// <returns>The expenses that were created, in line order.</returns>
+    public List<Expense> ApproveAndRecord(CompanyData data, PayRun run)
+    {
+        var created = new List<Expense>();
+
+        if (run.Status != PayRunStatus.Draft)
+        {
+            return created;
+        }
+
+        Approve(run);
+
+        foreach (PayRunLine line in run.Lines)
+        {
+            if (line.NetPay == 0)
+            {
+                continue;
+            }
+
+            Expense expense = TransactionFactory.CreateExpense(data, new TransactionDraft(
+                Date: run.PayDate,
+                Description: $"Wages - {line.EmployeeName}",
+                Total: line.NetPay,
+                CounterpartyId: null,
+                Notes: $"Net pay for {run.PeriodStart:yyyy-MM-dd} to {run.PeriodEnd:yyyy-MM-dd} ({run.Id})."));
+
+            data.Expenses.Add(expense);
+            line.ExpenseId = expense.Id;
+            created.Add(expense);
+        }
+
+        return created;
     }
 
     /// <summary>
@@ -220,6 +264,21 @@ public class PayrollService(PayrollRateService? rateService = null)
                 ProvincialTax = -line.ProvincialTax,
                 NetPay = -line.NetPay,
             });
+        }
+
+        // The wage expenses are removed rather than reversed. They were written by this app,
+        // not observed in the world, and a voided run is one whose money never left. Leaving
+        // a matching pair of plus and minus expenses would double the transaction count on
+        // every report for no gain.
+        foreach (PayRunLine line in run.Lines)
+        {
+            if (line.ExpenseId is not { Length: > 0 } expenseId)
+            {
+                continue;
+            }
+
+            data.Expenses.RemoveAll(e => e.Id == expenseId);
+            line.ExpenseId = null;
         }
 
         run.Status = PayRunStatus.Void;

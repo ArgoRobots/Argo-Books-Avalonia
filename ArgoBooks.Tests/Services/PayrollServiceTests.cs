@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Payroll;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -182,6 +183,103 @@ public class PayrollServiceTests
 
         Assert.Equal(PayRunStatus.Approved, run.Status);
         Assert.NotNull(run.ApprovedAt);
+    }
+
+    [Fact]
+    public void ApproveAndRecord_WritesOneExpensePerEmployeeAtNetPay()
+    {
+        // Net rather than gross, so the books mirror the bank. The employer makes two separate
+        // withdrawals, the net pay now and the CRA remittance later, and recording gross here
+        // would count the deductions twice.
+        CompanyData data = DataWithEmployee();
+        data.Employees.Add(new Employee { Id = "EMP-002", Name = "Second Person", Province = "AB" });
+
+        PayRun run = ApprovedRun("PR-0001", PayDate, "EMP-001", 2000m, 110.99m, 32.60m);
+        run.Lines.Add(new PayRunLine { EmployeeId = "EMP-002", EmployeeName = "Second Person", NetPay = 1500m });
+        run.Status = PayRunStatus.Draft;
+
+        List<Expense> created = new PayrollService().ApproveAndRecord(data, run);
+
+        Assert.Equal(2, created.Count);
+        Assert.Equal(2, data.Expenses.Count);
+        Assert.Equal(1856.41m, created[0].Total);
+        Assert.Equal(1500m, created[1].Total);
+        Assert.Equal(PayDate, created[0].Date);
+    }
+
+    [Fact]
+    public void ApproveAndRecord_LinksEachExpenseBackToItsLine()
+    {
+        // Without the link a void cannot find what to remove.
+        CompanyData data = DataWithEmployee();
+        PayRun run = ApprovedRun("PR-0001", PayDate, "EMP-001", 2000m, 110.99m, 32.60m);
+        run.Status = PayRunStatus.Draft;
+
+        new PayrollService().ApproveAndRecord(data, run);
+
+        Assert.NotNull(run.Lines[0].ExpenseId);
+        Assert.Contains(data.Expenses, e => e.Id == run.Lines[0].ExpenseId);
+    }
+
+    [Fact]
+    public void ApproveAndRecord_DoesNothingToAnAlreadyApprovedRun()
+    {
+        // Guards against approving twice and paying everyone a second time in the books.
+        CompanyData data = DataWithEmployee();
+        PayRun run = ApprovedRun("PR-0001", PayDate, "EMP-001", 2000m, 110.99m, 32.60m);
+
+        List<Expense> created = new PayrollService().ApproveAndRecord(data, run);
+
+        Assert.Empty(created);
+        Assert.Empty(data.Expenses);
+    }
+
+    [Fact]
+    public void ApproveAndRecord_SkipsALineWithNothingToPay()
+    {
+        CompanyData data = DataWithEmployee();
+        PayRun run = ApprovedRun("PR-0001", PayDate, "EMP-001", 0m, 0m, 0m);
+        run.Status = PayRunStatus.Draft;
+
+        new PayrollService().ApproveAndRecord(data, run);
+
+        Assert.Empty(data.Expenses);
+    }
+
+    [Fact]
+    public void Void_RemovesTheWageExpensesTheRunCreated()
+    {
+        // A voided run is one whose money never left, so the expense goes with it. Leaving a
+        // matching plus and minus pair would double the transaction count on every report.
+        CompanyData data = DataWithEmployee();
+        PayRun run = ApprovedRun("PR-0001", PayDate, "EMP-001", 2000m, 110.99m, 32.60m);
+        run.Status = PayRunStatus.Draft;
+
+        var service = new PayrollService();
+        service.ApproveAndRecord(data, run);
+        Assert.Single(data.Expenses);
+
+        service.Void(data, run);
+
+        Assert.Empty(data.Expenses);
+        Assert.Null(run.Lines[0].ExpenseId);
+    }
+
+    [Fact]
+    public void Void_LeavesUnrelatedExpensesAlone()
+    {
+        CompanyData data = DataWithEmployee();
+        data.Expenses.Add(new Expense { Id = "PUR-2026-00099", Total = 40m });
+
+        PayRun run = ApprovedRun("PR-0001", PayDate, "EMP-001", 2000m, 110.99m, 32.60m);
+        run.Status = PayRunStatus.Draft;
+
+        var service = new PayrollService();
+        service.ApproveAndRecord(data, run);
+        service.Void(data, run);
+
+        Assert.Single(data.Expenses);
+        Assert.Equal("PUR-2026-00099", data.Expenses[0].Id);
     }
 
     [Fact]
