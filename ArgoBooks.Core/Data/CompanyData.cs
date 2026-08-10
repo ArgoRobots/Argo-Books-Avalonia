@@ -70,6 +70,13 @@ public class CompanyData
     public List<Models.Payroll.Employee> Employees { get; init; } = [];
 
     /// <summary>
+    /// Every payroll ever run, including voided ones and the reversals that cancelled them.
+    /// Nothing is removed: an approved run's figures are what the employee's pay stub says.
+    /// </summary>
+    [JsonPropertyName("payRuns")]
+    public List<Models.Payroll.PayRun> PayRuns { get; init; } = [];
+
+    /// <summary>
     /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]
