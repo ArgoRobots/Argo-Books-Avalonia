@@ -68,27 +68,6 @@
                     <TabItem Header="{loc:Loc General}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
-                                <!-- Payroll is hidden unless the company actually pays people. -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Payroll'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Show the payroll section, for paying employees and working out their deductions'}"
-                                                       FontSize="12"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding ShowPayroll}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc Language}"

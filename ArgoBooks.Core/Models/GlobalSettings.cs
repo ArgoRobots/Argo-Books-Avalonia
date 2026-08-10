@@ -33,12 +33,6 @@ public class UpdateSettings
 public class UiSettings
 {
     public bool SidebarCollapsed { get; set; } = false;
-
-    /// <summary>
-    /// Whether the Payroll section appears in the sidebar. Off by default: most companies
-    /// have no employees, and an empty Payroll section is clutter for them.
-    /// </summary>
-    public bool ShowPayroll { get; set; } = false;
     public bool ReportsElementPanelCollapsed { get; set; } = false;
     public string Theme { get; set; } = "Dark";
     public string AccentColor { get; set; } = "Blue";

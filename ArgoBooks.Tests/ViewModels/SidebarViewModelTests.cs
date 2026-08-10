@@ -272,11 +272,9 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void Constructor_DefaultState_ShowPayrollIsFalse()
+    public void Constructor_DefaultState_ShowPayrollIsTrue()
     {
-        // Off unless the company actually pays people. Most have no employees, so an
-        // empty Payroll section would just be clutter. Turned on in settings.
-        Assert.False(_viewModel.ShowPayroll);
+        Assert.True(_viewModel.ShowPayroll);
     }
 
     [Fact]

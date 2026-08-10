@@ -64,9 +64,7 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showRentals = true;
 
     [ObservableProperty]
-    // Off unless the company actually pays people. Most users have no employees,
-    // so an empty Payroll section would just be clutter.
-    private bool _showPayroll;
+    private bool _showPayroll = true;
 
     [ObservableProperty]
     private bool _showTeam; // Hidden until enterprise plan
