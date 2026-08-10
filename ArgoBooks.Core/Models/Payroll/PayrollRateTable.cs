@@ -138,6 +138,14 @@ public class CppRates
     [JsonPropertyName("rateEmployer")]
     public decimal RateEmployer { get; set; }
 
+    /// <summary>
+    /// The base portion of the rate, historically 4.95%. The remainder is the CPP
+    /// enhancement, which is treated completely differently by the tax calculation: the
+    /// enhanced part is deducted from income, while only the base part feeds the K2 credit.
+    /// </summary>
+    [JsonPropertyName("baseRateEmployee")]
+    public decimal BaseRateEmployee { get; set; }
+
     /// <summary>Annual amount exempt from contributions, prorated across pay periods.</summary>
     [JsonPropertyName("basicExemptionAnnual")]
     public decimal BasicExemptionAnnual { get; set; }

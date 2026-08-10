@@ -28,6 +28,7 @@
   "cpp": {
     "rateEmployee": 0.0595,
     "rateEmployer": 0.0595,
+    "baseRateEmployee": 0.0495,
     "basicExemptionAnnual": 3500,
     "ympeCeiling": 74600,
     "maxContributionEmployee": 4230.45

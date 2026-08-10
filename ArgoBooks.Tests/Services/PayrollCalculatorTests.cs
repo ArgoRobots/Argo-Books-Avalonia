@@ -234,4 +234,59 @@ public class PayrollCalculatorTests
     }
 
     #endregion
+
+    #region PDOC fixtures, captured from CRA's own calculator
+
+    /// <summary>
+    /// Every figure CRA's Payroll Deductions Online Calculator produced for these inputs,
+    /// Alberta, paid 2026-08-14, claim code 1 (16,452 federal and 22,769 provincial).
+    ///
+    /// This is the only test here that proves agreement with CRA rather than internal
+    /// consistency. It found three real defects that every other test passed straight over:
+    /// the CPP enhancement being deducted from income rather than credited, EI capping on the
+    /// premium rather than on insurable earnings, and the K2 credit ignoring contributions
+    /// already made earlier in the year.
+    ///
+    /// gross, periods, ytd(pensionable, cpp, insurable, ei), then expected
+    /// federal, provincial, cpp, cpp2, ei, net.
+    /// </summary>
+    public static IEnumerable<object[]> PdocCases =>
+    [
+        ["biweekly 2000",        2000m, 26,     0m,    0m,     0m,    0m,  163.23m,  78.45m, 110.99m,   0m, 32.60m, 1614.73m],
+        ["biweekly 3500",        3500m, 26,     0m,    0m,     0m,    0m,  442.63m, 215.21m, 200.24m,   0m, 57.05m, 2584.87m],
+        ["weekly 1000",          1000m, 52,     0m,    0m,     0m,    0m,   81.61m,  39.23m,  55.50m,   0m, 16.30m,  807.36m],
+        ["monthly 5000",         5000m, 12,     0m,    0m,     0m,    0m,  444.86m, 219.28m, 280.15m,   0m, 81.50m, 3974.21m],
+        ["semi-monthly 2500",    2500m, 24,     0m,    0m,     0m,    0m,  222.43m, 109.64m, 140.07m,   0m, 40.75m, 1987.11m],
+        ["biweekly 4000 at cap", 4000m, 26, 74000m, 4200m, 67500m, 1100m,  523.09m, 254.47m,  30.45m, 136m, 23.07m, 3032.92m],
+        ["biweekly 500 at cap",   500m, 26, 74000m, 4200m, 67500m, 1100m,    0.00m,   0.00m,  21.74m,   0m,  8.15m,  470.11m],
+        ["biweekly 8000 at cap", 8000m, 26, 74000m, 4200m, 67500m, 1100m, 1507.74m, 679.59m,  30.45m, 296m, 23.07m, 5463.15m],
+    ];
+
+    [Theory]
+    [MemberData(nameof(PdocCases))]
+    public void Deductions_MatchCraOnlineCalculator(
+        string label, decimal gross, int periods,
+        decimal ytdPensionable, decimal ytdCpp, decimal ytdInsurable, decimal ytdEi,
+        decimal federal, decimal provincial, decimal cpp, decimal cpp2, decimal ei, decimal net)
+    {
+        PayrollDeductions r = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = gross, Province = "AB", PayPeriodsPerYear = periods },
+            new PayrollYearToDate
+            {
+                PensionableEarnings = ytdPensionable,
+                CppEmployee = ytdCpp,
+                InsurableEarnings = ytdInsurable,
+                EiEmployee = ytdEi,
+            },
+            Rates());
+
+        Assert.Equal(cpp, r.CppEmployee);
+        Assert.Equal(cpp2, r.Cpp2Employee);
+        Assert.Equal(ei, r.EiEmployee);
+        Assert.Equal(federal, r.FederalTax);
+        Assert.Equal(provincial, r.ProvincialTax);
+        Assert.Equal(net, r.NetPay);
+    }
+
+    #endregion
 }

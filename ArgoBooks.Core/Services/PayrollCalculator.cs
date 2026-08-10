@@ -41,16 +41,38 @@ public static class PayrollCalculator
         int periods = input.PayPeriodsPerYear;
         decimal gross = input.GrossPay;
 
-        decimal cpp = CppForPeriod(gross, periods, ytd, rates, input.IsCppExempt, out decimal cpp2);
+        decimal cpp = CppForPeriod(gross, periods, ytd, rates, input.IsCppExempt,
+                                   out decimal cpp2, out decimal cppUnrounded);
         decimal ei = EiForPeriod(gross, ytd, rates, input.IsEiExempt);
 
+        // The CPP enhancement, the part of the rate above the historical 4.95% base, is not a
+        // tax credit. It is deducted from income before tax is worked out, and CPP2 is
+        // deducted the same way. Only the base portion feeds the K2 credit below.
+        //
+        // Worth stating because the two effects cancel exactly inside the lowest tax bracket,
+        // so getting this wrong looks correct until an employee earns enough to reach the
+        // second bracket, and then the tax is out by a few dollars every period.
+        decimal enhancedShare = rates.Cpp.RateEmployee > 0
+            ? (rates.Cpp.RateEmployee - rates.Cpp.BaseRateEmployee) / rates.Cpp.RateEmployee
+            : 0m;
+        decimal enhancedCpp = Round(cpp * enhancedShare);
+
         // Annualised income. T4127 calls this A.
-        decimal annual = gross * periods;
+        decimal annual = (gross - enhancedCpp - cpp2) * periods;
 
         // Annual contributions, needed for the K2 credit. Capped at the annual maximum
-        // because that is where deductions stop.
-        decimal annualCpp = Math.Min(cpp * periods, rates.Cpp.MaxContributionEmployee);
-        decimal annualEi = Math.Min(ei * periods, rates.Ei.MaxPremiumEmployee);
+        // because that is where deductions stop, and reduced to the base portion because the
+        // enhancement was already relieved as a deduction above.
+        // What the employee will have contributed across the whole year, not just this period
+        // annualised. Ignoring the year-to-date figures understates the credit for anyone who
+        // has already reached a ceiling, because their remaining periods deduct little or
+        // nothing while the year's total is still the full maximum.
+        // Annualised from the UNROUNDED contribution. Rounding each period to the cent first
+        // and then multiplying by 26 compounds the rounding into several cents a year, which
+        // is enough to move the final tax by a cent.
+        decimal annualCpp = Math.Min(ytd.CppEmployee + cppUnrounded * periods, rates.Cpp.MaxContributionEmployee)
+                            * (1 - enhancedShare);
+        decimal annualEi = Math.Min(ytd.EiEmployee + ei * periods, rates.Ei.MaxPremiumEmployee);
 
         decimal federalAnnual = FederalTaxForYear(annual, annualCpp, annualEi, input, rates);
         decimal provincialAnnual = ProvincialTaxForYear(annual, annualCpp, annualEi, input, rates, province);
@@ -80,9 +102,11 @@ public static class PayrollCalculator
     /// than optional.
     /// </summary>
     private static decimal CppForPeriod(
-        decimal gross, int periods, PayrollYearToDate ytd, PayrollRateTable rates, bool exempt, out decimal cpp2)
+        decimal gross, int periods, PayrollYearToDate ytd, PayrollRateTable rates, bool exempt,
+        out decimal cpp2, out decimal cppUnrounded)
     {
         cpp2 = 0m;
+        cppUnrounded = 0m;
         if (exempt || gross <= 0)
         {
             return 0m;
@@ -91,9 +115,11 @@ public static class PayrollCalculator
         decimal periodExemption = rates.Cpp.BasicExemptionAnnual / periods;
         decimal pensionable = Math.Max(0, gross - periodExemption);
 
-        decimal cpp = Round(pensionable * rates.Cpp.RateEmployee);
+        cppUnrounded = pensionable * rates.Cpp.RateEmployee;
+        decimal cpp = Round(cppUnrounded);
         decimal remaining = Math.Max(0, rates.Cpp.MaxContributionEmployee - ytd.CppEmployee);
         cpp = Math.Min(cpp, remaining);
+        cppUnrounded = Math.Min(cppUnrounded, remaining);
 
         // CPP2 applies to earnings between the two ceilings, so it only begins once the
         // employee's pensionable earnings for the year pass the first ceiling.
@@ -117,8 +143,11 @@ public static class PayrollCalculator
             return 0m;
         }
 
-        decimal insurable = Math.Max(0, Math.Min(rates.Ei.MaxInsurableEarnings - ytd.InsurableEarnings, gross));
-        decimal premium = Round(insurable * rates.Ei.RateEmployee);
+        // Capped on the premium rather than on remaining insurable earnings. Those two are
+        // only equivalent when the year-to-date figures agree perfectly, and they rarely do
+        // in real records. CRA's calculator caps the premium, so the last pay period of the
+        // year lands exactly on the annual maximum.
+        decimal premium = Round(gross * rates.Ei.RateEmployee);
         decimal remaining = Math.Max(0, rates.Ei.MaxPremiumEmployee - ytd.EiEmployee);
         return Math.Min(premium, remaining);
     }
@@ -137,9 +166,13 @@ public static class PayrollCalculator
         (decimal rate, decimal k) = BracketFor(federal.Brackets, annual);
         decimal lowest = federal.LowestRateForCredits;
 
+        // The employee's TD1 claim, or the full basic personal amount when none is on file.
+        // Deliberately not phased down for income: an employer applies the figure the employee
+        // wrote on their TD1, and reflecting the high-income reduction is the employee's job
+        // when completing that form. CRA's own calculator behaves this way.
         decimal claim = input.FederalClaimAmount > 0
             ? input.FederalClaimAmount
-            : federal.BasicPersonalAmount.ForIncome(annual);
+            : federal.BasicPersonalAmount.Maximum;
 
         decimal k1 = lowest * claim;
         decimal k2 = lowest * (annualCpp + annualEi);
@@ -161,7 +194,7 @@ public static class PayrollCalculator
 
         decimal claim = input.ProvincialClaimAmount > 0
             ? input.ProvincialClaimAmount
-            : province.BasicPersonalAmount.ForIncome(annual);
+            : province.BasicPersonalAmount.Maximum;
 
         decimal tax = rate * annual - k - lowest * claim - lowest * (annualCpp + annualEi);
         tax = Math.Max(0, tax);
