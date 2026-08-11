@@ -87,12 +87,16 @@ public class PayrollService(PayrollRateService? rateService = null)
                 continue;
             }
 
-            decimal gross = line.BasePay + line.Bonus + line.VacationPay;
+            // An hourly employee's base pay is derived from their hours rather than typed, but
+            // it still has to be stored: a pay stub shows the earnings lines adding up to
+            // gross, and leaving this at zero makes the stub fail to reconcile in front of the
+            // person being paid.
             if (employee.PayType == PayType.Hourly)
             {
-                gross = Math.Round(line.HoursWorked * employee.PayRate, 2, MidpointRounding.AwayFromZero)
-                        + line.Bonus + line.VacationPay;
+                line.BasePay = Math.Round(line.HoursWorked * employee.PayRate, 2, MidpointRounding.AwayFromZero);
             }
+
+            decimal gross = line.BasePay + line.Bonus + line.VacationPay;
 
             PayrollYearToDate ytd = YearToDateFor(data, employee.Id, run);
 

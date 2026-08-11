@@ -72,7 +72,9 @@ public static class PayStubPdfRenderer
                                 e.Item().Text($"Province of employment: {line.Province}");
                         });
 
-                        row.ConstantItem(220).Column(d =>
+                        // Wide enough that the period fits on one line. At 220 it wrapped mid
+                        // range, which reads as two dates rather than one span.
+                        row.ConstantItem(260).Column(d =>
                         {
                             Field(d, "Pay date:", run.PayDate.ToString("yyyy-MM-dd"));
                             Field(d, "Period:", $"{run.PeriodStart:yyyy-MM-dd} to {run.PeriodEnd:yyyy-MM-dd}");
@@ -86,12 +88,12 @@ public static class PayStubPdfRenderer
                         c.Item().Text("EARNINGS").FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
                         c.Item().PaddingTop(6).Column(rows =>
                         {
-                            if (line.HoursWorked != 0)
-                            {
-                                Amount(rows, "Hours worked", line.HoursWorked.ToString("0.##"), plain: true);
-                            }
-
-                            Amount(rows, "Base pay", Money(line.BasePay, currencySymbol));
+                            // Hours belong on the base pay line rather than above it, so every
+                            // line in this section is an amount and they visibly sum to gross.
+                            Amount(rows, line.HoursWorked != 0
+                                    ? $"Base pay ({line.HoursWorked:0.##} hours)"
+                                    : "Base pay",
+                                Money(line.BasePay, currencySymbol));
 
                             if (line.Bonus != 0)
                             {
@@ -172,7 +174,7 @@ public static class PayStubPdfRenderer
         col.Item().Row(r =>
         {
             r.RelativeItem().Text(label).FontColor(Colors.Grey.Darken2);
-            r.ConstantItem(110).AlignRight().Text(value);
+            r.ConstantItem(150).AlignRight().Text(value);
         });
 
     private static void Amount(ColumnDescriptor col, string label, string value,
