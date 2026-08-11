@@ -260,6 +260,13 @@ public class PayrollCalculatorTests
         ["biweekly 4000 at cap", 4000m, 26, 74000m, 4200m, 67500m, 1100m,  523.09m, 254.47m,  30.45m, 136m, 23.07m, 3032.92m],
         ["biweekly 500 at cap",   500m, 26, 74000m, 4200m, 67500m, 1100m,    0.00m,   0.00m,  21.74m,   0m,  8.15m,  470.11m],
         ["biweekly 8000 at cap", 8000m, 26, 74000m, 4200m, 67500m, 1100m, 1507.74m, 679.59m,  30.45m, 296m, 23.07m, 5463.15m],
+
+        // The pair that settled how K2 annualises. Same employee, same pay, six periods apart:
+        // CRA returns identical tax both times. Anything that makes the credit depend on what
+        // has already been deducted this year breaks the second of these, and under-withholds
+        // for the rest of the year without touching any other case.
+        ["biweekly 2400 fresh",  2400m, 26,     0m,    0m,     0m,    0m,  223.20m, 108.50m, 134.79m,   0m, 39.12m, 1894.39m],
+        ["biweekly 2400 mid-yr", 2400m, 26, 14400m, 808.74m, 14400m, 234.72m, 223.20m, 108.50m, 134.79m, 0m, 39.12m, 1894.39m],
     ];
 
     [Theory]

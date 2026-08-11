@@ -42,8 +42,8 @@ public static class PayrollCalculator
         decimal gross = input.GrossPay;
 
         decimal cpp = CppForPeriod(gross, periods, ytd, rates, input.IsCppExempt,
-                                   out decimal cpp2, out decimal cppUnrounded);
-        decimal ei = EiForPeriod(gross, ytd, rates, input.IsEiExempt);
+                                   out decimal cpp2, out decimal cppUncapped);
+        decimal ei = EiForPeriod(gross, ytd, rates, input.IsEiExempt, out decimal eiUncapped);
 
         // The CPP enhancement, the part of the rate above the historical 4.95% base, is not a
         // tax credit. It is deducted from income before tax is worked out, and CPP2 is
@@ -60,19 +60,25 @@ public static class PayrollCalculator
         // Annualised income. T4127 calls this A.
         decimal annual = (gross - enhancedCpp - cpp2) * periods;
 
-        // Annual contributions, needed for the K2 credit. Capped at the annual maximum
-        // because that is where deductions stop, and reduced to the base portion because the
-        // enhancement was already relieved as a deduction above.
-        // What the employee will have contributed across the whole year, not just this period
-        // annualised. Ignoring the year-to-date figures understates the credit for anyone who
-        // has already reached a ceiling, because their remaining periods deduct little or
-        // nothing while the year's total is still the full maximum.
-        // Annualised from the UNROUNDED contribution. Rounding each period to the cent first
-        // and then multiplying by 26 compounds the rounding into several cents a year, which
-        // is enough to move the final tax by a cent.
-        decimal annualCpp = Math.Min(ytd.CppEmployee + cppUnrounded * periods, rates.Cpp.MaxContributionEmployee)
+        // Annual contributions, for the K2 credit. T4127 expresses this as the period's
+        // contribution times the number of periods, capped at the annual maximum, and reduced
+        // to the base portion because the enhancement was already relieved as a deduction.
+        //
+        // Two details decide whether this matches CRA, and both were got wrong once:
+        //
+        // Annualise the UNCAPPED contribution, the one the rate produces before the remaining
+        // annual room is applied. Someone who has already reached the ceiling deducts almost
+        // nothing this period, and annualising that near-zero figure collapses the credit and
+        // spikes their tax. Annualising the uncapped figure and then capping the ANNUAL total
+        // gives them the full maximum, which is what they will actually have contributed.
+        //
+        // Do NOT add the year-to-date figures. Verified against PDOC: the same employee on the
+        // same pay gets the same tax in period 1 and period 7, with year-to-date CPP of 808.74
+        // on the second. Adding it makes the projection creep up to the annual maximum partway
+        // through the year and pin there, quietly under-withholding from that point on.
+        decimal annualCpp = Math.Min(cppUncapped * periods, rates.Cpp.MaxContributionEmployee)
                             * (1 - enhancedShare);
-        decimal annualEi = Math.Min(ytd.EiEmployee + ei * periods, rates.Ei.MaxPremiumEmployee);
+        decimal annualEi = Math.Min(eiUncapped * periods, rates.Ei.MaxPremiumEmployee);
 
         decimal federalAnnual = FederalTaxForYear(annual, annualCpp, annualEi, input, rates);
         decimal provincialAnnual = ProvincialTaxForYear(annual, annualCpp, annualEi, input, rates, province);
@@ -103,10 +109,10 @@ public static class PayrollCalculator
     /// </summary>
     private static decimal CppForPeriod(
         decimal gross, int periods, PayrollYearToDate ytd, PayrollRateTable rates, bool exempt,
-        out decimal cpp2, out decimal cppUnrounded)
+        out decimal cpp2, out decimal cppUncapped)
     {
         cpp2 = 0m;
-        cppUnrounded = 0m;
+        cppUncapped = 0m;
         if (exempt || gross <= 0)
         {
             return 0m;
@@ -115,11 +121,14 @@ public static class PayrollCalculator
         decimal periodExemption = rates.Cpp.BasicExemptionAnnual / periods;
         decimal pensionable = Math.Max(0, gross - periodExemption);
 
-        cppUnrounded = pensionable * rates.Cpp.RateEmployee;
-        decimal cpp = Round(cppUnrounded);
+        // Reported UNCAPPED, before the remaining annual room is applied. What is deducted
+        // this period is capped; what the K2 credit needs to annualise is not. See the note
+        // on annualCpp at the call site.
+        cppUncapped = pensionable * rates.Cpp.RateEmployee;
+
+        decimal cpp = Round(cppUncapped);
         decimal remaining = Math.Max(0, rates.Cpp.MaxContributionEmployee - ytd.CppEmployee);
         cpp = Math.Min(cpp, remaining);
-        cppUnrounded = Math.Min(cppUnrounded, remaining);
 
         // CPP2 applies to earnings between the two ceilings, so it only begins once the
         // employee's pensionable earnings for the year pass the first ceiling.
@@ -136,8 +145,10 @@ public static class PayrollCalculator
         return cpp;
     }
 
-    private static decimal EiForPeriod(decimal gross, PayrollYearToDate ytd, PayrollRateTable rates, bool exempt)
+    private static decimal EiForPeriod(decimal gross, PayrollYearToDate ytd, PayrollRateTable rates,
+                                       bool exempt, out decimal uncapped)
     {
+        uncapped = 0m;
         if (exempt || gross <= 0)
         {
             return 0m;
@@ -148,6 +159,8 @@ public static class PayrollCalculator
         // in real records. CRA's calculator caps the premium, so the last pay period of the
         // year lands exactly on the annual maximum.
         decimal premium = Round(gross * rates.Ei.RateEmployee);
+        uncapped = premium;
+
         decimal remaining = Math.Max(0, rates.Ei.MaxPremiumEmployee - ytd.EiEmployee);
         return Math.Min(premium, remaining);
     }

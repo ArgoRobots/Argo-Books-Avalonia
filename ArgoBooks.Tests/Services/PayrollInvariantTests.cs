@@ -365,20 +365,20 @@ public class PayrollInvariantTests
     }
 
     [Fact]
-    public void TheSameSalary_CostsAboutTheSameTaxWhicheverFrequencyItIsPaidAt()
+    public void TheSameSalary_CostsTheSameTaxWhicheverFrequencyItIsPaidAt()
     {
         // 62,400 divides evenly into all four frequencies, so any difference here is the
         // engine's rather than an artefact of an uneven period amount.
         //
-        // "About" is deliberate. Measured spread is around $6 on roughly $8,500 of annual
-        // tax, and it is not rounding noise: the K2 credit projects the year's CPP from the
-        // year-to-date figure, so the period at which that projection reaches the annual
-        // maximum lands at a different point in the year for twelve periods than for
-        // fifty-two. Source deductions are estimates trued up on the employee's return, so a
-        // spread this size is not an error, but it is real and it is worth knowing about.
+        // This test earned its keep. It first failed at a spread of $5.35, which looked like
+        // an acceptable tolerance question and was not: the K2 credit was projecting the
+        // year's CPP from the year-to-date figure, so the projection reached the annual
+        // maximum at a different point in the year for twelve periods than for fifty-two.
+        // PDOC settled it, the year-to-date term came out, and the spread fell to $0.36.
         //
-        // The bound is set to catch a structural mistake, not to make a precision claim: a
-        // wrong annualisation would move this by hundreds, not by six.
+        // A dollar is the bound because that is what per-period rounding can produce across
+        // fifty-two periods. Anything larger means the annualisation has become sensitive to
+        // something it should not see.
         PayrollRateTable rates = Rates();
         var nets = new List<decimal>();
 
@@ -387,7 +387,31 @@ public class PayrollInvariantTests
             nets.Add(RunYear(62400m / periods, periods, rates).Net);
         }
 
-        Assert.InRange(nets.Max() - nets.Min(), 0m, 20m);
+        Assert.InRange(nets.Max() - nets.Min(), 0m, 1m);
+    }
+
+    [Fact]
+    public void ConstantPay_IsTaxedTheSameInEveryPeriodOfTheYear()
+    {
+        // The plainest statement of what the K2 fix was about, and the cheapest guard against
+        // it regressing. Someone on unchanging pay must see the same deduction on every stub;
+        // a credit that drifts as the year-to-date figures grow is exactly what CRA does not
+        // do, and it under-withholds silently because each individual stub looks reasonable.
+        PayrollRateTable rates = Rates();
+        var ytd = new PayrollYearToDate();
+        decimal? first = null;
+
+        for (int period = 1; period <= 20; period++)
+        {
+            PayrollDeductions d = PayrollCalculator.Calculate(Input(2400m), ytd, rates);
+
+            first ??= d.FederalTax;
+            Assert.Equal(first.Value, d.FederalTax);
+
+            ytd.PensionableEarnings += d.GrossPay;
+            ytd.CppEmployee += d.CppEmployee;
+            ytd.EiEmployee += d.EiEmployee;
+        }
     }
 
     [Fact]
