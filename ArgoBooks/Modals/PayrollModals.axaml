@@ -152,12 +152,30 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
 
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Start date'}" FontSize="13" FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay}"
-                                                Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
+                                <Grid ColumnDefinitions="*,16,*">
+                                    <StackPanel Grid.Column="0" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Start date'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay}"
+                                                    Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'End date'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding EndDate, Mode=TwoWay}"
+                                                    Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                        <!-- Leaving is recorded here, archiving is a separate decision. The
+                                             T4 and the record of employment both need the actual last day,
+                                             and it is not the day someone got round to tidying the list. -->
+                                        <TextBlock Text="{loc:Loc 'Their last day, if they have left.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{Binding EndDateError}" FontSize="12"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   IsVisible="{Binding EndDateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    </StackPanel>
+                                </Grid>
 
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium"

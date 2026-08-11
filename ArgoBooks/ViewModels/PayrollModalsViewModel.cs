@@ -60,6 +60,14 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [ObservableProperty]
     private DateTimeOffset? _startDate;
 
+    /// <summary>
+    /// Their last day, if they have left. Kept separate from archiving: a leaver still needs a
+    /// T4 and a record of employment, and both want the actual last day rather than the day
+    /// someone got round to tidying the employee list.
+    /// </summary>
+    [ObservableProperty]
+    private DateTimeOffset? _endDate;
+
     [ObservableProperty]
     private string _notes = string.Empty;
 
@@ -68,6 +76,9 @@ public partial class PayrollModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _payRateError = string.Empty;
+
+    [ObservableProperty]
+    private string _endDateError = string.Empty;
 
     /// <summary>Label under the pay rate box, since the same field means two different things.</summary>
     public string PayRateHint => IsSalaried
@@ -121,10 +132,12 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsCppExempt = employee.IsCppExempt;
         IsEiExempt = employee.IsEiExempt;
         StartDate = employee.StartDate.HasValue ? new DateTimeOffset(employee.StartDate.Value) : null;
+        EndDate = employee.EndDate.HasValue ? new DateTimeOffset(employee.EndDate.Value) : null;
         Notes = employee.Notes;
 
         NameError = string.Empty;
         PayRateError = string.Empty;
+        EndDateError = string.Empty;
         IsEmployeeModalOpen = true;
     }
 
@@ -139,7 +152,13 @@ public partial class PayrollModalsViewModel : ViewModelBase
         NameError = string.IsNullOrWhiteSpace(Name) ? "Enter a name." : string.Empty;
         PayRateError = rate <= 0 ? "Enter a pay rate." : string.Empty;
 
-        if (NameError.Length > 0 || PayRateError.Length > 0)
+        // A last day before the first day would put pay periods outside the employment and
+        // make the record of employment nonsense.
+        EndDateError = StartDate is { } start && EndDate is { } end && end < start
+            ? "The end date cannot be before the start date."
+            : string.Empty;
+
+        if (NameError.Length > 0 || PayRateError.Length > 0 || EndDateError.Length > 0)
         {
             return;
         }
@@ -231,6 +250,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         employee.IsCppExempt = IsCppExempt;
         employee.IsEiExempt = IsEiExempt;
         employee.StartDate = StartDate?.DateTime;
+        employee.EndDate = EndDate?.DateTime;
         employee.Notes = Notes.Trim();
         employee.UpdatedAt = DateTime.UtcNow;
     }
@@ -421,8 +441,10 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsCppExempt = false;
         IsEiExempt = false;
         StartDate = null;
+        EndDate = null;
         Notes = string.Empty;
         NameError = string.Empty;
         PayRateError = string.Empty;
+        EndDateError = string.Empty;
     }
 }
