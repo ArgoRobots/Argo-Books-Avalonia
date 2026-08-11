@@ -75,6 +75,13 @@
                                         <TextBlock Text="{loc:Loc 'Where they work, which may differ from where they live.'}"
                                                    FontSize="11" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <!-- Said here rather than at pay-run time. Someone whose staff work
+                                             in a province that is not covered needs to know before they
+                                             enter an employee, not after they try to pay them. -->
+                                        <TextBlock Text="{Binding ProvinceSupportNote}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource WarningBrush}"
+                                                   IsVisible="{Binding ProvinceSupportNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" Spacing="6">

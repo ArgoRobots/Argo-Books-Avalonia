@@ -95,6 +95,16 @@ public partial class PayrollModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> SupportedProvinces { get; } = [];
 
+    /// <summary>
+    /// Explains a short province list, so someone whose staff work somewhere not yet covered
+    /// finds out here rather than after entering an employee they can never pay.
+    /// </summary>
+    [ObservableProperty]
+    private string _provinceSupportNote = string.Empty;
+
+    /// <summary>Provinces and territories, so a partial rate table can be recognised as partial.</summary>
+    private const int AllProvincesAndTerritories = 13;
+
     public ObservableCollection<PayFrequency> Frequencies { get; } =
         [PayFrequency.Weekly, PayFrequency.Biweekly, PayFrequency.SemiMonthly, PayFrequency.Monthly];
 
@@ -393,6 +403,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
             // No edition covers today. The employee form still works; a pay run is what will
             // refuse, with a message that explains why.
             SupportedProvinces.Add(Province);
+            ProvinceSupportNote = "No CRA payroll tables are loaded for today, so a pay run "
+                                  + "cannot be calculated until the rates are updated.";
             return;
         }
 
@@ -400,6 +412,11 @@ public partial class PayrollModalsViewModel : ViewModelBase
         {
             SupportedProvinces.Add(code);
         }
+
+        ProvinceSupportNote = SupportedProvinces.Count < AllProvincesAndTerritories
+            ? $"Payroll can only be calculated for {string.Join(", ", SupportedProvinces)} at the "
+              + "moment. Other provinces are being added."
+            : string.Empty;
 
         if (!SupportedProvinces.Contains(Province) && SupportedProvinces.Count > 0)
         {
