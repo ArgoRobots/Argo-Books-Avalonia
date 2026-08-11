@@ -197,10 +197,16 @@ public class PayrollCalculatorTests
     }
 
     [Fact]
-    public void UnsupportedProvince_ThrowsRatherThanGuessing()
+    public void QuebecThrowsRatherThanBeingCalculatedWithCraRules()
     {
+        // Quebec is the one jurisdiction deliberately absent. Revenu Quebec does not use CRA's
+        // rate-and-constant structure, so falling through to the federal shape would produce
+        // figures that look plausible and are wrong. It needs its own calculator.
+        //
+        // This test used to name Ontario, which stopped meaning anything the moment Ontario was
+        // added. Quebec cannot go stale the same way: it is excluded by design, not by backlog.
         PayrollInput input = Input(2000m);
-        input.Province = "ON";
+        input.Province = "QC";
 
         Assert.Throws<NotSupportedException>(
             () => PayrollCalculator.Calculate(input, new PayrollYearToDate(), Rates()));
@@ -335,6 +341,98 @@ public class PayrollCalculatorTests
         ["cpp exempt",      2400m,      0m,     0m,  true, false, 243.55m, 119.74m,   0.00m, 39.12m, 1997.59m],
         ["ei exempt",       2400m,      0m,     0m, false,  true, 228.68m, 111.63m, 134.79m,  0.00m, 1924.90m],
     ];
+
+    /// <summary>
+    /// One PDOC capture per province and territory, all on the same employee so the only thing
+    /// that varies is the jurisdiction: $2,400 biweekly, paid 2026-10-09, no year-to-date, the
+    /// basic claim amount for that province.
+    ///
+    /// The federal figure is 223.20 in every row, which is the point: it isolates the
+    /// provincial calculation. A wrong bracket, constant or basic amount for one province shows
+    /// up here and nowhere else.
+    ///
+    /// province, expected provincial tax, expected net.
+    /// </summary>
+    public static IEnumerable<object[]> PdocProvinceCases =>
+    [
+        ["AB", 108.50m, 1894.39m],
+        ["BC", 112.33m, 1890.56m],
+        ["MB", 185.96m, 1816.93m],
+        ["NB", 176.63m, 1826.26m],
+        ["NL", 181.71m, 1821.18m],
+        ["NS", 228.36m, 1774.53m],
+        ["NT",  99.19m, 1903.70m],
+        ["NU",  65.74m, 1937.15m],
+        ["ON", 122.74m, 1880.15m],
+        ["PE", 199.24m, 1803.65m],
+        ["SK", 157.02m, 1845.87m],
+        ["YT", 101.55m, 1901.34m],
+    ];
+
+    [Theory]
+    [MemberData(nameof(PdocProvinceCases))]
+    public void EveryProvince_MatchesCraOnlineCalculator(string province, decimal provincial, decimal net)
+    {
+        PayrollDeductions r = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = 2400m, Province = province, PayPeriodsPerYear = 26 },
+            new PayrollYearToDate(),
+            Rates());
+
+        Assert.Equal((province, 223.20m, provincial, net), (province, r.FederalTax, r.ProvincialTax, r.NetPay));
+    }
+
+    /// <summary>
+    /// The three provincial rules that only exist in one or two places, each at an income that
+    /// actually triggers it. Every one of these exercises a code path Alberta can never reach.
+    /// </summary>
+    [Fact]
+    public void OntarioSurtaxAndHealthPremium_MatchCraOnlineCalculator()
+    {
+        // $6,000 biweekly annualises to about $154,000, which clears both surtax thresholds and
+        // lands in the second-highest health premium band. CRA returns 602.06.
+        //
+        // This is the case that caught the surtax being compounded: applying the 36% band to a
+        // figure that already included the 20% band overstated Ontario tax by about $17 a period.
+        PayrollDeductions r = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = 6000m, Province = "ON", PayPeriodsPerYear = 26 },
+            new PayrollYearToDate(),
+            Rates());
+
+        Assert.Equal(1029.20m, r.FederalTax);
+        Assert.Equal(602.06m, r.ProvincialTax);
+        Assert.Equal(3921.95m, r.NetPay);
+    }
+
+    [Fact]
+    public void BritishColumbiaTaxReduction_MatchesCraOnlineCalculatorInsideThePhaseOut()
+    {
+        // $1,400 biweekly annualises to about $36,071, inside BC's 25,570 to 44,952 taper, so
+        // the credit is partial: 805 - (36,071.10 - 25,570) x 3.56% = 431.16. At $2,400 the
+        // employee is past the taper entirely and the credit is nil, so only an income in the
+        // band tests this at all.
+        PayrollDeductions r = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = 1400m, Province = "BC", PayPeriodsPerYear = 26 },
+            new PayrollYearToDate(),
+            Rates());
+
+        Assert.Equal(85.60m, r.FederalTax);
+        Assert.Equal(32.14m, r.ProvincialTax);
+        Assert.Equal(1184.15m, r.NetPay);
+    }
+
+    [Fact]
+    public void YukonCanadaEmploymentAmount_MatchesCraOnlineCalculator()
+    {
+        // Yukon is the only jurisdiction granting a provincial Canada Employment Amount. Without
+        // it the territorial tax comes out at 105.25 instead of 101.55, over-deducting $3.70 a
+        // period for every Yukon employee.
+        PayrollDeductions r = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = 2400m, Province = "YT", PayPeriodsPerYear = 26 },
+            new PayrollYearToDate(),
+            Rates());
+
+        Assert.Equal(101.55m, r.ProvincialTax);
+    }
 
     [Theory]
     [MemberData(nameof(PdocOptionCases))]

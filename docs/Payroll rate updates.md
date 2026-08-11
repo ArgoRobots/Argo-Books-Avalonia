@@ -71,6 +71,53 @@ Everything below comes from CRA, except Quebec which comes from Revenu Québec.
 of this in one pass, in the right shape. Run it in two different AI tools and compare the
 answers rather than trusting one.
 
+Better still, read the numbers straight out of T4127 rather than asking anything to recall
+them. Chapter 8 carries the whole lot in two tables: **Table 8.1** has every jurisdiction's
+thresholds `A`, rates `V` and constants `KP`, and **Table 8.2** has the basic amounts, the
+Canada Employment Amounts, the tax reduction amounts `S2` and Ontario's surtax. That is the
+source, and it is faster than checking a recollection of it against the source anyway.
+
+Note that the July edition only reproduces the sections that CHANGED. Formulas that did not
+change, and Ontario's health premium bands, are in the January edition instead.
+
+### Reading Table 8.1 into the rate file
+
+`A` is the LOWER bound of each bracket. Our `upTo` is the TOP of each bracket, which is the
+next `A`, with `null` for the last one. So a row reading
+
+    A   0       61,200   154,259
+    V   0.0800  0.1000   0.1200
+    KP  0       1,224    4,309
+
+becomes `upTo 61200 / rate .08 / k 0`, then `upTo 154259 / rate .10 / k 1224`, then
+`upTo 185111 / rate .12 / k 4309`. Getting this off by one shifts every bracket and does not
+look wrong in the output, so check the first row against the previous edition.
+
+---
+
+## Prorated figures, the easiest thing here to get wrong
+
+When a province changes its rates part way through the year, CRA does not print the annual
+figure in the July edition. It prints a **prorated** one that, combined with what was already
+withheld over the first six months, lands the year on the right total.
+
+Three jurisdictions are prorated in the July 2026 edition:
+
+| | Annual figure | July edition figure |
+|---|---|---|
+| BC, lowest rate | 5.60% | **6.14%** |
+| BC, basic reduction | $690 | **$805** |
+| Newfoundland and Labrador, basic personal amount | $13,094 | **$15,000** |
+| PEI, top bracket rate | 20% | **21%** |
+
+Two things follow. Putting the annual figure into a July edition is wrong in a way that looks
+right, because the number matches what the province itself announced. And carrying a July
+figure forward into the next January edition is wrong the other way, because the proration has
+done its job and expired.
+
+Whenever the "What's new" section of T4127 names a province, assume its figures are prorated
+until you have checked otherwise.
+
 ---
 
 ## How to check the numbers before trusting them
