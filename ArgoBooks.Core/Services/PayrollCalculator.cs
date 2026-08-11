@@ -209,28 +209,60 @@ public static class PayrollCalculator
             ? input.ProvincialClaimAmount
             : province.BasicPersonalAmount.Maximum;
 
-        decimal tax = rate * annual - k - lowest * claim - lowest * (annualCpp + annualEi);
+        // Yukon alone grants a provincial Canada Employment Amount. Elsewhere the amount is
+        // zero, so this term is zero and costs nothing.
+        decimal employmentCredit = lowest * Math.Min(annual, province.CanadaEmploymentAmount);
+
+        decimal tax = rate * annual - k - lowest * claim - lowest * (annualCpp + annualEi) - employmentCredit;
         tax = Math.Max(0, tax);
 
-        // Ontario charges its surtax on provincial tax, not on income, so it comes after.
+        // Ontario charges its surtax on provincial tax rather than on income, so it comes
+        // after. Every band is measured against the ORIGINAL tax: CRA's formula is
+        // 0.20 x (T4 - 5,818) + 0.36 x (T4 - 7,446), both terms reading the same T4.
+        // Accumulating into `tax` inside the loop would feed the first band's result into the
+        // second and overstate the surtax.
         if (province.Surtax is { } surtax)
         {
+            decimal basicTax = tax;
+            decimal surtaxDue = 0m;
+
             for (int i = 0; i < surtax.Thresholds.Count && i < surtax.Rates.Count; i++)
             {
-                if (tax > surtax.Thresholds[i])
+                if (basicTax > surtax.Thresholds[i])
                 {
-                    tax += (tax - surtax.Thresholds[i]) * surtax.Rates[i];
+                    surtaxDue += (basicTax - surtax.Thresholds[i]) * surtax.Rates[i];
                 }
             }
+
+            tax += surtaxDue;
         }
 
+        // The low-income reduction, which applies to tax plus surtax and can only cancel tax
+        // owing, never create a refund. Two provinces have one and they are different shapes.
         if (province.TaxReduction is { } reduction)
         {
-            // The reduction cannot create a refund; it only ever cancels tax owing.
-            decimal available = (reduction.Basic + reduction.PerDependant * input.Dependants) * 2 - tax;
-            tax = Math.Max(0, tax - Math.Max(0, Math.Min(tax, available)));
+            decimal credit;
+
+            if (reduction.PhaseOutStart > 0)
+            {
+                // British Columbia: a flat credit that tapers away over an income band, and
+                // stops entirely above the legislated maximum.
+                credit = annual > reduction.PhaseOutEnd
+                    ? 0m
+                    : reduction.Basic - Math.Max(0, annual - reduction.PhaseOutStart) * reduction.PhaseOutRate;
+            }
+            else
+            {
+                // Ontario: twice the personal amount, less the tax already worked out, so the
+                // credit runs out once tax passes twice that amount.
+                credit = (reduction.Basic + reduction.PerDependant * input.Dependants) * 2 - tax;
+            }
+
+            tax -= Math.Max(0, Math.Min(tax, credit));
         }
 
+        // Added last and deliberately after the reduction: CRA states the health premium is not
+        // reduced by the Ontario tax reduction.
         if (province.HealthPremium is { Count: > 0 } bands)
         {
             tax += HealthPremiumFor(annual, bands);

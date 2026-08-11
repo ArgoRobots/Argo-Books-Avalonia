@@ -206,6 +206,14 @@ public class ProvincialRates
     [JsonPropertyName("basicPersonalAmount")]
     public PersonalAmount BasicPersonalAmount { get; set; } = new();
 
+    /// <summary>
+    /// Yukon is the only jurisdiction that mirrors the federal Canada Employment Amount as a
+    /// provincial credit. Zero everywhere else, which makes the term vanish rather than needing
+    /// a null check.
+    /// </summary>
+    [JsonPropertyName("canadaEmploymentAmount")]
+    public decimal CanadaEmploymentAmount { get; set; }
+
     /// <summary>Ontario is the only province with a surtax. Null everywhere else.</summary>
     [JsonPropertyName("surtax")]
     public SurtaxRates? Surtax { get; set; }
@@ -229,13 +237,43 @@ public class SurtaxRates
     public List<decimal> Rates { get; set; } = [];
 }
 
+/// <summary>
+/// A provincial low-income tax reduction. Ontario and British Columbia both have one and they
+/// are different shapes, so this carries the fields for both and the calculator picks by
+/// whether a phase-out is present.
+///
+/// Ontario doubles a personal amount and subtracts the tax already worked out, so the credit
+/// disappears once tax exceeds twice the amount. British Columbia gives a flat credit that
+/// tapers away over an income band instead.
+/// </summary>
 public class TaxReductionRates
 {
+    /// <summary>Ontario: the amount that gets doubled. BC: the flat credit before tapering.</summary>
     [JsonPropertyName("basic")]
     public decimal Basic { get; set; }
 
+    /// <summary>Ontario only. Added to <see cref="Basic"/> for each dependant claimed.</summary>
     [JsonPropertyName("perDependant")]
     public decimal PerDependant { get; set; }
+
+    /// <summary>
+    /// BC only. Annual income at which the credit starts tapering. Zero selects Ontario's
+    /// shape, which is what every other field here assumes.
+    /// </summary>
+    [JsonPropertyName("phaseOutStart")]
+    public decimal PhaseOutStart { get; set; }
+
+    /// <summary>BC only. Rate at which the credit tapers above <see cref="PhaseOutStart"/>.</summary>
+    [JsonPropertyName("phaseOutRate")]
+    public decimal PhaseOutRate { get; set; }
+
+    /// <summary>
+    /// BC only. Income above which no credit is given at all. CRA states this exists to stop
+    /// the credit reaching anyone over the legislated maximum, so it is a hard cut-off rather
+    /// than the point where the taper happens to reach zero.
+    /// </summary>
+    [JsonPropertyName("phaseOutEnd")]
+    public decimal PhaseOutEnd { get; set; }
 }
 
 /// <summary>
