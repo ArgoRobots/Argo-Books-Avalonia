@@ -19,6 +19,30 @@ public class Employee : BaseEntity
     public string EmployeeNumber { get; set; } = string.Empty;
 
     /// <summary>
+    /// Social insurance number, box 12 on the T4 and mandatory to file one. Stored digits
+    /// only. CRA accepts all zeroes when an employee genuinely has not provided one, but warns
+    /// that it stops their CPP contributions being credited to them, so an empty value here is
+    /// a problem to surface at year end rather than a detail to fill in silently.
+    /// </summary>
+    [JsonPropertyName("sin")]
+    public string Sin { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Home address, which the T4 needs and which is NOT the same as
+    /// <see cref="Province"/>: that one is where they work and picks the tax table, this is
+    /// where their slip is addressed. Someone can live in one province and work in another.
+    /// </summary>
+    [JsonPropertyName("address")]
+    public Address Address { get; set; } = new();
+
+    /// <summary>
+    /// Box 45. Mandatory on every T4 since 2023: whether the employee or their family could
+    /// access dental coverage the employer offered, as at 31 December.
+    /// </summary>
+    [JsonPropertyName("dentalBenefit")]
+    public DentalBenefitCode DentalBenefit { get; set; } = DentalBenefitCode.NotEligible;
+
+    /// <summary>
     /// Two letter code for the province of EMPLOYMENT, which is not necessarily where the
     /// employee lives. It decides which tax table applies.
     /// </summary>
@@ -73,6 +97,24 @@ public class Employee : BaseEntity
         PayType == PayType.Salary && PayFrequency.PeriodsPerYear() > 0
             ? Math.Round(PayRate / PayFrequency.PeriodsPerYear(), 2, MidpointRounding.AwayFromZero)
             : 0m;
+}
+
+/// <summary>
+/// Box 45 on the T4. The numbers are CRA's own and are written to the XML directly, so they
+/// must not be renumbered.
+/// </summary>
+public enum DentalBenefitCode
+{
+    /// <summary>No access to any dental coverage the employer offered.</summary>
+    NotEligible = 1,
+
+    PayeeOnly = 2,
+
+    PayeeSpouseAndChildren = 3,
+
+    PayeeAndSpouse = 4,
+
+    PayeeAndChildren = 5,
 }
 
 /// <summary>How an employee is paid.</summary>
