@@ -80,6 +80,41 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _endDateError = string.Empty;
 
+    /// <summary>
+    /// Social insurance number, needed to file a T4. Held as typed and stripped to digits on
+    /// save, because people write it with spaces or dashes and rejecting that would be rude.
+    /// </summary>
+    [ObservableProperty]
+    private string _sin = string.Empty;
+
+    [ObservableProperty]
+    private string _sinError = string.Empty;
+
+    [ObservableProperty]
+    private string _addressStreet = string.Empty;
+
+    [ObservableProperty]
+    private string _addressCity = string.Empty;
+
+    [ObservableProperty]
+    private string _addressProvince = string.Empty;
+
+    [ObservableProperty]
+    private string _addressPostalCode = string.Empty;
+
+    /// <summary>Box 45, mandatory on every T4 since 2023.</summary>
+    [ObservableProperty]
+    private DentalBenefitCode _dentalBenefit = DentalBenefitCode.NotEligible;
+
+    public ObservableCollection<DentalBenefitCode> DentalOptions { get; } =
+    [
+        DentalBenefitCode.NotEligible,
+        DentalBenefitCode.PayeeOnly,
+        DentalBenefitCode.PayeeAndSpouse,
+        DentalBenefitCode.PayeeAndChildren,
+        DentalBenefitCode.PayeeSpouseAndChildren,
+    ];
+
     /// <summary>Label under the pay rate box, since the same field means two different things.</summary>
     public string PayRateHint => IsSalaried
         ? "Annual salary before deductions."
@@ -143,6 +178,12 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsEiExempt = employee.IsEiExempt;
         StartDate = employee.StartDate.HasValue ? new DateTimeOffset(employee.StartDate.Value) : null;
         EndDate = employee.EndDate.HasValue ? new DateTimeOffset(employee.EndDate.Value) : null;
+        Sin = employee.Sin;
+        AddressStreet = employee.Address.Street;
+        AddressCity = employee.Address.City;
+        AddressProvince = employee.Address.State;
+        AddressPostalCode = employee.Address.ZipCode;
+        DentalBenefit = employee.DentalBenefit;
         Notes = employee.Notes;
 
         NameError = string.Empty;
@@ -168,7 +209,15 @@ public partial class PayrollModalsViewModel : ViewModelBase
             ? "The end date cannot be before the start date."
             : string.Empty;
 
-        if (NameError.Length > 0 || PayRateError.Length > 0 || EndDateError.Length > 0)
+        // Checked but not required. Someone can be hired and paid before their SIN arrives,
+        // and blocking the whole employee record over it would stop payroll running at all.
+        // Year end is where a missing SIN actually becomes a problem, and it is reported there.
+        string sinDigits = new(Sin.Where(char.IsAsciiDigit).ToArray());
+        SinError = Sin.Trim().Length > 0 && sinDigits.Length != 9
+            ? "A social insurance number is 9 digits."
+            : string.Empty;
+
+        if (NameError.Length > 0 || PayRateError.Length > 0 || EndDateError.Length > 0 || SinError.Length > 0)
         {
             return;
         }
@@ -261,6 +310,12 @@ public partial class PayrollModalsViewModel : ViewModelBase
         employee.IsEiExempt = IsEiExempt;
         employee.StartDate = StartDate?.DateTime;
         employee.EndDate = EndDate?.DateTime;
+        employee.Sin = new string(Sin.Where(char.IsAsciiDigit).ToArray());
+        employee.Address.Street = AddressStreet.Trim();
+        employee.Address.City = AddressCity.Trim();
+        employee.Address.State = AddressProvince.Trim();
+        employee.Address.ZipCode = AddressPostalCode.Trim();
+        employee.DentalBenefit = DentalBenefit;
         employee.Notes = Notes.Trim();
         employee.UpdatedAt = DateTime.UtcNow;
     }
@@ -279,6 +334,16 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsEiExempt = e.IsEiExempt,
         StartDate = e.StartDate,
         EndDate = e.EndDate,
+        Sin = e.Sin,
+        DentalBenefit = e.DentalBenefit,
+        Address = new Core.Models.Common.Address
+        {
+            Street = e.Address.Street,
+            City = e.Address.City,
+            State = e.Address.State,
+            ZipCode = e.Address.ZipCode,
+            Country = e.Address.Country,
+        },
         Notes = e.Notes,
         IsArchived = e.IsArchived,
         UpdatedAt = e.UpdatedAt,
@@ -298,6 +363,9 @@ public partial class PayrollModalsViewModel : ViewModelBase
         target.IsEiExempt = from.IsEiExempt;
         target.StartDate = from.StartDate;
         target.EndDate = from.EndDate;
+        target.Sin = from.Sin;
+        target.DentalBenefit = from.DentalBenefit;
+        target.Address = from.Address;
         target.Notes = from.Notes;
         target.IsArchived = from.IsArchived;
         target.UpdatedAt = from.UpdatedAt;
@@ -459,9 +527,16 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsEiExempt = false;
         StartDate = null;
         EndDate = null;
+        Sin = string.Empty;
+        AddressStreet = string.Empty;
+        AddressCity = string.Empty;
+        AddressProvince = string.Empty;
+        AddressPostalCode = string.Empty;
+        DentalBenefit = DentalBenefitCode.NotEligible;
         Notes = string.Empty;
         NameError = string.Empty;
         PayRateError = string.Empty;
         EndDateError = string.Empty;
+        SinError = string.Empty;
     }
 }
