@@ -124,9 +124,9 @@
                                                IsColumnVisible="{Binding ShowStatusColumn}"
                                                ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions" IsSortable="False"
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
                                                ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
-                                               ColumnWidths="{Binding ColumnWidths}" />
+                                               IsSortable="False" IsResizable="False" ShowSeparator="False" />
                     </StackPanel>
                 </table:ArgoTable.HeaderContent>
 

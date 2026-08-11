@@ -279,7 +279,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
     private bool _isFilterModalOpen;
 
     [ObservableProperty]
-    private string _filterStatus = "Active";
+    private string _filterStatus = "All";
 
     [ObservableProperty]
     private string _filterProvince = "All";
@@ -290,7 +290,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _filterFrequency = "All";
 
-    public ObservableCollection<string> StatusOptions { get; } = ["Active", "Archived", "All"];
+    public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Archived"];
 
     public ObservableCollection<string> ProvinceFilterOptions { get; } = ["All"];
 
@@ -346,7 +346,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [RelayCommand]
     public void ClearFilters()
     {
-        FilterStatus = "Active";
+        FilterStatus = "All";
         FilterProvince = "All";
         FilterPayType = "All";
         FilterFrequency = "All";

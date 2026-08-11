@@ -48,7 +48,11 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     /// modal cannot change what the list shows.
     /// </summary>
     [ObservableProperty]
-    private string _filterStatus = "Active";
+    /// <summary>
+    /// Everyone by default, archived included. Archiving is a status change, not a deletion,
+    /// so hiding the row the moment it is archived reads as though the record went away.
+    /// </summary>
+    private string _filterStatus = "All";
 
     [ObservableProperty]
     private string _filterProvince = "All";
@@ -106,7 +110,7 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
 
     private void OnFiltersCleared(object? sender, EventArgs e)
     {
-        FilterStatus = "Active";
+        FilterStatus = "All";
         FilterProvince = "All";
         FilterPayType = "All";
         FilterFrequency = "All";
@@ -232,7 +236,7 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     private void ClearFilters()
     {
         SearchQuery = string.Empty;
-        FilterStatus = "Active";
+        FilterStatus = "All";
         FilterProvince = "All";
         FilterPayType = "All";
         FilterFrequency = "All";
@@ -367,6 +371,13 @@ public partial class EmployeeDisplayItem : ObservableObject
     [ObservableProperty]
     private bool _isArchived;
 
+    /// <summary>
+    /// The action the button will actually perform, not both possibilities at once. A tooltip
+    /// that says "archive or restore" makes the reader work out which one applies.
+    /// </summary>
+    [ObservableProperty]
+    private string _archiveTooltip = "Archive";
+
     public static EmployeeDisplayItem From(Employee e) => new()
     {
         Id = e.Id,
@@ -380,5 +391,6 @@ public partial class EmployeeDisplayItem : ObservableObject
         Frequency = e.PayFrequency.DisplayName(),
         Status = e.IsArchived ? "Archived" : "Active",
         IsArchived = e.IsArchived,
+        ArchiveTooltip = e.IsArchived ? "Restore" : "Archive",
     };
 }

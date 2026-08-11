@@ -106,9 +106,9 @@
                                                SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions" IsSortable="False"
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
                                                ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
-                                               ColumnWidths="{Binding ColumnWidths}" />
+                                               IsSortable="False" IsResizable="False" ShowSeparator="False" />
                     </StackPanel>
                 </table:ArgoTable.HeaderContent>
 
@@ -158,7 +158,8 @@
                                                     </Button>
                                                     <!-- Archive, never delete: pay history points at this employee and a
                                                          T4 must stay produceable for someone who left mid-year. -->
-                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Archive or restore'}"
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{Binding ArchiveTooltip, Converter={StaticResource TranslateConverter}}"
                                                             Command="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ArchiveEmployeeCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.Suppliers}" Width="16" Height="16" />
