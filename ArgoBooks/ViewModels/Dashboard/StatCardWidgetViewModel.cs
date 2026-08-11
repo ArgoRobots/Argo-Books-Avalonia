@@ -283,8 +283,8 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
     ///
     /// Last month rather than the current one, because a regular remitter pays for the month
     /// just ended. Once that is paid the card rolls forward on its own, so there is nothing to
-    /// mark off. Approved runs only: a draft has not happened and a void is cancelled by its
-    /// reversal.
+    /// mark off. Everything but drafts counts: a voided run and its reversal are both included
+    /// and cancel to zero.
     /// </summary>
     private void LoadPayrollRemittance(CompanyData data)
     {
@@ -292,7 +292,7 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         DateTime firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
 
         decimal owing = data.PayRuns
-            .Where(r => r.Status == Core.Models.Payroll.PayRunStatus.Approved
+            .Where(r => r.Status != Core.Models.Payroll.PayRunStatus.Draft
                         && r.PayDate >= firstOfLastMonth
                         && r.PayDate < firstOfThisMonth)
             .Sum(r => r.TotalRemittance);

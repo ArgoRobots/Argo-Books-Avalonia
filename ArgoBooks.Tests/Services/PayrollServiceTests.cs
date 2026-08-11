@@ -134,16 +134,29 @@ public class PayrollServiceTests
     }
 
     [Fact]
-    public void YearToDate_IgnoresVoidedRuns()
+    public void YearToDate_IsUnaffectedByARunThatWasVoided()
     {
+        // Voiding has to leave the year-to-date exactly where it was before the run existed.
+        //
+        // Note this goes through Void() rather than setting the status by hand. The reversal
+        // is half the mechanism: the voided run still counts, and the reversal's negative
+        // amounts are what cancel it. A Void status on its own is not a state the service can
+        // produce, and testing it in isolation was what hid the double subtraction.
         CompanyData data = DataWithEmployee();
-        PayRun voided = ApprovedRun("PR-0001", new DateTime(2026, 1, 16), "EMP-001", 2000m, 110.99m, 32.60m);
-        voided.Status = PayRunStatus.Void;
-        data.PayRuns.Add(voided);
+        data.PayRuns.Add(ApprovedRun("PR-0001", new DateTime(2026, 1, 9), "EMP-001", 2000m, 110.99m, 32.60m));
 
-        PayrollYearToDate ytd = new PayrollService().YearToDateFor(data, "EMP-001");
+        PayRun second = ApprovedRun("PR-0002", new DateTime(2026, 1, 23), "EMP-001", 2000m, 110.99m, 32.60m);
+        data.PayRuns.Add(second);
 
-        Assert.Equal(0m, ytd.CppEmployee);
+        var service = new PayrollService();
+        service.Void(data, second);
+
+        PayrollYearToDate ytd = service.YearToDateFor(data, "EMP-001");
+
+        // Just the first run. The second and its reversal net out.
+        Assert.Equal(110.99m, ytd.CppEmployee);
+        Assert.Equal(32.60m, ytd.EiEmployee);
+        Assert.Equal(2000m, ytd.PensionableEarnings);
     }
 
     [Fact]
@@ -326,9 +339,26 @@ public class PayrollServiceTests
 
         PayrollYearToDate ytd = service.YearToDateFor(data, "EMP-001");
 
-        // The original is now Void so it is skipped, and the reversal is negative, so the net
-        // effect has to be zero rather than a negative balance.
-        Assert.Equal(-110.99m, ytd.CppEmployee);
+        // Exactly zero. The voided run and its reversal are both counted and cancel. Skipping
+        // the voided run as well would subtract the same payroll twice and leave the year to
+        // date at -110.99, so the next run would be calculated against a ceiling that had
+        // moved further away than it ever was.
+        Assert.Equal(0m, ytd.CppEmployee);
+        Assert.Equal(0m, ytd.EiEmployee);
+        Assert.Equal(0m, ytd.PensionableEarnings);
+    }
+
+    [Fact]
+    public void ADraftRunIsStillIgnoredEvenThoughVoidedRunsAreNot()
+    {
+        // The two exclusions are different in kind and it would be easy to widen one into the
+        // other: a void has happened and been reversed, a draft has not happened at all.
+        CompanyData data = DataWithEmployee();
+        PayRun draft = ApprovedRun("PR-0001", new DateTime(2026, 1, 16), "EMP-001", 2000m, 110.99m, 32.60m);
+        draft.Status = PayRunStatus.Draft;
+        data.PayRuns.Add(draft);
+
+        Assert.Equal(0m, new PayrollService().YearToDateFor(data, "EMP-001").CppEmployee);
     }
 
     #endregion

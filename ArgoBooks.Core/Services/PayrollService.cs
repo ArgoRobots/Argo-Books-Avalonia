@@ -128,12 +128,17 @@ public class PayrollService(PayrollRateService? rateService = null)
     }
 
     /// <summary>
-    /// What an employee has already had deducted this calendar year, from approved runs only.
+    /// What an employee has already had deducted this calendar year.
     ///
     /// Required rather than optional, because CPP, CPP2 and EI all stop at annual maximums and
-    /// cannot be worked out from one period in isolation. Drafts are excluded so an unapproved
-    /// run cannot inflate the totals, and voided runs are excluded because their reversal
-    /// already cancels them.
+    /// cannot be worked out from one period in isolation.
+    ///
+    /// Everything except drafts counts. A draft has not happened, so counting it would make
+    /// the next run under-deduct. A VOIDED run does count, which reads oddly until you notice
+    /// that its reversal is also counted: the two cancel to zero, which is the whole point of
+    /// writing a reversal. Skipping the voided run as well would subtract it twice and push
+    /// the year-to-date below where it was before the run ever existed, so every later run
+    /// would over-deduct against a ceiling that had already moved.
     /// </summary>
     public PayrollYearToDate YearToDateFor(CompanyData data, string employeeId, PayRun? excluding = null)
     {
@@ -142,7 +147,7 @@ public class PayrollService(PayrollRateService? rateService = null)
 
         foreach (PayRun run in data.PayRuns)
         {
-            if (run.Status != PayRunStatus.Approved
+            if (run.Status == PayRunStatus.Draft
                 || run.PayDate.Year != year
                 || (excluding != null && run.Id == excluding.Id)
                 || (excluding != null && run.PayDate > excluding.PayDate))

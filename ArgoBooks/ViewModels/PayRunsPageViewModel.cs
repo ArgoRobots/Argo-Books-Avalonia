@@ -342,11 +342,15 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     {
         int year = DateTime.Today.Year;
 
+        // Money totals include voided runs, because their reversals are included too and the
+        // pair cancels to zero. The count does not: a voided run and its reversal are not two
+        // more payrolls the owner ran.
         List<PayRun> thisYear = _all
-            .Where(r => r.Status == PayRunStatus.Approved && r.PayDate.Year == year)
+            .Where(r => r.Status != PayRunStatus.Draft && r.PayDate.Year == year)
             .ToList();
 
-        ApprovedCount = thisYear.Count;
+        ApprovedCount = thisYear.Count(r => r.Status == PayRunStatus.Approved
+                                            && r.VoidsPayRunId is not { Length: > 0 });
         YearToDateGross = CurrencyService.Format(thisYear.Sum(r => r.TotalGross));
         YearToDateRemittance = CurrencyService.Format(thisYear.Sum(r => r.TotalRemittance));
     }

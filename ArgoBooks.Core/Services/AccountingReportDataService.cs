@@ -1494,8 +1494,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// What is owed to CRA for the pay dates in range: everything withheld from employees,
     /// plus the employer's own contributions.
     ///
-    /// Approved runs only. A draft has not happened yet, and a voided run is cancelled by its
-    /// reversal, whose negative amounts net it out to zero.
+    /// Everything except drafts. A draft has not happened yet. A voided run still counts,
+    /// because its reversal counts too and the pair nets to zero; excluding the voided run
+    /// while keeping its reversal would subtract the same payroll twice.
     ///
     /// No currency conversion here, unlike the other reports. Payroll is Canadian by
     /// definition and the deductions are always in Canadian dollars.
@@ -1511,7 +1512,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         };
 
         var runs = companyData?.PayRuns
-            .Where(r => r.Status == Models.Payroll.PayRunStatus.Approved && IsInDateRange(r.PayDate))
+            .Where(r => r.Status != Models.Payroll.PayRunStatus.Draft && IsInDateRange(r.PayDate))
             .ToList() ?? [];
 
         var lines = runs.SelectMany(r => r.Lines).ToList();
