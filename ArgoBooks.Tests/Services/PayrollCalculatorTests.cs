@@ -238,42 +238,66 @@ public class PayrollCalculatorTests
     #region PDOC fixtures, captured from CRA's own calculator
 
     /// <summary>
-    /// Every figure CRA's Payroll Deductions Online Calculator produced for these inputs,
-    /// Alberta, paid 2026-08-14, claim code 1 (16,452 federal and 22,769 provincial).
+    /// Every figure CRA's Payroll Deductions Online Calculator produced for these inputs, in
+    /// Alberta on the 2026-07 edition, with the basic claim amounts (16,452 federal, 22,769
+    /// provincial) unless a case says otherwise.
     ///
-    /// This is the only test here that proves agreement with CRA rather than internal
-    /// consistency. It found three real defects that every other test passed straight over:
-    /// the CPP enhancement being deducted from income rather than credited, EI capping on the
-    /// premium rather than on insurable earnings, and the K2 credit ignoring contributions
-    /// already made earlier in the year.
+    /// These are the only tests here that prove agreement with CRA rather than internal
+    /// consistency, and they are where every real defect in this engine has been found: the
+    /// CPP enhancement being deducted from income rather than credited, EI capping on
+    /// insurable earnings rather than on the premium, and the K2 credit's annualisation, which
+    /// took two attempts because the first fix repaired the at-the-ceiling case and broke
+    /// every ordinary one.
     ///
-    /// gross, periods, ytd(pensionable, cpp, insurable, ei), then expected
+    /// The at-cap rows were paid 2026-08-14 and the rest 2026-10-09. Both dates select the
+    /// same edition, so the rates are identical and the two sets are directly comparable.
+    ///
+    /// gross, periods, ytd(pensionable, cpp, cpp2, insurable, ei), then expected
     /// federal, provincial, cpp, cpp2, ei, net.
     /// </summary>
     public static IEnumerable<object[]> PdocCases =>
     [
-        ["biweekly 2000",        2000m, 26,     0m,    0m,     0m,    0m,  163.23m,  78.45m, 110.99m,   0m, 32.60m, 1614.73m],
-        ["biweekly 3500",        3500m, 26,     0m,    0m,     0m,    0m,  442.63m, 215.21m, 200.24m,   0m, 57.05m, 2584.87m],
-        ["weekly 1000",          1000m, 52,     0m,    0m,     0m,    0m,   81.61m,  39.23m,  55.50m,   0m, 16.30m,  807.36m],
-        ["monthly 5000",         5000m, 12,     0m,    0m,     0m,    0m,  444.86m, 219.28m, 280.15m,   0m, 81.50m, 3974.21m],
-        ["semi-monthly 2500",    2500m, 24,     0m,    0m,     0m,    0m,  222.43m, 109.64m, 140.07m,   0m, 40.75m, 1987.11m],
-        ["biweekly 4000 at cap", 4000m, 26, 74000m, 4200m, 67500m, 1100m,  523.09m, 254.47m,  30.45m, 136m, 23.07m, 3032.92m],
-        ["biweekly 500 at cap",   500m, 26, 74000m, 4200m, 67500m, 1100m,    0.00m,   0.00m,  21.74m,   0m,  8.15m,  470.11m],
-        ["biweekly 8000 at cap", 8000m, 26, 74000m, 4200m, 67500m, 1100m, 1507.74m, 679.59m,  30.45m, 296m, 23.07m, 5463.15m],
+        ["biweekly 2000",        2000m, 26,     0m,      0m,   0m,     0m,      0m,  163.23m,  78.45m, 110.99m,   0m, 32.60m, 1614.73m],
+        ["biweekly 3500",        3500m, 26,     0m,      0m,   0m,     0m,      0m,  442.63m, 215.21m, 200.24m,   0m, 57.05m, 2584.87m],
+        ["weekly 1000",          1000m, 52,     0m,      0m,   0m,     0m,      0m,   81.61m,  39.23m,  55.50m,   0m, 16.30m,  807.36m],
+        ["monthly 5000",         5000m, 12,     0m,      0m,   0m,     0m,      0m,  444.86m, 219.28m, 280.15m,   0m, 81.50m, 3974.21m],
+        ["semi-monthly 2500",    2500m, 24,     0m,      0m,   0m,     0m,      0m,  222.43m, 109.64m, 140.07m,   0m, 40.75m, 1987.11m],
+        ["biweekly 4000 at cap", 4000m, 26, 74000m,   4200m,   0m, 67500m,   1100m,  523.09m, 254.47m,  30.45m, 136m, 23.07m, 3032.92m],
+        ["biweekly 500 at cap",   500m, 26, 74000m,   4200m,   0m, 67500m,   1100m,    0.00m,   0.00m,  21.74m,   0m,  8.15m,  470.11m],
+        ["biweekly 8000 at cap", 8000m, 26, 74000m,   4200m,   0m, 67500m,   1100m, 1507.74m, 679.59m,  30.45m, 296m, 23.07m, 5463.15m],
 
-        // The pair that settled how K2 annualises. Same employee, same pay, six periods apart:
-        // CRA returns identical tax both times. Anything that makes the credit depend on what
-        // has already been deducted this year breaks the second of these, and under-withholds
-        // for the rest of the year without touching any other case.
-        ["biweekly 2400 fresh",  2400m, 26,     0m,    0m,     0m,    0m,  223.20m, 108.50m, 134.79m,   0m, 39.12m, 1894.39m],
-        ["biweekly 2400 mid-yr", 2400m, 26, 14400m, 808.74m, 14400m, 234.72m, 223.20m, 108.50m, 134.79m, 0m, 39.12m, 1894.39m],
+        // Constant pay, four points across the year. CRA returns identical tax at every one.
+        // This is the set that settled how K2 annualises: anything that makes the credit
+        // depend on what has already been deducted this year breaks every row but the first,
+        // and under-withholds for the rest of the year without disturbing any other case.
+        ["2400 period 1",        2400m, 26,     0m,      0m,   0m,     0m,      0m,  223.20m, 108.50m, 134.79m,   0m, 39.12m, 1894.39m],
+        ["2400 period 7",        2400m, 26, 14400m, 808.74m,   0m, 14400m, 234.72m,  223.20m, 108.50m, 134.79m,   0m, 39.12m, 1894.39m],
+        ["2400 period 13",       2400m, 26, 28800m, 1617.48m,  0m, 28800m, 469.44m,  223.20m, 108.50m, 134.79m,   0m, 39.12m, 1894.39m],
+        ["2400 period 20",       2400m, 26, 45600m, 2561.01m,  0m, 45600m, 743.28m,  223.20m, 108.50m, 134.79m,   0m, 39.12m, 1894.39m],
+
+        // CPP2. The first row is the one that matters: year-to-date pensionable earnings sit
+        // below the first ceiling and this single cheque carries them over it, so only the
+        // 1,900 above 74,600 attracts CPP2. That partial crossing is the fiddliest arithmetic
+        // in the engine and had no fixture at all before this.
+        ["crossing into cpp2",   3500m, 26, 73000m,   4100m,   0m, 68900m, 1123.07m,  429.45m, 208.79m, 130.45m,  76m,  0.00m, 2655.31m],
+        ["inside cpp2 band",     3500m, 26, 78000m, 4230.45m, 136m, 68900m, 1123.07m,  420.82m, 204.58m,   0.00m, 140m,  0.00m, 2734.60m],
+
+        // One ceiling reached and not the other. EI stops at 68,900 of insurable earnings
+        // while CPP runs to 74,600, so there is a real stretch of a high earner's year that
+        // looks like the first of these. Every other fixture has the two moving together.
+        ["ei done, cpp running", 3000m, 26, 70000m,   3957m,   0m, 68900m, 1123.07m,  341.15m, 165.71m, 170.49m,   0m,  0.00m, 2322.65m],
+        ["cpp done, ei running", 3000m, 26, 74600m, 4230.45m,  0m, 40000m,    652m,  322.42m, 156.58m,   0.00m, 120m, 48.90m, 2352.10m],
+
+        // Third federal bracket, with CPP and EI both still running. The rest cluster in the
+        // lowest two.
+        ["biweekly 6000",        6000m, 26,     0m,      0m,   0m,     0m,      0m, 1029.20m, 462.89m, 348.99m,   0m, 97.80m, 4061.12m],
     ];
 
     [Theory]
     [MemberData(nameof(PdocCases))]
     public void Deductions_MatchCraOnlineCalculator(
         string label, decimal gross, int periods,
-        decimal ytdPensionable, decimal ytdCpp, decimal ytdInsurable, decimal ytdEi,
+        decimal ytdPensionable, decimal ytdCpp, decimal ytdCpp2, decimal ytdInsurable, decimal ytdEi,
         decimal federal, decimal provincial, decimal cpp, decimal cpp2, decimal ei, decimal net)
     {
         PayrollDeductions r = PayrollCalculator.Calculate(
@@ -282,17 +306,60 @@ public class PayrollCalculatorTests
             {
                 PensionableEarnings = ytdPensionable,
                 CppEmployee = ytdCpp,
+                Cpp2Employee = ytdCpp2,
                 InsurableEarnings = ytdInsurable,
                 EiEmployee = ytdEi,
             },
             Rates());
 
-        Assert.Equal(cpp, r.CppEmployee);
-        Assert.Equal(cpp2, r.Cpp2Employee);
-        Assert.Equal(ei, r.EiEmployee);
-        Assert.Equal(federal, r.FederalTax);
-        Assert.Equal(provincial, r.ProvincialTax);
-        Assert.Equal(net, r.NetPay);
+        // Compared as one tuple so a failure names the case and shows every figure at once.
+        // Six separate asserts would stop at the first difference, which hides whether one
+        // number drifted or the whole row did.
+        Assert.Equal(
+            (label, federal, provincial, cpp, cpp2, ei, net),
+            (label, r.FederalTax, r.ProvincialTax, r.CppEmployee, r.Cpp2Employee, r.EiEmployee, r.NetPay));
+    }
+
+    /// <summary>
+    /// The same oracle for the cases that need something other than the basic claim and two
+    /// contributing sides. The invariant tests already pin the DIRECTION of all three of these
+    /// (a larger claim can never raise tax, an exempt employee always pays more than a
+    /// contributing one). These pin the figure.
+    ///
+    /// gross, federal claim, provincial claim, cpp exempt, ei exempt, then expected
+    /// federal, provincial, cpp, ei, net. All biweekly, no year-to-date.
+    /// </summary>
+    public static IEnumerable<object[]> PdocOptionCases =>
+    [
+        ["td1 above basic", 2400m, 25000m, 30000m, false, false, 177.18m,  86.25m, 134.79m, 39.12m, 1962.66m],
+        ["cpp exempt",      2400m,      0m,     0m,  true, false, 243.55m, 119.74m,   0.00m, 39.12m, 1997.59m],
+        ["ei exempt",       2400m,      0m,     0m, false,  true, 228.68m, 111.63m, 134.79m,  0.00m, 1924.90m],
+    ];
+
+    [Theory]
+    [MemberData(nameof(PdocOptionCases))]
+    public void DeductionsWithClaimsAndExemptions_MatchCraOnlineCalculator(
+        string label, decimal gross, decimal federalClaim, decimal provincialClaim,
+        bool cppExempt, bool eiExempt,
+        decimal federal, decimal provincial, decimal cpp, decimal ei, decimal net)
+    {
+        PayrollDeductions r = PayrollCalculator.Calculate(
+            new PayrollInput
+            {
+                GrossPay = gross,
+                Province = "AB",
+                PayPeriodsPerYear = 26,
+                FederalClaimAmount = federalClaim,
+                ProvincialClaimAmount = provincialClaim,
+                IsCppExempt = cppExempt,
+                IsEiExempt = eiExempt,
+            },
+            new PayrollYearToDate(),
+            Rates());
+
+        Assert.Equal(
+            (label, federal, provincial, cpp, ei, net),
+            (label, r.FederalTax, r.ProvincialTax, r.CppEmployee, r.EiEmployee, r.NetPay));
     }
 
     #endregion
