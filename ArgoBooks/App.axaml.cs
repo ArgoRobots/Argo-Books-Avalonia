@@ -203,6 +203,8 @@ public partial class App : Application
 
     public static PayRunModalsViewModel? PayRunModalsViewModel => _appShellViewModel?.PayRunModalsViewModel;
 
+    public static YearEndModalViewModel? YearEndModalViewModel => _appShellViewModel?.YearEndModalViewModel;
+
     /// <summary>
     /// Gets the stock adjustments modals view model for shared access.
     /// </summary>

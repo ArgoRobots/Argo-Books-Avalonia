@@ -164,6 +164,14 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
 
     #region Commands
 
+    /// <summary>
+    /// Year end is a modal rather than a nav item because it is used once a year, and it is
+    /// not premium-gated the way running a payroll is: someone who ran payroll while
+    /// subscribed must still be able to produce the T4s for that year.
+    /// </summary>
+    [RelayCommand]
+    private void OpenYearEnd() => App.YearEndModalViewModel?.Open();
+
     [RelayCommand]
     private void RunPayroll()
     {

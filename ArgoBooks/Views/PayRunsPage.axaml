@@ -68,6 +68,13 @@
                              BorderSizeChanged="OnHeaderSizeChanged"
                              TableGridSizeChanged="OnTableSizeChanged">
 
+                <table:ArgoTable.ExtraButtonsContent>
+                    <Button Classes="secondary-button"
+                            Content="{loc:Loc 'Year end'}"
+                            ToolTip.Tip="{loc:Loc 'T4 slips and the file CRA needs'}"
+                            Command="{Binding OpenYearEndCommand}" />
+                </table:ArgoTable.ExtraButtonsContent>
+
                 <!-- The page stays visible on the free plan. An owner with staff seeing what
                      it does is the conversion lever; only running a payroll is blocked. -->
                 <table:ArgoTable.InfoBannerContent>
