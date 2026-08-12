@@ -65,6 +65,18 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
     public ObservableCollection<PayRunEmployeeSelection> SelectableEmployees { get; } = [];
 
+    /// <summary>
+    /// Why there is nobody to pay, or empty when there is. Two different sentences rather than
+    /// one, because the fix is different: an employer with no employees has to add one, and an
+    /// employer whose staff are all archived has to restore one. An empty list said neither and
+    /// read like something had failed to load.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNobodyToPay))]
+    private string _noEmployeesMessage = string.Empty;
+
+    public bool HasNobodyToPay => NoEmployeesMessage.Length > 0;
+
     partial void OnPayDateChanged(DateTimeOffset? value)
     {
         RefreshRateEdition();
@@ -140,12 +152,9 @@ public partial class PayRunModalsViewModel : ViewModelBase
     private void LoadSelectableEmployees()
     {
         SelectableEmployees.Clear();
+        NoEmployeesMessage = string.Empty;
 
-        List<Employee>? employees = App.CompanyManager?.CompanyData?.Employees;
-        if (employees == null)
-        {
-            return;
-        }
+        List<Employee> employees = App.CompanyManager?.CompanyData?.Employees ?? [];
 
         foreach (Employee e in employees.Where(e => !e.IsArchived).OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase))
         {
@@ -157,6 +166,17 @@ public partial class PayRunModalsViewModel : ViewModelBase
                 IsSelected = true,
             });
         }
+
+        if (SelectableEmployees.Count > 0)
+        {
+            return;
+        }
+
+        // Archived staff are excluded from a pay run but still exist, so "no employees" would be
+        // wrong here and would send the employer off to add someone they already have.
+        NoEmployeesMessage = employees.Count > 0
+            ? "Every employee is archived, so there is nobody to pay. Restore someone on the Employees page first."
+            : "There are no employees yet. Add one on the Employees page, then come back and run payroll.";
     }
 
     private void RefreshRateEdition()
