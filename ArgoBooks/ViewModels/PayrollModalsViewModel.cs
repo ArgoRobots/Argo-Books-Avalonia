@@ -45,6 +45,15 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [ObservableProperty]
     private PayFrequency _payFrequency = PayFrequency.Biweekly;
 
+    /// <summary>
+    /// Contract hours in a normal week. Only asked of salaried staff, and only used by the
+    /// Record of Employment: block 15A wants insurable hours and a salaried pay run records
+    /// none. Blank is allowed, and the ROE worksheet then says the hours are unknown rather
+    /// than printing zero, because zero hours would cost the employee their EI claim.
+    /// </summary>
+    [ObservableProperty]
+    private string _standardHoursPerWeek = string.Empty;
+
     [ObservableProperty]
     private string _federalClaimAmount = string.Empty;
 
@@ -172,6 +181,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsSalaried = employee.PayType == PayType.Salary;
         PayRate = Money(employee.PayRate);
         PayFrequency = employee.PayFrequency;
+        StandardHoursPerWeek = employee.StandardHoursPerWeek?.ToString("0.##") ?? string.Empty;
         FederalClaimAmount = Money(employee.FederalClaimAmount);
         ProvincialClaimAmount = Money(employee.ProvincialClaimAmount);
         IsCppExempt = employee.IsCppExempt;
@@ -304,6 +314,12 @@ public partial class PayrollModalsViewModel : ViewModelBase
         employee.PayType = IsSalaried ? PayType.Salary : PayType.Hourly;
         employee.PayRate = rate;
         employee.PayFrequency = PayFrequency;
+
+        // Null rather than zero when blank, and cleared outright for an hourly employee whose
+        // real hours are entered on every run. Zero would read as "worked no hours" on an ROE.
+        decimal hours = Parse(StandardHoursPerWeek);
+        employee.StandardHoursPerWeek = IsSalaried && hours > 0 ? hours : null;
+
         employee.FederalClaimAmount = Parse(FederalClaimAmount);
         employee.ProvincialClaimAmount = Parse(ProvincialClaimAmount);
         employee.IsCppExempt = IsCppExempt;
@@ -521,6 +537,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsSalaried = true;
         PayRate = string.Empty;
         PayFrequency = PayFrequency.Biweekly;
+        StandardHoursPerWeek = string.Empty;
         FederalClaimAmount = string.Empty;
         ProvincialClaimAmount = string.Empty;
         IsCppExempt = false;

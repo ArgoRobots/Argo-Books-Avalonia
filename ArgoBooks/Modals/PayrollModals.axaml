@@ -113,6 +113,22 @@
                                     <TextBlock Text="{Binding PayRateError}" FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding PayRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                    <!-- Salary only. An hourly employee's real hours are entered on
+                                         every pay run, so asking for contract hours would invite
+                                         the wrong number to be used on their ROE. -->
+                                    <StackPanel Spacing="4" IsVisible="{Binding IsSalaried}">
+                                        <TextBlock Text="{loc:Loc 'Hours in a normal week'}" FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBox Text="{Binding StandardHoursPerWeek, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 PlaceholderText="40"
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                 MaxLength="5" />
+                                        <TextBlock Text="{loc:Loc 'Optional. Used only for the Record of Employment, which asks for insurable hours. Without it that box has to be filled from the employment contract.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">

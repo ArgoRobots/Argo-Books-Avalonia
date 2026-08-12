@@ -1,9 +1,14 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Payroll;
+using ArgoBooks.Core.Services.Payroll;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -193,6 +198,63 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
         {
             App.PayrollModalsViewModel?.OpenEditEmployeeModal(employee);
         }
+    }
+
+    /// <summary>
+    /// Saves the Record of Employment worksheet for keying into ROE Web.
+    ///
+    /// Offered per employee rather than at year end because an ROE is due five calendar days
+    /// after the pay period in which someone stops being paid, which has nothing to do with
+    /// December.
+    /// </summary>
+    [RelayCommand]
+    private async Task RecordOfEmploymentAsync(EmployeeDisplayItem? item)
+    {
+        if (item == null || App.CompanyManager?.CompanyData is not { } data)
+        {
+            return;
+        }
+
+        try
+        {
+            RoeWorksheet sheet = new RoeService().Build(data, item.Id);
+
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null)
+            {
+                return;
+            }
+
+            IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save the Record of Employment worksheet".Translate(),
+                SuggestedFileName = $"ROE-worksheet-{Sanitize(sheet.EmployeeName)}.pdf",
+                DefaultExtension = "pdf",
+                FileTypeChoices = [new FilePickerFileType("PDF") { Patterns = ["*.pdf"] }],
+            });
+
+            if (file == null)
+            {
+                return;
+            }
+
+            byte[] bytes = await Task.Run(() => RoePdfRenderer.Render(sheet));
+            await File.WriteAllBytesAsync(file.Path.LocalPath, bytes);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.Roe");
+        }
+    }
+
+    private static string Sanitize(string name)
+    {
+        char[] invalid = Path.GetInvalidFileNameChars();
+        string result = new(name.Select(c => invalid.Contains(c) || c == ' ' ? '-' : c).ToArray());
+        return string.IsNullOrEmpty(result.Trim('-')) ? "employee" : result.Trim('-');
     }
 
     /// <summary>

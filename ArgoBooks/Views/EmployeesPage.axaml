@@ -156,6 +156,14 @@
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
                                                     </Button>
+                                                    <!-- Due five days after the pay period in which someone stops
+                                                         being paid, so it belongs on the row rather than at year end. -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Record of Employment worksheet'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).RecordOfEmploymentCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Reports}" Width="16" Height="16" />
+                                                    </Button>
                                                     <!-- Archive, never delete: pay history points at this employee and a
                                                          T4 must stay produceable for someone who left mid-year. -->
                                                     <Button Classes="icon-button"
