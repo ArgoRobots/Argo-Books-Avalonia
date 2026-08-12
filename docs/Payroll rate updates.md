@@ -125,19 +125,19 @@ table says 0.430% and 0.602%, and 103,000 x 0.00430 = 442.90 confirms it. Read t
 
 ---
 
-## Still outstanding: the RL-1
+## The RL-1
 
 A Quebec employer files an **RL-1 slip and RL-1 Summary with Revenu Quebec**, in addition to
-the T4 and T4 Summary with CRA. The app does not produce one. That is why the T4 Summary's
-CPP totals deliberately exclude Quebec's QPP: those figures belong on the RL-1, and CRA has no
-field for them.
+the T4 and T4 Summary with CRA. That is why the T4 Summary's CPP totals deliberately exclude
+Quebec's QPP: those figures belong on the RL-1, and CRA has no field for them.
 
-So Quebec payroll can currently be CALCULATED and PAID correctly, and its T4 is right, but the
-year end filing is incomplete for a Quebec employer.
+Built in `Rl1Service`, `Rl1PdfRenderer` and `Models/Payroll/Rl1Slip.cs`, and reachable from the
+Quebec section of the year end modal, which only appears for an employer who actually has a
+Quebec employee.
 
-### What has been settled about building it
+### What was settled about building it
 
-**Build the slip and summary as PDFs, not XML.** Revenu Quebec requires online XML filing only
+**The slip and summary are PDFs, not XML.** Revenu Quebec requires online XML filing only
 from employers sending MORE than 5 RL slips of the same type. Anyone filing fewer than 6 may
 use the Transmitting RL Slips online service or send paper. This app's employer has two or
 three staff, so they are under the threshold and will key the figures in, exactly as they
@@ -148,7 +148,10 @@ as a web page, Revenu Quebec routes RL-slip specifications through its Division 
 l'acquisition des donnees electroniques for registered product developers. Building the XML
 would mean registering first.
 
-### Boxes confirmed so far
+Above five slips the app says so and stops, rather than handing over paper that Revenu Quebec
+will send back. See `Rl1Service.Validate`.
+
+### The boxes
 
 From the [Guide to Filing the RL-1 Slip](https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/rl-1.g-v/):
 
@@ -162,11 +165,34 @@ From the [Guide to Filing the RL-1 Slip](https://www.revenuquebec.ca/en/online-s
 | E | Quebec income tax withheld | PayRunLine.ProvincialTax |
 | F | Union dues | not collected, always nil |
 | G | Pensionable salary or wages under the QPP | gross, or nil if QPP exempt |
+| H | QPIP premium | PayRunLine.QpipEmployee |
+| I | Eligible salary or wages under the QPIP | gross, or nil if exempt |
 
-**Not yet confirmed: the QPIP boxes.** The premium and the eligible salary each have a box and
-the letters were not captured before the source page truncated. They must be read from the
-guide rather than assumed, because a wrong box letter puts a real number in the wrong place on
-a government slip and nothing downstream would catch it.
+H and I were confirmed against Revenu Quebec's own box-by-box pages
+([box H](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/filing-rl-slips-and-the-rl-1-summary-general-rules/rl-1-slip-employment-and-other-income/how-to-complete-the-rl-1-slip-box-by-box-instructions/box-h/),
+[box I](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/filing-rl-slips-and-the-rl-1-summary-general-rules/rl-1-slip-employment-and-other-income/how-to-complete-the-rl-1-slip-box-by-box-instructions/box-i/))
+rather than inferred, because a wrong box letter puts a real number in the wrong place on a
+government slip and nothing downstream would catch it.
+
+Three things about those boxes are easy to get wrong:
+
+- **Box I takes `0` rather than being left blank** when there is no eligible salary. Revenu
+  Quebec states this explicitly, which is why the renderer always prints it.
+- **Box E is the Quebec tax alone.** The federal tax withheld in the same pay run goes to CRA
+  and appears in box 22 of the T4. Printing the combined figure would credit the employee with
+  Quebec tax that Quebec never received. Pinned by a test.
+- **Box I is capped at the QPIP maximum insurable earnings** ($103,000 for 2026, $98,000 for
+  2025), which comes from the rate file rather than from the slip.
+
+### What the RL-1 Summary does NOT cover
+
+The summary's remittance total is QPP, QPIP and Quebec income tax. It excludes the
+**contribution to the health services fund**, the **contribution related to labour standards**,
+and the **workforce skills development contribution**, none of which this app calculates. The
+PDF says so on its face, because an employer comparing the total against what they actually
+remitted would otherwise conclude they had overpaid.
+
+Employment insurance is federal and is deliberately absent: it is on the T4 Summary.
 
 ---
 
