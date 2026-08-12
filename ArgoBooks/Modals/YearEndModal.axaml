@@ -36,7 +36,7 @@
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'T4 slips for your employees, and the file CRA needs'}"
                                                FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                               Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                                 </StackPanel>
 
                                 <ComboBox Grid.Column="1" Margin="0,0,12,0" Width="110"
@@ -51,7 +51,11 @@
                         </Border>
 
                         <!-- Content -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <!-- Horizontal scrolling disabled, as in every other modal. Left enabled,
+                             the ScrollViewer measures its content at infinite width, so nothing
+                             wraps and the long lines push the modal sideways. -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="24" Spacing="16">
 
                                 <!-- Everything wrong, all at once. Fixing these means visiting
@@ -205,23 +209,23 @@
                                     <StackPanel Spacing="10">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="{loc:Loc 'Total employment income'}" FontSize="13"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
                                             <TextBlock Grid.Column="1" Text="{Binding TotalIncome}" FontSize="13" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                         </Grid>
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Text="{loc:Loc 'Total withheld from employees'}" FontSize="13"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
                                             <TextBlock Grid.Column="1" Text="{Binding TotalDeductions}" FontSize="13" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                         </Grid>
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0">
                                                 <TextBlock Text="{loc:Loc 'Total that should have been remitted'}" FontSize="13"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
                                                 <TextBlock Text="{loc:Loc 'Compare this against what you actually sent CRA over the year'}"
                                                            FontSize="11"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" />
                                             </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{Binding TotalRemitted}" FontSize="15" FontWeight="SemiBold"
                                                        VerticalAlignment="Center"
@@ -271,7 +275,7 @@
                                             <StackPanel Grid.Column="0">
                                                 <TextBlock Text="{loc:Loc 'Total that should have been remitted to Revenu Quebec'}"
                                                            FontSize="13"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
                                                 <TextBlock Text="{loc:Loc 'QPP, QPIP and Quebec tax only. It does not include the health services fund.'}"
                                                            FontSize="11" TextWrapping="Wrap"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
