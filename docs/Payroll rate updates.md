@@ -93,6 +93,50 @@ becomes `upTo 61200 / rate .08 / k 0`, then `upTo 154259 / rate .10 / k 1224`, t
 `upTo 185111 / rate .12 / k 4309`. Getting this off by one shifts every bracket and does not
 look wrong in the output, so check the first row against the previous edition.
 
+
+---
+
+## Quebec is a separate update, from a separate source
+
+Quebec administers its own income tax, pension plan and parental insurance plan, so none of
+its figures appear in T4127 and none of the PDOC fixtures say anything about it. It is a
+second gathering exercise on its own schedule.
+
+**Sources**
+
+- [TP-1015.F-V, Formulas to Calculate Source Deductions](https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/tp-1015-f-v/),
+  which carries the brackets, the constants, the personal amounts and the formula itself.
+  Appendix 1 has a worked example that is the Quebec equivalent of T4127's, and is pinned as
+  a test.
+- [QPP maximums and contribution rate](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/calculating-source-deductions-and-contributions/qpp-contributions/maximum-pensionable-earnings-and-contribution-rate/)
+- [QPIP maximums and premium rates](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/calculating-source-deductions-and-contributions/qpip-premiums/maximum-insurable-earnings-and-premium-rate/)
+- The Quebec EI maximum, which is lower than the rest of Canada because QPIP covers parental
+  benefits. The RATE is in T4127; the maximum is announced with the EI rate each autumn.
+- The federal abatement, 16.5%, which is in T4127's Table 8.2 against QC.
+
+**The oracle is not WebRAS.** This is the opposite of the rest of Canada. Revenu Quebec states
+in the guide and again inside WebRAS itself: "In the event of a discrepancy between the
+calculations using the formulas and those using WebRAS, the calculations using the formulas
+prevail." So TP-1015.F is authoritative and WebRAS is a sanity check. Do not "fix" the
+calculator to match WebRAS.
+
+**A search summary got QPIP wrong.** It reported 0.455% and 0.636% for 2026. The published
+table says 0.430% and 0.602%, and 103,000 x 0.00430 = 442.90 confirms it. Read the tables.
+
+---
+
+## Still outstanding: the RL-1
+
+A Quebec employer files an **RL-1 slip and RL-1 Summary with Revenu Quebec**, in addition to
+the T4 and T4 Summary with CRA. The app does not produce one. That is why the T4 Summary's
+CPP totals deliberately exclude Quebec's QPP: those figures belong on the RL-1, and CRA has no
+field for them.
+
+So Quebec payroll can currently be CALCULATED and PAID correctly, and its T4 is right, but the
+year end filing is incomplete for a Quebec employer. Building it is roughly the size of the T4
+work: a model, a service, an XML writer, a PDF and validation, against Revenu Quebec's own
+RL-1 specification.
+
 ---
 
 ## Prorated figures, the easiest thing here to get wrong
