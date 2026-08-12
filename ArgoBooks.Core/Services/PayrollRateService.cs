@@ -42,13 +42,6 @@ public class PayrollRateService
         return LoadAll().FirstOrDefault(t => t.Covers(payDate));
     }
 
-    /// <summary>True when a pay run on this date can be calculated at all.</summary>
-    public bool HasRatesFor(DateTime payDate) => GetForDate(payDate) != null;
-
-    /// <summary>Editions available, newest first. Used by diagnostics and settings.</summary>
-    public IReadOnlyList<PayrollRateTable> AvailableEditions() =>
-        LoadAll().OrderByDescending(t => t.EffectiveFrom).ToList();
-
     /// <summary>
     /// Drops the in-memory copies so a newly downloaded edition is picked up without a
     /// restart.

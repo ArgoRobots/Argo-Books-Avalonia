@@ -77,8 +77,14 @@ public class TaxBracket
 }
 
 /// <summary>
-/// A personal amount that is reduced as income rises. Where an amount is fixed, Maximum and
-/// Minimum are equal and the phase-out bounds are ignored.
+/// A personal amount, with the income range over which it is reduced.
+///
+/// Only <see cref="Maximum"/> is read. The phase-out figures are recorded because T4127
+/// publishes them and the rate files carry them, but payroll deliberately does NOT apply the
+/// reduction: an employer withholds against the figure the employee wrote on their TD1, and
+/// reflecting the high-income reduction is the employee's job when completing that form. CRA's
+/// own calculator behaves the same way, which the PDOC fixtures confirm. See the comment in
+/// PayrollCalculator where the claim amount is chosen.
 /// </summary>
 public class PersonalAmount
 {
@@ -93,32 +99,6 @@ public class PersonalAmount
 
     [JsonPropertyName("phaseoutEnd")]
     public decimal PhaseoutEnd { get; set; }
-
-    /// <summary>
-    /// The amount for a given annual net income, reduced linearly between the phase-out
-    /// bounds. A fixed amount is expressed as Maximum equal to Minimum, which this returns
-    /// unchanged at every income.
-    /// </summary>
-    public decimal ForIncome(decimal netIncome)
-    {
-        if (Maximum == Minimum || netIncome <= PhaseoutStart)
-        {
-            return Maximum;
-        }
-
-        if (netIncome >= PhaseoutEnd)
-        {
-            return Minimum;
-        }
-
-        decimal range = PhaseoutEnd - PhaseoutStart;
-        if (range <= 0)
-        {
-            return Maximum;
-        }
-
-        return Maximum - (netIncome - PhaseoutStart) * ((Maximum - Minimum) / range);
-    }
 }
 
 public class FederalRates

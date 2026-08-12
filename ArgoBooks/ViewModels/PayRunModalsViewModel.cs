@@ -124,8 +124,6 @@ public partial class PayRunModalsViewModel : ViewModelBase
     /// <summary>Raised after approve or void, so the pay runs page reloads.</summary>
     public event EventHandler? PayRunChanged;
 
-    public void RaisePayRunChanged() => PayRunChanged?.Invoke(this, EventArgs.Empty);
-
     #region Opening
 
     public void OpenRunModal()

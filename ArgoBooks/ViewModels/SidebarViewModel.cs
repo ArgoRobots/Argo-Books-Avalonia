@@ -89,7 +89,6 @@ public partial class SidebarViewModel : ViewModelBase
     public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
     public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
     public ObservableCollection<SidebarItemModel> PayrollItems { get; } = [];
-    public ObservableCollection<SidebarItemModel> TeamItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TrackingItems { get; } = [];
 
     #endregion
@@ -240,7 +239,6 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in RentalItems) item.IsCollapsed = isCollapsed;
         foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
         foreach (var item in PayrollItems) item.IsCollapsed = isCollapsed;
-        foreach (var item in TeamItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TrackingItems) item.IsCollapsed = isCollapsed;
     }
 
@@ -300,7 +298,6 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in RentalItems) item.IsActive = item.PageName == pageName;
         foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
         foreach (var item in PayrollItems) item.IsActive = item.PageName == pageName;
-        foreach (var item in TeamItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TrackingItems) item.IsActive = item.PageName == pageName;
     }
 
