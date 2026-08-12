@@ -32,6 +32,14 @@ public static class PayrollCalculator
         ArgumentNullException.ThrowIfNull(ytd);
         ArgumentNullException.ThrowIfNull(rates);
 
+        // Quebec is handed off whole rather than branched through. Its pension plan, its
+        // parental insurance plan and its income tax formula are all different in kind, so
+        // there is nothing below this line that would apply to it.
+        if (string.Equals(input.Province, "QC", StringComparison.OrdinalIgnoreCase))
+        {
+            return QuebecPayrollCalculator.Calculate(input, ytd, rates);
+        }
+
         if (!rates.Provinces.TryGetValue(input.Province, out ProvincialRates? province))
         {
             throw new NotSupportedException(
@@ -348,6 +356,11 @@ public class PayrollYearToDate
     public decimal Cpp2Employee { get; set; }
 
     public decimal EiEmployee { get; set; }
+
+    /// <summary>Quebec only. Needed because QPIP stops at its own annual maximum.</summary>
+    public decimal QpipEmployee { get; set; }
+
+    public decimal QpipEmployer { get; set; }
 }
 
 /// <summary>
@@ -371,20 +384,25 @@ public class PayrollDeductions
 
     public decimal EiEmployer { get; set; }
 
+    /// <summary>Quebec parental insurance plan. Zero everywhere outside Quebec.</summary>
+    public decimal QpipEmployee { get; set; }
+
+    public decimal QpipEmployer { get; set; }
+
     public decimal FederalTax { get; set; }
 
     public decimal ProvincialTax { get; set; }
 
     /// <summary>What the employee receives.</summary>
     public decimal NetPay =>
-        GrossPay - CppEmployee - Cpp2Employee - EiEmployee - FederalTax - ProvincialTax;
+        GrossPay - CppEmployee - Cpp2Employee - EiEmployee - QpipEmployee - FederalTax - ProvincialTax;
 
     /// <summary>What must be remitted to CRA for this employee: withheld plus employer share.</summary>
     public decimal TotalRemittance =>
         CppEmployee + CppEmployer + Cpp2Employee + Cpp2Employer
-        + EiEmployee + EiEmployer + FederalTax + ProvincialTax;
+        + EiEmployee + EiEmployer + QpipEmployee + QpipEmployer + FederalTax + ProvincialTax;
 
     /// <summary>What this employee actually costs, gross plus the employer contributions.</summary>
     public decimal TotalCost =>
-        GrossPay + CppEmployer + Cpp2Employer + EiEmployer;
+        GrossPay + CppEmployer + Cpp2Employer + EiEmployer + QpipEmployer;
 }

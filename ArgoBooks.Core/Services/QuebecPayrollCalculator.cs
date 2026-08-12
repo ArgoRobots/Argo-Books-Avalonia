@@ -1,0 +1,250 @@
+using ArgoBooks.Core.Models.Payroll;
+
+namespace ArgoBooks.Core.Services;
+
+/// <summary>
+/// Source deductions for an employee working in Quebec, following Revenu Quebec's TP-1015.F.
+///
+/// A separate calculator rather than a branch inside the federal one, because Quebec is not a
+/// province-shaped problem. Three things differ in kind, not degree:
+///
+/// The pension plan is QPP, at 6.30% split as a 5.30% base plus a 1.00% first additional
+/// contribution. CPP is 5.95% split 4.95 and 1.00, so neither the rate nor the split carries
+/// over.
+///
+/// There is a parental insurance plan, QPIP, with no equivalent anywhere else in Canada, and
+/// Quebec employees pay a LOWER EI rate because of it.
+///
+/// The income tax formula is not CRA's shape at all. Quebec has a deduction for workers that
+/// comes off income, relieves personal credits at a stated rate rather than at the lowest
+/// bracket rate, and gives no credit for QPP or QPIP: the additional QPP is relieved as a
+/// deduction instead. Writing this by analogy with the federal formula would produce numbers
+/// that look reasonable and are wrong.
+///
+/// CRA reduces federal tax by an abatement for Quebec residents, to make room for Quebec's own
+/// income tax. That is applied here rather than federally, because it only ever applies here.
+/// </summary>
+public static class QuebecPayrollCalculator
+{
+    public static PayrollDeductions Calculate(PayrollInput input, PayrollYearToDate ytd, PayrollRateTable rates)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(ytd);
+        ArgumentNullException.ThrowIfNull(rates);
+
+        if (rates.Quebec is not { } qc)
+        {
+            throw new NotSupportedException(
+                $"Edition {rates.EditionId} carries no Quebec rates, so a Quebec pay run cannot be calculated.");
+        }
+
+        int periods = input.PayPeriodsPerYear;
+        decimal gross = input.GrossPay;
+
+        decimal qpp = QppForPeriod(gross, periods, ytd, qc, input.IsCppExempt,
+                                   out decimal qpp2, out decimal qppUncapped);
+        decimal qpip = QpipForPeriod(gross, ytd, qc);
+        decimal ei = EiForPeriod(gross, ytd, rates, qc, input.IsEiExempt);
+
+        decimal quebecTax = QuebecTaxForPeriod(gross, periods, qpp, qpp2, input, qc);
+        decimal federalTax = FederalTaxForPeriod(gross, periods, qpp, qpp2, qppUncapped, ei, input, rates, qc);
+
+        return new PayrollDeductions
+        {
+            GrossPay = gross,
+            CppEmployee = qpp,
+            CppEmployer = qpp,
+            Cpp2Employee = qpp2,
+            Cpp2Employer = qpp2,
+            EiEmployee = ei,
+            EiEmployer = Round(ei * rates.Ei.QuebecEmployerMultiplier),
+            QpipEmployee = qpip,
+            QpipEmployer = QpipEmployerForPeriod(gross, ytd, qc),
+            FederalTax = federalTax,
+            ProvincialTax = quebecTax,
+        };
+    }
+
+    /// <summary>
+    /// Quebec income tax for one period. TP-1015.F works annually and divides at the end:
+    ///
+    ///   I = P x (G - F - H - CSA)
+    ///   Y = (T x I) - K - (creditRate x E)
+    ///   A = Y / P
+    ///
+    /// F, J, J1, K1, Q and Q1 are pension contributions, Revenu Quebec authorisations and
+    /// labour-sponsored fund share purchases. This app collects none of them, so they are zero
+    /// and left out rather than carried as dead terms.
+    /// </summary>
+    private static decimal QuebecTaxForPeriod(
+        decimal gross, int periods, decimal qpp, decimal qpp2, PayrollInput input, QuebecRates qc)
+    {
+        if (gross <= 0)
+        {
+            return 0m;
+        }
+
+        // H, the deduction for workers: a share of pay, capped for the YEAR and so divided
+        // across periods rather than capped per period.
+        decimal workerDeduction = Math.Min(
+            qc.WorkerDeductionRate * gross,
+            periods > 0 ? qc.WorkerDeductionMaxAnnual / periods : 0m);
+
+        // CSA, the deductible part of QPP. Only the first additional contribution comes off
+        // income, which is the 1.00 percentage point inside the 6.30% rate, plus all of QPP2.
+        decimal additionalShare = qc.Qpp.RateEmployee > 0
+            ? (qc.Qpp.RateEmployee - qc.Qpp.BaseRateEmployee) / qc.Qpp.RateEmployee
+            : 0m;
+        decimal deductibleQpp = Round(qpp * additionalShare) + qpp2;
+
+        decimal annual = Math.Max(0, (gross - workerDeduction - deductibleQpp) * periods);
+
+        (decimal rate, decimal k) = BracketFor(qc.Brackets, annual);
+
+        decimal claim = input.ProvincialClaimAmount > 0 ? input.ProvincialClaimAmount : qc.BasicPersonalAmount;
+
+        decimal annualTax = Math.Max(0, rate * annual - k - qc.CreditRate * claim);
+
+        return Round(annualTax / periods);
+    }
+
+    /// <summary>
+    /// Federal tax for a Quebec employee: CRA's own formula, then reduced by the abatement.
+    ///
+    /// The K2 credit uses QPP rather than CPP, because that is what the employee actually
+    /// contributed, and the same base-portion-only rule applies.
+    /// </summary>
+    private static decimal FederalTaxForPeriod(
+        decimal gross, int periods, decimal qpp, decimal qpp2, decimal qppUncapped, decimal ei,
+        PayrollInput input, PayrollRateTable rates, QuebecRates qc)
+    {
+        if (gross <= 0)
+        {
+            return 0m;
+        }
+
+        decimal additionalShare = qc.Qpp.RateEmployee > 0
+            ? (qc.Qpp.RateEmployee - qc.Qpp.BaseRateEmployee) / qc.Qpp.RateEmployee
+            : 0m;
+
+        decimal enhancedQpp = Round(qpp * additionalShare);
+        decimal annual = (gross - enhancedQpp - qpp2) * periods;
+
+        decimal annualQpp = Math.Min(qppUncapped * periods, qc.Qpp.MaxContributionEmployee) * (1 - additionalShare);
+        decimal annualEi = Math.Min(ei * periods, qc.EiMaxPremiumEmployee);
+
+        FederalRates federal = rates.Federal;
+        (decimal rate, decimal k) = BracketFor(federal.Brackets, annual);
+        decimal lowest = federal.LowestRateForCredits;
+
+        decimal claim = input.FederalClaimAmount > 0
+            ? input.FederalClaimAmount
+            : federal.BasicPersonalAmount.Maximum;
+
+        decimal t3 = rate * annual
+                     - k
+                     - lowest * claim
+                     - lowest * (annualQpp + annualEi)
+                     - lowest * Math.Min(annual, federal.CanadaEmploymentAmount);
+
+        // The abatement. CRA collects less federal tax from Quebec residents because Quebec
+        // collects its own, and it applies to the tax rather than to the income.
+        decimal afterAbatement = Math.Max(0, t3) * (1 - qc.FederalAbatement);
+
+        return Round(afterAbatement / periods);
+    }
+
+    /// <summary>QPP for the period. Same arithmetic as CPP, different constants.</summary>
+    private static decimal QppForPeriod(
+        decimal gross, int periods, PayrollYearToDate ytd, QuebecRates qc, bool exempt,
+        out decimal qpp2, out decimal qppUncapped)
+    {
+        qpp2 = 0m;
+        qppUncapped = 0m;
+
+        if (exempt || gross <= 0)
+        {
+            return 0m;
+        }
+
+        decimal periodExemption = qc.Qpp.BasicExemptionAnnual / periods;
+        decimal pensionable = Math.Max(0, gross - periodExemption);
+
+        qppUncapped = pensionable * qc.Qpp.RateEmployee;
+
+        decimal qpp = Round(qppUncapped);
+        decimal remaining = Math.Max(0, qc.Qpp.MaxContributionEmployee - ytd.CppEmployee);
+        qpp = Math.Min(qpp, remaining);
+
+        decimal earnedBefore = ytd.PensionableEarnings;
+        decimal above = Math.Max(0,
+            Math.Min(earnedBefore + gross, qc.Qpp2.YampeCeiling) - Math.Max(earnedBefore, qc.Qpp.YmpeCeiling));
+
+        if (above > 0)
+        {
+            decimal remaining2 = Math.Max(0, qc.Qpp2.MaxContributionEmployee - ytd.Cpp2Employee);
+            qpp2 = Math.Min(Round(above * qc.Qpp2.RateEmployee), remaining2);
+        }
+
+        return qpp;
+    }
+
+    /// <summary>
+    /// QPIP. Capped on the premium rather than on insurable earnings, for the same reason EI
+    /// is: the two only agree when the year-to-date figures are perfect, and they rarely are.
+    /// </summary>
+    private static decimal QpipForPeriod(decimal gross, PayrollYearToDate ytd, QuebecRates qc)
+    {
+        if (gross <= 0)
+        {
+            return 0m;
+        }
+
+        decimal premium = Round(gross * qc.Qpip.RateEmployee);
+        decimal remaining = Math.Max(0, qc.Qpip.MaxPremiumEmployee - ytd.QpipEmployee);
+        return Math.Min(premium, remaining);
+    }
+
+    private static decimal QpipEmployerForPeriod(decimal gross, PayrollYearToDate ytd, QuebecRates qc)
+    {
+        if (gross <= 0)
+        {
+            return 0m;
+        }
+
+        // The employer side has its own rate and its own maximum. It is not the employee
+        // premium times a multiplier, which is how EI works and is the easy mistake here.
+        decimal premium = Round(gross * qc.Qpip.RateEmployer);
+        decimal remaining = Math.Max(0, qc.Qpip.MaxPremiumEmployer - ytd.QpipEmployer);
+        return Math.Min(premium, remaining);
+    }
+
+    /// <summary>EI at Quebec's reduced rate and maximum, because QPIP covers parental benefits.</summary>
+    private static decimal EiForPeriod(
+        decimal gross, PayrollYearToDate ytd, PayrollRateTable rates, QuebecRates qc, bool exempt)
+    {
+        if (exempt || gross <= 0)
+        {
+            return 0m;
+        }
+
+        decimal premium = Round(gross * rates.Ei.QuebecRateEmployee);
+        decimal remaining = Math.Max(0, qc.EiMaxPremiumEmployee - ytd.EiEmployee);
+        return Math.Min(premium, remaining);
+    }
+
+    private static (decimal Rate, decimal ConstantK) BracketFor(List<TaxBracket> brackets, decimal annual)
+    {
+        foreach (TaxBracket bracket in brackets)
+        {
+            if (bracket.UpTo == null || annual <= bracket.UpTo)
+            {
+                return (bracket.Rate, bracket.ConstantK);
+            }
+        }
+
+        return brackets.Count > 0 ? (brackets[^1].Rate, brackets[^1].ConstantK) : (0m, 0m);
+    }
+
+    private static decimal Round(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+}

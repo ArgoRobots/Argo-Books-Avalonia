@@ -197,16 +197,16 @@ public class PayrollCalculatorTests
     }
 
     [Fact]
-    public void QuebecThrowsRatherThanBeingCalculatedWithCraRules()
+    public void AnUnknownProvinceCodeThrowsRatherThanGuessing()
     {
-        // Quebec is the one jurisdiction deliberately absent. Revenu Quebec does not use CRA's
-        // rate-and-constant structure, so falling through to the federal shape would produce
-        // figures that look plausible and are wrong. It needs its own calculator.
+        // Falling back to some other province's table would produce figures that look
+        // plausible and are wrong, which is worse than refusing.
         //
-        // This test used to name Ontario, which stopped meaning anything the moment Ontario was
-        // added. Quebec cannot go stale the same way: it is excluded by design, not by backlog.
+        // This test has now named two jurisdictions that stopped being unsupported: Ontario,
+        // then Quebec, each of which I claimed at the time would not go stale. A code that is
+        // not a jurisdiction at all is the only example that actually cannot.
         PayrollInput input = Input(2000m);
-        input.Province = "QC";
+        input.Province = "ZZ";
 
         Assert.Throws<NotSupportedException>(
             () => PayrollCalculator.Calculate(input, new PayrollYearToDate(), Rates()));

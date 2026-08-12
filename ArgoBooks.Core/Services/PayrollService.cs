@@ -121,6 +121,8 @@ public class PayrollService(PayrollRateService? rateService = null)
             line.Cpp2Employer = d.Cpp2Employer;
             line.EiEmployee = d.EiEmployee;
             line.EiEmployer = d.EiEmployer;
+            line.QpipEmployee = d.QpipEmployee;
+            line.QpipEmployer = d.QpipEmployer;
             line.FederalTax = d.FederalTax;
             line.ProvincialTax = d.ProvincialTax;
             line.NetPay = d.NetPay;
@@ -162,6 +164,8 @@ public class PayrollService(PayrollRateService? rateService = null)
                 ytd.CppEmployee += line.CppEmployee;
                 ytd.Cpp2Employee += line.Cpp2Employee;
                 ytd.EiEmployee += line.EiEmployee;
+                ytd.QpipEmployee += line.QpipEmployee;
+                ytd.QpipEmployer += line.QpipEmployer;
             }
         }
 
@@ -269,6 +273,8 @@ public class PayrollService(PayrollRateService? rateService = null)
                 Cpp2Employer = -line.Cpp2Employer,
                 EiEmployee = -line.EiEmployee,
                 EiEmployer = -line.EiEmployer,
+                QpipEmployee = -line.QpipEmployee,
+                QpipEmployer = -line.QpipEmployer,
                 FederalTax = -line.FederalTax,
                 ProvincialTax = -line.ProvincialTax,
                 NetPay = -line.NetPay,

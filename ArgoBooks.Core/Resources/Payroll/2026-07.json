@@ -64,6 +64,57 @@
     "quebecRateEmployee": 0.013,
     "quebecEmployerMultiplier": 1.4
   },
+  "quebec": {
+    "qpp": {
+      "rateEmployee": 0.063,
+      "rateEmployer": 0.063,
+      "baseRateEmployee": 0.053,
+      "basicExemptionAnnual": 3500,
+      "ympeCeiling": 74600,
+      "maxContributionEmployee": 4479.3
+    },
+    "qpp2": {
+      "rateEmployee": 0.04,
+      "rateEmployer": 0.04,
+      "yampeCeiling": 85000,
+      "maxContributionEmployee": 416.0
+    },
+    "qpip": {
+      "rateEmployee": 0.0043,
+      "rateEmployer": 0.00602,
+      "maxInsurableEarnings": 103000,
+      "maxPremiumEmployee": 442.9,
+      "maxPremiumEmployer": 620.06
+    },
+    "brackets": [
+      {
+        "upTo": 54345,
+        "rate": 0.14,
+        "constantK": 0
+      },
+      {
+        "upTo": 108680,
+        "rate": 0.19,
+        "constantK": 2717
+      },
+      {
+        "upTo": 132245,
+        "rate": 0.24,
+        "constantK": 8151
+      },
+      {
+        "upTo": null,
+        "rate": 0.2575,
+        "constantK": 10465
+      }
+    ],
+    "basicPersonalAmount": 18952,
+    "creditRate": 0.14,
+    "workerDeductionRate": 0.06,
+    "workerDeductionMaxAnnual": 1450,
+    "federalAbatement": 0.165,
+    "eiMaxPremiumEmployee": 895.7
+  },
   "provinces": {
     "AB": {
       "brackets": [

@@ -136,6 +136,13 @@ public class PayRunLine
     [JsonPropertyName("eiEmployer")]
     public decimal EiEmployer { get; set; }
 
+    /// <summary>Quebec parental insurance plan. Zero for every employee outside Quebec.</summary>
+    [JsonPropertyName("qpipEmployee")]
+    public decimal QpipEmployee { get; set; }
+
+    [JsonPropertyName("qpipEmployer")]
+    public decimal QpipEmployer { get; set; }
+
     [JsonPropertyName("federalTax")]
     public decimal FederalTax { get; set; }
 
@@ -153,7 +160,7 @@ public class PayRunLine
 
     public decimal TotalRemittance =>
         CppEmployee + CppEmployer + Cpp2Employee + Cpp2Employer
-        + EiEmployee + EiEmployer + FederalTax + ProvincialTax;
+        + EiEmployee + EiEmployer + QpipEmployee + QpipEmployer + FederalTax + ProvincialTax;
 
-    public decimal TotalCost => GrossPay + CppEmployer + Cpp2Employer + EiEmployer;
+    public decimal TotalCost => GrossPay + CppEmployer + Cpp2Employer + EiEmployer + QpipEmployer;
 }

@@ -38,6 +38,15 @@ public class PayrollRateTable
     public EiRates Ei { get; set; } = new();
 
     /// <summary>Keyed by two letter code: AB, BC, ON and so on.</summary>
+    /// <summary>
+    /// Quebec, which is not a province entry because it is not a province-shaped problem.
+    /// Revenu Quebec runs its own pension plan, its own parental insurance plan and its own
+    /// income tax formula, and CRA reduces federal tax by an abatement to make room for it.
+    /// Null until the edition carries Quebec data.
+    /// </summary>
+    [JsonPropertyName("quebec")]
+    public QuebecRates? Quebec { get; set; }
+
     [JsonPropertyName("provinces")]
     public Dictionary<string, ProvincialRates> Provinces { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -296,4 +305,81 @@ public class HealthPremiumBand
 
     [JsonPropertyName("maxPremium")]
     public decimal MaxPremium { get; set; }
+}
+
+
+/// <summary>
+/// Everything Quebec needs that the rest of Canada does not.
+///
+/// QPP and QPP2 reuse the CPP shapes because the arithmetic is identical and only the
+/// constants differ: QPP is 6.30% against CPP's 5.95%, split as a 5.30% base plus a 1.00%
+/// first additional contribution rather than CPP's 4.95 and 1.00.
+/// </summary>
+public class QuebecRates
+{
+    [JsonPropertyName("qpp")]
+    public CppRates Qpp { get; set; } = new();
+
+    [JsonPropertyName("qpp2")]
+    public Cpp2Rates Qpp2 { get; set; } = new();
+
+    [JsonPropertyName("qpip")]
+    public QpipRates Qpip { get; set; } = new();
+
+    [JsonPropertyName("brackets")]
+    public List<TaxBracket> Brackets { get; set; } = [];
+
+    /// <summary>Personal credits from form TP-1015.3-V. The guide calls this E.</summary>
+    [JsonPropertyName("basicPersonalAmount")]
+    public decimal BasicPersonalAmount { get; set; }
+
+    /// <summary>
+    /// The rate personal credits are relieved at. Quebec uses 14%, which happens to equal the
+    /// lowest bracket rate but is stated separately in the guide and could diverge.
+    /// </summary>
+    [JsonPropertyName("creditRate")]
+    public decimal CreditRate { get; set; }
+
+    /// <summary>
+    /// The deduction for workers: a share of pay that comes off income before tax, capped for
+    /// the year. Quebec only, with no federal equivalent at all.
+    /// </summary>
+    [JsonPropertyName("workerDeductionRate")]
+    public decimal WorkerDeductionRate { get; set; }
+
+    [JsonPropertyName("workerDeductionMaxAnnual")]
+    public decimal WorkerDeductionMaxAnnual { get; set; }
+
+    /// <summary>
+    /// The share of federal tax CRA gives up for Quebec residents, because Quebec collects its
+    /// own. Applied to federal tax after it is worked out.
+    /// </summary>
+    [JsonPropertyName("federalAbatement")]
+    public decimal FederalAbatement { get; set; }
+
+    /// <summary>
+    /// Quebec's EI maximum. The RATE lives on EiRates as QuebecRateEmployee because it is a
+    /// federal programme, but the maximum differs and has nowhere else to go.
+    /// </summary>
+    [JsonPropertyName("eiMaxPremiumEmployee")]
+    public decimal EiMaxPremiumEmployee { get; set; }
+}
+
+/// <summary>Quebec parental insurance plan. Has no equivalent anywhere else in Canada.</summary>
+public class QpipRates
+{
+    [JsonPropertyName("rateEmployee")]
+    public decimal RateEmployee { get; set; }
+
+    [JsonPropertyName("rateEmployer")]
+    public decimal RateEmployer { get; set; }
+
+    [JsonPropertyName("maxInsurableEarnings")]
+    public decimal MaxInsurableEarnings { get; set; }
+
+    [JsonPropertyName("maxPremiumEmployee")]
+    public decimal MaxPremiumEmployee { get; set; }
+
+    [JsonPropertyName("maxPremiumEmployer")]
+    public decimal MaxPremiumEmployer { get; set; }
 }
