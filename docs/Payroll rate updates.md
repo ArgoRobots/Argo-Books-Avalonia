@@ -302,3 +302,83 @@ the affected dates will see that payroll cannot be run and will contact support.
 Recovering is just the normal process above. Any pay run already approved under the previous
 edition keeps its stored figures and is not retroactively changed, which is intended: it
 matches the stub the employee was given.
+
+---
+
+## Amending a filed T4
+
+CRA is explicit that **an amended return must not include original slips, and an original
+return must not contain amended slips**. They go up as separate submissions.
+
+The app has no record of what was filed last time, so it cannot work out which slips changed.
+That is why choosing Amendment or Cancellation on the year end screen turns on a checkbox per
+employee: only the employer knows. Filing all of them would restate every employee as amended.
+
+Two details from the [2026V4 T4 specification](https://www.canada.ca/en/revenue-agency/services/e-services/filing-information-returns-electronically-t4-t5-other-types-returns-overview/t619-2026/t4-2026.html)
+that are easy to get wrong:
+
+| | Slip `rpt_tcd` | Summary `rpt_tcd` |
+|---|---|---|
+| Original | O | O |
+| Amendment | A | A |
+| Cancellation | C | **A** |
+
+The summary has no C. CRA lists only O and A for it, so a cancellation carries C on its slips
+and A on the summary. Writing C there would be a value the specification does not define.
+
+`<fileramendmentnote>` takes up to 1309 characters and is **for report type A only**. Since an
+optional element carrying no value rejects the whole submission, it is written only when the
+filing is an amendment AND the note is non-empty.
+
+CRA also states the summary totals are "those reported from the T4 Slips filed with this T4
+Summary", so an amendment for one employee must not total the others. The totals follow the
+selected slips by themselves because `T4Return` computes them from its own list.
+
+---
+
+## The Record of Employment
+
+Due within **five calendar days of the end of the pay period** in which the interruption of
+earnings occurs, not five days from the last day worked. Service Canada calculates an EI claim
+from it, so a wrong figure does not bounce: it quietly shortens how long someone is paid.
+
+Argo Books produces a **worksheet for ROE Web**, not an ROE. Service Canada issues ROEs through
+ROE Web or ROE SAT; a printed sheet is not a filing. The worksheet exists so nobody has to
+re-add 27 pay periods by hand on a five day deadline.
+
+### The two windows are different lengths
+
+This is the trap. From the
+[ROE guide](https://www.canada.ca/en/employment-social-development/programs/ei/ei-list/reports/roe-guide.html):
+
+| Pay period type | Blocks 15A and 15C | Block 15B |
+|---|---|---|
+| Weekly | 53 | 27 |
+| Biweekly | 27 | 14 |
+| Semi-monthly | 25 | 13 |
+| Monthly | 13 | 7 |
+
+Neither column is a clean function of the frequency, so both are transcribed from Service
+Canada's charts rather than derived. A test asserts the hours window is always longer than the
+earnings window, because collapsing them into one constant is the obvious "tidy-up" that would
+break this.
+
+### Other things worth knowing
+
+- **Block 15C is most recent pay period FIRST**, which is the opposite of storage order. Nil
+  periods are printed as `0.00` rather than skipped: a skipped row shifts every later period
+  into the wrong slot.
+- **Block 15A needs insurable hours, and a salaried pay run records none.** Service Canada's
+  answer for an employer who does not track hours is the contract hours, which is what
+  `Employee.StandardHoursPerWeek` is for. When it is blank the worksheet says the hours are
+  unknown instead of printing zero, because zero hours costs the employee their claim.
+- **A salaried nil period earns no hours.** Crediting contract hours to a period with no
+  earnings would invent hours nobody worked.
+- **Block 12 can never be earlier than block 11.** An end date after the last pay period, which
+  is what a final unpaid stretch looks like, would otherwise produce exactly that.
+- **Block 16, the reason for issuing, is deliberately absent.** The app knows someone stopped
+  being paid; it does not know whether they quit, were dismissed or went on leave, and those
+  are different legal statements with different consequences for the claim. It is chosen in
+  ROE Web.
+- A voided run and its reversal share a pay period, so they are grouped by `PeriodEnd` before
+  the window is applied. Counting them as two periods would push a real period off the end.
