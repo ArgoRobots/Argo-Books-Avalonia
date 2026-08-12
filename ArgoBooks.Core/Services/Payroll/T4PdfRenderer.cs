@@ -93,17 +93,32 @@ public static class T4PdfRenderer
                     c.Item().PaddingTop(6).Column(rows =>
                     {
                         Box(rows, 14, "Employment income", slip.EmploymentIncome, bold: true);
-                        Box(rows, 16, "Employee's CPP contributions", slip.CppContributions);
+
+                        // A Quebec employee contributes to QPP, which lives in different boxes.
+                        // Printing it against box 16 would not merely be mislabelled, it would
+                        // disagree with the slip filed for them.
+                        Box(rows, slip.IsQuebec ? "17" : "16",
+                            slip.IsQuebec ? "Employee's QPP contributions" : "Employee's CPP contributions",
+                            slip.CppContributions);
 
                         if (slip.Cpp2Contributions > 0)
                         {
-                            Box(rows, "16A", "Employee's second CPP contributions", slip.Cpp2Contributions);
+                            Box(rows, slip.IsQuebec ? "17A" : "16A",
+                                slip.IsQuebec ? "Employee's second QPP contributions" : "Employee's second CPP contributions",
+                                slip.Cpp2Contributions);
                         }
 
                         Box(rows, 18, "Employee's EI premiums", slip.EiPremiums);
                         Box(rows, 22, "Income tax deducted", slip.IncomeTaxDeducted);
                         Box(rows, 24, "EI insurable earnings", slip.InsurableEarnings);
-                        Box(rows, 26, "CPP pensionable earnings", slip.PensionableEarnings);
+                        Box(rows, 26, slip.IsQuebec ? "QPP pensionable earnings" : "CPP pensionable earnings",
+                            slip.PensionableEarnings);
+
+                        if (slip.IsQuebec)
+                        {
+                            Box(rows, 55, "QPIP premiums", slip.QpipPremiums);
+                            Box(rows, 56, "QPIP insurable earnings", slip.QpipInsurableEarnings);
+                        }
                     });
                 });
 

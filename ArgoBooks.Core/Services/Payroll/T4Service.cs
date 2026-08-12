@@ -86,6 +86,7 @@ public class T4Service
             EmployeeNumber = employee.EmployeeNumber,
             Address = employee.Address,
             ProvinceOfEmployment = employee.Province,
+            IsQuebec = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase),
             EmploymentIncome = gross,
             CppContributions = lines.Sum(l => l.CppEmployee),
             Cpp2Contributions = lines.Sum(l => l.Cpp2Employee),
@@ -96,6 +97,12 @@ public class T4Service
             // deliberately go to zero rather than to gross.
             InsurableEarnings = employee.IsEiExempt ? 0m : gross,
             PensionableEarnings = employee.IsCppExempt ? 0m : gross,
+
+            QpipPremiums = lines.Sum(l => l.QpipEmployee),
+            QpipInsurableEarnings = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase)
+                ? gross
+                : 0m,
+            EmployerQpip = lines.Sum(l => l.QpipEmployer),
 
             CppExemptAllYear = employee.IsCppExempt,
             EiExemptAllYear = employee.IsEiExempt,

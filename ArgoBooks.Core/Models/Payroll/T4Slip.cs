@@ -27,6 +27,13 @@ public class T4Slip
     /// <summary>Box 10. Province of EMPLOYMENT, not of residence.</summary>
     public string ProvinceOfEmployment { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Quebec employees report QPP in boxes 17 and 17A rather than CPP in 16 and 16A, and
+    /// carry QPIP in 55 and 56. CRA is explicit that CPP and QPP must never appear on the same
+    /// slip, so this decides which pair is written, not merely how they are labelled.
+    /// </summary>
+    public bool IsQuebec { get; set; }
+
     /// <summary>Box 14.</summary>
     public decimal EmploymentIncome { get; set; }
 
@@ -45,8 +52,14 @@ public class T4Slip
     /// <summary>Box 24. Required even when nil, in which case it is filed as 0.00.</summary>
     public decimal InsurableEarnings { get; set; }
 
-    /// <summary>Box 26. Required even when nil.</summary>
+    /// <summary>Box 26. Required even when nil. Shared between CPP and QPP.</summary>
     public decimal PensionableEarnings { get; set; }
+
+    /// <summary>Box 55. Quebec only.</summary>
+    public decimal QpipPremiums { get; set; }
+
+    /// <summary>Box 56. Quebec only.</summary>
+    public decimal QpipInsurableEarnings { get; set; }
 
     /// <summary>Box 28. True when exempt for the WHOLE year, not part of it.</summary>
     public bool CppExemptAllYear { get; set; }
@@ -63,6 +76,8 @@ public class T4Slip
     public decimal EmployerCpp2 { get; set; }
 
     public decimal EmployerEi { get; set; }
+
+    public decimal EmployerQpip { get; set; }
 }
 
 /// <summary>
@@ -94,17 +109,23 @@ public class T4Return
 
     public decimal TotalEmploymentIncome => Slips.Sum(s => s.EmploymentIncome);
 
-    public decimal TotalEmployeeCpp => Slips.Sum(s => s.CppContributions);
+    /// <summary>
+    /// CPP only. CRA states plainly that Quebec Pension Plan contributions must NOT be included
+    /// in this field, and there is no QPP total on the T4 Summary at all: QPP is reported to
+    /// Revenu Quebec on the RL-1 Summary instead. A mixed employer therefore totals less here
+    /// than the sum of their slips, which is correct and looks wrong.
+    /// </summary>
+    public decimal TotalEmployeeCpp => Slips.Where(s => !s.IsQuebec).Sum(s => s.CppContributions);
 
-    public decimal TotalEmployeeCpp2 => Slips.Sum(s => s.Cpp2Contributions);
+    public decimal TotalEmployeeCpp2 => Slips.Where(s => !s.IsQuebec).Sum(s => s.Cpp2Contributions);
 
     public decimal TotalEmployeeEi => Slips.Sum(s => s.EiPremiums);
 
     public decimal TotalIncomeTax => Slips.Sum(s => s.IncomeTaxDeducted);
 
-    public decimal TotalEmployerCpp => Slips.Sum(s => s.EmployerCpp);
+    public decimal TotalEmployerCpp => Slips.Where(s => !s.IsQuebec).Sum(s => s.EmployerCpp);
 
-    public decimal TotalEmployerCpp2 => Slips.Sum(s => s.EmployerCpp2);
+    public decimal TotalEmployerCpp2 => Slips.Where(s => !s.IsQuebec).Sum(s => s.EmployerCpp2);
 
     public decimal TotalEmployerEi => Slips.Sum(s => s.EmployerEi);
 }

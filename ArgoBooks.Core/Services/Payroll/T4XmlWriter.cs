@@ -66,12 +66,29 @@ public static class T4XmlWriter
         // unconditionally while the others are not. CRA states explicitly that exempt
         // employment files 0.00 rather than omitting the element.
         Add(amounts, "empt_incamt", Money(slip.EmploymentIncome));
-        Add(amounts, "cpp_cntrb_amt", Money(slip.CppContributions));
-        Add(amounts, "cppe_cntrb_amt", Money(slip.Cpp2Contributions));
+
+        // CRA: "Under no circumstances should amounts for both CPP and QPP appear on the same
+        // slip." Quebec employees contribute to QPP, so their money goes in boxes 17 and 17A
+        // and the CPP elements are omitted entirely rather than written as zero.
+        if (slip.IsQuebec)
+        {
+            Add(amounts, "qpp_cntrb_amt", Money(slip.CppContributions));
+            Add(amounts, "qppe_cntrb_amt", Money(slip.Cpp2Contributions));
+        }
+        else
+        {
+            Add(amounts, "cpp_cntrb_amt", Money(slip.CppContributions));
+            Add(amounts, "cppe_cntrb_amt", Money(slip.Cpp2Contributions));
+        }
+
         Add(amounts, "empe_eip_amt", Money(slip.EiPremiums));
         Add(amounts, "itx_ddct_amt", Money(slip.IncomeTaxDeducted));
         amounts.Add(new XElement("ei_insu_ern_amt", Money(slip.InsurableEarnings) ?? "0.00"));
         amounts.Add(new XElement("cpp_qpp_ern_amt", Money(slip.PensionableEarnings) ?? "0.00"));
+
+        // Boxes 55 and 56, Quebec only. Optional, so omitted rather than zeroed elsewhere.
+        Add(amounts, "prov_pip_amt", Money(slip.QpipPremiums));
+        Add(amounts, "prov_insu_ern_amt", Money(slip.QpipInsurableEarnings));
 
         var element = new XElement("T4Slip", name);
 
@@ -87,6 +104,13 @@ public static class T4XmlWriter
         element.Add(new XElement("bn", Upper(t4.PayrollAccountNumber, 15) ?? string.Empty));
         element.Add(new XElement("cpp_qpp_xmpt_cd", slip.CppExemptAllYear ? "1" : "0"));
         element.Add(new XElement("ei_xmpt_cd", slip.EiExemptAllYear ? "1" : "0"));
+
+        // Box 28's QPIP exemption. Only meaningful in Quebec, and optional, so it is written
+        // only where it says something.
+        if (slip.IsQuebec)
+        {
+            element.Add(new XElement("prov_pip_xmpt_cd", slip.QpipPremiums > 0 ? "0" : "1"));
+        }
         element.Add(new XElement("rpt_tcd", ReportCode(t4.ReportType)));
         element.Add(new XElement("empt_prov_cd", Upper(slip.ProvinceOfEmployment, 2) ?? string.Empty));
         element.Add(new XElement("empr_dntl_ben_rpt_cd", ((int)slip.DentalBenefit).ToString(CultureInfo.InvariantCulture)));

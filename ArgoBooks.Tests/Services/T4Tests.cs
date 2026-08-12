@@ -334,6 +334,73 @@ public class T4Tests
         Assert.Equal("A", Summary(t4).Element("rpt_tcd")!.Value);
     }
 
+    [Fact]
+    public void AQuebecEmployeeFilesQppBoxesAndNeverCppOnes()
+    {
+        // CRA: "Under no circumstances should amounts for both CPP and QPP appear on the same
+        // slip." So the CPP elements are absent entirely, not zeroed.
+        CompanyData data = Data(Person());
+        data.Employees[0].Province = "QC";
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+        data.PayRuns[0].Lines[0].QpipEmployee = 8.60m;
+        data.PayRuns[0].Lines[0].QpipEmployer = 12.04m;
+
+        XElement amounts = Slip(BuiltReturn(data)).Element("T4_AMT")!;
+
+        Assert.NotNull(amounts.Element("qpp_cntrb_amt"));
+        Assert.Null(amounts.Element("cpp_cntrb_amt"));
+        Assert.Null(amounts.Element("cppe_cntrb_amt"));
+    }
+
+    [Fact]
+    public void AQuebecEmployeeFilesQpipInBoxes55And56()
+    {
+        CompanyData data = Data(Person());
+        data.Employees[0].Province = "QC";
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+        data.PayRuns[0].Lines[0].QpipEmployee = 8.60m;
+
+        XElement amounts = Slip(BuiltReturn(data)).Element("T4_AMT")!;
+
+        Assert.Equal("8.60", amounts.Element("prov_pip_amt")!.Value);
+        Assert.Equal("2000.00", amounts.Element("prov_insu_ern_amt")!.Value);
+    }
+
+    [Fact]
+    public void ANonQuebecEmployeeCarriesNoQpipElementsAtAll()
+    {
+        // They are optional, and an optional element with no value rejects the submission.
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        XElement slip = Slip(BuiltReturn(data));
+
+        Assert.Null(slip.Element("T4_AMT")!.Element("prov_pip_amt"));
+        Assert.Null(slip.Element("T4_AMT")!.Element("prov_insu_ern_amt"));
+        Assert.Null(slip.Element("prov_pip_xmpt_cd"));
+    }
+
+    [Fact]
+    public void TheSummaryCppTotalsExcludeQuebecsQpp()
+    {
+        // CRA states QPP must not be included in the CPP totals, and there is no QPP total on
+        // the T4 Summary at all: it goes to Revenu Quebec on the RL-1 Summary instead. So a
+        // mixed employer totals less here than the sum of their slips, correctly.
+        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones", "046454286"));
+        data.Employees[1].Province = "QC";
+
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m, cpp: 100m));
+
+        PayRun quebec = Run("PR-0002", new DateTime(2026, 7, 3), "EMP-002", 2000m, cpp: 120m);
+        quebec.Lines[0].EmployeeId = "EMP-002";
+        data.PayRuns.Add(quebec);
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Equal(2, t4.Slips.Count);
+        Assert.Equal(100m, t4.TotalEmployeeCpp);
+    }
+
     #endregion
 
     #region Refusing to file something wrong
