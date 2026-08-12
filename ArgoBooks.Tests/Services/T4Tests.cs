@@ -171,6 +171,23 @@ public class T4Tests
         Assert.True(slip.EiExemptAllYear);
     }
 
+    [Fact]
+    public void Boxes24And26_AreCappedAtTheYearsCeilings_ForAHighEarner()
+    {
+        // Boxes 24 and 26 report the portion of pay that was actually insurable and pensionable,
+        // not gross. Someone on $200,000 stopped contributing part way through the year, and a
+        // slip reporting the whole salary there looks entirely reasonable while leaving CRA to
+        // find the premiums short against the earnings.
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 200_000m));
+
+        T4Slip slip = BuiltReturn(data).Slips.Single();
+
+        Assert.Equal(200_000m, slip.EmploymentIncome);
+        Assert.True(slip.InsurableEarnings < 200_000m, "box 24 was not capped");
+        Assert.True(slip.PensionableEarnings < 200_000m, "box 26 was not capped");
+    }
+
     [Theory]
     [InlineData("Dana Smith", "Smith", "Dana", "")]
     [InlineData("Dana Marie Smith", "Smith", "Dana", "M")]

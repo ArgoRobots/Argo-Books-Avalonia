@@ -13,6 +13,10 @@ namespace ArgoBooks.Core.Services.Payroll;
 /// </summary>
 public class T4Service
 {
+    private readonly PayrollRateService _rates;
+
+    public T4Service(PayrollRateService? rates = null) => _rates = rates ?? new PayrollRateService();
+
     /// <summary>
     /// Assembles the return for a tax year. Draft runs are excluded, but a draft is also a
     /// reason to refuse to file at all, so callers should check <see cref="Validate"/> first
@@ -41,6 +45,8 @@ public class T4Service
             ContactPhone = company.PayrollContactPhone ?? company.Phone ?? string.Empty,
         };
 
+        EarningsCeilings ceilings = EarningsCeilings.For(_rates, taxYear);
+
         // Everything except drafts, so a voided run and its reversal both count and cancel to
         // zero. Matches how the year-to-date figures are built.
         var lines = data.PayRuns
@@ -56,7 +62,7 @@ public class T4Service
                 continue;
             }
 
-            T4Slip slip = BuildSlip(employee, group.ToList());
+            T4Slip slip = BuildSlip(employee, group.ToList(), ceilings);
 
             // A slip whose every figure nets to zero is one whose runs were all voided. There
             // is nothing to report and CRA has no element that means "nil year".
@@ -70,7 +76,7 @@ public class T4Service
         return t4;
     }
 
-    private static T4Slip BuildSlip(Employee employee, List<PayRunLine> lines)
+    private static T4Slip BuildSlip(Employee employee, List<PayRunLine> lines, EarningsCeilings ceilings)
     {
         (string surname, string given, string initial) = SplitName(employee.Name);
 
@@ -95,12 +101,17 @@ public class T4Service
 
             // Exempt employment reports nil earnings rather than omitting the box, so these
             // deliberately go to zero rather than to gross.
-            InsurableEarnings = employee.IsEiExempt ? 0m : gross,
-            PensionableEarnings = employee.IsCppExempt ? 0m : gross,
+            //
+            // Capped at the year's ceiling. Someone earning above it stopped contributing part
+            // way through the year, and reporting their whole salary here would have CRA expect
+            // contributions on money that was never pensionable or insurable. The figure looks
+            // right either way, which is exactly why it needs pinning.
+            InsurableEarnings = employee.IsEiExempt ? 0m : ceilings.CapEi(gross),
+            PensionableEarnings = employee.IsCppExempt ? 0m : ceilings.CapPensionable(gross),
 
             QpipPremiums = lines.Sum(l => l.QpipEmployee),
             QpipInsurableEarnings = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase)
-                ? gross
+                ? ceilings.CapQpip(gross)
                 : 0m,
             EmployerQpip = lines.Sum(l => l.QpipEmployer),
 
