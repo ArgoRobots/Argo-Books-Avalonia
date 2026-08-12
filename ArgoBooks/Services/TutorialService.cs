@@ -425,14 +425,6 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Gets the count of completed checklist items.
-    /// </summary>
-    public int GetCompletedChecklistCount()
-    {
-        return Settings.CompletedChecklistItems.Count;
-    }
-
-    /// <summary>
     /// Gets the total count of checklist items.
     /// </summary>
     public int GetTotalChecklistCount()
@@ -529,21 +521,6 @@ public class TutorialService
         }
     }
 
-
-    /// <summary>
-    /// Resets the setup checklist progress.
-    /// </summary>
-    public void ResetSetupChecklist()
-    {
-        var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null)
-        {
-            settings.Tutorial.CompletedChecklistItems.Clear();
-            settings.Tutorial.ShowSetupChecklist = true;
-            SaveSettings();
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
 
     /// <summary>
     /// Gets the first-visit hint text for a page.

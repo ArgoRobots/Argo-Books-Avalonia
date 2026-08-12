@@ -533,8 +533,8 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
 
     public ArgoTable()
     {
-        InitializeComponent();
         ClearSearchCommand = new RelayCommand(() => SearchQuery = null);
+        InitializeComponent();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

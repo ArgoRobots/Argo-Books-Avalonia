@@ -44,7 +44,6 @@ public class ChartLoaderService
     /// Chart aggregations are all USD-normalized (so multi-currency data rolls up consistently),
     /// but charts must render in the display currency or the bars / tooltips disagree with the
     /// stat cards. Apply this at the boundary right before passing values to LiveCharts.
-    /// (Replaces the single-date variant, which was removed.)
     /// </summary>
     public static double[] ConvertUSDValuesToDisplay(double[] usdValues, DateTime[] dates)
     {

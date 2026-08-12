@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Data;
 
 namespace ArgoBooks.Services;
@@ -375,7 +376,7 @@ public partial class LanguageService
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, $"Failed to download translations for {languageName}");
+            NetworkFailure.Report(App.ErrorLogger, ex, $"Failed to download translations for {languageName}");
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, $"Error: {ex.Message}"));
             return false;
         }
@@ -615,28 +616,6 @@ public partial class LanguageService
             }
             catch { /* directory access error - return empty */ }
             return languages;
-        }
-    }
-
-    /// <summary>
-    /// Clears all cached translations.
-    /// </summary>
-    public void ClearCache()
-    {
-        _englishCache.Clear();
-        _currentLanguageCache.Clear();
-        _currentLoadedIsoCode = "";
-
-        try
-        {
-            foreach (var file in Directory.GetFiles(_cacheDirectory, "*.json"))
-            {
-                File.Delete(file);
-            }
-        }
-        catch (Exception ex)
-        {
-            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to clear translation cache files");
         }
     }
 

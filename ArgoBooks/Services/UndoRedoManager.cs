@@ -313,30 +313,6 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
     }
 
     /// <summary>
-    /// Undoes multiple actions up to and including the specified index.
-    /// </summary>
-    /// <param name="count">Number of actions to undo.</param>
-    public void UndoMultiple(int count)
-    {
-        for (int i = 0; i < count && CanUndo; i++)
-        {
-            Undo();
-        }
-    }
-
-    /// <summary>
-    /// Redoes multiple actions up to and including the specified index.
-    /// </summary>
-    /// <param name="count">Number of actions to redo.</param>
-    public void RedoMultiple(int count)
-    {
-        for (int i = 0; i < count && CanRedo; i++)
-        {
-            Redo();
-        }
-    }
-
-    /// <summary>
     /// Marks the current state as saved.
     /// </summary>
     public void MarkSaved()

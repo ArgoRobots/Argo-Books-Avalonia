@@ -427,8 +427,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         && IsOnOrBeforeEndDate(r.Date))
             .Sum(r => ToDisplay(r.EffectiveTotalUSD, r.Date));
 
+        // Invoice-linked only. A revenue-linked payment records money already
+        // counted by its Revenue row above, so including it counts the same
+        // sale twice. Mirrors the InvoiceId exclusion on cashFromRevenue.
         var cashFromPayments = companyData.Payments
-            .Where(p => IsOnOrBeforeEndDate(p.Date))
+            .Where(p => !string.IsNullOrEmpty(p.InvoiceId) && IsOnOrBeforeEndDate(p.Date))
             .Sum(p => ToDisplay(p.EffectiveAmountUSD, p.Date));
 
         var cashPaidForExpenses = companyData.Expenses
@@ -672,8 +675,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         && IsInDateRange(r.Date))
             .Sum(r => ToDisplay(r.EffectiveTotalUSD, r.Date));
 
+        // Invoice-linked only, matching the name and the cashFromSales exclusion
+        // above. Without this a revenue-linked payment is counted alongside its
+        // own Revenue row.
         var cashFromInvoicePayments = companyData.Payments
-            .Where(p => IsInDateRange(p.Date))
+            .Where(p => !string.IsNullOrEmpty(p.InvoiceId) && IsInDateRange(p.Date))
             .Sum(p => ToDisplay(p.EffectiveAmountUSD, p.Date));
 
         var cashPaidForExpenses = companyData.Expenses

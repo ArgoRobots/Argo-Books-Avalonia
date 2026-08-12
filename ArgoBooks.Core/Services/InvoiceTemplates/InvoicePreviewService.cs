@@ -50,41 +50,6 @@ public static class InvoicePreviewService
     }
 
     /// <summary>
-    /// Cleans up old preview files.
-    /// </summary>
-    public static void CleanupOldPreviews(TimeSpan maxAge)
-    {
-        try
-        {
-            if (!Directory.Exists(TempDirectory))
-                return;
-
-            var cutoff = DateTime.UtcNow - maxAge;
-            var files = Directory.GetFiles(TempDirectory, "invoice-preview-*.html");
-
-            foreach (var file in files)
-            {
-                var info = new FileInfo(file);
-                if (info.CreationTimeUtc < cutoff)
-                {
-                    try
-                    {
-                        File.Delete(file);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine(ex.Message);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine(ex.Message);
-        }
-    }
-
-    /// <summary>
     /// Opens a URL in the default browser (cross-platform).
     /// </summary>
     private static void OpenUrl(string url)

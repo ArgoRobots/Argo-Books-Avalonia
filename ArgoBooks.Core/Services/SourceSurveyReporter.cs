@@ -82,8 +82,7 @@ public sealed class SourceSurveyReporter
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network,
-                context: "SourceSurveyReporter.ReportAsync");
+            NetworkFailure.Report(_errorLogger, ex, "SourceSurveyReporter.ReportAsync");
             return false;
         }
     }

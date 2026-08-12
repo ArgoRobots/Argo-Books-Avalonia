@@ -112,7 +112,7 @@ public class OperationTimingServiceTests : IDisposable
         public int ErrorCount { get; private set; }
         public void LogError(Exception exception, ErrorCategory category, string? context = null) => ErrorCount++;
         public void LogError(string message, ErrorCategory category, string? context = null) => ErrorCount++;
-        public void LogWarning(string message, string? context = null) { }
+        public void LogWarning(string message, string? context = null, ErrorCategory category = ErrorCategory.Unknown, string? code = null) { }
         public void LogInfo(string message) { }
         public void LogDebug(string message) { }
         public IReadOnlyList<ErrorLogEntry> GetRecentErrors(int count = 50) => [];

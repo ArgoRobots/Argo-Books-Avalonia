@@ -28,5 +28,16 @@ public enum TelemetryDataType
     /// <summary>
     /// Feature usage tracking.
     /// </summary>
-    FeatureUsage
+    FeatureUsage,
+
+    /// <summary>
+    /// Who the user is: company name, business type, industry, country and currency.
+    /// The one event type that is not anonymous, disclosed as such in the privacy policy.
+    /// </summary>
+    CompanyProfile,
+
+    /// <summary>
+    /// How long a launch took, split at the first moment the app could draw anything.
+    /// </summary>
+    Startup
 }

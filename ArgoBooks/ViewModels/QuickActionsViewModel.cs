@@ -151,13 +151,12 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("New Customer", "Add a new customer", Icons.NewCustomer, QuickActionType.QuickAction, "Customers", "OpenAddModal"),
             new QuickActionItem("New Product", "Add a new product or service", Icons.NewProduct, QuickActionType.QuickAction, "Products", "OpenAddModal"),
             new QuickActionItem("New Supplier", "Add a new supplier", Icons.Suppliers, QuickActionType.QuickAction, "Suppliers", "OpenAddModal"),
-            new QuickActionItem("Record Payment", "Record a payment received", Icons.Payments, QuickActionType.QuickAction, "Payments", "OpenAddModal"),
             new QuickActionItem("New Rental Item", "Add a new rental item", Icons.NewRentalItem, QuickActionType.QuickAction, "RentalInventory", "OpenAddModal"),
             new QuickActionItem("New Rental Record", "Create a new rental transaction", Icons.RentalRecords, QuickActionType.QuickAction, "RentalRecords", "OpenAddModal"),
             new QuickActionItem("New Category", "Add a new category", Icons.Categories, QuickActionType.QuickAction, "Categories", "OpenAddModal"),
             new QuickActionItem("New Location", "Add a new location", Icons.Locations, QuickActionType.QuickAction, "Locations", "OpenAddModal"),
             new QuickActionItem("New Purchase Order", "Create a new purchase order", Icons.NewPurchaseOrder, QuickActionType.QuickAction, "PurchaseOrders", "OpenAddModal"),
-            new QuickActionItem("New Stock Adjustment", "Record a stock adjustment", Icons.NewStockAdjustment, QuickActionType.QuickAction, "Adjustments", "OpenAddModal"),
+            new QuickActionItem("New Stock Adjustment", "Record a stock adjustment", Icons.NewStockAdjustment, QuickActionType.QuickAction, "StockAdjustments", "OpenAddModal"),
         ]);
 
         // Navigation - Go to pages
@@ -172,7 +171,6 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("Expenses", "View and manage expenses", Icons.Expenses, QuickActionType.Navigation, "Expenses"),
             new QuickActionItem("Revenue", "View and manage revenue", Icons.Revenue, QuickActionType.Navigation, "Revenue"),
             new QuickActionItem("Invoices", "Manage invoices", Icons.Invoices, QuickActionType.Navigation, "Invoices"),
-            new QuickActionItem("Payments", "View payment records", Icons.Payments, QuickActionType.Navigation, "Payments"),
             new QuickActionItem("Receipts", "View and manage receipts", Icons.Receipts, QuickActionType.Navigation, "Receipts"),
             new QuickActionItem("Purchase Orders", "Manage purchase orders", Icons.PurchaseOrders, QuickActionType.Navigation, "PurchaseOrders"),
             new QuickActionItem("Returns", "Manage returns", Icons.Returns, QuickActionType.Navigation, "Returns"),
@@ -185,7 +183,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             // Inventory
             new QuickActionItem("Products", "Manage products and services", Icons.Products, QuickActionType.Navigation, "Products"),
             new QuickActionItem("Stock Levels", "Monitor inventory levels", Icons.StockLevels, QuickActionType.Navigation, "StockLevels"),
-            new QuickActionItem("Adjustments", "Manage stock adjustments", Icons.Adjustments, QuickActionType.Navigation, "Adjustments"),
+            new QuickActionItem("Adjustments", "Manage stock adjustments", Icons.Adjustments, QuickActionType.Navigation, "StockAdjustments"),
             new QuickActionItem("Categories", "Manage categories", Icons.Categories, QuickActionType.Navigation, "Categories"),
             new QuickActionItem("Locations", "Manage locations (Enterprise)", Icons.Locations, QuickActionType.Navigation, "Locations"),
 
@@ -547,12 +545,14 @@ public partial class QuickActionsViewModel : ViewModelBase
                 results.Add((new QuickActionItem(s.Name, string.IsNullOrWhiteSpace(s.ContactPerson) ? s.Email : s.ContactPerson, Icons.Suppliers, QuickActionType.SearchResult, "Suppliers", entityId: s.Id), score));
         }
 
-        // Payments
+        // Payments. They have no page of their own, so a hit opens the invoice it belongs to.
         foreach (var p in companyData.Payments)
         {
+            if (string.IsNullOrEmpty(p.InvoiceId))
+                continue;
             var score = BestScore(query, p.Id, p.ReferenceNumber ?? "", p.InvoiceId);
             if (score > 0)
-                results.Add((new QuickActionItem(p.Id, $"{CurrencyService.Format(p.Amount)} · {p.PaymentMethod}", Icons.Payments, QuickActionType.SearchResult, "Payments", entityId: p.Id), score));
+                results.Add((new QuickActionItem(p.Id, $"{CurrencyService.Format(p.Amount)} · {p.PaymentMethod}", Icons.Payments, QuickActionType.SearchResult, "Invoices", entityId: p.InvoiceId), score));
         }
 
         // Rental Records

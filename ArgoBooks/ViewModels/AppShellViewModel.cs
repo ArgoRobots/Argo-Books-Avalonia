@@ -1162,10 +1162,9 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Sets all plan statuses at once.
     /// </summary>
-    public void SetPlanStatus(bool hasPremium, bool hasEnterprise = false)
+    public void SetPlanStatus(bool hasPremium)
     {
         SidebarViewModel.HasPremium = hasPremium;
-        SidebarViewModel.HasEnterprise = hasEnterprise;
         SettingsModalViewModel.HasPremium = hasPremium;
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;

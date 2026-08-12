@@ -40,6 +40,13 @@ public class CompanySettings
     [JsonPropertyName("invoiceTotalsHealedVersion")]
     public string? InvoiceTotalsHealedVersion { get; set; }
 
+    /// <summary>
+    /// Marks that revenue-linked payments have been folded into their Revenue rows.
+    /// See <c>CompanyManager.MigrateRevenueLinkedPayments</c>.
+    /// </summary>
+    [JsonPropertyName("revenuePaymentsMigratedVersion")]
+    public string? RevenuePaymentsMigratedVersion { get; set; }
+
     [JsonPropertyName("company")]
     public CompanyInfo Company { get; set; } = new();
     [JsonPropertyName("localization")]

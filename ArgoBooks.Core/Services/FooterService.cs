@@ -101,20 +101,6 @@ public class FooterService
     }
 
     /// <summary>
-    /// Gets the content length of a file (excluding footer).
-    /// </summary>
-    /// <param name="filePath">Path to the .argo file.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Content length in bytes, or -1 if invalid.</returns>
-    public async Task<long> GetContentLengthAsync(string filePath, CancellationToken cancellationToken = default)
-    {
-        await using var fileStream = new FileStream(
-            filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-
-        return await GetContentLengthFromStreamAsync(fileStream, cancellationToken);
-    }
-
-    /// <summary>
     /// Gets the content length from a stream (excluding footer).
     /// </summary>
     /// <param name="stream">Stream to read from.</param>

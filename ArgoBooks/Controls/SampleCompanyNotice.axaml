@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="44"
+             x:Class="ArgoBooks.Controls.SampleCompanyNotice"
+             x:DataType="controls:SampleCompanyNotice">
+
+    <Border Background="{DynamicResource WarningLightBrush}"
+            CornerRadius="8"
+            Padding="12">
+        <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
+                   FontSize="13"
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource WarningTextBrush}"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Stretch" />
+    </Border>
+</UserControl>

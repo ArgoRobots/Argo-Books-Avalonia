@@ -249,18 +249,6 @@ public static class Countries
         PriorityCodes.Contains(code, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Finds a country by name.
-    /// </summary>
-    public static CountryInfo? FindByName(string name) =>
-        All.FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>
-    /// Finds a country by ISO code.
-    /// </summary>
-    public static CountryInfo? FindByCode(string code) =>
-        All.FirstOrDefault(c => c.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>
     /// Mapping of common country aliases, abbreviations, and alternative names to their canonical names.
     /// </summary>
     private static readonly Dictionary<string, string> CountryAliases = new(StringComparer.OrdinalIgnoreCase)

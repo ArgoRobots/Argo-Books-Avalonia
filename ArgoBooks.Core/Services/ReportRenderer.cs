@@ -468,30 +468,6 @@ public class ReportRenderer : IDisposable
         }
     }
 
-    /// <summary>
-    /// Creates a preview bitmap at the specified scale.
-    /// </summary>
-    public SKBitmap CreatePreview(int maxWidth, int maxHeight)
-    {
-        var (width, height) = PageDimensions.GetDimensions(_config.PageSize, _config.PageOrientation);
-
-        // Calculate scale to fit within bounds
-        var scaleX = (float)maxWidth / width;
-        var scaleY = (float)maxHeight / height;
-        var scale = Math.Min(scaleX, scaleY);
-
-        var previewWidth = (int)(width * scale);
-        var previewHeight = (int)(height * scale);
-
-        var bitmap = new SKBitmap(previewWidth, previewHeight);
-        using var canvas = new SKCanvas(bitmap);
-
-        canvas.Scale(scale, scale);
-        RenderToCanvas(canvas, width, height);
-
-        return bitmap;
-    }
-
     #region Page Continuation Planning
 
     private PageContinuationPlan? _continuationPlan;

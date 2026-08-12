@@ -273,10 +273,9 @@
                                             HorizontalAlignment="Center"
                                             BoxShadow="0 4 16 0 #40000000">
                                         <StackPanel Spacing="16">
-                                            <TextBlock Text="{loc:Loc 'Delete Template?'}"
-                                                       FontSize="16"
+                                            <TextBlock FontSize="16"
                                                        FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"><Run Text="{loc:Loc 'Delete template'}" /><Run Text="?" /></TextBlock>
                                             <TextBlock Text="{loc:Loc 'This template will be permanently deleted. This action cannot be undone.'}"
                                                        FontSize="13"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -330,7 +329,7 @@
                                     <StackPanel Grid.Row="0" Margin="20,20,20,0" Spacing="16">
                                         <!-- Template Name -->
                                         <StackPanel Spacing="6">
-                                            <TextBlock Text="{loc:Loc 'Template Name'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Template name'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding TemplateName, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      BorderBrush="{Binding HasValidationMessage, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"

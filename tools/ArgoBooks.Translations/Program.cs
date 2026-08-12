@@ -8,9 +8,11 @@ using ArgoBooks.Localization;
 // Usage: dotnet run -- [options]
 //
 // Options:
-//   --collect           Collect all translatable strings (no API call)
 //   --translate         Translate to all languages (requires Azure API key)
 //   --languages fr,de   Translate to specific languages only
+//                       Pass --languages en to rebuild en.json and stop: English is
+//                       skipped by the translation loop, so nothing else is touched
+//                       and no API key is needed
 //   --output <path>     Output directory for JSON files
 //   --source <path>     Source directory to scan (default: ../ArgoBooks)
 //   --retry-same        Clear translations matching the English source (excluding allowlist)
@@ -20,12 +22,11 @@ using ArgoBooks.Localization;
 Console.WriteLine("=== Argo Books Translation Generator ===\n");
 
 // Parse command line arguments (args is provided by top-level statements)
-var collectOnly = args.Contains("--collect");
 var retrySame = args.Contains("--retry-same");
 var skipConfirmation = args.Contains("--yes") || args.Contains("-y");
 var specificLanguages = new List<string>();
 var outputDir = "./languages";
-var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "ArgoBooks"));
+var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "..", "ArgoBooks"));
 var allowlistPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "translation-allowlist.json"));
 
 for (int i = 0; i < args.Length; i++)
@@ -166,13 +167,6 @@ foreach (var kvp in strings.Take(10))
 if (strings.Count > 10)
 {
     Console.WriteLine($"  ... and {strings.Count - 10} more\n");
-}
-
-if (collectOnly)
-{
-    Console.WriteLine("\nDone! Use --translate to translate to all languages.");
-    Console.WriteLine("Or use --languages fr,de,es to translate to specific languages.");
-    return 0;
 }
 
 // Step 2: Translate
@@ -332,7 +326,7 @@ if (totalNewStrings > 0 && string.IsNullOrEmpty(azureKey))
     Console.WriteLine("  PowerShell:  $env:AZURE_TRANSLATOR_KEY = \"your-api-key\"");
     Console.WriteLine("  Cmd:         set AZURE_TRANSLATOR_KEY=your-api-key");
     Console.WriteLine("  Bash:        export AZURE_TRANSLATOR_KEY=your-api-key\n");
-    Console.WriteLine("Or use --collect to just collect strings without translating.");
+    Console.WriteLine("Or use --languages en to rebuild en.json without translating.");
     return 1;
 }
 

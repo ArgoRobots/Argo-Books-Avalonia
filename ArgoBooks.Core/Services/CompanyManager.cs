@@ -1,10 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
@@ -660,6 +662,10 @@ public class CompanyManager : IDisposable
                 _currentTempDirectory, cancellationToken, loadReceipts: false);
             StartReceiptsBackgroundLoad(_currentTempDirectory, CompanyData);
 
+            // Runs before the heal: it removes Payment rows, and the heal
+            // recalculates invoice totals from whatever is left.
+            MigrateRevenueLinkedPayments(CompanyData);
+
             // One-time recalc: heal any historic drift between Invoice
             // totals and the Payment rows that drive them.
             HealInvoiceTotalsIfNeeded(CompanyData);
@@ -773,6 +779,61 @@ public class CompanyManager : IDisposable
         data.Settings.InvoiceTotalsHealedVersion = InvoiceTotalsHealVersion;
         if (healed)
             data.ChangesMade = true;
+    }
+
+    public const string RevenuePaymentsMigrationVersion = "1";
+
+    /// <summary>
+    /// Folds payments that were attached to a Revenue into the Revenue itself, then
+    /// removes them. Payments became invoice-only in v2.0.12, so these rows have
+    /// nowhere to live. Any file last written by v2.0.11 or earlier can contain them.
+    /// </summary>
+    /// <remarks>
+    /// The Revenue is marked collected before its payments go, otherwise money the user
+    /// genuinely received would vanish from cash: a Revenue left Pending is excluded from
+    /// the cash figures, and the payments were the only record it had arrived. For a sale
+    /// only part-collected this counts the whole amount early, which is the accepted
+    /// trade: Revenue has a status but no amount-paid field, so partial collection cannot
+    /// be represented once the payments are gone.
+    ///
+    /// Deleting these also removes a double-count. A collected Revenue and its payments
+    /// were both being summed into Balance Sheet cash and Cash Flow.
+    ///
+    /// Same version-marker approach as <see cref="HealInvoiceTotalsIfNeeded"/>: the marker
+    /// lives in appSettings.json while the rows live elsewhere, so ChangesMade is flagged
+    /// to force a full save rather than a settings-only one.
+    /// </remarks>
+    public static void MigrateRevenueLinkedPayments(CompanyData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+
+        if (data.Settings.RevenuePaymentsMigratedVersion == RevenuePaymentsMigrationVersion)
+            return;
+
+        List<Payment> revenueLinked = data.Payments
+            .Where(p => !string.IsNullOrEmpty(p.RevenueId) && string.IsNullOrEmpty(p.InvoiceId))
+            .ToList();
+
+        if (revenueLinked.Count > 0)
+        {
+            foreach (string revenueId in revenueLinked.Select(p => p.RevenueId).Distinct())
+            {
+                Revenue? revenue = data.Revenues.FirstOrDefault(r => r.Id == revenueId);
+                if (revenue != null && !RevenueAggregator.IsCollected(revenue))
+                {
+                    revenue.PaymentStatus = RevenuePaymentStatus.Paid;
+                }
+            }
+
+            foreach (Payment payment in revenueLinked)
+            {
+                data.Payments.Remove(payment);
+            }
+
+            data.ChangesMade = true;
+        }
+
+        data.Settings.RevenuePaymentsMigratedVersion = RevenuePaymentsMigrationVersion;
     }
 
     /// <summary>

@@ -263,19 +263,20 @@ public partial class InvoiceHtmlRenderer
             .Sum(p => p.ProcessingFee) ?? 0m;
 
         var portalConfigured = IsPortalConfigured(companySettings);
-        // Passing the fee to the customer is a per-invoice override, else the template's setting.
-        // Passing the fee to the customer is a per-invoice setting (default on); no longer a template setting.
+        // Passing the fee to the customer is a per-invoice setting, defaulting to on.
         var passProcessingFee = invoice.PassProcessingFee ?? true;
         var feesActive = portalConfigured && passProcessingFee;
         var hasUnpaidBalance = invoice.Balance > 0;
         var estimatedProcessingFee = hasUnpaidBalance && feesActive
             ? CalculateProcessingFee(invoice.Balance)
             : 0m;
-        var displayProcessingFee = actualProcessingFee > 0 ? actualProcessingFee : estimatedProcessingFee;
-        // In the editor, keep the fee / amount-to-pay rows present whenever the fee applies so the
-        // live recompute can fill them in as the user types (even from a $0 starting point).
+        // Fees already charged AND the estimate on what is still owed. The totals
+        // column has to reconcile a gross Amount Paid against a forward-looking
+        // Amount to Pay, so showing only one of the two would never add up.
+        var displayProcessingFee = actualProcessingFee + estimatedProcessingFee;
+        // In the editor, keep the fee row present whenever the fee applies so the
+        // live recompute can fill it in as the user types (even from a $0 start).
         var showProcessingFeeRow = displayProcessingFee > 0 || (editable && feesActive);
-        var showAmountToPay = (hasUnpaidBalance || editable) && portalConfigured;
 
         var context = new Dictionary<string, object?>
         {
@@ -369,32 +370,25 @@ public partial class InvoiceHtmlRenderer
             ["FeeModeRaw"] = invoice.CustomFeeIsPercent ? "percent" : "fixed",
             ["DiscountRaw"] = invoice.DiscountAmount.ToString("0.##"),
             ["DiscountModeRaw"] = invoice.DiscountIsPercent ? "percent" : "fixed",
-            // Total includes any actual processing fee the customer paid
-            // on top of the invoice, so the row reconciles cleanly with
-            // Amount Paid (Total − Amount Paid = Balance Due). The bare
-            // invoice subtotal/tax/etc. roll-up is already shown by the
-            // Subtotal/Tax rows above; this Total row is the gross.
-            // The final amount due always shows the currency code (e.g. "$841.85 CAD") so there's no
-            // ambiguity about which dollar it is.
-            ["Total"] = $"{currencySymbol}{Money(invoice.Total + actualProcessingFee)}{CurrencyCodeSuffix(invoice)}",
+            ["Total"] = $"{currencySymbol}{Money(invoice.Total)}{CurrencyCodeSuffix(invoice)}",
+            // Already gross: portal payments are stored at the amount the customer
+            // was actually charged, fee included (see PaymentPortalService). Adding
+            // the fee again here double-counts it.
             ["AmountPaid"] = invoice.AmountPaid > 0 ? $"{currencySymbol}{Money(invoice.AmountPaid)}" : null,
             ["Balance"] = $"{currencySymbol}{Money(invoice.Balance)}{CurrencyCodeSuffix(invoice)}",
 
-            // Processing fee, see invoiceCurrency / actualProcessingFee
-            // block above for the row-visibility rules. ShowProcessingFee
-            // controls the fee row itself; ShowAmountToPay controls the
-            // separate "Amount to Pay" vs "Total" label switch so a paid
-            // invoice with an actual fee shows fee + Total (not fee +
-            // Amount to Pay).
+            // Every fee touching this invoice: already charged, plus the estimate
+            // on what is still owed. Both belong in the column, the first to offset
+            // the gross Amount Paid above and the second to reach Amount to Pay.
             ["ShowProcessingFee"] = showProcessingFeeRow,
             ["ProcessingFeeLabel"] = BuildProcessingFeeLabel(companySettings),
             ["ProcessingFeeAmount"] = showProcessingFeeRow
                 ? $"{currencySymbol}{Money(displayProcessingFee)}"
                 : "",
-            ["ShowAmountToPay"] = showAmountToPay,
-            ["AmountToPay"] = showAmountToPay
-                ? $"{currencySymbol}{Money(invoice.Balance + estimatedProcessingFee)}{CurrencyCodeSuffix(invoice)}"
-                : "",
+            // The only headline figure on the invoice, so it always renders, including
+            // the 0.00 on a settled invoice.
+            ["ShowAmountToPay"] = true,
+            ["AmountToPay"] = $"{currencySymbol}{Money(invoice.Balance + estimatedProcessingFee)}{CurrencyCodeSuffix(invoice)}",
 
             // Notes
             ["Notes"] = invoice.Notes,

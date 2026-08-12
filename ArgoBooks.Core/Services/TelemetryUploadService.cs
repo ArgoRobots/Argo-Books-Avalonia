@@ -118,7 +118,10 @@ public class TelemetryUploadService : ITelemetryUploadService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network, "Failed to upload telemetry data");
+            // Silent background work: a user whose connection dropped must not read as a
+            // defect, and probing to find out would cost five seconds on a retry nobody
+            // is waiting for. The events stay pending and go up on the next flush.
+            NetworkFailure.Report(_errorLogger, ex, "Failed to upload telemetry data");
             result.Success = false;
             result.ErrorMessage = ex.Message;
             // Save backup on failure
@@ -214,7 +217,10 @@ public class TelemetryUploadService : ITelemetryUploadService
     /// Same shape for both free and premium tiers. Fields not present here cannot
     /// leak to the wire by construction.
     /// Forbidden fields: userAgent, geoLocation.city, geoLocation.hashedIp,
-    /// FeatureUsageEvent.context, ErrorEvent.message, ApiUsageEvent.model, ApiUsageEvent.tokensUsed.
+    /// FeatureUsageEvent.context, ApiUsageEvent.model, ApiUsageEvent.tokensUsed.
+    /// ErrorEvent.message is sent scrubbed rather than withheld, since a warning's code
+    /// alone rarely says what happened; see the note at the field itself for what that
+    /// scrubbing does and does not cover.
     /// </summary>
     private object BuildPayload(List<TelemetryEvent> batch)
     {
@@ -267,8 +273,19 @@ public class TelemetryUploadService : ITelemetryUploadService
             dataId = err.DataId,
             timestamp = err.Timestamp,
             dataType = "Error",
+            // The server keys errors vs warnings off this. Older builds omit it, and the
+            // dashboard reads a missing severity as "Error".
+            severity = err.Severity.ToString(),
             errorCategory = err.ErrorCategory.ToString(),
             errorCode = err.ErrorCode,
+            // Scrubbed and length-capped by ErrorLogger.SanitizeMessage, which strips
+            // emails, phone numbers, and the user segment of a home directory path.
+            // It does not strip file names: a message naming D:\Books\Acme.argo, or
+            // C:\Users\<user>\Books\Acme.argo, arrives with Acme.argo intact, and
+            // customers name company files after the business. Every uploaded Error
+            // carries a message, not just the warnings this was added for.
+            // Warnings need it: their code alone rarely says what actually happened.
+            message = err.Message,
             sourceFile = err.SourceFile,
             lineNumber = err.LineNumber,
             methodName = err.MethodName,

@@ -26,9 +26,19 @@ public interface IErrorLogger
     /// <summary>
     /// Logs a warning message.
     /// </summary>
+    /// <remarks>
+    /// Warnings are local-only by default. A warning is uploaded to telemetry only when
+    /// it is given a <paramref name="code"/>, which is what makes it identifiable on the
+    /// dashboard (it groups by code the same way errors do). Without one, every warning
+    /// would arrive as an uncategorised row with nothing to group or act on, so an
+    /// un-coded warning stays in the in-app log where it is still useful for support.
+    /// Add a code to a warning when you actually want to watch it in production.
+    /// </remarks>
     /// <param name="message">Warning message.</param>
     /// <param name="context">Optional context.</param>
-    void LogWarning(string message, string? context = null);
+    /// <param name="category">Category, used only when <paramref name="code"/> is set.</param>
+    /// <param name="code">Stable identifier. Supplying it opts this warning into telemetry.</param>
+    void LogWarning(string message, string? context = null, ErrorCategory category = ErrorCategory.Unknown, string? code = null);
 
     /// <summary>
     /// Logs an informational message.

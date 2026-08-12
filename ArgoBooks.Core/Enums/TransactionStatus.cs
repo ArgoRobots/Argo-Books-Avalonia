@@ -30,22 +30,6 @@ public static class TransactionStatusExtensions
     }
 
     /// <summary>
-    /// Parses a display name string to a TransactionStatus enum value.
-    /// </summary>
-    public static TransactionStatus? ParseTransactionStatus(string? name)
-    {
-        return name switch
-        {
-            "Completed" => TransactionStatus.Completed,
-            "Pending" => TransactionStatus.Pending,
-            "Partial Return" => TransactionStatus.PartialReturn,
-            "Returned" => TransactionStatus.Returned,
-            "Cancelled" => TransactionStatus.Cancelled,
-            _ => null
-        };
-    }
-
-    /// <summary>
     /// Gets filter options including "All" as the first entry.
     /// </summary>
     public static string[] GetFilterOptions()

@@ -209,58 +209,6 @@ public class InvoiceEmailService : IDisposable
     }
 
     /// <summary>
-    /// Tests the email API connection.
-    /// </summary>
-    public async Task<InvoiceEmailResponse> TestConnectionAsync(
-        CancellationToken cancellationToken = default)
-    {
-        if (!LicenseAuthHelper.IsConfigured)
-        {
-            return new InvoiceEmailResponse
-            {
-                Success = false,
-                Message = "Premium subscription required. Please activate your license key.",
-                ErrorCode = "NOT_CONFIGURED"
-            };
-        }
-
-        try
-        {
-            // Try to reach the API endpoint with a simple HEAD or GET request
-            using var request = new HttpRequestMessage(HttpMethod.Get, InvoiceEmailSettings.ApiEndpoint);
-            LicenseAuthHelper.AddAuthHeaders(request);
-
-            using var response = await _httpClient.SendAsync(request, cancellationToken);
-
-            // Any response means the endpoint is reachable
-            return new InvoiceEmailResponse
-            {
-                Success = true,
-                Message = $"Connection successful. API responded with status {(int)response.StatusCode}.",
-                Timestamp = DateTime.UtcNow
-            };
-        }
-        catch (TaskCanceledException)
-        {
-            return new InvoiceEmailResponse
-            {
-                Success = false,
-                Message = "Connection timed out.",
-                ErrorCode = "TIMEOUT"
-            };
-        }
-        catch (HttpRequestException ex)
-        {
-            return new InvoiceEmailResponse
-            {
-                Success = false,
-                Message = $"Connection failed: {ex.Message}",
-                ErrorCode = "CONNECTION_ERROR"
-            };
-        }
-    }
-
-    /// <summary>
     /// Renders invoice HTML for preview purposes.
     /// </summary>
     public string RenderInvoiceHtml(

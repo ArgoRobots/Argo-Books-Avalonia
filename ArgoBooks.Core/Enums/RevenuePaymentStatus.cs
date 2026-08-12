@@ -2,7 +2,7 @@ namespace ArgoBooks.Core.Enums;
 
 /// <summary>
 /// Collection state of a Revenue row, used by cash-basis dashboard /
-/// analytics aggregations. Replaces the historical free-form string field.
+/// analytics aggregations.
 ///
 /// <see cref="Paid"/> and <see cref="Complete"/> both mean "fully
 /// collected"; <see cref="Complete"/> is a legacy alias preserved so

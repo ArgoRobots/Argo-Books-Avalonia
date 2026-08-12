@@ -77,7 +77,7 @@
                                                    FontSize="13"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource DangerBrush}" />
-                                        <TextBlock Text="{loc:Loc 'in stock'}"
+                                        <TextBlock Text="{loc:Loc 'In stock'}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                     </StackPanel>

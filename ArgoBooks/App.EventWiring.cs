@@ -73,6 +73,17 @@ public partial class App
             var companySettings = CompanyManager.CompanyData?.Settings;
             if (companySettings != null)
             {
+                // Hooked here rather than at the create-company screen so it also covers
+                // companies made before this shipped, and companies opened on a second
+                // machine. TrackCompanyProfileAsync ignores repeats within a session.
+                _ = TelemetryManager?.TrackCompanyProfileAsync(
+                    companySettings.Company.Name,
+                    companySettings.Company.BusinessType,
+                    companySettings.Company.Industry,
+                    companySettings.Company.Country,
+                    companySettings.Localization.Currency,
+                    CompanyManager.IsSampleCompany);
+
                 var language = companySettings.Localization.Language;
                 if (!string.IsNullOrEmpty(language))
                 {

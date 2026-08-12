@@ -33,41 +33,6 @@ public static class ReportTemplateFactory
     }
 
     /// <summary>
-    /// Gets all available accounting template names.
-    /// </summary>
-    public static string[] GetAccountingTemplateNames() =>
-    [
-        TemplateNames.IncomeStatement,
-        TemplateNames.BalanceSheet,
-        TemplateNames.CashFlowStatement,
-        TemplateNames.GeneralLedger,
-        TemplateNames.ARaging,
-        TemplateNames.TaxSummary,
-        TemplateNames.ProductSales,
-        TemplateNames.PayrollRemittance
-    ];
-
-    /// <summary>
-    /// Gets all available built-in template names.
-    /// </summary>
-    public static string[] GetBuiltInTemplateNames()
-    {
-        return
-        [
-            TemplateNames.Custom,
-            TemplateNames.MonthlyRevenue,
-            TemplateNames.FinancialOverview,
-            TemplateNames.PerformanceAnalysis,
-            TemplateNames.ReturnsAnalysis,
-            TemplateNames.LossesAnalysis,
-            TemplateNames.GeographicAnalysis,
-            TemplateNames.CustomerAnalysis,
-            TemplateNames.ExpenseBreakdown,
-            .. GetAccountingTemplateNames()
-        ];
-    }
-
-    /// <summary>
     /// Checks if the given template name is a built-in template.
     /// </summary>
     public static bool IsBuiltInTemplate(string templateName)

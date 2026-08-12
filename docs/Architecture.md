@@ -34,14 +34,14 @@ The application follows the [Model-View-ViewModel (MVVM)](https://docs.avaloniau
 | **ArgoBooks.Desktop** | Desktop entry point (Windows/macOS/Linux) |
 | **ArgoBooks.Mobile** | Android companion app: receipt capture, scan review, read-only snapshot viewing |
 | **ArgoBooks.Tests** | Unit tests (xUnit) |
-| **ArgoBooks.TranslationTool** | Offline tool that generates language files via Azure Translator |
+| **ArgoBooks.Translations** | Offline tool that generates language files via Azure Translator |
 
 `ArgoBooks.Shared` is referenced by `ArgoBooks.Core`, so its types live in the `ArgoBooks.Core.*`
 namespaces despite sitting in a separate project. Anything the phone and the desktop both need,
 in particular the encryption used on company files, belongs there rather than in Core.
 
 The recovery tool at `tools/ArgoBooks.Recovery` is deliberately **outside** the solution so it
-can never be built into or shipped with the app. See [Password recovery](Password%20recovery.md).
+can never be built into or shipped with the app. See [Password recovery](../tools/ArgoBooks.Recovery/README.md).
 
 ## Design Principles
 

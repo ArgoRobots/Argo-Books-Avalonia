@@ -252,18 +252,6 @@ public class ExchangeRateService
     }
 
     /// <summary>
-    /// Converts an amount from USD to another currency.
-    /// </summary>
-    /// <param name="amountUSD">The amount in USD.</param>
-    /// <param name="toCurrency">Target currency code.</param>
-    /// <param name="date">The date for the exchange rate.</param>
-    /// <returns>The amount in the target currency.</returns>
-    public async Task<decimal> ConvertFromUSDAsync(decimal amountUSD, string toCurrency, DateTime date)
-    {
-        return await ConvertAsync(amountUSD, BaseCurrency, toCurrency, date);
-    }
-
-    /// <summary>
     /// Preloads exchange rates for a range of dates.
     /// Useful for batch operations to minimize API calls.
     /// </summary>
@@ -503,11 +491,6 @@ public class ExchangeRateService
 
         return null;
     }
-
-    /// <summary>
-    /// Saves the cache to disk.
-    /// </summary>
-    public Task SaveCacheAsync() => _cache.SaveAsync();
 
     /// <summary>
     /// Response from the exchange rates proxy endpoint.

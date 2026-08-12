@@ -66,7 +66,7 @@
                     </TabControl.ItemsPanel>
                     <!-- General Tab -->
                     <TabItem Header="{loc:Loc General}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
@@ -159,15 +159,15 @@
                                             Padding="16">
                                         <StackPanel Spacing="12">
                                             <StackPanel Spacing="2">
-                                                <TextBlock Text="{loc:Loc 'Anonymous Usage Data'}"
+                                                <TextBlock Text="{loc:Loc 'Usage Data'}"
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{loc:Loc 'Argo Books collects anonymous usage data to help improve the app.'}"
+                                                <TextBlock Text="{loc:Loc 'Argo Books collects usage data to help improve the app, including your company name, industry, country and currency.'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            TextWrapping="Wrap" />
-                                                <TextBlock Text="{loc:Loc 'No financial or business information is ever sent.'}"
+                                                <TextBlock Text="{loc:Loc 'Your transactions, customers, suppliers and documents are never sent.'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            TextWrapping="Wrap" />
@@ -194,22 +194,14 @@
 
                     <!-- Notifications Tab -->
                     <TabItem Header="{loc:Loc Notifications}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <!-- Horizontal scrolling disabled so the viewport width is finite. Left on
+                             the default, cards get infinite width during measure and TextWrapping
+                             never kicks in, so longer descriptions run past the toggle. -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
-                                <!-- Sample company notice -->
-                                <Border Background="{DynamicResource WarningLightBrush}"
-                                        CornerRadius="8"
-                                        Padding="12"
-                                        Margin="0,0,0,12"
-                                        IsVisible="{Binding IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Stretch" />
-                                </Border>
+                                <!-- Extra bottom margin: this StackPanel uses Spacing="4". -->
+                                <controls:SampleCompanyNotice Margin="0,0,0,12"
+                                                              IsVisible="{Binding IsSampleCompany}" />
                                 <TextBlock Text="{loc:Loc 'Configure notification preferences'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
@@ -320,6 +312,46 @@
                                     </Grid>
                                 </Border>
 
+                                <!-- Payment Emails (sent by the server, so they arrive with the app closed) -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Sends an email to your business email address each time an online payment comes in, even when Argo Books is closed'}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <!-- Amber-on-amber pill rather than amber text: the plain
+                                                 WarningBrush (#F59E0B) has poor contrast against the
+                                                 light-theme SurfaceAlt (#E9ECEF), and the Warning
+                                                 brushes are theme-invariant so no single foreground
+                                                 reads well on both. Matches the sample-company notice
+                                                 at the top of this tab. -->
+                                            <Border Background="{DynamicResource WarningLightBrush}"
+                                                    CornerRadius="6"
+                                                    Padding="8,6"
+                                                    Margin="0,4,0,0"
+                                                    HorizontalAlignment="Left"
+                                                    IsVisible="{Binding !PortalOwnerEmailVerified}">
+                                                <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource WarningTextBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding PortalEmailOwnerOnPayment}"
+                                                      IsEnabled="{Binding PortalOwnerEmailVerified}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
                                 <!-- Unsaved Changes Reminder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -363,7 +395,7 @@
 
                     <!-- Appearance Tab -->
                     <TabItem Header="{loc:Loc Appearance}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="24" HorizontalAlignment="Center">
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
@@ -613,21 +645,9 @@
 
                     <!-- Security Tab -->
                     <TabItem Header="{loc:Loc Security}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
-                                <!-- Sample company notice -->
-                                <Border Background="{DynamicResource WarningLightBrush}"
-                                        CornerRadius="8"
-                                        Padding="12"
-                                        IsVisible="{Binding IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Stretch" />
-                                </Border>
+                                <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
 
                                 <!-- Password - No password set -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -759,28 +779,13 @@
 
                     <!-- Payment Portal Tab -->
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
-                                <!-- Sample company notice -->
-                                <Border Background="{DynamicResource WarningLightBrush}"
-                                        CornerRadius="8"
-                                        Padding="12"
-                                        IsVisible="{Binding IsSampleCompany}">
-                                    <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
-                                               FontSize="13"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource WarningTextBrush}"
-                                               TextWrapping="Wrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Stretch" />
-                                </Border>
+                                <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
                                 <!-- Portal Company Name -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Company Name'}" />
-                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource ErrorBrush}" Text=" *" />
-                                    </StackPanel>
-                                    <TextBlock Text="{loc:Loc 'Required. The name displayed on your customer-facing payment portal.'}"
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Company Name'}" />
+                                    <TextBlock Text="{loc:Loc 'The name displayed on your customer-facing payment portal.'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding PortalCompanyName, Mode=TwoWay}"
@@ -791,13 +796,19 @@
 
                                 <!-- Portal Owner Email -->
                                 <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Owner Email'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                    </TextBlock>
-                                    <TextBlock Text="{loc:Loc 'Required, for refund verification and recovery. Click Set to confirm it with an emailed code.'}"
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc 'Owner Email'}" />
+                                    <!-- Empty state copy: points at the Set button below. -->
+                                    <TextBlock Text="{loc:Loc 'Used for refund verification and recovery. Click Set to confirm it with an emailed code.'}"
                                                FontSize="12"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+                                    <!-- Set state copy: points at the Change button below. -->
+                                    <TextBlock Text="{loc:Loc 'Used for refund verification and recovery. Click Change to update it with an emailed code.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                                     <!-- Empty state: editable input + Set button (initial setup). Full-width to
                                          match the Company Name box, with the Set action tucked to the right. -->
@@ -1031,6 +1042,43 @@
                                     </Border>
                                 </StackPanel>
 
+                                <!-- Automatic overdue reminders, sent by the server. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,8,0,0">
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc 'Automatic payment reminders'}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{loc:Loc 'Email customers 3, 7 and 14 days after an invoice becomes overdue. Reminders stop as soon as the invoice is paid or cancelled.'}"
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <!-- Switch only, not the card: disabling the card would
+                                                 dim the sentence explaining why it is off. -->
+                                            <ToggleSwitch Grid.Column="1"
+                                                          IsChecked="{Binding PortalSendPaymentReminders}"
+                                                          IsEnabled="{Binding CanEditPaymentReminders}"
+                                                          VerticalAlignment="Center" />
+                                        </Grid>
+                                        <TextBlock Text="{loc:Loc 'Only invoices that fall due from now on are chased, so turning this on will not email anyone about invoices that are already overdue. Record payments you take in cash or by cheque so those customers are not chased.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   IsVisible="{Binding PortalSendPaymentReminders}" />
+                                        <TextBlock Text="{loc:Loc 'Connect a payment provider first, so customers have a way to pay from the reminder.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   IsVisible="{Binding !IsAnyPaymentProviderConnected}" />
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- Sync Interval -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">
                                     <TextBlock Text="{loc:Loc 'Auto-Sync Interval'}"
@@ -1111,7 +1159,7 @@
                                                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
                                                         SearchText="{Binding CategorySearchText, Mode=TwoWay}"
                                                         DisplayMemberPath="Name"
-                                                        Placeholder="{loc:Loc 'Category...'}"
+                                                        Placeholder="{loc:Loc 'Select category...'}"
                                                         ShowAddNew="True"
                                                         AddNewText="{loc:Loc 'Create one'}"
                                                         AddNewCommand="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).OpenCreateCategoryCommand}"
@@ -1173,7 +1221,8 @@
                          Integrations is kept last. Must match SettingsModalViewModel.MobileAppTabIndex,
                          which gates the pairing poll loop's visibility check - if this tab is ever
                          reordered, update that constant too. -->
-                    <TabItem Header="{loc:Loc 'Mobile app'}">
+                    <TabItem Header="{loc:Loc 'Mobile app'}"
+                             IsVisible="{Binding IsMobileAppTabVisible}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
@@ -1363,8 +1412,11 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
-                                <!-- Stripe integration card -->
-                                <StackPanel Spacing="8" IsEnabled="{Binding !IsSampleCompany}">
+                                <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
+
+                                <!-- IsEnabled sits on the inputs below, not here, so the sample
+                                     company keeps a clickable "Full guide" link. -->
+                                <StackPanel Spacing="8">
                                     <TextBlock Text="Stripe" FontSize="14" FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Import your Stripe payouts, charges, fees and refunds into your books.'}"
@@ -1377,31 +1429,48 @@
                                                    FontSize="12" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
 
-                                        <!-- Collapsible how-to guidance -->
-                                        <Expander Header="{loc:Loc 'How do I get this key?'}">
-                                            <StackPanel Spacing="4" Margin="0,8,0,0">
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '1. In your Stripe dashboard, open Developers, then API keys.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '2. Click Create restricted key.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '3. Grant Read access to Balance transactions, Charges, and Payouts. Leave everything else at None.'}" />
-                                                <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           Text="{loc:Loc '4. Create the key, copy it, and paste it below.'}" />
-                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                        <!-- Not behind a disclosure: this block only renders while
+                                             Stripe is unconnected, so anyone seeing it needs it. -->
+                                        <Border Background="{DynamicResource InfoLightBrush}"
+                                                BorderBrush="{DynamicResource InfoBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="8"
+                                                Padding="14,12">
+                                            <StackPanel Spacing="8">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <PathIcon Data="{x:Static icons:Icons.Help}"
+                                                              Width="16" Height="16"
+                                                              Foreground="{DynamicResource InfoTextBrush}"
+                                                              VerticalAlignment="Center" />
+                                                    <TextBlock Text="{loc:Loc 'How to get this key'}"
+                                                               FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource InfoTextBrush}"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                               Foreground="{DynamicResource InfoTextBrush}"
+                                                               Text="{loc:Loc '1. In your Stripe dashboard, open Developers, then API keys.'}" />
+                                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                               Foreground="{DynamicResource InfoTextBrush}"
+                                                               Text="{loc:Loc '2. Click Create restricted key.'}" />
+                                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                               Foreground="{DynamicResource InfoTextBrush}"
+                                                               Text="{loc:Loc '3. Grant Read access to Balance transactions, Charges, and Payouts. Leave everything else at None.'}" />
+                                                    <TextBlock TextWrapping="Wrap" FontSize="12"
+                                                               Foreground="{DynamicResource InfoTextBrush}"
+                                                               Text="{loc:Loc '4. Create the key, copy it, and paste it below.'}" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
                                                     <TextBlock Text="{loc:Loc 'Full guide: '}" FontSize="12"
                                                                VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                               Foreground="{DynamicResource InfoTextBrush}" />
                                                     <Button Classes="link" Content="argorobots.com/integrations/stripe"
                                                             FontSize="12" Padding="0" MinHeight="0"
                                                             Command="{Binding OpenStripeGuideCommand}" />
                                                 </StackPanel>
                                             </StackPanel>
-                                        </Expander>
+                                        </Border>
 
                                         <TextBox Text="{Binding StripeKeyInput, Mode=TwoWay}"
                                                  Classes="form-input"
@@ -1409,12 +1478,15 @@
                                                  TextWrapping="Wrap"
                                                  AcceptsReturn="False"
                                                  MinHeight="64" Height="64"
-                                                 VerticalContentAlignment="Top" />
+                                                 VerticalContentAlignment="Top"
+                                                 IsEnabled="{Binding !IsSampleCompany}" />
 
                                         <TextBlock Text="{Binding StripeIntegrationError}" Foreground="#dc2626" FontSize="12"
                                                    TextWrapping="Wrap"
                                                    IsVisible="{Binding StripeIntegrationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
+                                        <!-- No IsSampleCompany check needed: CanConnectStripeIntegration
+                                             requires a key, and the box above is disabled. -->
                                         <Button Content="{loc:Loc Connect}"
                                                 Classes="primary-button"
                                                 HorizontalAlignment="Left"
@@ -1425,7 +1497,8 @@
 
                                     <!-- Connected state -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
-                                            IsVisible="{Binding StripeIntegrationConnected}">
+                                            IsVisible="{Binding StripeIntegrationConnected}"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{loc:Loc 'Connected'}" FontSize="12"
@@ -1555,7 +1628,7 @@
                             </Grid>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="{loc:Loc 'Confirm Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Confirm password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"

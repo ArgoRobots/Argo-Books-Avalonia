@@ -4,12 +4,12 @@
 
 - **Do NOT build or run tests after every change.** Only build/test when explicitly asked.
 - **Do NOT amend commits or force push** unless explicitly told to. Always create new commits.
-- **Do NOT update the language files** like ArgoBooks.TranslationTool/languages/en.json and similar.
+- **Do NOT update the language files** like tools/ArgoBooks.Translations/languages/en.json and similar.
 - **Do NOT commit plan or spec markdown files** (e.g. anything under `docs/superpowers/`). These are local planning artifacts; keep them untracked.
 
 ## Project Overview
 
-Argo Books is a cross-platform desktop accounting application built with C# .NET 10 and Avalonia UI. It provides AI receipt scanning, expense/revenue tracking, predictive analytics, inventory management, rental management, customer management, and invoicing. Data is stored locally in encrypted `.argo` files, no cloud or database required. Available for Windows, macOS, and Linux.
+Argo Books is a cross-platform desktop accounting application built with C# .NET 10 and Avalonia UI. It provides receipt scanning, invoicing, expense/revenue tracking, predictive analytics, inventory management, rental management, customer management, and more. Data is stored locally in encrypted `.argo` files, no cloud or database required. Available for Windows, macOS, and Linux.
 
 ## Build & Run Commands
 
@@ -20,7 +20,7 @@ Argo Books is a cross-platform desktop accounting application built with C# .NET
 - **Run single test:** `dotnet test ArgoBooks.Tests --filter "FullyQualifiedName~TestClassName.TestMethodName"`
 - **Run test category:** `dotnet test ArgoBooks.Tests --filter "FullyQualifiedName~Namespace"`
 
-Requires .NET 10 SDK. A `.env` file with API keys must be placed at the solution root.
+Requires .NET 10 SDK.
 
 ## Architecture
 
@@ -32,11 +32,29 @@ Requires .NET 10 SDK. A `.env` file with API keys must be placed at the solution
 |---------|------|
 | **ArgoBooks** | UI layer: Views (.axaml), ViewModels, Controls, UI Services |
 | **ArgoBooks.Core** | Business logic: Models, Services, Data, Security, Platform abstraction |
+| **ArgoBooks.Shared** | Code shared with mobile: encryption, receipt scanning |
 | **ArgoBooks.Desktop** | Entry point for Windows/macOS/Linux |
+| **ArgoBooks.Mobile** | Android entry point |
 | **ArgoBooks.Tests** | xUnit tests (references both ArgoBooks and ArgoBooks.Core) |
-| **ArgoBooks.TranslationTool** | Offline tool that generates language files via Azure Translator |
 
-**Dependency flow:** Desktop -> ArgoBooks -> ArgoBooks.Core
+**Dependency flow:**
+
+```
+Desktop -> ArgoBooks -> ArgoBooks.Core -> ArgoBooks.Shared
+Mobile  -> ArgoBooks.Shared
+```
+
+### Tools
+
+Developer tools live in `tools/`, separate from the app. Each has a README explaining what it does.
+
+| Tool | Role |
+|------|------|
+| **ArgoBooks.Translations** | Generates the language files via Azure Translator |
+| **ArgoBooks.Recovery** | Opens a company file when the password is lost |
+| **ArgoBooks.UnusedCode** | Reports members that nothing references |
+
+Only Translations is in `ArgoBooks.sln`. The other two are deliberately left out and built on demand with `dotnet build tools/<name>`: Recovery must never ship with the app because it opens files without the password, and UnusedCode is only a diagnostic.
 
 ### Data Storage
 
@@ -50,9 +68,11 @@ File-based, not database. Company data lives in encrypted `.argo` files (AES-256
 - **Central package versioning** in `Directory.Packages.props`; app version in `Directory.Build.props`
 - **Conditional compilation:** `WINDOWS` constant defined when targeting `net10.0-windows`; WebView2 is Windows-only
 
-### Service Layer (ArgoBooks.Core/Services/)
+### Service Layer
 
-Core business services include: `CompanyManager` (file lifecycle), `EncryptionService` (AES-256), `SpreadsheetImportService`/`SpreadsheetExportService` (Excel/CSV), `GeminiService` (AI matching), `GeminiReceiptScannerService` (OCR), `InsightsService` (analytics), `ReportRenderer` (PDF via QuestPDF), `LicenseService`, `PaymentPortalService`.
+Most business services are in `ArgoBooks.Core/Services/`: `CompanyManager` (file lifecycle), `SpreadsheetImportService`/`SpreadsheetExportService` (Excel/CSV), `GeminiService` (AI matching), `InsightsService` (analytics), `ReportRenderer` (PDF via QuestPDF), `LicenseService`, `PaymentPortalService`.
+
+Anything mobile also needs lives in `ArgoBooks.Shared` instead: `EncryptionService` (AES-256) and `GeminiReceiptScannerService` (OCR).
 
 UI services in `ArgoBooks/Services/` handle navigation, theming, localization, undo/redo, modals, and chart loading.
 
@@ -68,4 +88,4 @@ Organized by domain: `Entities/`, `Transactions/`, `Invoices/`, `Inventory/`, `R
 
 ## Multi-Target Builds
 
-ArgoBooks and ArgoBooks.Core target both `net10.0` and `net10.0-windows10.0.17763.0`. Windows-specific code (WebView2, Windows Hello, DPAPI) is gated behind the `WINDOWS` compilation constant or target framework conditions in csproj files.
+ArgoBooks, ArgoBooks.Core and ArgoBooks.Desktop target both `net10.0` and `net10.0-windows10.0.17763.0`. ArgoBooks.Shared and ArgoBooks.Tests are `net10.0` only, and ArgoBooks.Mobile is `net10.0-android`. Windows-specific code (WebView2, Windows Hello, DPAPI) is gated behind the `WINDOWS` compilation constant or target framework conditions in csproj files.

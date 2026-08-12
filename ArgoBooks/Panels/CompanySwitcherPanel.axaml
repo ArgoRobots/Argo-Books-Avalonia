@@ -225,10 +225,9 @@
                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="{loc:Loc 'Open Company...'}"
-                                           FontSize="14"
+                                <TextBlock FontSize="14"
                                            FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                           Foreground="{DynamicResource TextPrimaryBrush}"><Run Text="{loc:Loc 'Open Company'}" /><Run Text="..." /></TextBlock>
                                 <TextBlock Text="{loc:Loc 'Browse for a company file'}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />

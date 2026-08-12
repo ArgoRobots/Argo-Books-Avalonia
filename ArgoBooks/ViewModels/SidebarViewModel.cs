@@ -67,27 +67,13 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showPayroll = true;
 
     [ObservableProperty]
-    private bool _showTeam; // Hidden until enterprise plan
-
-    [ObservableProperty]
     private bool _hasPremium; // Premium plan
-
-    [ObservableProperty]
-    private bool _hasEnterprise; // Enterprise plan (always false for now)
 
     #endregion
 
     #region Premium Feature Items
 
     private SidebarItemModel? _invoicesItem;
-    private SidebarItemModel? _paymentsItem;
-
-    #endregion
-
-    #region Enterprise Feature Items
-
-    private SidebarItemModel? _locationsItem;
-    private SidebarItemModel? _transfersItem;
 
     #endregion
 
@@ -97,9 +83,10 @@ public partial class SidebarViewModel : ViewModelBase
     private string _currentPage = "Dashboard";
 
     public ObservableCollection<SidebarItemModel> MainItems { get; } = [];
-    public ObservableCollection<SidebarItemModel> TransactionItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> ExpenseItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> RevenueItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> ImportItems { get; } = [];
     public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
-    public ObservableCollection<SidebarItemModel> ManagementItems { get; } = [];
     public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
     public ObservableCollection<SidebarItemModel> PayrollItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TeamItems { get; } = [];
@@ -156,45 +143,44 @@ public partial class SidebarViewModel : ViewModelBase
         MainItems.Add(CreateItem("Insights", "Insights", Icons.Insights));
         MainItems.Add(CreateItem("Reports", "Reports", Icons.Reports));
 
-        // Transactions Section (mockup: Expenses, Revenue, Invoices, Payments)
-        TransactionItems.Add(CreateItem("Expenses", "Expenses", Icons.Expenses));
-        TransactionItems.Add(CreateItem("Revenue", "Revenue", Icons.Revenue));
+        // Expenses Section. The category and product pages are one page each, entered
+        // on the matching tab, so these route to a page name that presets it.
+        ExpenseItems.Add(CreateItem("Expenses", "Expenses", Icons.Expenses));
+        ExpenseItems.Add(CreateItem("Expense categories", "ExpenseCategories", Icons.Categories));
+        ExpenseItems.Add(CreateItem("Expense products", "ExpenseProducts", Icons.Products));
+        ExpenseItems.Add(CreateItem("Suppliers", "Suppliers", Icons.Suppliers));
+
+        // Revenue Section
+        RevenueItems.Add(CreateItem("Revenue", "Revenue", Icons.Revenue));
         _invoicesItem = CreateItem("Invoices", "Invoices", Icons.Invoices);
         _invoicesItem.IsVisible = true; // Available on free tier (with send limits)
-        TransactionItems.Add(_invoicesItem);
-        _paymentsItem = CreateItem("Payments", "Payments", Icons.Payments);
-        _paymentsItem.IsVisible = true; // Available on free tier (online payments via portal)
-        TransactionItems.Add(_paymentsItem);
-        TransactionItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Bank));
+        RevenueItems.Add(_invoicesItem);
+        RevenueItems.Add(CreateItem("Revenue categories", "RevenueCategories", Icons.Categories));
+        RevenueItems.Add(CreateItem("Revenue products", "RevenueProducts", Icons.Products));
+        RevenueItems.Add(CreateItem("Customers", "Customers", Icons.Customers));
 
-        // Rentals Section (mockup: Rental Inventory, Rental Records)
+        // Import Section. Both screens turn outside evidence into transactions, and
+        // both can produce an expense or a revenue, so neither belongs to one side.
+        ImportItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Bank));
+        ImportItems.Add(CreateItem("Receipts", "Receipts", Icons.Receipts));
+
+        // Rentals Section
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory", Icons.RentalInventory));
         RentalItems.Add(CreateItem("Rental Records", "RentalRecords", Icons.RentalRecords));
 
-        // Management Section (mockup: Customers, Products/Services, Categories, Suppliers)
-        ManagementItems.Add(CreateItem("Customers", "Customers", Icons.Customers));
-        ManagementItems.Add(CreateItem("Products / Services", "Products", Icons.Products));
-        ManagementItems.Add(CreateItem("Categories", "Categories", Icons.Categories));
-        ManagementItems.Add(CreateItem("Suppliers", "Suppliers", Icons.Suppliers));
+        // Inventory Section
+        InventoryItems.Add(CreateItem("Stock Levels", "StockLevels", Icons.StockLevels));
+        InventoryItems.Add(CreateItem("Adjustments", "StockAdjustments", Icons.Adjustments));
+        InventoryItems.Add(CreateItem("Locations", "Locations", Icons.Locations));
+        InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders", Icons.PurchaseOrders));
 
         // Payroll Section
         PayrollItems.Add(CreateItem("Employees", "Employees", Icons.Customers));
         PayrollItems.Add(CreateItem("Pay Runs", "PayRuns", Icons.Payments));
 
-        // Inventory Section (mockup: Stock Levels, Adjustments, Locations, Transfers, Purchase Orders)
-        InventoryItems.Add(CreateItem("Stock Levels", "StockLevels", Icons.StockLevels));
-        InventoryItems.Add(CreateItem("Adjustments", "StockAdjustments", Icons.Adjustments));
-        _locationsItem = CreateItem("Locations", "Locations", Icons.Locations);
-        InventoryItems.Add(_locationsItem);
-        _transfersItem = CreateItem("Transfers", "Transfers", Icons.Transfers);
-        _transfersItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
-        InventoryItems.Add(_transfersItem);
-        InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders", Icons.PurchaseOrders));
-
-        // Tracking Section (mockup: Returns, Lost/Damaged, Receipts)
+        // Tracking Section
         TrackingItems.Add(CreateItem("Returns", "Returns", Icons.Returns));
         TrackingItems.Add(CreateItem("Lost / Damaged", "LostDamaged", Icons.LostDamaged));
-        TrackingItems.Add(CreateItem("Receipts", "Receipts", Icons.Receipts));
 
         // Set Dashboard as active by default
         SetActivePage("Dashboard");
@@ -243,24 +229,15 @@ public partial class SidebarViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Updates enterprise feature visibility when enterprise status changes.
-    /// </summary>
-    partial void OnHasEnterpriseChanged(bool value)
-    {
-        ShowTeam = value;
-        _locationsItem?.IsVisible = value;
-        _transfersItem?.IsVisible = value;
-    }
-
-    /// <summary>
     /// Updates collapsed state on all items.
     /// </summary>
     private void UpdateItemsCollapsedState(bool isCollapsed)
     {
         foreach (var item in MainItems) item.IsCollapsed = isCollapsed;
-        foreach (var item in TransactionItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in ExpenseItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in RevenueItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in ImportItems) item.IsCollapsed = isCollapsed;
         foreach (var item in RentalItems) item.IsCollapsed = isCollapsed;
-        foreach (var item in ManagementItems) item.IsCollapsed = isCollapsed;
         foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
         foreach (var item in PayrollItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TeamItems) item.IsCollapsed = isCollapsed;
@@ -317,9 +294,10 @@ public partial class SidebarViewModel : ViewModelBase
 
         // Update active state on all items
         foreach (var item in MainItems) item.IsActive = item.PageName == pageName;
-        foreach (var item in TransactionItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in ExpenseItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in RevenueItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in ImportItems) item.IsActive = item.PageName == pageName;
         foreach (var item in RentalItems) item.IsActive = item.PageName == pageName;
-        foreach (var item in ManagementItems) item.IsActive = item.PageName == pageName;
         foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
         foreach (var item in PayrollItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TeamItems) item.IsActive = item.PageName == pageName;
@@ -329,7 +307,8 @@ public partial class SidebarViewModel : ViewModelBase
     /// <summary>
     /// Updates feature visibility based on settings.
     /// </summary>
-    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals, bool showPayroll)
+    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals,
+                                        bool showPayroll)
     {
         ShowTransactions = showTransactions;
         ShowInventory = showInventory;

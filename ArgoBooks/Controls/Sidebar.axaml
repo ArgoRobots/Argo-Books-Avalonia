@@ -175,20 +175,28 @@
                                          IsCollapsible="True"
                                          Items="{Binding MainItems}" />
 
-                <!-- Transactions Section -->
-                <controls:SidebarSection Title="{loc:Loc Transactions}"
-                                         SectionKey="Transactions"
+                <!-- Expenses Section -->
+                <controls:SidebarSection Title="{loc:Loc Expenses}"
+                                         SectionKey="Expenses"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
-                                         Items="{Binding TransactionItems}"
+                                         Items="{Binding ExpenseItems}"
                                          IsVisible="{Binding ShowTransactions}" />
 
-                <!-- Management Section -->
-                <controls:SidebarSection Title="{loc:Loc Management}"
-                                         SectionKey="Management"
+                <!-- Revenue Section -->
+                <controls:SidebarSection Title="{loc:Loc Revenue}"
+                                         SectionKey="Revenue"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          IsCollapsible="True"
-                                         Items="{Binding ManagementItems}" />
+                                         Items="{Binding RevenueItems}"
+                                         IsVisible="{Binding ShowTransactions}" />
+
+                <!-- Import Section -->
+                <controls:SidebarSection Title="{loc:Loc Import}"
+                                         SectionKey="Import"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         IsCollapsible="True"
+                                         Items="{Binding ImportItems}" />
 
                 <!-- Payroll Section -->
                 <controls:SidebarSection Title="{loc:Loc Payroll}"
@@ -213,14 +221,6 @@
                                          IsCollapsible="True"
                                          Items="{Binding RentalItems}"
                                          IsVisible="{Binding ShowRentals}" />
-
-                <!-- Team Section -->
-                <controls:SidebarSection Title="{loc:Loc Team}"
-                                         SectionKey="Team"
-                                         IsCollapsed="{Binding IsCollapsed}"
-                                         IsCollapsible="True"
-                                         Items="{Binding TeamItems}"
-                                         IsVisible="{Binding ShowTeam}" />
 
                 <!-- Tracking Section -->
                 <controls:SidebarSection Title="{loc:Loc Tracking}"
