@@ -54,7 +54,8 @@ public partial class YearEndModalViewModel : ViewModelBase
     /// The slips can always be produced. Filing is what a problem blocks, and the distinction
     /// matters: an employer with a missing SIN can still hand out stubs while chasing it.
     /// </summary>
-    public bool CanFile => Problems.Count == 0 && Rows.Count > 0;
+    public bool CanFile => Problems.Count == 0 && Rows.Count > 0
+                           && (!IsAmending || Rows.Any(r => r.IsSelected));
 
     public bool HasRows => Rows.Count > 0;
 
@@ -69,6 +70,85 @@ public partial class YearEndModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _statusMessage = string.Empty;
+
+    #region Amendments
+
+    /// <summary>
+    /// Original, amendment or cancellation.
+    ///
+    /// CRA is explicit that an amended return must not include original slips and vice versa,
+    /// so the two are separate submissions. That is why choosing anything but Original turns on
+    /// per-employee selection below: the app has no record of what was filed last time, so only
+    /// the employer knows which slips actually changed, and sending all of them would restate
+    /// every employee as amended.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAmending))]
+    [NotifyPropertyChangedFor(nameof(CanFile))]
+    private T4ReportType _filingType = T4ReportType.Original;
+
+    public bool IsAmending => FilingType != T4ReportType.Original;
+
+    /// <summary>Why it was amended. CRA takes it on the summary, for an amendment only.</summary>
+    [ObservableProperty]
+    private string _amendmentNote = string.Empty;
+
+    /// <summary>
+    /// Three booleans rather than a bound enum, so the radio buttons need no converter. Each
+    /// setter ignores being set to false, which is what the deselected button does when its
+    /// sibling is picked.
+    /// </summary>
+    public bool IsOriginalFiling
+    {
+        get => FilingType == T4ReportType.Original;
+        set { if (value) { FilingType = T4ReportType.Original; } }
+    }
+
+    public bool IsAmendmentFiling
+    {
+        get => FilingType == T4ReportType.Amendment;
+        set { if (value) { FilingType = T4ReportType.Amendment; } }
+    }
+
+    public bool IsCancelFiling
+    {
+        get => FilingType == T4ReportType.Cancel;
+        set { if (value) { FilingType = T4ReportType.Cancel; } }
+    }
+
+    partial void OnFilingTypeChanged(T4ReportType value)
+    {
+        OnPropertyChanged(nameof(IsOriginalFiling));
+        OnPropertyChanged(nameof(IsAmendmentFiling));
+        OnPropertyChanged(nameof(IsCancelFiling));
+
+        // Selecting every row on the way in matches what the employer usually wants when they
+        // switch to Cancel, and is one click away from what they want for an amendment.
+        foreach (T4RowViewModel row in Rows)
+        {
+            row.IsSelected = value == T4ReportType.Cancel;
+        }
+
+        OnPropertyChanged(nameof(CanFile));
+    }
+
+    /// <summary>The slips that will actually be filed.</summary>
+    private List<T4Slip> SlipsToFile() =>
+        _return == null
+            ? []
+            : !IsAmending
+                ? _return.Slips
+                : _return.Slips
+                    .Where(s => Rows.FirstOrDefault(r => r.EmployeeId == s.EmployeeId)?.IsSelected == true)
+                    .ToList();
+
+    /// <summary>
+    /// Called by each row when its checkbox moves, because CanFile depends on how many are
+    /// ticked and an amendment with none ticked would file an empty return.
+    /// </summary>
+    private void OnRowSelectionChanged() => OnPropertyChanged(nameof(CanFile));
+
+    #endregion
 
     #region Quebec
 
@@ -206,8 +286,9 @@ public partial class YearEndModalViewModel : ViewModelBase
 
         foreach (T4Slip slip in _return.Slips)
         {
-            Rows.Add(new T4RowViewModel
+            Rows.Add(new T4RowViewModel(OnRowSelectionChanged)
             {
+                EmployeeId = slip.EmployeeId,
                 Name = $"{slip.GivenName} {slip.Surname}".Trim(),
                 Income = CurrencyService.Format(slip.EmploymentIncome),
                 Cpp = CurrencyService.Format(slip.CppContributions + slip.Cpp2Contributions),
@@ -334,6 +415,16 @@ public partial class YearEndModalViewModel : ViewModelBase
         {
             Rl1Return rl1 = _quebecReturn;
 
+            // The slip code is printed on the PDF so the employer keys the right one in. Unlike
+            // the T4 there is no per-slip selection: these are printed and re-keyed by hand, so
+            // the employer chooses which ones to actually send.
+            rl1.SlipCode = FilingType switch
+            {
+                T4ReportType.Amendment => Rl1SlipCode.Amended,
+                T4ReportType.Cancel => Rl1SlipCode.Cancelled,
+                _ => Rl1SlipCode.Original,
+            };
+
             foreach (Rl1Slip slip in rl1.Slips)
             {
                 byte[] bytes = await Task.Run(() => Rl1PdfRenderer.RenderSlip(rl1, slip));
@@ -374,12 +465,41 @@ public partial class YearEndModalViewModel : ViewModelBase
             return;
         }
 
+        // A separate return object rather than mutating the built one, so the on-screen figures
+        // keep showing the whole year while the file carries only what is being filed. CRA
+        // totals the summary from the slips it accompanies, so the totals follow the selection
+        // by themselves.
+        var filing = new T4Return
+        {
+            TaxYear = _return.TaxYear,
+            PayrollAccountNumber = _return.PayrollAccountNumber,
+            EmployerName = _return.EmployerName,
+            EmployerAddress = _return.EmployerAddress,
+            ContactName = _return.ContactName,
+            ContactPhone = _return.ContactPhone,
+            ReportType = FilingType,
+            AmendmentNote = AmendmentNote,
+            Slips = SlipsToFile(),
+        };
+
+        if (filing.Slips.Count == 0)
+        {
+            return;
+        }
+
         try
         {
+            string suffix = FilingType switch
+            {
+                T4ReportType.Amendment => "-amended",
+                T4ReportType.Cancel => "-cancelled",
+                _ => string.Empty,
+            };
+
             IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save the T4 XML for filing".Translate(),
-                SuggestedFileName = $"T4-{_return.TaxYear}.xml",
+                SuggestedFileName = $"T4-{_return.TaxYear}{suffix}.xml",
                 DefaultExtension = "xml",
                 FileTypeChoices = [new FilePickerFileType("XML") { Patterns = ["*.xml"] }],
             });
@@ -389,10 +509,13 @@ public partial class YearEndModalViewModel : ViewModelBase
                 return;
             }
 
-            await File.WriteAllTextAsync(file.Path.LocalPath, T4XmlWriter.BuildString(_return), new UTF8Encoding(false));
+            await File.WriteAllTextAsync(file.Path.LocalPath, T4XmlWriter.BuildString(filing), new UTF8Encoding(false));
 
-            StatusMessage = "Saved. Upload it through CRA's Internet File Transfer, which will add the transmittal record."
-                .Translate();
+            StatusMessage = IsAmending
+                ? "Saved {0} slip(s). Upload it through CRA's Internet File Transfer. Send it on its own: CRA rejects a return that mixes amended and original slips."
+                    .TranslateFormat(filing.Slips.Count)
+                : "Saved. Upload it through CRA's Internet File Transfer, which will add the transmittal record."
+                    .Translate();
         }
         catch (Exception ex)
         {
@@ -429,6 +552,21 @@ public partial class YearEndModalViewModel : ViewModelBase
 /// <summary>One employee's line on the year end review.</summary>
 public partial class T4RowViewModel : ObservableObject
 {
+    private readonly Action? _selectionChanged;
+
+    public T4RowViewModel(Action? selectionChanged = null) => _selectionChanged = selectionChanged;
+
+    public string EmployeeId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Whether this slip goes in an amended or cancelled return. Ignored on an original, where
+    /// every slip is filed.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSelected;
+
+    partial void OnIsSelectedChanged(bool value) => _selectionChanged?.Invoke();
+
     [ObservableProperty]
     private string _name = string.Empty;
 
