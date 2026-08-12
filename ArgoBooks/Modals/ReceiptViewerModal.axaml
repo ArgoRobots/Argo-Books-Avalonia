@@ -140,11 +140,13 @@
                                       Width="16" Height="16" />
                         </Button>
 
-                        <!-- Delete button -->
+                        <!-- Delete button. Hidden for a generated document: it is not stored
+                             anywhere, and it is rebuilt from the books every time. -->
                         <Button Grid.Column="2"
                                 Classes="icon-button"
                                 Margin="8,0,0,0"
                                 ToolTip.Tip="{loc:Loc 'Delete'}"
+                                IsVisible="{Binding CanDelete}"
                                 Command="{Binding DeleteCommand}">
                             <PathIcon Data="{x:Static icons:Icons.Delete}"
                                       Width="16" Height="16" />

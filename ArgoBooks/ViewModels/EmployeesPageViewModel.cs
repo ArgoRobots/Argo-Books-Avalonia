@@ -6,9 +6,6 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -201,11 +198,15 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
-    /// Saves the Record of Employment worksheet for keying into ROE Web.
+    /// Opens the Record of Employment worksheet for keying into ROE Web.
     ///
     /// Offered per employee rather than at year end because an ROE is due five calendar days
     /// after the pay period in which someone stops being paid, which has nothing to do with
     /// December.
+    ///
+    /// Shown in the receipt viewer rather than saved straight to disk, because the usual thing
+    /// to do with it is read a figure off it while ROE Web is open in a browser, not file it.
+    /// Saving is still a button away.
     /// </summary>
     [RelayCommand]
     private async Task RecordOfEmploymentAsync(EmployeeDisplayItem? item)
@@ -218,31 +219,12 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
         try
         {
             RoeWorksheet sheet = new RoeService().Build(data, item.Id);
-
-            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                ? desktop.MainWindow
-                : null;
-
-            if (topLevel?.StorageProvider == null)
-            {
-                return;
-            }
-
-            IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-            {
-                Title = "Save the Record of Employment worksheet".Translate(),
-                SuggestedFileName = $"ROE-worksheet-{Sanitize(sheet.EmployeeName)}.pdf",
-                DefaultExtension = "pdf",
-                FileTypeChoices = [new FilePickerFileType("PDF") { Patterns = ["*.pdf"] }],
-            });
-
-            if (file == null)
-            {
-                return;
-            }
-
             byte[] bytes = await Task.Run(() => RoePdfRenderer.Render(sheet));
-            await File.WriteAllBytesAsync(file.Path.LocalPath, bytes);
+
+            App.ReceiptViewerModal?.ShowDocument(
+                "Record of Employment: {0}".TranslateFormat(sheet.EmployeeName),
+                bytes,
+                $"ROE-worksheet-{Sanitize(sheet.EmployeeName)}.pdf");
         }
         catch (Exception ex)
         {

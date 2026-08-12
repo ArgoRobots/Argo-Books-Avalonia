@@ -92,6 +92,43 @@ public static class ReceiptPageRenderer
         }
     }
 
+    /// <summary>
+    /// Renders a PDF that is not a stored receipt, such as a generated report, through the same
+    /// page cache and streaming path.
+    ///
+    /// The cache key is derived from the CONTENT rather than from the caller's name, because a
+    /// generated document changes whenever the underlying data does. Keying by name alone would
+    /// serve the previous render from cache, and a payroll document showing last week's figures
+    /// is worse than one that takes a moment to appear.
+    /// </summary>
+    /// <param name="name">Used in the temp file name, so the cached pages are recognisable.</param>
+    public static async Task<IReadOnlyList<string>> GetPagePathsAsync(
+        string name,
+        byte[] pdfBytes,
+        IProgress<(int Index, string Path)>? onPage = null)
+    {
+        if (pdfBytes is not { Length: > 0 })
+        {
+            return [];
+        }
+
+        try
+        {
+            EnsureTempDir();
+
+            string safe = new(Path.GetFileNameWithoutExtension(name)
+                .Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '-' : c).ToArray());
+
+            string hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(pdfBytes))[..12];
+
+            return await GetPdfPagePathsAsync($"{safe}-{hash}.pdf", pdfBytes, onPage);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
     private static async Task<IReadOnlyList<string>> GetPdfPagePathsAsync(
         string fileName, byte[] bytes, IProgress<(int Index, string Path)>? onPage)
     {

@@ -12,6 +12,11 @@ namespace ArgoBooks.ViewModels;
 
 /// <summary>
 /// ViewModel for the receipt viewer modal.
+///
+/// Also shows generated documents that are not receipts, such as the Record of Employment
+/// worksheet, through <see cref="ShowDocument"/>. They share everything that matters here (page
+/// streaming, zoom, fullscreen, download) and differ only in where the bytes come from and
+/// whether deleting makes sense, so a second viewer would have been the same code twice.
 /// </summary>
 public partial class ReceiptViewerModalViewModel : ViewModelBase
 {
@@ -20,6 +25,21 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _receiptId = string.Empty;
+
+    /// <summary>
+    /// Set when showing a generated document rather than a stored receipt. Held so Download can
+    /// write the original PDF instead of a rendered page image.
+    /// </summary>
+    private byte[]? _documentBytes;
+
+    private string _documentFileName = string.Empty;
+
+    /// <summary>
+    /// False for a generated document. There is nothing to delete: it is not stored anywhere,
+    /// and it is rebuilt from the books every time it is opened.
+    /// </summary>
+    [ObservableProperty]
+    private bool _canDelete = true;
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -58,11 +78,58 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     public void Show(string receiptId, string? title = null)
     {
         ReceiptId = receiptId;
+        _documentBytes = null;
+        _documentFileName = string.Empty;
+        CanDelete = true;
         Title = title ?? $"Receipt for {receiptId}";
         IsFullscreen = false;
         ReceiptPages.Clear();
         IsOpen = true;
         _ = LoadPagesAsync(receiptId);
+    }
+
+    /// <summary>
+    /// Shows a generated PDF that is not a stored receipt, using the same page streaming, zoom
+    /// and fullscreen as a receipt.
+    /// </summary>
+    /// <param name="title">Shown in the header.</param>
+    /// <param name="pdfBytes">The document itself, kept so Download saves the PDF not a page.</param>
+    /// <param name="fileName">Suggested name when saving, and the basis of the cache file name.</param>
+    public void ShowDocument(string title, byte[] pdfBytes, string fileName)
+    {
+        ReceiptId = string.Empty;
+        _documentBytes = pdfBytes;
+        _documentFileName = fileName;
+        CanDelete = false;
+        Title = title;
+        IsFullscreen = false;
+        ReceiptPages.Clear();
+        IsOpen = true;
+        _ = LoadDocumentPagesAsync(pdfBytes, fileName);
+    }
+
+    private async Task LoadDocumentPagesAsync(byte[] pdfBytes, string fileName)
+    {
+        var token = ++_renderToken;
+        _pageOrder.Clear();
+
+        IsLoadingPages = true;
+        try
+        {
+            var progress = new Progress<(int Index, string Path)>(page =>
+            {
+                if (token != _renderToken)
+                    return;
+                InsertPageOrdered(page.Index, page.Path);
+            });
+
+            await ReceiptPageRenderer.GetPagePathsAsync(fileName, pdfBytes, progress);
+        }
+        finally
+        {
+            if (token == _renderToken)
+                IsLoadingPages = false;
+        }
     }
 
     private async Task LoadPagesAsync(string receiptId)
@@ -214,6 +281,39 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Saves the generated PDF itself, not a rendered page image.</summary>
+    private async Task DownloadDocumentAsync()
+    {
+        byte[]? bytes = _documentBytes;
+        if (bytes == null) return;
+
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save".Translate(),
+                SuggestedFileName = _documentFileName,
+                DefaultExtension = "pdf",
+                FileTypeChoices = [new FilePickerFileType("PDF") { Patterns = ["*.pdf"] }]
+            });
+
+            if (result == null) return;
+
+            await File.WriteAllBytesAsync(result.Path.LocalPath, bytes);
+            App.AddNotification("Success", "Saved successfully", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "ReceiptViewer.DownloadDocument");
+        }
+    }
+
     [RelayCommand]
     private void Close()
     {
@@ -225,6 +325,9 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         _pageOrder.Clear();
         ReceiptId = string.Empty;
         Title = string.Empty;
+        _documentBytes = null;
+        _documentFileName = string.Empty;
+        CanDelete = true;
     }
 
     [RelayCommand]
@@ -236,6 +339,12 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task Download()
     {
+        if (_documentBytes != null)
+        {
+            await DownloadDocumentAsync();
+            return;
+        }
+
         if (string.IsNullOrEmpty(ReceiptId)) return;
 
         try
