@@ -140,14 +140,15 @@ public partial class PayrollModalsViewModel : ViewModelBase
     public ObservableCollection<string> SupportedProvinces { get; } = [];
 
     /// <summary>
-    /// Explains a short province list, so someone whose staff work somewhere not yet covered
-    /// finds out here rather than after entering an employee they can never pay.
+    /// Set only when no rate edition covers today, in which case no province can be calculated
+    /// for and the employer needs to know before entering an employee.
+    ///
+    /// There is deliberately no note about partial coverage any more. Every province and
+    /// territory is supported, so a list of them told the reader nothing and, because Quebec is
+    /// held outside the provinces table, it read as though Quebec were missing.
     /// </summary>
     [ObservableProperty]
     private string _provinceSupportNote = string.Empty;
-
-    /// <summary>Provinces and territories, so a partial rate table can be recognised as partial.</summary>
-    private const int AllProvincesAndTerritories = 13;
 
     public ObservableCollection<PayFrequency> Frequencies { get; } =
         [PayFrequency.Weekly, PayFrequency.Biweekly, PayFrequency.SemiMonthly, PayFrequency.Monthly];
@@ -492,15 +493,24 @@ public partial class PayrollModalsViewModel : ViewModelBase
             return;
         }
 
-        foreach (string code in table.Provinces.Keys.OrderBy(c => c, StringComparer.Ordinal))
+        // Quebec is NOT in the provinces table. It administers its own income tax, pension plan
+        // and parental insurance, so its figures live in their own block and the calculator
+        // dispatches on the code before it ever looks a province up. Reading only the table's
+        // keys therefore leaves QC off the list and makes a fully supported jurisdiction
+        // unselectable.
+        var codes = table.Provinces.Keys.ToList();
+
+        if (table.Quebec != null)
+        {
+            codes.Add("QC");
+        }
+
+        foreach (string code in codes.OrderBy(c => c, StringComparer.Ordinal))
         {
             SupportedProvinces.Add(code);
         }
 
-        ProvinceSupportNote = SupportedProvinces.Count < AllProvincesAndTerritories
-            ? $"Payroll can only be calculated for {string.Join(", ", SupportedProvinces)} at the "
-              + "moment. Other provinces are being added."
-            : string.Empty;
+        ProvinceSupportNote = string.Empty;
 
         if (!SupportedProvinces.Contains(Province) && SupportedProvinces.Count > 0)
         {

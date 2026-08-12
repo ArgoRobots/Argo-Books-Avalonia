@@ -96,21 +96,25 @@ public class PayrollModalsViewModelTests
     }
 
     [Fact]
-    public void AShortProvinceList_ExplainsItself()
+    public void EveryProvinceAndTerritory_IsOffered()
     {
-        // Only the provinces with a loaded rate table are offered. Without a reason on screen
-        // an employer whose staff work elsewhere just sees a dropdown that is missing.
+        // Thirteen, including Quebec. Quebec is not in the rate table's provinces block, because
+        // it administers its own tax, pension plan and parental insurance, so building the list
+        // from that block alone left a fully supported jurisdiction unselectable.
         var vm = new PayrollModalsViewModel();
 
-        if (vm.SupportedProvinces.Count < 13)
-        {
-            Assert.NotEmpty(vm.ProvinceSupportNote);
-            Assert.Contains(vm.SupportedProvinces[0], vm.ProvinceSupportNote);
-        }
-        else
-        {
-            Assert.Empty(vm.ProvinceSupportNote);
-        }
+        Assert.Equal(13, vm.SupportedProvinces.Count);
+        Assert.Contains("QC", vm.SupportedProvinces);
+    }
+
+    [Fact]
+    public void WithRatesLoaded_ThereIsNoProvinceNote()
+    {
+        // The old note listed the supported provinces. Every one is supported now, so it said
+        // nothing, and it omitted Quebec, so what it did say was wrong.
+        var vm = new PayrollModalsViewModel();
+
+        Assert.Empty(vm.ProvinceSupportNote);
     }
 
     [Fact]
