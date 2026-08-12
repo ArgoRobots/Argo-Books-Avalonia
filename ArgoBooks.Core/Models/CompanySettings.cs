@@ -116,6 +116,15 @@ public class CompanyInfo
 
     [JsonPropertyName("payrollContactPhone")]
     public string? PayrollContactPhone { get; set; }
+
+    /// <summary>
+    /// The Revenu Quebec identification number, ten digits then a two letter file code then
+    /// four digits, as in 1234567890RS0001. Needed only by an employer with Quebec staff, and
+    /// it is NOT the CRA payroll account number: a Quebec employer holds both, files a T4 with
+    /// one and an RL-1 with the other, and the two look nothing alike.
+    /// </summary>
+    [JsonPropertyName("quebecIdentificationNumber")]
+    public string? QuebecIdentificationNumber { get; set; }
 }
 
 public class LocalizationSettings
