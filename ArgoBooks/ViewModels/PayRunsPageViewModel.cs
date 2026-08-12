@@ -185,6 +185,49 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
+    /// Opens every stub on the run in the viewer, one page per employee, so the figures can be
+    /// checked before anything is handed out.
+    ///
+    /// Kept separate from downloading rather than replacing it, because the two produce
+    /// genuinely different things: this is one document covering everyone, for the employer,
+    /// while the download is one file per person, to hand to that person. The viewer's own
+    /// download button saves this combined document, which is not what you give an employee.
+    /// </summary>
+    [RelayCommand]
+    private async Task ViewStubsAsync(PayRunDisplayItem? item)
+    {
+        CompanyData? data = App.CompanyManager?.CompanyData;
+        PayRun? run = _all.FirstOrDefault(r => r.Id == item?.Id);
+
+        if (data == null || run == null || run.Lines.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            string symbol = CurrencyService.CurrentSymbol;
+
+            // Year to date up to but not including this run, so each stub's own figures are
+            // what gets added to it rather than counted twice. Same rule as the download.
+            var stubs = run.Lines
+                .Select(line => (Line: line, Ytd: _payroll.YearToDateFor(data, line.EmployeeId, run)))
+                .ToList();
+
+            byte[] bytes = await Task.Run(() => PayStubPdfRenderer.RenderAll(run, stubs, data, symbol));
+
+            App.ReceiptViewerModal?.ShowDocument(
+                "Pay stubs: {0}".TranslateFormat(run.PayDate.ToString("d MMMM yyyy")),
+                bytes,
+                $"pay-stubs-{run.PayDate:yyyy-MM-dd}.pdf");
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.ViewStubs");
+        }
+    }
+
+    /// <summary>
     /// Saves a pay stub PDF for every employee on the run. One file each, since a stub is
     /// handed to one person and nobody should see anyone else's pay.
     /// </summary>

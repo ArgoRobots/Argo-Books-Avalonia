@@ -174,7 +174,17 @@
                                                              ShowSeparator="False">
                                             <table:ArgoTableCell.CellContent>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
-                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Download pay stubs'}"
+                                                    <!-- View shows one document covering everyone, for
+                                                         checking. Download writes one file per person,
+                                                         to hand to that person. Different outputs, so
+                                                         both buttons earn their place. -->
+                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'View pay stubs'}"
+                                                            IsEnabled="{Binding IsApproved}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).ViewStubsCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Reports}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc 'Download pay stubs, one file per employee'}"
                                                             IsEnabled="{Binding IsApproved}"
                                                             Command="{Binding $parent[ItemsControl].((vm:PayRunsPageViewModel)DataContext).DownloadStubsCommand}"
                                                             CommandParameter="{Binding}">
