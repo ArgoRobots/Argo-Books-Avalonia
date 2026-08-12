@@ -31,10 +31,15 @@ public partial class YearEndModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isOpen;
 
+    /// <summary>
+    /// Nullable because the ComboBox pushes null back the instant its selected item leaves the
+    /// list, and reopening the modal refills that list. Bound to an int, that null had nowhere
+    /// to go and surfaced as a conversion error under the control on every reopen.
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasProblems))]
     [NotifyPropertyChangedFor(nameof(CanFile))]
-    private int _selectedYear = DateTime.Today.Year;
+    private int? _selectedYear = DateTime.Today.Year;
 
     public ObservableCollection<int> AvailableYears { get; } = [];
 
@@ -227,12 +232,25 @@ public partial class YearEndModalViewModel : ViewModelBase
 
     #endregion
 
-    partial void OnSelectedYearChanged(int value) => Rebuild();
+    partial void OnSelectedYearChanged(int? value)
+    {
+        // Ignore the transient null the ComboBox reports while the year list is being refilled.
+        // Rebuilding then would wipe the screen and, worse, leave it wiped if the refill picked
+        // the same year and so raised no second change.
+        if (value.HasValue && !_refillingYears)
+        {
+            Rebuild();
+        }
+    }
+
+    /// <summary>Set while <see cref="AvailableYears"/> is being replaced.</summary>
+    private bool _refillingYears;
 
     public void Open()
     {
         CompanyData? data = App.CompanyManager?.CompanyData;
 
+        _refillingYears = true;
         AvailableYears.Clear();
 
         // Only years that actually have pay runs. Offering every year since 2020 would invite
@@ -261,7 +279,11 @@ public partial class YearEndModalViewModel : ViewModelBase
         QuebecIdentificationNumber = data?.Settings.Company.QuebecIdentificationNumber ?? string.Empty;
         _loading = false;
 
+        // Reselect before lifting the guard, so the whole refill produces exactly one rebuild
+        // here rather than one from the setter and another from this call.
         SelectedYear = AvailableYears[0];
+        _refillingYears = false;
+
         Rebuild();
         IsOpen = true;
     }
@@ -277,12 +299,12 @@ public partial class YearEndModalViewModel : ViewModelBase
         StatusMessage = string.Empty;
 
         CompanyData? data = App.CompanyManager?.CompanyData;
-        if (data == null)
+        if (data == null || SelectedYear is not { } year)
         {
             return;
         }
 
-        _return = _t4.Build(data, SelectedYear);
+        _return = _t4.Build(data, year);
 
         foreach (T4Slip slip in _return.Slips)
         {
@@ -310,7 +332,7 @@ public partial class YearEndModalViewModel : ViewModelBase
             _return.TotalEmployeeCpp + _return.TotalEmployeeCpp2 + _return.TotalEmployerCpp + _return.TotalEmployerCpp2
             + _return.TotalEmployeeEi + _return.TotalEmployerEi + _return.TotalIncomeTax);
 
-        BuildQuebec(data);
+        BuildQuebec(data, year);
 
         OnPropertyChanged(nameof(HasProblems));
         OnPropertyChanged(nameof(CanFile));
@@ -322,9 +344,9 @@ public partial class YearEndModalViewModel : ViewModelBase
     /// return: it covers only Quebec employees, and its totals are supposed to disagree with
     /// the T4's.
     /// </summary>
-    private void BuildQuebec(CompanyData data)
+    private void BuildQuebec(CompanyData data, int year)
     {
-        HasQuebec = Rl1Service.HasQuebecEmployees(data, SelectedYear);
+        HasQuebec = Rl1Service.HasQuebecEmployees(data, year);
 
         if (!HasQuebec)
         {
@@ -335,7 +357,7 @@ public partial class YearEndModalViewModel : ViewModelBase
             return;
         }
 
-        _quebecReturn = _rl1.Build(data, SelectedYear);
+        _quebecReturn = _rl1.Build(data, year);
 
         foreach (string problem in Rl1Service.Validate(data, _quebecReturn))
         {
