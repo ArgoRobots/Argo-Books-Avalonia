@@ -57,11 +57,46 @@ internal static partial class Program
     [GeneratedRegex(@"^[ \t]*(?:public|internal)\s+const\s+\w+\s+(\w+)\s*=", RegexOptions.Multiline)]
     private static partial Regex ConstDeclaration();
 
+    /// <summary>
+    /// A property: an accessor block or an expression body, and no parameter list, which is
+    /// what separates it from a method. Group 1 is the declared type, needed to follow one
+    /// serialized type into the next.
+    /// </summary>
+    [GeneratedRegex(
+        @"^[ \t]*(?:public|internal)\s+(?:static\s+|virtual\s+|override\s+|sealed\s+|required\s+|new\s+|abstract\s+)*([\w<>?\[\],\.\s]+?)\s+(\w+)\s*(?:\{\s*(?:get|init)|=>)",
+        RegexOptions.Multiline)]
+    private static partial Regex PropertyDeclaration();
+
+    /// <summary>Any type declaration, so a property can be attributed to its owner.</summary>
+    [GeneratedRegex(@"^[ \t]*(?:public|internal|private|protected|\s)*(?:sealed\s+|abstract\s+|static\s+|partial\s+)*(?:class|record|struct|interface)\s+(\w+)",
+        RegexOptions.Multiline)]
+    private static partial Regex TypeDeclaration();
+
+    /// <summary>A type named as a serializer's generic argument, which makes it a root.</summary>
+    [GeneratedRegex(@"(?:Serialize|Deserialize)(?:Async)?\s*<\s*(?:[\w\.]+\.)?(\w+)")]
+    private static partial Regex SerializerCall();
+
     [GeneratedRegex(@"\w+")]
     private static partial Regex Word();
 
     [GeneratedRegex(@"^(Get|Set)[A-Z]")]
     private static partial Regex AttachedAccessor();
+
+    /// <summary>
+    /// Marks a type as one System.Text.Json walks. Any of these anywhere in a type's body is
+    /// enough, because they only appear on types that are serialized.
+    /// </summary>
+    private static readonly string[] JsonMarkers =
+    [
+        "JsonPropertyName", "JsonIgnore", "JsonInclude", "JsonConverter",
+        "JsonExtensionData", "JsonPropertyOrder", "JsonNumberHandling",
+    ];
+
+    /// <summary>Keywords the property pattern can pick up from a type declaration line.</summary>
+    private static readonly HashSet<string> NotPropertyTypes =
+    [
+        "class", "record", "struct", "interface", "enum", "namespace", "using", "return",
+    ];
 
     private static int Main(string[] args)
     {
@@ -72,10 +107,15 @@ internal static partial class Program
 
                   --methods   report methods only
                   --consts    report constants only
+                  --props     report properties only
                   --raw       disable the filters, to inspect what they are hiding
 
                 Reports public and internal members whose name appears only once in the
                 whole repository, which means nothing references them.
+
+                Properties on serialized types are listed separately. They are persisted
+                to disk whether or not any code reads them, so deleting one drops a field
+                from every existing file.
                 """);
             return 0;
         }
@@ -83,8 +123,11 @@ internal static partial class Program
         bool raw = args.Contains("--raw");
         bool onlyMethods = args.Contains("--methods");
         bool onlyConsts = args.Contains("--consts");
-        bool wantMethods = onlyMethods || !onlyConsts;
-        bool wantConsts = onlyConsts || !onlyMethods;
+        bool onlyProps = args.Contains("--props");
+        bool any = onlyMethods || onlyConsts || onlyProps;
+        bool wantMethods = onlyMethods || !any;
+        bool wantConsts = onlyConsts || !any;
+        bool wantProps = onlyProps || !any;
 
         string root = RepositoryRoot();
         List<string> files = SourceFiles(root);
@@ -108,7 +151,12 @@ internal static partial class Program
             }
         }
 
+        HashSet<string> serializedTypes = wantProps && !raw
+            ? SerializedTypes(contents)
+            : [];
+
         var findings = new Dictionary<string, List<(int Line, string Name)>>(StringComparer.Ordinal);
+        var persisted = new Dictionary<string, List<(int Line, string Name)>>(StringComparer.Ordinal);
         int scanned = 0;
 
         foreach ((string path, string text) in contents)
@@ -177,13 +225,70 @@ internal static partial class Program
                     Record(findings, relative, LineOf(text, match.Index), name);
                 }
             }
+
+            if (wantProps)
+            {
+                List<(int Index, string Name)> types = TypesIn(text);
+
+                foreach (Match match in PropertyDeclaration().Matches(text))
+                {
+                    string declared = match.Groups[1].Value.Trim();
+                    string name = match.Groups[2].Value;
+
+                    // "public class Foo" reaches here when the body happens to start with a
+                    // word the pattern accepts, so the declared type is checked.
+                    if (NotPropertyTypes.Contains(declared) ||
+                        declared.Split(' ').Any(NotPropertyTypes.Contains))
+                    {
+                        continue;
+                    }
+
+                    // Reachable through its base, which is itself a second occurrence.
+                    if (match.Value.Contains("override", StringComparison.Ordinal))
+                        continue;
+
+                    scanned++;
+
+                    if (occurrences.GetValueOrDefault(name) > 1)
+                        continue;
+
+                    // A property on a serialized type is written to and read from disk even
+                    // when no code touches it, so it is reported apart rather than filtered
+                    // out: an orphaned settings field is still worth seeing, it just must
+                    // not be deleted on sight.
+                    string owner = OwnerOf(types, match.Index);
+                    bool onDisk = !raw && serializedTypes.Contains(owner);
+
+                    Record(onDisk ? persisted : findings, relative, LineOf(text, match.Index), name);
+                }
+            }
         }
 
         int total = findings.Values.Sum(v => v.Count);
+        int onDiskTotal = persisted.Values.Sum(v => v.Count);
+
         Console.WriteLine($"Scanned {files.Count} files, {scanned} declarations ({(raw ? "unfiltered" : "filtered")}).");
         Console.WriteLine($"Referenced nowhere else: {total}");
         Console.WriteLine();
 
+        Print(findings);
+
+        if (onDiskTotal > 0)
+        {
+            Console.WriteLine($"On serialized types: {onDiskTotal}");
+            Console.WriteLine("These are written to and read from disk whether or not any code");
+            Console.WriteLine("touches them. Deleting one drops a field from every existing file,");
+            Console.WriteLine("so check what is actually stored before removing it.");
+            Console.WriteLine();
+            Print(persisted);
+        }
+
+        // Always succeeds: this is a report to read, not a gate to fail a build on.
+        return 0;
+    }
+
+    private static void Print(Dictionary<string, List<(int Line, string Name)>> findings)
+    {
         foreach ((string relative, List<(int Line, string Name)> entries) in
                  findings.OrderByDescending(f => f.Value.Count).ThenBy(f => f.Key, StringComparer.Ordinal))
         {
@@ -194,9 +299,101 @@ internal static partial class Program
             }
             Console.WriteLine();
         }
+    }
 
-        // Always succeeds: this is a report to read, not a gate to fail a build on.
-        return 0;
+    /// <summary>
+    /// Every type System.Text.Json walks, found by starting from the ones it demonstrably
+    /// touches and following their properties outwards.
+    ///
+    /// The roots are types carrying a Json attribute, and types named as a serializer's
+    /// generic argument. Neither alone is enough: a settings class can be serialized whole
+    /// without carrying a single attribute, and its properties are real saved preferences
+    /// that would otherwise look deletable.
+    ///
+    /// Never name an app symbol in this file. The tool counts its own source, so a symbol
+    /// mentioned in a comment here gains a second occurrence and stops being reported.
+    /// </summary>
+    private static HashSet<string> SerializedTypes(Dictionary<string, string> contents)
+    {
+        var declared = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var roots = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach ((string path, string text) in contents)
+        {
+            if (!path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            foreach (Match call in SerializerCall().Matches(text))
+            {
+                roots.Add(call.Groups[1].Value);
+            }
+
+            List<(int Index, string Name)> types = TypesIn(text);
+            if (types.Count == 0)
+                continue;
+
+            for (int i = 0; i < types.Count; i++)
+            {
+                (int start, string name) = types[i];
+                int end = i + 1 < types.Count ? types[i + 1].Index : text.Length;
+                string body = text[start..end];
+
+                if (JsonMarkers.Any(marker => body.Contains(marker, StringComparison.Ordinal)))
+                    roots.Add(name);
+
+                // The types this one holds, so the walk can reach a nested model that
+                // carries no attributes of its own.
+                if (!declared.TryGetValue(name, out List<string>? held))
+                {
+                    held = [];
+                    declared[name] = held;
+                }
+
+                foreach (Match property in PropertyDeclaration().Matches(body))
+                {
+                    foreach (Match token in Word().Matches(property.Groups[1].Value))
+                    {
+                        held.Add(token.Value);
+                    }
+                }
+            }
+        }
+
+        // Breadth first from the roots, following only names that are types in this repository.
+        var reached = new HashSet<string>(StringComparer.Ordinal);
+        var queue = new Queue<string>(roots);
+
+        while (queue.Count > 0)
+        {
+            string current = queue.Dequeue();
+            if (!reached.Add(current) || !declared.TryGetValue(current, out List<string>? held))
+                continue;
+
+            foreach (string next in held)
+            {
+                if (declared.ContainsKey(next) && !reached.Contains(next))
+                    queue.Enqueue(next);
+            }
+        }
+
+        return reached;
+    }
+
+    /// <summary>Type declarations in a file, in source order.</summary>
+    private static List<(int Index, string Name)> TypesIn(string text) =>
+        [.. TypeDeclaration().Matches(text).Select(m => (m.Index, m.Groups[1].Value))];
+
+    /// <summary>The type a member at this offset belongs to: the nearest one declared above it.</summary>
+    private static string OwnerOf(List<(int Index, string Name)> types, int index)
+    {
+        string owner = string.Empty;
+        foreach ((int start, string name) in types)
+        {
+            if (start > index)
+                break;
+            owner = name;
+        }
+        return owner;
     }
 
     private static void Record(
