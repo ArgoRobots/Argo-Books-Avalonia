@@ -582,43 +582,6 @@ public partial class LanguageService
         return _currentLanguageCache.ContainsKey(textKey);
     }
 
-    /// <summary>
-    /// Gets the number of cached translations for the current language.
-    /// </summary>
-    public int CachedTranslationCount
-    {
-        get
-        {
-            if (CurrentIsoCode == "en")
-                return _englishCache.Count;
-
-            EnsureLanguageLoaded(CurrentIsoCode);
-            return _currentLanguageCache.Count;
-        }
-    }
-
-    /// <summary>
-    /// Gets a list of all cached language ISO codes.
-    /// </summary>
-    public IReadOnlyList<string> CachedLanguages
-    {
-        get
-        {
-            var languages = new List<string>();
-            try
-            {
-                foreach (var file in Directory.GetFiles(_cacheDirectory, "*.json"))
-                {
-                    var isoCode = Path.GetFileNameWithoutExtension(file);
-                    if (Languages.IsValidIsoCode(isoCode))
-                        languages.Add(isoCode);
-                }
-            }
-            catch { /* directory access error - return empty */ }
-            return languages;
-        }
-    }
-
 }
 
 /// <summary>

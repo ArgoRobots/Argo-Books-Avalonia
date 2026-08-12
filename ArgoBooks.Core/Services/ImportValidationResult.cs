@@ -175,11 +175,6 @@ public class ImportValidationResult
     public bool HasNonAutoFixableIssues => Issues.Any(i => !i.IsAutoFixable);
 
     /// <summary>
-    /// Whether all issues can be automatically fixed.
-    /// </summary>
-    public bool AllIssuesAutoFixable => Issues.All(i => i.IsAutoFixable);
-
-    /// <summary>
     /// Get issues grouped by sheet name for display.
     /// </summary>
     public Dictionary<string, List<ValidationIssue>> GetIssuesBySheet()

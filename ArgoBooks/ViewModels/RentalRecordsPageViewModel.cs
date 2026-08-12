@@ -721,7 +721,6 @@ public partial class RentalRecordDisplayItem : ObservableObject
 
     public string StartDateFormatted => StartDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
-    public string ReturnDateFormatted => ReturnDate?.ToString("MMM d, yyyy") ?? "-";
     public string RateFormatted => $"{CurrencyService.Format(RateAmount)}/{RateType}";
     public string TotalCostFormatted => CurrencyService.Format(TotalCost);
     public string DepositFormatted => CurrencyService.Format(SecurityDeposit);

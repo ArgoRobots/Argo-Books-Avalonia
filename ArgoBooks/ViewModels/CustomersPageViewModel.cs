@@ -801,11 +801,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         CloseDeleteConfirm();
     }
 
-    /// <summary>
-    /// Gets the name of the customer being deleted (for display in confirmation).
-    /// </summary>
-    public string DeletingCustomerName => _deletingCustomer?.Name ?? string.Empty;
-
     #endregion
 
     #region Filter Modal

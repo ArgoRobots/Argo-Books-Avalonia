@@ -824,7 +824,6 @@ public partial class ExpenseDisplayItem : ObservableObject
     public string UnitPriceFormatted => IsPendingConversion
         ? CurrencyService.Format(UnitPrice)
         : CurrencyService.FormatWithOriginal(UnitPrice, OriginalCurrency, UnitPriceUSD, Date);
-    public string ReceiptIcon => HasReceipt ? "✓" : "✗";
 
     /// <summary>Friendly explanation for the info tooltip next to the "Pending" status badge.</summary>
     public string PendingConversionHint => CurrencyService.BuildPendingConversionHint(Total, OriginalCurrency, Date);

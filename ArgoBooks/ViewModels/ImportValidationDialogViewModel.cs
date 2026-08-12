@@ -44,19 +44,11 @@ public class ValidationIssueViewModel(ValidationIssue issue) : ObservableObject
     public string Description => issue.Description;
     public string ReferenceType => issue.ReferenceType;
     public string RowId => issue.RowId;
-    public bool IsError => issue.Severity == ValidationIssueSeverity.Error;
     public bool IsWarning => issue.Severity == ValidationIssueSeverity.Warning;
     public bool IsAutoFixable => issue.IsAutoFixable;
 
-    public string CellReference => $"Row {RowNumber}";
     public string DisplayValue => string.IsNullOrEmpty(InvalidValue) ? "(empty)" : InvalidValue;
 
-    /// <summary>
-    /// Gets a description with an indicator if the issue can be auto-fixed.
-    /// </summary>
-    public string FullDescription => IsAutoFixable
-        ? $"{Description} (will be auto-created)"
-        : $"{Description} (requires manual fix)";
 }
 
 /// <summary>

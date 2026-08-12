@@ -3368,10 +3368,6 @@ public class PasswordChangeEventArgs(string? newPassword, string? currentPasswor
 /// </summary>
 public class AutoLockSettingsEventArgs(string timeoutString) : EventArgs
 {
-    /// <summary>
-    /// The selected auto-lock timeout string (e.g., "5 minutes", "Never").
-    /// </summary>
-    public string TimeoutString { get; } = timeoutString;
 
     /// <summary>
     /// The timeout in minutes (0 for "Never").

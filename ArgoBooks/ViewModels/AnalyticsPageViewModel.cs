@@ -1419,17 +1419,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         }
     }
 
-    /// <summary>
-    /// Gets the legend text paint based on the current theme.
-    /// </summary>
-    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
-
-    /// <summary>
-    /// Gets the draw margin for pie charts to center them better when legend is on the right.
-    /// Adds margins to shift pie toward center and leave space for the legend.
-    /// </summary>
-    public Margin PieChartDrawMargin => new(0, 40, 120, 0);
-
     #endregion
 
     #region Chart Context Menu Overrides

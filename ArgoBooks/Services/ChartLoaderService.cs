@@ -69,16 +69,6 @@ public class ChartLoaderService
         return dailyPoints;
     }
 
-    /// <summary>
-    /// Gets the legend text paint based on the current theme.
-    /// </summary>
-    public static SolidColorPaint GetLegendTextPaint()
-    {
-        var isDarkTheme = ThemeService.Instance.IsDarkTheme;
-        var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
-        return new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") };
-    }
-
     // Maximum length for legend labels to prevent overflow
     private const int MaxLegendLabelLength = 18;
 

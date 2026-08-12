@@ -72,8 +72,6 @@ public partial class SheetAnalysisViewModel : ObservableObject
         ? "Direct Mapping"
         : "AI Processing";
 
-    public string SheetSummary => $"{DetectedType} - {RowCountDisplay}";
-
     /// <summary>
     /// Confidence color category: high (>0.9), medium (0.7-0.9), low (<0.7).
     /// </summary>
@@ -121,10 +119,6 @@ public partial class SheetAnalysisViewModel : ObservableObject
         _analysis.IsIncluded = IsIncluded;
     }
 
-    /// <summary>
-    /// Available entity types for the dropdown.
-    /// </summary>
-    public static SpreadsheetSheetType[] AvailableTypes { get; } = Enum.GetValues<SpreadsheetSheetType>();
 }
 
 /// <summary>
@@ -161,7 +155,6 @@ public partial class ColumnMappingViewModel : ObservableObject
     public bool IsMediumConfidence => Confidence is > 0.7 and <= 0.9;
     public bool IsLowConfidence => Confidence <= 0.7;
 
-    public bool HasTransformHint => !string.IsNullOrEmpty(TransformHint);
 }
 
 /// <summary>

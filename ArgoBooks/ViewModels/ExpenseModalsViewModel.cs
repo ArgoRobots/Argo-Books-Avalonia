@@ -67,36 +67,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     public ObservableCollection<CounterpartyOption> SupplierOptions => CounterpartyOptions;
 
-    // Filter aliases
-    public CounterpartyOption? FilterSelectedSupplier
-    {
-        get => FilterSelectedCounterparty;
-        set => FilterSelectedCounterparty = value;
-    }
-
     public string? FilterSupplierId
     {
         get => FilterCounterpartyId;
         set => FilterCounterpartyId = value;
-    }
-
-    // Delete aliases
-    public string DeleteExpenseId
-    {
-        get => DeleteTransactionId;
-        set => DeleteTransactionId = value;
-    }
-
-    public string DeleteExpenseDescription
-    {
-        get => DeleteTransactionDescription;
-        set => DeleteTransactionDescription = value;
-    }
-
-    public string DeleteExpenseAmount
-    {
-        get => DeleteTransactionAmount;
-        set => DeleteTransactionAmount = value;
     }
 
     // Command aliases for AXAML bindings

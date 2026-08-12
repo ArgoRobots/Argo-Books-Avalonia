@@ -1401,7 +1401,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         OnPropertyChanged(nameof(Configuration));
     }
 
-
     /// <summary>
     /// Returns true if we are editing an existing custom template (not a built-in template).
     /// </summary>
@@ -1555,13 +1554,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 
     [ObservableProperty]
     private string? _exportMessage;
-
-    public ObservableCollection<ExportFormatOption> ExportFormats { get; } =
-    [
-        new("PDF Document", ExportFormat.PDF, "For printing & sharing"),
-        new("PNG Image", ExportFormat.PNG, "High quality, lossless"),
-        new("JPEG Image", ExportFormat.JPEG, "Smaller file size")
-    ];
 
     private void GeneratePreview()
     {
@@ -1919,9 +1911,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 
     public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =
         new(Enum.GetValues<ImageScaleMode>());
-
-    public ObservableCollection<TableDataSelection> TableDataSelections { get; } =
-        new(Enum.GetValues<TableDataSelection>());
 
     public ObservableCollection<AccountingReportType> AccountingReportTypes { get; } =
         new(Enum.GetValues<AccountingReportType>());
@@ -2970,16 +2959,6 @@ public partial class DatePresetOption(string name) : ObservableObject
 
     [ObservableProperty]
     private bool _isSelected;
-}
-
-/// <summary>
-/// Represents an export format option.
-/// </summary>
-public class ExportFormatOption(string name, ExportFormat format, string description)
-{
-    public string Name { get; } = name;
-    public ExportFormat Format { get; } = format;
-    public string Description { get; } = description;
 }
 
 /// <summary>

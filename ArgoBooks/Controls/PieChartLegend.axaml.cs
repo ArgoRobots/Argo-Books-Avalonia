@@ -37,11 +37,6 @@ public class PieLegendItem
     public string ColorHex { get; set; } = AppColors.Primary;
 
     /// <summary>
-    /// Formatted value display string.
-    /// </summary>
-    public string FormattedValue => $"{Value:N0}";
-
-    /// <summary>
     /// Formatted percentage display string.
     /// </summary>
     public string FormattedPercentage => $"{Percentage:F1}%";

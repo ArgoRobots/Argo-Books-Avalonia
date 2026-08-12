@@ -528,20 +528,4 @@ public partial class LostDamagedDisplayItem : ObservableObject
     public string ValueLostFormatted => CurrencyService.Format(ValueLost);
     public string QuantityFormatted => $"{Quantity} unit(s)";
 
-    public bool IsLost => ItemType == "Lost";
-    public bool IsDamaged => ItemType == "Damaged";
-
-    public string TypeBadgeBackground => ItemType switch
-    {
-        "Lost" => AppColors.WarningLight,
-        "Damaged" => AppColors.ErrorLight,
-        _ => AppColors.GrayLightest
-    };
-
-    public string TypeBadgeForeground => ItemType switch
-    {
-        "Lost" => AppColors.WarningDark,
-        "Damaged" => AppColors.Error,
-        _ => AppColors.GrayMedium
-    };
 }

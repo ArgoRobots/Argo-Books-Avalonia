@@ -1747,7 +1747,6 @@ public partial class InvoiceDisplayItem : ObservableObject
         OriginalCurrency,
         TotalUSD + ProcessorFeesPaidUSD,
         IssueDate);
-    public string BalanceFormatted => CurrencyService.FormatWithOriginal(Balance, OriginalCurrency, BalanceUSD, IssueDate);
 
     /// <summary>
     /// Whether this invoice is a draft.

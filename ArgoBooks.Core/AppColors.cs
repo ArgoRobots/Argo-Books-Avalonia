@@ -24,7 +24,6 @@ public static class AppColors
     // ── Semantic: Warning / Amber ───────────────────────────────────
     public const string Warning = "#F59E0B";
     public const string WarningLight = "#FEF3C7";
-    public const string WarningDark = "#D97706";
     public const string WarningText = "#92400E";
 
     // ── Semantic: Error / Danger ────────────────────────────────────

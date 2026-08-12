@@ -260,19 +260,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     #region Dropdown Options
 
     /// <summary>
-    /// Common payment terms options.
-    /// </summary>
-    public ObservableCollection<string> PaymentTermsOptions { get; } =
-    [
-        "Due on Receipt",
-        "Net 15",
-        "Net 30",
-        "Net 45",
-        "Net 60",
-        "Net 90"
-    ];
-
-    /// <summary>
     /// All countries for dropdown (from shared Countries data).
     /// </summary>
     public IReadOnlyList<string> CountryOptions { get; } = Countries.Names;
@@ -903,16 +890,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         LoadSuppliers();
         CloseDeleteConfirm();
     }
-
-    /// <summary>
-    /// Gets the name of the supplier being deleted (for display in confirmation).
-    /// </summary>
-    public string DeletingSupplierName => _deletingSupplier?.Name ?? string.Empty;
-
-    /// <summary>
-    /// Gets the product count of the supplier being deleted.
-    /// </summary>
-    public int DeletingSupplierProductCount => _deletingSupplier?.ProductCount ?? 0;
 
     #endregion
 

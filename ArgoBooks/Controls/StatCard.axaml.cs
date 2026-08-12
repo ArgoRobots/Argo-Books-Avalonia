@@ -149,13 +149,6 @@ public partial class StatCard : UserControl
     /// <summary>Gets whether icon color is Info.</summary>
     public bool IsInfoColor => IconColor == StatCardColor.Info;
 
-    // Value Color Classes
-    /// <summary>Gets whether value color is Success.</summary>
-    public bool IsValueColorSuccess => ValueColor == StatCardColor.Success;
-
-    /// <summary>Gets whether value color is Danger.</summary>
-    public bool IsValueColorDanger => ValueColor == StatCardColor.Danger;
-
     /// <summary>Gets whether trend is positive (value > 0).</summary>
     public bool IsPositiveTrend => ChangeValue is > 0;
 

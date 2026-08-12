@@ -92,25 +92,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         set => FilterCounterpartyId = value;
     }
 
-    // Delete aliases
-    public string DeleteRevenueId
-    {
-        get => DeleteTransactionId;
-        set => DeleteTransactionId = value;
-    }
-
-    public string DeleteRevenueDescription
-    {
-        get => DeleteTransactionDescription;
-        set => DeleteTransactionDescription = value;
-    }
-
-    public string DeleteRevenueAmount
-    {
-        get => DeleteTransactionAmount;
-        set => DeleteTransactionAmount = value;
-    }
-
     // Payment status
     [ObservableProperty]
     private bool _modalPaid = true;

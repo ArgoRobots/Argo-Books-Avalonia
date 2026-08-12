@@ -1397,7 +1397,6 @@ public class AccountantAnalysisRow
     public string AccountantName { get; set; } = string.Empty;
     public decimal TotalRevenue { get; set; }
     public decimal TotalPurchases { get; set; }
-    public decimal TotalVolume { get; set; }
     public int TransactionCount { get; set; }
 }
 

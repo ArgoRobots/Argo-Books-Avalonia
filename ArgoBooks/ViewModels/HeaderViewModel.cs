@@ -772,15 +772,6 @@ public class NotificationItem : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    /// <summary>
-    /// Optional action to perform when clicked.
-    /// </summary>
-    public string? ActionRoute { get; set; }
-
-    /// <summary>
-    /// Optional parameters for the action.
-    /// </summary>
-    public Dictionary<string, object?>? ActionParameters { get; set; }
 }
 
 /// <summary>

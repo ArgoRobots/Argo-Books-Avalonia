@@ -170,12 +170,6 @@ public class TutorialService
     public bool HasCompletedAppTour => Settings.HasCompletedAppTour;
 
     /// <summary>
-    /// Gets whether the setup checklist should be shown.
-    /// </summary>
-    public bool ShouldShowSetupChecklist =>
-        Settings.ShowSetupChecklist && !AreAllChecklistItemsCompleted();
-
-    /// <summary>
     /// Gets whether the user has manually dismissed the setup checklist.
     /// </summary>
     public bool IsSetupChecklistDismissed => !Settings.ShowSetupChecklist;

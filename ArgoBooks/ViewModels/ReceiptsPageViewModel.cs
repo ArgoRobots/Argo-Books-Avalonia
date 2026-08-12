@@ -1255,7 +1255,6 @@ public partial class ReceiptDisplayItem : ObservableObject
     // Computed properties for display
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string AmountFormatted => CurrencyService.Format(Amount);
-    public string FileSizeFormatted => FormatFileSize(FileSize);
 
     public bool IsExpense => TransactionType == "Expense";
     public bool IsRevenue => TransactionType == "Revenue";
@@ -1270,10 +1269,6 @@ public partial class ReceiptDisplayItem : ObservableObject
                          FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
 
     public bool HasImage => !string.IsNullOrEmpty(ImagePath);
-
-    public string TypeBadgeText => TransactionType;
-
-    public string SourceBadgeText => IsAiScanned ? "AI Scanned" : "Manual";
 
     private static string FormatFileSize(long bytes)
     {
