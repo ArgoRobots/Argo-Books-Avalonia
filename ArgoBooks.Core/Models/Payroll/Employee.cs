@@ -60,6 +60,18 @@ public class Employee : BaseEntity
     public PayFrequency PayFrequency { get; set; } = PayFrequency.Biweekly;
 
     /// <summary>
+    /// Contract hours in a normal week. Only needed for a SALARIED employee, and only for the
+    /// Record of Employment: block 15A wants insurable hours, and a salaried pay run records
+    /// none because none are entered. Service Canada's answer for an employer who does not
+    /// track them is to use the contract hours, which is what this is.
+    ///
+    /// Null means unknown, and the ROE worksheet says so rather than printing a number. Hours
+    /// are what an EI claim is calculated from, so a guess here shortens someone's benefit.
+    /// </summary>
+    [JsonPropertyName("standardHoursPerWeek")]
+    public decimal? StandardHoursPerWeek { get; set; }
+
+    /// <summary>
     /// Total claim amount from the employee's federal TD1. Zero means they have not filed
     /// one, in which case the basic personal amount is used.
     /// </summary>
