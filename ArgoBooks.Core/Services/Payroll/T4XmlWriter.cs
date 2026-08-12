@@ -159,7 +159,16 @@ public static class T4XmlWriter
         summary.Add(contact);
         summary.Add(new XElement("tx_yr", t4.TaxYear.ToString(CultureInfo.InvariantCulture)));
         summary.Add(new XElement("slp_cnt", t4.Slips.Count.ToString(CultureInfo.InvariantCulture)));
-        summary.Add(new XElement("rpt_tcd", ReportCode(t4.ReportType)));
+        summary.Add(new XElement("rpt_tcd", SummaryReportCode(t4.ReportType)));
+
+        // CRA accepts this for report type A only, and an optional element carrying no value
+        // rejects the whole submission, so it is written only when there is both an amendment
+        // and something to say.
+        if (t4.ReportType == T4ReportType.Amendment)
+        {
+            Add(summary, "fileramendmentnote", Text(t4.AmendmentNote, 1309));
+        }
+
         summary.Add(totals);
 
         return summary;
@@ -177,12 +186,21 @@ public static class T4XmlWriter
     private static XElement Required(string element, string? value) =>
         new(element, value ?? string.Empty);
 
+    /// <summary>The slip's code. O, A or C.</summary>
     private static string ReportCode(T4ReportType type) => type switch
     {
         T4ReportType.Amendment => "A",
         T4ReportType.Cancel => "C",
         _ => "O",
     };
+
+    /// <summary>
+    /// The summary's code, which is NOT the same set. CRA lists only O and A for the summary
+    /// while the slip also takes C, so a cancellation return carries C on its slips and A on
+    /// the summary: the return as a whole is a correction to what was already filed.
+    /// </summary>
+    private static string SummaryReportCode(T4ReportType type) =>
+        type == T4ReportType.Original ? "O" : "A";
 
     /// <summary>
     /// Dollars and cents, no separators. Negatives are not permitted by the specification, so

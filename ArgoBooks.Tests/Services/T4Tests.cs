@@ -171,6 +171,101 @@ public class T4Tests
         Assert.True(slip.EiExemptAllYear);
     }
 
+    #region Amendments
+
+    [Fact]
+    public void AnAmendment_CarriesAOnBothTheSlipAndTheSummary()
+    {
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+        t4.ReportType = T4ReportType.Amendment;
+
+        XDocument doc = T4XmlWriter.Build(t4);
+
+        Assert.Equal("A", doc.Descendants("T4Slip").Single().Element("rpt_tcd")!.Value);
+        Assert.Equal("A", doc.Descendants("T4Summary").Single().Element("rpt_tcd")!.Value);
+    }
+
+    [Fact]
+    public void ACancellation_CarriesCOnTheSlipButAOnTheSummary()
+    {
+        // CRA lists O and A for the summary and O, A and C for the slip. Writing C on the
+        // summary would be a value the specification does not define.
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+        t4.ReportType = T4ReportType.Cancel;
+
+        XDocument doc = T4XmlWriter.Build(t4);
+
+        Assert.Equal("C", doc.Descendants("T4Slip").Single().Element("rpt_tcd")!.Value);
+        Assert.Equal("A", doc.Descendants("T4Summary").Single().Element("rpt_tcd")!.Value);
+    }
+
+    [Fact]
+    public void TheAmendmentNote_IsWrittenOnlyForAnAmendment()
+    {
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+        t4.AmendmentNote = "Box 14 corrected for a missed bonus.";
+
+        // An original carrying the element would be a value CRA accepts for type A only.
+        Assert.Null(T4XmlWriter.Build(t4).Descendants("fileramendmentnote").FirstOrDefault());
+
+        t4.ReportType = T4ReportType.Amendment;
+
+        Assert.Equal("Box 14 corrected for a missed bonus.",
+            T4XmlWriter.Build(t4).Descendants("fileramendmentnote").Single().Value);
+    }
+
+    [Fact]
+    public void AnEmptyAmendmentNote_IsOmittedRatherThanWrittenBlank()
+    {
+        // An optional element carrying no value rejects the whole submission.
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+        t4.ReportType = T4ReportType.Amendment;
+        t4.AmendmentNote = "   ";
+
+        Assert.Null(T4XmlWriter.Build(t4).Descendants("fileramendmentnote").FirstOrDefault());
+    }
+
+    [Fact]
+    public void TheSummaryTotals_FollowTheSlipsActuallyFiled_NotTheWholeYear()
+    {
+        // CRA: the totals are those reported from the slips filed with this summary. An
+        // amendment for one employee must not total the other three.
+        CompanyData data = Data(Person("EMP-001", "Dana Smith"), Person("EMP-002", "Alex Jones"));
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+        data.PayRuns.Add(Run("PR-0002", new DateTime(2026, 7, 3), "EMP-002", 5000m));
+
+        T4Return whole = BuiltReturn(data);
+        Assert.Equal(7000m, whole.TotalEmploymentIncome);
+
+        var amendment = new T4Return
+        {
+            TaxYear = whole.TaxYear,
+            PayrollAccountNumber = whole.PayrollAccountNumber,
+            EmployerName = whole.EmployerName,
+            ContactName = whole.ContactName,
+            ContactPhone = whole.ContactPhone,
+            ReportType = T4ReportType.Amendment,
+            Slips = whole.Slips.Where(s => s.EmployeeId == "EMP-002").ToList(),
+        };
+
+        Assert.Equal(5000m, amendment.TotalEmploymentIncome);
+        Assert.Equal("1", T4XmlWriter.Build(amendment).Descendants("slp_cnt").Single().Value);
+    }
+
+    #endregion
+
     [Fact]
     public void Boxes24And26_AreCappedAtTheYearsCeilings_ForAHighEarner()
     {

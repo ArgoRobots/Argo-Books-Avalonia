@@ -102,10 +102,18 @@ public class T4Return
     public List<T4Slip> Slips { get; set; } = [];
 
     /// <summary>
-    /// O for an original filing, A for an amendment, C to cancel. CRA refuses a return that
-    /// mixes originals and amendments, so this belongs to the return rather than the slip.
+    /// O for an original filing, A for an amendment, C to cancel. CRA is explicit that an
+    /// amended return must not include original slips and an original return must not include
+    /// amended ones, so this belongs to the return rather than the slip: the two go up as
+    /// separate submissions containing different slips.
     /// </summary>
     public T4ReportType ReportType { get; set; } = T4ReportType.Original;
+
+    /// <summary>
+    /// Why the return was amended. Written to the summary's fileramendmentnote, which CRA
+    /// accepts for report type A only and caps at 1309 characters. Ignored on an original.
+    /// </summary>
+    public string AmendmentNote { get; set; } = string.Empty;
 
     public decimal TotalEmploymentIncome => Slips.Sum(s => s.EmploymentIncome);
 
