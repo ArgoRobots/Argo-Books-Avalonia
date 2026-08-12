@@ -133,9 +133,40 @@ CPP totals deliberately exclude Quebec's QPP: those figures belong on the RL-1, 
 field for them.
 
 So Quebec payroll can currently be CALCULATED and PAID correctly, and its T4 is right, but the
-year end filing is incomplete for a Quebec employer. Building it is roughly the size of the T4
-work: a model, a service, an XML writer, a PDF and validation, against Revenu Quebec's own
-RL-1 specification.
+year end filing is incomplete for a Quebec employer.
+
+### What has been settled about building it
+
+**Build the slip and summary as PDFs, not XML.** Revenu Quebec requires online XML filing only
+from employers sending MORE than 5 RL slips of the same type. Anyone filing fewer than 6 may
+use the Transmitting RL Slips online service or send paper. This app's employer has two or
+three staff, so they are under the threshold and will key the figures in, exactly as they
+would with CRA's Web Forms rather than T4 XML.
+
+**The RL-1 XML specification is not public anyway.** Unlike CRA, which publishes the T4 layout
+as a web page, Revenu Quebec routes RL-slip specifications through its Division de
+l'acquisition des donnees electroniques for registered product developers. Building the XML
+would mean registering first.
+
+### Boxes confirmed so far
+
+From the [Guide to Filing the RL-1 Slip](https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/rl-1.g-v/):
+
+| Box | Meaning | Where it comes from |
+|---|---|---|
+| A | Employment income | gross pay for the year |
+| B.A | QPP contribution | PayRunLine.CppEmployee for a QC employee |
+| B.B | Additional QPP contribution | PayRunLine.Cpp2Employee |
+| C | Employment Insurance premium | PayRunLine.EiEmployee |
+| D | RPP contribution | not collected, always nil |
+| E | Quebec income tax withheld | PayRunLine.ProvincialTax |
+| F | Union dues | not collected, always nil |
+| G | Pensionable salary or wages under the QPP | gross, or nil if QPP exempt |
+
+**Not yet confirmed: the QPIP boxes.** The premium and the eligible salary each have a box and
+the letters were not captured before the source page truncated. They must be read from the
+guide rather than assumed, because a wrong box letter puts a real number in the wrong place on
+a government slip and nothing downstream would catch it.
 
 ---
 
