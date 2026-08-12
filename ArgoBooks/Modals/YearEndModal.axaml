@@ -192,6 +192,63 @@
                                     </StackPanel>
                                 </Border>
 
+                                <!-- The Revenu Quebec half, shown only to an employer who has a
+                                     Quebec employee. It is a second filing rather than a
+                                     variation on the first, so it gets its own problems, its
+                                     own total and its own button rather than sharing the
+                                     footer's. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                        IsVisible="{Binding HasQuebec}">
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{loc:Loc 'Quebec: RL-1'}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'You have Quebec employees, so you also file an RL-1 with Revenu Quebec. It is separate from the T4 and carries the Quebec tax and QPIP amounts.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Revenu Quebec identification number'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding QuebecIdentificationNumber, Mode=TwoWay}" Classes="form-input"
+                                                     PlaceholderText="1234567890RS0001" MaxLength="18" />
+                                            <TextBlock Text="{loc:Loc 'This is not your CRA payroll account number. It is on your Revenu Quebec statement.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+
+                                        <ItemsControl ItemsSource="{Binding QuebecProblems}"
+                                                      IsVisible="{Binding HasQuebecProblems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap"
+                                                               Margin="0,2"
+                                                               Foreground="{DynamicResource WarningBrush}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc 'Total that should have been remitted to Revenu Quebec'}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{loc:Loc 'QPP, QPIP and Quebec tax only. It does not include the health services fund.'}"
+                                                           FontSize="11" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding QuebecTotalRemitted}" FontSize="15"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Button Classes="secondary-button" HorizontalAlignment="Left"
+                                                Content="{loc:Loc 'Download RL-1 slips'}"
+                                                Command="{Binding DownloadQuebecSlipsCommand}" />
+                                    </StackPanel>
+                                </Border>
+
                                 <TextBlock Text="{loc:Loc 'No approved pay runs in this year, so there is nothing to file.'}"
                                            FontSize="13" TextWrapping="Wrap"
                                            Foreground="{DynamicResource TextTertiaryBrush}"

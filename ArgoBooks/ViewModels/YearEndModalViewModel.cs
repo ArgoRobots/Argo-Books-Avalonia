@@ -24,7 +24,9 @@ namespace ArgoBooks.ViewModels;
 public partial class YearEndModalViewModel : ViewModelBase
 {
     private readonly T4Service _t4 = new();
+    private readonly Rl1Service _rl1 = new();
     private T4Return? _return;
+    private Rl1Return? _quebecReturn;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -68,6 +70,35 @@ public partial class YearEndModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
+    #region Quebec
+
+    /// <summary>
+    /// A Quebec employer files twice: a T4 with CRA and an RL-1 with Revenu Quebec. The RL-1
+    /// half of this screen only appears when there is actually a Quebec employee, so the vast
+    /// majority of employers never see it.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasQuebec;
+
+    /// <summary>
+    /// Kept apart from <see cref="Problems"/> because the two filings fail for different
+    /// reasons and are fixed in different places. A missing Revenu Quebec number must not read
+    /// as a reason the T4 cannot go.
+    /// </summary>
+    public ObservableCollection<string> QuebecProblems { get; } = [];
+
+    public bool HasQuebecProblems => QuebecProblems.Count > 0;
+
+    [ObservableProperty]
+    private string _quebecIdentificationNumber = string.Empty;
+
+    [ObservableProperty]
+    private string _quebecTotalRemitted = "$0.00";
+
+    partial void OnQuebecIdentificationNumberChanged(string value) => SaveDetails();
+
+    #endregion
+
     #region Filing details
 
     /// <summary>
@@ -108,6 +139,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         data.Settings.Company.PayrollAccountNumber = AccountNumber.Trim();
         data.Settings.Company.PayrollContactName = ContactName.Trim();
         data.Settings.Company.PayrollContactPhone = ContactPhone.Trim();
+        data.Settings.Company.QuebecIdentificationNumber = QuebecIdentificationNumber.Trim();
         App.CompanyManager?.MarkAsChanged();
 
         Rebuild();
@@ -146,6 +178,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         AccountNumber = data?.Settings.Company.PayrollAccountNumber ?? string.Empty;
         ContactName = data?.Settings.Company.PayrollContactName ?? string.Empty;
         ContactPhone = data?.Settings.Company.PayrollContactPhone ?? data?.Settings.Company.Phone ?? string.Empty;
+        QuebecIdentificationNumber = data?.Settings.Company.QuebecIdentificationNumber ?? string.Empty;
         _loading = false;
 
         SelectedYear = AvailableYears[0];
@@ -160,6 +193,7 @@ public partial class YearEndModalViewModel : ViewModelBase
     {
         Rows.Clear();
         Problems.Clear();
+        QuebecProblems.Clear();
         StatusMessage = string.Empty;
 
         CompanyData? data = App.CompanyManager?.CompanyData;
@@ -195,10 +229,46 @@ public partial class YearEndModalViewModel : ViewModelBase
             _return.TotalEmployeeCpp + _return.TotalEmployeeCpp2 + _return.TotalEmployerCpp + _return.TotalEmployerCpp2
             + _return.TotalEmployeeEi + _return.TotalEmployerEi + _return.TotalIncomeTax);
 
+        BuildQuebec(data);
+
         OnPropertyChanged(nameof(HasProblems));
         OnPropertyChanged(nameof(CanFile));
         OnPropertyChanged(nameof(HasRows));
     }
+
+    /// <summary>
+    /// The Revenu Quebec half. Built from the same pay runs, but it is a genuinely separate
+    /// return: it covers only Quebec employees, and its totals are supposed to disagree with
+    /// the T4's.
+    /// </summary>
+    private void BuildQuebec(CompanyData data)
+    {
+        HasQuebec = Rl1Service.HasQuebecEmployees(data, SelectedYear);
+
+        if (!HasQuebec)
+        {
+            _quebecReturn = null;
+            QuebecTotalRemitted = CurrencyService.Format(0m);
+            OnPropertyChanged(nameof(HasQuebecProblems));
+            OnPropertyChanged(nameof(CanFileQuebec));
+            return;
+        }
+
+        _quebecReturn = _rl1.Build(data, SelectedYear);
+
+        foreach (string problem in Rl1Service.Validate(data, _quebecReturn))
+        {
+            QuebecProblems.Add(problem);
+        }
+
+        QuebecTotalRemitted = CurrencyService.Format(_quebecReturn.TotalRemittable);
+
+        OnPropertyChanged(nameof(HasQuebecProblems));
+        OnPropertyChanged(nameof(CanFileQuebec));
+    }
+
+    /// <summary>Mirrors <see cref="CanFile"/>: the slips print regardless, filing is what blocks.</summary>
+    public bool CanFileQuebec => HasQuebec && QuebecProblems.Count == 0 && _quebecReturn?.Slips.Count > 0;
 
     /// <summary>Saves a slip per employee plus the summary, into a folder of the user's choosing.</summary>
     [RelayCommand]
@@ -235,6 +305,51 @@ public partial class YearEndModalViewModel : ViewModelBase
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.T4Slips");
             StatusMessage = "Could not save the slips: {0}".TranslateFormat(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Saves an RL-1 per Quebec employee plus the RL-1 Summary.
+    ///
+    /// There is no XML counterpart to this, unlike the T4. Revenu Quebec does not publish the
+    /// RL-1 XML specification, so under six slips these PDFs are the filing, sent by mail, and
+    /// above five slips the employer is told to go elsewhere rather than handed paper that will
+    /// be sent back.
+    /// </summary>
+    [RelayCommand]
+    private async Task DownloadQuebecSlipsAsync()
+    {
+        if (_quebecReturn == null || _quebecReturn.Slips.Count == 0)
+        {
+            return;
+        }
+
+        string? directory = await PickFolderAsync("Choose where to save the RL-1 slips");
+        if (directory == null)
+        {
+            return;
+        }
+
+        try
+        {
+            Rl1Return rl1 = _quebecReturn;
+
+            foreach (Rl1Slip slip in rl1.Slips)
+            {
+                byte[] bytes = await Task.Run(() => Rl1PdfRenderer.RenderSlip(rl1, slip));
+                string name = $"RL1-{rl1.TaxYear}-{Sanitize($"{slip.GivenName} {slip.Surname}")}.pdf";
+                await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
+            }
+
+            byte[] summary = await Task.Run(() => Rl1PdfRenderer.RenderSummary(rl1));
+            await File.WriteAllBytesAsync(Path.Combine(directory, $"RL1-Summary-{rl1.TaxYear}.pdf"), summary);
+
+            StatusMessage = "Saved {0} RL-1 slips and the summary.".TranslateFormat(rl1.Slips.Count);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.Rl1Slips");
+            StatusMessage = "Could not save the RL-1 slips: {0}".TranslateFormat(ex.Message);
         }
     }
 
