@@ -49,6 +49,7 @@ public interface ITelemetryManager
         string? industry,
         string? country,
         string? currency,
+        string? language,
         bool isSample,
         CancellationToken cancellationToken = default);
 

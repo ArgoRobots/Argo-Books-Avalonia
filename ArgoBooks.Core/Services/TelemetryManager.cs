@@ -284,6 +284,7 @@ public class TelemetryManager : ITelemetryManager
         string? industry,
         string? country,
         string? currency,
+        string? language,
         bool isSample,
         CancellationToken cancellationToken = default)
     {
@@ -292,7 +293,13 @@ public class TelemetryManager : ITelemetryManager
             // One row per company per session. Callers fire this from the company-opened
             // path, which also runs on every save and on returning from settings, so
             // without this a long session would record the same profile dozens of times.
-            var key = $"{companyName}|{country}|{currency}|{isSample}";
+            //
+            // Language is in the key even though it makes a second row possible, because it
+            // is the one field here a user actively changes mid-session, and they change it
+            // in the settings screen whose exit re-fires this. Keyed without it we would
+            // only ever record the language they opened with, which is the opposite of the
+            // question the field exists to answer.
+            var key = $"{companyName}|{country}|{currency}|{language}|{isSample}";
             lock (_profileGate)
             {
                 if (!_reportedCompanyProfiles.Add(key))
@@ -307,6 +314,7 @@ public class TelemetryManager : ITelemetryManager
             profileEvent.Industry = industry;
             profileEvent.Country = country;
             profileEvent.Currency = currency;
+            profileEvent.Language = language;
             profileEvent.IsSample = isSample;
             await _storageService.RecordEventAsync(profileEvent, cancellationToken);
         }

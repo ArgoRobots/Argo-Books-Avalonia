@@ -163,7 +163,7 @@
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{loc:Loc 'Argo Books collects usage data to help improve the app, including your company name, industry, country and currency.'}"
+                                                <TextBlock Text="{loc:Loc 'Argo Books collects usage data to help improve the app, including your company name, industry, country, currency and language.'}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            TextWrapping="Wrap" />

@@ -82,6 +82,7 @@ public partial class App
                     companySettings.Company.Industry,
                     companySettings.Company.Country,
                     companySettings.Localization.Currency,
+                    companySettings.Localization.Language,
                     CompanyManager.IsSampleCompany);
 
                 var language = companySettings.Localization.Language;

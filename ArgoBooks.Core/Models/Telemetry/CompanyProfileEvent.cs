@@ -40,6 +40,14 @@ public class CompanyProfileEvent : TelemetryEvent
     public string? Currency { get; set; }
 
     /// <summary>
+    /// The language the app is displayed in, as its English name, which is how the setting
+    /// stores it. Not the same question as Country: plenty of people run an English app in a
+    /// country whose language is not English, and that gap is exactly what tells us which
+    /// translations are actually being used rather than merely available.
+    /// </summary>
+    public string? Language { get; set; }
+
+    /// <summary>
     /// True for the built-in demo company. Its details are ours, not the user's, so every
     /// read site has to be able to exclude them before counting industries or currencies.
     /// </summary>
