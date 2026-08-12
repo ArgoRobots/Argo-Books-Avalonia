@@ -280,21 +280,23 @@ public class SidebarViewModelTests
     [Fact]
     public void UpdateFeatureVisibility_SetsAllFlags()
     {
-        _viewModel.UpdateFeatureVisibility(false, false, false);
+        _viewModel.UpdateFeatureVisibility(false, false, false, false);
 
         Assert.False(_viewModel.ShowTransactions);
         Assert.False(_viewModel.ShowInventory);
         Assert.False(_viewModel.ShowRentals);
+        Assert.False(_viewModel.ShowPayroll);
     }
 
     [Fact]
     public void UpdateFeatureVisibility_IndividualFlags_SetCorrectly()
     {
-        _viewModel.UpdateFeatureVisibility(true, false, true);
+        _viewModel.UpdateFeatureVisibility(true, false, true, false);
 
         Assert.True(_viewModel.ShowTransactions);
         Assert.False(_viewModel.ShowInventory);
         Assert.True(_viewModel.ShowRentals);
+        Assert.False(_viewModel.ShowPayroll);
     }
 
     #endregion

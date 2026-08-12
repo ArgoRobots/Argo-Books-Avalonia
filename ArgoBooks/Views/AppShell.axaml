@@ -293,6 +293,9 @@
         <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
         <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
+        <modals:PayrollModals DataContext="{Binding PayrollModalsViewModel}" />
+        <modals:PayRunModals DataContext="{Binding PayRunModalsViewModel}" />
+        <modals:YearEndModal DataContext="{Binding YearEndModalViewModel}" />
 
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />

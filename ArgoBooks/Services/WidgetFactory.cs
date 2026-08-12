@@ -29,6 +29,7 @@ public static class WidgetFactory
         [WidgetType.StatCardTotalCustomers] = new(WidgetType.StatCardTotalCustomers, "Total Customers", "Number of customers", "Statistics", "👥", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.StatCardInventoryValue] = new(WidgetType.StatCardInventoryValue, "Inventory Value", "Total value of inventory on hand", "Statistics", "📦", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.StatCardOverdueInvoices] = new(WidgetType.StatCardOverdueInvoices, "Overdue Invoices", "Invoices past their due date", "Statistics", "🚨", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
+        [WidgetType.StatCardPayrollRemittance] = new(WidgetType.StatCardPayrollRemittance, "Next Remittance Due", "What you owe CRA for last month's payroll", "Statistics", "🏦", WidgetSize.Tiny, [WidgetSize.Tiny, WidgetSize.Small, WidgetSize.Medium]),
         [WidgetType.QuickActions] = new(WidgetType.QuickActions, "Quick Actions", "Shortcut buttons for common tasks", "Actions", "⚡", WidgetSize.Large, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
         [WidgetType.RecentTransactions] = new(WidgetType.RecentTransactions, "Recent Transactions", "Latest revenue and expense entries", "Tables", "📝", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
         [WidgetType.ActiveRentalsTable] = new(WidgetType.ActiveRentalsTable, "Active Rentals Table", "Currently active and overdue rentals", "Tables", "📅", WidgetSize.Medium, [WidgetSize.Medium, WidgetSize.MedLarge, WidgetSize.Large]),
@@ -110,6 +111,7 @@ public static class WidgetFactory
         WidgetType.StatCardTotalCustomers => new StatCardWidgetViewModel(StatCardKind.TotalCustomers),
         WidgetType.StatCardInventoryValue => new StatCardWidgetViewModel(StatCardKind.InventoryValue),
         WidgetType.StatCardOverdueInvoices => new StatCardWidgetViewModel(StatCardKind.OverdueInvoices),
+        WidgetType.StatCardPayrollRemittance => new StatCardWidgetViewModel(StatCardKind.PayrollRemittance),
         WidgetType.QuickActions => new QuickActionsWidgetViewModel(),
         WidgetType.Chart => new UnifiedChartWidgetViewModel(ChartDataType.TotalProfits),
         WidgetType.ProfitsChart => new UnifiedChartWidgetViewModel(ChartDataType.TotalProfits),
@@ -134,7 +136,8 @@ public static class WidgetFactory
         WidgetType.StatCardNetProfit or
         WidgetType.StatCardTotalCustomers or
         WidgetType.StatCardInventoryValue or
-        WidgetType.StatCardOverdueInvoices => new StatCardWidget(),
+        WidgetType.StatCardOverdueInvoices or
+        WidgetType.StatCardPayrollRemittance => new StatCardWidget(),
         WidgetType.QuickActions => new QuickActionsWidget(),
         WidgetType.ProfitsChart or
         WidgetType.RevenueVsExpensesChart or

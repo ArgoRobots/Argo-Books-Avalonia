@@ -64,6 +64,9 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showRentals = true;
 
     [ObservableProperty]
+    private bool _showPayroll = true;
+
+    [ObservableProperty]
     private bool _hasPremium; // Premium plan
 
     #endregion
@@ -85,6 +88,7 @@ public partial class SidebarViewModel : ViewModelBase
     public ObservableCollection<SidebarItemModel> ImportItems { get; } = [];
     public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
     public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> PayrollItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TrackingItems { get; } = [];
 
     #endregion
@@ -169,6 +173,10 @@ public partial class SidebarViewModel : ViewModelBase
         InventoryItems.Add(CreateItem("Locations", "Locations", Icons.Locations));
         InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders", Icons.PurchaseOrders));
 
+        // Payroll Section
+        PayrollItems.Add(CreateItem("Employees", "Employees", Icons.Customers));
+        PayrollItems.Add(CreateItem("Pay Runs", "PayRuns", Icons.Payments));
+
         // Tracking Section
         TrackingItems.Add(CreateItem("Returns", "Returns", Icons.Returns));
         TrackingItems.Add(CreateItem("Lost / Damaged", "LostDamaged", Icons.LostDamaged));
@@ -230,6 +238,7 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in ImportItems) item.IsCollapsed = isCollapsed;
         foreach (var item in RentalItems) item.IsCollapsed = isCollapsed;
         foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in PayrollItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TrackingItems) item.IsCollapsed = isCollapsed;
     }
 
@@ -288,17 +297,20 @@ public partial class SidebarViewModel : ViewModelBase
         foreach (var item in ImportItems) item.IsActive = item.PageName == pageName;
         foreach (var item in RentalItems) item.IsActive = item.PageName == pageName;
         foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in PayrollItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TrackingItems) item.IsActive = item.PageName == pageName;
     }
 
     /// <summary>
     /// Updates feature visibility based on settings.
     /// </summary>
-    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals)
+    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals,
+                                        bool showPayroll)
     {
         ShowTransactions = showTransactions;
         ShowInventory = showInventory;
         ShowRentals = showRentals;
+        ShowPayroll = showPayroll;
     }
 
     /// <summary>

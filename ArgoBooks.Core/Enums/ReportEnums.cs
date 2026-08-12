@@ -249,7 +249,8 @@ public enum AccountingReportType
     GeneralLedger,
     AccountsReceivableAging,
     TaxSummary,
-    ProductSales
+    ProductSales,
+    PayrollRemittance
 }
 
 /// <summary>
@@ -411,6 +412,7 @@ public static class ReportEnumExtensions
             AccountingReportType.AccountsReceivableAging => "Accounts Receivable Aging",
             AccountingReportType.TaxSummary => "Tax Summary",
             AccountingReportType.ProductSales => "Sales by Product",
+            AccountingReportType.PayrollRemittance => "Payroll Remittance",
             _ => reportType.ToString()
         };
     }

@@ -1,0 +1,330 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="ArgoBooks.Modals.YearEndModal"
+             x:DataType="vm:YearEndModalViewModel">
+
+    <Design.DataContext>
+        <vm:YearEndModalViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <controls:ModalOverlay IsOpen="{Binding IsOpen}" ClosingCommand="{Binding CloseCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="820" MaxHeight="760"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{loc:Loc 'Year end'}" FontSize="18" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'T4 slips for your employees, and the file CRA needs'}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <ComboBox Grid.Column="1" Margin="0,0,12,0" Width="110"
+                                          ItemsSource="{Binding AvailableYears}"
+                                          SelectedItem="{Binding SelectedYear, Mode=TwoWay}"
+                                          Classes="form-combobox" VerticalAlignment="Center" />
+
+                                <Button Grid.Column="2" Classes="icon-button" Command="{Binding CloseCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <!-- Horizontal scrolling disabled, as in every other modal. Left enabled,
+                             the ScrollViewer measures its content at infinite width, so nothing
+                             wraps and the long lines push the modal sideways. -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="16">
+
+                                <!-- Everything wrong, all at once. Fixing these means visiting
+                                     other screens, so the whole list is more useful than the
+                                     first item. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                        IsVisible="{Binding HasProblems}">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="{loc:Loc 'Fix these before filing'}" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource WarningBrush}" />
+                                        <ItemsControl ItemsSource="{Binding Problems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap"
+                                                               Margin="0,2"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock Text="{loc:Loc 'You can still download the slips. Only filing is blocked.'}"
+                                                   FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- The three things CRA needs that pay runs cannot supply.
+                                     Editable here so the reason filing is blocked can be
+                                     fixed where it is reported. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="{loc:Loc 'Filing details'}" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <Grid ColumnDefinitions="*,16,*">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Payroll account number'}" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding AccountNumber, Mode=TwoWay}" Classes="form-input"
+                                                         PlaceholderText="000000000RP0000" MaxLength="17" />
+                                                <TextBlock Text="{loc:Loc 'From your CRA statement of account. RP, not RC.'}"
+                                                           FontSize="11" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Who CRA should contact'}" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ContactName, Mode=TwoWay}" Classes="form-input"
+                                                         MaxLength="22" />
+                                                <TextBox Text="{Binding ContactPhone, Mode=TwoWay}" Classes="form-input"
+                                                         PlaceholderText="403 555 1234" MaxLength="14" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Original, amendment or cancellation. CRA rejects a return
+                                     that mixes amended and original slips, so the choice
+                                     changes which slips go in the file rather than just a
+                                     code on it. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                        IsVisible="{Binding HasRows}">
+                                    <StackPanel Spacing="10">
+                                        <TextBlock Text="{loc:Loc 'What kind of filing is this?'}" FontSize="13"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="20">
+                                            <RadioButton GroupName="FilingType" Content="{loc:Loc 'Original'}"
+                                                         IsChecked="{Binding IsOriginalFiling, Mode=TwoWay}" />
+                                            <RadioButton GroupName="FilingType" Content="{loc:Loc 'Amendment'}"
+                                                         IsChecked="{Binding IsAmendmentFiling, Mode=TwoWay}" />
+                                            <RadioButton GroupName="FilingType" Content="{loc:Loc 'Cancellation'}"
+                                                         IsChecked="{Binding IsCancelFiling, Mode=TwoWay}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6" IsVisible="{Binding IsAmending}">
+                                            <TextBlock Text="{loc:Loc 'Tick the employees whose slips changed. Send this on its own: CRA rejects a return that mixes amended and original slips.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBox Text="{Binding AmendmentNote, Mode=TwoWay}" Classes="form-input"
+                                                     MaxLength="1309" AcceptsReturn="True" MinHeight="56"
+                                                     TextWrapping="Wrap"
+                                                     PlaceholderText="{loc:Loc 'Why is it being amended? CRA reads this.'}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Per employee, so the figures can be checked against the
+                                     pay stubs before anything leaves the building. -->
+                                <StackPanel Spacing="8" IsVisible="{Binding HasRows}">
+                                    <Grid ColumnDefinitions="2*,1.2*,1.2*,1.2*,1.2*">
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc Employee}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc 'Income'}" FontSize="12" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Right"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="2" Text="{loc:Loc CPP}" FontSize="12" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Right"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="3" Text="{loc:Loc EI}" FontSize="12" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Right"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="4" Text="{loc:Loc 'Tax'}" FontSize="12" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Right"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </Grid>
+
+                                    <ItemsControl ItemsSource="{Binding Rows}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:T4RowViewModel">
+                                                <Border Padding="0,8" BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="0,0,0,1">
+                                                    <Grid ColumnDefinitions="2*,1.2*,1.2*,1.2*,1.2*">
+                                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                                                            <!-- Only when amending. The app has no
+                                                                 record of what was filed last
+                                                                 time, so only the employer knows
+                                                                 which slips actually changed. -->
+                                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                      VerticalAlignment="Center" MinWidth="0"
+                                                                      IsVisible="{Binding $parent[ItemsControl].((vm:YearEndModalViewModel)DataContext).IsAmending}" />
+                                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                            <!-- Flagged per row so a missing SIN
+                                                                 is traceable to a person. -->
+                                                            <TextBlock Text="{loc:Loc 'no SIN'}" FontSize="11"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource WarningBrush}"
+                                                                       IsVisible="{Binding !HasSin}" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Income}" FontSize="13"
+                                                                   HorizontalAlignment="Right"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <TextBlock Grid.Column="2" Text="{Binding Cpp}" FontSize="13"
+                                                                   HorizontalAlignment="Right"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding Ei}" FontSize="13"
+                                                                   HorizontalAlignment="Right"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                        <TextBlock Grid.Column="4" Text="{Binding Tax}" FontSize="13"
+                                                                   HorizontalAlignment="Right"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                        IsVisible="{Binding HasRows}">
+                                    <StackPanel Spacing="10">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Total employment income'}" FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                            <TextBlock Grid.Column="1" Text="{Binding TotalIncome}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Total withheld from employees'}" FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                            <TextBlock Grid.Column="1" Text="{Binding TotalDeductions}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc 'Total that should have been remitted'}" FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{loc:Loc 'Compare this against what you actually sent CRA over the year'}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding TotalRemitted}" FontSize="15" FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- The Revenu Quebec half, shown only to an employer who has a
+                                     Quebec employee. It is a second filing rather than a
+                                     variation on the first, so it gets its own problems, its
+                                     own total and its own button rather than sharing the
+                                     footer's. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                        IsVisible="{Binding HasQuebec}">
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{loc:Loc 'Quebec: RL-1'}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'You have Quebec employees, so you also file an RL-1 with Revenu Quebec. It is separate from the T4 and carries the Quebec tax and QPIP amounts.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Revenu Quebec identification number'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding QuebecIdentificationNumber, Mode=TwoWay}" Classes="form-input"
+                                                     PlaceholderText="1234567890RS0001" MaxLength="18" />
+                                            <TextBlock Text="{loc:Loc 'This is not your CRA payroll account number. It is on your Revenu Quebec statement.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+
+                                        <ItemsControl ItemsSource="{Binding QuebecProblems}"
+                                                      IsVisible="{Binding HasQuebecProblems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap"
+                                                               Margin="0,2"
+                                                               Foreground="{DynamicResource WarningBrush}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc 'Total that should have been remitted to Revenu Quebec'}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                                                <TextBlock Text="{loc:Loc 'QPP, QPIP and Quebec tax only. It does not include the health services fund.'}"
+                                                           FontSize="11" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding QuebecTotalRemitted}" FontSize="15"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Button Classes="secondary-button" HorizontalAlignment="Left"
+                                                Content="{loc:Loc 'Download RL-1 slips'}"
+                                                Command="{Binding DownloadQuebecSlipsCommand}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="{loc:Loc 'No approved pay runs in this year, so there is nothing to file.'}"
+                                           FontSize="13" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding !HasRows}" />
+
+                                <TextBlock Text="{Binding StatusMessage}" FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource SuccessBrush}"
+                                           IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="11" TextWrapping="Wrap"
+                                           Margin="0,0,16,0"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Text="{loc:Loc 'T4s are due to CRA and to your employees by the last day of February.'}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="secondary-button" Content="{loc:Loc 'Download slips'}"
+                                            IsEnabled="{Binding HasRows}"
+                                            Command="{Binding DownloadSlipsCommand}" />
+                                    <Button Classes="primary-button" Content="{loc:Loc 'Export for filing'}"
+                                            IsEnabled="{Binding CanFile}"
+                                            Command="{Binding ExportXmlCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+
+</UserControl>

@@ -34,6 +34,9 @@ public partial class AppShellViewModel : ViewModelBase
     private RevenueModalsViewModel? _revenueModalsViewModel;
     private StockLevelsModalsViewModel? _stockLevelsModalsViewModel;
     private LocationsModalsViewModel? _locationsModalsViewModel;
+    private PayrollModalsViewModel? _payrollModalsViewModel;
+    private PayRunModalsViewModel? _payRunModalsViewModel;
+    private YearEndModalViewModel? _yearEndModalViewModel;
     private StockAdjustmentsModalsViewModel? _stockAdjustmentsModalsViewModel;
     private BankMatchingModalsViewModel? _bankMatchingModalsViewModel;
     private BankStatementImportModalViewModel? _bankStatementImportModalViewModel;
@@ -444,6 +447,54 @@ public partial class AppShellViewModel : ViewModelBase
                 OnPropertyChanged();
             }
             return _locationsModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the payroll modals view model.
+    /// </summary>
+    public PayrollModalsViewModel PayrollModalsViewModel
+    {
+        get
+        {
+            if (_payrollModalsViewModel == null)
+            {
+                _payrollModalsViewModel = new PayrollModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _payrollModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the pay run modal view model.
+    /// </summary>
+    public PayRunModalsViewModel PayRunModalsViewModel
+    {
+        get
+        {
+            if (_payRunModalsViewModel == null)
+            {
+                _payRunModalsViewModel = new PayRunModalsViewModel();
+                OnPropertyChanged();
+            }
+            return _payRunModalsViewModel;
+        }
+    }
+
+    /// <summary>
+    /// Gets the year end modal view model.
+    /// </summary>
+    public YearEndModalViewModel YearEndModalViewModel
+    {
+        get
+        {
+            if (_yearEndModalViewModel == null)
+            {
+                _yearEndModalViewModel = new YearEndModalViewModel();
+                OnPropertyChanged();
+            }
+            return _yearEndModalViewModel;
         }
     }
 

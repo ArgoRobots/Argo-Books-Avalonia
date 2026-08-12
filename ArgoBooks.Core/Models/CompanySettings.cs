@@ -97,6 +97,41 @@ public class CompanyInfo
     public string? Country { get; set; }
     [JsonPropertyName("logoFileName")]
     public string? LogoFileName { get; set; }
+
+    /// <summary>
+    /// Postal code. Only payroll needs it so far, because a T4 carries the employer's full
+    /// address, but it is ordinary company information rather than a payroll field.
+    /// </summary>
+    [JsonPropertyName("postalCode")]
+    public string? PostalCode { get; set; }
+
+    /// <summary>
+    /// CRA payroll program account, the fifteen character BN15 in the form 000000000RP0000.
+    /// Required on both the T4 slip (box 54) and the summary, and CRA validates that the two
+    /// match, so it is stored once here rather than per employee.
+    /// </summary>
+    [JsonPropertyName("payrollAccountNumber")]
+    public string? PayrollAccountNumber { get; set; }
+
+    /// <summary>
+    /// The person CRA should call about a T4 filing, required on the summary. Kept separate
+    /// from the company's own name and phone because it is a named individual, and because a
+    /// bookkeeper filing on the owner's behalf puts themselves here.
+    /// </summary>
+    [JsonPropertyName("payrollContactName")]
+    public string? PayrollContactName { get; set; }
+
+    [JsonPropertyName("payrollContactPhone")]
+    public string? PayrollContactPhone { get; set; }
+
+    /// <summary>
+    /// The Revenu Quebec identification number, ten digits then a two letter file code then
+    /// four digits, as in 1234567890RS0001. Needed only by an employer with Quebec staff, and
+    /// it is NOT the CRA payroll account number: a Quebec employer holds both, files a T4 with
+    /// one and an RL-1 with the other, and the two look nothing alike.
+    /// </summary>
+    [JsonPropertyName("quebecIdentificationNumber")]
+    public string? QuebecIdentificationNumber { get; set; }
 }
 
 public class LocalizationSettings

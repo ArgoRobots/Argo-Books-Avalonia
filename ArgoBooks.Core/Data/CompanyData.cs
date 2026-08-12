@@ -63,6 +63,20 @@ public class CompanyData
     public List<Supplier> Suppliers { get; init; } = [];
 
     /// <summary>
+    /// Everyone on the payroll, including those who have left. Employees are archived rather
+    /// than removed, because a T4 must still be produceable for someone who left mid-year.
+    /// </summary>
+    [JsonPropertyName("employees")]
+    public List<Models.Payroll.Employee> Employees { get; init; } = [];
+
+    /// <summary>
+    /// Every payroll ever run, including voided ones and the reversals that cancelled them.
+    /// Nothing is removed: an approved run's figures are what the employee's pay stub says.
+    /// </summary>
+    [JsonPropertyName("payRuns")]
+    public List<Models.Payroll.PayRun> PayRuns { get; init; } = [];
+
+    /// <summary>
     /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]

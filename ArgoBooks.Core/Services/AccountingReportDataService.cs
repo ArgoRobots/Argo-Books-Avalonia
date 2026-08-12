@@ -188,6 +188,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             AccountingReportType.GeneralLedger => GetGeneralLedgerData(),
             AccountingReportType.AccountsReceivableAging => GetARAgingData(),
             AccountingReportType.TaxSummary => GetTaxSummaryData(),
+            AccountingReportType.PayrollRemittance => GetPayrollRemittanceData(),
             AccountingReportType.ProductSales => GetProductSalesData(),
             _ => new AccountingTableData { Title = "Unknown Report" }
         };
@@ -1493,6 +1494,102 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         });
 
         return data;
+    }
+
+    /// <summary>
+    /// What is owed to CRA for the pay dates in range: everything withheld from employees,
+    /// plus the employer's own contributions.
+    ///
+    /// Everything except drafts. A draft has not happened yet. A voided run still counts,
+    /// because its reversal counts too and the pair nets to zero; excluding the voided run
+    /// while keeping its reversal would subtract the same payroll twice.
+    ///
+    /// No currency conversion here, unlike the other reports. Payroll is Canadian by
+    /// definition and the deductions are always in Canadian dollars.
+    /// </summary>
+    private AccountingTableData GetPayrollRemittanceData()
+    {
+        var data = new AccountingTableData
+        {
+            Title = "Payroll Remittance",
+            Subtitle = GetCurrencySubtitle(),
+            ColumnHeaders = [],
+            ColumnWidthRatios = [0.65, 0.35]
+        };
+
+        var runs = companyData?.PayRuns
+            .Where(r => r.Status != Models.Payroll.PayRunStatus.Draft && IsInDateRange(r.PayDate))
+            .ToList() ?? [];
+
+        var lines = runs.SelectMany(r => r.Lines).ToList();
+
+        decimal cppEmployee = lines.Sum(l => l.CppEmployee) + lines.Sum(l => l.Cpp2Employee);
+        decimal cppEmployer = lines.Sum(l => l.CppEmployer) + lines.Sum(l => l.Cpp2Employer);
+        decimal eiEmployee = lines.Sum(l => l.EiEmployee);
+        decimal eiEmployer = lines.Sum(l => l.EiEmployer);
+        decimal incomeTax = lines.Sum(l => l.FederalTax) + lines.Sum(l => l.ProvincialTax);
+        decimal total = cppEmployee + cppEmployer + eiEmployee + eiEmployer + incomeTax;
+
+        data.Rows.Add(new AccountingRow
+        {
+            Label = "Withheld from employees",
+            RowType = AccountingRowType.SectionHeader,
+            Values = ["Amount"]
+        });
+        data.Rows.Add(Row("Income tax", incomeTax));
+        data.Rows.Add(Row("CPP", cppEmployee));
+        data.Rows.Add(Row("EI", eiEmployee));
+        data.Rows.Add(new AccountingRow
+        {
+            Label = "Total withheld",
+            Values = [FormatCurrency(incomeTax + cppEmployee + eiEmployee)],
+            RowType = AccountingRowType.SubtotalRow
+        });
+
+        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+
+        data.Rows.Add(new AccountingRow
+        {
+            Label = "Employer contributions",
+            RowType = AccountingRowType.SectionHeader,
+            Values = [""]
+        });
+        data.Rows.Add(Row("CPP", cppEmployer));
+        data.Rows.Add(Row("EI", eiEmployer));
+        data.Rows.Add(new AccountingRow
+        {
+            Label = "Total employer",
+            Values = [FormatCurrency(cppEmployer + eiEmployer)],
+            RowType = AccountingRowType.SubtotalRow
+        });
+
+        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = [""] });
+
+        data.Rows.Add(new AccountingRow
+        {
+            Label = "Total to remit",
+            Values = [FormatCurrency(total)],
+            RowType = AccountingRowType.GrandTotalRow
+        });
+
+        data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+        data.Rows.Add(new AccountingRow
+        {
+            Label = $"Pay runs included: {runs.Count}",
+            Values = [""],
+            RowType = AccountingRowType.DataRow
+        });
+
+        return data;
+
+        AccountingRow Row(string label, decimal value) => new()
+        {
+            Label = label,
+            Values = [FormatCurrency(value)],
+            IndentLevel = 1,
+            RowType = AccountingRowType.DataRow
+        };
     }
 
     private void AddEmptyTaxSummary(AccountingTableData data, AccountingTerms t)

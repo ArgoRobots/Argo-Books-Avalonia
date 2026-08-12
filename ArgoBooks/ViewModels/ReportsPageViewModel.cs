@@ -66,7 +66,9 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         new(ReportTemplateFactory.TemplateNames.TaxSummary, "Tax Summary", "Tax you collected vs. tax you paid",
             Icons.BarChart, AppColors.FlatOrange, AppColors.FlatOrangeLight),
         new(ReportTemplateFactory.TemplateNames.ProductSales, "Sales by Product", "Units and revenue per product",
-            Icons.Products, AppColors.FlatIndigo, AppColors.FlatIndigoLight)
+            Icons.Products, AppColors.FlatIndigo, AppColors.FlatIndigoLight),
+        new(ReportTemplateFactory.TemplateNames.PayrollRemittance, "Payroll Remittance", "What you owe CRA for your payroll",
+            Icons.Payments, AppColors.MdBrown, AppColors.MdBrownLight)
     ];
 
     #endregion
