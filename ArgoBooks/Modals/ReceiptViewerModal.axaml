@@ -93,7 +93,7 @@
                             <PathIcon Data="{x:Static icons:Icons.Receipts}"
                                       Width="48" Height="48"
                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <TextBlock Text="{loc:Loc 'Loading receipt...'}"
+                            <TextBlock Text="{Binding LoadingMessage, Converter={StaticResource TranslateConverter}}"
                                        FontSize="14"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center" />
@@ -107,7 +107,7 @@
                             <PathIcon Data="{x:Static icons:Icons.Receipts}"
                                       Width="48" Height="48"
                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <TextBlock Text="{loc:Loc 'Receipt preview not available'}"
+                            <TextBlock Text="{Binding EmptyMessage, Converter={StaticResource TranslateConverter}}"
                                        FontSize="14"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center" />

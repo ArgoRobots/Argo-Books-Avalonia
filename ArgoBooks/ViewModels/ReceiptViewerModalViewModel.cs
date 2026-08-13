@@ -41,6 +41,17 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _canDelete = true;
 
+    /// <summary>
+    /// What to call the thing on screen while it loads or fails. The viewer shows generated
+    /// documents as well as receipts now, and a Record of Employment announcing itself as a
+    /// receipt is just wrong.
+    /// </summary>
+    [ObservableProperty]
+    private string _loadingMessage = "Loading receipt...";
+
+    [ObservableProperty]
+    private string _emptyMessage = "Receipt preview not available";
+
     [ObservableProperty]
     private string _title = string.Empty;
 
@@ -81,6 +92,8 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         _documentBytes = null;
         _documentFileName = string.Empty;
         CanDelete = true;
+        LoadingMessage = "Loading receipt...";
+        EmptyMessage = "Receipt preview not available";
         Title = title ?? $"Receipt for {receiptId}";
         IsFullscreen = false;
         ReceiptPages.Clear();
@@ -101,6 +114,8 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         _documentBytes = pdfBytes;
         _documentFileName = fileName;
         CanDelete = false;
+        LoadingMessage = "Loading document...";
+        EmptyMessage = "Document preview not available";
         Title = title;
         IsFullscreen = false;
         ReceiptPages.Clear();
