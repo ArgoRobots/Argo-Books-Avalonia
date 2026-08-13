@@ -366,6 +366,10 @@ public partial class PayRunModalsViewModel : ViewModelBase
             AmountRows.Add(row);
         }
 
+        // The same pair the amount-changed handler runs. Without the recalculate the rows show
+        // an empty Gross until the first keystroke, even though the figures are already known:
+        // a salaried run arrives with its base pay filled in and needs no input at all.
+        Recalculate();
         UpdateGrossTotal();
     }
 
