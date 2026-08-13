@@ -101,8 +101,7 @@
                                 </Grid>
 
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="{loc:Loc 'Pay'}" FontSize="13" FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Pay'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                         <RadioButton GroupName="PayType" Content="{loc:Loc 'Salary'}"
                                                      IsChecked="{Binding IsSalaried, Mode=TwoWay}" />
