@@ -161,12 +161,30 @@ public partial class PayrollModalsViewModel : ViewModelBase
     /// <summary>Event raised after a save, so the page can reload.</summary>
     public event EventHandler? EmployeeSaved;
 
+    /// <summary>
+    /// The form as it stood when the modal opened, so closing can tell whether anything was
+    /// touched.
+    ///
+    /// A snapshot rather than one _originalX field per property, which is how the older modals
+    /// do it. This form has twenty fields and gained two of them in a single change, and a
+    /// per-field list silently stops detecting whatever nobody remembered to add to it.
+    /// </summary>
+    private string _employeeSnapshot = string.Empty;
+
+    private string EmployeeFormSnapshot() => string.Join('\u001f',
+        Name, EmployeeNumber, Province, IsSalaried, PayRate, PayFrequency, StandardHoursPerWeek,
+        FederalClaimAmount, ProvincialClaimAmount, IsCppExempt, IsEiExempt, StartDate, EndDate,
+        Sin, AddressStreet, AddressCity, AddressProvince, AddressPostalCode, DentalBenefit, Notes);
+
+    public bool HasEmployeeModalChanges => EmployeeFormSnapshot() != _employeeSnapshot;
+
     public void OpenAddEmployeeModal()
     {
         _editing = null;
         ModalTitle = "Add employee";
         Clear();
         RefreshSupportedProvinces();
+        _employeeSnapshot = EmployeeFormSnapshot();
         IsEmployeeModalOpen = true;
     }
 
@@ -200,7 +218,33 @@ public partial class PayrollModalsViewModel : ViewModelBase
         NameError = string.Empty;
         PayRateError = string.Empty;
         EndDateError = string.Empty;
+
+        _employeeSnapshot = EmployeeFormSnapshot();
         IsEmployeeModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closing with unsaved work asks first, as every other entity modal does. Clicking the
+    /// backdrop is the easiest way to lose a half-filled form, and it was silent here.
+    /// </summary>
+    [RelayCommand]
+    private async Task RequestCloseEmployeeModalAsync()
+    {
+        if (HasEmployeeModalChanges)
+        {
+            // A new employee discards differently from an edited one, so the wording matches
+            // which of the two is on screen.
+            bool confirmed = _editing == null
+                ? await ConfirmDiscardNewAsync()
+                : await ConfirmDiscardEditsAsync();
+
+            if (!confirmed)
+            {
+                return;
+            }
+        }
+
+        CloseEmployeeModal();
     }
 
     [RelayCommand]
@@ -445,7 +489,42 @@ public partial class PayrollModalsViewModel : ViewModelBase
             FilterProvince = "All";
         }
 
+        _filterSnapshot = FilterSnapshot();
         IsFilterModalOpen = true;
+    }
+
+    private string _filterSnapshot = string.Empty;
+
+    private string FilterSnapshot() =>
+        string.Join('', FilterStatus, FilterProvince, FilterPayType, FilterFrequency);
+
+    public bool HasFilterModalChanges => FilterSnapshot() != _filterSnapshot;
+
+    /// <summary>
+    /// Filters are live properties, so abandoning the modal has to put them back. Without the
+    /// restore the page would quietly keep filtering by a choice the user cancelled.
+    /// </summary>
+    [RelayCommand]
+    public async Task RequestCloseFilterModalAsync()
+    {
+        if (HasFilterModalChanges)
+        {
+            if (!await ConfirmDiscardFiltersAsync())
+            {
+                return;
+            }
+
+            string[] original = _filterSnapshot.Split('');
+            if (original.Length == 4)
+            {
+                FilterStatus = original[0];
+                FilterProvince = original[1];
+                FilterPayType = original[2];
+                FilterFrequency = original[3];
+            }
+        }
+
+        CloseFilterModal();
     }
 
     [RelayCommand]

@@ -19,7 +19,7 @@
     <Panel>
         <!-- ======================= ADD / EDIT EMPLOYEE ======================= -->
         <controls:ModalOverlay IsOpen="{Binding IsEmployeeModalOpen}"
-                               ClosingCommand="{Binding CloseEmployeeModalCommand}">
+                               ClosingCommand="{Binding RequestCloseEmployeeModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center" VerticalAlignment="Center"
                         Width="640" MaxHeight="700"
@@ -291,7 +291,7 @@
 
         <!-- ============================ FILTER ============================ -->
         <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
-                               ClosingCommand="{Binding CloseFilterModalCommand}">
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center" VerticalAlignment="Center"
                         Width="450"

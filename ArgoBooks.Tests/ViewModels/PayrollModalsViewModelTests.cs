@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.ViewModels;
 using Xunit;
 
@@ -125,5 +126,126 @@ public class PayrollModalsViewModelTests
 
         Assert.NotEmpty(vm.SupportedProvinces);
         Assert.Contains(vm.Province, vm.SupportedProvinces);
+    }
+}
+
+/// <summary>
+/// Tests for the unsaved-changes detection behind the discard prompt.
+///
+/// The prompt itself cannot be exercised here, because the confirm helper returns true when
+/// there is no dialog and tests have none. What is worth pinning is the detection: if it stops
+/// noticing a field, the modal silently goes back to throwing away work on a backdrop click,
+/// which is the bug this was added to fix and which nothing else would catch.
+/// </summary>
+public class PayrollModalsDiscardTests
+{
+    private static Employee Person() => new()
+    {
+        Id = "EMP-001",
+        Name = "Dana Smith",
+        Province = "AB",
+        PayType = PayType.Salary,
+        PayRate = 52000m,
+        PayFrequency = PayFrequency.Biweekly,
+    };
+
+    [Fact]
+    public void AFreshAddForm_HasNothingToDiscard()
+    {
+        var vm = new PayrollModalsViewModel();
+        vm.OpenAddEmployeeModal();
+
+        Assert.False(vm.HasEmployeeModalChanges);
+    }
+
+    [Fact]
+    public void TypingIntoTheAddForm_CountsAsChanges()
+    {
+        var vm = new PayrollModalsViewModel();
+        vm.OpenAddEmployeeModal();
+
+        vm.Name = "Dana Smith";
+
+        Assert.True(vm.HasEmployeeModalChanges);
+    }
+
+    [Fact]
+    public void AnUntouchedEditForm_HasNothingToDiscard()
+    {
+        // The snapshot is taken after the employee is loaded, so merely opening an existing
+        // record must not look like an edit.
+        var vm = new PayrollModalsViewModel();
+        vm.OpenEditEmployeeModal(Person());
+
+        Assert.False(vm.HasEmployeeModalChanges);
+    }
+
+    [Fact]
+    public void EditingAnyFieldCounts_IncludingTheOnesAddedLast()
+    {
+        var vm = new PayrollModalsViewModel();
+        vm.OpenEditEmployeeModal(Person());
+
+        // Contract hours arrived with the Record of Employment, after this form was written.
+        // A per-field original list is exactly what would have missed it.
+        vm.StandardHoursPerWeek = "37.5";
+
+        Assert.True(vm.HasEmployeeModalChanges);
+    }
+
+    [Fact]
+    public void TypingAndThenUndoingIt_IsNotAChange()
+    {
+        var vm = new PayrollModalsViewModel();
+        vm.OpenEditEmployeeModal(Person());
+
+        vm.Name = "Someone Else";
+        Assert.True(vm.HasEmployeeModalChanges);
+
+        vm.Name = "Dana Smith";
+
+        // Nothing would be lost by closing now, so nothing should be asked.
+        Assert.False(vm.HasEmployeeModalChanges);
+    }
+
+    [Fact]
+    public void ReopeningTheAddFormAfterAnEdit_StartsClean()
+    {
+        var vm = new PayrollModalsViewModel();
+        vm.OpenEditEmployeeModal(Person());
+        vm.Name = "Someone Else";
+
+        vm.OpenAddEmployeeModal();
+
+        Assert.False(vm.HasEmployeeModalChanges);
+    }
+
+    [Fact]
+    public void ChangingAFilter_CountsAsChanges()
+    {
+        var vm = new PayrollModalsViewModel();
+        vm.OpenFilterModal();
+        Assert.False(vm.HasFilterModalChanges);
+
+        vm.FilterPayType = "Hourly";
+
+        Assert.True(vm.HasFilterModalChanges);
+    }
+
+    [Fact]
+    public void AbandoningTheFilterModal_PutsTheFiltersBack()
+    {
+        // Filters are live properties, so leaving a cancelled choice in place would keep the
+        // page filtered by something the user backed out of.
+        var vm = new PayrollModalsViewModel();
+        vm.OpenFilterModal();
+        vm.FilterStatus = "Archived";
+        vm.FilterPayType = "Hourly";
+
+        vm.RequestCloseFilterModalCommand.Execute(null);
+
+        Assert.Equal("All", vm.FilterStatus);
+        Assert.Equal("All", vm.FilterPayType);
+        Assert.False(vm.IsFilterModalOpen);
     }
 }
