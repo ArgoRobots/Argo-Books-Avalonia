@@ -70,7 +70,13 @@
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                         <ComboBox ItemsSource="{Binding SupportedProvinces}"
                                                   SelectedItem="{Binding Province, Mode=TwoWay}"
-                                                  Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                                  Classes="form-combobox" HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={x:Static local:ProvinceNameConverter.Instance}}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
                                         <!-- Only provinces the loaded rate table covers are offered, so an
                                              employee can never be created that a pay run would refuse. -->
                                         <TextBlock Text="{loc:Loc 'Where they work, which may differ from where they live.'}"
@@ -344,7 +350,7 @@
                                               Classes="form-combobox" HorizontalAlignment="Stretch">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                                <TextBlock Text="{Binding Converter={x:Static local:ProvinceNameConverter.Instance}}" />
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
