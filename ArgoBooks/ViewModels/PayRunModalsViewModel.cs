@@ -147,6 +147,27 @@ public partial class PayRunModalsViewModel : ViewModelBase
         _draft = null;
     }
 
+    /// <summary>
+    /// True once the run holds work that retyping would cost something.
+    ///
+    /// Step 1 is deliberately not guarded: the pay date, the period and the employee ticks are
+    /// all prefilled defaults, so abandoning there loses nothing anyone chose. From step 2 the
+    /// amounts are hand entered, which is the part worth asking about, and the rows survive
+    /// stepping back so the check does not depend on where they are now.
+    /// </summary>
+    private bool HasRunInProgress => Step > 1 || AmountRows.Count > 0;
+
+    [RelayCommand]
+    private async Task RequestCloseRunModalAsync()
+    {
+        if (HasRunInProgress && !await ConfirmDiscardNewAsync())
+        {
+            return;
+        }
+
+        CloseRunModal();
+    }
+
     private void LoadSelectableEmployees()
     {
         SelectableEmployees.Clear();

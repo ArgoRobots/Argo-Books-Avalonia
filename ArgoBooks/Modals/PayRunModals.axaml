@@ -38,7 +38,7 @@
 
     <Panel>
         <controls:ModalOverlay IsOpen="{Binding IsRunModalOpen}"
-                               ClosingCommand="{Binding CloseRunModalCommand}">
+                               ClosingCommand="{Binding RequestCloseRunModalCommand}">
             <controls:ModalOverlay.ModalContent>
                 <Border HorizontalAlignment="Center" VerticalAlignment="Center"
                         Width="820" MaxHeight="760"
