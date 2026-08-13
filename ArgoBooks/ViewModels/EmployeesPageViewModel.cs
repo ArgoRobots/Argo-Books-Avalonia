@@ -224,19 +224,12 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
             App.ReceiptViewerModal?.ShowDocument(
                 "Record of Employment: {0}".TranslateFormat(sheet.EmployeeName),
                 bytes,
-                $"ROE-worksheet-{Sanitize(sheet.EmployeeName)}.pdf");
+                $"ROE-worksheet-{ExportFolderHelper.Sanitize(sheet.EmployeeName)}.pdf");
         }
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.Roe");
         }
-    }
-
-    private static string Sanitize(string name)
-    {
-        char[] invalid = Path.GetInvalidFileNameChars();
-        string result = new(name.Select(c => invalid.Contains(c) || c == ' ' ? '-' : c).ToArray());
-        return string.IsNullOrEmpty(result.Trim('-')) ? "employee" : result.Trim('-');
     }
 
     /// <summary>

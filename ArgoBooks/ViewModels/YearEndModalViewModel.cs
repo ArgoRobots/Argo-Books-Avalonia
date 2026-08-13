@@ -6,6 +6,7 @@ using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Services.Payroll;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Utilities;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
@@ -392,10 +393,13 @@ public partial class YearEndModalViewModel : ViewModelBase
         {
             T4Return t4 = _return;
 
+            directory = ExportFolderHelper.Resolve(
+                directory, $"T4 {t4.TaxYear}", t4.Slips.Count + 1);
+
             foreach (T4Slip slip in t4.Slips)
             {
                 byte[] bytes = await Task.Run(() => T4PdfRenderer.RenderSlip(t4, slip));
-                string name = $"T4-{t4.TaxYear}-{Sanitize($"{slip.GivenName} {slip.Surname}")}.pdf";
+                string name = $"T4-{t4.TaxYear}-{ExportFolderHelper.Sanitize($"{slip.GivenName} {slip.Surname}")}.pdf";
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
 
@@ -437,6 +441,9 @@ public partial class YearEndModalViewModel : ViewModelBase
         {
             Rl1Return rl1 = _quebecReturn;
 
+            directory = ExportFolderHelper.Resolve(
+                directory, $"RL-1 {rl1.TaxYear}", rl1.Slips.Count + 1);
+
             // The slip code is printed on the PDF so the employer keys the right one in. Unlike
             // the T4 there is no per-slip selection: these are printed and re-keyed by hand, so
             // the employer chooses which ones to actually send.
@@ -450,7 +457,7 @@ public partial class YearEndModalViewModel : ViewModelBase
             foreach (Rl1Slip slip in rl1.Slips)
             {
                 byte[] bytes = await Task.Run(() => Rl1PdfRenderer.RenderSlip(rl1, slip));
-                string name = $"RL1-{rl1.TaxYear}-{Sanitize($"{slip.GivenName} {slip.Surname}")}.pdf";
+                string name = $"RL1-{rl1.TaxYear}-{ExportFolderHelper.Sanitize($"{slip.GivenName} {slip.Surname}")}.pdf";
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
 
@@ -563,12 +570,6 @@ public partial class YearEndModalViewModel : ViewModelBase
         return folders.Count == 0 ? null : folders[0].Path.LocalPath;
     }
 
-    private static string Sanitize(string name)
-    {
-        char[] invalid = Path.GetInvalidFileNameChars();
-        string result = new(name.Select(c => invalid.Contains(c) || c == ' ' ? '-' : c).ToArray());
-        return string.IsNullOrEmpty(result.Trim('-')) ? "employee" : result.Trim('-');
-    }
 }
 
 /// <summary>One employee's line on the year end review.</summary>

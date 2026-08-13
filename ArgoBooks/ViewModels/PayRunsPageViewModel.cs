@@ -265,7 +265,13 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
                 return;
             }
 
-            string directory = folders[0].Path.LocalPath;
+            // One stub each, so anything but a single-employee run gets its own folder
+            // rather than scattering PDFs through whatever the user picked.
+            string directory = ExportFolderHelper.Resolve(
+                folders[0].Path.LocalPath,
+                $"Pay stubs {run.PayDate:yyyy-MM-dd}",
+                run.Lines.Count);
+
             string symbol = CurrencyService.CurrentSymbol;
 
             foreach (PayRunLine line in run.Lines)
@@ -275,7 +281,7 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
                 PayrollYearToDate ytd = _payroll.YearToDateFor(data, line.EmployeeId, run);
 
                 byte[] bytes = await Task.Run(() => PayStubPdfRenderer.Render(run, line, ytd, data, symbol));
-                string name = $"{run.PayDate:yyyy-MM-dd}-{Sanitize(line.EmployeeName)}.pdf";
+                string name = $"{run.PayDate:yyyy-MM-dd}-{ExportFolderHelper.Sanitize(line.EmployeeName)}.pdf";
 
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
@@ -443,12 +449,6 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
         NotifyPaginationChanged();
     }
 
-    private static string Sanitize(string name)
-    {
-        char[] invalid = Path.GetInvalidFileNameChars();
-        string result = new(name.Select(c => invalid.Contains(c) || c == ' ' ? '-' : c).ToArray());
-        return string.IsNullOrEmpty(result.Trim('-')) ? "employee" : result.Trim('-');
-    }
 }
 
 /// <summary>One row of the pay runs table, already formatted for display.</summary>
