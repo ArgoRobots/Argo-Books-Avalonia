@@ -278,7 +278,10 @@
                                             <DataTemplate DataType="vm:PayRunReviewRow">
                                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                                                     <StackPanel>
-                                                        <Button Classes="review-row" Padding="0,12"
+                                                        <!-- Right inset matches the expanded rows below, so a
+                                                             net figure and the amounts it breaks down into stay
+                                                             on the same right edge. -->
+                                                        <Button Classes="review-row" Padding="0,12,12,12"
                                                                 HorizontalAlignment="Stretch"
                                                                 HorizontalContentAlignment="Stretch"
                                                                 Command="{Binding ToggleExpandedCommand}">
@@ -300,7 +303,7 @@
                                                             </Grid>
                                                         </Button>
 
-                                                        <StackPanel Margin="22,0,0,12" Spacing="4" IsVisible="{Binding IsExpanded}">
+                                                        <StackPanel Margin="22,0,12,12" Spacing="4" IsVisible="{Binding IsExpanded}">
                                                             <Grid ColumnDefinitions="*,Auto">
                                                                 <TextBlock Grid.Column="0" Text="{loc:Loc Gross}" FontSize="12"
                                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
