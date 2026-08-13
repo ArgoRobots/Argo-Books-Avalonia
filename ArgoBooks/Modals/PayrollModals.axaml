@@ -110,11 +110,15 @@
                                         <RadioButton GroupName="PayType" Content="{loc:Loc 'Hourly'}"
                                                      IsChecked="{Binding !IsSalaried}" />
                                     </StackPanel>
+                                    <!-- No IsDecimalOnly here: it rejects any keystroke whose
+                                         RESULT is not bare digits, so it blocks typing into a box
+                                         this behavior has already put a symbol in. Currency
+                                         formatting does the same filtering itself. -->
                                     <TextBox Text="{Binding PayRate, Mode=TwoWay}"
                                              Classes="form-input"
                                              PlaceholderText="0.00"
-                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                             MaxLength="13" />
+                                             behaviors:CurrencyInputBehavior.FormatAsCurrency="True"
+                                             MaxLength="16" />
                                     <TextBlock Text="{Binding PayRateHint}" FontSize="11"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Text="{Binding PayRateError}" FontSize="12"

@@ -172,8 +172,9 @@ public partial class PayrollModalsViewModel : ViewModelBase
     private string _employeeSnapshot = string.Empty;
 
     private string EmployeeFormSnapshot() => string.Join('\u001f',
-        Name, EmployeeNumber, Province, IsSalaried, PayRate, PayFrequency, StandardHoursPerWeek,
-        FederalClaimAmount, ProvincialClaimAmount, IsCppExempt, IsEiExempt, StartDate, EndDate,
+        Name, EmployeeNumber, Province, IsSalaried, Parse(PayRate), PayFrequency,
+        Parse(StandardHoursPerWeek), Parse(FederalClaimAmount), Parse(ProvincialClaimAmount),
+        IsCppExempt, IsEiExempt, StartDate, EndDate,
         Sin, AddressStreet, AddressCity, AddressProvince, AddressPostalCode, DentalBenefit, Notes);
 
     public bool HasEmployeeModalChanges => EmployeeFormSnapshot() != _employeeSnapshot;
@@ -198,7 +199,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         EmployeeNumber = employee.EmployeeNumber;
         Province = employee.Province;
         IsSalaried = employee.PayType == PayType.Salary;
-        PayRate = Money(employee.PayRate);
+        PayRate = employee.PayRate == 0m ? string.Empty : CurrencyService.Format(employee.PayRate);
         PayFrequency = employee.PayFrequency;
         StandardHoursPerWeek = employee.StandardHoursPerWeek?.ToString("0.##") ?? string.Empty;
         FederalClaimAmount = Money(employee.FederalClaimAmount);
@@ -616,8 +617,14 @@ public partial class PayrollModalsViewModel : ViewModelBase
     private static string Money(decimal value) =>
         value == 0 ? string.Empty : value.ToString("0.00", CultureInfo.CurrentCulture);
 
+    /// <summary>
+    /// Reads an amount back from a box that may be showing it formatted. Goes through the same
+    /// parser the formatting behavior uses, so a figure it wrote can always be read again: a
+    /// company keeping books in a currency other than its machine's would otherwise round-trip
+    /// its own salary field to zero.
+    /// </summary>
     private static decimal Parse(string text) =>
-        decimal.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal d) ? d : 0m;
+        Behaviors.CurrencyInputBehavior.TryParse(text, out decimal d) ? d : 0m;
 
     private void Clear()
     {
