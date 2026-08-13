@@ -81,6 +81,27 @@
                                     </StackPanel>
                                 </Border>
 
+                                <!-- Said, not enforced. A missing social insurance number used to
+                                     sit in the list above and disable filing forever, even though
+                                     CRA accepts the slip without one. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                        IsVisible="{Binding HasWarnings}">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="{loc:Loc 'Worth checking, but you can still file'}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <ItemsControl ItemsSource="{Binding Warnings}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap"
+                                                               Margin="0,2"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- The three things CRA needs that pay runs cannot supply.
                                      Editable here so the reason filing is blocked can be
                                      fixed where it is reported. -->

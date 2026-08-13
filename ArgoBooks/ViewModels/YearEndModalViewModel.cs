@@ -57,6 +57,15 @@ public partial class YearEndModalViewModel : ViewModelBase
     public bool HasProblems => Problems.Count > 0;
 
     /// <summary>
+    /// Worth knowing before filing, but not a reason to stop. Separate from Problems because
+    /// mixing the two meant a missing social insurance number, which CRA accepts, disabled the
+    /// export button with no way to clear it from this screen.
+    /// </summary>
+    public ObservableCollection<string> Warnings { get; } = [];
+
+    public bool HasWarnings => Warnings.Count > 0;
+
+    /// <summary>
     /// The slips can always be produced. Filing is what a problem blocks, and the distinction
     /// matters: an employer with a missing SIN can still hand out stubs while chasing it.
     /// </summary>
@@ -296,6 +305,7 @@ public partial class YearEndModalViewModel : ViewModelBase
     {
         Rows.Clear();
         Problems.Clear();
+        Warnings.Clear();
         QuebecProblems.Clear();
         StatusMessage = string.Empty;
 
@@ -326,6 +336,11 @@ public partial class YearEndModalViewModel : ViewModelBase
             Problems.Add(problem);
         }
 
+        foreach (string warning in T4Service.Warnings(_return))
+        {
+            Warnings.Add(warning);
+        }
+
         TotalIncome = CurrencyService.Format(_return.TotalEmploymentIncome);
         TotalDeductions = CurrencyService.Format(
             _return.TotalEmployeeCpp + _return.TotalEmployeeCpp2 + _return.TotalEmployeeEi + _return.TotalIncomeTax);
@@ -336,6 +351,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         BuildQuebec(data, year);
 
         OnPropertyChanged(nameof(HasProblems));
+        OnPropertyChanged(nameof(HasWarnings));
         OnPropertyChanged(nameof(CanFile));
         OnPropertyChanged(nameof(HasRows));
     }

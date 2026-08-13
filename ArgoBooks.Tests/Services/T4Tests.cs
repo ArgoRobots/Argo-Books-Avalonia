@@ -518,6 +518,49 @@ public class T4Tests
     #region Refusing to file something wrong
 
     [Fact]
+    public void AMissingSin_WarnsButDoesNotBlockFiling()
+    {
+        // CRA defines all zeroes for this case and the XML writer files it, so refusing to file
+        // was this app enforcing a rule stricter than the one it implements. It also could not
+        // be cleared from the year end screen, which left the export button permanently dead.
+        CompanyData data = Data(Person(sin: string.Empty));
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Empty(T4Service.Validate(data, t4));
+        Assert.Contains(T4Service.Warnings(t4),
+            w => w.Contains("social insurance", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void AnEmployeeWithASin_ProducesNoWarning()
+    {
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        Assert.Empty(T4Service.Warnings(BuiltReturn(data)));
+    }
+
+    [Fact]
+    public void TheThingsCraActuallyRejects_StillBlock()
+    {
+        // The filing details are required and are all editable on the year end screen, which is
+        // what separates them from a missing SIN.
+        CompanyData data = Data(Person());
+        data.Settings.Company.PayrollAccountNumber = null;
+        data.Settings.Company.PayrollContactName = null;
+        data.Settings.Company.PayrollContactPhone = null;
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        List<string> problems = T4Service.Validate(data, BuiltReturn(data));
+
+        Assert.Contains(problems, p => p.Contains("payroll account number", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(problems, p => p.Contains("contact name", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(problems, p => p.Contains("phone", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void ADraftRunInTheYear_BlocksFiling()
     {
         CompanyData data = Data(Person());

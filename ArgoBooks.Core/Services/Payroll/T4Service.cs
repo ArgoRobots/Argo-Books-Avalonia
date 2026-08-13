@@ -170,12 +170,6 @@ public class T4Service
         {
             string who = string.IsNullOrWhiteSpace(slip.Surname) ? slip.EmployeeId : slip.Surname;
 
-            if (new string(slip.Sin.Where(char.IsAsciiDigit).ToArray()).Length != 9)
-            {
-                problems.Add($"{who} has no social insurance number. CRA accepts the slip without one, "
-                             + "but their CPP contributions will not be credited to them.");
-            }
-
             if (string.IsNullOrWhiteSpace(slip.ProvinceOfEmployment))
             {
                 problems.Add($"{who} has no province of employment, which is required on the slip.");
@@ -188,6 +182,37 @@ public class T4Service
         }
 
         return problems;
+    }
+
+    /// <summary>
+    /// Things worth knowing before filing that do NOT stop it.
+    ///
+    /// Kept apart from <see cref="Validate"/> because conflating the two is what made the export
+    /// button impossible to enable: a missing social insurance number was blocking a return that
+    /// CRA actually accepts. CRA defines all zeroes for exactly this case, and
+    /// <see cref="T4XmlWriter"/> writes it, so refusing to file was this app inventing a rule
+    /// stricter than the one it was implementing.
+    ///
+    /// It still has to be said, because the employee loses the credit for their contributions.
+    /// </summary>
+    public static List<string> Warnings(T4Return t4)
+    {
+        ArgumentNullException.ThrowIfNull(t4);
+
+        var warnings = new List<string>();
+
+        foreach (T4Slip slip in t4.Slips)
+        {
+            string who = string.IsNullOrWhiteSpace(slip.Surname) ? slip.EmployeeId : slip.Surname;
+
+            if (new string(slip.Sin.Where(char.IsAsciiDigit).ToArray()).Length != 9)
+            {
+                warnings.Add($"{who} has no social insurance number. The slip can still be filed, "
+                             + "but their CPP contributions will not be credited to them.");
+            }
+        }
+
+        return warnings;
     }
 
     /// <summary>Nine digits, then RP, then four digits.</summary>
