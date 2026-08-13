@@ -51,7 +51,8 @@
                                 <Grid ColumnDefinitions="*,16,*">
                                     <StackPanel Grid.Column="0" Spacing="6">
                                         <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
-                                        <TextBox Text="{Binding Name, Mode=TwoWay}" Classes="form-input" />
+                                        <TextBox Text="{Binding Name, Mode=TwoWay}" Classes="form-input"
+                                                 PlaceholderText="{loc:Loc 'Jordan Fielding'}" />
                                         <TextBlock Text="{Binding NameError}" FontSize="12"
                                                    Foreground="{DynamicResource ErrorBrush}"
                                                    IsVisible="{Binding NameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -60,7 +61,8 @@
                                     <StackPanel Grid.Column="2" Spacing="6">
                                         <TextBlock Text="{loc:Loc 'Employee number'}" FontSize="13" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBox Text="{Binding EmployeeNumber, Mode=TwoWay}" Classes="form-input" />
+                                        <TextBox Text="{Binding EmployeeNumber, Mode=TwoWay}" Classes="form-input"
+                                                 PlaceholderText="{loc:Loc 'Optional, e.g. E-014'}" />
                                     </StackPanel>
                                 </Grid>
 
