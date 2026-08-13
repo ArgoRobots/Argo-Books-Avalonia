@@ -30,7 +30,7 @@
                         <Border Grid.Row="0" Padding="24,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                     <TextBlock Text="{loc:Loc 'Year end'}" FontSize="18" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -39,12 +39,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                                 </StackPanel>
 
-                                <ComboBox Grid.Column="1" Margin="0,0,12,0" Width="110"
-                                          ItemsSource="{Binding AvailableYears}"
-                                          SelectedItem="{Binding SelectedYear, Mode=TwoWay}"
-                                          Classes="form-combobox" VerticalAlignment="Center" />
-
-                                <Button Grid.Column="2" Classes="icon-button" Command="{Binding CloseCommand}">
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseCommand}">
                                     <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
                                 </Button>
                             </Grid>
@@ -57,6 +52,18 @@
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="24" Spacing="16">
+
+                                <!-- The year leads, because every figure and every problem below
+                                     is for the year chosen here. It sat in the header beside the
+                                     close button, which read as window furniture rather than as
+                                     the control the screen turns on. -->
+                                <StackPanel Spacing="6" HorizontalAlignment="Left" MinWidth="180">
+                                    <TextBlock Text="{loc:Loc 'Tax year'}" FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding AvailableYears}"
+                                              SelectedItem="{Binding SelectedYear, Mode=TwoWay}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                </StackPanel>
 
                                 <!-- Everything wrong, all at once. Fixing these means visiting
                                      other screens, so the whole list is more useful than the
