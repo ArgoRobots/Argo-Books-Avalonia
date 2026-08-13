@@ -356,6 +356,7 @@ public partial class PayRunModalsViewModel : ViewModelBase
                     : hourly
                         ? $"{CurrencyService.Format(employee.PayRate)} / hour"
                         : $"{CurrencyService.Format(employee.PayRate)} / year",
+                UnitLabel = hourly ? "hrs" : CurrencyService.CurrentSymbol,
                 Hours = string.Empty,
                 BasePay = hourly ? string.Empty : line.BasePay.ToString("0.00", CultureInfo.CurrentCulture),
                 Bonus = string.Empty,
@@ -585,6 +586,15 @@ public partial class PayRunAmountRow : ObservableObject
 
     [ObservableProperty]
     private string _rateNote = string.Empty;
+
+    /// <summary>
+    /// What the amount box is measured in: hours for an hourly employee, money for a salaried
+    /// one. Sits beside the box because the column serves both and a placeholder disappears the
+    /// moment anything is typed, which is precisely when the reader is checking what they
+    /// entered.
+    /// </summary>
+    [ObservableProperty]
+    private string _unitLabel = string.Empty;
 
     [ObservableProperty]
     private string _hours = string.Empty;

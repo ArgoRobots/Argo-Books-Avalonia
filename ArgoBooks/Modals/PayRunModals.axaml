@@ -186,27 +186,40 @@
                                                         BorderThickness="0,0,0,1">
                                                     <Grid ColumnDefinitions="2*,1.2*,1.2*,1.2*,1.2*">
                                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                            <TextBlock Text="{Binding EmployeeName}" FontSize="13"
+                                                            <TextBlock Text="{Binding EmployeeName}" FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                            <TextBlock Text="{Binding RateNote}" FontSize="11"
+                                                            <TextBlock Text="{Binding RateNote}" FontSize="12"
                                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                                         </StackPanel>
 
                                                         <!-- Hourly people need hours typed in. Salaried people prefill
                                                              but stay editable, since a mid-period start is entered by
-                                                             adjusting the amount. -->
-                                                        <TextBox Grid.Column="1" Margin="0,0,8,0"
-                                                                 Text="{Binding Hours, Mode=TwoWay}"
-                                                                 Classes="form-input" PlaceholderText="0.00"
-                                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                                 MaxLength="10"
-                                                                 IsVisible="{Binding IsHourly}" />
-                                                        <TextBox Grid.Column="1" Margin="0,0,8,0"
-                                                                 Text="{Binding BasePay, Mode=TwoWay}"
-                                                                 Classes="form-input" PlaceholderText="0.00"
-                                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
-                                                                 MaxLength="13"
-                                                                 IsVisible="{Binding !IsHourly}" />
+                                                             adjusting the amount.
+
+                                                             The unit sits beside the box because this one column takes
+                                                             two different things, and the row should say which without
+                                                             the reader having to look at the caption under the name. A
+                                                             placeholder cannot do it: it disappears on the first
+                                                             keystroke, which is exactly when someone is checking what
+                                                             they typed. -->
+                                                        <Grid Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,0,8,0">
+                                                            <TextBox Grid.Column="0"
+                                                                     Text="{Binding Hours, Mode=TwoWay}"
+                                                                     Classes="form-input" PlaceholderText="0.00"
+                                                                     behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                                     MaxLength="10"
+                                                                     IsVisible="{Binding IsHourly}" />
+                                                            <TextBox Grid.Column="0"
+                                                                     Text="{Binding BasePay, Mode=TwoWay}"
+                                                                     Classes="form-input" PlaceholderText="0.00"
+                                                                     behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                                     MaxLength="13"
+                                                                     IsVisible="{Binding !IsHourly}" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding UnitLabel}"
+                                                                       FontSize="12" Margin="6,0,0,0"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                        </Grid>
 
                                                         <TextBox Grid.Column="2" Margin="0,0,8,0"
                                                                  Text="{Binding Bonus, Mode=TwoWay}"
