@@ -29,35 +29,6 @@ public static class PayStubPdfRenderer
         return ms.ToArray();
     }
 
-    /// <summary>
-    /// Every stub on the run in one document, a page each, for the employer to check before
-    /// handing anything out.
-    ///
-    /// Deliberately NOT what the download produces. A stub goes to one person and nobody should
-    /// see anyone else's pay, so the files saved to disk stay one per employee. This is for the
-    /// employer, who can already see the whole run on screen.
-    /// </summary>
-    public static byte[] RenderAll(PayRun run,
-                                   IReadOnlyList<(PayRunLine Line, PayrollYearToDate Ytd)> stubs,
-                                   CompanyData companyData, string currencySymbol = "$")
-    {
-        ArgumentNullException.ThrowIfNull(stubs);
-
-        QuestPDF.Settings.License = LicenseType.Community;
-
-        using var ms = new MemoryStream();
-
-        Document.Create(container =>
-        {
-            foreach ((PayRunLine line, PayrollYearToDate ytd) in stubs)
-            {
-                container.Page(page => Compose(page, run, line, ytd, companyData, currencySymbol));
-            }
-        }).GeneratePdf(ms);
-
-        return ms.ToArray();
-    }
-
     private static void Compose(PageDescriptor page, PayRun run, PayRunLine line,
                                 PayrollYearToDate ytd, CompanyData companyData, string currencySymbol)
     {

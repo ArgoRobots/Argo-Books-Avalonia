@@ -42,6 +42,30 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     private bool _canDelete = true;
 
     /// <summary>
+    /// The documents this viewer can page between, when it was opened on a set rather than a
+    /// single file. Empty for a receipt or a one-off document.
+    /// </summary>
+    public ObservableCollection<ViewerDocument> Documents { get; } = new();
+
+    /// <summary>True when there is a set to pick from, which is what shows the picker.</summary>
+    public bool HasDocumentSet => Documents.Count > 1;
+
+    /// <summary>
+    /// The document on screen. Changing it renders that one and only that one, which is the
+    /// whole point: a hundred stubs cost the same to open as one.
+    /// </summary>
+    [ObservableProperty]
+    private ViewerDocument? _selectedDocument;
+
+    partial void OnSelectedDocumentChanged(ViewerDocument? value)
+    {
+        if (value != null)
+        {
+            _ = ShowSelectedDocumentAsync(value);
+        }
+    }
+
+    /// <summary>
     /// What to call the thing on screen while it loads or fails. The viewer shows generated
     /// documents as well as receipts now, and a Record of Employment announcing itself as a
     /// receipt is just wrong.
@@ -90,6 +114,7 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     {
         ReceiptId = receiptId;
         _documentBytes = null;
+        ClearDocumentSet();
         _documentFileName = string.Empty;
         CanDelete = true;
         LoadingMessage = "Loading receipt...";
@@ -112,6 +137,7 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     {
         ReceiptId = string.Empty;
         _documentBytes = pdfBytes;
+        ClearDocumentSet();
         _documentFileName = fileName;
         CanDelete = false;
         LoadingMessage = "Loading document...";
@@ -121,6 +147,90 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         ReceiptPages.Clear();
         IsOpen = true;
         _ = LoadDocumentPagesAsync(pdfBytes, fileName);
+    }
+
+    /// <summary>
+    /// Shows a set of related documents with a picker, rendering only the one selected.
+    ///
+    /// Built for per-employee output: pay stubs now, and the T4, RL-1 and record of employment
+    /// slips have the same shape. The alternative, one combined document, has to compose and
+    /// rasterise every page before showing anything, which at a hundred employees is a long wait
+    /// for a scroll bar nobody can navigate.
+    /// </summary>
+    /// <param name="title">Shown in the header, describing the set rather than one item.</param>
+    /// <param name="documents">The set. A single item simply shows without a picker.</param>
+    public void ShowDocumentSet(string title, IEnumerable<ViewerDocument> documents)
+    {
+        ReceiptId = string.Empty;
+        _documentBytes = null;
+        _documentFileName = string.Empty;
+        CanDelete = false;
+        LoadingMessage = "Loading document...";
+        EmptyMessage = "Document preview not available";
+        Title = title;
+        IsFullscreen = false;
+        ReceiptPages.Clear();
+
+        Documents.Clear();
+        foreach (ViewerDocument document in documents)
+        {
+            Documents.Add(document);
+        }
+
+        OnPropertyChanged(nameof(HasDocumentSet));
+
+        IsOpen = true;
+
+        // Assigning this renders it, through OnSelectedDocumentChanged.
+        SelectedDocument = Documents.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Renders one document from the set.
+    ///
+    /// The render token is taken before the bytes are produced, not after, so a slow render for
+    /// someone the user has already clicked away from cannot paint its pages over the newer
+    /// selection.
+    /// </summary>
+    private async Task ShowSelectedDocumentAsync(ViewerDocument document)
+    {
+        int token = ++_renderToken;
+
+        _pageOrder.Clear();
+        ReceiptPages.Clear();
+        IsLoadingPages = true;
+
+        try
+        {
+            byte[] bytes = await document.LoadAsync();
+
+            if (token != _renderToken)
+            {
+                return;
+            }
+
+            // Held so the download button saves this document rather than a rendered page.
+            _documentBytes = bytes;
+            _documentFileName = document.FileName;
+
+            var progress = new Progress<(int Index, string Path)>(page =>
+            {
+                if (token != _renderToken)
+                    return;
+                InsertPageOrdered(page.Index, page.Path);
+            });
+
+            await ReceiptPageRenderer.GetPagePathsAsync(document.FileName, bytes, progress);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Viewer.ShowDocument");
+        }
+        finally
+        {
+            if (token == _renderToken)
+                IsLoadingPages = false;
+        }
     }
 
     private async Task LoadDocumentPagesAsync(byte[] pdfBytes, string fileName)
@@ -343,6 +453,24 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         _documentBytes = null;
         _documentFileName = string.Empty;
         CanDelete = true;
+        ClearDocumentSet();
+    }
+
+    /// <summary>
+    /// Drops the set without re-rendering. The selection is cleared first and silently, because
+    /// the change handler would otherwise try to render whatever it landed on next.
+    /// </summary>
+    private void ClearDocumentSet()
+    {
+        if (Documents.Count == 0 && SelectedDocument == null)
+        {
+            return;
+        }
+
+        _renderToken++;
+        SelectedDocument = null;
+        Documents.Clear();
+        OnPropertyChanged(nameof(HasDocumentSet));
     }
 
     [RelayCommand]

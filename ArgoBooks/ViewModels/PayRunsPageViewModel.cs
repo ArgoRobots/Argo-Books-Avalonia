@@ -185,16 +185,19 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     }
 
     /// <summary>
-    /// Opens every stub on the run in the viewer, one page per employee, so the figures can be
-    /// checked before anything is handed out.
+    /// Opens the run's stubs in the viewer, one employee at a time, picked by name.
     ///
-    /// Kept separate from downloading rather than replacing it, because the two produce
-    /// genuinely different things: this is one document covering everyone, for the employer,
-    /// while the download is one file per person, to hand to that person. The viewer's own
-    /// download button saves this combined document, which is not what you give an employee.
+    /// Each stub is composed only when it is selected. Rendering the whole run up front meant a
+    /// hundred employees produced a hundred PDF pages and a hundred rasterised images before
+    /// anything appeared, to fill a scroll bar nobody could navigate. Opening a run of a hundred
+    /// now costs the same as opening a run of one.
+    ///
+    /// Still separate from downloading. This is for checking a figure on screen; the download
+    /// writes one file per person, because that is what gets handed over and nobody should
+    /// receive a PDF containing a colleague's pay.
     /// </summary>
     [RelayCommand]
-    private async Task ViewStubsAsync(PayRunDisplayItem? item)
+    private void ViewStubs(PayRunDisplayItem? item)
     {
         CompanyData? data = App.CompanyManager?.CompanyData;
         PayRun? run = _all.FirstOrDefault(r => r.Id == item?.Id);
@@ -208,18 +211,26 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
         {
             string symbol = CurrencyService.CurrentSymbol;
 
-            // Year to date up to but not including this run, so each stub's own figures are
-            // what gets added to it rather than counted twice. Same rule as the download.
-            var stubs = run.Lines
-                .Select(line => (Line: line, Ytd: _payroll.YearToDateFor(data, line.EmployeeId, run)))
-                .ToList();
+            // One entry per employee, each holding a closure rather than bytes. Nothing is
+            // rendered until a name is chosen, and the viewer's cache keeps a second look at
+            // the same person instant.
+            var documents = run.Lines.Select(line => new ViewerDocument
+            {
+                Name = line.EmployeeName,
+                FileName = $"{run.PayDate:yyyy-MM-dd}-{ExportFolderHelper.Sanitize(line.EmployeeName)}.pdf",
 
-            byte[] bytes = await Task.Run(() => PayStubPdfRenderer.RenderAll(run, stubs, data, symbol));
+                // Year to date up to but not including this run, so the stub's own figures are
+                // what gets added to it rather than counted twice. Same rule as the download.
+                LoadAsync = () => Task.Run(() =>
+                {
+                    PayrollYearToDate ytd = _payroll.YearToDateFor(data, line.EmployeeId, run);
+                    return PayStubPdfRenderer.Render(run, line, ytd, data, symbol);
+                }),
+            }).ToList();
 
-            App.ReceiptViewerModal?.ShowDocument(
+            App.ReceiptViewerModal?.ShowDocumentSet(
                 "Pay stubs: {0}".TranslateFormat(run.PayDate.ToString("d MMMM yyyy")),
-                bytes,
-                $"pay-stubs-{run.PayDate:yyyy-MM-dd}.pdf");
+                documents);
         }
         catch (Exception ex)
         {
