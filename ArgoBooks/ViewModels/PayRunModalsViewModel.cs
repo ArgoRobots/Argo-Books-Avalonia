@@ -133,6 +133,11 @@ public partial class PayRunModalsViewModel : ViewModelBase
         PayDate = DateTimeOffset.Now;
         BlockingError = string.Empty;
 
+        // Nothing from the last run may survive into this one. The amount rows in particular
+        // outlived a close, so a second open began with rows already present and the discard
+        // guard fired on a run nobody had touched yet.
+        ResetRunState();
+
         RefreshRateEdition();
         PrefillPeriod();
         LoadSelectableEmployees();
@@ -327,7 +332,26 @@ public partial class PayRunModalsViewModel : ViewModelBase
         return true;
     }
 
-    private void BuildAmountRows(CompanyData data)
+    /// <summary>
+    /// Drops everything the previous run left behind.
+    ///
+    /// Detaching the handlers matters as much as clearing the list: a discarded row that is
+    /// still subscribed keeps driving recalculation for a draft it no longer belongs to.
+    /// </summary>
+    private void ResetRunState()
+    {
+        ClearAmountRows();
+        ReviewRows.Clear();
+        Warnings.Clear();
+        HasWarnings = false;
+        TotalGross = CurrencyService.Format(0m);
+        TotalNetPay = CurrencyService.Format(0m);
+        TotalRemittance = CurrencyService.Format(0m);
+        TotalCost = CurrencyService.Format(0m);
+        RemittanceDueNote = string.Empty;
+    }
+
+    private void ClearAmountRows()
     {
         foreach (PayRunAmountRow existing in AmountRows)
         {
@@ -335,6 +359,11 @@ public partial class PayRunModalsViewModel : ViewModelBase
         }
 
         AmountRows.Clear();
+    }
+
+    private void BuildAmountRows(CompanyData data)
+    {
+        ClearAmountRows();
 
         if (_draft == null)
         {

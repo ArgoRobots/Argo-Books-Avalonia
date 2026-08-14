@@ -25,6 +25,29 @@ public class PayRunModalsViewModelTests : ModalViewModelTestBase
     };
 
     [Fact]
+    public void ReopeningTheModal_LeavesNothingFromTheLastRun()
+    {
+        // The amount rows outlived a close, so every open after the first began with rows
+        // already present. Nothing showed them on step 1, but the discard guard reads them, so
+        // clicking outside asked to discard a run nobody had touched.
+        Company.Employees.Add(Person());
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.NextCommand.Execute(null);
+
+        Assert.Equal(2, vm.Step);
+        Assert.NotEmpty(vm.AmountRows);
+
+        vm.CloseRunModalCommand.Execute(null);
+        vm.OpenRunModal();
+
+        Assert.Equal(1, vm.Step);
+        Assert.Empty(vm.AmountRows);
+        Assert.Empty(vm.ReviewRows);
+    }
+
+    [Fact]
     public void WithNoEmployeesAtAll_ItSaysToAddOne()
     {
         var vm = new PayRunModalsViewModel();
