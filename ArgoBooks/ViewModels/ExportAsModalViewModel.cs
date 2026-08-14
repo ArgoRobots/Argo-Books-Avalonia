@@ -115,6 +115,10 @@ public partial class ExportAsModalViewModel : ViewModelBase
         AddDataItem(new ExportDataItem { Name = "Revenue", Key = "Revenue", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Expenses", Key = "Expenses", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Invoices", Key = "Invoices", RecordCount = 0, IsSelected = true });
+
+        // Straight after Invoices, because the importer assigns lines to whichever invoice it has
+        // already seen and sheets are processed in the order they are written.
+        AddDataItem(new ExportDataItem { Name = "Invoice Line Items", Key = "Invoice Line Items", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Payments", Key = "Payments", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Recurring Invoices", Key = "Recurring Invoices", RecordCount = 0, IsSelected = true });
 
@@ -122,6 +126,10 @@ public partial class ExportAsModalViewModel : ViewModelBase
         AddDataItem(new ExportDataItem { Name = "Inventory", Key = "Inventory", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Stock Adjustments", Key = "Stock Adjustments", RecordCount = 0, IsSelected = true });
         AddDataItem(new ExportDataItem { Name = "Purchase Orders", Key = "Purchase Orders", RecordCount = 0, IsSelected = true });
+
+        // The export service has always been able to write this sheet; it was simply never
+        // offered, so purchase orders exported with nothing on them.
+        AddDataItem(new ExportDataItem { Name = "Purchase Order Line Items", Key = "Purchase Order Line Items", RecordCount = 0, IsSelected = true });
 
         // Rentals
         AddDataItem(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0, IsSelected = true });
@@ -173,11 +181,13 @@ public partial class ExportAsModalViewModel : ViewModelBase
                 "Revenue" => companyData.Revenues.Count,
                 "Expenses" => companyData.Expenses.Count,
                 "Invoices" => companyData.Invoices.Count,
+                "Invoice Line Items" => companyData.Invoices.Sum(i => i.LineItems.Count),
                 "Payments" => companyData.Payments.Count,
                 "Recurring Invoices" => companyData.RecurringInvoices.Count,
                 "Inventory" => companyData.Inventory.Count,
                 "Stock Adjustments" => companyData.StockAdjustments.Count,
                 "Purchase Orders" => companyData.PurchaseOrders.Count,
+                "Purchase Order Line Items" => companyData.PurchaseOrders.Sum(p => p.LineItems.Count),
                 "Rental Inventory" => companyData.RentalInventory.Count,
                 "Rental Records" => companyData.Rentals.Count,
                 _ => 0

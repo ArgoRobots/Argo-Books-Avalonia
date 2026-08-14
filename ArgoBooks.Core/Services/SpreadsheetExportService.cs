@@ -291,6 +291,7 @@ public class SpreadsheetExportService
         {
             "Customers" => GetCustomersData(data),
             "Invoices" => GetInvoicesData(data, startDate, endDate),
+            "Invoice Line Items" => GetInvoiceLineItemsData(data, startDate, endDate),
             "Expenses" or "Purchases" => GetExpensesData(data, startDate, endDate),
             "Products" => GetProductsData(data),
             "Inventory" => GetInventoryData(data),
@@ -365,10 +366,15 @@ public class SpreadsheetExportService
         // invoice off this sheet meant looking CUS-003 up somewhere else first.
         var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
 
-        var headers = new[] { "Invoice #", "Customer ID", "Customer Name", "Issue Date", "Due Date", "Subtotal", "Tax", "Total", "Paid", "Balance", "Status" };
+        // ID and Invoice # are two different values: INV-2026-00001 and #INV-2026-00001. Only
+        // the first appears anywhere else, so exporting only the second left the payments sheet
+        // pointing at invoice ids that were nowhere on the invoices sheet, and re-importing put
+        // the display number in the id field and prefixed every invoice with a hash.
+        var headers = new[] { "ID", "Invoice #", "Customer ID", "Customer Name", "Issue Date", "Due Date", "Subtotal", "Tax", "Total", "Paid", "Balance", "Status", "Currency" };
         var filtered = data.Invoices.Where(i => IsInDateRange(i.IssueDate, startDate, endDate));
         var rows = filtered.Select(i => new object[]
         {
+            i.Id,
             i.InvoiceNumber,
             i.CustomerId,
             Named(customerNames, i.CustomerId),
@@ -379,8 +385,39 @@ public class SpreadsheetExportService
             i.Total,
             i.AmountPaid,
             i.Balance,
-            i.Status.ToString()
+            i.Status.ToString(),
+            i.OriginalCurrency
         }).ToList();
+        return (headers, rows);
+    }
+
+    /// <summary>
+    /// What was actually on each invoice, one row per line.
+    ///
+    /// Modelled on the Purchase Order Line Items sheet, which had the same shape and the same
+    /// reason to exist. Without it an invoice exports as a set of totals with nothing behind
+    /// them, and re-importing produces an invoice with no lines at all.
+    /// </summary>
+    private (string[] Headers, List<object[]> Rows) GetInvoiceLineItemsData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    {
+        var headers = new[] { "Invoice ID", "Product ID", "Description", "Quantity", "Unit Price", "Tax Rate", "Discount", "Amount" };
+        var filtered = data.Invoices.Where(i => IsInDateRange(i.IssueDate, startDate, endDate));
+        var rows = filtered
+            .SelectMany(i => i.LineItems.Select(li => new object[]
+            {
+                i.Id,
+                li.ProductId ?? "",
+                li.Description,
+                li.Quantity,
+                li.UnitPrice,
+                li.TaxRate,
+                li.Discount,
+
+                // Derived on the model rather than stored, so it is printed for reading and not
+                // read back on import: quantity, price and discount are what rebuild the line.
+                li.Amount
+            }))
+            .ToList();
         return (headers, rows);
     }
 
@@ -393,7 +430,11 @@ public class SpreadsheetExportService
         // import schema does not carry a name column, so a re-imported export is unchanged.
         var supplierNames = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
 
-        var headers = new[] { "ID", "Date", "Supplier ID", "Supplier Name", "Product", "Unit Price", "Tax", "Total", "Payment Method" };
+        // Quantity, Shipping, Reference and Currency were all missing. Quantity mattered most:
+        // the Unit Price column was being fed Amount, which is quantity times unit price, so on
+        // any row with more than one unit the columns visibly failed to add up to the total and
+        // a re-import turned three units into one.
+        var headers = new[] { "ID", "Date", "Supplier ID", "Supplier Name", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Method", "Currency" };
         var filtered = data.Expenses.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
@@ -402,10 +443,14 @@ public class SpreadsheetExportService
             p.SupplierId ?? "",
             Named(supplierNames, p.SupplierId),
             p.Description,
-            p.Amount,
+            p.Quantity,
+            p.UnitPrice,
             p.TaxAmount,
+            p.ShippingCost,
             p.Total,
-            p.PaymentMethod.ToString()
+            p.ReferenceNumber,
+            p.PaymentMethod.ToString(),
+            p.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -464,7 +509,7 @@ public class SpreadsheetExportService
         // of customer ids is the wrong thing to be holding a statement next to.
         var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
 
-        var headers = new[] { "ID", "Invoice ID", "Customer ID", "Customer Name", "Date", "Amount", "Payment Method", "Reference", "Notes" };
+        var headers = new[] { "ID", "Invoice ID", "Customer ID", "Customer Name", "Date", "Amount", "Payment Method", "Reference", "Notes", "Currency" };
         var filtered = data.Payments.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
@@ -476,7 +521,8 @@ public class SpreadsheetExportService
             p.Amount,
             p.PaymentMethod.ToString(),
             p.ReferenceNumber ?? "",
-            p.Notes
+            p.Notes,
+            p.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -508,7 +554,8 @@ public class SpreadsheetExportService
         // same reason: Customer ID identifies the customer, this just saves the cross-reference.
         var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
 
-        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Product", "Unit Price", "Tax", "Total", "Payment Status" };
+        // The same four columns the expenses sheet was missing, for the same reasons.
+        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Status", "Currency" };
         var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {
@@ -517,10 +564,14 @@ public class SpreadsheetExportService
             s.CustomerId ?? "",
             Named(customerNames, s.CustomerId),
             s.Description,
-            s.Amount,
+            s.Quantity,
+            s.UnitPrice,
             s.TaxAmount,
+            s.ShippingCost,
             s.Total,
-            s.PaymentStatus.ToString()
+            s.ReferenceNumber,
+            s.PaymentStatus.ToString(),
+            s.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -657,16 +708,20 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetPurchaseOrdersData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Supplier ID", "Order Date", "Expected Date", "Total", "Status" };
+        var supplierNames = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
+
+        var headers = new[] { "ID", "Supplier ID", "Supplier Name", "Order Date", "Expected Date", "Total", "Status", "Currency" };
         var filtered = data.PurchaseOrders.Where(p => IsInDateRange(p.OrderDate, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
             p.SupplierId,
+            Named(supplierNames, p.SupplierId),
             p.OrderDate,
             p.ExpectedDeliveryDate,
             p.Total,
-            p.Status.ToString()
+            p.Status.ToString(),
+            p.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }

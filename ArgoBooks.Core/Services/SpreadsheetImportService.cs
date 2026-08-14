@@ -837,6 +837,9 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.PurchaseOrders:
                 ImportPurchaseOrders(data, headers, rows, options);
                 break;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                ImportInvoiceLineItems(data, headers, rows, options);
+                break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows, options);
                 break;
@@ -874,6 +877,7 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
         SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Count,
         SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Count,
+        SpreadsheetSheetType.InvoiceLineItems => data.Invoices.SelectMany(i => i.LineItems).Count(),
         SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrders.SelectMany(po => po.LineItems).Count(),
         SpreadsheetSheetType.Returns => data.Returns.Count,
         SpreadsheetSheetType.LostDamaged => data.LostDamaged.Count,
@@ -906,10 +910,13 @@ public class SpreadsheetImportService
         }
         var countAfter = GetEntityCount(data, sheetType);
 
-        // Purchase-order line items are merged onto their parent order rather than added as
+        // Line items are merged onto their parent order or invoice rather than added as
         // first-class entities, so the collection-count delta doesn't reflect the rows processed.
         // Use the explicit per-row count the importer recorded instead.
-        var inserted = sheetType == SpreadsheetSheetType.PurchaseOrderLineItems && options != null
+        bool mergedOntoParent = sheetType is SpreadsheetSheetType.PurchaseOrderLineItems
+                                          or SpreadsheetSheetType.InvoiceLineItems;
+
+        var inserted = mergedOntoParent && options != null
             ? options.InsertedCount
             : Math.Max(0, countAfter - countBefore);
 
@@ -935,7 +942,8 @@ public class SpreadsheetImportService
         // span several rows; purchase-order line items merge onto a parent) legitimately have
         // more rows than entities, so the difference there is expected, not a dropped row.
         bool rowMapsToEntity = sheetType is not (
-            SpreadsheetSheetType.RentalRecords or SpreadsheetSheetType.PurchaseOrderLineItems);
+            SpreadsheetSheetType.RentalRecords or SpreadsheetSheetType.PurchaseOrderLineItems
+            or SpreadsheetSheetType.InvoiceLineItems);
         if (rowMapsToEntity)
         {
             var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
@@ -1635,11 +1643,20 @@ public class SpreadsheetImportService
                 return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Invoices:
                 var invoice = JsonSerializer.Deserialize<Invoice>(jsonStr, opts);
+
+                // Either column can identify the invoice, and each fills in for the other.
+                // Sheets from elsewhere usually carry only an invoice number, and this app's own
+                // export now carries both, so neither can be assumed present.
+                if (invoice != null)
+                {
+                    if (string.IsNullOrEmpty(invoice.Id))
+                        invoice.Id = invoice.InvoiceNumber;
+                    else if (string.IsNullOrEmpty(invoice.InvoiceNumber))
+                        invoice.InvoiceNumber = invoice.Id;
+                }
+
                 if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
                 {
-                    // Ensure InvoiceNumber is set (schema maps "Invoice #" to "id", not "invoiceNumber")
-                    if (string.IsNullOrEmpty(invoice.InvoiceNumber))
-                        invoice.InvoiceNumber = invoice.Id;
 
                     var invoiceCurrency = ExtractRowCurrency(entityJson, options);
                     if (!string.IsNullOrEmpty(invoiceCurrency))
@@ -1954,6 +1971,23 @@ public class SpreadsheetImportService
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
                 return ImportEntityResult.Failed;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                // Like PO line items below: they belong to an invoice rather than to a
+                // collection of their own, so the parent has to be found first.
+                var invoiceLineItem = JsonSerializer.Deserialize<LineItem>(jsonStr, opts);
+                if (invoiceLineItem != null
+                    && entityJson.TryGetProperty("invoiceId", out var invoiceIdEl))
+                {
+                    var lineInvoiceId = invoiceIdEl.GetString();
+                    var parentInvoice = data.Invoices.FirstOrDefault(i => i.Id == lineInvoiceId)
+                                        ?? data.Invoices.FirstOrDefault(i => i.InvoiceNumber == lineInvoiceId);
+                    if (parentInvoice != null)
+                    {
+                        parentInvoice.LineItems.Add(invoiceLineItem);
+                        return ImportEntityResult.Inserted;
+                    }
+                }
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 // PO line items need special handling - they belong to a PurchaseOrder
                 var poLineItem = JsonSerializer.Deserialize<PurchaseOrderLineItem>(jsonStr, opts);
@@ -2158,6 +2192,9 @@ public class SpreadsheetImportService
                 break;
             case SpreadsheetSheetType.PurchaseOrders:
                 ValidateExpenseOrderReferences(sheetName, rows, headers, data, importedIds, result);
+                break;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                ValidateInvoiceLineItemReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ValidatePurchaseOrderLineItemReferences(sheetName, rows, headers, data, importedIds, result);
@@ -2562,6 +2599,48 @@ public class SpreadsheetImportService
         }
     }
 
+    private void ValidateInvoiceLineItemReferences(
+        string sheetName,
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
+
+        // Either column can identify an invoice, so both count as known. Checking only the id
+        // would flag every line on a sheet that identifies its invoices by number.
+        var existingInvoices = data.Invoices.Select(i => i.Id)
+            .Concat(data.Invoices.Select(i => i.InvoiceNumber))
+            .Where(v => !string.IsNullOrEmpty(v))
+            .ToHashSet(StringComparer.Ordinal);
+        var importedInvoices = importedIds.GetValueOrDefault("Invoices") ?? [];
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var invoiceId = GetNullableString(row, headers, "Invoice ID");
+            var productId = GetNullableString(row, headers, "Product ID");
+
+            if (!string.IsNullOrEmpty(productId) &&
+                !existingProducts.Contains(productId) &&
+                !importedProducts.Contains(productId))
+            {
+                result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: invoiceId);
+            }
+
+            if (!string.IsNullOrEmpty(invoiceId) &&
+                !existingInvoices.Contains(invoiceId) &&
+                !importedInvoices.Contains(invoiceId))
+            {
+                result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
+                    $"Invoice '{invoiceId}' not found", isAutoFixable: false, rowId: invoiceId);
+            }
+        }
+    }
+
     private void ValidatePurchaseOrderLineItemReferences(
         string sheetName,
         List<List<object?>> rows, List<string> headers,
@@ -2915,6 +2994,9 @@ public class SpreadsheetImportService
                 break;
             case SpreadsheetSheetType.PurchaseOrders:
                 ImportPurchaseOrders(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                ImportInvoiceLineItems(data, headers, rows, options);
                 break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows, options);
@@ -3321,28 +3403,41 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
+
+            // Two columns, either of which can identify the invoice. This app's own export
+            // carries both; a sheet from elsewhere usually has only the number. Whichever is
+            // present fills in for the other, so payments and line items still find their
+            // parent either way.
+            var invoiceId = GetString(row, headers, "ID");
             var invoiceNumber = GetString(row, headers, "Invoice #");
             var customerId = GetString(row, headers, "Customer ID");
             var issueDate = GetDateTime(row, headers, "Issue Date");
             var total = GetDecimal(row, headers, "Total");
 
-            // Skip fully-empty rows (no number, customer, date, or amount).
-            if (string.IsNullOrWhiteSpace(invoiceNumber) && string.IsNullOrWhiteSpace(customerId)
+            // Skip fully-empty rows (no id, number, customer, date, or amount).
+            if (string.IsNullOrWhiteSpace(invoiceId) && string.IsNullOrWhiteSpace(invoiceNumber)
+                && string.IsNullOrWhiteSpace(customerId)
                 && issueDate == DateTime.MinValue && total == 0)
                 continue;
 
-            // Blank invoice #: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(invoiceId))
+                invoiceId = invoiceNumber;
             if (string.IsNullOrWhiteSpace(invoiceNumber))
+                invoiceNumber = invoiceId;
+
+            // Blank on both: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(invoiceId))
             {
                 data.IdCounters.Invoice++;
-                invoiceNumber = $"INV-{data.IdCounters.Invoice:D3}";
+                invoiceId = $"INV-{data.IdCounters.Invoice:D3}";
+                invoiceNumber = invoiceId;
             }
 
-            var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
+            var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceId);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var invoice = existing ?? new Invoice();
-            invoice.Id = invoiceNumber;
+            invoice.Id = invoiceId;
             invoice.InvoiceNumber = invoiceNumber;
             invoice.CustomerId = customerId;
             invoice.IssueDate = issueDate;
@@ -4280,6 +4375,75 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 data.PurchaseOrders.Add(po);
             else if (options != null)
                 options.UpdatedCount++;
+        }
+    }
+
+    /// <summary>
+    /// Puts the lines back on their invoices.
+    ///
+    /// Mirrors <see cref="ImportPurchaseOrderLineItems"/>, including the part that reads oddly:
+    /// the whole sheet is grouped first and each invoice's lines are then REPLACED in one go,
+    /// rather than appended row by row. Appending would double every line on a second import of
+    /// the same file, which is the normal way people re-run an import after fixing something.
+    ///
+    /// The line's Amount column is deliberately not read. It is quantity times price less
+    /// discount plus tax, all four of which are in the sheet, so recomputing it means a hand
+    /// edit to one of the parts cannot leave a total that contradicts them.
+    /// </summary>
+    private void ImportInvoiceLineItems(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
+    {
+        var lineItemsByInvoice = new Dictionary<string, List<LineItem>>(StringComparer.Ordinal);
+
+        foreach (var row in rows)
+        {
+            var invoiceId = GetString(row, headers, "Invoice ID");
+            if (string.IsNullOrEmpty(invoiceId)) continue;
+
+            var lineItem = new LineItem
+            {
+                ProductId = GetNullableString(row, headers, "Product ID"),
+                Description = GetString(row, headers, "Description"),
+                Quantity = GetDecimal(row, headers, "Quantity"),
+                UnitPrice = GetDecimal(row, headers, "Unit Price"),
+                TaxRate = GetDecimal(row, headers, "Tax Rate"),
+                Discount = GetDecimal(row, headers, "Discount")
+            };
+
+            if (!lineItemsByInvoice.ContainsKey(invoiceId))
+                lineItemsByInvoice[invoiceId] = [];
+
+            lineItemsByInvoice[invoiceId].Add(lineItem);
+        }
+
+        foreach (var (invoiceId, lineItems) in lineItemsByInvoice)
+        {
+            // Match on either column, because either can identify an invoice on the sheet it
+            // came from. See the fallback in ImportInvoices.
+            var invoice = data.Invoices.FirstOrDefault(i => i.Id == invoiceId)
+                          ?? data.Invoices.FirstOrDefault(i => i.InvoiceNumber == invoiceId);
+
+            // No matching invoice: leave these rows unassigned (counted as unimported by the caller).
+            if (invoice == null) continue;
+
+            if (options?.SkipExistingRecords == true && invoice.LineItems.Count > 0)
+            {
+                options.SkippedCount += lineItems.Count;
+                continue;
+            }
+
+            bool hadLineItems = invoice.LineItems.Count > 0;
+            invoice.LineItems = lineItems;
+
+            // The invoice's own totals are NOT recalculated from these lines. Tax, discounts,
+            // shipping, deposits and a custom fee all sit on the invoice rather than on its
+            // lines, and the Invoices sheet already carries the figures the customer was billed.
+            // Deriving them here from lines alone would quietly restate what was sent out.
+
+            if (options != null)
+            {
+                if (hadLineItems) options.UpdatedCount += lineItems.Count;
+                else options.InsertedCount += lineItems.Count;
+            }
         }
     }
 

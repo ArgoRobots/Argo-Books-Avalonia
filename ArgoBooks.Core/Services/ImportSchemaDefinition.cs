@@ -165,7 +165,12 @@ public static class ImportSchemaDefinition
 
             [SpreadsheetSheetType.Invoices] =
             [
-                new("Invoice #", "string", "Invoice number (e.g., INV-2024-001)", Required: true, JsonName: "id"),
+                // Two different values. ID is what payments and line items point at; Invoice # is
+                // what the customer sees on the paperwork, and in this app it is the id with a
+                // hash in front. A sheet that only has Invoice # still works: the importer falls
+                // back to it for the id, which is what it always used to do.
+                new("ID", "string", "Unique identifier (e.g., INV-2024-00001)", JsonName: "id"),
+                new("Invoice #", "string", "Invoice number shown on the invoice (e.g., #INV-2024-00001). Used as the identifier when there is no ID column", Required: true, JsonName: "invoiceNumber"),
                 new("Customer ID", "string", "Customer identifier", Required: true, JsonName: "customerId"),
                 new("Issue Date", "datetime", "Date invoice was issued", JsonName: "issueDate"),
                 new("Due Date", "datetime", "Payment due date", JsonName: "dueDate"),
@@ -312,6 +317,20 @@ public static class ImportSchemaDefinition
                 new("Total", "decimal", "Order total", JsonName: "total"),
                 new("Status", "enum:Draft,Submitted,Approved,Received,Cancelled", "Order status", JsonName: "status"),
                 new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
+            ],
+
+            [SpreadsheetSheetType.InvoiceLineItems] =
+            [
+                new("Invoice ID", "string", "Identifier of the invoice these lines belong to", Required: true),
+                new("Product ID", "string", "Product identifier, if the line is linked to a product", JsonName: "productId"),
+                new("Description", "string", "What the line is for", JsonName: "description"),
+                new("Quantity", "decimal", "Number of units", JsonName: "quantity"),
+                new("Unit Price", "decimal", "Price per unit before tax and discount", JsonName: "unitPrice"),
+                new("Tax Rate", "decimal", "Tax rate as a decimal (e.g., 0.08 for 8%)", JsonName: "taxRate"),
+                new("Discount", "decimal", "Discount applied to this line", JsonName: "discount"),
+                // Amount is quantity x price less discount, plus tax. It is exported so the sheet
+                // reads on its own and is deliberately not imported: the line is rebuilt from its
+                // parts, so a stale total in the file cannot contradict them.
             ],
 
             [SpreadsheetSheetType.PurchaseOrderLineItems] =
