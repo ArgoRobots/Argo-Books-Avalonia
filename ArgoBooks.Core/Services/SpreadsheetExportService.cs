@@ -309,6 +309,33 @@ public class SpreadsheetExportService
         };
     }
 
+    /// <summary>
+    /// Id to name for the sheets that print both.
+    ///
+    /// Tolerates a repeated id by keeping the last one rather than throwing, which
+    /// <c>ToDictionary</c> would. A name column is a convenience and must never be the reason a
+    /// whole export fails: the ids come from imported files as well as from this app.
+    /// </summary>
+    private static Dictionary<string, string> NameLookup<T>(
+        IEnumerable<T> items, Func<T, string> id, Func<T, string> name)
+    {
+        var lookup = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (T item in items)
+        {
+            lookup[id(item)] = name(item);
+        }
+
+        return lookup;
+    }
+
+    /// <summary>
+    /// The name for an id, or blank. Blank rather than the id repeated, so an empty cell reads
+    /// as "nobody was recorded" and the reader looks at the id column beside it.
+    /// </summary>
+    private static string Named(Dictionary<string, string> lookup, string? id) =>
+        id is { Length: > 0 } && lookup.TryGetValue(id, out string? name) ? name : "";
+
     private (string[] Headers, List<object[]> Rows) GetCustomersData(CompanyData data)
     {
         var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(_country);
@@ -354,13 +381,21 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetExpensesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Supplier ID", "Product", "Unit Price", "Tax", "Total", "Payment Method" };
+        // The name sits beside the id so a sheet of scanned receipts can be read on its own,
+        // without holding it next to the Suppliers sheet to find out who SUP-014 is.
+        //
+        // Presentation only. Supplier ID is still what identifies the supplier, and the Expenses
+        // import schema does not carry a name column, so a re-imported export is unchanged.
+        var supplierNames = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
+
+        var headers = new[] { "ID", "Date", "Supplier ID", "Supplier Name", "Product", "Unit Price", "Tax", "Total", "Payment Method" };
         var filtered = data.Expenses.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
             p.Date,
             p.SupplierId ?? "",
+            Named(supplierNames, p.SupplierId),
             p.Description,
             p.Amount,
             p.TaxAmount,
@@ -373,8 +408,8 @@ public class SpreadsheetExportService
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
         // Build lookup dictionaries for category and supplier names
-        var categoryLookup = data.Categories.ToDictionary(c => c.Id, c => c.Name);
-        var supplierLookup = data.Suppliers.ToDictionary(s => s.Id, s => s.Name);
+        var categoryLookup = NameLookup(data.Categories, c => c.Id, c => c.Name);
+        var supplierLookup = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
 
         var headers = new[] { "ID", "Name", "Type", "Item Type", "SKU", "Description", "Category ID", "Category Name", "Supplier ID", "Supplier Name", "Reorder Point", "Overstock Threshold" };
         var rows = data.Products.Select(p => new object[]
@@ -391,9 +426,9 @@ public class SpreadsheetExportService
             p.Sku,
             p.Description,
             p.CategoryId ?? "",
-            p.CategoryId != null && categoryLookup.TryGetValue(p.CategoryId, out var catName) ? catName : "",
+            Named(categoryLookup, p.CategoryId),
             p.SupplierId ?? "",
-            p.SupplierId != null && supplierLookup.TryGetValue(p.SupplierId, out var supName) ? supName : "",
+            Named(supplierLookup, p.SupplierId),
             p.ReorderPoint,
             p.OverstockThreshold
         }).ToList();
@@ -459,13 +494,18 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetRevenueData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Customer ID", "Product", "Unit Price", "Tax", "Total", "Payment Status" };
+        // The mirror of the supplier name on the expenses sheet, and presentation only for the
+        // same reason: Customer ID identifies the customer, this just saves the cross-reference.
+        var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
+
+        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Product", "Unit Price", "Tax", "Total", "Payment Status" };
         var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {
             s.Id,
             s.Date,
             s.CustomerId ?? "",
+            Named(customerNames, s.CustomerId),
             s.Description,
             s.Amount,
             s.TaxAmount,
