@@ -219,7 +219,7 @@
                                     <StackPanel Spacing="12">
                                         <TextBlock Text="{loc:Loc 'For their T4'}" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="{loc:Loc 'Needed in February to file. You can add it later, but payroll cannot be filed without it.'}"
+                                        <TextBlock Text="{loc:Loc 'Used at year end, and you can add them later. A T4 files without a social insurance number, but the contributions are not credited to the employee. An RL-1 or a record of employment does need one.'}"
                                                    FontSize="11" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
 
