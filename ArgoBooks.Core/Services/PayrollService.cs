@@ -209,6 +209,10 @@ public class PayrollService(PayrollRateService? rateService = null)
 
         Approve(run);
 
+        string companyCurrency = string.IsNullOrWhiteSpace(data.Settings.Localization.Currency)
+            ? "USD"
+            : data.Settings.Localization.Currency;
+
         foreach (PayRunLine line in run.Lines)
         {
             if (line.NetPay == 0)
@@ -221,7 +225,17 @@ public class PayrollService(PayrollRateService? rateService = null)
                 Description: $"Wages - {line.EmployeeName}",
                 Total: line.NetPay,
                 CounterpartyId: null,
-                Notes: $"Net pay for {run.PeriodStart:yyyy-MM-dd} to {run.PeriodEnd:yyyy-MM-dd} ({run.Id})."));
+                Notes: $"Net pay for {run.PeriodStart:yyyy-MM-dd} to {run.PeriodEnd:yyyy-MM-dd} ({run.Id}).",
+                OriginalCurrency: companyCurrency));
+
+            // Pass the amount straight through to the USD base, exactly as the bank import does.
+            // Payroll is computed in the company's own currency by CRA rules, so there is no
+            // exchange rate involved and none to look up. Left unset, the display path treats the
+            // figure as USD needing conversion at the pay date, finds no rate, and shows Pending
+            // instead of the amount. Worse, once a rate did arrive it would show a converted
+            // number that was never what anyone was paid.
+            expense.TotalUSD = expense.Total;
+            expense.UnitPriceUSD = expense.UnitPrice;
 
             data.Expenses.Add(expense);
             line.ExpenseId = expense.Id;
