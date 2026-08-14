@@ -107,7 +107,7 @@
                     VerticalAlignment="Center" IsVisible="{Binding IsOverLimit}">
           <TextBlock Text="{Binding FreeScanLimit, StringFormat='You have used your {0} free scans this month'}"
                      FontSize="17" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center" />
-          <TextBlock Text="Upgrade to Argo Premium on the web for more scans every month."
+          <TextBlock Text="Upgrade to Argo Books Premium on the web for more scans every month."
                      Opacity="0.7" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,6" />
           <Button Content="Upgrade on the web"
                   Command="{Binding UpgradeCommand}"
