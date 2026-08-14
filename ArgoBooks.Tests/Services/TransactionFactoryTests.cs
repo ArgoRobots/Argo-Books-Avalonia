@@ -17,7 +17,8 @@ public class TransactionFactoryTests
             Description: "AMZN MKTP US",
             Total: 38.20m,
             CounterpartyId: "SUP-001",
-            Notes: "from statement");
+            Notes: "from statement",
+            OriginalCurrency: "USD");
 
         var expense = TransactionFactory.CreateExpense(data, draft);
 
@@ -39,7 +40,8 @@ public class TransactionFactoryTests
             Description: "STRIPE TRANSFER",
             Total: 1200m,
             CounterpartyId: "CUS-001",
-            Notes: null);
+            Notes: null,
+            OriginalCurrency: "USD");
 
         var revenue = TransactionFactory.CreateRevenue(data, draft);
 
