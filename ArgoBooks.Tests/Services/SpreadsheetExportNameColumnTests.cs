@@ -164,6 +164,70 @@ public class SpreadsheetExportNameColumnTests
 
     #endregion
 
+    #region Invoices and payments
+
+    [Fact]
+    public async Task AnInvoice_CarriesTheCustomerNameBesideTheId()
+    {
+        CompanyData data = Company();
+        data.Invoices.Add(new Invoice
+        {
+            Id = "INV-2026-00001",
+            InvoiceNumber = "#INV-2026-00001",
+            CustomerId = "CUS-003",
+            IssueDate = new DateTime(2026, 5, 4),
+            Total = 500m,
+        });
+
+        (List<string> headers, List<List<string>> rows) = await ExportAsync(data, "Invoices");
+        List<string> row = Assert.Single(rows);
+
+        Assert.Equal("CUS-003", Cell(headers, row, "Customer ID"));
+        Assert.Equal("Jane Doe", Cell(headers, row, "Customer Name"));
+    }
+
+    [Fact]
+    public async Task APayment_CarriesTheCustomerNameBesideTheId()
+    {
+        CompanyData data = Company();
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-001",
+            InvoiceId = "INV-2026-00001",
+            CustomerId = "CUS-003",
+            Date = new DateTime(2026, 5, 11),
+            Amount = 500m,
+        });
+
+        (List<string> headers, List<List<string>> rows) = await ExportAsync(data, "Payments");
+        List<string> row = Assert.Single(rows);
+
+        Assert.Equal("CUS-003", Cell(headers, row, "Customer ID"));
+        Assert.Equal("Jane Doe", Cell(headers, row, "Customer Name"));
+    }
+
+    [Fact]
+    public async Task APaymentForACustomerThatIsGone_StillExports()
+    {
+        CompanyData data = Company();
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-002",
+            InvoiceId = "INV-2026-00002",
+            CustomerId = "CUS-999",
+            Date = new DateTime(2026, 5, 11),
+            Amount = 20m,
+        });
+
+        (List<string> headers, List<List<string>> rows) = await ExportAsync(data, "Payments");
+        List<string> row = Assert.Single(rows);
+
+        Assert.Equal("CUS-999", Cell(headers, row, "Customer ID"));
+        Assert.Equal(string.Empty, Cell(headers, row, "Customer Name"));
+    }
+
+    #endregion
+
     #region What the columns must not disturb
 
     [Fact]

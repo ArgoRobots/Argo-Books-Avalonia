@@ -361,12 +361,17 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetInvoicesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "Invoice #", "Customer ID", "Issue Date", "Due Date", "Subtotal", "Tax", "Total", "Paid", "Balance", "Status" };
+        // Who the invoice was for, beside the id that identifies them. Chasing an unpaid
+        // invoice off this sheet meant looking CUS-003 up somewhere else first.
+        var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
+
+        var headers = new[] { "Invoice #", "Customer ID", "Customer Name", "Issue Date", "Due Date", "Subtotal", "Tax", "Total", "Paid", "Balance", "Status" };
         var filtered = data.Invoices.Where(i => IsInDateRange(i.IssueDate, startDate, endDate));
         var rows = filtered.Select(i => new object[]
         {
             i.InvoiceNumber,
             i.CustomerId,
+            Named(customerNames, i.CustomerId),
             i.IssueDate,
             i.DueDate,
             i.Subtotal,
@@ -455,13 +460,18 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetPaymentsData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Invoice ID", "Customer ID", "Date", "Amount", "Payment Method", "Reference", "Notes" };
+        // Reconciling a bank statement against this sheet is the main use for it, and a column
+        // of customer ids is the wrong thing to be holding a statement next to.
+        var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
+
+        var headers = new[] { "ID", "Invoice ID", "Customer ID", "Customer Name", "Date", "Amount", "Payment Method", "Reference", "Notes" };
         var filtered = data.Payments.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
             p.InvoiceId,
             p.CustomerId,
+            Named(customerNames, p.CustomerId),
             p.Date,
             p.Amount,
             p.PaymentMethod.ToString(),
