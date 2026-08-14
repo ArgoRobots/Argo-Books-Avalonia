@@ -342,6 +342,35 @@ public static class ImportSchemaDefinition
                 new("Quantity Received", "int", "Quantity received so far", JsonName: "quantityReceived"),
             ],
 
+            [SpreadsheetSheetType.Employees] =
+            [
+                new("ID", "string", "Unique identifier (e.g., EMP-001)", Required: true, JsonName: "id"),
+                new("Name", "string", "Full name, as it should appear on the T4", Required: true, JsonName: "name"),
+                new("Employee #", "string", "Optional payroll number", JsonName: "employeeNumber"),
+                new("SIN", "string", "Social insurance number, digits only", JsonName: "sin"),
+                new("Province of Employment", "string", "Two letter code for where the employee WORKS, which decides the tax table and is not necessarily where they live", JsonName: "province"),
+                new("Pay Type", "enum:Salary,Hourly", "Whether the pay rate is an annual salary or an hourly rate", JsonName: "payType"),
+                new("Pay Rate", "decimal", "Annual salary, or the hourly rate, depending on Pay Type", JsonName: "payRate"),
+                new("Pay Frequency", "enum:Weekly,Biweekly,SemiMonthly,Monthly", "How often the employee is paid", JsonName: "payFrequency"),
+                new("Standard Hours Per Week", "decimal", "Contract hours in a normal week, for salaried staff only. Leave blank when unknown rather than entering zero", JsonName: "standardHoursPerWeek"),
+                new("Federal Claim Amount", "decimal", "Total claim amount from the federal TD1. Zero means none was filed", JsonName: "federalClaimAmount"),
+                new("Provincial Claim Amount", "decimal", "Total claim amount from the provincial or territorial TD1", JsonName: "provincialClaimAmount"),
+                new("CPP Exempt", "bool", "Under 18, over 70, or already drawing a CPP retirement pension", JsonName: "isCppExempt"),
+                new("EI Exempt", "bool", "Typically an owner controlling more than 40% of the voting shares", JsonName: "isEiExempt"),
+                new("Dental Benefit", "enum:NotEligible,PayeeOnly,PayeeAndSpouse,PayeeAndChildren,PayeeSpouseAndChildren", "Box 45 on the T4: what dental coverage the employer offered", JsonName: "dentalBenefit"),
+                new("Start Date", "datetime", "First day worked", JsonName: "startDate"),
+                new("End Date", "datetime", "Last day worked, if they have left", JsonName: "endDate"),
+                // The home address, which the T4 is posted to. Not the same as Province of
+                // Employment above: someone can live in one province and work in another.
+                new("Street", "string", "Home address street", JsonName: "address.street"),
+                new("City", "string", "City", JsonName: "address.city"),
+                new(stateLabel, "string", stateDesc, JsonName: "address.state"),
+                new(postalLabel, "string", postalDesc, JsonName: "address.zipCode"),
+                new("Country", "string", "Country", JsonName: "address.country"),
+                new("Status", "enum:Active,Archived", "Archived employees stay in the file but are hidden from pay runs"),
+                new("Notes", "string", "Additional notes", JsonName: "notes"),
+            ],
+
             [SpreadsheetSheetType.Returns] =
             [
                 new("ID", "string", "Unique identifier (e.g., RET-001)", Required: true, JsonName: "id"),

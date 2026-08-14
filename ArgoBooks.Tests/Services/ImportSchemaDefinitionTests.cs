@@ -7,15 +7,32 @@ namespace ArgoBooks.Tests.Services;
 public class ImportSchemaDefinitionTests
 {
     [Fact]
-    public void GetSchema_ContainsAllEntityTypes()
+    public void GetSchema_ContainsEveryImportableEntityType()
     {
+        // Every sheet the importer will read has to say what its columns mean, otherwise the
+        // mapper has nothing to map onto and the sheet silently imports as nothing. Export-only
+        // sheets are excluded by IsImportable rather than named here, so adding another one is
+        // a single edit in the enum.
         var schema = ImportSchemaDefinition.GetSchema();
-        var allTypes = Enum.GetValues<SpreadsheetSheetType>();
 
-        foreach (var entityType in allTypes)
+        foreach (var entityType in Enum.GetValues<SpreadsheetSheetType>())
         {
-            if (entityType == SpreadsheetSheetType.Unknown) continue;
+            if (!entityType.IsImportable()) continue;
             Assert.True(schema.ContainsKey(entityType), $"Schema missing definition for {entityType}");
+        }
+    }
+
+    [Fact]
+    public void GetSchema_HasNoDefinitionForExportOnlyTypes()
+    {
+        // The other side of the rule. A schema for an export-only sheet would advertise to the
+        // mapper that it can be imported, and pay runs deliberately cannot be.
+        var schema = ImportSchemaDefinition.GetSchema();
+
+        foreach (var entityType in Enum.GetValues<SpreadsheetSheetType>())
+        {
+            if (entityType.IsImportable() || entityType == SpreadsheetSheetType.Unknown) continue;
+            Assert.False(schema.ContainsKey(entityType), $"{entityType} is export only but has an import schema");
         }
     }
 
@@ -82,14 +99,14 @@ public class ImportSchemaDefinitionTests
     }
 
     [Fact]
-    public void FormatSchemaForPrompt_ContainsAllEntityTypes()
+    public void FormatSchemaForPrompt_ContainsEveryImportableEntityType()
     {
         var prompt = ImportSchemaDefinition.FormatSchemaForPrompt();
         var allTypes = Enum.GetValues<SpreadsheetSheetType>();
 
         foreach (var entityType in allTypes)
         {
-            if (entityType == SpreadsheetSheetType.Unknown) continue;
+            if (!entityType.IsImportable()) continue;
             Assert.Contains(entityType.ToString(), prompt);
         }
     }

@@ -2,6 +2,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -39,6 +40,7 @@ public class SpreadsheetRoundTripFidelityTests : IDisposable
     [
         "Customers", "Suppliers", "Products", "Invoices", "Invoice Line Items",
         "Payments", "Expenses", "Revenue", "Purchase Orders", "Purchase Order Line Items",
+        "Employees", "Pay Runs",
     ];
 
     private static CompanyData Source()
@@ -305,6 +307,180 @@ public class SpreadsheetRoundTripFidelityTests : IDisposable
         await new SpreadsheetImportService().ImportFromExcelAsync(_path, target);
 
         Assert.Equal("CAD", Assert.Single(target.Expenses).OriginalCurrency);
+    }
+
+    #endregion
+
+    #region Payroll
+
+    private static Employee Dana() => new()
+    {
+        Id = "EMP-001",
+        Name = "Dana Smith",
+        EmployeeNumber = "42",
+        Sin = "046454286",
+        Province = "AB",
+        PayType = PayType.Salary,
+        PayRate = 62400m,
+        PayFrequency = PayFrequency.Biweekly,
+        StandardHoursPerWeek = 37.5m,
+        FederalClaimAmount = 16500m,
+        ProvincialClaimAmount = 22769m,
+        IsCppExempt = true,
+        IsEiExempt = true,
+        DentalBenefit = DentalBenefitCode.PayeeAndSpouse,
+        StartDate = new DateTime(2024, 1, 8),
+        EndDate = new DateTime(2026, 7, 10),
+        Address = new Address { Street = "42 Employee Road", City = "Calgary", State = "AB", ZipCode = "T2P1A1", Country = "CAN" },
+        Notes = "on the payroll",
+    };
+
+    [Fact]
+    public async Task AnEmployee_SurvivesARoundTripWithEverythingPayrollNeeds()
+    {
+        CompanyData source = Source();
+        source.Employees.Add(Dana());
+
+        CompanyData target = await RoundTripAsync(source);
+        Employee employee = Assert.Single(target.Employees);
+
+        Assert.Equal("EMP-001", employee.Id);
+        Assert.Equal("Dana Smith", employee.Name);
+        Assert.Equal("42", employee.EmployeeNumber);
+        Assert.Equal("046454286", employee.Sin);
+        Assert.Equal("AB", employee.Province);
+        Assert.Equal(PayType.Salary, employee.PayType);
+        Assert.Equal(62400m, employee.PayRate);
+        Assert.Equal(PayFrequency.Biweekly, employee.PayFrequency);
+        Assert.Equal(37.5m, employee.StandardHoursPerWeek);
+        Assert.Equal(16500m, employee.FederalClaimAmount);
+        Assert.Equal(22769m, employee.ProvincialClaimAmount);
+        Assert.True(employee.IsCppExempt);
+        Assert.True(employee.IsEiExempt);
+        Assert.Equal(DentalBenefitCode.PayeeAndSpouse, employee.DentalBenefit);
+        Assert.Equal(new DateTime(2024, 1, 8), employee.StartDate);
+        Assert.Equal(new DateTime(2026, 7, 10), employee.EndDate);
+        Assert.Equal("42 Employee Road", employee.Address.Street);
+        Assert.Equal("on the payroll", employee.Notes);
+    }
+
+    [Fact]
+    public async Task AnEmployeeWithNoContractHours_ComesBackWithNoneRatherThanZero()
+    {
+        // Zero hours on a record of employment reads as "worked none" and costs the employee
+        // their claim, so blank has to stay blank across the trip.
+        CompanyData source = Source();
+        Employee dana = Dana();
+        dana.StandardHoursPerWeek = null;
+        source.Employees.Add(dana);
+
+        CompanyData target = await RoundTripAsync(source);
+
+        Assert.Null(Assert.Single(target.Employees).StandardHoursPerWeek);
+    }
+
+    [Fact]
+    public async Task AnArchivedEmployee_StaysArchived()
+    {
+        // They are archived rather than deleted precisely so a T4 can still be produced for
+        // them in February. Coming back active would put a leaver into the next pay run.
+        CompanyData source = Source();
+        Employee dana = Dana();
+        dana.IsArchived = true;
+        source.Employees.Add(dana);
+
+        CompanyData target = await RoundTripAsync(source);
+
+        Assert.True(Assert.Single(target.Employees).IsArchived);
+    }
+
+    [Fact]
+    public async Task ASocialInsuranceNumberWrittenWithSpaces_IsStoredAsDigits()
+    {
+        CompanyData source = Source();
+        source.Employees.Add(Dana());
+
+        await new SpreadsheetExportService().ExportToExcelAsync(_path, source, [.. AllSheets], null, null);
+
+        var target = new CompanyData();
+        target.Settings.Localization.Currency = "USD";
+        target.Employees.Add(new Employee { Id = "EMP-001", Name = "Dana Smith", Sin = "046 454 286" });
+        await new SpreadsheetImportService().ImportFromExcelAsync(_path, target);
+
+        Assert.Equal("046454286", Assert.Single(target.Employees).Sin);
+    }
+
+    [Fact]
+    public async Task PayRunsAreExportedButNotImported()
+    {
+        // Deliberate. An approved run's figures are frozen so a stub reprinted next year still
+        // matches the one the employee was handed; reading them back from a sheet anybody could
+        // have edited would defeat that.
+        CompanyData source = Source();
+        source.Employees.Add(Dana());
+        source.PayRuns.Add(new PayRun
+        {
+            Id = "PR-0001",
+            PayDate = new DateTime(2026, 7, 3),
+            PeriodStart = new DateTime(2026, 6, 20),
+            PeriodEnd = new DateTime(2026, 7, 3),
+            RateEditionId = "2026-07",
+            Status = PayRunStatus.Approved,
+            Lines =
+            {
+                new PayRunLine
+                {
+                    EmployeeId = "EMP-001",
+                    EmployeeName = "Dana Smith",
+                    Province = "AB",
+                    PayPeriodsPerYear = 26,
+                    BasePay = 2400m,
+                    GrossPay = 2400m,
+                    CppEmployee = 134.79m,
+                    EiEmployee = 39.12m,
+                    FederalTax = 250m,
+                    ProvincialTax = 120m,
+                    NetPay = 1856.09m,
+                },
+            },
+        });
+
+        CompanyData target = await RoundTripAsync(source);
+
+        Assert.Empty(target.PayRuns);
+    }
+
+    [Fact]
+    public async Task ThePayRunSheetCarriesTheRegisterAndTheEditionThatProducedIt()
+    {
+        // Two runs in the same year can use different CRA tables, so a register that does not
+        // say which one produced a figure cannot be checked against anything.
+        CompanyData source = Source();
+        source.PayRuns.Add(new PayRun
+        {
+            Id = "PR-0001",
+            PayDate = new DateTime(2026, 7, 3),
+            RateEditionId = "2026-07",
+            Status = PayRunStatus.Approved,
+            Lines = { new PayRunLine { EmployeeId = "EMP-001", EmployeeName = "Dana Smith", GrossPay = 2400m, NetPay = 1856.09m } },
+        });
+
+        string csv = Path.ChangeExtension(_path, ".csv");
+
+        try
+        {
+            await new SpreadsheetExportService().ExportToCsvAsync(csv, source, ["Pay Runs"], null, null);
+            List<List<string>> rows = CsvReader.ReadAllRows(csv, out List<string> headers);
+            List<string> row = Assert.Single(rows);
+
+            Assert.Equal("PR-0001", row[headers.IndexOf("Run ID")]);
+            Assert.Equal("Dana Smith", row[headers.IndexOf("Employee Name")]);
+            Assert.Equal("2026-07", row[headers.IndexOf("Rate Edition")]);
+        }
+        finally
+        {
+            File.Delete(csv);
+        }
     }
 
     #endregion

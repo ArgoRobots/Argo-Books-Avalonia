@@ -133,7 +133,13 @@ public partial class ExportAsModalViewModel : ViewModelBase
 
         // Rentals
         AddDataItem(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0, IsSelected = true });
-        AddDataItem(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true, IsLast = true });
+        AddDataItem(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true });
+
+        // Payroll. Employees import like any other entity list; Pay Runs is a register to read,
+        // and is not imported, because an approved run's figures are frozen so the stub the
+        // employee was handed keeps matching.
+        AddDataItem(new ExportDataItem { Name = "Employees", Key = "Employees", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Pay Runs", Key = "Pay Runs", RecordCount = 0, IsSelected = true, IsLast = true });
 
         // Initialize SelectAllData based on initial state
         UpdateSelectAllState();
@@ -190,6 +196,8 @@ public partial class ExportAsModalViewModel : ViewModelBase
                 "Purchase Order Line Items" => companyData.PurchaseOrders.Sum(p => p.LineItems.Count),
                 "Rental Inventory" => companyData.RentalInventory.Count,
                 "Rental Records" => companyData.Rentals.Count,
+                "Employees" => companyData.Employees.Count,
+                "Pay Runs" => companyData.PayRuns.Sum(r => r.Lines.Count),
                 _ => 0
             };
         }

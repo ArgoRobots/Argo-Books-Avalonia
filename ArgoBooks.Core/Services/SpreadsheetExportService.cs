@@ -306,6 +306,8 @@ public class SpreadsheetExportService
             "Stock Adjustments" => GetStockAdjustmentsData(data, startDate, endDate),
             "Purchase Orders" => GetPurchaseOrdersData(data, startDate, endDate),
             "Purchase Order Line Items" => GetPurchaseOrderLineItemsData(data, startDate, endDate),
+            "Employees" => GetEmployeesData(data),
+            "Pay Runs" => GetPayRunsData(data, startDate, endDate),
             _ => ([], [])
         };
     }
@@ -740,6 +742,128 @@ public class SpreadsheetExportService
                 li.QuantityReceived
             }))
             .ToList();
+        return (headers, rows);
+    }
+
+    /// <summary>
+    /// The payroll list, as an entity sheet like Customers and Suppliers.
+    ///
+    /// Includes the social insurance number, because without it the sheet cannot be used to set
+    /// payroll up again and a T4 cannot be filed. It is the employer's own record of their own
+    /// staff, which is what the rest of this export is too, but it is the most sensitive column
+    /// the app writes and worth knowing is there before mailing a workbook to anyone.
+    /// </summary>
+    private (string[] Headers, List<object[]> Rows) GetEmployeesData(CompanyData data)
+    {
+        var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(_country);
+
+        var headers = new[]
+        {
+            "ID", "Name", "Employee #", "SIN", "Province of Employment", "Pay Type", "Pay Rate",
+            "Pay Frequency", "Standard Hours Per Week", "Federal Claim Amount", "Provincial Claim Amount",
+            "CPP Exempt", "EI Exempt", "Dental Benefit", "Start Date", "End Date",
+            "Street", "City", stateLabel, postalLabel, "Country", "Status", "Notes"
+        };
+
+        var rows = data.Employees.Select(e => new object[]
+        {
+            e.Id,
+            e.Name,
+            e.EmployeeNumber,
+            e.Sin,
+
+            // Where they WORK, which picks the tax table. Their home province is in the address
+            // columns and is not necessarily the same one.
+            e.Province,
+            e.PayType.ToString(),
+            e.PayRate,
+            e.PayFrequency.ToString(),
+
+            // Blank rather than zero when unknown. Zero hours on a record of employment costs
+            // the employee their claim, so the difference has to survive the trip.
+            e.StandardHoursPerWeek.HasValue ? (object)e.StandardHoursPerWeek.Value : "",
+            e.FederalClaimAmount,
+            e.ProvincialClaimAmount,
+            e.IsCppExempt,
+            e.IsEiExempt,
+            e.DentalBenefit.ToString(),
+            e.StartDate ?? DateTime.MinValue,
+            e.EndDate ?? DateTime.MinValue,
+            e.Address.Street,
+            e.Address.City,
+            e.Address.State,
+            e.Address.ZipCode,
+            e.Address.Country,
+            e.IsArchived ? "Archived" : "Active",
+            e.Notes
+        }).ToList();
+
+        return (headers, rows);
+    }
+
+    /// <summary>
+    /// The payroll register: one row per employee per pay run, with the run's own details
+    /// repeated across its rows.
+    ///
+    /// Flat rather than split into a runs sheet and a lines sheet, because this is the shape an
+    /// accountant asks for and the shape a pivot table wants. It is also why it is export only:
+    /// see the note on <see cref="Models.Payroll.PayRun"/>. An approved run's figures are frozen
+    /// so a stub reprinted next year still matches the one the employee was handed, and an
+    /// importer that let those be typed over in a spreadsheet would defeat that.
+    /// </summary>
+    private (string[] Headers, List<object[]> Rows) GetPayRunsData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    {
+        var headers = new[]
+        {
+            "Run ID", "Pay Date", "Period Start", "Period End", "Status", "Rate Edition", "Voids Run ID",
+            "Employee ID", "Employee Name", "Province", "Pay Periods Per Year", "Hours Worked",
+            "Base Pay", "Bonus", "Vacation Pay", "Gross Pay",
+            "CPP", "CPP2", "EI", "QPIP", "Federal Tax", "Provincial Tax", "Net Pay",
+            "Employer CPP", "Employer CPP2", "Employer EI", "Employer QPIP",
+            "Total Remittance", "Total Cost", "Expense ID"
+        };
+
+        var filtered = data.PayRuns.Where(r => IsInDateRange(r.PayDate, startDate, endDate));
+
+        var rows = filtered
+            .SelectMany(run => run.Lines.Select(line => new object[]
+            {
+                run.Id,
+                run.PayDate,
+                run.PeriodStart,
+                run.PeriodEnd,
+                run.Status.ToString(),
+
+                // Which CRA edition produced these figures. Two runs in the same year can use
+                // different tables, so a register without it cannot be checked against anything.
+                run.RateEditionId,
+                run.VoidsPayRunId ?? "",
+                line.EmployeeId,
+                line.EmployeeName,
+                line.Province,
+                line.PayPeriodsPerYear,
+                line.HoursWorked,
+                line.BasePay,
+                line.Bonus,
+                line.VacationPay,
+                line.GrossPay,
+                line.CppEmployee,
+                line.Cpp2Employee,
+                line.EiEmployee,
+                line.QpipEmployee,
+                line.FederalTax,
+                line.ProvincialTax,
+                line.NetPay,
+                line.CppEmployer,
+                line.Cpp2Employer,
+                line.EiEmployer,
+                line.QpipEmployer,
+                line.TotalRemittance,
+                line.TotalCost,
+                line.ExpenseId ?? ""
+            }))
+            .ToList();
+
         return (headers, rows);
     }
 

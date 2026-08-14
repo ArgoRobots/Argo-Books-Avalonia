@@ -843,6 +843,15 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows, options);
                 break;
+            case SpreadsheetSheetType.Employees:
+                ImportEmployees(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.PayRuns:
+                // Export only. An approved run's figures are frozen so a stub reprinted next
+                // year still matches the one the employee was handed, and reading them back
+                // from a sheet somebody could have typed in would defeat that. Listed rather
+                // than left to fall through, so the decision is visible here.
+                break;
             case SpreadsheetSheetType.Returns:
                 ImportReturns(data, headers, rows, options);
                 break;
@@ -879,6 +888,7 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Count,
         SpreadsheetSheetType.InvoiceLineItems => data.Invoices.SelectMany(i => i.LineItems).Count(),
         SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrders.SelectMany(po => po.LineItems).Count(),
+        SpreadsheetSheetType.Employees => data.Employees.Count,
         SpreadsheetSheetType.Returns => data.Returns.Count,
         SpreadsheetSheetType.LostDamaged => data.LostDamaged.Count,
         _ => 0
@@ -3001,6 +3011,15 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows, options);
                 break;
+            case SpreadsheetSheetType.Employees:
+                ImportEmployees(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.PayRuns:
+                // Export only. An approved run's figures are frozen so a stub reprinted next
+                // year still matches the one the employee was handed, and reading them back
+                // from a sheet somebody could have typed in would defeat that. Listed rather
+                // than left to fall through, so the decision is visible here.
+                break;
             case SpreadsheetSheetType.Returns:
                 ImportReturns(data, headers, rows, options);
                 break;
@@ -3819,6 +3838,113 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             else if (options != null)
                 options.UpdatedCount++;
         }
+    }
+
+    /// <summary>
+    /// The payroll list. An ordinary entity sheet, unlike the pay runs themselves, which are
+    /// export only because an approved run's figures are frozen.
+    /// </summary>
+    private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
+    {
+        foreach (var row in rows)
+        {
+            var id = GetString(row, headers, "ID");
+            var name = GetString(row, headers, "Name");
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            // Numbered off the existing employees rather than an IdCounters entry, because that
+            // is how the employee form mints them and there is no counter for them in the file.
+            if (string.IsNullOrWhiteSpace(id))
+                id = NextEmployeeId(data);
+
+            var existing = data.Employees.FirstOrDefault(e => e.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
+
+            var employee = existing ?? new Models.Payroll.Employee();
+            employee.Id = id;
+            employee.Name = name;
+            employee.EmployeeNumber = GetString(row, headers, "Employee #");
+
+            // Digits only, the way the employee form stores it. People write it with spaces or
+            // dashes, and a T4 will not file unless it is nine digits.
+            employee.Sin = new string(GetString(row, headers, "SIN").Where(char.IsAsciiDigit).ToArray());
+
+            var province = GetString(row, headers, "Province of Employment");
+            if (!string.IsNullOrWhiteSpace(province))
+                employee.Province = province.Trim().ToUpperInvariant();
+
+            employee.PayType = ParseEnum(GetString(row, headers, "Pay Type"), Models.Payroll.PayType.Salary);
+            employee.PayRate = GetDecimal(row, headers, "Pay Rate");
+            employee.PayFrequency = ParseEnum(GetString(row, headers, "Pay Frequency"), Models.Payroll.PayFrequency.Biweekly);
+
+            // Null rather than zero when the cell is blank. Zero reads as "worked no hours" on a
+            // record of employment, which costs the employee their claim.
+            employee.StandardHoursPerWeek =
+                SpreadsheetRowReader.GetNullableDecimal(row, headers, "Standard Hours Per Week");
+
+            employee.FederalClaimAmount = GetDecimal(row, headers, "Federal Claim Amount");
+            employee.ProvincialClaimAmount = GetDecimal(row, headers, "Provincial Claim Amount");
+            employee.IsCppExempt = ReadBool(row, headers, "CPP Exempt");
+            employee.IsEiExempt = ReadBool(row, headers, "EI Exempt");
+            employee.DentalBenefit = ParseEnum(GetString(row, headers, "Dental Benefit"),
+                Models.Payroll.DentalBenefitCode.NotEligible);
+            employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date");
+            employee.EndDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "End Date");
+
+            employee.Address = new Address
+            {
+                Street = GetString(row, headers, "Street"),
+                City = GetString(row, headers, "City"),
+                State = GetStringMulti(row, headers, StateVariants),
+                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
+                Country = GetString(row, headers, "Country")
+            };
+
+            employee.IsArchived = GetString(row, headers, "Status")
+                .Trim().Equals("Archived", StringComparison.OrdinalIgnoreCase);
+            employee.Notes = GetString(row, headers, "Notes");
+
+            if (existing == null)
+                data.Employees.Add(employee);
+            else if (options != null)
+                options.UpdatedCount++;
+        }
+    }
+
+    private static string NextEmployeeId(CompanyData data)
+    {
+        int highest = 0;
+
+        foreach (var e in data.Employees)
+        {
+            if (e.Id.StartsWith("EMP-", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(e.Id[4..], out int n) && n > highest)
+            {
+                highest = n;
+            }
+        }
+
+        return $"EMP-{highest + 1:D3}";
+    }
+
+    /// <summary>
+    /// Reads a yes/no cell. Excel gives a real bool, a CSV gives whatever was typed, and the
+    /// app's own export writes True/False, so all three have to be understood.
+    /// </summary>
+    private static bool ReadBool(List<object?> row, List<string> headers, string columnName)
+    {
+        var text = GetString(row, headers, columnName).Trim();
+
+        if (bool.TryParse(text, out bool parsed))
+            return parsed;
+
+        return text.Equals("yes", StringComparison.OrdinalIgnoreCase)
+               || text.Equals("y", StringComparison.OrdinalIgnoreCase)
+               || text == "1";
     }
 
     private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
