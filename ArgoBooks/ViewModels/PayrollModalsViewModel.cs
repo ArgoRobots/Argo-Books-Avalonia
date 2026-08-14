@@ -153,8 +153,17 @@ public partial class PayrollModalsViewModel : ViewModelBase
     public ObservableCollection<PayFrequency> Frequencies { get; } =
         [PayFrequency.Weekly, PayFrequency.Biweekly, PayFrequency.SemiMonthly, PayFrequency.Monthly];
 
-    public PayrollModalsViewModel()
+    private readonly Core.Services.PayrollRateService _rates;
+
+    /// <param name="rates">
+    /// Optional, and taken the same way <c>PayrollService</c> and <c>Rl1Service</c> take theirs.
+    /// It exists so the "no rates loaded" note can be exercised: otherwise the only way to see
+    /// that branch is to run the app on a date no CRA edition covers, which is a year away and
+    /// is exactly when nobody wants to find out the message is wrong.
+    /// </param>
+    public PayrollModalsViewModel(Core.Services.PayrollRateService? rates = null)
     {
+        _rates = rates ?? new Core.Services.PayrollRateService();
         RefreshSupportedProvinces();
     }
 
@@ -560,8 +569,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
     {
         SupportedProvinces.Clear();
 
-        Core.Models.Payroll.PayrollRateTable? table =
-            new Core.Services.PayrollRateService().GetForDate(DateTime.Today);
+        Core.Models.Payroll.PayrollRateTable? table = _rates.GetForDate(DateTime.Today);
 
         if (table == null)
         {

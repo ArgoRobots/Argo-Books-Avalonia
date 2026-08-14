@@ -37,7 +37,12 @@ public class PayrollRateService
     /// 2027 pay run with 2026 rates produces deductions that look plausible and are wrong,
     /// which is worse than producing nothing.
     /// </summary>
-    public PayrollRateTable? GetForDate(DateTime payDate)
+    /// <remarks>
+    /// Virtual only so a test can stand in an app with no editions loaded at all. That state is
+    /// real, it is what the day after the last edition expires looks like, and the only other
+    /// way to reach it is to wait for it.
+    /// </remarks>
+    public virtual PayrollRateTable? GetForDate(DateTime payDate)
     {
         return LoadAll().FirstOrDefault(t => t.Covers(payDate));
     }

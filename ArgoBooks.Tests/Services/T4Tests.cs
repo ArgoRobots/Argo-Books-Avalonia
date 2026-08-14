@@ -628,4 +628,43 @@ public class T4Tests
     }
 
     #endregion
+
+    #region Writing the file
+
+    [Fact]
+    public void TheXmlIsAlsoAvailableAsText_WhichIsWhatGetsSavedAndPreviewed()
+    {
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        string xml = T4XmlWriter.BuildString(BuiltReturn(data));
+
+        Assert.Contains("<Return>", xml, StringComparison.Ordinal);
+        Assert.Contains("046454286", xml, StringComparison.Ordinal);
+
+        // Must parse back. A string built by hand somewhere in this path would not.
+        Assert.NotNull(XDocument.Parse(xml));
+    }
+
+    [Fact]
+    public void AnEmployeesAddress_ReachesTheSlipWhenThereIsOne()
+    {
+        // The address element is left out entirely when empty, because CRA rejects an optional
+        // element that carries no value. The other side of that branch needs its own test.
+        CompanyData data = Data(Person());
+        data.Employees[0].Address = new ArgoBooks.Core.Models.Common.Address
+        {
+            Street = "42 Employee Road",
+            City = "Calgary",
+            State = "AB",
+            ZipCode = "T2P1A1",
+        };
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        string xml = T4XmlWriter.BuildString(BuiltReturn(data));
+
+        Assert.Contains("42 Employee Road", xml, StringComparison.Ordinal);
+    }
+
+    #endregion
 }
