@@ -33,22 +33,30 @@ public class SpreadsheetExportService
 
         _country = companyData.Settings.Company.Country;
 
-        using var workbook = new XLWorkbook();
-
-        foreach (var dataItem in selectedDataItems)
+        // Building the workbook runs off the calling thread, not just saving it. Composing a
+        // sheet per data type for a whole company is where the seconds go, and doing that on the
+        // UI thread meant the caller's loading overlay was set and then never painted: the
+        // window simply froze until the file appeared. The PDF export below has always worked
+        // this way.
+        await Task.Run(() =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            AddWorksheet(workbook, dataItem, companyData, startDate, endDate);
-        }
+            using var workbook = new XLWorkbook();
 
-        // Ensure at least one worksheet exists
-        if (workbook.Worksheets.Count == 0)
-        {
-            var ws = workbook.Worksheets.Add("Empty");
-            ws.Cell(1, 1).Value = "No data selected for export";
-        }
+            foreach (var dataItem in selectedDataItems)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                AddWorksheet(workbook, dataItem, companyData, startDate, endDate);
+            }
 
-        await Task.Run(() => workbook.SaveAs(filePath), cancellationToken);
+            // Ensure at least one worksheet exists
+            if (workbook.Worksheets.Count == 0)
+            {
+                var ws = workbook.Worksheets.Add("Empty");
+                ws.Cell(1, 1).Value = "No data selected for export";
+            }
+
+            workbook.SaveAs(filePath);
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -68,15 +76,23 @@ public class SpreadsheetExportService
 
         _country = companyData.Settings.Company.Country;
 
-        var sb = new StringBuilder();
-
-        foreach (var dataItem in selectedDataItems)
+        // Off the calling thread for the same reason as the Excel export above: the text is
+        // built a row at a time out of the whole company, and the caller cannot paint a loading
+        // overlay while that happens on its own thread.
+        string csv = await Task.Run(() =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            AppendCsvSection(sb, dataItem, companyData, startDate, endDate);
-        }
+            var sb = new StringBuilder();
 
-        await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8, cancellationToken);
+            foreach (var dataItem in selectedDataItems)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                AppendCsvSection(sb, dataItem, companyData, startDate, endDate);
+            }
+
+            return sb.ToString();
+        }, cancellationToken);
+
+        await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8, cancellationToken);
     }
 
     /// <summary>
