@@ -19,6 +19,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
     private static readonly string LicenseRedeemUrl = $"{ApiConfig.BaseUrl}/api/license/redeem.php";
+    private static readonly string LicenseCaptureEmailUrl = $"{ApiConfig.BaseUrl}/api/license/capture-email.php";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private static readonly string PricingApiUrl = $"{ApiConfig.BaseUrl}/api/pricing/plans.php";
 
@@ -69,6 +70,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     partial void OnIsVerificationSuccessChanged(bool value)
     {
+        // The key entry form is hidden by either this or the email step, so it has to be told
+        // when either moves.
+        OnPropertyChanged(nameof(ShowKeyEntryForm));
+
         if (value)
         {
             // Show continue button after 2 second delay
@@ -334,12 +339,111 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
     }
 
+    #region Email capture
+
+    /// <summary>
+    /// Shown between redeeming the key and the success panel, and only for a key we hold no
+    /// contact address for.
+    ///
+    /// Keys sold through a reseller arrive as a pre-generated batch with no buyer details, so
+    /// this is the only moment their address can be asked for. Anyone who bought through the
+    /// website is already on record and never sees this: they get the success panel directly,
+    /// exactly as before.
+    ///
+    /// Premium is ALREADY active by the time this appears, both on the server and locally.
+    /// Nothing here can withhold it, and closing the modal at this step costs us an address
+    /// rather than costing the customer what they paid for.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowKeyEntryForm))]
+    private bool _isEmailCaptureStep;
+
+    [ObservableProperty]
+    private string _customerEmail = string.Empty;
+
+    [ObservableProperty]
+    private string? _emailError;
+
+    [ObservableProperty]
+    private bool _isSubmittingEmail;
+
+    /// <summary>The key just redeemed, kept so the capture call can identify it.</summary>
+    private string _redeemedKey = string.Empty;
+
+    /// <summary>The entry form is now one of three states rather than the inverse of success.</summary>
+    public bool ShowKeyEntryForm => !IsVerificationSuccess && !IsEmailCaptureStep;
+
+
+    /// <summary>
+    /// Records the address, then moves on to the success panel.
+    ///
+    /// A server failure still advances. The licence is active either way, and stopping someone
+    /// on a dead-end screen over a contact detail is precisely the support ticket this whole
+    /// flow is meant to avoid.
+    /// </summary>
+    [RelayCommand]
+    private async Task SubmitEmailAsync()
+    {
+        string email = CustomerEmail.Trim();
+
+        if (email.Length == 0)
+        {
+            EmailError = "Please enter your email address".Translate();
+            return;
+        }
+
+        // Deliberately loose. The server validates properly, and a regex that rejects a real
+        // address here would cost us the very thing we are trying to collect.
+        int at = email.IndexOf('@');
+        if (at <= 0 || email.IndexOf('.', at) <= at + 1 || email.EndsWith('.'))
+        {
+            EmailError = "That does not look like an email address".Translate();
+            return;
+        }
+
+        IsSubmittingEmail = true;
+        EmailError = null;
+
+        try
+        {
+            await CaptureEmailAsync(_redeemedKey, email);
+        }
+        catch (Exception ex)
+        {
+            // Logged, not shown. There is nothing the customer can usefully do about it.
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "License email capture failed");
+        }
+        finally
+        {
+            IsSubmittingEmail = false;
+        }
+
+        IsEmailCaptureStep = false;
+        IsVerificationSuccess = true;
+    }
+
+    private async Task CaptureEmailAsync(string premiumKey, string email)
+    {
+        var deviceId = App.LicenseService?.GetDeviceId() ?? "";
+
+        var requestBody = new { premium_key = premiumKey, device_id = deviceId, email };
+        var json = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        await HttpClient.PostAsync(LicenseCaptureEmailUrl, content);
+    }
+
+    #endregion
+
     [RelayCommand]
     private void Close()
     {
         IsOpen = false;
         IsEnterKeyModalOpen = false;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
+        CustomerEmail = string.Empty;
+        EmailError = null;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -397,6 +501,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsOpen = false;
         IsEnterKeyModalOpen = true;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -407,6 +512,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsEnterKeyModalOpen = false;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -417,6 +523,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsEnterKeyModalOpen = false;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -429,6 +536,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsEnterKeyModalOpen = false;
         KeyVerified?.Invoke(this, LicenseKey);
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         SuccessMessage = null;
     }
@@ -454,6 +562,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsVerifying = true;
         VerificationError = null;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
 
         try
         {
@@ -461,8 +570,19 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (response?.Success == true)
             {
-                IsVerificationSuccess = true;
+                _redeemedKey = key;
                 SuccessMessage = response.Message ?? "License activated successfully!";
+
+                // Ask for an address only when the server has none. Anyone who bought through
+                // the website goes straight to the success panel, unchanged.
+                if (response.NeedsEmail)
+                {
+                    IsEmailCaptureStep = true;
+                }
+                else
+                {
+                    IsVerificationSuccess = true;
+                }
 
                 // Save license securely
                 var licenseType = response.Type?.ToLowerInvariant() ?? "";
@@ -725,6 +845,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         [JsonPropertyName("duration_months")]
         public int DurationMonths { get; init; }
+
+        /// <summary>
+        /// True when the server holds no contact address for this key, which is the case for a
+        /// batch sold through a reseller. False for anything bought through the website, so an
+        /// existing customer is never asked twice.
+        /// </summary>
+        [JsonPropertyName("needs_email")]
+        public bool NeedsEmail { get; init; }
     }
 
     #endregion

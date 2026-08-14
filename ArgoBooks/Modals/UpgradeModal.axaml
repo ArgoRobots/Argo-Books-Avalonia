@@ -345,7 +345,7 @@
                 <Panel>
                     <!-- Normal Entry View -->
                     <Grid RowDefinitions="Auto,*,Auto"
-                          IsVisible="{Binding !IsVerificationSuccess}">
+                          IsVisible="{Binding ShowKeyEntryForm}">
                         <!-- Header -->
                         <Border Grid.Row="0"
                                 Padding="24,20"
@@ -431,6 +431,54 @@
                     </Grid>
 
                     <!-- Success Animation View -->
+                    <!-- Email capture. Only shown for a key the server holds no address for,
+                         which means a batch sold through a reseller. Premium is already active
+                         by the time this appears: this step collects a contact address, it does
+                         not stand between the customer and what they paid for. -->
+                    <StackPanel IsVisible="{Binding IsEmailCaptureStep}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Spacing="20"
+                                MaxWidth="380"
+                                Margin="48">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="40" Height="40"
+                                  Foreground="{DynamicResource SuccessBrush}"
+                                  HorizontalAlignment="Center" />
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Premium is active'}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SuccessBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{loc:Loc 'Where should we send your receipt? We use this to reach you about your licence, and to help if you ever move it to another computer.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBox Text="{Binding CustomerEmail, Mode=TwoWay}"
+                                     Classes="form-input"
+                                     PlaceholderText="you@example.com"
+                                     MaxLength="255" />
+                            <TextBlock Text="{Binding EmailError}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding EmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+
+                        <Button Classes="primary-button"
+                                Content="{loc:Loc Continue}"
+                                Command="{Binding SubmitEmailCommand}"
+                                IsEnabled="{Binding !IsSubmittingEmail}"
+                                HorizontalAlignment="Center"
+                                Padding="32,12" />
+                    </StackPanel>
+
                     <StackPanel IsVisible="{Binding IsVerificationSuccess}"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
