@@ -578,21 +578,24 @@ public class T4Tests
     [Fact]
     public void AMissingSin_IsReportedWithTheConsequenceRatherThanJustFlagged()
     {
+        // Still says what it costs the employee, but as a warning: CRA accepts the slip, so
+        // this must not be the reason a return cannot be filed.
         CompanyData data = Data(Person(sin: string.Empty));
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
 
-        List<string> problems = T4Service.Validate(data, BuiltReturn(data));
+        List<string> warnings = T4Service.Warnings(BuiltReturn(data));
 
-        Assert.Contains(problems, p => p.Contains("CPP contributions will not be credited"));
+        Assert.Contains(warnings, w => w.Contains("contributions will not be credited"));
     }
 
     [Fact]
     public void EverythingWrongIsReportedAtOnce()
     {
         // An employer missing three things wants all three, not one per attempt.
-        CompanyData data = Data(Person(sin: string.Empty));
+        CompanyData data = Data(Person());
         data.Settings.Company.PayrollAccountNumber = null;
         data.Settings.Company.PayrollContactName = null;
+        data.Settings.Company.PayrollContactPhone = null;
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
 
         List<string> problems = T4Service.Validate(data, BuiltReturn(data));
