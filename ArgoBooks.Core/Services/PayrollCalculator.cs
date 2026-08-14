@@ -65,8 +65,18 @@ public static class PayrollCalculator
             : 0m;
         decimal enhancedCpp = Round(cpp * enhancedShare);
 
-        // Annualised income. T4127 calls this A.
-        decimal annual = (gross - enhancedCpp - cpp2) * periods;
+        // Split the period into the part that recurs and the part that does not. Annualising a
+        // bonus as though it were paid every period is the single largest error a payroll
+        // program can make: a $5,000 bonus on $2,400 biweekly annualises to $192,400 instead of
+        // $67,400, pushing the whole year's income four brackets up and over-withholding by
+        // hundreds of dollars on that one pay.
+        //
+        // T4127 factors: B is the non-periodic payment payable now, B1 is the non-periodic
+        // payments already made this year, I is the regular remuneration for the period.
+        (decimal periodicAnnual, decimal currentBonus, decimal priorBonuses) =
+            SplitForBonus(input, ytd, gross, periods, enhancedCpp + cpp2);
+
+        decimal annual = periodicAnnual + priorBonuses;
 
         // Annual contributions, for the K2 credit. T4127 expresses this as the period's
         // contribution times the number of periods, capped at the annual maximum, and reduced
@@ -88,11 +98,38 @@ public static class PayrollCalculator
                             * (1 - enhancedShare);
         decimal annualEi = Math.Min(eiUncapped * periods, rates.Ei.MaxPremiumEmployee);
 
-        decimal federalAnnual = FederalTaxForYear(annual, annualCpp, annualEi, input, rates);
-        decimal provincialAnnual = ProvincialTaxForYear(annual, annualCpp, annualEi, input, rates, province);
+        decimal federalAnnual = Math.Max(0, FederalTaxForYear(annual, annualCpp, annualEi, input, rates));
+        decimal provincialAnnual = Math.Max(0, ProvincialTaxForYear(annual, annualCpp, annualEi, input, rates, province));
 
-        decimal federal = Round(Math.Max(0, federalAnnual) / periods);
-        decimal provincial = Round(Math.Max(0, provincialAnnual) / periods);
+        decimal federal = Round(federalAnnual / periods);
+        decimal provincial = Round(provincialAnnual / periods);
+
+        // T4127's TB: tax on the bonus is the annual tax WITH it less the annual tax WITHOUT
+        // it, taken whole rather than divided by the number of periods, because the bonus is
+        // paid once. Everything else about the period is untouched, including the K2 credit,
+        // which the guide leaves on the same annualised contribution for both steps.
+        if (currentBonus > 0)
+        {
+            decimal withBonus = annual + currentBonus;
+
+            if (withBonus <= rates.Federal.FlatBonusCeiling)
+            {
+                // CRA replaces the whole calculation with a flat rate at very low annual
+                // income. Stated as one combined rate rather than a federal and a provincial
+                // part, so it is withheld as federal tax: below this ceiling the formula
+                // produces zero on both sides, and the T4 reports a single combined figure in
+                // box 22 anyway. Total remittance is the same either way.
+                federal += Round(currentBonus * rates.Federal.FlatBonusRate);
+            }
+            else
+            {
+                federal += Round(
+                    Math.Max(0, FederalTaxForYear(withBonus, annualCpp, annualEi, input, rates)) - federalAnnual);
+                provincial += Round(
+                    Math.Max(0, ProvincialTaxForYear(withBonus, annualCpp, annualEi, input, rates, province))
+                    - provincialAnnual);
+            }
+        }
 
         return new PayrollDeductions
         {
@@ -106,6 +143,44 @@ public static class PayrollCalculator
             FederalTax = federal,
             ProvincialTax = provincial,
         };
+    }
+
+    /// <summary>
+    /// Splits one period's pay into the annualised recurring part and the one-off part, the way
+    /// T4127's bonus steps do.
+    ///
+    /// Shared with the Quebec calculator, because the split itself is arithmetic on the pay
+    /// rather than anything jurisdictional: only the tax formula applied to the two results
+    /// differs.
+    /// </summary>
+    /// <param name="additionalContributions">
+    /// The pension contributions that are relieved as a DEDUCTION rather than a credit: the
+    /// enhanced portion of CPP or QPP, plus all of CPP2 or QPP2.
+    /// </param>
+    /// <returns>
+    /// The annualised regular income, the taxable bonus payable now, and the bonuses already
+    /// paid this year. T4127 calls these [P x (I - F5A)], (B - F5B) and (B1 - F5BYTD).
+    /// </returns>
+    internal static (decimal PeriodicAnnual, decimal CurrentBonus, decimal PriorBonuses) SplitForBonus(
+        PayrollInput input, PayrollYearToDate ytd, decimal gross, int periods, decimal additionalContributions)
+    {
+        decimal bonus = Math.Clamp(input.NonPeriodicPay, 0m, Math.Max(0m, gross));
+        decimal regular = gross - bonus;
+
+        // F5A and F5B. The deduction for the additional pension contributions is split between
+        // the recurring and the one-off pay in proportion to pensionable income, which is
+        // T4127 verbatim:  F5A = F5 x ((PI - B) / PI)  and  F5B = F5 x (B / PI).
+        //
+        // It matters more than its size suggests: F5A is multiplied by the number of pay
+        // periods and F5B is not, so charging the bonus's share to the periodic side would
+        // annualise a deduction that was only ever taken once.
+        decimal f5b = gross > 0 ? Round(additionalContributions * (bonus / gross)) : 0m;
+        decimal f5a = additionalContributions - f5b;
+
+        return (
+            Math.Max(0m, (regular - f5a) * periods),
+            Math.Max(0m, bonus - f5b),
+            Math.Max(0m, ytd.NonPeriodicPay));
     }
 
     /// <summary>
@@ -332,6 +407,17 @@ public class PayrollInput
     /// <summary>TD1P total. Zero means use the basic personal amount.</summary>
     public decimal ProvincialClaimAmount { get; set; }
 
+    /// <summary>
+    /// T4127's B: the part of <see cref="GrossPay"/> that is a bonus, retroactive pay increase,
+    /// vacation pay for vacation not taken, accumulated overtime or any other payment that does
+    /// not recur every period.
+    ///
+    /// Part of gross rather than on top of it, because CPP, CPP2 and EI are charged on the
+    /// whole amount regardless. Only income tax cares about the split, and it cares a great
+    /// deal: the rest of the period is annualised and this is not.
+    /// </summary>
+    public decimal NonPeriodicPay { get; set; }
+
     /// <summary>Only used by provinces whose tax reduction has a dependant component.</summary>
     public int Dependants { get; set; }
 
@@ -361,6 +447,16 @@ public class PayrollYearToDate
     public decimal QpipEmployee { get; set; }
 
     public decimal QpipEmployer { get; set; }
+
+    /// <summary>
+    /// T4127's B1: bonuses and other non-periodic payments already made this year, before this
+    /// period.
+    ///
+    /// Needed because a second bonus must be taxed on top of the first rather than as though it
+    /// were the only one. Without it, two $5,000 bonuses in a year are each taxed as the first,
+    /// and the employee is under-withheld on the second.
+    /// </summary>
+    public decimal NonPeriodicPay { get; set; }
 }
 
 /// <summary>

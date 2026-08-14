@@ -40,7 +40,9 @@
       "phaseoutEnd": 258482
     },
     "canadaEmploymentAmount": 1501,
-    "lowestRateForCredits": 0.14
+    "lowestRateForCredits": 0.14,
+    "flatBonusCeiling": 5000,
+    "flatBonusRate": 0.15
   },
   "cpp": {
     "rateEmployee": 0.0595,
@@ -113,7 +115,10 @@
     "workerDeductionRate": 0.06,
     "workerDeductionMaxAnnual": 1450,
     "federalAbatement": 0.165,
-    "eiMaxPremiumEmployee": 895.7
+    "eiMaxPremiumEmployee": 895.7,
+    "flatBonusCeiling": 18952,
+    "flatBonusRate": 0.07,
+    "federalFlatBonusRate": 0.1
   },
   "provinces": {
     "AB": {

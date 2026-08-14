@@ -117,6 +117,25 @@ public class FederalRates
     /// <summary>The rate credits are converted at, which is the lowest bracket rate.</summary>
     [JsonPropertyName("lowestRateForCredits")]
     public decimal LowestRateForCredits { get; set; }
+
+    /// <summary>
+    /// Annual taxable income at or below which a bonus is taxed at a flat rate instead of by
+    /// the two-step calculation. T4127 states this as $5,000.
+    /// </summary>
+    [JsonPropertyName("flatBonusCeiling")]
+    public decimal FlatBonusCeiling { get; set; } = 5000m;
+
+    /// <summary>
+    /// The flat rate applied under <see cref="FlatBonusCeiling"/>. T4127 states 15%, and states
+    /// it as a single combined figure rather than a federal and a provincial part.
+    ///
+    /// Defaulted in code as well as carried in the rate file so that an edition published
+    /// without it keeps working, and so that a change to it is a rate-file update rather than a
+    /// release. It is deliberately NOT tied to the lowest bracket rate: those happen to have
+    /// been equal historically and have since diverged.
+    /// </summary>
+    [JsonPropertyName("flatBonusRate")]
+    public decimal FlatBonusRate { get; set; } = 0.15m;
 }
 
 public class CppRates
@@ -343,6 +362,28 @@ public class QuebecRates
     /// </summary>
     [JsonPropertyName("eiMaxPremiumEmployee")]
     public decimal EiMaxPremiumEmployee { get; set; }
+
+    /// <summary>
+    /// Annual remuneration, INCLUDING the bonus, at or below which Revenu Quebec has a bonus
+    /// taxed at a flat rate rather than by the formula. $18,952 for 2026.
+    ///
+    /// Much higher than CRA's equivalent ceiling and not the same rule: this one is checked
+    /// against remuneration, CRA's against annual taxable income.
+    /// </summary>
+    [JsonPropertyName("flatBonusCeiling")]
+    public decimal FlatBonusCeiling { get; set; } = 18952m;
+
+    /// <summary>The flat Quebec rate under <see cref="FlatBonusCeiling"/>.</summary>
+    [JsonPropertyName("flatBonusRate")]
+    public decimal FlatBonusRate { get; set; } = 0.07m;
+
+    /// <summary>
+    /// The FEDERAL flat rate on a bonus for a Quebec employee, under the federal ceiling on
+    /// <see cref="FederalRates.FlatBonusCeiling"/>. T4127 publishes 10% here where it publishes
+    /// 15% elsewhere, and 10% is a stated figure rather than 15% net of the abatement.
+    /// </summary>
+    [JsonPropertyName("federalFlatBonusRate")]
+    public decimal FederalFlatBonusRate { get; set; } = 0.10m;
 }
 
 /// <summary>Quebec parental insurance plan. Has no equivalent anywhere else in Canada.</summary>

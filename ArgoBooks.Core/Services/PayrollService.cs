@@ -104,6 +104,14 @@ public class PayrollService(PayrollRateService? rateService = null)
                 new PayrollInput
                 {
                     GrossPay = gross,
+
+                    // Only the bonus is treated as non-periodic. Vacation pay is left as
+                    // regular income: CRA's definition covers vacation pay taken as money
+                    // INSTEAD of time off, but the common case here is the 4% added to every
+                    // cheque, which does recur. Annualising a bonus is a large error in one
+                    // direction; treating a recurring 4% as one-off would be an error in the
+                    // other.
+                    NonPeriodicPay = line.Bonus,
                     Province = employee.Province,
                     PayPeriodsPerYear = employee.PayFrequency.PeriodsPerYear(),
                     FederalClaimAmount = employee.FederalClaimAmount,
@@ -166,6 +174,10 @@ public class PayrollService(PayrollRateService? rateService = null)
                 ytd.EiEmployee += line.EiEmployee;
                 ytd.QpipEmployee += line.QpipEmployee;
                 ytd.QpipEmployer += line.QpipEmployer;
+
+                // T4127's B1. A second bonus has to be taxed on top of the first rather than as
+                // though it were the only one this year.
+                ytd.NonPeriodicPay += line.Bonus;
             }
         }
 

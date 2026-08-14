@@ -46,8 +46,8 @@ public static class QuebecPayrollCalculator
         decimal qpip = QpipForPeriod(gross, ytd, qc);
         decimal ei = EiForPeriod(gross, ytd, rates, qc, input.IsEiExempt);
 
-        decimal quebecTax = QuebecTaxForPeriod(gross, periods, qpp, qpp2, input, qc);
-        decimal federalTax = FederalTaxForPeriod(gross, periods, qpp, qpp2, qppUncapped, ei, input, rates, qc);
+        decimal quebecTax = QuebecTaxForPeriod(gross, periods, qpp, qpp2, input, ytd, qc);
+        decimal federalTax = FederalTaxForPeriod(gross, periods, qpp, qpp2, qppUncapped, ei, input, ytd, rates, qc);
 
         return new PayrollDeductions
         {
@@ -75,9 +75,15 @@ public static class QuebecPayrollCalculator
     /// F, J, J1, K1, Q and Q1 are pension contributions, Revenu Quebec authorisations and
     /// labour-sponsored fund share purchases. This app collects none of them, so they are zero
     /// and left out rather than carried as dead terms.
+    ///
+    /// A bonus is not annualised, for the same reason it is not federally. Revenu Quebec states
+    /// the rule the other way round from CRA: below a threshold on annual remuneration
+    /// INCLUDING the bonus, withhold a flat rate; above it, work the tax out with and without
+    /// the bonus and take the difference.
     /// </summary>
     private static decimal QuebecTaxForPeriod(
-        decimal gross, int periods, decimal qpp, decimal qpp2, PayrollInput input, QuebecRates qc)
+        decimal gross, int periods, decimal qpp, decimal qpp2, PayrollInput input,
+        PayrollYearToDate ytd, QuebecRates qc)
     {
         if (gross <= 0)
         {
@@ -97,15 +103,37 @@ public static class QuebecPayrollCalculator
             : 0m;
         decimal deductibleQpp = Round(qpp * additionalShare) + qpp2;
 
-        decimal annual = Math.Max(0, (gross - workerDeduction - deductibleQpp) * periods);
+        // Both H and CSA are period-level deductions charged on the whole of this period's pay,
+        // so both are split between the recurring and the one-off part in proportion to it.
+        // T4127 spells that split out for the federal equivalent of CSA; TP-1015.F does not
+        // state it for H, and splitting is the only reading that does not annualise a deduction
+        // taken once.
+        (decimal periodicAnnual, decimal bonus, decimal priorBonuses) =
+            PayrollCalculator.SplitForBonus(input, ytd, gross, periods, deductibleQpp + workerDeduction);
 
+        decimal annual = periodicAnnual + priorBonuses;
+        decimal annualTax = AnnualQuebecTax(annual, input, qc);
+        decimal tax = Round(annualTax / periods);
+
+        if (bonus > 0)
+        {
+            decimal withBonus = annual + bonus;
+
+            tax += withBonus <= qc.FlatBonusCeiling
+                ? Round(bonus * qc.FlatBonusRate)
+                : Round(AnnualQuebecTax(withBonus, input, qc) - annualTax);
+        }
+
+        return tax;
+    }
+
+    private static decimal AnnualQuebecTax(decimal annual, PayrollInput input, QuebecRates qc)
+    {
         (decimal rate, decimal k) = BracketFor(qc.Brackets, annual);
 
         decimal claim = input.ProvincialClaimAmount > 0 ? input.ProvincialClaimAmount : qc.BasicPersonalAmount;
 
-        decimal annualTax = Math.Max(0, rate * annual - k - qc.CreditRate * claim);
-
-        return Round(annualTax / periods);
+        return Math.Max(0, rate * annual - k - qc.CreditRate * claim);
     }
 
     /// <summary>
@@ -116,7 +144,7 @@ public static class QuebecPayrollCalculator
     /// </summary>
     private static decimal FederalTaxForPeriod(
         decimal gross, int periods, decimal qpp, decimal qpp2, decimal qppUncapped, decimal ei,
-        PayrollInput input, PayrollRateTable rates, QuebecRates qc)
+        PayrollInput input, PayrollYearToDate ytd, PayrollRateTable rates, QuebecRates qc)
     {
         if (gross <= 0)
         {
@@ -128,11 +156,37 @@ public static class QuebecPayrollCalculator
             : 0m;
 
         decimal enhancedQpp = Round(qpp * additionalShare);
-        decimal annual = (gross - enhancedQpp - qpp2) * periods;
+
+        (decimal periodicAnnual, decimal bonus, decimal priorBonuses) =
+            PayrollCalculator.SplitForBonus(input, ytd, gross, periods, enhancedQpp + qpp2);
+
+        decimal annual = periodicAnnual + priorBonuses;
 
         decimal annualQpp = Math.Min(qppUncapped * periods, qc.Qpp.MaxContributionEmployee) * (1 - additionalShare);
         decimal annualEi = Math.Min(ei * periods, qc.EiMaxPremiumEmployee);
 
+        decimal annualTax = AnnualFederalTax(annual, annualQpp, annualEi, input, rates, qc);
+        decimal tax = Round(annualTax / periods);
+
+        // The federal share of a bonus, on CRA's rule rather than Quebec's: T4127 states the
+        // same flat-rate shortcut under the same ceiling, at 10% for Quebec instead of 15%.
+        // That 10% is a published figure, not the 15% with the abatement applied to it.
+        if (bonus > 0)
+        {
+            decimal withBonus = annual + bonus;
+
+            tax += withBonus <= rates.Federal.FlatBonusCeiling
+                ? Round(bonus * qc.FederalFlatBonusRate)
+                : Round(AnnualFederalTax(withBonus, annualQpp, annualEi, input, rates, qc) - annualTax);
+        }
+
+        return tax;
+    }
+
+    private static decimal AnnualFederalTax(
+        decimal annual, decimal annualQpp, decimal annualEi,
+        PayrollInput input, PayrollRateTable rates, QuebecRates qc)
+    {
         FederalRates federal = rates.Federal;
         (decimal rate, decimal k) = BracketFor(federal.Brackets, annual);
         decimal lowest = federal.LowestRateForCredits;
@@ -149,9 +203,7 @@ public static class QuebecPayrollCalculator
 
         // The abatement. CRA collects less federal tax from Quebec residents because Quebec
         // collects its own, and it applies to the tax rather than to the income.
-        decimal afterAbatement = Math.Max(0, t3) * (1 - qc.FederalAbatement);
-
-        return Round(afterAbatement / periods);
+        return Math.Max(0, t3) * (1 - qc.FederalAbatement);
     }
 
     /// <summary>QPP for the period. Same arithmetic as CPP, different constants.</summary>
