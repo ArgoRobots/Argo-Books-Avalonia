@@ -138,4 +138,75 @@ public class YearEndModalViewModelTests : ModalViewModelTestBase
         Assert.NotEmpty(vm.Rows);
         Assert.Single(vm.Rows);
     }
+
+    #region The payroll account number
+
+    /// <summary>
+    /// The problem list at the top of the modal already says why filing is blocked, but it
+    /// scrolls away, and the export button is at the bottom with nothing on it to explain why it
+    /// is dead. The field itself has to say so.
+    /// </summary>
+    [Fact]
+    public void AMalformedAccountNumber_IsReportedOnTheFieldItself()
+    {
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3)));
+
+        var vm = new YearEndModalViewModel();
+        vm.Open();
+
+        vm.AccountNumber = "67867";
+
+        Assert.NotEmpty(vm.AccountNumberError);
+        Assert.False(vm.CanFile);
+    }
+
+    [Fact]
+    public void AWellFormedAccountNumber_ClearsTheError()
+    {
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3)));
+
+        var vm = new YearEndModalViewModel();
+        vm.Open();
+
+        vm.AccountNumber = "123456789RP0001";
+
+        Assert.Empty(vm.AccountNumberError);
+    }
+
+    [Fact]
+    public void AnEmptyAccountNumber_SaysNothingYet()
+    {
+        // Empty is not the same as wrong. The field is marked required and the problem list says
+        // it is missing; colouring it red before anything has been typed is nagging.
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3)));
+
+        var vm = new YearEndModalViewModel();
+        vm.Open();
+
+        vm.AccountNumber = string.Empty;
+
+        Assert.Empty(vm.AccountNumberError);
+        Assert.False(vm.CanFile);
+    }
+
+    [Fact]
+    public void SpacingAndCaseInTheAccountNumber_AreAccepted()
+    {
+        // Stored on the CRA statement with spaces, and IsPayrollAccountNumber strips them, so the
+        // field must not report an error on something the validator is going to accept.
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3)));
+
+        var vm = new YearEndModalViewModel();
+        vm.Open();
+
+        vm.AccountNumber = "123456789 rp 0001";
+
+        Assert.Empty(vm.AccountNumberError);
+    }
+
+    #endregion
 }

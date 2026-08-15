@@ -121,6 +121,12 @@
                                                 <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Payroll account number'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
                                                 <TextBox Text="{Binding AccountNumber, Mode=TwoWay}" Classes="form-input"
                                                          PlaceholderText="000000000RP0000" MaxLength="17" />
+                                                <!-- Said at the field as well as in the problem list at the top,
+                                                     which scrolls out of sight long before the export button. -->
+                                                <TextBlock Text="{Binding AccountNumberError}" FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource ErrorBrush}"
+                                                           IsVisible="{Binding AccountNumberError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                                 <TextBlock Text="{loc:Loc 'From your CRA statement of account. RP, not RC.'}"
                                                            FontSize="11" TextWrapping="Wrap"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />

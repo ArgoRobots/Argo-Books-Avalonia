@@ -203,7 +203,25 @@ public partial class YearEndModalViewModel : ViewModelBase
     /// in the same place beats a message pointing at a settings tab.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AccountNumberError))]
     private string _accountNumber = string.Empty;
+
+    /// <summary>
+    /// Why this particular number will not do, shown under the field.
+    ///
+    /// The problem list at the top of the modal already says filing is blocked and why, but it
+    /// scrolls out of sight, and the export button sits at the bottom with nothing on it to
+    /// explain why it is dead. Somebody who has typed the wrong thing is looking at the field,
+    /// so that is where it has to be said.
+    ///
+    /// Empty is deliberately not an error. It is different from wrong: the field is already
+    /// marked required and the problem list reports it as missing, and colouring it red before
+    /// anything has been typed is nagging rather than help.
+    /// </summary>
+    public string AccountNumberError =>
+        string.IsNullOrWhiteSpace(AccountNumber) || T4Service.IsPayrollAccountNumber(AccountNumber)
+            ? string.Empty
+            : "Nine digits, then RP, then four: 000000000RP0000.";
 
     [ObservableProperty]
     private string _contactName = string.Empty;
