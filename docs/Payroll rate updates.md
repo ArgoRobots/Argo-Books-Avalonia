@@ -332,32 +332,44 @@ the file, not the engine, unless the engine changed too.
 
 ## Shipping it
 
-> **The upload half of this does not exist yet.** `PayrollRateService` reads a cache directory
-> before falling back to the embedded copy, which is the receiving end of a delivery mechanism
-> that was never built. Nothing in the app writes to that directory, nothing calls
-> `PayrollRateService.Invalidate()`, and the website has no payroll endpoint: `cron/payroll_rate_reminder.php`
-> is the only payroll file in that repository. Until it is built, **committing and shipping an
-> app update is the only way a customer gets a new edition.** The reminder email's step 4 says
-> otherwise and is wrong.
+Do both of these:
 
-**Today:**
+1. **Upload** `{edition}.json` to `resources/downloads/payroll/` on the website. This is the
+   step that reaches everyone already running the app, with no release.
+2. **Commit** it to `ArgoBooks.Core/Resources/Payroll/`, so a fresh install has it offline
+   rather than needing to reach the server before it can run payroll. The csproj globs
+   `Resources\Payroll\*.json`, so a new file needs no csproj change.
 
-1. **Commit** the new edition to `ArgoBooks.Core/Resources/Payroll/`. The csproj globs
-   `Resources\Payroll\*.json` as an embedded resource, so a new file needs no csproj change.
-2. **Ship an app update.** That is what reaches customers.
+Uploading alone leaves a new install unable to calculate until it syncs. Committing alone means
+nobody gets it until they update the app.
 
-**What building the upload path would take,** if it is worth doing rather than releasing twice
-a year anyway. `LanguageService` is the working example to copy: it pulls from
-`{ApiConfig.BaseUrl}/resources/downloads/{version}/languages/{iso}.json` into a `Languages`
-folder under the platform cache path. The payroll equivalent is the same shape:
+### How the download works
 
-- a `resources/downloads/payroll/{edition}.json` route on the website
-- a fetch into `{cache}/Payroll/`, which `PayrollRateService` already reads first
-- a call to `PayrollRateService.Invalidate()` afterwards, so the new edition is seen without a
-  restart. It exists and currently has no callers.
+`PayrollRateUpdateService` fetches `{ApiConfig.BaseUrl}/resources/downloads/payroll/{edition}.json`,
+the same shape `LanguageService` uses for translations. It runs when a pay run meets a date no
+loaded edition covers, which is the moment the user actually needs one, and the edition id is
+derived from the pay date rather than looked up: `2027-01` for January to June, `2027-07` after.
 
-The deadline is fixed and twice yearly, so the choice is between building this once and
-remembering to ship a release in the last three weeks of December and June, every year.
+**It refuses far more than it accepts, and every refusal leaves the cache alone.** A download
+is only written if it parses, its `editionId` matches the filename that was asked for, and it
+passes `PayrollRateValidator`: every derived maximum reproducing from its own rate, and every
+bracket ascending, ending open and meeting its neighbour at the boundary. A 404, an offline
+machine, a captive portal answering 200 with HTML, and a truncated file all take the same path,
+which is to change nothing.
+
+That matters because this is the one download in the app where being wrong is silent and
+expensive. Everything else degrades visibly: a missing translation shows English, a missing
+exchange rate shows Pending. A wrong rate table produces a wrong deduction on a real person's
+pay that nothing downstream questions.
+
+**A rejected file is invisible to the customer.** They see "no tables loaded" and nothing says
+why. So validate before uploading, not after. The rules are in
+`resources/downloads/payroll/README.md` on the website, and `PayrollRateValidatorTests` shows
+what each failure looks like.
+
+What this does NOT do is check the numbers against CRA. It cannot: a table can pass every check
+and still carry last year's figures. The verification pass above is still the only thing that
+catches that.
 
 ---
 

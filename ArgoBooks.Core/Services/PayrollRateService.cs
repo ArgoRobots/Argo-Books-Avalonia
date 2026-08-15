@@ -30,6 +30,12 @@ public class PayrollRateService
     }
 
     /// <summary>
+    /// Where a delivered edition goes. Exposed so <see cref="PayrollRateUpdateService"/> writes
+    /// to the same place this reads from, rather than rebuilding the path and drifting from it.
+    /// </summary>
+    public string CacheDirectory => _cacheDirectory;
+
+    /// <summary>
     /// The edition covering <paramref name="payDate"/>, or null when none is available.
     ///
     /// Null is a real answer and callers must handle it by refusing to calculate. There is

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Avalonia.Threading;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Services;
@@ -19,8 +20,23 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class PayRunModalsViewModel : ViewModelBase
 {
-    private readonly PayrollService _payroll = new();
+    /// <summary>
+    /// One rate service for the whole modal, shared with the payroll service rather than
+    /// constructed wherever a table is wanted.
+    ///
+    /// It matters now that an edition can be downloaded mid-session. Each instance parses and
+    /// caches the editions it finds, so a second instance would keep serving the editions that
+    /// existed when it was built and quietly disagree with the one that just fetched a new one.
+    /// </summary>
+    private readonly PayrollRateService _rates = new();
+
+    private readonly PayrollService _payroll;
     private PayRun? _draft;
+
+    /// <summary>True while a rate download is in flight, so a rapid date change cannot start several.</summary>
+    private bool _fetchingRates;
+
+    public PayRunModalsViewModel() => _payroll = new PayrollService(_rates);
 
     [ObservableProperty]
     private bool _isRunModalOpen;
@@ -206,18 +222,66 @@ public partial class PayRunModalsViewModel : ViewModelBase
     private void RefreshRateEdition()
     {
         DateTime date = PayDate?.DateTime ?? DateTime.Today;
-        PayrollRateTable? table = new PayrollRateService().GetForDate(date);
+        PayrollRateTable? table = _rates.GetForDate(date);
 
         if (table == null)
         {
             RateEditionNote = string.Empty;
             BlockingError = $"No CRA payroll tables are loaded for {date:d MMMM yyyy}. " +
-                            "Update the rates before running payroll for this date.";
+                            "Checking for an update.";
+
+            // CRA publishes twice a year on dates nobody chooses, so the edition a pay date
+            // needs can exist on the server while this install has never seen it. Ask, rather
+            // than telling the user payroll is unavailable until the next app release.
+            _ = FetchRatesForAsync(date);
             return;
         }
 
         BlockingError = string.Empty;
         RateEditionNote = $"Using CRA tables effective {table.EffectiveFrom:d MMMM yyyy}.";
+    }
+
+    /// <summary>
+    /// Tries to fetch the edition covering this pay date, and refreshes the screen if one
+    /// arrives.
+    ///
+    /// Deliberately silent when it fails. Being offline, or asking before CRA's file has been
+    /// uploaded, is the ordinary case rather than an error: the message already on screen says
+    /// the tables are missing, which is both true and the only thing the user can act on.
+    /// </summary>
+    private async Task FetchRatesForAsync(DateTime payDate)
+    {
+        if (_fetchingRates)
+        {
+            return;
+        }
+
+        _fetchingRates = true;
+
+        try
+        {
+            bool arrived = await new PayrollRateUpdateService(_rates).TryUpdateForDateAsync(payDate);
+
+            if (!arrived)
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                    BlockingError = $"No CRA payroll tables are loaded for {payDate:d MMMM yyyy}. " +
+                                    "Update the rates before running payroll for this date.");
+                return;
+            }
+
+            // Back on the UI thread, and through the same path as any other date change so the
+            // note and the blocking error are set by one piece of code rather than two.
+            await Dispatcher.UIThread.InvokeAsync(RefreshRateEdition);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.FetchRates");
+        }
+        finally
+        {
+            _fetchingRates = false;
+        }
     }
 
     /// <summary>
@@ -495,7 +559,7 @@ public partial class PayRunModalsViewModel : ViewModelBase
             return;
         }
 
-        PayrollRateTable? rates = new PayrollRateService().GetForDate(_draft.PayDate);
+        PayrollRateTable? rates = _rates.GetForDate(_draft.PayDate);
 
         foreach (PayRunLine line in _draft.Lines)
         {
