@@ -1,39 +1,56 @@
 # Payroll rate updates
 
-CRA publishes new payroll deduction tables **twice a year**, effective **January 1** and
-**July 1**. Argo Books ships no tax numbers in the app itself, so each new edition is a data
-file that has to be prepared, checked and uploaded.
+CRA issues new payroll deduction tables **twice a year**. Argo Books keeps none of those figures
+in code: every rate, threshold and constant is data, which is why an update is a file rather
+than a release.
 
-> This has a hard deadline and no grace period. A pay run calculated on or after a changeover
-> either refuses to run, or uses the previous edition and produces deductions that look
-> correct and are wrong. The app cannot detect that on its own.
+Each edition lives in two places, and a finished update goes to both.
 
-A reminder email arrives in mid-December and mid-June. It is one of the alerts that cannot be
-switched off, and it comes from `cron/payroll_rate_reminder.php` in the website repository.
-
----
-
-## When
-
-| Edition | Effective | Prepare during |
+| | Where | Who it serves |
 |---|---|---|
-| `YYYY-01` | January 1 | December |
-| `YYYY-07` | July 1 | June |
+| **Upload** | `resources/downloads/payroll/` on the website | Everyone already running the app. They fetch it when they meet a pay date no loaded edition covers. |
+| **Commit** | `ArgoBooks.Core/Resources/Payroll/` in this repo | A fresh or offline install, which calculates from the embedded copy until it can reach the server. |
 
-Aim to have the file uploaded a week before it takes effect.
+Uploading alone leaves a new install unable to run payroll until it syncs. Committing alone
+means nobody gets it until they update the app. A delivered file wins over the embedded one of
+the same edition, so the two never fight.
 
----
+**Published and effective are different dates, and the gap is the whole working window.** CRA
+puts an edition out roughly a month before it applies, so the numbers are already sitting there
+while the current ones are still in force. The July 1 2026 edition was stamped `Rev. 26 (26/06)`,
+meaning June 2026. There is no scramble in this job as long as it starts in that gap.
 
-## Why there are two editions a year
+| Edition | Published | Takes effect | Do the work |
+|---|---|---|---|
+| `YYYY-01` | around November or December | January 1 | December |
+| `YYYY-07` | around May or June | July 1 | June |
 
-The July edition is not just a refresh. When a province changes a rate part way through the
-year, CRA publishes a **prorated** figure for the second half that offsets what was used in
-the first half. In 2026 that affected British Columbia, Newfoundland and Labrador, and Prince
-Edward Island.
+Aim to have it uploaded a week early. Some editions get amended after publication, so if you
+build one very early, re-check it against CRA before the changeover: the January 2026 edition
+was revised in May 2026 to add a PEI bracket.
 
-This is why a pay run picks its table by **pay date** rather than by year, and why the
-January edition must be kept alongside the July one rather than replaced by it. A February
-pay run and an August pay run in the same year legitimately use different numbers.
+## What happens if the date passes
+
+Payroll stops. It does not go quietly wrong.
+
+The app refuses any pay date no loaded edition covers, and never falls back to the previous
+edition, so no incorrect deduction is produced. Nothing already approved changes either: an
+approved run keeps the figures it was calculated with, which is what makes a reissued pay stub
+still match the one the employee was handed.
+
+That is a loud failure rather than a silent one, and it is the right way round. But it lands on
+every customer at once on a date CRA chose, and the only fix is a new file, so treat the
+deadline as hard.
+
+## The reminder chases you until it is done
+
+`cron/payroll_rate_reminder.php` in the website repository, and it cannot be switched off.
+
+- **10th to 20th of December and June:** start the work. The numbers are out by then.
+- **Last three days before the changeover:** only if the file still is not on the server.
+
+Both check `resources/downloads/payroll/{edition}.json` and go silent once it is there. So the
+first email is a to-do and **the second one arriving means the upload has not happened.**
 
 ---
 
@@ -112,6 +129,22 @@ The `_verification` note at the top of each rate file records exactly what was c
 
 Note that the July edition only reproduces the sections that CHANGED. Formulas that did not
 change, and Ontario's health premium bands, are in the January edition instead.
+
+### The current edition tells you what the next one holds
+
+Each edition carries an **"Upcoming Changes"** section for the one after it, so the shape of the
+next update is knowable months ahead rather than being a surprise in the working window. Worth
+reading on the way past, because it is where a change big enough to need code rather than data
+would show up first.
+
+As of the July 2026 edition, for `2027-01`:
+
+- **CPP base rate falls from 4.95% to 4.75%** on January 1 2027, announced April 28 2026. This
+  one is not just a number: `baseRateEmployee` splits CPP into the part relieved as a credit and
+  the part relieved as a deduction, so it moves income tax as well as the contribution.
+- **British Columbia pauses indexation** at 2026 levels for the 2027 to 2030 tax years, resuming
+  in 2031. So BC's brackets and personal amounts should come across unchanged, and a diff showing
+  them moving means something is wrong.
 
 ### Reading Table 8.1 into the rate file
 
@@ -332,16 +365,8 @@ the file, not the engine, unless the engine changed too.
 
 ## Shipping it
 
-Do both of these:
-
-1. **Upload** `{edition}.json` to `resources/downloads/payroll/` on the website. This is the
-   step that reaches everyone already running the app, with no release.
-2. **Commit** it to `ArgoBooks.Core/Resources/Payroll/`, so a fresh install has it offline
-   rather than needing to reach the server before it can run payroll. The csproj globs
-   `Resources\Payroll\*.json`, so a new file needs no csproj change.
-
-Uploading alone leaves a new install unable to calculate until it syncs. Committing alone means
-nobody gets it until they update the app.
+Upload it and commit it, as set out at the top. Nothing in the csproj needs touching: it globs
+`Resources\Payroll\*.json`, so a new file is embedded by being in the folder.
 
 ### How the download works
 
