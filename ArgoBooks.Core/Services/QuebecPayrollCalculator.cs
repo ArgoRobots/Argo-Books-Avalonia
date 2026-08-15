@@ -267,6 +267,22 @@ public static class QuebecPayrollCalculator
     /// <summary>
     /// QPIP. Capped on the premium rather than on insurable earnings, for the same reason EI
     /// is: the two only agree when the year-to-date figures are perfect, and they rarely are.
+    ///
+    /// Deliberately takes no exemption flag, which looks like an oversight beside QPP and EI and
+    /// is not one. Revenu Quebec: "employment that is not insurable under the Employment
+    /// Insurance Act is not necessarily excluded employment under the Act respecting parental
+    /// insurance ... you must withhold and pay QPIP premiums respecting salary or wages paid to
+    /// a shareholder (or a shareholder's spouse) as an employee, REGARDLESS of the number of
+    /// shares held by that person."
+    ///
+    /// So the owner-manager this app marks EI exempt, the one holding more than 40% of the
+    /// voting shares, still pays QPIP. Passing IsEiExempt through here would stop withholding
+    /// from exactly the person who owes it.
+    ///
+    /// The $2,000 annual threshold is likewise not applied here. Revenu Quebec is explicit that
+    /// it is settled on the employee's own return: "regardless of the $2,000 threshold, you must
+    /// start withholding and paying QPIP premiums as soon as you pay the employee one dollar of
+    /// eligible salary or wages."
     /// </summary>
     /// <param name="uncapped">
     /// The premium before the remaining annual room is applied. What is withheld this period is

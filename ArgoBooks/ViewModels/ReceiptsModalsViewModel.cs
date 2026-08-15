@@ -1487,7 +1487,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 Supplier = supplierName,
                 Source = "AI Scanned",
                 OcrData = CreateOcrDataFromScanResult(scanResult),
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             if (isRevenue)
@@ -1515,8 +1515,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     PaymentStatus = RevenuePaymentStatus.Paid,
                     Notes = notes,
                     ReceiptId = receiptId,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
                 ApplyDisplayCurrency(companyData, revenue, "Revenue");
 
@@ -1547,8 +1547,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     PaymentMethod = Enum.TryParse<PaymentMethod>(paymentMethod.Replace(" ", ""), out var epm) ? epm : PaymentMethod.Cash,
                     Notes = notes,
                     ReceiptId = receiptId,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
                 ApplyDisplayCurrency(companyData, expense, "Expense");
 
@@ -2500,8 +2500,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = Notes,
             ReceiptId = receiptId,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
         ApplyDisplayCurrency(companyData, expense, "Expense");
 
@@ -2519,7 +2519,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Supplier = ExtractedSupplier,
             Source = "AI Scanned",
             OcrData = CreateOcrData(),
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
 
         // Capture auto-created entities for undo
@@ -2589,8 +2589,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             PaymentStatus = RevenuePaymentStatus.Paid,
             Notes = Notes,
             ReceiptId = receiptId,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
         ApplyDisplayCurrency(companyData, revenue, "Revenue");
 
@@ -2608,7 +2608,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             Supplier = ExtractedSupplier, // Still store the merchant name for reference
             Source = "AI Scanned",
             OcrData = CreateOcrData(),
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
 
         // Capture auto-created entities for undo

@@ -44,8 +44,8 @@ public static class TransactionFactory
             Total = draft.Total,
             Notes = draft.Notes ?? string.Empty,
             OriginalCurrency = draft.OriginalCurrency,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
     }
 
@@ -67,8 +67,8 @@ public static class TransactionFactory
             PaymentStatus = RevenuePaymentStatus.Paid,
             Notes = draft.Notes ?? string.Empty,
             OriginalCurrency = draft.OriginalCurrency,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
     }
 

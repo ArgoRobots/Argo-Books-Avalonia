@@ -127,6 +127,14 @@ public class T4Service
             // insurable earnings using box 56", and box 28's PPIP tick means no premium was
             // withheld for the whole period. Earnings with no premium against them is the one
             // combination that cannot be true.
+            //
+            // RC4120 also carries a list under box 56 of when NOT to report it, which includes
+            // "the insurable earnings are the same as the employment income in box 14" and "the
+            // insurable earnings are over the maximum for the year". Taken literally that would
+            // suppress box 56 in every case this app can produce, since QPIP eligible earnings
+            // here are always gross capped at the ceiling. It is left reported, because the two
+            // instructions contradict each other and the box 55 pairing above is the one written
+            // as a requirement. Worth revisiting against CRA's XML schema rather than guessing.
             QpipInsurableEarnings = quebec && qpip > 0 ? ceilings.CapQpip(gross) : 0m,
             EmployerQpip = lines.Sum(l => l.QpipEmployer),
 

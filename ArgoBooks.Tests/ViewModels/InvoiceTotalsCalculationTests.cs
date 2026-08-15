@@ -77,4 +77,52 @@ public class InvoiceTotalsCalculationTests
         Assert.Equal(14m, vm.TaxAmount);
         Assert.Equal(194m, vm.Total);
     }
+
+    #region Per-line discount
+
+    [Fact]
+    public void ALineDiscount_ComesOffTheSubtotal()
+    {
+        // §4: Subtotal = SUM over LineItem of (Quantity x UnitPrice - Discount). The form has no
+        // box for a per-line discount, so this only ever arrives on an imported line; the
+        // spreadsheet importer reads a Discount column for every invoice line and the exporter
+        // writes one. It used to be ignored by every total in the app and then erased on the
+        // next save.
+        var vm = new InvoiceModalsViewModel();
+        vm.LineItems.Add(new LineItemDisplayModel { Quantity = 10, UnitPrice = 100m, Discount = 50m });
+        vm.TaxRate = 10m;
+
+        // subtotal 1000 - 50 = 950; tax = 95; total = 1045.
+        Assert.Equal(950m, vm.Subtotal);
+        Assert.Equal(95m, vm.TaxAmount);
+        Assert.Equal(1045m, vm.Total);
+    }
+
+    [Fact]
+    public void APerLineTaxRate_DoesNotAddToTheSubtotal()
+    {
+        // §4 is explicit that the invoice header rate produces the stored tax: "line items each
+        // carry a TaxRate but the invoice header rate is what's stored as the final tax". Rolling
+        // a line's own rate into the subtotal would have the header rate charged on top of it.
+        var vm = new InvoiceModalsViewModel();
+        vm.LineItems.Add(new LineItemDisplayModel { Quantity = 10, UnitPrice = 100m, TaxRate = 0.13m });
+        vm.TaxRate = 10m;
+
+        Assert.Equal(1000m, vm.Subtotal);
+        Assert.Equal(100m, vm.TaxAmount);
+    }
+
+    [Fact]
+    public void ALineWithNoDiscount_IsExactlyWhatItAlwaysWas()
+    {
+        // Every line this app creates has Discount = 0, so honouring the field must be a no-op
+        // for existing invoices rather than a repricing of them.
+        var vm = new InvoiceModalsViewModel();
+        vm.LineItems.Add(new LineItemDisplayModel { Quantity = 3, UnitPrice = 0.333m });
+
+        Assert.Equal(0.999m, vm.Subtotal);
+        Assert.Equal(0.999m, vm.LineItems[0].Amount);
+    }
+
+    #endregion
 }

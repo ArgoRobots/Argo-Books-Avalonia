@@ -524,8 +524,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             PaymentStatus = ModalPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid,
             Notes = ModalNotes,
             ReferenceNumber = string.Empty,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             // USD conversion fields
             OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
             TotalUSD = ConvertedTotal?.AmountUSD ?? Total,
@@ -635,7 +635,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         revenue.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
         revenue.PaymentStatus = ModalPaid ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid;
         revenue.Notes = ModalNotes;
-        revenue.UpdatedAt = DateTime.Now;
+        revenue.UpdatedAt = DateTime.UtcNow;
         // USD conversion fields
         revenue.OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD";
         revenue.TotalUSD = ConvertedTotal?.AmountUSD ?? Total;
@@ -757,7 +757,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             Date = ModalDate?.DateTime ?? DateTime.Now,
             Supplier = supplier,
             Source = "Manual",
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
     }
 
