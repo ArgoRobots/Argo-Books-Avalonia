@@ -119,17 +119,29 @@ public static class PayStubPdfRenderer
             // Deductions
             col.Item().Column(c =>
             {
+                // A Quebec employee contributes to QPP, not CPP, and to QPIP, which has no
+                // equivalent anywhere else. Both matter here rather than being cosmetic: the
+                // total below is gross minus net, so a withheld premium with no line of its own
+                // leaves the section not adding up in front of the person being paid.
+                bool quebec = string.Equals(line.Province, "QC", StringComparison.OrdinalIgnoreCase);
+
                 c.Item().Text("DEDUCTIONS").FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
                 c.Item().PaddingTop(6).Column(rows =>
                 {
-                    Amount(rows, "CPP", Money(line.CppEmployee, currencySymbol));
+                    Amount(rows, quebec ? "QPP" : "CPP", Money(line.CppEmployee, currencySymbol));
 
                     if (line.Cpp2Employee != 0)
                     {
-                        Amount(rows, "CPP2", Money(line.Cpp2Employee, currencySymbol));
+                        Amount(rows, quebec ? "QPP2" : "CPP2", Money(line.Cpp2Employee, currencySymbol));
                     }
 
                     Amount(rows, "EI", Money(line.EiEmployee, currencySymbol));
+
+                    if (line.QpipEmployee != 0)
+                    {
+                        Amount(rows, "QPIP", Money(line.QpipEmployee, currencySymbol));
+                    }
+
                     Amount(rows, "Federal tax", Money(line.FederalTax, currencySymbol));
                     Amount(rows, $"{line.Province} tax", Money(line.ProvincialTax, currencySymbol));
 
@@ -149,18 +161,27 @@ public static class PayStubPdfRenderer
             // Year to date, which is what an employee checks a stub against.
             col.Item().Column(c =>
             {
+                bool quebec = string.Equals(line.Province, "QC", StringComparison.OrdinalIgnoreCase);
+
                 c.Item().Text("YEAR TO DATE").FontSize(9).SemiBold().FontColor(Colors.Grey.Darken2);
                 c.Item().PaddingTop(6).Column(rows =>
                 {
                     Amount(rows, "Gross pay", Money(ytd.PensionableEarnings + line.GrossPay, currencySymbol));
-                    Amount(rows, "CPP", Money(ytd.CppEmployee + line.CppEmployee, currencySymbol));
+                    Amount(rows, quebec ? "QPP" : "CPP",
+                        Money(ytd.CppEmployee + line.CppEmployee, currencySymbol));
 
                     if (ytd.Cpp2Employee + line.Cpp2Employee != 0)
                     {
-                        Amount(rows, "CPP2", Money(ytd.Cpp2Employee + line.Cpp2Employee, currencySymbol));
+                        Amount(rows, quebec ? "QPP2" : "CPP2",
+                            Money(ytd.Cpp2Employee + line.Cpp2Employee, currencySymbol));
                     }
 
                     Amount(rows, "EI", Money(ytd.EiEmployee + line.EiEmployee, currencySymbol));
+
+                    if (ytd.QpipEmployee + line.QpipEmployee != 0)
+                    {
+                        Amount(rows, "QPIP", Money(ytd.QpipEmployee + line.QpipEmployee, currencySymbol));
+                    }
                 });
             });
         });

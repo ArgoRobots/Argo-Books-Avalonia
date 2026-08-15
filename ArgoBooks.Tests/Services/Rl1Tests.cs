@@ -201,6 +201,49 @@ public class Rl1Tests
     }
 
     [Fact]
+    public void BoxG_IsCappedAtTheAdditionalMaximum_WhenThereIsAQpp2Contribution()
+    {
+        // RL-1.G-V section 5.9 gives box G two maximums: the maximum pensionable earnings "if an
+        // amount is entered in box B.A only", and the ADDITIONAL maximum "if amounts are entered
+        // in boxes B.A and B.B". Anyone paid above the first ceiling has QPP2 withheld and so
+        // has an amount in box B.B, which selects the second.
+        //
+        // Capping at the first ceiling reported less pensionable salary than the QPP2 in box B.B
+        // was charged on, which is the pair Revenu Quebec checks against each other.
+        PayrollRateTable rates = new Core.Services.PayrollRateService().GetForDate(new DateTime(2026, 12, 31))!;
+        decimal betweenTheCeilings = (rates.Quebec!.Qpp.YmpeCeiling + rates.Quebec.Qpp2.YampeCeiling) / 2m;
+
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", betweenTheCeilings, qpp2: 200m));
+
+        Rl1Slip slip = Built(data).Slips[0];
+
+        Assert.True(betweenTheCeilings > rates.Quebec.Qpp.YmpeCeiling, "the fixture must straddle the first ceiling");
+        Assert.Equal(betweenTheCeilings, slip.QppPensionableSalary);
+    }
+
+    [Fact]
+    public void BoxI_IsNotNil_WhenAQpipPremiumWasWithheld()
+    {
+        // Box I was gated on the EI exemption, and the two exemptions are not the same one. EI
+        // exemption is the owner holding more than 40% of the voting shares; QPIP has its own
+        // rules and its own base, and the calculator withholds it from a Quebec employee either
+        // way. That produced a slip with a premium in box H and a nil box I, which is the one
+        // pair that cannot be right: RL-1.G-V takes "0" in box I to mean there was no eligible
+        // salary at all.
+        Employee person = Person();
+        person.IsEiExempt = true;
+
+        CompanyData data = Data(person);
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m, ei: 0m, qpip: 8.60m));
+
+        Rl1Slip slip = Built(data).Slips[0];
+
+        Assert.Equal(8.60m, slip.QpipPremium);
+        Assert.Equal(2000m, slip.QpipEligibleSalary);
+    }
+
+    [Fact]
     public void BoxesGAndI_AreCappedAtTheYearsCeilings_ForAHighEarner()
     {
         CompanyData data = Data(Person());

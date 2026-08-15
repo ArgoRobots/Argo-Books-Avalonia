@@ -424,4 +424,80 @@ public class AccountingReportDataServiceTests
     }
 
     #endregion
+
+    #region Payroll Remittance Tests
+
+    private static ReportFilters PayrollFilters() => new()
+    {
+        StartDate = new DateTime(2026, 1, 1),
+        EndDate = new DateTime(2026, 12, 31)
+    };
+
+    private static CompanyData PayrollData(string province, decimal qpip = 0m)
+    {
+        var data = new CompanyData();
+
+        data.PayRuns.Add(new Core.Models.Payroll.PayRun
+        {
+            Id = "PR-0001",
+            PayDate = new DateTime(2026, 7, 3),
+            Status = Core.Models.Payroll.PayRunStatus.Approved,
+            Lines =
+            {
+                new Core.Models.Payroll.PayRunLine
+                {
+                    EmployeeId = "EMP-001",
+                    Province = province,
+                    GrossPay = 2000m,
+                    CppEmployee = 100m,
+                    CppEmployer = 100m,
+                    EiEmployee = 30m,
+                    EiEmployer = 42m,
+                    QpipEmployee = qpip,
+                    QpipEmployer = qpip,
+                    FederalTax = 200m,
+                    ProvincialTax = 90m,
+                },
+            },
+        });
+
+        return data;
+    }
+
+    private static decimal AmountOf(AccountingTableData data, string label) =>
+        decimal.Parse(new string(data.Rows.Find(r => r.Label == label)!.Values[0]
+            .Where(c => char.IsDigit(c) || c == '.').ToArray()), System.Globalization.CultureInfo.InvariantCulture);
+
+    [Fact]
+    public void PayrollRemittance_OutsideQuebec_TotalsEverythingForCra()
+    {
+        var result = new AccountingReportDataService(PayrollData("ON"), PayrollFilters())
+            .GetReportData(AccountingReportType.PayrollRemittance);
+
+        // 200 federal + 90 provincial + 100 CPP + 100 employer CPP + 30 EI + 42 employer EI.
+        Assert.Equal(562m, AmountOf(result, "Total to remit"));
+        Assert.DoesNotContain(result.Rows, r => r.Label.Contains("Revenu Quebec"));
+    }
+
+    [Fact]
+    public void PayrollRemittance_ForAQuebecEmployee_SplitsTheTwoAgenciesApart()
+    {
+        // Revenu Quebec collects Quebec income tax, QPP and QPIP; CRA collects federal income
+        // tax and EI. A single combined total is owed to nobody: it overstates the CRA payment
+        // by the whole Quebec side, and never mentions the payment Revenu Quebec is waiting for.
+        var result = new AccountingReportDataService(PayrollData("QC", qpip: 9m), PayrollFilters())
+            .GetReportData(AccountingReportType.PayrollRemittance);
+
+        // CRA: federal tax 200 + EI 30 + employer EI 42. No Quebec tax, and no QPP.
+        Assert.Equal(272m, AmountOf(result, "Total to remit to CRA"));
+
+        // Revenu Quebec: Quebec tax 90 + QPP 100 + employer QPP 100 + QPIP 9 + employer QPIP 9.
+        Assert.Equal(308m, AmountOf(result, "Total to remit to Revenu Quebec"));
+
+        // The health services fund is a real employer contribution this app does not calculate,
+        // so a total that looked complete would be trusted.
+        Assert.Contains(result.Rows, r => r.Label.Contains("health services fund"));
+    }
+
+    #endregion
 }

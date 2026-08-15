@@ -100,6 +100,7 @@ public class Rl1Service
         (string surname, string given) = SplitName(employee.Name);
 
         decimal gross = lines.Sum(l => l.GrossPay);
+        decimal qpip = lines.Sum(l => l.QpipEmployee);
 
         return new Rl1Slip
         {
@@ -129,11 +130,18 @@ public class Rl1Service
             // reporting their whole salary would have Revenu Quebec expect contributions on
             // money that was never pensionable or eligible.
             QppPensionableSalary = employee.IsCppExempt ? 0m : ceilings.CapPensionable(gross),
-            QpipPremium = lines.Sum(l => l.QpipEmployee),
+            QpipPremium = qpip,
 
             // Revenu Quebec is explicit that box I takes "0" when there is none rather than
             // being left blank, so the figure is always set even when it is nil.
-            QpipEligibleSalary = employee.IsEiExempt ? 0m : ceilings.CapQpip(gross),
+            //
+            // Nil means no QPIP premium was withheld, NOT that the employee is exempt from EI.
+            // Those were conflated here, and the two exemptions are not the same one: EI
+            // exemption is the owner holding more than 40% of the voting shares, and QPIP has
+            // its own rules and its own base, which is why the calculator withholds QPIP from an
+            // EI exempt Quebec employee. Reading box H against box I is how Revenu Quebec checks
+            // the slip, and a premium in H with a nil I is the one pair that cannot be right.
+            QpipEligibleSalary = qpip > 0 ? ceilings.CapQpip(gross) : 0m,
 
             EmployerQpp = lines.Sum(l => l.CppEmployer),
             EmployerQpp2 = lines.Sum(l => l.Cpp2Employer),

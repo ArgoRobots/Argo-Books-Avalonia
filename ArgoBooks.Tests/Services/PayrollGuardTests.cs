@@ -131,6 +131,34 @@ public class PayrollGuardTests
             new PayrollYearToDate(), rates));
     }
 
+    [Theory]
+    [InlineData("AB", true)]
+    [InlineData("ON", true)]
+    [InlineData("qc", true)]
+    [InlineData("QC", true)]
+    [InlineData("ONTARIO", false)]
+    [InlineData("ZZ", false)]
+    [InlineData("", false)]
+    public void WhetherAProvinceCanBeCalculatedFor_CanBeAskedBeforeTheCalculatorThrows(
+        string province, bool expected)
+    {
+        // The calculator throws for a province it has no table for, which is right for a pure
+        // function and useless as a way to find out. That throw used to travel out of the pay
+        // run modal and take the window with it, and it is reachable without touching the
+        // province dropdown: the spreadsheet importer stores whatever is in the cell, so an
+        // employee imported as "Ontario" is upper-cased to ONTARIO and can never be paid.
+        //
+        // Quebec must answer true. It is held outside the provinces dictionary, so a check that
+        // only reads that dictionary reports a fully supported jurisdiction as missing.
+        Assert.Equal(expected, new PayrollService().Supports(new DateTime(2026, 8, 15), province));
+    }
+
+    [Fact]
+    public void ADateNoEditionCovers_SupportsNoProvinceAtAll()
+    {
+        Assert.False(new PayrollService().Supports(new DateTime(2020, 1, 15), "AB"));
+    }
+
     [Fact]
     public void NullArguments_AreRejectedAtTheDoor()
     {

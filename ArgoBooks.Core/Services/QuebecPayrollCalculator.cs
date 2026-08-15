@@ -43,11 +43,12 @@ public static class QuebecPayrollCalculator
 
         decimal qpp = QppForPeriod(gross, periods, ytd, qc, input.IsCppExempt,
                                    out decimal qpp2, out decimal qppUncapped);
-        decimal qpip = QpipForPeriod(gross, ytd, qc);
-        decimal ei = EiForPeriod(gross, ytd, rates, qc, input.IsEiExempt);
+        decimal qpip = QpipForPeriod(gross, ytd, qc, out decimal qpipUncapped);
+        decimal ei = EiForPeriod(gross, ytd, rates, qc, input.IsEiExempt, out decimal eiUncapped);
 
         decimal quebecTax = QuebecTaxForPeriod(gross, periods, qpp, qpp2, input, ytd, qc);
-        decimal federalTax = FederalTaxForPeriod(gross, periods, qpp, qpp2, qppUncapped, ei, input, ytd, rates, qc);
+        decimal federalTax = FederalTaxForPeriod(
+            gross, periods, qpp, qpp2, qppUncapped, eiUncapped, qpipUncapped, input, ytd, rates, qc);
 
         return new PayrollDeductions
         {
@@ -139,11 +140,32 @@ public static class QuebecPayrollCalculator
     /// <summary>
     /// Federal tax for a Quebec employee: CRA's own formula, then reduced by the abatement.
     ///
-    /// The K2 credit uses QPP rather than CPP, because that is what the employee actually
-    /// contributed, and the same base-portion-only rule applies.
+    /// The credit is T4127's K2Q, which is not K2 with QPP substituted for CPP. It has THREE
+    /// terms where K2 has two, and the guide spells all three out:
+    ///
+    ///   K2Q = [(rate x (P x C x (base/total), maximum ...))
+    ///        + (rate x (P x EI, maximum ...))
+    ///        + (rate x (P x IE x qpipRate, maximum ...))]
+    ///
+    /// The third is QPIP. It has no federal equivalent anywhere else in Canada, which is
+    /// precisely why it is easy to leave out, and leaving it out over-withholds federal tax from
+    /// every Quebec employee for the whole year.
     /// </summary>
+    /// <param name="eiUncapped">
+    /// The period's EI premium BEFORE the remaining annual room is applied, and likewise for
+    /// <paramref name="qpipUncapped"/> and <paramref name="qppUncapped"/>. T4127 is explicit
+    /// that once a maximum is reached, the annualised term "is replaced by the employee's
+    /// maximum annual contribution or premium ... to ensure that the employee will get the
+    /// maximum CPP, EI, and QPIP tax credit for the rest of the pay periods in the year."
+    ///
+    /// Annualising what was actually deducted does the opposite: it collapses to nothing in the
+    /// period the ceiling is reached and stays there, so the credit vanishes and tax jumps for
+    /// the rest of the year. Annualising the uncapped figure and capping the ANNUAL total is
+    /// what the guide asks for.
+    /// </param>
     private static decimal FederalTaxForPeriod(
-        decimal gross, int periods, decimal qpp, decimal qpp2, decimal qppUncapped, decimal ei,
+        decimal gross, int periods, decimal qpp, decimal qpp2, decimal qppUncapped,
+        decimal eiUncapped, decimal qpipUncapped,
         PayrollInput input, PayrollYearToDate ytd, PayrollRateTable rates, QuebecRates qc)
     {
         if (gross <= 0)
@@ -163,9 +185,10 @@ public static class QuebecPayrollCalculator
         decimal annual = periodicAnnual + priorBonuses;
 
         decimal annualQpp = Math.Min(qppUncapped * periods, qc.Qpp.MaxContributionEmployee) * (1 - additionalShare);
-        decimal annualEi = Math.Min(ei * periods, qc.EiMaxPremiumEmployee);
+        decimal annualEi = Math.Min(eiUncapped * periods, qc.EiMaxPremiumEmployee);
+        decimal annualQpip = Math.Min(qpipUncapped * periods, qc.Qpip.MaxPremiumEmployee);
 
-        decimal annualTax = AnnualFederalTax(annual, annualQpp, annualEi, input, rates, qc);
+        decimal annualTax = AnnualFederalTax(annual, annualQpp, annualEi, annualQpip, input, rates, qc);
         decimal tax = Round(annualTax / periods);
 
         // The federal share of a bonus, on CRA's rule rather than Quebec's: T4127 states the
@@ -177,14 +200,14 @@ public static class QuebecPayrollCalculator
 
             tax += withBonus <= rates.Federal.FlatBonusCeiling
                 ? Round(bonus * qc.FederalFlatBonusRate)
-                : Round(AnnualFederalTax(withBonus, annualQpp, annualEi, input, rates, qc) - annualTax);
+                : Round(AnnualFederalTax(withBonus, annualQpp, annualEi, annualQpip, input, rates, qc) - annualTax);
         }
 
         return tax;
     }
 
     private static decimal AnnualFederalTax(
-        decimal annual, decimal annualQpp, decimal annualEi,
+        decimal annual, decimal annualQpp, decimal annualEi, decimal annualQpip,
         PayrollInput input, PayrollRateTable rates, QuebecRates qc)
     {
         FederalRates federal = rates.Federal;
@@ -198,7 +221,7 @@ public static class QuebecPayrollCalculator
         decimal t3 = rate * annual
                      - k
                      - lowest * claim
-                     - lowest * (annualQpp + annualEi)
+                     - lowest * (annualQpp + annualEi + annualQpip)
                      - lowest * Math.Min(annual, federal.CanadaEmploymentAmount);
 
         // The abatement. CRA collects less federal tax from Quebec residents because Quebec
@@ -245,14 +268,23 @@ public static class QuebecPayrollCalculator
     /// QPIP. Capped on the premium rather than on insurable earnings, for the same reason EI
     /// is: the two only agree when the year-to-date figures are perfect, and they rarely are.
     /// </summary>
-    private static decimal QpipForPeriod(decimal gross, PayrollYearToDate ytd, QuebecRates qc)
+    /// <param name="uncapped">
+    /// The premium before the remaining annual room is applied. What is withheld this period is
+    /// capped; what the K2Q credit annualises is not.
+    /// </param>
+    private static decimal QpipForPeriod(decimal gross, PayrollYearToDate ytd, QuebecRates qc,
+                                         out decimal uncapped)
     {
+        uncapped = 0m;
+
         if (gross <= 0)
         {
             return 0m;
         }
 
         decimal premium = Round(gross * qc.Qpip.RateEmployee);
+        uncapped = premium;
+
         decimal remaining = Math.Max(0, qc.Qpip.MaxPremiumEmployee - ytd.QpipEmployee);
         return Math.Min(premium, remaining);
     }
@@ -272,15 +304,21 @@ public static class QuebecPayrollCalculator
     }
 
     /// <summary>EI at Quebec's reduced rate and maximum, because QPIP covers parental benefits.</summary>
+    /// <param name="uncapped">The premium before the remaining annual room is applied.</param>
     private static decimal EiForPeriod(
-        decimal gross, PayrollYearToDate ytd, PayrollRateTable rates, QuebecRates qc, bool exempt)
+        decimal gross, PayrollYearToDate ytd, PayrollRateTable rates, QuebecRates qc, bool exempt,
+        out decimal uncapped)
     {
+        uncapped = 0m;
+
         if (exempt || gross <= 0)
         {
             return 0m;
         }
 
         decimal premium = Round(gross * rates.Ei.QuebecRateEmployee);
+        uncapped = premium;
+
         decimal remaining = Math.Max(0, qc.EiMaxPremiumEmployee - ytd.EiEmployee);
         return Math.Min(premium, remaining);
     }

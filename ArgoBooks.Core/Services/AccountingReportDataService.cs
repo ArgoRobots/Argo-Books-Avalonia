@@ -1497,8 +1497,15 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     }
 
     /// <summary>
-    /// What is owed to CRA for the pay dates in range: everything withheld from employees,
-    /// plus the employer's own contributions.
+    /// What is owed for the pay dates in range: everything withheld from employees, plus the
+    /// employer's own contributions.
+    ///
+    /// Split by who collects it, because for a Quebec employer that is two agencies and two
+    /// payments. Revenu Quebec collects Quebec income tax, QPP and QPIP; CRA collects federal
+    /// income tax and EI. Totalling them together produced a single figure that was owed to
+    /// nobody: too much to CRA by the whole Quebec side, and no mention at all of the payment
+    /// Revenu Quebec was waiting for. The section only appears when there is a Quebec employee,
+    /// so an employer outside Quebec sees exactly what they saw before.
     ///
     /// Everything except drafts. A draft has not happened yet. A voided run still counts,
     /// because its reversal counts too and the pair nets to zero; excluding the voided run
@@ -1523,26 +1530,43 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         var lines = runs.SelectMany(r => r.Lines).ToList();
 
-        decimal cppEmployee = lines.Sum(l => l.CppEmployee) + lines.Sum(l => l.Cpp2Employee);
-        decimal cppEmployer = lines.Sum(l => l.CppEmployer) + lines.Sum(l => l.Cpp2Employer);
+        // The province is stored on the line rather than read from the employee, so a run keeps
+        // reporting to the right agency after someone transfers between provinces.
+        var quebec = lines.Where(IsQuebecLine).ToList();
+        var rest = lines.Where(l => !IsQuebecLine(l)).ToList();
+
+        // CRA. Federal tax from everybody, provincial tax from everybody except Quebec, all of
+        // EI, and CPP from outside Quebec only: a Quebec employee's pension money is QPP.
+        decimal craTax = lines.Sum(l => l.FederalTax) + rest.Sum(l => l.ProvincialTax);
+        decimal cppEmployee = rest.Sum(l => l.CppEmployee) + rest.Sum(l => l.Cpp2Employee);
+        decimal cppEmployer = rest.Sum(l => l.CppEmployer) + rest.Sum(l => l.Cpp2Employer);
         decimal eiEmployee = lines.Sum(l => l.EiEmployee);
         decimal eiEmployer = lines.Sum(l => l.EiEmployer);
-        decimal incomeTax = lines.Sum(l => l.FederalTax) + lines.Sum(l => l.ProvincialTax);
-        decimal total = cppEmployee + cppEmployer + eiEmployee + eiEmployer + incomeTax;
+        decimal craTotal = craTax + cppEmployee + cppEmployer + eiEmployee + eiEmployer;
+
+        // Revenu Quebec.
+        decimal quebecTax = quebec.Sum(l => l.ProvincialTax);
+        decimal qppEmployee = quebec.Sum(l => l.CppEmployee) + quebec.Sum(l => l.Cpp2Employee);
+        decimal qppEmployer = quebec.Sum(l => l.CppEmployer) + quebec.Sum(l => l.Cpp2Employer);
+        decimal qpipEmployee = lines.Sum(l => l.QpipEmployee);
+        decimal qpipEmployer = lines.Sum(l => l.QpipEmployer);
+        decimal quebecTotal = quebecTax + qppEmployee + qppEmployer + qpipEmployee + qpipEmployer;
+
+        bool hasQuebec = quebec.Count > 0 || qpipEmployee != 0m || qpipEmployer != 0m;
 
         data.Rows.Add(new AccountingRow
         {
-            Label = "Withheld from employees",
+            Label = hasQuebec ? "Canada Revenue Agency - withheld from employees" : "Withheld from employees",
             RowType = AccountingRowType.SectionHeader,
             Values = ["Amount"]
         });
-        data.Rows.Add(Row("Income tax", incomeTax));
+        data.Rows.Add(Row("Income tax", craTax));
         data.Rows.Add(Row("CPP", cppEmployee));
         data.Rows.Add(Row("EI", eiEmployee));
         data.Rows.Add(new AccountingRow
         {
             Label = "Total withheld",
-            Values = [FormatCurrency(incomeTax + cppEmployee + eiEmployee)],
+            Values = [FormatCurrency(craTax + cppEmployee + eiEmployee)],
             RowType = AccountingRowType.SubtotalRow
         });
 
@@ -1550,7 +1574,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         data.Rows.Add(new AccountingRow
         {
-            Label = "Employer contributions",
+            Label = hasQuebec ? "Canada Revenue Agency - employer contributions" : "Employer contributions",
             RowType = AccountingRowType.SectionHeader,
             Values = [""]
         });
@@ -1568,10 +1592,67 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         data.Rows.Add(new AccountingRow
         {
-            Label = "Total to remit",
-            Values = [FormatCurrency(total)],
+            Label = hasQuebec ? "Total to remit to CRA" : "Total to remit",
+            Values = [FormatCurrency(craTotal)],
             RowType = AccountingRowType.GrandTotalRow
         });
+
+        if (hasQuebec)
+        {
+            data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Revenu Quebec - withheld from employees",
+                RowType = AccountingRowType.SectionHeader,
+                Values = [""]
+            });
+            data.Rows.Add(Row("Quebec income tax", quebecTax));
+            data.Rows.Add(Row("QPP", qppEmployee));
+            data.Rows.Add(Row("QPIP", qpipEmployee));
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Total withheld",
+                Values = [FormatCurrency(quebecTax + qppEmployee + qpipEmployee)],
+                RowType = AccountingRowType.SubtotalRow
+            });
+
+            data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Revenu Quebec - employer contributions",
+                RowType = AccountingRowType.SectionHeader,
+                Values = [""]
+            });
+            data.Rows.Add(Row("QPP", qppEmployer));
+            data.Rows.Add(Row("QPIP", qpipEmployer));
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Total employer",
+                Values = [FormatCurrency(qppEmployer + qpipEmployer)],
+                RowType = AccountingRowType.SubtotalRow
+            });
+
+            data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+            data.Rows.Add(new AccountingRow { RowType = AccountingRowType.SeparatorLine, Values = [""] });
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Total to remit to Revenu Quebec",
+                Values = [FormatCurrency(quebecTotal)],
+                RowType = AccountingRowType.GrandTotalRow
+            });
+
+            // Stated rather than left to be inferred from a nil line. The health services fund
+            // is a real employer contribution that Revenu Quebec expects with this payment, and
+            // this app does not calculate it, so a total that looks complete would be trusted.
+            data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Excludes the contribution to the health services fund, which Argo Books "
+                        + "does not calculate. Add it before remitting.",
+                Values = [""],
+                RowType = AccountingRowType.DataRow
+            });
+        }
 
         data.Rows.Add(new AccountingRow { RowType = AccountingRowType.BlankRow, Values = [""] });
         data.Rows.Add(new AccountingRow
@@ -1582,6 +1663,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         });
 
         return data;
+
+        static bool IsQuebecLine(Models.Payroll.PayRunLine line) =>
+            string.Equals(line.Province, "QC", StringComparison.OrdinalIgnoreCase);
 
         AccountingRow Row(string label, decimal value) => new()
         {

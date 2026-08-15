@@ -63,6 +63,30 @@ public class PayrollService(PayrollRateService? rateService = null)
     }
 
     /// <summary>
+    /// Whether a pay run for this date can be calculated for this province at all.
+    ///
+    /// The calculator throws for a province it has no table for, which is the right answer for a
+    /// pure function and the wrong thing to discover halfway through building a draft. Callers
+    /// ask first so they can say whose province is the problem.
+    ///
+    /// Quebec is supported when the edition carries Quebec data, and is deliberately not looked
+    /// for in the provinces dictionary: it is not in there, and checking that dictionary alone
+    /// reports a fully supported jurisdiction as missing.
+    /// </summary>
+    public bool Supports(DateTime payDate, string? province)
+    {
+        PayrollRateTable? rates = _rates.GetForDate(payDate);
+        if (rates == null || string.IsNullOrWhiteSpace(province))
+        {
+            return false;
+        }
+
+        return string.Equals(province, "QC", StringComparison.OrdinalIgnoreCase)
+            ? rates.Quebec != null
+            : rates.Provinces.ContainsKey(province);
+    }
+
+    /// <summary>
     /// Recomputes every line from its inputs. Only ever called on a draft: an approved run's
     /// figures are frozen so they keep agreeing with the stub the employee was given.
     /// </summary>

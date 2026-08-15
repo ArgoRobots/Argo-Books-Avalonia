@@ -104,6 +104,62 @@ public class T4Tests
     }
 
     [Fact]
+    public void IncomeTax_ExcludesQuebecTax_ForAQuebecEmployee()
+    {
+        // RC4120 on box 22, in as many words: "This includes the federal, provincial (except
+        // Quebec), and territorial taxes that apply."
+        //
+        // Quebec income tax is withheld in the same run and stored in the same column, but it
+        // goes to Revenu Quebec and is reported on RL-1 box E. Adding it here reports the same
+        // money on both slips, and the employee claims credit for it twice. The figure looks
+        // entirely reasonable either way, which is why it needs pinning.
+        CompanyData data = Data(Person());
+        data.Employees[0].Province = "QC";
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m, fed: 200m, prov: 90m));
+
+        Assert.Equal(200m, BuiltReturn(data).Slips.Single().IncomeTaxDeducted);
+    }
+
+    [Fact]
+    public void Box26_IsCappedAtTheAdditionalMaximum_NotTheFirstCeiling()
+    {
+        // The intuitive reading is that earnings above the YMPE belong to CPP2 and are reported
+        // in box 16A, so box 26 should stop at the first ceiling. RC4120 says otherwise: report
+        // the pensionable earnings "up to the additional maximum pensionable earnings for the
+        // year", which is the YAMPE.
+        //
+        // Capping at the YMPE understates the box for exactly the population that has CPP2 in
+        // box 16A, and CRA's PIER review then finds a CPP2 contribution charged on earnings the
+        // slip says were never reached.
+        PayrollRateTable rates = new PayrollRateService().GetForDate(new DateTime(2026, 12, 31))!;
+        decimal betweenTheCeilings = (rates.Cpp.YmpeCeiling + rates.Cpp2.YampeCeiling) / 2m;
+
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", betweenTheCeilings));
+
+        T4Slip slip = BuiltReturn(data).Slips.Single();
+
+        Assert.True(betweenTheCeilings > rates.Cpp.YmpeCeiling, "the fixture must straddle the first ceiling");
+        Assert.Equal(betweenTheCeilings, slip.PensionableEarnings);
+    }
+
+    [Fact]
+    public void Box56_IsAbsent_WhenNoQpipPremiumWasWithheld()
+    {
+        // RC4120 pairs boxes 55 and 56: "If you report an amount in box 55, you have to report
+        // insurable earnings using box 56." Insurable earnings with no premium against them is
+        // the one combination that cannot be true, and box 28's PPIP tick says the opposite.
+        CompanyData data = Data(Person());
+        data.Employees[0].Province = "QC";
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Slip slip = BuiltReturn(data).Slips.Single();
+
+        Assert.Equal(0m, slip.QpipPremiums);
+        Assert.Equal(0m, slip.QpipInsurableEarnings);
+    }
+
+    [Fact]
     public void AnotherYearsRuns_AreNotIncluded()
     {
         CompanyData data = Data(Person());

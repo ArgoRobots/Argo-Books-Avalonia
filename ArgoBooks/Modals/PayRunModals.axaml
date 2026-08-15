@@ -311,7 +311,7 @@
                                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                             </Grid>
                                                             <Grid ColumnDefinitions="*,Auto" Margin="12,0,0,0">
-                                                                <TextBlock Grid.Column="0" Text="{loc:Loc CPP}" FontSize="12"
+                                                                <TextBlock Grid.Column="0" Text="{Binding CppLabel}" FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Cpp}" FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -320,6 +320,15 @@
                                                                 <TextBlock Grid.Column="0" Text="{loc:Loc EI}" FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                                 <TextBlock Grid.Column="1" Text="{Binding Ei}" FontSize="12"
+                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                            </Grid>
+                                                            <!-- Quebec only. Without it the amounts below do not
+                                                                 add up to the net pay above them. -->
+                                                            <Grid ColumnDefinitions="*,Auto" Margin="12,0,0,0"
+                                                                  IsVisible="{Binding HasQpip}">
+                                                                <TextBlock Grid.Column="0" Text="QPIP" FontSize="12"
+                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Qpip}" FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                             </Grid>
                                                             <Grid ColumnDefinitions="*,Auto" Margin="12,0,0,0">

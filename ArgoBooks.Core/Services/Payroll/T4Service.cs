@@ -81,6 +81,8 @@ public class T4Service
         (string surname, string given, string initial) = SplitName(employee.Name);
 
         decimal gross = lines.Sum(l => l.GrossPay);
+        bool quebec = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase);
+        decimal qpip = lines.Sum(l => l.QpipEmployee);
 
         return new T4Slip
         {
@@ -92,12 +94,21 @@ public class T4Service
             EmployeeNumber = employee.EmployeeNumber,
             Address = employee.Address,
             ProvinceOfEmployment = employee.Province,
-            IsQuebec = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase),
+            IsQuebec = quebec,
             EmploymentIncome = gross,
             CppContributions = lines.Sum(l => l.CppEmployee),
             Cpp2Contributions = lines.Sum(l => l.Cpp2Employee),
             EiPremiums = lines.Sum(l => l.EiEmployee),
-            IncomeTaxDeducted = lines.Sum(l => l.FederalTax) + lines.Sum(l => l.ProvincialTax),
+
+            // Box 22 is federal, provincial and territorial tax together, with one exception
+            // stated in as many words by RC4120: "This includes the federal, provincial (except
+            // Quebec), and territorial taxes that apply."
+            //
+            // Quebec income tax is withheld in the same pay run and stored in the same column,
+            // but it is remitted to Revenu Quebec and reported on RL-1 box E. Adding it here
+            // reports the same money on both slips, and the employee claims credit for it twice.
+            IncomeTaxDeducted = lines.Sum(l => l.FederalTax)
+                                + (quebec ? 0m : lines.Sum(l => l.ProvincialTax)),
 
             // Exempt employment reports nil earnings rather than omitting the box, so these
             // deliberately go to zero rather than to gross.
@@ -109,10 +120,14 @@ public class T4Service
             InsurableEarnings = employee.IsEiExempt ? 0m : ceilings.CapEi(gross),
             PensionableEarnings = employee.IsCppExempt ? 0m : ceilings.CapPensionable(gross),
 
-            QpipPremiums = lines.Sum(l => l.QpipEmployee),
-            QpipInsurableEarnings = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase)
-                ? ceilings.CapQpip(gross)
-                : 0m,
+            QpipPremiums = qpip,
+
+            // Tied to whether a premium was actually withheld rather than to the province alone.
+            // RC4120 pairs the two: "If you report an amount in box 55, you have to report
+            // insurable earnings using box 56", and box 28's PPIP tick means no premium was
+            // withheld for the whole period. Earnings with no premium against them is the one
+            // combination that cannot be true.
+            QpipInsurableEarnings = quebec && qpip > 0 ? ceilings.CapQpip(gross) : 0m,
             EmployerQpip = lines.Sum(l => l.QpipEmployer),
 
             CppExemptAllYear = employee.IsCppExempt,

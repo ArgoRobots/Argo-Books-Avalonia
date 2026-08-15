@@ -195,6 +195,66 @@ public class QuebecPayrollCalculatorTests
 
     #endregion
 
+    #region The K2Q credit
+
+    [Fact]
+    public void ReachingTheEiMaximum_DoesNotChangeFederalTax()
+    {
+        // T4127, on all three terms of K2Q: "once the employee contributions or premiums have
+        // reached annual for CPP, EI or QPIP, for the rest of the pay periods in the year,
+        // (P x C x ...), (P x EI), or (P x IE x ...) is replaced by the employee's maximum
+        // annual contribution or premium. This modification ensures that the employee will get
+        // the maximum CPP, EI, and QPIP tax credit for the rest of the pay periods in the year."
+        //
+        // Annualising what was actually withheld does the opposite: in the period the ceiling is
+        // reached the deduction falls to nothing, the credit collapses with it, and federal tax
+        // jumps for every remaining period of the year. Nothing about the employee changed, so
+        // nothing about their tax may.
+        PayrollRateTable rates = Rates();
+        var atMax = new PayrollYearToDate { EiEmployee = rates.Quebec!.EiMaxPremiumEmployee };
+
+        Assert.Equal(0m, Calc(5000m, ytd: atMax).EiEmployee);
+        Assert.Equal(Calc(5000m).FederalTax, Calc(5000m, ytd: atMax).FederalTax);
+    }
+
+    [Fact]
+    public void ReachingTheQpipMaximum_DoesNotChangeFederalTax()
+    {
+        PayrollRateTable rates = Rates();
+        var atMax = new PayrollYearToDate { QpipEmployee = rates.Quebec!.Qpip.MaxPremiumEmployee };
+
+        Assert.Equal(0m, Calc(5000m, ytd: atMax).QpipEmployee);
+        Assert.Equal(Calc(5000m).FederalTax, Calc(5000m, ytd: atMax).FederalTax);
+    }
+
+    [Fact]
+    public void FederalTax_CreditsQpipAsWellAsQppAndEi()
+    {
+        // K2Q has THREE terms where the rest of Canada's K2 has two, and the third is QPIP:
+        //
+        //   K2Q = [(0.14 x (P x C x (base/total), max ...))
+        //        + (0.14 x (P x EI, max ...))
+        //        + (0.14 x (P x IE x qpipRate, max ...))]
+        //
+        // Worked through for $2,400 biweekly with no TD1 on file, using the 2026-07 edition:
+        //
+        //   QPP        (2400 - 3500/26) x 0.0630            = 142.72, annualised base 3,121.70
+        //   EI         2400 x 0.0130 x 26                   =   811.20
+        //   QPIP       2400 x 0.0043 x 26                   =   268.32
+        //   A          (2400 - 22.65 enhanced QPP) x 26     = 61,811.10, second bracket
+        //   T3         0.205 x A - 3804 - 0.14 x 16452
+        //                - 0.14 x (3121.70 + 811.20 + 268.32) - 0.14 x 1501
+        //                                                   = 5,765.68
+        //   abatement  x (1 - 0.165)                        = 4,814.35
+        //   period     / 26                                 =   185.17
+        //
+        // Dropping the QPIP term alone gives 186.37, which is $31.20 a year over-withheld from
+        // every Quebec employee and looks entirely reasonable on the stub.
+        Assert.Equal(185.17m, Calc(2400m).FederalTax);
+    }
+
+    #endregion
+
     #region Identities that must hold here too
 
     [Theory]

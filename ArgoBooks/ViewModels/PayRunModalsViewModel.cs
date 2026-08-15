@@ -312,12 +312,42 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
         DateTime payDate = PayDate?.DateTime.Date ?? DateTime.Today;
 
-        _draft = _payroll.CreateDraft(
-            data,
-            payDate,
-            PeriodStart?.DateTime.Date ?? payDate,
-            PeriodEnd?.DateTime.Date ?? payDate,
-            chosen);
+        // Asked before the draft is built, not after. The calculator throws for a province it
+        // has no table for, and that throw used to travel all the way out of this method and
+        // close the app. The province dropdown cannot produce a bad code, but the spreadsheet
+        // importer takes whatever is in the cell and upper-cases it, so "Ontario" gets stored
+        // and every pay run afterwards is unrunnable.
+        List<string> unsupported = data.Employees
+            .Where(e => chosen.Contains(e.Id) && !_payroll.Supports(payDate, e.Province))
+            .Select(e => $"{e.Name} ({e.Province})")
+            .ToList();
+
+        if (unsupported.Count > 0)
+        {
+            BlockingError = $"No rate table covers the province of employment for "
+                            + $"{string.Join(", ", unsupported)}. Correct it on the Employees page, "
+                            + "or leave them out of this run.";
+            return false;
+        }
+
+        try
+        {
+            _draft = _payroll.CreateDraft(
+                data,
+                payDate,
+                PeriodStart?.DateTime.Date ?? payDate,
+                PeriodEnd?.DateTime.Date ?? payDate,
+                chosen);
+        }
+        catch (Exception ex)
+        {
+            // A backstop for anything the check above did not anticipate. Refusing to start the
+            // run and saying so beats taking the window down with the draft half built.
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payroll.BuildDraft");
+            _draft = null;
+            BlockingError = $"This pay run could not be calculated: {ex.Message}";
+            return false;
+        }
 
         if (_draft == null)
         {
@@ -469,12 +499,24 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
         foreach (PayRunLine line in _draft.Lines)
         {
+            bool quebec = string.Equals(line.Province, "QC", StringComparison.OrdinalIgnoreCase);
+
             ReviewRows.Add(new PayRunReviewRow
             {
                 EmployeeName = line.EmployeeName,
                 Gross = CurrencyService.Format(line.GrossPay),
                 Cpp = CurrencyService.Format(line.CppEmployee + line.Cpp2Employee),
+
+                // Quebec's pension money is QPP. It is stored in the CPP fields because it is
+                // the same column in the same run, but naming it CPP on the review is telling
+                // the employer they withheld something they did not.
+                CppLabel = quebec ? "QPP" : "CPP",
                 Ei = CurrencyService.Format(line.EiEmployee),
+
+                // Without this the breakdown does not add up to the net pay beside it for a
+                // Quebec employee, because QPIP is withheld and was shown nowhere.
+                Qpip = CurrencyService.Format(line.QpipEmployee),
+                HasQpip = line.QpipEmployee != 0m,
                 FederalTax = CurrencyService.Format(line.FederalTax),
                 ProvincialTax = CurrencyService.Format(line.ProvincialTax),
                 ProvincialTaxLabel = $"{line.Province} tax",
@@ -509,16 +551,28 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
         PayrollYearToDate ytd = _payroll.YearToDateFor(data, employee.Id, _draft);
 
-        if (!employee.IsCppExempt
-            && ytd.CppEmployee + line.CppEmployee >= rates.Cpp.MaxContributionEmployee)
+        // Quebec runs its own plans at its own maximums, so the figure to compare against is not
+        // the federal one. Checking a Quebec employee against CPP's ceiling announces the
+        // maximum late, and against EI's higher rest-of-Canada ceiling never announces it at all.
+        bool quebec = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase);
+        QuebecRates? qc = quebec ? rates.Quebec : null;
+
+        decimal pensionMax = qc?.Qpp.MaxContributionEmployee ?? rates.Cpp.MaxContributionEmployee;
+        decimal eiMax = qc?.EiMaxPremiumEmployee ?? rates.Ei.MaxPremiumEmployee;
+
+        if (!employee.IsCppExempt && ytd.CppEmployee + line.CppEmployee >= pensionMax)
         {
-            Warnings.Add($"{employee.Name} has reached the CPP maximum for the year.");
+            Warnings.Add($"{employee.Name} has reached the {(quebec ? "QPP" : "CPP")} maximum for the year.");
         }
 
-        if (!employee.IsEiExempt
-            && ytd.EiEmployee + line.EiEmployee >= rates.Ei.MaxPremiumEmployee)
+        if (!employee.IsEiExempt && ytd.EiEmployee + line.EiEmployee >= eiMax)
         {
             Warnings.Add($"{employee.Name} has reached the EI maximum for the year.");
+        }
+
+        if (quebec && ytd.QpipEmployee + line.QpipEmployee >= (qc?.Qpip.MaxPremiumEmployee ?? decimal.MaxValue))
+        {
+            Warnings.Add($"{employee.Name} has reached the QPIP maximum for the year.");
         }
 
         if (employee.FederalClaimAmount == 0 && employee.ProvincialClaimAmount == 0)
@@ -526,7 +580,9 @@ public partial class PayRunModalsViewModel : ViewModelBase
             Warnings.Add($"{employee.Name} has no TD1 on file, so the basic personal amount is used.");
         }
 
-        if (!rates.Provinces.ContainsKey(employee.Province))
+        // Quebec is held outside the provinces table, so asking that table alone reported a
+        // fully supported jurisdiction as missing on every Quebec run.
+        if (!_payroll.Supports(_draft?.PayDate ?? DateTime.Today, employee.Province))
         {
             Warnings.Add($"{employee.Name} works in {employee.Province}, which has no rate table loaded.");
         }
@@ -658,8 +714,19 @@ public partial class PayRunReviewRow : ObservableObject
     [ObservableProperty]
     private string _cpp = string.Empty;
 
+    /// <summary>CPP, or QPP in Quebec. Carried as text so no new translation key is needed.</summary>
+    [ObservableProperty]
+    private string _cppLabel = "CPP";
+
     [ObservableProperty]
     private string _ei = string.Empty;
+
+    [ObservableProperty]
+    private string _qpip = string.Empty;
+
+    /// <summary>Quebec only, so the row is absent rather than nil everywhere else.</summary>
+    [ObservableProperty]
+    private bool _hasQpip;
 
     [ObservableProperty]
     private string _federalTax = string.Empty;
