@@ -4,53 +4,45 @@ CRA issues new payroll deduction tables **twice a year**. Argo Books keeps none 
 in code: every rate, threshold and constant is data, which is why an update is a file rather
 than a release.
 
-Each edition lives in two places, and a finished update goes to both.
+Each edition lives in two places.
 
 | | Where | Who it serves |
 |---|---|---|
-| **Upload** | `resources/downloads/payroll/` on the website | Everyone already running the app. They fetch it when they meet a pay date no loaded edition covers. |
+| **Upload** | `resources/downloads/payroll/` on the website | Everyone already running the app. They fetch it the first time a pay run needs an edition they do not hold. |
 | **Commit** | `ArgoBooks.Core/Resources/Payroll/` in this repo | A fresh or offline install, which calculates from the embedded copy until it can reach the server. |
 
-Uploading alone leaves a new install unable to run payroll until it syncs. Committing alone
-means nobody gets it until they update the app. A delivered file wins over the embedded one of
-the same edition, so the two never fight.
+Uploading to the server alone leaves a new install unable to run payroll until it syncs. Committing to the desktop repo alone
+means nobody gets it until they update the app.
 
-**Published and effective are different dates, and the gap is the whole working window.** CRA
-puts an edition out roughly a month before it applies, so the numbers are already sitting there
-while the current ones are still in force. The July 1 2026 edition was stamped `Rev. 26 (26/06)`,
-meaning June 2026. There is no scramble in this job as long as it starts in that gap.
+**Published and effective are different dates, and the gap is the window we have to add the new
+files.** CRA puts an edition out roughly a month before it applies.
 
 | Edition | Published | Takes effect | Do the work |
 |---|---|---|---|
 | `YYYY-01` | around November or December | January 1 | December |
 | `YYYY-07` | around May or June | July 1 | June |
 
-Aim to have it uploaded a week early. Some editions get amended after publication, so if you
-build one very early, re-check it against CRA before the changeover: the January 2026 edition
-was revised in May 2026 to add a PEI bracket.
+Aim to have it uploaded a week early.
+
+**An edition can be amended after it is published, so check that it still says what it said.**
+The guide carries its own revision stamp at the top, reading `Rev. YY (YY/MM)`, and the month is
+when that text was last touched. The January 2026 edition says `Rev. 26 (26/05)`, five months
+into the period it governs, because PEI gained a bracket in May. If the stamp is later than the
+day you built the file, something moved after you read it.
 
 ## What happens if the date passes
 
-Payroll stops. It does not go quietly wrong.
-
-The app refuses any pay date no loaded edition covers, and never falls back to the previous
-edition, so no incorrect deduction is produced. Nothing already approved changes either: an
-approved run keeps the figures it was calculated with, which is what makes a reissued pay stub
-still match the one the employee was handed.
-
-That is a loud failure rather than a silent one, and it is the right way round. But it lands on
-every customer at once on a date CRA chose, and the only fix is a new file, so treat the
-deadline as hard.
+The app refuses to calculate a pay run when it holds no edition covering that pay date. It never
+falls back to the previous edition, so no incorrect deduction is produced.
 
 ## The reminder chases you until it is done
 
-`cron/payroll_rate_reminder.php` in the website repository, and it cannot be switched off.
+`cron/payroll_rate_reminder.php` in the website repository sends reminder emails to the admin.
 
 - **10th to 20th of December and June:** start the work. The numbers are out by then.
 - **Last three days before the changeover:** only if the file still is not on the server.
 
-Both check `resources/downloads/payroll/{edition}.json` and go silent once it is there. So the
-first email is a to-do and **the second one arriving means the upload has not happened.**
+Both check `resources/downloads/payroll/{edition}.json` and go silent once it is there.
 
 ---
 
@@ -82,42 +74,43 @@ Everything below comes from CRA, except Quebec which comes from Revenu Québec.
 - [CPP contribution rates, maximums and exemptions](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-contribution-rates-maximums-exemptions.html)
 - [CPP2 rates and maximums](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/calculating-deductions/making-deductions/second-additional-cpp-contribution-rates-maximums.html)
 - [EI premium rates and maximums](https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/employment-insurance-ei/ei-premium-rates-maximums.html)
-- Revenu Québec guide TP-1015.F-V, for Quebec
-
-`C:\Users\evand\Downloads\payroll-numbers-prompt-combined.txt` is a prompt that collects all
-of this in one pass, in the right shape. Run it in two different AI tools and compare the
-answers rather than trusting one.
-
-Better still, read the numbers straight out of T4127 rather than asking anything to recall
-them. Chapter 8 carries the whole lot in two tables: **Table 8.1** has every jurisdiction's
-thresholds `A`, rates `V` and constants `KP`, and **Table 8.2** has the basic amounts, the
-Canada Employment Amounts, the tax reduction amounts `S2` and Ontario's surtax. That is the
-source, and it is faster than checking a recollection of it against the source anyway.
+- [TP-1015.F-V, Formulas to Calculate Source Deductions](https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/tp-1015-f-v/), for Quebec. It is a separate gathering exercise, covered in its own section below
 
 ### Reading the tables with Claude driving Chrome
 
-This is now the recommended way, and it removes the recall problem entirely.
-
 **canada.ca cannot be fetched programmatically.** Plain HTTP gets 403 or times out, whichever
 tool is asking. The Chrome extension is the way in, because the request comes from a real
-browser session. Chrome has to be RUNNING first, or the extension reports "not connected".
+browser session. Chrome has to be running first, or the extension reports "not connected".
 
-Once connected, ask for the tables as text rather than reading them off a screenshot:
+**Do not try to read the page as text.** T4127 is about 100,000 characters and the text tool
+stops at 50,000, so the whole of Chapter 8 falls off the end. Run JavaScript against the tables
+instead.
+
+Step 1, find which table is which. Return the list as the last expression: the tool hands back
+the value of the last expression and throws away anything logged to the console, so a
+`console.log` here comes back empty.
 
 ```js
-// Table 8.1 and 8.2, as pipe-separated rows
-const T = [...document.querySelectorAll('table')];
-T.forEach((t, i) => console.log(i, t.caption ? t.caption.innerText.trim() : ''));
-
-const t = T[3];  // whichever index Table 8.1 turned out to be
-[...t.rows].map(r => [...r.cells]
-  .map(c => c.innerText.replace(/\s+/g, ' ').trim()).join('|')).join('\n')
+[...document.querySelectorAll('table')]
+  .map((t, i) => i + ': ' + (t.caption ? t.caption.innerText.trim() : '(no caption)'))
+  .join('\n')
 ```
 
-Two practical notes. Pull the rows in slices of a dozen, because a whole table overflows the
-tool's output limit and gets truncated mid-number. And the formula sections trip an output
-filter that reads `=` as query-string data, so `.split('=').join(' EQ ')` before returning
-them.
+Step 2, dump one table, **a dozen rows at a time**. A whole table overflows the output limit and
+gets truncated mid-number, which is the one failure here that looks like data rather than an
+error.
+
+```js
+const t = document.querySelectorAll('table')[3];   // the index from step 1
+[...t.rows].slice(0, 12)
+  .map(r => [...r.cells].map(c => c.innerText.replace(/\s+/g, ' ').trim()).join('|'))
+  .join('\n')
+```
+
+For the formula sections rather than the tables, read `document.body.innerText` around a
+distinctive string. Those trip an output filter that reads `=` as query-string data and blocks
+the whole response, so rewrite the symbols before returning: `.split('=').join(' EQ ')`, and
+`.split('?').join(' QQ ')` if the passage has question marks.
 
 **Build the new edition as a diff from the previous one, not by retyping it.** Copy the file,
 apply only the jurisdictions the "What's new" section names, then verify every cell of the
@@ -234,11 +227,14 @@ From the [Guide to Filing the RL-1 Slip](https://www.revenuquebec.ca/en/online-s
 | H | QPIP premium | PayRunLine.QpipEmployee |
 | I | Eligible salary or wages under the QPIP | gross capped at the QPIP maximum, or nil when no premium was withheld |
 
-H and I were confirmed against Revenu Quebec's own box-by-box pages
-([box H](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/filing-rl-slips-and-the-rl-1-summary-general-rules/rl-1-slip-employment-and-other-income/how-to-complete-the-rl-1-slip-box-by-box-instructions/box-h/),
-[box I](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/filing-rl-slips-and-the-rl-1-summary-general-rules/rl-1-slip-employment-and-other-income/how-to-complete-the-rl-1-slip-box-by-box-instructions/box-i/))
+H and I were confirmed against sections 5.10 and 5.11 of the
+[Guide to Filing the RL-1 Slip](https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/rl-1.g-v/)
 rather than inferred, because a wrong box letter puts a real number in the wrong place on a
 government slip and nothing downstream would catch it.
+
+Revenu Quebec used to publish a page per box on its website and has since retired them: the
+whole `how-to-complete-the-rl-1-slip-box-by-box-instructions` branch now answers 410. The guide
+is the surviving source, so cite that rather than a web page for anything box-specific.
 
 Three things about those boxes are easy to get wrong:
 
@@ -365,7 +361,7 @@ the file, not the engine, unless the engine changed too.
 
 ## Shipping it
 
-Upload it and commit it, as set out at the top. Nothing in the csproj needs touching: it globs
+Upload it to the server and commit it to the desktop repo, as set out at the top. Nothing in the csproj needs touching: it globs
 `Resources\Payroll\*.json`, so a new file is embedded by being in the folder.
 
 ### How the download works
