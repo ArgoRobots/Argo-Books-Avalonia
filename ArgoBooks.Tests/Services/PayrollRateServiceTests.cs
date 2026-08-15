@@ -86,8 +86,79 @@ public class PayrollRateServiceTests : IDisposable
 
         Assert.NotNull(Service().GetForDate(table.EffectiveFrom));
         Assert.NotNull(Service().GetForDate(table.EffectiveTo));
-        Assert.Null(Service().GetForDate(table.EffectiveFrom.AddDays(-1)));
         Assert.Null(Service().GetForDate(table.EffectiveTo.AddDays(1)));
+    }
+
+    [Fact]
+    public void TheTwoHalvesOf2026_MeetWithNoGapAndNoOverlap()
+    {
+        // CRA publishes twice a year and the halves have to abut exactly. A gap leaves a pay date
+        // that cannot be calculated at all; an overlap makes which edition applies depend on the
+        // order the files happened to load.
+        PayrollRateTable january = Service().GetForDate(new DateTime(2026, 3, 15))!;
+        PayrollRateTable july = Service().GetForDate(new DateTime(2026, 8, 15))!;
+
+        Assert.Equal("2026-01", january.EditionId);
+        Assert.Equal("2026-07", july.EditionId);
+        Assert.Equal(january.EffectiveTo.Date.AddDays(1), july.EffectiveFrom.Date);
+        Assert.Equal("2026-01", Service().GetForDate(new DateTime(2026, 6, 30))!.EditionId);
+        Assert.Equal("2026-07", Service().GetForDate(new DateTime(2026, 7, 1))!.EditionId);
+    }
+
+    [Fact]
+    public void TheJanuaryEdition_CarriesTheUnproratedFiguresForTheThreeProvincesThatChanged()
+    {
+        // BC, NL and PE all changed retroactively to 1 January 2026, so the JULY edition carries
+        // prorated figures to catch the year up and the January one carries the originals, which
+        // are what was actually withheld from January to June. Getting these the wrong way round
+        // is invisible: both sets are plausible numbers for the same province in the same year.
+        PayrollRateTable jan = Service().GetForDate(new DateTime(2026, 3, 15))!;
+        PayrollRateTable jul = Service().GetForDate(new DateTime(2026, 8, 15))!;
+
+        // T4127 122nd edition vs 123rd: BC's lowest rate, prorated up for the second half.
+        Assert.Equal(0.0506m, jan.Provinces["BC"].Brackets[0].Rate);
+        Assert.Equal(0.0614m, jul.Provinces["BC"].Brackets[0].Rate);
+
+        // BC's tax reduction basic amount, and the income at which it runs out.
+        Assert.Equal(575m, jan.Provinces["BC"].TaxReduction!.Basic);
+        Assert.Equal(805m, jul.Provinces["BC"].TaxReduction!.Basic);
+        Assert.Equal(41722m, jan.Provinces["BC"].TaxReduction!.PhaseOutEnd);
+        Assert.Equal(44952m, jul.Provinces["BC"].TaxReduction!.PhaseOutEnd);
+
+        // Newfoundland and Labrador's basic personal amount.
+        Assert.Equal(11188m, jan.Provinces["NL"].BasicPersonalAmount.Maximum);
+        Assert.Equal(15000m, jul.Provinces["NL"].BasicPersonalAmount.Maximum);
+
+        // Prince Edward Island's 21% band over $200,000 exists only in the second half.
+        Assert.Equal(5, jan.Provinces["PE"].Brackets.Count);
+        Assert.Equal(6, jul.Provinces["PE"].Brackets.Count);
+        Assert.Equal(0.19m, jan.Provinces["PE"].Brackets[^1].Rate);
+        Assert.Equal(0.21m, jul.Provinces["PE"].Brackets[^1].Rate);
+    }
+
+    [Fact]
+    public void TheAnnualFigures_AreIdenticalInBothHalves()
+    {
+        // CPP, CPP2, EI, QPP and QPIP are set once a year. A July edition that disagreed with the
+        // January one about a ceiling would make an employee's year-to-date stop adding up at the
+        // halfway point.
+        PayrollRateTable jan = Service().GetForDate(new DateTime(2026, 3, 15))!;
+        PayrollRateTable jul = Service().GetForDate(new DateTime(2026, 8, 15))!;
+
+        Assert.Equal(jul.Cpp.YmpeCeiling, jan.Cpp.YmpeCeiling);
+        Assert.Equal(jul.Cpp.MaxContributionEmployee, jan.Cpp.MaxContributionEmployee);
+        Assert.Equal(jul.Cpp2.YampeCeiling, jan.Cpp2.YampeCeiling);
+        Assert.Equal(jul.Cpp2.MaxContributionEmployee, jan.Cpp2.MaxContributionEmployee);
+        Assert.Equal(jul.Ei.MaxInsurableEarnings, jan.Ei.MaxInsurableEarnings);
+        Assert.Equal(jul.Ei.MaxPremiumEmployee, jan.Ei.MaxPremiumEmployee);
+        Assert.Equal(jul.Quebec!.Qpp.MaxContributionEmployee, jan.Quebec!.Qpp.MaxContributionEmployee);
+        Assert.Equal(jul.Quebec.Qpip.MaxPremiumEmployee, jan.Quebec.Qpip.MaxPremiumEmployee);
+        Assert.Equal(jul.Quebec.EiMaxPremiumEmployee, jan.Quebec.EiMaxPremiumEmployee);
+
+        // And the federal side, which did not change mid-year for 2026.
+        Assert.Equal(jul.Federal.BasicPersonalAmount.Maximum, jan.Federal.BasicPersonalAmount.Maximum);
+        Assert.Equal(jul.Federal.CanadaEmploymentAmount, jan.Federal.CanadaEmploymentAmount);
+        Assert.Equal(jul.Federal.Brackets.Count, jan.Federal.Brackets.Count);
     }
 
     #endregion

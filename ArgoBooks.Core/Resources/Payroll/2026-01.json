@@ -1,10 +1,10 @@
 {
-  "editionId": "2026-07",
-  "effectiveFrom": "2026-07-01T00:00:00",
-  "effectiveTo": "2026-12-31T00:00:00",
-  "_source": "CRA T4127 Payroll Deductions Formulas, 123rd edition effective July 1 2026. CPP, CPP2 and EI from the CRA rate pages. Every value below was returned independently by two retrievals that agreed exactly, and the derived maximums reproduce from their own rates: CPP 4230.45 = (74600-3500)*0.0595, CPP2 416.00 = (85000-74600)*0.04, EI 1123.07 = 68900*0.0163.",
-  "_verification": "Checked cell by cell against T4127 123rd edition Chapter 8 on canada.ca: Table 8.1 (every bracket, rate and constant for the federal table and all twelve provinces and territories), Table 8.2 (every basic personal amount, the Canada Employment Amount, BC's and Ontario's S2, Ontario's surtax bands and Quebec's abatement) and Tables 8.3 to 8.8 (CPP, CPP2, EI, QPP and QPIP). Ontario's five health premium bands were checked against the V2 formula and BC's tax reduction against the S formula, including the footnote that 44,952 is a hard cut-off rather than where the taper reaches zero. Quebec was checked against Revenu Quebec's Principal Changes for 2026: the four thresholds, the basic personal amount of 18,952, the 1,450 worker deduction and the 18,952 gratuities threshold, and the four bracket constants reproduce from those thresholds by continuity. Zero mismatches.",
-  "_provinces_note": "All thirteen jurisdictions are present: the twelve provinces and territories that use CRA's rate-and-constant structure, plus Quebec, which is held in its own block because Revenu Quebec's formula is a different shape. Adding a jurisdiction is data plus test fixtures, not code.",
+  "editionId": "2026-01",
+  "effectiveFrom": "2026-01-01T00:00:00",
+  "effectiveTo": "2026-06-30T00:00:00",
+  "_source": "CRA T4127 Payroll Deductions Formulas, 122nd edition effective January 1 2026 (T4127(E) Rev. 26 (26/05)), Chapter 8 Tables 8.1 to 8.8, read from canada.ca. Built from the verified 123rd-edition file by applying only the three jurisdictions that differ between the halves of 2026, then re-checked cell by cell against Table 8.1.",
+  "_verification": "Every bracket, rate and constant was compared against Table 8.1 of the 122nd edition and matched. CPP, CPP2, EI, QPP and QPIP are annual and identical in both editions (Tables 8.3 to 8.8). Quebec is unchanged mid-year: its block is TP-1015.F-V (2026-01), the January edition already.",
+  "_provinces_note": "BC, NL and PE are the only jurisdictions that differ from the July edition. All three changed retroactively to January 1, so the JULY edition carries prorated figures to catch up over the second half and this one carries the originals, which are what was actually withheld from January to June.",
   "federal": {
     "brackets": [
       {
@@ -168,38 +168,38 @@
       "brackets": [
         {
           "upTo": 50363,
-          "rate": 0.0614,
+          "rate": 0.0506,
           "constantK": 0
         },
         {
           "upTo": 100728,
           "rate": 0.077,
-          "constantK": 786
+          "constantK": 1330
         },
         {
           "upTo": 115648,
           "rate": 0.105,
-          "constantK": 3606
+          "constantK": 4150
         },
         {
           "upTo": 140430,
           "rate": 0.1229,
-          "constantK": 5676
+          "constantK": 6220
         },
         {
           "upTo": 190405,
           "rate": 0.147,
-          "constantK": 9061
+          "constantK": 9604
         },
         {
           "upTo": 265545,
           "rate": 0.168,
-          "constantK": 13059
+          "constantK": 13603
         },
         {
           "upTo": null,
           "rate": 0.205,
-          "constantK": 22884
+          "constantK": 23428
         }
       ],
       "basicPersonalAmount": {
@@ -210,11 +210,11 @@
       },
       "surtax": null,
       "taxReduction": {
-        "basic": 805,
+        "basic": 575,
         "perDependant": 0,
         "phaseOutStart": 25570,
         "phaseOutRate": 0.0356,
-        "phaseOutEnd": 44952
+        "phaseOutEnd": 41722
       },
       "healthPremium": null
     },
@@ -323,8 +323,8 @@
         }
       ],
       "basicPersonalAmount": {
-        "maximum": 15000,
-        "minimum": 15000,
+        "maximum": 11188,
+        "minimum": 11188,
         "phaseoutStart": 0,
         "phaseoutEnd": 0
       },
@@ -550,14 +550,9 @@
           "constantK": 4497
         },
         {
-          "upTo": 200000,
+          "upTo": null,
           "rate": 0.19,
           "constantK": 6464
-        },
-        {
-          "upTo": null,
-          "rate": 0.21,
-          "constantK": 10464
         }
       ],
       "basicPersonalAmount": {
