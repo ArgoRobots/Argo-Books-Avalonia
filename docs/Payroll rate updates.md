@@ -77,6 +77,39 @@ thresholds `A`, rates `V` and constants `KP`, and **Table 8.2** has the basic am
 Canada Employment Amounts, the tax reduction amounts `S2` and Ontario's surtax. That is the
 source, and it is faster than checking a recollection of it against the source anyway.
 
+### Reading the tables with Claude driving Chrome
+
+This is now the recommended way, and it removes the recall problem entirely.
+
+**canada.ca cannot be fetched programmatically.** Plain HTTP gets 403 or times out, whichever
+tool is asking. The Chrome extension is the way in, because the request comes from a real
+browser session. Chrome has to be RUNNING first, or the extension reports "not connected".
+
+Once connected, ask for the tables as text rather than reading them off a screenshot:
+
+```js
+// Table 8.1 and 8.2, as pipe-separated rows
+const T = [...document.querySelectorAll('table')];
+T.forEach((t, i) => console.log(i, t.caption ? t.caption.innerText.trim() : ''));
+
+const t = T[3];  // whichever index Table 8.1 turned out to be
+[...t.rows].map(r => [...r.cells]
+  .map(c => c.innerText.replace(/\s+/g, ' ').trim()).join('|')).join('\n')
+```
+
+Two practical notes. Pull the rows in slices of a dozen, because a whole table overflows the
+tool's output limit and gets truncated mid-number. And the formula sections trip an output
+filter that reads `=` as query-string data, so `.split('=').join(' EQ ')` before returning
+them.
+
+**Build the new edition as a diff from the previous one, not by retyping it.** Copy the file,
+apply only the jurisdictions the "What's new" section names, then verify every cell of the
+result against Table 8.1 with a script. In the 2026-01 round that verification caught a real
+error: the wrong PEI bracket had been dropped, leaving a 21% top rate that does not exist in
+the first half of the year. Retyping thirteen jurisdictions by hand would not have caught it.
+
+The `_verification` note at the top of each rate file records exactly what was compared.
+
 Note that the July edition only reproduces the sections that CHANGED. Formulas that did not
 change, and Ontario's health premium bands, are in the January edition instead.
 
@@ -164,9 +197,9 @@ From the [Guide to Filing the RL-1 Slip](https://www.revenuquebec.ca/en/online-s
 | D | RPP contribution | not collected, always nil |
 | E | Quebec income tax withheld | PayRunLine.ProvincialTax |
 | F | Union dues | not collected, always nil |
-| G | Pensionable salary or wages under the QPP | gross, or nil if QPP exempt |
+| G | Pensionable salary or wages under the QPP | gross capped at the YAMPE, or nil if QPP exempt |
 | H | QPIP premium | PayRunLine.QpipEmployee |
-| I | Eligible salary or wages under the QPIP | gross, or nil if exempt |
+| I | Eligible salary or wages under the QPIP | gross capped at the QPIP maximum, or nil when no premium was withheld |
 
 H and I were confirmed against Revenu Quebec's own box-by-box pages
 ([box H](https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/filing-rl-slips-and-the-rl-1-summary-general-rules/rl-1-slip-employment-and-other-income/how-to-complete-the-rl-1-slip-box-by-box-instructions/box-h/),
@@ -178,6 +211,18 @@ Three things about those boxes are easy to get wrong:
 
 - **Box I takes `0` rather than being left blank** when there is no eligible salary. Revenu
   Quebec states this explicitly, which is why the renderer always prints it.
+- **Nil in box I means no premium was withheld, NOT that the employee is EI exempt.** Those
+  were conflated once, and Revenu Quebec is explicit that they are different: "employment that
+  is not insurable under the Employment Insurance Act is not necessarily excluded employment
+  under the Act respecting parental insurance", and premiums are due on a shareholder's salary
+  "regardless of the number of shares held by that person". That is exactly the owner-manager
+  this app marks EI exempt, so they pay QPIP and box I carries their earnings. A premium in
+  box H against a nil box I is the one pair that cannot be right.
+- **Box G is capped at the YAMPE, not the YMPE.** The intuition is the other way round, since
+  earnings above the first ceiling belong to QPP2 and are reported in box B.B. RL-1.G-V §5.9
+  gives box G two maximums and selects the additional one whenever box B.B carries an amount,
+  which is every case where the cap can bind. Capping at the YMPE understates the box for
+  precisely the employees who have QPP2 against it.
 - **Box E is the Quebec tax alone.** The federal tax withheld in the same pay run goes to CRA
   and appears in box 22 of the T4. Printing the combined figure would credit the employee with
   Quebec tax that Quebec never received. Pinned by a test.
@@ -204,12 +249,17 @@ withheld over the first six months, lands the year on the right total.
 
 Three jurisdictions are prorated in the July 2026 edition:
 
-| | Annual figure | July edition figure |
-|---|---|---|
-| BC, lowest rate | 5.60% | **6.14%** |
-| BC, basic reduction | $690 | **$805** |
-| Newfoundland and Labrador, basic personal amount | $13,094 | **$15,000** |
-| PEI, top bracket rate | 20% | **21%** |
+| | January edition | Annual figure | July edition figure |
+|---|---|---|---|
+| BC, lowest rate | 5.06% | 5.60% | **6.14%** |
+| BC, basic reduction | $575 | $690 | **$805** |
+| Newfoundland and Labrador, basic personal amount | $11,188 | $13,094 | **$15,000** |
+| PEI, top bracket rate | no such bracket | 20% over $200,000 | **21%** |
+
+The January column is what was actually withheld from January to June, and it is the figure
+the January edition carries. Read the middle column as the answer to "what did the province
+announce", which is the one number that appears in NEITHER edition. Both editions are correct
+and neither matches the press release, which is the whole trap.
 
 Two things follow. Putting the annual figure into a July edition is wrong in a way that looks
 right, because the number matches what the province itself announced. And carrying a July
@@ -282,15 +332,32 @@ the file, not the engine, unless the engine changed too.
 
 ## Shipping it
 
-The rate file is delivered the same way language files are, so existing installs pick it up
-without an app update. `PayrollRateService` looks in the cache directory first and falls back
-to the copy embedded in the assembly, so:
+> **The upload half of this does not exist yet.** `PayrollRateService` reads a cache directory
+> before falling back to the embedded copy, which is the receiving end of a delivery mechanism
+> that was never built. Nothing in the app writes to that directory, nothing calls
+> `PayrollRateService.Invalidate()`, and the website has no payroll endpoint: `cron/payroll_rate_reminder.php`
+> is the only payroll file in that repository. Until it is built, **committing and shipping an
+> app update is the only way a customer gets a new edition.** The reminder email's step 4 says
+> otherwise and is wrong.
 
-- **Upload** the new edition for everyone already running the app
-- **Also commit** it to `ArgoBooks.Core/Resources/Payroll/` so fresh installs have it offline
+**Today:**
 
-Do both. Uploading alone leaves a new install unable to calculate until it syncs; committing
-alone means nobody gets it until they update the app.
+1. **Commit** the new edition to `ArgoBooks.Core/Resources/Payroll/`. The csproj globs
+   `Resources\Payroll\*.json` as an embedded resource, so a new file needs no csproj change.
+2. **Ship an app update.** That is what reaches customers.
+
+**What building the upload path would take,** if it is worth doing rather than releasing twice
+a year anyway. `LanguageService` is the working example to copy: it pulls from
+`{ApiConfig.BaseUrl}/resources/downloads/{version}/languages/{iso}.json` into a `Languages`
+folder under the platform cache path. The payroll equivalent is the same shape:
+
+- a `resources/downloads/payroll/{edition}.json` route on the website
+- a fetch into `{cache}/Payroll/`, which `PayrollRateService` already reads first
+- a call to `PayrollRateService.Invalidate()` afterwards, so the new edition is seen without a
+  restart. It exists and currently has no callers.
+
+The deadline is fixed and twice yearly, so the choice is between building this once and
+remembering to ship a release in the last three weeks of December and June, every year.
 
 ---
 
