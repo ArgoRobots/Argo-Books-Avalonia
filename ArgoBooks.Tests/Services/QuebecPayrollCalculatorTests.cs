@@ -75,6 +75,76 @@ public class QuebecPayrollCalculatorTests
 
     #endregion
 
+    #region WebRAS fixtures, captured from Revenu Quebec's own calculator
+
+    /// <summary>
+    /// Captured from WebRAS 2026.01 (rates effective 2026-01-01, tool last updated 2026-02-25),
+    /// biweekly, no TP-1015.3-V on file so the basic personal amount applies, no other
+    /// deductions or credits.
+    ///
+    /// These are what the rest of Canada's PDOC fixtures are, and Quebec had none: PDOC
+    /// deliberately excludes Quebec, so nothing gathered for the other provinces said anything
+    /// here. Until these were taken, every Quebec figure this app produced rested on the
+    /// formulas alone with no second opinion anywhere.
+    ///
+    /// Two incomes, deliberately in different tax brackets: $2,400 lands in Quebec's 19% band
+    /// once annualised and $5,000 in the 24% band, so a wrong bracket constant cannot pass both.
+    ///
+    /// WebRAS is a check and NOT the oracle, which is the opposite of PDOC's role. Revenu Quebec
+    /// states on the tool itself: "In the event of a discrepancy between the calculations using
+    /// the formulas and those using WebRAS, the calculations using the formulas prevail." So a
+    /// future failure here is a question to investigate against TP-1015.F, not a licence to edit
+    /// the calculator until the numbers match.
+    /// </summary>
+    [Theory]
+    [InlineData(2400, 142.72, 10.32, 234.55)]
+    [InlineData(5000, 306.52, 21.50, 759.39)]
+    public void MatchesWebRasOnTheEmployeeDeductions(
+        decimal gross, decimal qpp, decimal qpip, decimal quebecTax)
+    {
+        PayrollDeductions d = Calc(gross);
+
+        Assert.Equal(qpp, d.CppEmployee);
+        Assert.Equal(0m, d.Cpp2Employee);
+        Assert.Equal(qpip, d.QpipEmployee);
+        Assert.Equal(quebecTax, d.ProvincialTax);
+    }
+
+    [Theory]
+    [InlineData(2400, 142.72, 14.45)]
+    [InlineData(5000, 306.52, 30.10)]
+    public void MatchesWebRasOnTheEmployerContributions(decimal gross, decimal qpp, decimal qpip)
+    {
+        // The employer QPIP rate is its own published figure rather than a multiple of the
+        // employee's, and WebRAS prints both, so this is where that would show up if it were
+        // ever quietly derived.
+        PayrollDeductions d = Calc(gross);
+
+        Assert.Equal(qpp, d.CppEmployer);
+        Assert.Equal(qpip, d.QpipEmployer);
+    }
+
+    [Fact]
+    public void MatchesWebRasOnTheTaxableIncomeItArrivesAt()
+    {
+        // WebRAS prints the figure it taxes: $2,321.58 on a $2,400 pay. That is the pay less the
+        // $55.77 deduction for workers and the $22.65 deductible share of QPP, so agreeing on it
+        // means the two Quebec-specific deductions are both right and are both being applied
+        // once. Agreeing on the tax alone could hide two errors cancelling.
+        PayrollRateTable rates = Rates();
+        QuebecRates qc = rates.Quebec!;
+
+        decimal workerDeduction = Math.Min(qc.WorkerDeductionRate * 2400m, qc.WorkerDeductionMaxAnnual / 26m);
+        decimal additionalShare = (qc.Qpp.RateEmployee - qc.Qpp.BaseRateEmployee) / qc.Qpp.RateEmployee;
+        decimal deductibleQpp = Math.Round(Calc(2400m).CppEmployee * additionalShare, 2, MidpointRounding.AwayFromZero);
+
+        decimal taxable = 2400m - Math.Round(workerDeduction, 2, MidpointRounding.AwayFromZero) - deductibleQpp;
+
+        Assert.Equal(2321.58m, taxable);
+    }
+
+    #endregion
+
     #region What makes Quebec different
 
     [Fact]
