@@ -63,10 +63,29 @@ public partial class PayRunModalsViewModel : ViewModelBase
     private DateTimeOffset? _payDate = DateTimeOffset.Now;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PeriodError))]
     private DateTimeOffset? _periodStart;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PeriodError))]
     private DateTimeOffset? _periodEnd;
+
+    /// <summary>
+    /// Why the period will not do, or empty when it will.
+    ///
+    /// A backwards period calculates perfectly happily, which is why it needs catching here. The
+    /// deduction arithmetic divides annual figures by the number of pay periods and never looks
+    /// at the dates, so nothing downstream objects. It surfaces later, on a pay stub that reads
+    /// as nonsense and in the 27 consecutive periods a record of employment is built from, where
+    /// it costs somebody part of an EI claim.
+    ///
+    /// A single day period is allowed. It is a real thing, so the test is "ends before it
+    /// starts" rather than "does not end after it starts".
+    /// </summary>
+    public string PeriodError =>
+        PeriodStart is { } start && PeriodEnd is { } end && end.Date < start.Date
+            ? "The period ends before it starts."
+            : string.Empty;
 
     /// <summary>
     /// Which CRA edition the pay date falls in. Shown because three provinces carry different
@@ -374,6 +393,12 @@ public partial class PayRunModalsViewModel : ViewModelBase
             return false;
         }
 
+        if (PeriodError.Length > 0)
+        {
+            BlockingError = PeriodError;
+            return false;
+        }
+
         DateTime payDate = PayDate?.DateTime.Date ?? DateTime.Today;
 
         // Asked before the draft is built, not after. The calculator throws for a province it
@@ -561,6 +586,8 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
         PayrollRateTable? rates = _rates.GetForDate(_draft.PayDate);
 
+        AddOverlapWarning(data);
+
         foreach (PayRunLine line in _draft.Lines)
         {
             bool quebec = string.Equals(line.Province, "QC", StringComparison.OrdinalIgnoreCase);
@@ -599,6 +626,50 @@ public partial class PayRunModalsViewModel : ViewModelBase
         // Regular remitters pay by the 15th of the month after the employees were paid.
         DateTime due = new DateTime(_draft.PayDate.Year, _draft.PayDate.Month, 1).AddMonths(1).AddDays(14);
         RemittanceDueNote = $"Due to CRA by {due:d MMMM yyyy}.";
+    }
+
+    /// <summary>
+    /// Says so when somebody in this run has already been paid for a period that overlaps this
+    /// one.
+    ///
+    /// A warning and not a refusal, deliberately. Paying the same period twice is usually a
+    /// mistake and occasionally exactly right: a correction after an error, or a bonus paid on
+    /// its own. Nothing in the data distinguishes the two, so blocking would be wrong the first
+    /// time somebody genuinely needs a second run, and there would be no way past it.
+    ///
+    /// Overlap rather than an exact match, because 3 to 16 August followed by 10 to 23 August
+    /// pays a week twice just as surely and is far harder to notice by eye.
+    ///
+    /// A voided run does not count. Voiding is how a run is undone, so its period has not been
+    /// paid, and warning about it would send the employer looking for something that is no
+    /// longer there.
+    /// </summary>
+    private void AddOverlapWarning(CompanyData data)
+    {
+        if (_draft == null)
+        {
+            return;
+        }
+
+        DateTime start = _draft.PeriodStart.Date;
+        DateTime end = _draft.PeriodEnd.Date;
+        var paying = _draft.Lines.Select(l => l.EmployeeId).ToHashSet(StringComparer.Ordinal);
+
+        foreach (PayRun run in data.PayRuns)
+        {
+            if (run.Id == _draft.Id
+                || run.Status != PayRunStatus.Approved
+                || run.VoidsPayRunId is { Length: > 0 }
+                || run.PeriodStart.Date > end
+                || run.PeriodEnd.Date < start
+                || !run.Lines.Any(l => paying.Contains(l.EmployeeId)))
+            {
+                continue;
+            }
+
+            Warnings.Add($"{run.Id} already paid {run.PeriodStart:d MMM} to {run.PeriodEnd:d MMM yyyy}, "
+                         + "which overlaps this period. Continue only if this run is meant to be on top of it.");
+        }
     }
 
     /// <summary>

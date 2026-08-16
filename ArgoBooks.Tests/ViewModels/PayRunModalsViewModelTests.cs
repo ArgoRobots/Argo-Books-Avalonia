@@ -115,4 +115,181 @@ public class PayRunModalsViewModelTests : ModalViewModelTestBase
         Assert.False(vm.HasNobodyToPay);
         Assert.Empty(vm.NoEmployeesMessage);
     }
+
+    #region The pay period
+
+    private static PayRun ApprovedRun(string id, DateTime start, DateTime end, string employeeId = "EMP-001") => new()
+    {
+        Id = id,
+        PayDate = end,
+        PeriodStart = start,
+        PeriodEnd = end,
+        Status = PayRunStatus.Approved,
+        Lines = { new PayRunLine { EmployeeId = employeeId, EmployeeName = "Dana Smith", Province = "AB", GrossPay = 2000m, NetPay = 1600m } },
+    };
+
+    [Fact]
+    public void APeriodThatEndsBeforeItStarts_IsRefused()
+    {
+        // Every annual figure is divided across the pay periods, so the period itself never
+        // enters the arithmetic and a backwards one calculates perfectly happily. It only shows
+        // up later, on a pay stub and in the 27 periods an ROE reads back.
+        Company.Employees.Add(Person());
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 14));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 1));
+
+        Assert.NotEmpty(vm.PeriodError);
+
+        vm.NextCommand.Execute(null);
+        Assert.Equal(1, vm.Step);
+    }
+
+    [Fact]
+    public void APeriodOfASingleDay_IsAllowed()
+    {
+        // The boundary. A one day period is a real thing, so the check has to be "ends before it
+        // starts" rather than "does not end after it starts".
+        Company.Employees.Add(Person());
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 14));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 14));
+
+        Assert.Empty(vm.PeriodError);
+    }
+
+    [Fact]
+    public void CorrectingTheDates_ClearsTheRefusal()
+    {
+        Company.Employees.Add(Person());
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2020, 1, 1));
+        Assert.NotEmpty(vm.PeriodError);
+
+        vm.PeriodEnd = vm.PeriodStart!.Value.AddDays(13);
+        Assert.Empty(vm.PeriodError);
+    }
+
+    #endregion
+
+    #region Paying the same period twice
+
+    [Fact]
+    public void APeriodAlreadyPaid_IsWarnedAboutRatherThanBlocked()
+    {
+        // Deliberately a warning. A second run over the same period is usually a mistake and
+        // occasionally exactly right: a correction, or a bonus paid separately. Blocking it would
+        // be wrong the first time somebody needs one, and there is no way for the app to tell the
+        // two apart.
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(ApprovedRun("PR-0001", new DateTime(2026, 8, 3), new DateTime(2026, 8, 16)));
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 16));
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 3));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 16));
+
+        vm.NextCommand.Execute(null);
+        Assert.Equal(2, vm.Step);
+        vm.NextCommand.Execute(null);
+
+        Assert.Equal(3, vm.Step);
+        Assert.True(vm.HasWarnings);
+        Assert.Contains(vm.Warnings, w => w.Contains("PR-0001"));
+    }
+
+    [Fact]
+    public void APeriodThatMerelyOverlaps_IsStillWorthSaying()
+    {
+        // Overlap rather than an exact match, because paying 3 to 16 August and then 10 to 23
+        // August pays a week twice just as surely, and is harder to spot by eye.
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(ApprovedRun("PR-0001", new DateTime(2026, 8, 3), new DateTime(2026, 8, 16)));
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 23));
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 10));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 23));
+
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+
+        Assert.Contains(vm.Warnings, w => w.Contains("PR-0001"));
+    }
+
+    [Fact]
+    public void APeriodNobodyHasBeenPaidFor_SaysNothing()
+    {
+        Company.Employees.Add(Person());
+        Company.PayRuns.Add(ApprovedRun("PR-0001", new DateTime(2026, 7, 6), new DateTime(2026, 7, 19)));
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 16));
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 3));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 16));
+
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+
+        Assert.DoesNotContain(vm.Warnings, w => w.Contains("PR-0001"));
+    }
+
+    [Fact]
+    public void AVoidedRun_DoesNotCountAsHavingPaidThePeriod()
+    {
+        // Voiding is how a run is undone, so a period whose only run was voided has not been paid
+        // and warning about it would send the employer looking for something that is not there.
+        Company.Employees.Add(Person());
+
+        PayRun voided = ApprovedRun("PR-0001", new DateTime(2026, 8, 3), new DateTime(2026, 8, 16));
+        voided.Status = PayRunStatus.Void;
+        Company.PayRuns.Add(voided);
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 16));
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 3));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 16));
+
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+
+        Assert.DoesNotContain(vm.Warnings, w => w.Contains("PR-0001"));
+    }
+
+    [Fact]
+    public void APeriodPaidToSomebodyElse_IsNotThisEmployeesProblem()
+    {
+        // The overlap only matters for the people actually in this run.
+        Company.Employees.Add(Person());
+        Company.Employees.Add(Person("EMP-002", "Alex Jones"));
+        Company.PayRuns.Add(ApprovedRun("PR-0001", new DateTime(2026, 8, 3), new DateTime(2026, 8, 16), "EMP-002"));
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        foreach (PayRunEmployeeSelection s in vm.SelectableEmployees)
+        {
+            s.IsSelected = s.Id == "EMP-001";
+        }
+
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 16));
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 3));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 16));
+
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+
+        Assert.DoesNotContain(vm.Warnings, w => w.Contains("PR-0001"));
+    }
+
+    #endregion
 }
