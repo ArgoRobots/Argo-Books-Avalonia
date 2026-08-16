@@ -25,14 +25,16 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
-        <!-- Expander row on the review step: a full-width click target with no chrome. -->
+        <!-- Expander row on the review step -->
         <Style Selector="Button.review-row">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6,6,0,0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.review-row:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="6,6,0,0" />
         </Style>
     </UserControl.Styles>
 
@@ -288,7 +290,7 @@
                                                         <!-- Right inset matches the expanded rows below, so a
                                                              net figure and the amounts it breaks down into stay
                                                              on the same right edge. -->
-                                                        <Button Classes="review-row" Padding="0,12,12,12"
+                                                        <Button Classes="review-row" Padding="12,12,12,12"
                                                                 HorizontalAlignment="Stretch"
                                                                 HorizontalContentAlignment="Stretch"
                                                                 Command="{Binding ToggleExpandedCommand}">
@@ -310,7 +312,9 @@
                                                             </Grid>
                                                         </Button>
 
-                                                        <StackPanel Margin="22,0,12,12" Spacing="4" IsVisible="{Binding IsExpanded}">
+                                                        <StackPanel Margin="34,0,12,12" Spacing="4"
+                                                                    MaxWidth="360" HorizontalAlignment="Left"
+                                                                    IsVisible="{Binding IsExpanded}">
                                                             <Grid ColumnDefinitions="*,Auto">
                                                                 <TextBlock Grid.Column="0" Text="{loc:Loc Gross}" FontSize="12"
                                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
