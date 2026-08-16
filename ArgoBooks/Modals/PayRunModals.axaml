@@ -112,15 +112,15 @@
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <DatePicker SelectedDate="{Binding PeriodEnd, Mode=TwoWay}"
                                                         Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                            <!-- Under the date at fault rather than under the row. Said as
+                                                 soon as it is true, not on pressing Next: a backwards period
+                                                 calculates happily and only reads as nonsense later, on a
+                                                 stub and on a record of employment. -->
+                                            <TextBlock Text="{Binding PeriodError}" FontSize="12" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding PeriodError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                         </StackPanel>
                                     </Grid>
-
-                                    <!-- Said as soon as the dates are wrong, rather than waiting for Next.
-                                         A backwards period calculates happily and only reads as nonsense
-                                         later, on a stub and on a record of employment. -->
-                                    <TextBlock Text="{Binding PeriodError}" FontSize="12" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource ErrorBrush}"
-                                               IsVisible="{Binding PeriodError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                                     <!-- The pay date decides which CRA edition applies, and some provinces
                                          carry different figures in each half of the year. Making the edition

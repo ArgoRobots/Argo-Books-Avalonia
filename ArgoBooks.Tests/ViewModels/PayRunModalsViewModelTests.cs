@@ -145,6 +145,11 @@ public class PayRunModalsViewModelTests : ModalViewModelTestBase
 
         vm.NextCommand.Execute(null);
         Assert.Equal(1, vm.Step);
+
+        // Said once, next to the date that is wrong. Copying it into BlockingError as well put
+        // the same sentence on screen twice, in two different places, the moment Next was
+        // pressed.
+        Assert.Empty(vm.BlockingError);
     }
 
     [Fact]

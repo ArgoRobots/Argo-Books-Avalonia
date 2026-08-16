@@ -393,9 +393,10 @@ public partial class PayRunModalsViewModel : ViewModelBase
             return false;
         }
 
+        // Refused, but not restated. PeriodError is already on screen beside the date that is
+        // wrong, and copying it into BlockingError put the same sentence in two places at once.
         if (PeriodError.Length > 0)
         {
-            BlockingError = PeriodError;
             return false;
         }
 
