@@ -18,7 +18,14 @@ namespace ArgoBooks.Core.Services.Payroll;
 /// - Block 15B covers a shorter window: 27 weekly, 14 biweekly, 13 semi-monthly, 7 monthly.
 ///
 /// Both are read from Service Canada's charts rather than derived, because they are not a
-/// clean function of the frequency.
+/// clean function of the frequency. All eight cells were checked against the ROE guide on
+/// canada.ca: the guide prints them as two separate charts and puts a footnote under each saying
+/// the other one differs, which is as close as a government document comes to warning you not to
+/// reuse a number.
+///
+/// The guide carries a fifth row both charts agree on, "13 pay periods a year", which is not a
+/// frequency this app offers. If it is ever added, the counts are 14 for blocks 15A and 15C and
+/// 7 for block 15B, and note that 14 is NOT the biweekly 27 despite both being roughly fortnightly.
 /// </summary>
 public class RoeService
 {

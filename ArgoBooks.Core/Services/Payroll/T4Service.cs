@@ -137,9 +137,13 @@ public class T4Service
             // "the insurable earnings are the same as the employment income in box 14" and "the
             // insurable earnings are over the maximum for the year". Taken literally that would
             // suppress box 56 in every case this app can produce, since QPIP eligible earnings
-            // here are always gross capped at the ceiling. It is left reported, because the two
-            // instructions contradict each other and the box 55 pairing above is the one written
-            // as a requirement. Worth revisiting against CRA's XML schema rather than guessing.
+            // here are always gross capped at the ceiling. The two instructions contradict each
+            // other and both are CRA's.
+            //
+            // Settled by the XML specification, which marks prov_insu_ern_amt optional rather
+            // than required. So neither choice is rejected on submission, which leaves the box 55
+            // pairing as the only one of the two phrased as an obligation, and reporting a
+            // redundant figure as the cheaper way to be wrong. Reported.
             QpipInsurableEarnings = quebec && qpip > 0 ? ceilings.CapQpip(gross) : 0m,
             EmployerQpip = lines.Sum(l => l.QpipEmployer),
 
