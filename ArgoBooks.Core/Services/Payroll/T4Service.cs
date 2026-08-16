@@ -43,6 +43,11 @@ public class T4Service
             },
             ContactName = company.PayrollContactName ?? string.Empty,
             ContactPhone = company.PayrollContactPhone ?? company.Phone ?? string.Empty,
+
+            // Both for the T619 transmittal that wraps the submission rather than for any slip.
+            ContactEmail = company.PayrollContactEmail ?? string.Empty,
+            LanguageCode = string.Equals(data.Settings.Localization.Language, "French",
+                StringComparison.OrdinalIgnoreCase) ? "F" : "E",
         };
 
         EarningsCeilings ceilings = EarningsCeilings.For(_rates, taxYear);
@@ -189,6 +194,14 @@ public class T4Service
             problems.Add("A ten digit contact phone number is required on the T4 Summary.");
         }
 
+        // Required by the T619 transmittal record wrapping the submission. Without it CRA rejects
+        // the upload, so it is refused here rather than discovered at the deadline.
+        if (!IsEmailAddress(t4.ContactEmail))
+        {
+            problems.Add("A contact email address is required. CRA uses it to tell you how the "
+                         + "filing was processed, and the submission is rejected without one.");
+        }
+
         foreach (T4Slip slip in t4.Slips)
         {
             string who = string.IsNullOrWhiteSpace(slip.Surname) ? slip.EmployeeId : slip.Surname;
@@ -236,6 +249,30 @@ public class T4Service
         }
 
         return warnings;
+    }
+
+    /// <summary>
+    /// Something plausible enough to be an address, capped at the 60 characters CRA allows.
+    ///
+    /// Deliberately loose. The point is to catch an empty box or an obvious slip, not to
+    /// adjudicate the grammar of email addresses, and a filing blocked by a validator that is
+    /// stricter than CRA's is worse than one CRA bounces.
+    /// </summary>
+    public static bool IsEmailAddress(string? value)
+    {
+        string v = (value ?? string.Empty).Trim();
+
+        if (v.Length is 0 or > 60 || v.Any(char.IsWhiteSpace))
+        {
+            return false;
+        }
+
+        int at = v.IndexOf('@');
+
+        return at > 0
+               && at == v.LastIndexOf('@')
+               && v.IndexOf('.', at) > at + 1
+               && !v.EndsWith('.');
     }
 
     /// <summary>Nine digits, then RP, then four digits.</summary>

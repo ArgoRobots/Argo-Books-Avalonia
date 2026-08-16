@@ -6,8 +6,15 @@ using ArgoBooks.Core.Models.Payroll;
 namespace ArgoBooks.Core.Services.Payroll;
 
 /// <summary>
-/// Writes a T4 return as the XML CRA accepts for electronic filing, following the 2026V4
-/// specification.
+/// Writes a T4 return as the XML CRA accepts for electronic filing, following the **2026V4**
+/// specification: T619 for the transmittal and T4 for the return.
+///
+/// That version is year-stamped and revised within the year, and both halves changed in ways
+/// that would reject a previously working file: the T619 language code became required, and the
+/// T4 gained a validation that the account number on the slip and on the summary must match.
+/// Re-read the "What's new" section of both when preparing a January rate edition, and update
+/// the version named here so the next person can tell whether anyone has. See
+/// docs/Payroll rate updates.md, "What else needs a look each year".
 ///
 /// Two of CRA's rules shape almost every decision here:
 ///
@@ -22,8 +29,13 @@ namespace ArgoBooks.Core.Services.Payroll;
 public static class T4XmlWriter
 {
     /// <summary>
-    /// Builds the return document. Does not include the T619 transmittal record, which wraps
-    /// a submission and belongs to whoever transmits it rather than to the return.
+    /// Builds the whole submission: the T619 transmittal record, then the return.
+    ///
+    /// The T619 was left out once, on the reasoning that a transmittal belongs to whoever
+    /// transmits rather than to the return. CRA's specification says otherwise in as many words,
+    /// "T619 applicable to all return types", and shows it as the first child of Submission with
+    /// the returns after it. A file without one is rejected on upload, which is a failure that
+    /// arrives at the February deadline against a document whose every slip is correct.
     /// </summary>
     public static XDocument Build(T4Return t4)
     {
@@ -31,20 +43,103 @@ public static class T4XmlWriter
 
         var slips = t4.Slips.Select(slip => BuildSlip(t4, slip));
 
-        var root = new XElement("Return",
-            new XElement("T4",
-                slips,
-                BuildSummary(t4)));
+        var root = new XElement("Submission",
+            new XAttribute(XNamespace.Xmlns + "xsi", "http://www.w3.org/2001/XMLSchema-instance"),
+            BuildTransmittal(t4),
+            new XElement("Return",
+                new XElement("T4",
+                    slips,
+                    BuildSummary(t4))));
 
         return new XDocument(new XDeclaration("1.0", "UTF-8", null), root);
+    }
+
+    /// <summary>
+    /// The T619. Says who is sending the submission and where CRA should write back.
+    ///
+    /// For this app's employer the transmitter and the employer are the same person, so the
+    /// account number is the payroll account number from the return. CRA requires it to match
+    /// the credentials used to sign in, which for a small employer filing their own return it
+    /// does by definition.
+    ///
+    /// The field ORDER is the specification's own sequence rather than anything chosen here. It
+    /// is an ordered schema, so a correct set of fields in a different order still rejects.
+    /// </summary>
+    private static XElement BuildTransmittal(T4Return t4)
+    {
+        string account = Upper(t4.PayrollAccountNumber, 15) ?? string.Empty;
+        string phone = Digits(t4.ContactPhone, 10) ?? string.Empty;
+
+        var contact = new XElement("CNTC",
+            new XElement("cntc_nm", Text(t4.ContactName, 35) ?? string.Empty),
+            new XElement("cntc_area_cd", phone.Length >= 10 ? phone[..3] : string.Empty),
+            new XElement("cntc_phn_nbr", phone.Length >= 10 ? $"{phone[3..6]}-{phone[6..10]}" : string.Empty),
+            new XElement("cntc_email_area", Text(t4.ContactEmail, 60) ?? string.Empty));
+
+        var transmittal = new XElement("T619",
+            new XElement("TransmitterAccountNumber", new XElement("bn15", account)),
+            new XElement("sbmt_ref_id", SubmissionReference(t4)),
+
+            // One return per submission, so one summary. This counts summaries and not slips:
+            // sending the slip count would tell CRA to expect that many returns inside.
+            new XElement("summ_cnt", "1"),
+            new XElement("lang_cd", LanguageCode(t4.LanguageCode)),
+            new XElement("TransmitterName", Required("l1_nm", Text(t4.EmployerName, 35))),
+            new XElement("TransmitterCountryCode", TransmitterCountry(t4)),
+            contact);
+
+        return transmittal;
+    }
+
+    /// <summary>
+    /// A short reference the transmitter makes up to tell one submission from another. CRA caps
+    /// it at eight characters and rejects spaces, hyphens and punctuation, so it is built from
+    /// the tax year and the account number rather than from anything free-form.
+    /// </summary>
+    private static string SubmissionReference(T4Return t4)
+    {
+        string digits = new((t4.PayrollAccountNumber ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
+        string tail = digits.Length >= 4 ? digits[^4..] : digits.PadLeft(4, '0');
+
+        return $"{t4.TaxYear.ToString(CultureInfo.InvariantCulture)}{tail}";
+    }
+
+    /// <summary>E or F, and nothing else. Anything unrecognised is English.</summary>
+    private static string LanguageCode(string? value) =>
+        string.Equals(value?.Trim(), "F", StringComparison.OrdinalIgnoreCase) ? "F" : "E";
+
+    /// <summary>
+    /// Three letter ISO country code for where the transmitter is. Taken from the employer
+    /// address, since they are the same party, and defaulting to Canada because an employer
+    /// filing a T4 has a Canadian payroll account by definition.
+    /// </summary>
+    private static string TransmitterCountry(T4Return t4)
+    {
+        string? country = Upper(t4.EmployerAddress.Country, 3);
+
+        return country is { Length: 3 } ? country : "CAN";
     }
 
     public static string BuildString(T4Return t4)
     {
         var builder = new StringBuilder();
-        using var writer = new StringWriter(builder, CultureInfo.InvariantCulture);
+        using var writer = new Utf8StringWriter(builder);
         Build(t4).Save(writer, SaveOptions.None);
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// A StringWriter that reports UTF-8, because the declaration is taken from the writer.
+    ///
+    /// Save(TextWriter) asks the writer what encoding it is, and a plain StringWriter answers
+    /// UTF-16 whatever is done with the characters afterwards. The export then wrote those
+    /// characters out as UTF-8 bytes, so the file announced an encoding it was not in. Nothing
+    /// in this app would notice; the parser at CRA's end is what notices.
+    /// </summary>
+    private sealed class Utf8StringWriter(StringBuilder builder)
+        : StringWriter(builder, CultureInfo.InvariantCulture)
+    {
+        public override Encoding Encoding => Encoding.UTF8;
     }
 
     private static XElement BuildSlip(T4Return t4, T4Slip slip)

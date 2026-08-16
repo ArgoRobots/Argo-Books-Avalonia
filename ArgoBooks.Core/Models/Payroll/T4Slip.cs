@@ -99,6 +99,17 @@ public class T4Return
     /// <summary>Digits only. Split into area code and number when written out.</summary>
     public string ContactPhone { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Required by the T619 transmittal record, and the address CRA replies to about the
+    /// filing. Not printed on any slip: it exists only inside the submitted XML.
+    /// </summary>
+    public string ContactEmail { get; set; } = string.Empty;
+
+    /// <summary>
+    /// T619's lang_cd, the language CRA should correspond in. "E" or "F", and required.
+    /// </summary>
+    public string LanguageCode { get; set; } = "E";
+
     public List<T4Slip> Slips { get; set; } = [];
 
     /// <summary>

@@ -229,6 +229,24 @@ public partial class YearEndModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _contactPhone = string.Empty;
 
+    /// <summary>
+    /// Where CRA writes back about the filing. Required by the T619 transmittal record that
+    /// wraps the submission, so without it the upload is rejected outright.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ContactEmailError))]
+    private string _contactEmail = string.Empty;
+
+    /// <summary>
+    /// Shown under the field, on the same reasoning as <see cref="AccountNumberError"/>: the
+    /// problem list scrolls away long before the export button, and empty is not the same as
+    /// wrong.
+    /// </summary>
+    public string ContactEmailError =>
+        string.IsNullOrWhiteSpace(ContactEmail) || T4Service.IsEmailAddress(ContactEmail)
+            ? string.Empty
+            : "That does not look like an email address.";
+
     /// <summary>Stops the setters writing back while Open is filling them in.</summary>
     private bool _loading;
 
@@ -237,6 +255,8 @@ public partial class YearEndModalViewModel : ViewModelBase
     partial void OnContactNameChanged(string value) => SaveDetails();
 
     partial void OnContactPhoneChanged(string value) => SaveDetails();
+
+    partial void OnContactEmailChanged(string value) => SaveDetails();
 
     /// <summary>
     /// Written straight through as they are typed, so the problem list updates live and the
@@ -252,6 +272,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         data.Settings.Company.PayrollAccountNumber = AccountNumber.Trim();
         data.Settings.Company.PayrollContactName = ContactName.Trim();
         data.Settings.Company.PayrollContactPhone = ContactPhone.Trim();
+        data.Settings.Company.PayrollContactEmail = ContactEmail.Trim();
         data.Settings.Company.QuebecIdentificationNumber = QuebecIdentificationNumber.Trim();
         App.CompanyManager?.MarkAsChanged();
 
@@ -304,6 +325,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         AccountNumber = data?.Settings.Company.PayrollAccountNumber ?? string.Empty;
         ContactName = data?.Settings.Company.PayrollContactName ?? string.Empty;
         ContactPhone = data?.Settings.Company.PayrollContactPhone ?? data?.Settings.Company.Phone ?? string.Empty;
+        ContactEmail = data?.Settings.Company.PayrollContactEmail ?? data?.Settings.Company.Email ?? string.Empty;
         QuebecIdentificationNumber = data?.Settings.Company.QuebecIdentificationNumber ?? string.Empty;
         _loading = false;
 

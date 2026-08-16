@@ -125,6 +125,17 @@ public class CompanyInfo
     public string? PayrollContactPhone { get; set; }
 
     /// <summary>
+    /// Where CRA writes back about an electronic filing. Required by the T619 transmittal record
+    /// that wraps every submission, and the only field of it this app did not already hold.
+    ///
+    /// CRA states it is used "to facilitate communication regarding the processing of information
+    /// returns received", so it is where a rejection or a query arrives. Getting it wrong is
+    /// quiet: the submission goes through and the answer goes nowhere.
+    /// </summary>
+    [JsonPropertyName("payrollContactEmail")]
+    public string? PayrollContactEmail { get; set; }
+
+    /// <summary>
     /// The Revenu Quebec identification number, ten digits then a two letter file code then
     /// four digits, as in 1234567890RS0001. Needed only by an employer with Quebec staff, and
     /// it is NOT the CRA payroll account number: a Quebec employer holds both, files a T4 with

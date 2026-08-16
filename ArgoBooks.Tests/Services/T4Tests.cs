@@ -32,6 +32,7 @@ public class T4Tests
         data.Settings.Company.PayrollAccountNumber = Bn;
         data.Settings.Company.PayrollContactName = "Pat Owner";
         data.Settings.Company.PayrollContactPhone = "4035551234";
+        data.Settings.Company.PayrollContactEmail = "pat@example.com";
         data.Employees.AddRange(employees);
         return data;
     }
@@ -359,11 +360,18 @@ public class T4Tests
 
     #region The XML CRA will accept
 
+    /// <summary>
+    /// The slips sit under Submission/Return/T4, because CRA wraps every electronic filing in a
+    /// Submission carrying a T619 transmittal record. See the T619 tests below.
+    /// </summary>
     private static XElement Slip(T4Return t4) =>
-        T4XmlWriter.Build(t4).Root!.Element("T4")!.Elements("T4Slip").First();
+        T4XmlWriter.Build(t4).Root!.Element("Return")!.Element("T4")!.Elements("T4Slip").First();
 
     private static XElement Summary(T4Return t4) =>
-        T4XmlWriter.Build(t4).Root!.Element("T4")!.Element("T4Summary")!;
+        T4XmlWriter.Build(t4).Root!.Element("Return")!.Element("T4")!.Element("T4Summary")!;
+
+    private static XElement Transmittal(T4Return t4) =>
+        T4XmlWriter.Build(t4).Root!.Element("T619")!;
 
     private static T4Return WithOneSlip()
     {
@@ -371,6 +379,131 @@ public class T4Tests
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
         return BuiltReturn(data);
     }
+
+    #region The T619 transmittal record
+
+    [Fact]
+    public void TheDocumentIsASubmissionCarryingATransmittalAndThenTheReturn()
+    {
+        // CRA's T619 specification, 2026V4: every electronic filing is a Submission whose first
+        // child is the T619 and whose returns follow it. Writing the Return on its own, which is
+        // what this did, produces a file the upload rejects: there is nothing in it saying who
+        // is transmitting. The failure lands at the February deadline, on a file that looks
+        // complete because every slip inside it is.
+        XDocument doc = T4XmlWriter.Build(WithOneSlip());
+
+        Assert.Equal("Submission", doc.Root!.Name.LocalName);
+        Assert.Equal(["T619", "Return"], doc.Root.Elements().Select(e => e.Name.LocalName).ToArray());
+    }
+
+    [Fact]
+    public void TheDeclaredEncodingIsTheOneTheFileIsActuallyWrittenIn()
+    {
+        // Save(TextWriter) takes the declaration from the writer, and a StringWriter is UTF-16,
+        // so the document announced utf-16 while the export wrote the bytes as UTF-8. A file
+        // that lies about its own encoding is a parse failure at the other end, and the other
+        // end here is CRA's upload.
+        string xml = T4XmlWriter.BuildString(WithOneSlip());
+
+        Assert.Contains("encoding=\"utf-8\"", xml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("utf-16", xml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void TheTransmittalCarriesEveryFieldCraMarksRequired()
+    {
+        XElement t619 = Transmittal(WithOneSlip());
+
+        Assert.Equal(Bn, t619.Element("TransmitterAccountNumber")!.Element("bn15")!.Value);
+        Assert.Equal("E", t619.Element("lang_cd")!.Value);
+        Assert.Equal("CAN", t619.Element("TransmitterCountryCode")!.Value);
+
+        XElement contact = t619.Element("CNTC")!;
+        Assert.Equal("Pat Owner", contact.Element("cntc_nm")!.Value);
+        Assert.Equal("403", contact.Element("cntc_area_cd")!.Value);
+        Assert.Equal("555-1234", contact.Element("cntc_phn_nbr")!.Value);
+        Assert.Equal("pat@example.com", contact.Element("cntc_email_area")!.Value);
+    }
+
+    [Fact]
+    public void TheTransmitterAccountNumber_IsTheSameOneAsTheSummary()
+    {
+        // CRA: "Must be the same BN15 as the one used to sign in with a WAC or MyBA". A small
+        // employer files their own return, so the transmitter and the employer are one and the
+        // same and the number cannot be allowed to drift between the two places it appears.
+        T4Return t4 = WithOneSlip();
+
+        Assert.Equal(
+            Summary(t4).Element("bn")!.Value,
+            Transmittal(t4).Element("TransmitterAccountNumber")!.Element("bn15")!.Value);
+    }
+
+    [Fact]
+    public void TheTransmittalFieldsAreInTheOrderTheSpecificationListsThem()
+    {
+        // The specification is an ordered sequence, so a correct set of fields in the wrong order
+        // is still a rejection.
+        XElement t619 = Transmittal(WithOneSlip());
+
+        Assert.Equal(
+            ["TransmitterAccountNumber", "sbmt_ref_id", "summ_cnt", "lang_cd", "TransmitterName",
+             "TransmitterCountryCode", "CNTC"],
+            t619.Elements().Select(e => e.Name.LocalName).ToArray());
+    }
+
+    [Fact]
+    public void TheSubmissionReference_IsShortAndCarriesNoPunctuation()
+    {
+        // "Up to 8 alphanumeric. Space, hyphen and special characters are not accepted."
+        string reference = Transmittal(WithOneSlip()).Element("sbmt_ref_id")!.Value;
+
+        Assert.InRange(reference.Length, 1, 8);
+        Assert.All(reference, c => Assert.True(char.IsAsciiLetterOrDigit(c), $"'{c}' is not allowed here"));
+    }
+
+    [Fact]
+    public void TheSummaryCount_IsTheNumberOfSummariesRatherThanOfSlips()
+    {
+        // One T4 return carries one summary however many people are on it. Sending the slip
+        // count here would tell CRA to expect several returns inside one submission.
+        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones", "046454286"));
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        PayRun second = Run("PR-0002", new DateTime(2026, 7, 3), "EMP-002", 2000m);
+        second.Lines[0].EmployeeId = "EMP-002";
+        data.PayRuns.Add(second);
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Equal(2, t4.Slips.Count);
+        Assert.Equal("1", Transmittal(t4).Element("summ_cnt")!.Value);
+    }
+
+    [Fact]
+    public void AFrenchFiling_SaysSo()
+    {
+        T4Return t4 = WithOneSlip();
+        t4.LanguageCode = "F";
+
+        Assert.Equal("F", Transmittal(t4).Element("lang_cd")!.Value);
+    }
+
+    [Fact]
+    public void AMissingContactEmail_StopsTheFiling()
+    {
+        // Required by the T619, and the one field of it this app did not already hold. Without
+        // it the submission is rejected, so it belongs with the other refusals rather than being
+        // discovered on upload.
+        CompanyData data = Data(Person());
+        data.Settings.Company.PayrollContactEmail = string.Empty;
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        List<string> problems = T4Service.Validate(data, BuiltReturn(data));
+
+        Assert.Contains(problems, p => p.Contains("email", StringComparison.OrdinalIgnoreCase));
+    }
+
+    #endregion
 
     [Fact]
     public void NoElementIsEverWrittenEmpty()
