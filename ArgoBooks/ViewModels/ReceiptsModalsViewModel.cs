@@ -976,9 +976,29 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 return;
             }
 
+            // A batch bigger than the allowance used to update this label and then scan
+            // everything anyway, so the monthly limit did not hold in the one case it
+            // exists for. Ask, then scan only what the allowance covers.
             if (usageCheck.Remaining < BulkItems.Count)
             {
                 ScansRemaining = usageCheck.Remaining;
+
+                var proceed = await UpgradePromptHelper.ConfirmPartialReceiptScanAsync(
+                    BulkItems.Count, usageCheck.Remaining, usageCheck.MonthlyLimit, usageCheck.ResetsAt);
+
+                if (!proceed)
+                {
+                    IsBulkScanning = false;
+                    return;
+                }
+
+                // Drop the ones the allowance does not cover before any scanning starts.
+                // The dialog named this number, and the list is what the user watches, so
+                // leaving them queued would look stuck and scanning them would overspend.
+                while (BulkItems.Count > usageCheck.Remaining)
+                {
+                    BulkItems.RemoveAt(BulkItems.Count - 1);
+                }
             }
         }
 
@@ -997,7 +1017,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     /// <summary>
     /// Pipelines a single item through: read file → preprocess → generate preview → scan API.
-    /// All stages run within the semaphore so up to 3 items process simultaneously.
+    /// All stages run within the semaphore so up to 5 items process simultaneously.
     /// </summary>
     private async Task ProcessAndScanItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
     {
