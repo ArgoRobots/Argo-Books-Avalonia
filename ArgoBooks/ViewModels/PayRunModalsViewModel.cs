@@ -654,6 +654,8 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
         DateTime start = _draft.PeriodStart.Date;
         DateTime end = _draft.PeriodEnd.Date;
+
+        AddDistantPayDateWarning(start, end);
         var paying = _draft.Lines.Select(l => l.EmployeeId).ToHashSet(StringComparer.Ordinal);
 
         foreach (PayRun run in data.PayRuns)
@@ -671,6 +673,38 @@ public partial class PayRunModalsViewModel : ViewModelBase
             Warnings.Add($"{run.Id} already paid {run.PeriodStart:d MMM} to {run.PeriodEnd:d MMM yyyy}, "
                          + "which overlaps this period. Continue only if this run is meant to be on top of it.");
         }
+    }
+
+    /// <summary>
+    /// Says so when the pay date is nowhere near the period it pays for.
+    ///
+    /// The two are only loosely related by design: the pay date picks the CRA edition and the
+    /// period never enters the arithmetic at all, so a period two years from its pay date
+    /// calculates without complaint. It is also precisely what a mistyped year looks like, and
+    /// the year is the digit nobody re-reads.
+    ///
+    /// Ninety days, and only measured forwards from the end of the period, because paying weeks
+    /// after a period ends is ordinary and paying BEFORE it ends is a legitimate advance. A
+    /// warning rather than a refusal: correcting an old period is a real thing to do, and the
+    /// app cannot tell a deliberate one from a typo.
+    /// </summary>
+    private void AddDistantPayDateWarning(DateTime periodStart, DateTime periodEnd)
+    {
+        if (_draft == null)
+        {
+            return;
+        }
+
+        DateTime payDate = _draft.PayDate.Date;
+
+        if (payDate >= periodStart.AddDays(-90) && payDate <= periodEnd.AddDays(90))
+        {
+            return;
+        }
+
+        Warnings.Add($"The pay date is {payDate:d MMM yyyy} but the period runs "
+                     + $"{periodStart:d MMM yyyy} to {periodEnd:d MMM yyyy}. Check the year if that "
+                     + "was not deliberate.");
     }
 
     /// <summary>

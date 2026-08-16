@@ -181,6 +181,46 @@ public class PayRunModalsViewModelTests : ModalViewModelTestBase
         Assert.Empty(vm.PeriodError);
     }
 
+    [Fact]
+    public void APayDateNowhereNearThePeriod_IsWarnedAbout()
+    {
+        // A pay date in 2026 against a period in 2024 calculates happily, because the pay date
+        // only picks the rate edition and the period never enters the arithmetic. It is also
+        // exactly what a mistyped year looks like, and the year is the digit nobody re-reads.
+        Company.Employees.Add(Person());
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 16));
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2024, 6, 3));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2024, 6, 16));
+
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+
+        Assert.Equal(3, vm.Step);
+        Assert.Contains(vm.Warnings, w => w.Contains("pay date", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void APayDateShortlyAfterThePeriod_IsNormalAndSaysNothing()
+    {
+        // Paying a week or two after the period ends is how payroll usually works, so the check
+        // has to be loose enough not to fire on the ordinary case.
+        Company.Employees.Add(Person());
+
+        var vm = new PayRunModalsViewModel();
+        vm.OpenRunModal();
+        vm.PeriodStart = new DateTimeOffset(new DateTime(2026, 8, 3));
+        vm.PeriodEnd = new DateTimeOffset(new DateTime(2026, 8, 16));
+        vm.PayDate = new DateTimeOffset(new DateTime(2026, 8, 21));
+
+        vm.NextCommand.Execute(null);
+        vm.NextCommand.Execute(null);
+
+        Assert.DoesNotContain(vm.Warnings, w => w.Contains("pay date", StringComparison.OrdinalIgnoreCase));
+    }
+
     #endregion
 
     #region Paying the same period twice
