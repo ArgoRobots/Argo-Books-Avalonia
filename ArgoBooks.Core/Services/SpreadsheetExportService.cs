@@ -761,7 +761,7 @@ public class SpreadsheetExportService
         {
             "ID", "Name", "Employee #", "SIN", "Province of Employment", "Pay Type", "Pay Rate",
             "Pay Frequency", "Standard Hours Per Week", "Federal Claim Amount", "Provincial Claim Amount",
-            "CPP Exempt", "EI Exempt", "Dental Benefit", "Start Date", "End Date",
+            "Ontario Dependants", "CPP Exempt", "EI Exempt", "Dental Benefit", "Start Date", "End Date",
             "Street", "City", stateLabel, postalLabel, "Country", "Status", "Notes"
         };
 
@@ -784,6 +784,10 @@ public class SpreadsheetExportService
             e.StandardHoursPerWeek.HasValue ? (object)e.StandardHoursPerWeek.Value : "",
             e.FederalClaimAmount,
             e.ProvincialClaimAmount,
+
+            // Ontario only, and zero everywhere else. Exported so a sheet round trip does not
+            // quietly drop it, the way the per-line invoice discount was being dropped.
+            e.OntarioDependants,
             e.IsCppExempt,
             e.IsEiExempt,
             e.DentalBenefit.ToString(),

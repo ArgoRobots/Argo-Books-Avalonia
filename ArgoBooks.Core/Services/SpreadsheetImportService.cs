@@ -3888,6 +3888,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             employee.FederalClaimAmount = GetDecimal(row, headers, "Federal Claim Amount");
             employee.ProvincialClaimAmount = GetDecimal(row, headers, "Provincial Claim Amount");
+            employee.OntarioDependants = Math.Max(0, GetInt(row, headers, "Ontario Dependants"));
             employee.IsCppExempt = ReadBool(row, headers, "CPP Exempt");
             employee.IsEiExempt = ReadBool(row, headers, "EI Exempt");
             employee.DentalBenefit = ParseEnum(GetString(row, headers, "Dental Benefit"),

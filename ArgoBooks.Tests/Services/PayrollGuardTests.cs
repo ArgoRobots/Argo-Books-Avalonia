@@ -190,6 +190,67 @@ public class PayrollGuardTests
     }
 
     [Fact]
+    public void OntarioDependants_ReduceTheTax()
+    {
+        // T4127's factor Y: "$554 multiplied by the number of disabled dependants" plus "$554
+        // multiplied by the number of dependants under age 19", as shown on Form TD1ON. It feeds
+        // Ontario's tax reduction, which is twice the basic amount plus Y, less the tax already
+        // worked out. An income low enough for the reduction to still be alive, or the credit is
+        // exhausted and dependants change nothing.
+        PayrollRateTable rates = Rates();
+
+        decimal none = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = 900m, Province = "ON", PayPeriodsPerYear = 26 },
+            new PayrollYearToDate(), rates).ProvincialTax;
+
+        decimal two = PayrollCalculator.Calculate(
+            new PayrollInput { GrossPay = 900m, Province = "ON", PayPeriodsPerYear = 26, Dependants = 2 },
+            new PayrollYearToDate(), rates).ProvincialTax;
+
+        Assert.True(two < none, $"two dependants ({two}) should pay less than none ({none})");
+    }
+
+    [Fact]
+    public void DependantsOutsideOntario_ChangeNothing()
+    {
+        // Only Ontario's reduction has a dependant component. BC's tapers on income alone, and
+        // everywhere else has no reduction at all, so the field has to be inert there rather
+        // than quietly applying.
+        PayrollRateTable rates = Rates();
+
+        foreach (string province in new[] { "AB", "BC", "SK" })
+        {
+            decimal none = PayrollCalculator.Calculate(
+                new PayrollInput { GrossPay = 900m, Province = province, PayPeriodsPerYear = 26 },
+                new PayrollYearToDate(), rates).ProvincialTax;
+
+            decimal three = PayrollCalculator.Calculate(
+                new PayrollInput { GrossPay = 900m, Province = province, PayPeriodsPerYear = 26, Dependants = 3 },
+                new PayrollYearToDate(), rates).ProvincialTax;
+
+            Assert.Equal(none, three);
+        }
+    }
+
+    [Fact]
+    public void AnEmployeesDependantCount_ReachesTheCalculator()
+    {
+        // The count is on the employee and the calculator takes it as an input, and for a long
+        // while nothing joined the two, so the whole factor multiplied by zero.
+        CompanyData data = Company(Person(province: "ON"));
+        data.Employees[0].PayRate = 23400m;
+        data.Employees[0].OntarioDependants = 2;
+
+        var service = new PayrollService();
+        PayRun withDependants = service.CreateDraft(data, PayDate, PayDate.AddDays(-13), PayDate)!;
+
+        data.Employees[0].OntarioDependants = 0;
+        PayRun without = service.CreateDraft(data, PayDate, PayDate.AddDays(-13), PayDate)!;
+
+        Assert.True(withDependants.Lines[0].ProvincialTax < without.Lines[0].ProvincialTax);
+    }
+
+    [Fact]
     public void AnOntarioIncomeUnderEveryHealthPremiumBand_PaysNoPremium()
     {
         // The premium starts above $20,000, so someone under it falls off the end of the band

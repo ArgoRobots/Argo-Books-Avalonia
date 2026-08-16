@@ -82,6 +82,22 @@ public class Employee : BaseEntity
     [JsonPropertyName("provincialClaimAmount")]
     public decimal ProvincialClaimAmount { get; set; }
 
+    /// <summary>
+    /// Dependants claimed on the employee's Ontario TD1ON, feeding T4127's factor Y.
+    ///
+    /// Ontario is the only jurisdiction whose tax reduction has a dependant component, and it
+    /// values a dependant under 19 and a disabled dependant identically, so one total is all the
+    /// arithmetic needs even though the form asks for two counts.
+    ///
+    /// Zero is a legitimate answer rather than missing data. CRA says so directly: "If Y is not
+    /// used, any over deduction of tax will be considered when the individual files their income
+    /// tax and benefit return. When possible, use the Y factor." So leaving it at zero withholds
+    /// slightly too much and the employee gets it back, which is why this is optional on the form
+    /// rather than something a pay run refuses without.
+    /// </summary>
+    [JsonPropertyName("ontarioDependants")]
+    public int OntarioDependants { get; set; }
+
     /// <summary>Under 18, over 70, or already receiving a CPP retirement pension.</summary>
     [JsonPropertyName("isCppExempt")]
     public bool IsCppExempt { get; set; }

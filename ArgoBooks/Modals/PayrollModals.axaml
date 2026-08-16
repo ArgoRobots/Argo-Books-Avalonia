@@ -171,6 +171,22 @@
                                                          MaxLength="13" />
                                             </StackPanel>
                                         </Grid>
+
+                                        <!-- Ontario alone has a dependant component in its tax
+                                             reduction, so the question is only asked of Ontario
+                                             employees rather than being shown and ignored. -->
+                                        <StackPanel Spacing="6" IsVisible="{Binding ShowOntarioDependants}">
+                                            <TextBlock Text="{loc:Loc 'Dependants on their TD1ON'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding OntarioDependants, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     PlaceholderText="0"
+                                                     behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                                     MaxLength="2" />
+                                            <TextBlock Text="{loc:Loc 'Dependants under 19 plus disabled dependants. Optional: leaving it blank withholds slightly more, which the employee gets back on their return.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
 

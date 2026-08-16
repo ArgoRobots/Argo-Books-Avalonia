@@ -60,6 +60,13 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _provincialClaimAmount = string.Empty;
 
+    /// <summary>
+    /// Dependants from the employee's TD1ON. Only Ontario's tax reduction reads it, so the box
+    /// is hidden everywhere else rather than asking a question with no effect.
+    /// </summary>
+    [ObservableProperty]
+    private string _ontarioDependants = string.Empty;
+
     [ObservableProperty]
     private bool _isCppExempt;
 
@@ -131,6 +138,11 @@ public partial class PayrollModalsViewModel : ViewModelBase
 
     partial void OnIsSalariedChanged(bool value) => OnPropertyChanged(nameof(PayRateHint));
 
+    /// <summary>Ontario is the only province whose tax reduction has a dependant component.</summary>
+    public bool ShowOntarioDependants => string.Equals(Province, "ON", StringComparison.OrdinalIgnoreCase);
+
+    partial void OnProvinceChanged(string value) => OnPropertyChanged(nameof(ShowOntarioDependants));
+
     #endregion
 
     /// <summary>
@@ -183,7 +195,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
     private string EmployeeFormSnapshot() => string.Join('\u001f',
         Name, EmployeeNumber, Province, IsSalaried, Parse(PayRate), PayFrequency,
         Parse(StandardHoursPerWeek), Parse(FederalClaimAmount), Parse(ProvincialClaimAmount),
-        IsCppExempt, IsEiExempt, StartDate, EndDate,
+        OntarioDependants, IsCppExempt, IsEiExempt, StartDate, EndDate,
         Sin, AddressStreet, AddressCity, AddressProvince, AddressPostalCode, DentalBenefit, Notes);
 
     public bool HasEmployeeModalChanges => EmployeeFormSnapshot() != _employeeSnapshot;
@@ -213,6 +225,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         StandardHoursPerWeek = employee.StandardHoursPerWeek?.ToString("0.##") ?? string.Empty;
         FederalClaimAmount = Money(employee.FederalClaimAmount);
         ProvincialClaimAmount = Money(employee.ProvincialClaimAmount);
+        OntarioDependants = employee.OntarioDependants == 0 ? string.Empty : employee.OntarioDependants.ToString();
         IsCppExempt = employee.IsCppExempt;
         IsEiExempt = employee.IsEiExempt;
         StartDate = employee.StartDate.HasValue ? new DateTimeOffset(employee.StartDate.Value) : null;
@@ -377,6 +390,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
 
         employee.FederalClaimAmount = Parse(FederalClaimAmount);
         employee.ProvincialClaimAmount = Parse(ProvincialClaimAmount);
+        employee.OntarioDependants = int.TryParse(OntarioDependants, out int dependants) && dependants > 0 ? dependants : 0;
         employee.IsCppExempt = IsCppExempt;
         employee.IsEiExempt = IsEiExempt;
         employee.StartDate = StartDate?.DateTime;
@@ -401,6 +415,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         PayFrequency = e.PayFrequency,
         FederalClaimAmount = e.FederalClaimAmount,
         ProvincialClaimAmount = e.ProvincialClaimAmount,
+        OntarioDependants = e.OntarioDependants,
         IsCppExempt = e.IsCppExempt,
         IsEiExempt = e.IsEiExempt,
         StartDate = e.StartDate,
@@ -430,6 +445,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         target.PayFrequency = from.PayFrequency;
         target.FederalClaimAmount = from.FederalClaimAmount;
         target.ProvincialClaimAmount = from.ProvincialClaimAmount;
+        target.OntarioDependants = from.OntarioDependants;
         target.IsCppExempt = from.IsCppExempt;
         target.IsEiExempt = from.IsEiExempt;
         target.StartDate = from.StartDate;
@@ -644,6 +660,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         StandardHoursPerWeek = string.Empty;
         FederalClaimAmount = string.Empty;
         ProvincialClaimAmount = string.Empty;
+        OntarioDependants = string.Empty;
         IsCppExempt = false;
         IsEiExempt = false;
         StartDate = null;

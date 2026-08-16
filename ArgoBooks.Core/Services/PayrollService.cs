@@ -140,6 +140,10 @@ public class PayrollService(PayrollRateService? rateService = null)
                     PayPeriodsPerYear = employee.PayFrequency.PeriodsPerYear(),
                     FederalClaimAmount = employee.FederalClaimAmount,
                     ProvincialClaimAmount = employee.ProvincialClaimAmount,
+
+                    // Ontario's tax reduction is the only one that reads this. Everywhere else
+                    // the term is absent from the formula, so it costs nothing to pass through.
+                    Dependants = employee.OntarioDependants,
                     IsCppExempt = employee.IsCppExempt,
                     IsEiExempt = employee.IsEiExempt,
                 },
@@ -206,6 +210,46 @@ public class PayrollService(PayrollRateService? rateService = null)
         }
 
         return ytd;
+    }
+
+    /// <summary>
+    /// What has to reach CRA next, and by when.
+    ///
+    /// A regular remitter sends what they withheld during a month by the 15th of the FOLLOWING
+    /// month, so the two are always a month apart and the useful question is not "what have we
+    /// withheld this month". In the middle of September the deadline that has not passed is 15
+    /// September, and what it covers is AUGUST. Naming September's figure there would show an
+    /// amount that is not yet due while hiding the one that is.
+    ///
+    /// The 15th itself counts as not yet passed. It is the day this matters most: the payment is
+    /// due today rather than overdue, and rolling on to the next month would tell somebody they
+    /// had nothing to pay on the morning they had to pay it.
+    ///
+    /// Everything except drafts counts, so a voided run and its reversal both appear and cancel,
+    /// matching how the year-to-date figures are built.
+    /// </summary>
+    /// <param name="today">Injected so the boundary can be tested rather than waited for.</param>
+    public static (decimal Amount, DateTime DueDate) NextRemittance(IEnumerable<PayRun> runs, DateTime today)
+    {
+        ArgumentNullException.ThrowIfNull(runs);
+
+        DateTime date = today.Date;
+
+        // On or before the 15th the deadline is this month's, covering last month's payroll.
+        // After it, the next deadline is next month's, covering this month's.
+        DateTime dueDate = date.Day <= 15
+            ? new DateTime(date.Year, date.Month, 15)
+            : new DateTime(date.Year, date.Month, 15).AddMonths(1);
+
+        DateTime covered = dueDate.AddMonths(-1);
+
+        decimal amount = runs
+            .Where(r => r.Status != PayRunStatus.Draft
+                        && r.PayDate.Year == covered.Year
+                        && r.PayDate.Month == covered.Month)
+            .Sum(r => r.TotalRemittance);
+
+        return (amount, dueDate);
     }
 
     /// <summary>
