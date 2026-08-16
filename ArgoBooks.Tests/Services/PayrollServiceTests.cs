@@ -362,4 +362,105 @@ public class PayrollServiceTests
     }
 
     #endregion
+
+    #region What is owed to CRA next
+
+    /// <summary>A run whose lines carry a known remittance, so the totals are readable.</summary>
+    private static PayRun RunOn(string id, DateTime payDate) =>
+        ApprovedRun(id, payDate, "EMP-001", 2000m, 100m, 30m);
+
+    [Fact]
+    public void TheNextRemittance_CoversTheMonthBeforeItsDeadline()
+    {
+        // A regular remitter sends what they withheld in a month by the 15th of the NEXT month.
+        // So in the middle of August, what is coming due is August's payroll, on 15 September.
+        var data = new List<PayRun> { RunOn("PR-0001", new DateTime(2026, 8, 14)) };
+
+        (decimal amount, DateTime due) = PayrollService.NextRemittance(data, new DateTime(2026, 8, 16));
+
+        Assert.Equal(new DateTime(2026, 9, 15), due);
+        Assert.True(amount > 0);
+    }
+
+    [Fact]
+    public void BeforeTheFifteenth_TheDeadlineIsStillLastMonths()
+    {
+        // On 10 September the 15 September deadline has not passed, and what it covers is
+        // AUGUST's payroll. Showing September's here would name a figure that is not yet due and
+        // hide the one that is.
+        var data = new List<PayRun>
+        {
+            RunOn("PR-0001", new DateTime(2026, 8, 14)),
+            RunOn("PR-0002", new DateTime(2026, 9, 4)),
+        };
+
+        (decimal august, DateTime due) = PayrollService.NextRemittance(data, new DateTime(2026, 9, 10));
+
+        Assert.Equal(new DateTime(2026, 9, 15), due);
+        Assert.Equal(PayrollService.NextRemittance(
+            [RunOn("PR-0001", new DateTime(2026, 8, 14))], new DateTime(2026, 9, 10)).Amount, august);
+    }
+
+    [Fact]
+    public void AfterTheFifteenth_ItRollsOnToTheNextDeadline()
+    {
+        var data = new List<PayRun>
+        {
+            RunOn("PR-0001", new DateTime(2026, 8, 14)),
+            RunOn("PR-0002", new DateTime(2026, 9, 4)),
+        };
+
+        (decimal amount, DateTime due) = PayrollService.NextRemittance(data, new DateTime(2026, 9, 16));
+
+        Assert.Equal(new DateTime(2026, 10, 15), due);
+        Assert.Equal(RunOn("PR-0002", new DateTime(2026, 9, 4)).TotalRemittance, amount);
+    }
+
+    [Fact]
+    public void ADeadlineOnTheFifteenthItself_HasNotPassedYet()
+    {
+        // The boundary, and the day it matters most: the payment is due today, not overdue.
+        var data = new List<PayRun> { RunOn("PR-0001", new DateTime(2026, 8, 14)) };
+
+        (_, DateTime due) = PayrollService.NextRemittance(data, new DateTime(2026, 9, 15));
+
+        Assert.Equal(new DateTime(2026, 9, 15), due);
+    }
+
+    [Fact]
+    public void NoPayrollInTheCoveredMonth_OwesNothing()
+    {
+        var data = new List<PayRun> { RunOn("PR-0001", new DateTime(2026, 3, 14)) };
+
+        (decimal amount, _) = PayrollService.NextRemittance(data, new DateTime(2026, 8, 16));
+
+        Assert.Equal(0m, amount);
+    }
+
+    [Fact]
+    public void ADraftRun_IsNotOwedYet()
+    {
+        PayRun draft = RunOn("PR-0001", new DateTime(2026, 8, 14));
+        draft.Status = PayRunStatus.Draft;
+
+        (decimal amount, _) = PayrollService.NextRemittance([draft], new DateTime(2026, 8, 16));
+
+        Assert.Equal(0m, amount);
+    }
+
+    [Fact]
+    public void AVoidedRunAndItsReversal_CancelToNothingOwed()
+    {
+        // Both are counted, exactly as the year-to-date figures count them, so the pair nets to
+        // zero rather than the void being skipped and its reversal subtracting a second time.
+        var data = new CompanyData();
+        data.PayRuns.Add(RunOn("PR-0001", new DateTime(2026, 8, 14)));
+        new PayrollService().Void(data, data.PayRuns[0]);
+
+        (decimal amount, _) = PayrollService.NextRemittance(data.PayRuns, new DateTime(2026, 8, 16));
+
+        Assert.Equal(0m, amount);
+    }
+
+    #endregion
 }

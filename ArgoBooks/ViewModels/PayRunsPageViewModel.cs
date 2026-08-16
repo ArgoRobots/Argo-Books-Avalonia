@@ -46,6 +46,23 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _approvedCount;
 
+    /// <summary>
+    /// What has to reach CRA next, and the label saying by when.
+    ///
+    /// Separate from the year-to-date figure beside it because they answer different questions.
+    /// The running total says how much payroll has passed through; this one is the amount to
+    /// send and the date to send it, which is the only one anybody has to act on.
+    ///
+    /// It cannot know whether the payment has been made, so it keeps showing the figure all
+    /// month and then rolls on to the next deadline. That is deliberate: recording remittances
+    /// would be a new thing to keep up to date, and one kept badly is worse than none.
+    /// </summary>
+    [ObservableProperty]
+    private string _remittanceDue = "$0";
+
+    [ObservableProperty]
+    private string _remittanceDueLabel = "Due to CRA";
+
     #endregion
 
     [ObservableProperty]
@@ -421,6 +438,13 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
                                             && r.VoidsPayRunId is not { Length: > 0 });
         YearToDateGross = CurrencyService.Format(thisYear.Sum(r => r.TotalGross));
         YearToDateRemittance = CurrencyService.Format(thisYear.Sum(r => r.TotalRemittance));
+
+        // Read off every run rather than off thisYear, because the deadline in the first half of
+        // January covers the previous December.
+        (decimal due, DateTime dueDate) = PayrollService.NextRemittance(_all, DateTime.Today);
+
+        RemittanceDue = CurrencyService.Format(due);
+        RemittanceDueLabel = $"Due to CRA by {dueDate:d MMMM}";
     }
 
     private void Filter()

@@ -34,6 +34,13 @@
                                    Value="{Binding YearToDateRemittance}"
                                    Icon="{x:Static icons:Icons.BarChart}"
                                    IconColor="Warning" />
+                <!-- The one figure here that is an instruction rather than a total: the amount to
+                     send and the day to send it by. The card cannot know whether it has been
+                     paid, so it shows the deadline rather than pretending to be a to-do. -->
+                <controls:StatCard Label="{Binding RemittanceDueLabel}"
+                                   Value="{Binding RemittanceDue}"
+                                   Icon="{x:Static icons:Icons.Calendar}"
+                                   IconColor="Danger" />
             </controls:StatCardsRow>
 
             <table:ArgoTable Grid.Row="1"
