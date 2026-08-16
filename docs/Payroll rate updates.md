@@ -46,6 +46,57 @@ Both check `resources/downloads/payroll/{edition}.json` and go silent once it is
 
 ---
 
+## What else needs a look each year
+
+The rate tables are the big one and the rest of this document is about them. They are not the
+only thing that moves, and nothing else has a reminder attached, so check these when you do the
+January edition.
+
+### The XML specification
+
+The file the year end screen exports is built to a specification that is year-stamped and
+revised within the year:
+
+- [T619, Electronic Transmittal](https://www.canada.ca/en/revenue-agency/services/e-services/filing-information-returns-electronically-t4-t5-other-types-returns-overview/t619-2026.html)
+- [T4, Statement of Remuneration Paid](https://www.canada.ca/en/revenue-agency/services/e-services/filing-information-returns-electronically-t4-t5-other-types-returns-overview/t619-2026/t4-2026.html)
+
+The year is in the URL, so `t4-2026.html` becomes `t4-2027.html`. Both open with a **What's new**
+section listing what changed, which makes this a five minute read rather than a re-check of
+every field.
+
+Worth doing, because the changes are not cosmetic. Both documents were at 2026V4, four revisions
+inside one year, and that year the T619 language code became Required while the T4 gained a
+validation that the account number on the slip and on the summary must match. Either would turn
+a working export into a rejected one, and the rejection lands at the filing deadline against a
+file whose every figure is correct.
+
+`T4XmlWriter` names the version it was written against at the top. Update that when you check,
+so the next person can tell whether anyone has looked since.
+
+### The RL-1 guide
+
+Revenu Québec reissues
+[the guide](https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/rl-1.g-v/)
+every year; the box mapping in this app came from RL-1.G-V (2025-10). The boxes themselves are
+stable, the rules around them less so, and Revenu Québec has already retired its per-box web
+pages once, so cite the guide rather than a page.
+
+### The filing thresholds
+
+Both agencies allow paper only below a slip count and require electronic filing above it. CRA's
+moved from 50 to 5 not long ago, so this is not a constant. The Revenu Québec threshold is
+hardcoded in `Rl1Service.Validate`; CRA's appears only in documentation.
+
+### What does not need touching
+
+There are no hardcoded years anywhere in the payroll code. Every figure that changes lives in a
+rate file, and the only year-stamped things in code are the comments naming the spec version.
+
+Box 45's dental codes are CRA's own numbers held in an enum and written straight to the XML, so
+they must never be renumbered, but they have not moved since 2023.
+
+---
+
 ## What to collect
 
 Everything below comes from CRA, except Quebec which comes from Revenu Québec.
@@ -80,7 +131,16 @@ Everything below comes from CRA, except Quebec which comes from Revenu Québec.
 
 **canada.ca cannot be fetched programmatically.** Plain HTTP gets 403 or times out, whichever
 tool is asking. The Chrome extension is the way in, because the request comes from a real
-browser session. Chrome has to be running first, or the extension reports "not connected".
+browser session.
+
+**If the extension reports "not connected", Chrome is simply not running. Start it rather than
+stopping to ask:**
+
+```powershell
+Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe"
+```
+
+Give it five seconds or so, then connect.
 
 **Do not try to read the page as text.** T4127 is about 100,000 characters and the text tool
 stops at 50,000, so the whole of Chapter 8 falls off the end. Run JavaScript against the tables
