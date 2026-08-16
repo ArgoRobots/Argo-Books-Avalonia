@@ -424,7 +424,7 @@ public class CompanyManager : IDisposable
     /// Event raised when the open company's file was renamed during a save.
     /// Listeners should refresh any cached recent-company UI to reflect the new path.
     /// </summary>
-    public event EventHandler<CompanyRenamedEventArgs>? CompanyRenamed;
+    public event EventHandler? CompanyRenamed;
 
     /// <summary>
     /// Event raised when the company data changes.
@@ -933,10 +933,9 @@ public class CompanyManager : IDisposable
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
 
             // Apply pending rename before saving so the file is saved at the new path.
-            // Capture the rename so we can fire CompanyRenamed AFTER the file save,
+            // Note the rename so we can fire CompanyRenamed AFTER the file save,
             // when the footer at the new path contains the updated company name.
-            string? renamedFromPath = null;
-            string? renamedToPath = null;
+            var wasRenamed = false;
 
             if (PendingRenamePath != null && PendingRenamePath != CurrentFilePath)
             {
@@ -963,8 +962,7 @@ public class CompanyManager : IDisposable
                     _settingsService.RemoveRecentCompany(oldPath);
                     _settingsService.AddRecentCompany(CurrentFilePath);
                     await _settingsService.SaveGlobalSettingsAsync(cancellationToken);
-                    renamedFromPath = oldPath;
-                    renamedToPath = CurrentFilePath;
+                    wasRenamed = true;
                 }
 
                 PendingRenamePath = null;
@@ -987,9 +985,9 @@ public class CompanyManager : IDisposable
             // Now that the file at the new path contains the freshly-written footer
             // with the updated company name, listeners can refresh recent-company
             // UI from disk and pick up the new name.
-            if (renamedFromPath != null && renamedToPath != null)
+            if (wasRenamed)
             {
-                CompanyRenamed?.Invoke(this, new CompanyRenamedEventArgs(renamedFromPath, renamedToPath));
+                CompanyRenamed?.Invoke(this, EventArgs.Empty);
             }
 
             // Raise event
@@ -1736,15 +1734,6 @@ public class CompanyOpenedEventArgs(string companyName, string filePath, bool is
     public string CompanyName { get; } = companyName;
     public string FilePath { get; } = filePath;
     public bool IsEncrypted { get; } = isEncrypted;
-}
-
-/// <summary>
-/// Event args for the company renamed event.
-/// </summary>
-public class CompanyRenamedEventArgs(string oldFilePath, string newFilePath) : EventArgs
-{
-    public string OldFilePath { get; } = oldFilePath;
-    public string NewFilePath { get; } = newFilePath;
 }
 
 /// <summary>
