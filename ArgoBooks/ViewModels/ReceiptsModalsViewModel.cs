@@ -1003,8 +1003,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
 
         // Pipeline: each item reads, preprocesses, generates preview, and scans
-        // in a single task. SemaphoreSlim(5) gates concurrency across all stages.
-        var semaphore = new SemaphoreSlim(5);
+        // in a single task. SemaphoreSlim gates concurrency across all stages.
+        //
+        // Three rather than five: at five, observed scans averaged 39 seconds and the
+        // slowest successful one took 85, because the requests compete with each other
+        // upstream. Fewer in flight means each finishes sooner, which matters more than
+        // raw parallelism when a slow scan is what pushes one past its timeout.
+        var semaphore = new SemaphoreSlim(3);
         var tasks = BulkItems
             .Select(item => ProcessAndScanItemAsync(item, semaphore, token))
             .ToList();
@@ -1017,7 +1022,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     /// <summary>
     /// Pipelines a single item through: read file → preprocess → generate preview → scan API.
-    /// All stages run within the semaphore so up to 5 items process simultaneously.
+    /// All stages run within the semaphore so up to 3 items process simultaneously.
     /// </summary>
     private async Task ProcessAndScanItemAsync(BulkScanItem item, SemaphoreSlim semaphore, CancellationToken token)
     {

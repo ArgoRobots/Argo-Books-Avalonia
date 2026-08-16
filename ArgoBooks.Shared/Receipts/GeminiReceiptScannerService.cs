@@ -25,7 +25,16 @@ public class GeminiReceiptScannerService(
     Action<double, double, long, double?>? onTimingRecorded = null)
     : IReceiptScannerService, IDisposable
 {
-    private readonly HttpClient _httpClient = httpClient ?? new HttpClient();
+    /// <summary>
+    /// Receipt extraction is the slowest call the app makes: a vision model reading a full
+    /// photo, occasionally followed by a second verification pass. Observed successful scans
+    /// reach 85 seconds, so HttpClient's 100-second default sat barely above the working
+    /// range and gave up on calls that would have completed. Every other client in the app
+    /// picks its own timeout; this one was the last inheriting the default by accident.
+    /// </summary>
+    private static readonly TimeSpan ScanTimeout = TimeSpan.FromSeconds(180);
+
+    private readonly HttpClient _httpClient = httpClient ?? new HttpClient { Timeout = ScanTimeout };
     private readonly bool _ownsHttpClient = httpClient is null;
 
     private const string DefaultModel = "gemini-2.5-flash";
@@ -125,6 +134,33 @@ Rules:
             }
 
             var result = ParseResponse(response);
+
+            // A scan can come back unusable without anything throwing, which is why these
+            // report themselves. Until now every one of them looked identical on the
+            // dashboard: a single success=false with no reason attached, indistinguishable
+            // from a timeout or a dead upstream.
+            if (!result.IsSuccess)
+            {
+                // Covers both "the model says this is not a receipt" and "the response would
+                // not parse". The code groups them; the message says which, since it carries
+                // the model's own words.
+                errorLogger?.LogWarning(
+                    $"Receipt scan returned no usable data: {result.ErrorMessage}",
+                    "GeminiReceiptScannerService.ScanReceiptAsync",
+                    ErrorCategory.Api,
+                    "ReceiptScanRejected");
+            }
+            else if (result.LineItems.Count == 0)
+            {
+                // Parsed cleanly and found nothing. Usually a blurred or cropped photo, but
+                // a run of these is how a prompt or model regression would first show up.
+                errorLogger?.LogWarning(
+                    "Receipt scan parsed but extracted no line items",
+                    "GeminiReceiptScannerService.ScanReceiptAsync",
+                    ErrorCategory.Api,
+                    "ReceiptScanNoLineItems");
+            }
+
             if (result.IsSuccess && result.LineItems.Count > 0)
             {
                 // The verification pass is a second full-image round-trip (~15-30s),
@@ -140,7 +176,20 @@ Rules:
         }
         catch (TaskCanceledException)
         {
-            return ReceiptScanResult.Failed("Scan operation was cancelled or timed out.");
+            // One exception type, two very different events. A user who pressed Cancel is
+            // not a failure and must not be reported as one; only the client giving up on
+            // its own is worth knowing about, and that one used to vanish silently.
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return ReceiptScanResult.Failed("Scan cancelled.");
+            }
+
+            errorLogger?.LogWarning(
+                $"Receipt scan timed out after {stopwatch.ElapsedMilliseconds} ms",
+                "GeminiReceiptScannerService.ScanReceiptAsync",
+                ErrorCategory.Api,
+                "ReceiptScanTimeout");
+            return ReceiptScanResult.Failed("The scan took too long to complete. Please try again.");
         }
         catch (HttpRequestException ex)
         {
