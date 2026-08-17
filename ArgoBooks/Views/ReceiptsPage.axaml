@@ -99,7 +99,9 @@
                 </Grid>
             </Border>
 
-            <!-- Main Content Card using ArgoTable -->
+            <!-- Main Content Card using ArgoTable.
+                 ShowColumnHeaders follows the view: grid view has no columns, so the header
+                 strip rendered as an empty band above the cards. -->
             <table:ArgoTable Grid.Row="2"
                                 Title="{loc:Loc 'Receipt Archive'}"
                                 ItemsSource="{Binding Receipts}"
@@ -118,6 +120,7 @@
                                 AddButtonText="{loc:Loc 'Scan Receipt'}"
                                 AddButtonTooltip="{loc:Loc 'Scan Receipt'}"
                                 IsAddButtonEnabled="True"
+                                ShowColumnHeaders="{Binding IsListView}"
                                 ColumnWidthsManager="{Binding ColumnWidths}"
                                 CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
                                 TotalPages="{Binding TotalPages}"
@@ -132,6 +135,20 @@
                                 EmptyMessage="{loc:Loc 'Receipts from transactions will appear here. You can also scan receipts using AI.'}"
                                 BorderSizeChanged="OnHeaderSizeChanged"
                                 TableGridSizeChanged="OnTableSizeChanged">
+
+                <!-- The monthly scan allowance. Not a stat card: it is a standing fact about the
+                     account rather than a figure from this company file, and it is what decides
+                     whether the next scan works. Hidden until it is known, so a failed lookup
+                     shows nothing rather than a misleading zero. -->
+                <table:ArgoTable.HeaderInfoContent>
+                    <TextBlock Text="{Binding ScanUsage}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextAlignment="Right"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               ToolTip.Tip="{loc:Loc 'AI receipt scans used against this month''s allowance.'}"
+                               IsVisible="{Binding ScanUsage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </table:ArgoTable.HeaderInfoContent>
 
                 <!-- View Toggle Buttons -->
                 <table:ArgoTable.ExtraButtonsContent>
@@ -545,9 +562,23 @@
             <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
         </Style>
 
-        <!-- Selection mode header styling -->
+        <!-- Selection mode header styling.
+             PrimaryLightBrush is a fixed pale blue with no dark variant, and it cannot be given
+             one: ThemeService.ApplyAccentColor writes the key straight into Application.Resources
+             when an accent is chosen, which outranks any theme dictionary. So the bar is built
+             from brushes that already flip with the theme, and keeps its identity from a primary
+             edge rather than a primary fill. -->
         <Style Selector="Border.selection-mode">
-            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+        </Style>
+
+        <!-- The close button sat at the default icon foreground, which is near-white in dark
+             theme and was invisible on the pale blue fill. Pinned to the text colour so it
+             contrasts with the surface in both themes. -->
+        <Style Selector="Border.selection-mode Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
 
         <!-- Icon button hover in selection mode header - use semi-transparent primary -->
