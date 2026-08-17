@@ -3855,6 +3855,19 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
                 continue;
 
+            // A single Name column is what this app exports, but almost nothing else does: payroll
+            // systems, HR exports and this app's own sample workbook all split the name in two.
+            // Without this the row still imports on its ID and lands as a nameless employee, which
+            // is worse than not importing it at all.
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = string.Join(' ', new[]
+                {
+                    GetString(row, headers, "First Name"),
+                    GetString(row, headers, "Last Name"),
+                }.Where(part => !string.IsNullOrWhiteSpace(part))).Trim();
+            }
+
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             // Numbered off the existing employees rather than an IdCounters entry, because that
             // is how the employee form mints them and there is no counter for them in the file.
@@ -3877,9 +3890,27 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (!string.IsNullOrWhiteSpace(province))
                 employee.Province = province.Trim().ToUpperInvariant();
 
-            employee.PayType = ParseEnum(GetString(row, headers, "Pay Type"), Models.Payroll.PayType.Salary);
+            // "Salary Type" and "Salary Amount" are the common names elsewhere for what this app
+            // calls Pay Type and Pay Rate. Only consulted when the app's own column is absent or
+            // empty, so an export from Argo Books still wins.
+            var payTypeText = GetString(row, headers, "Pay Type");
+            if (string.IsNullOrWhiteSpace(payTypeText))
+                payTypeText = GetString(row, headers, "Salary Type");
+
+            // Anything that is not explicitly hourly is salaried, which is what "Annual" means.
+            employee.PayType = payTypeText.Trim().Equals("Hourly", StringComparison.OrdinalIgnoreCase)
+                ? Models.Payroll.PayType.Hourly
+                : Models.Payroll.PayType.Salary;
+
             employee.PayRate = GetDecimal(row, headers, "Pay Rate");
-            employee.PayFrequency = ParseEnum(GetString(row, headers, "Pay Frequency"), Models.Payroll.PayFrequency.Biweekly);
+            if (employee.PayRate == 0m)
+                employee.PayRate = GetDecimal(row, headers, "Salary Amount");
+
+            // Hyphens and spaces stripped, so "Bi-weekly" and "Semi Monthly" land on the enum
+            // rather than silently falling back to the default.
+            var frequencyText = new string(GetString(row, headers, "Pay Frequency")
+                .Where(char.IsAsciiLetter).ToArray());
+            employee.PayFrequency = ParseEnum(frequencyText, Models.Payroll.PayFrequency.Biweekly);
 
             // Null rather than zero when the cell is blank. Zero reads as "worked no hours" on a
             // record of employment, which costs the employee their claim.
@@ -3893,7 +3924,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             employee.IsEiExempt = ReadBool(row, headers, "EI Exempt");
             employee.DentalBenefit = ParseEnum(GetString(row, headers, "Dental Benefit"),
                 Models.Payroll.DentalBenefitCode.NotEligible);
-            employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date");
+            // "Hire Date" is the usual name for it outside this app.
+            employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date")
+                                 ?? SpreadsheetRowReader.GetNullableDateTime(row, headers, "Hire Date");
             employee.EndDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "End Date");
 
             employee.Address = new Address
