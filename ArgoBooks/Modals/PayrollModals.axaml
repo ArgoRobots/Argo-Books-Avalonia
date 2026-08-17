@@ -262,10 +262,28 @@
                                                 <TextBox Grid.Column="0" Text="{Binding AddressCity, Mode=TwoWay}"
                                                          Classes="form-input" PlaceholderText="{loc:Loc 'City'}" MaxLength="28" />
                                                 <TextBox Grid.Column="2" Text="{Binding AddressProvince, Mode=TwoWay}"
-                                                         Classes="form-input" PlaceholderText="{loc:Loc 'Prov'}" MaxLength="2" />
+                                                         Classes="form-input" PlaceholderText="{Binding AddressProvinceLabel}" MaxLength="2" />
                                                 <TextBox Grid.Column="4" Text="{Binding AddressPostalCode, Mode=TwoWay}"
                                                          Classes="form-input" PlaceholderText="{loc:Loc 'Postal code'}" MaxLength="10" />
                                             </Grid>
+                                            <!-- CRA reads the province box differently depending on
+                                                 the country: a code for Canada, a state for the US,
+                                                 and ZZ for anywhere else. -->
+                                            <controls:CountryInput SelectedCountryName="{Binding AddressCountry, Mode=TwoWay}" />
+
+                                            <TextBlock Text="{Binding AddressError}" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding AddressError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                            <TextBlock Text="{Binding AddressProvinceError}" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding AddressProvinceError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                            <TextBlock Text="{Binding AddressPostalCodeError}" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding AddressPostalCodeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
                                             <!-- Not the same as the province of employment above. -->
                                             <TextBlock Text="{loc:Loc 'Where they live, which may differ from where they work.'}"
                                                        FontSize="11" TextWrapping="Wrap"

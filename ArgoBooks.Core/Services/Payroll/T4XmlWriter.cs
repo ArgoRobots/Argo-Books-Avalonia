@@ -71,7 +71,7 @@ public static class T4XmlWriter
         string phone = Digits(t4.ContactPhone, 10) ?? string.Empty;
 
         var contact = new XElement("CNTC",
-            new XElement("cntc_nm", Text(t4.ContactName, 35) ?? string.Empty),
+            new XElement("cntc_nm", Name(t4.ContactName, 35) ?? string.Empty),
             new XElement("cntc_area_cd", phone.Length >= 10 ? phone[..3] : string.Empty),
             new XElement("cntc_phn_nbr", phone.Length >= 10 ? $"{phone[3..6]}-{phone[6..10]}" : string.Empty),
             new XElement("cntc_email_area", Text(t4.ContactEmail, 60) ?? string.Empty));
@@ -113,12 +113,8 @@ public static class T4XmlWriter
     /// address, since they are the same party, and defaulting to Canada because an employer
     /// filing a T4 has a Canadian payroll account by definition.
     /// </summary>
-    private static string TransmitterCountry(T4Return t4)
-    {
-        string? country = Upper(t4.EmployerAddress.Country, 3);
-
-        return country is { Length: 3 } ? country : "CAN";
-    }
+    private static string TransmitterCountry(T4Return t4) =>
+        CraFormat.Alpha3Country(t4.EmployerAddress.Country) ?? "CAN";
 
     public static string BuildString(T4Return t4)
     {
@@ -144,16 +140,16 @@ public static class T4XmlWriter
 
     private static XElement BuildSlip(T4Return t4, T4Slip slip)
     {
-        var name = new XElement("EMPE_NM", Required("snm", Text(slip.Surname, 20)));
-        Add(name, "gvn_nm", Text(slip.GivenName, 12));
-        Add(name, "init", Text(slip.Initial, 1));
+        var name = new XElement("EMPE_NM", Required("snm", Name(slip.Surname, 20)));
+        Add(name, "gvn_nm", Name(slip.GivenName, 12));
+        Add(name, "init", Initial(slip.Initial));
 
         var address = new XElement("EMPE_ADDR");
-        Add(address, "addr_l1_txt", Text(slip.Address.Street, 30));
-        Add(address, "cty_nm", Text(slip.Address.City, 28));
-        Add(address, "prov_cd", Upper(slip.Address.State, 2));
-        Add(address, "cntry_cd", Upper(slip.Address.Country, 3));
-        Add(address, "pstl_cd", Upper(slip.Address.ZipCode, 10));
+        Add(address, "addr_l1_txt", Street(slip.Address.Street, 30));
+        Add(address, "cty_nm", Street(slip.Address.City, 28));
+        Add(address, "prov_cd", ProvinceCode(slip.Address.State, slip.Address.Country));
+        Add(address, "cntry_cd", CraFormat.Alpha3Country(slip.Address.Country));
+        Add(address, "pstl_cd", PostalCode(slip.Address.ZipCode, slip.Address.Country));
 
         var amounts = new XElement("T4_AMT");
 
@@ -216,19 +212,19 @@ public static class T4XmlWriter
 
     private static XElement BuildSummary(T4Return t4)
     {
-        var name = new XElement("EMPR_NM", Required("l1_nm", Text(t4.EmployerName, 30)));
+        var name = new XElement("EMPR_NM", Required("l1_nm", Name(t4.EmployerName, 30)));
 
         var address = new XElement("EMPR_ADDR");
-        Add(address, "addr_l1_txt", Text(t4.EmployerAddress.Street, 30));
-        Add(address, "cty_nm", Text(t4.EmployerAddress.City, 28));
-        Add(address, "prov_cd", Upper(t4.EmployerAddress.State, 2));
-        Add(address, "cntry_cd", Upper(t4.EmployerAddress.Country, 3));
-        Add(address, "pstl_cd", Upper(t4.EmployerAddress.ZipCode, 10));
+        Add(address, "addr_l1_txt", Street(t4.EmployerAddress.Street, 30));
+        Add(address, "cty_nm", Street(t4.EmployerAddress.City, 28));
+        Add(address, "prov_cd", ProvinceCode(t4.EmployerAddress.State, t4.EmployerAddress.Country));
+        Add(address, "cntry_cd", CraFormat.Alpha3Country(t4.EmployerAddress.Country));
+        Add(address, "pstl_cd", PostalCode(t4.EmployerAddress.ZipCode, t4.EmployerAddress.Country));
 
         // CRA wants the area code separately from the rest, and the rest hyphenated as 3-4.
         string phone = Digits(t4.ContactPhone, 10) ?? string.Empty;
         var contact = new XElement("CNTC",
-            new XElement("cntc_nm", Text(t4.ContactName, 22) ?? string.Empty),
+            new XElement("cntc_nm", Name(t4.ContactName, 22) ?? string.Empty),
             new XElement("cntc_area_cd", phone.Length >= 10 ? phone[..3] : string.Empty),
             new XElement("cntc_phn_nbr", phone.Length >= 10 ? $"{phone[3..6]}-{phone[6..10]}" : string.Empty));
 
@@ -310,6 +306,56 @@ public static class T4XmlWriter
         string trimmed = (value ?? string.Empty).Trim();
         return trimmed.Length == 0 ? null : trimmed[..Math.Min(trimmed.Length, max)];
     }
+
+    /// <summary>
+    /// A name in the characters CRA lists, truncated to the field width.
+    ///
+    /// The cleaning is a last resort rather than the intended fix: the employee form refuses a
+    /// character CRA will not take, and year end validation lists any employee entered before it
+    /// did. This is here so that a file is never written containing one, since a single comma in
+    /// a name rejects the entire submission and the employer finds out at the deadline.
+    /// </summary>
+    private static string? Name(string? value, int max) => Text(CraFormat.CleanName(value), max);
+
+    /// <summary>As <see cref="Name"/>, for the fields that may also carry / and #.</summary>
+    private static string? Street(string? value, int max) => Text(CraFormat.CleanAddress(value), max);
+
+    /// <summary>
+    /// One alpha, as the specification requires. Taken from the second given name, which may
+    /// begin with something that is not a letter once a name has been split on spaces.
+    /// </summary>
+    private static string? Initial(string? value)
+    {
+        string cleaned = CraFormat.CleanName(value);
+        char? letter = cleaned.FirstOrDefault(char.IsLetter);
+
+        return letter is > '\0' ? letter.Value.ToString() : null;
+    }
+
+    /// <summary>
+    /// The address province.
+    ///
+    /// CRA: "when the employee's country code is neither CAN nor USA, enter ZZ in this field".
+    /// A country the app cannot identify is left alone rather than forced to ZZ, since the most
+    /// common reason for one is that no country was recorded at all and the address is Canadian.
+    /// </summary>
+    private static string? ProvinceCode(string? province, string? country)
+    {
+        if (CraFormat.Alpha3Country(country) is { } code && code is not ("CAN" or "USA"))
+        {
+            return "ZZ";
+        }
+
+        return Upper(province, 2);
+    }
+
+    /// <summary>
+    /// The postal code with its separators removed, because a Canadian one is six characters and
+    /// the specification allows a dash only for a USA or foreign code. Nearly everyone types the
+    /// space.
+    /// </summary>
+    private static string? PostalCode(string? value, string? country) =>
+        Upper(CraFormat.NormalizePostalCode(value, country), 10);
 
     private static string? Upper(string? value, int max) => Text(value, max)?.ToUpperInvariant();
 

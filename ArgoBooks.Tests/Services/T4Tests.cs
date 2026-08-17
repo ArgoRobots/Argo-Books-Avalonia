@@ -856,4 +856,121 @@ public class T4Tests
     }
 
     #endregion
+
+    #region Text CRA will not accept
+
+    /// <summary>
+    /// The ordinary case, and the one that would have hit almost every user: a postal code is
+    /// written with a space and CRA's format is six characters without one.
+    /// </summary>
+    [Fact]
+    public void PostalCode_LosesItsSpace()
+    {
+        CompanyData data = Data(Person());
+        data.Employees[0].Address = new ArgoBooks.Core.Models.Common.Address { ZipCode = "K1A 0B1", Country = "Canada" };
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        XDocument doc = T4XmlWriter.Build(BuiltReturn(data));
+
+        Assert.Equal("K1A0B1", doc.Descendants("pstl_cd").First().Value);
+    }
+
+    [Fact]
+    public void Country_IsWrittenAsItsIsoCodeNotTheFirstThreeLetters()
+    {
+        CompanyData data = Data(Person());
+        data.Employees[0].Address = new ArgoBooks.Core.Models.Common.Address { Country = "Germany", ZipCode = "10115" };
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        XDocument doc = T4XmlWriter.Build(BuiltReturn(data));
+
+        // Truncating the name would give GER, which is not an ISO 3166 code.
+        Assert.Equal("DEU", doc.Descendants("cntry_cd").First().Value);
+    }
+
+    /// <summary>CRA: "when the employee's country code is neither CAN nor USA, enter ZZ".</summary>
+    [Fact]
+    public void Province_BecomesZZ_ForAnAddressOutsideCanadaAndTheUs()
+    {
+        CompanyData data = Data(Person());
+        data.Employees[0].Address = new ArgoBooks.Core.Models.Common.Address { State = "BE", Country = "Germany" };
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        XDocument doc = T4XmlWriter.Build(BuiltReturn(data));
+
+        Assert.Equal("ZZ", doc.Descendants("prov_cd").First().Value);
+    }
+
+    [Fact]
+    public void Name_IsWrittenWithoutTheCharactersCraRejects()
+    {
+        CompanyData data = Data(Person(name: "Smith, John"));
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        string xml = T4XmlWriter.BuildString(BuiltReturn(data));
+
+        Assert.DoesNotContain(",", xml, StringComparison.Ordinal);
+    }
+
+    /// <summary>The specification says one alpha, and a split name can start an initial with anything.</summary>
+    [Fact]
+    public void Initial_IsALetterOrIsOmitted()
+    {
+        CompanyData data = Data(Person(name: "Ann (Marie) Roy"));
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        XDocument doc = T4XmlWriter.Build(BuiltReturn(data));
+        string? initial = doc.Descendants("init").FirstOrDefault()?.Value;
+
+        Assert.True(initial == null || (initial.Length == 1 && char.IsLetter(initial[0])));
+    }
+
+    [Fact]
+    public void Validation_ReportsAPostalCodeCraWouldReject()
+    {
+        CompanyData data = Data(Person());
+        data.Employees[0].Address = new ArgoBooks.Core.Models.Common.Address { ZipCode = "K1A0B", Country = "Canada" };
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Contains(T4Service.Validate(data, t4), p => p.Contains("postal code", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Validation_ReportsAProvinceThatIsNotOne()
+    {
+        CompanyData data = Data(Person());
+        data.Employees[0].Address = new ArgoBooks.Core.Models.Common.Address { State = "QU", Country = "Canada" };
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Contains(T4Service.Validate(data, t4), p => p.Contains("province or territory code", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validation_ReportsANameCraWouldReject()
+    {
+        CompanyData data = Data(Person(name: "Smith, John"));
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Contains(T4Service.Validate(data, t4), p => p.Contains("does not accept", StringComparison.Ordinal));
+    }
+
+    /// <summary>An employee with no address at all files perfectly well, and must not be blocked.</summary>
+    [Fact]
+    public void Validation_SaysNothingAboutAnEmptyAddress()
+    {
+        CompanyData data = Data(Person());
+        data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
+
+        T4Return t4 = BuiltReturn(data);
+
+        Assert.Empty(T4Service.Validate(data, t4));
+    }
+
+    #endregion
 }

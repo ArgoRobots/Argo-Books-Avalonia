@@ -214,6 +214,46 @@ public class T4Service
             {
                 problems.Add($"{who} has no province of employment, which is required on the slip.");
             }
+
+            // The employee form refuses all of the below. These catch anyone entered before it
+            // did, since a file that has been sitting on disk since an earlier version is exactly
+            // what gets filed without anybody opening the employee again.
+            string badName = CraFormat.DisallowedCharacters(slip.Surname + " " + slip.GivenName);
+            if (badName.Length > 0)
+            {
+                problems.Add($"{who}'s name contains {Describe(badName)}, which CRA does not accept. "
+                             + "A name may only contain letters, digits, an apostrophe, an ampersand, "
+                             + "a period, a hyphen and a space.");
+            }
+
+            string badAddress = CraFormat.DisallowedCharacters(
+                slip.Address.Street + " " + slip.Address.City, address: true);
+            if (badAddress.Length > 0)
+            {
+                problems.Add($"{who}'s address contains {Describe(badAddress)}, which CRA does not accept.");
+            }
+
+            // The address is optional in full, so these only apply once something has been
+            // entered: an employee with no address at all files perfectly well. The province is
+            // only held to the Canadian list when the address is Canadian, or when no country was
+            // recorded, which on a T4 means Canadian.
+            bool canadianAddress = string.IsNullOrWhiteSpace(slip.Address.Country)
+                                   || CraFormat.IsCanada(slip.Address.Country);
+
+            if (!string.IsNullOrWhiteSpace(slip.Address.State)
+                && canadianAddress
+                && !CraFormat.IsProvinceCode(slip.Address.State))
+            {
+                problems.Add($"{who}'s address province \"{slip.Address.State}\" is not a Canadian "
+                             + "province or territory code. Use two letters, such as ON or QC.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(slip.Address.ZipCode)
+                && !CraFormat.IsPostalCode(slip.Address.ZipCode, slip.Address.Country))
+            {
+                problems.Add($"{who}'s postal code \"{slip.Address.ZipCode}\" is not in a form CRA "
+                             + "accepts. A Canadian postal code is six characters, such as K1A0B1.");
+            }
         }
 
         if (t4.Slips.Count == 0)
@@ -254,6 +294,13 @@ public class T4Service
 
         return warnings;
     }
+
+    /// <summary>
+    /// Names the offending characters rather than only saying there are some, since a comma or a
+    /// curly apostrophe in a name is invisible to the person being told to remove it.
+    /// </summary>
+    private static string Describe(string characters) =>
+        string.Join(" and ", characters.Select(c => c == ' ' ? "a space" : $"\"{c}\""));
 
     /// <summary>
     /// Something plausible enough to be an address, capped at the 60 characters CRA allows.

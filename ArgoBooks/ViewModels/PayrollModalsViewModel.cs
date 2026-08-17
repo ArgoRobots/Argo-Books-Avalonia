@@ -118,6 +118,35 @@ public partial class PayrollModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _addressPostalCode = string.Empty;
 
+    /// <summary>
+    /// Where they live, which the T4 wants as an ISO country code and the app stores as a name.
+    ///
+    /// Asked for rather than assumed, because CRA reads the province box differently depending on
+    /// it: a Canadian address carries a province code, a US address carries a state, and anywhere
+    /// else must carry ZZ. Without a country the app was writing whatever was typed and calling
+    /// every address Canadian.
+    ///
+    /// Defaults to Canada, which is where an employee on a Canadian payroll almost always lives.
+    /// </summary>
+    [ObservableProperty]
+    private string _addressCountry = "Canada";
+
+    /// <summary>Which of the three is really the province box depends on the country.</summary>
+    public string AddressProvinceLabel =>
+        Core.Services.Payroll.CraFormat.IsUnitedStates(AddressCountry) ? "State" : "Prov";
+
+    partial void OnAddressCountryChanged(string value) =>
+        OnPropertyChanged(nameof(AddressProvinceLabel));
+
+    [ObservableProperty]
+    private string _addressError = string.Empty;
+
+    [ObservableProperty]
+    private string _addressProvinceError = string.Empty;
+
+    [ObservableProperty]
+    private string _addressPostalCodeError = string.Empty;
+
     /// <summary>Box 45, mandatory on every T4 since 2023.</summary>
     [ObservableProperty]
     private DentalBenefitCode _dentalBenefit = DentalBenefitCode.NotEligible;
@@ -196,7 +225,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
         Name, EmployeeNumber, Province, IsSalaried, Parse(PayRate), PayFrequency,
         Parse(StandardHoursPerWeek), Parse(FederalClaimAmount), Parse(ProvincialClaimAmount),
         OntarioDependants, IsCppExempt, IsEiExempt, StartDate, EndDate,
-        Sin, AddressStreet, AddressCity, AddressProvince, AddressPostalCode, DentalBenefit, Notes);
+        Sin, AddressStreet, AddressCity, AddressProvince, AddressPostalCode, AddressCountry,
+        DentalBenefit, Notes);
 
     public bool HasEmployeeModalChanges => EmployeeFormSnapshot() != _employeeSnapshot;
 
@@ -235,12 +265,19 @@ public partial class PayrollModalsViewModel : ViewModelBase
         AddressCity = employee.Address.City;
         AddressProvince = employee.Address.State;
         AddressPostalCode = employee.Address.ZipCode;
+        AddressCountry = string.IsNullOrWhiteSpace(employee.Address.Country)
+            ? "Canada"
+            : employee.Address.Country;
         DentalBenefit = employee.DentalBenefit;
         Notes = employee.Notes;
 
         NameError = string.Empty;
         PayRateError = string.Empty;
         EndDateError = string.Empty;
+        SinError = string.Empty;
+        AddressError = string.Empty;
+        AddressProvinceError = string.Empty;
+        AddressPostalCodeError = string.Empty;
 
         _employeeSnapshot = EmployeeFormSnapshot();
         IsEmployeeModalOpen = true;
@@ -278,7 +315,18 @@ public partial class PayrollModalsViewModel : ViewModelBase
     {
         decimal rate = Parse(PayRate);
 
-        NameError = string.IsNullOrWhiteSpace(Name) ? "Enter a name." : string.Empty;
+        // The name goes on the T4 as typed, and CRA accepts a narrow set of characters in it. A
+        // comma, which is what someone writing "Smith, John" produces, rejects the whole
+        // submission at the February deadline. Caught here, where it costs nothing to fix.
+        string badName = Core.Services.Payroll.CraFormat.DisallowedCharacters(Name);
+
+        NameError = string.IsNullOrWhiteSpace(Name)
+            ? "Enter a name."
+            : badName.Length > 0
+                ? $"CRA does not accept {Describe(badName)} in a name. Use letters, digits, "
+                  + "an apostrophe, an ampersand, a period or a hyphen."
+                : string.Empty;
+
         PayRateError = rate <= 0 ? "Enter a pay rate." : string.Empty;
 
         // A last day before the first day would put pay periods outside the employment and
@@ -295,7 +343,11 @@ public partial class PayrollModalsViewModel : ViewModelBase
             ? "A social insurance number is 9 digits."
             : string.Empty;
 
-        if (NameError.Length > 0 || PayRateError.Length > 0 || EndDateError.Length > 0 || SinError.Length > 0)
+        ValidateAddress();
+
+        if (NameError.Length > 0 || PayRateError.Length > 0 || EndDateError.Length > 0
+            || SinError.Length > 0 || AddressError.Length > 0 || AddressProvinceError.Length > 0
+            || AddressPostalCodeError.Length > 0)
         {
             return;
         }
@@ -319,6 +371,49 @@ public partial class PayrollModalsViewModel : ViewModelBase
         IsEmployeeModalOpen = false;
         EmployeeSaved?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// Checks the parts of the address CRA is fussy about, and quietly tidies the postal code.
+    ///
+    /// The whole address is optional on a T4, so an empty field is never a problem here. Each
+    /// check only applies once something has been typed into the box it guards.
+    /// </summary>
+    private void ValidateAddress()
+    {
+        // Everyone writes "K1A 0B1". CRA's format is six characters with no space, and only a
+        // USA or foreign code may carry a dash. Correcting it is kinder than refusing it, and it
+        // is the one field where the right answer is never ambiguous.
+        AddressPostalCode = Core.Services.Payroll.CraFormat
+            .NormalizePostalCode(AddressPostalCode, AddressCountry);
+
+        string badAddress = Core.Services.Payroll.CraFormat
+            .DisallowedCharacters(AddressStreet + " " + AddressCity, address: true);
+
+        AddressError = badAddress.Length > 0
+            ? $"CRA does not accept {Describe(badAddress)} in an address."
+            : string.Empty;
+
+        bool canadian = Core.Services.Payroll.CraFormat.IsCanada(AddressCountry);
+        bool american = Core.Services.Payroll.CraFormat.IsUnitedStates(AddressCountry);
+
+        AddressProvinceError = AddressProvince.Trim().Length > 0
+                               && canadian
+                               && !Core.Services.Payroll.CraFormat.IsProvinceCode(AddressProvince)
+            ? "Use a two letter province or territory code, such as ON or QC."
+            : string.Empty;
+
+        AddressPostalCodeError = AddressPostalCode.Length > 0
+                                 && (canadian || american)
+                                 && !Core.Services.Payroll.CraFormat.IsPostalCode(AddressPostalCode, AddressCountry)
+            ? canadian
+                ? "A Canadian postal code is six characters, such as K1A0B1."
+                : "A US ZIP code is five digits, or five and four."
+            : string.Empty;
+    }
+
+    /// <summary>Names the offending characters, since a curly apostrophe looks like a normal one.</summary>
+    private static string Describe(string characters) =>
+        string.Join(" or ", characters.Select(c => c == ' ' ? "a space" : $"\"{c}\""));
 
     private void AddEmployee(Core.Data.CompanyData data, decimal rate)
     {
@@ -398,8 +493,9 @@ public partial class PayrollModalsViewModel : ViewModelBase
         employee.Sin = new string(Sin.Where(char.IsAsciiDigit).ToArray());
         employee.Address.Street = AddressStreet.Trim();
         employee.Address.City = AddressCity.Trim();
-        employee.Address.State = AddressProvince.Trim();
+        employee.Address.State = AddressProvince.Trim().ToUpperInvariant();
         employee.Address.ZipCode = AddressPostalCode.Trim();
+        employee.Address.Country = AddressCountry.Trim();
         employee.DentalBenefit = DentalBenefit;
         employee.Notes = Notes.Trim();
         employee.UpdatedAt = DateTime.UtcNow;
@@ -670,11 +766,15 @@ public partial class PayrollModalsViewModel : ViewModelBase
         AddressCity = string.Empty;
         AddressProvince = string.Empty;
         AddressPostalCode = string.Empty;
+        AddressCountry = "Canada";
         DentalBenefit = DentalBenefitCode.NotEligible;
         Notes = string.Empty;
         NameError = string.Empty;
         PayRateError = string.Empty;
         EndDateError = string.Empty;
         SinError = string.Empty;
+        AddressError = string.Empty;
+        AddressProvinceError = string.Empty;
+        AddressPostalCodeError = string.Empty;
     }
 }
