@@ -1,6 +1,7 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Models.Rentals;
 
 namespace ArgoBooks.Core.Services;
@@ -117,6 +118,10 @@ public class SampleCompanyService
             if (maxDate == DateTime.MinValue)
                 maxDate = DateTime.Today;
             AddSampleActiveRentals(context.CompanyData, maxDate);
+
+            // After the rentals, and off the same reference date, so the pay dates land inside
+            // the window the rest of the sample already occupies.
+            AddSamplePayroll(context.CompanyData, maxDate);
 
             // Save company data to temp directory
             await _fileService.SaveCompanyDataAsync(companyDir, context.CompanyData, cancellationToken);
@@ -454,6 +459,119 @@ public class SampleCompanyService
     }
 
     /// <summary>
+    /// Gives the sample company three employees and three months of payroll.
+    ///
+    /// The runs are built through <see cref="PayrollService"/> rather than written out by hand,
+    /// so every figure is real CRA arithmetic: the year-to-date totals accumulate, the CPP and EI
+    /// ceilings apply, and the four cards on the Pay runs page add up to what the pay stubs say.
+    /// Hand-written figures would have to be redone every time the rates changed, and would be
+    /// wrong in exactly the way a sample is never inspected closely enough to catch.
+    ///
+    /// A run is skipped when no rate edition covers its pay date. That happens when the app is
+    /// run long after these editions shipped, and the sensible answer is a sample company with
+    /// employees and no pay runs rather than a crash or invented numbers.
+    /// </summary>
+    internal static void AddSamplePayroll(CompanyData data, DateTime referenceDate)
+    {
+        if (data.Employees.Count > 0)
+        {
+            return;
+        }
+
+        var company = data.Settings.Company;
+
+        // Format-valid and plainly not real, so year end and the T4 export run end to end
+        // instead of stopping at the account number validation.
+        company.PayrollAccountNumber = "123456789RP0001";
+        company.PayrollContactName = "Alex Morgan";
+        company.PayrollContactPhone = "5551000000";
+        company.PayrollContactEmail = "payroll@samplecompany.com";
+        company.RemitterType = RemitterType.Regular;
+
+        DateTime hired = referenceDate.AddYears(-2);
+
+        data.Employees.AddRange(
+        [
+            SampleEmployee("EMP-001", "Sarah Chen", "111111118", "ON", hired,
+                "118 Bay Street", "Toronto", "M5J2N8",
+                PayType.Salary, 78000m),
+
+            SampleEmployee("EMP-002", "Marcus Bell", "222222226", "ON", hired.AddMonths(7),
+                "47 King Street East", "Hamilton", "L8N1A9",
+                PayType.Hourly, 32.50m),
+
+            SampleEmployee("EMP-003", "Priya Raman", "333333334", "BC", hired.AddMonths(14),
+                "900 Granville Street", "Vancouver", "V6Z1K3",
+                PayType.Salary, 92000m),
+        ]);
+
+        var payroll = new PayrollService();
+
+        // Oldest first, because each run's deductions depend on the year-to-date the ones before
+        // it produced. Building them newest first would put everybody at a zero starting point
+        // and quietly under-deduct against the annual ceilings.
+        for (int period = 5; period >= 0; period--)
+        {
+            DateTime payDate = referenceDate.AddDays(-14 * period);
+
+            PayRun? run = payroll.CreateDraft(data, payDate, payDate.AddDays(-13), payDate);
+            if (run == null)
+            {
+                continue;
+            }
+
+            // An hourly employee's pay comes from hours entered on the run, so a draft leaves
+            // them at nil until the hours are filled in.
+            foreach (PayRunLine line in run.Lines)
+            {
+                Employee? employee = data.Employees.FirstOrDefault(e => e.Id == line.EmployeeId);
+
+                if (employee?.PayType == PayType.Hourly)
+                {
+                    line.HoursWorked = 75m;
+                }
+            }
+
+            payroll.Recalculate(data, run);
+
+            // In the list before it is approved, so the next run's year-to-date can see it.
+            data.PayRuns.Add(run);
+            payroll.ApproveAndRecord(data, run);
+        }
+    }
+
+    private static Employee SampleEmployee(
+        string id, string name, string sin, string province, DateTime start,
+        string street, string city, string postalCode,
+        PayType payType, decimal payRate) => new()
+        {
+            Id = id,
+            Name = name,
+            Sin = sin,
+            Province = province,
+            PayType = payType,
+            PayRate = payRate,
+            PayFrequency = PayFrequency.Biweekly,
+
+            // Only meaningful for the salaried two, and only for the record of employment, which
+            // wants insurable hours a salaried run never records.
+            StandardHoursPerWeek = payType == PayType.Salary ? 37.5m : null,
+
+            StartDate = start,
+            DentalBenefit = DentalBenefitCode.PayeeOnly,
+            Address = new Models.Common.Address
+            {
+                Street = street,
+                City = city,
+                State = province,
+                ZipCode = postalCode,
+                Country = "Canada",
+            },
+            CreatedAt = start,
+            UpdatedAt = start,
+        };
+
+    /// <summary>
     /// Time-shifts all dates in the sample data so that the most recent transaction
     /// appears as if it happened recently (within the last few days).
     /// This ensures the dashboard shows meaningful data regardless of when the sample was created.
@@ -612,5 +730,30 @@ public class SampleCompanyService
 
         foreach (var item in data.Inventory)
             item.LastUpdated = Shift(item.LastUpdated);
+
+        foreach (var employee in data.Employees)
+        {
+            employee.StartDate = ShiftNullable(employee.StartDate);
+            employee.EndDate = ShiftNullable(employee.EndDate);
+            employee.CreatedAt = Shift(employee.CreatedAt);
+            employee.UpdatedAt = Shift(employee.UpdatedAt);
+        }
+
+        // The wage expenses these produced are in data.Expenses and were shifted above, so the
+        // runs have to move by the same offset or a pay run and the expense it created would end
+        // up on different days.
+        //
+        // Only the dates move. The deductions stay exactly as they were calculated, which means a
+        // shift across a year boundary leaves figures worked out under the previous year's rates.
+        // That is the same compromise every other record here makes, and re-running payroll on
+        // open would be worse: the numbers on a sample pay stub would change under the reader.
+        foreach (var run in data.PayRuns)
+        {
+            run.PayDate = Shift(run.PayDate);
+            run.PeriodStart = Shift(run.PeriodStart);
+            run.PeriodEnd = Shift(run.PeriodEnd);
+            run.CreatedAt = Shift(run.CreatedAt);
+            run.ApprovedAt = ShiftNullable(run.ApprovedAt);
+        }
     }
 }
