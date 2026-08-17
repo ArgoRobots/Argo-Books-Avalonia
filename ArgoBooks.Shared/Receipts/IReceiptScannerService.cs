@@ -78,10 +78,25 @@ public class ReceiptScanResult
     /// <summary>
     /// Creates a failed result with an error message.
     /// </summary>
-    public static ReceiptScanResult Failed(string errorMessage) => new()
+    /// <summary>
+    /// The server's own machine-readable reason, when it gave one.
+    ///
+    /// Carried alongside the message because a caller sometimes has to ACT on the reason rather
+    /// than only show it: a bulk scan that hits the monthly allowance must stop, since every
+    /// remaining file will be refused too, while it should keep going after a one-off upstream
+    /// failure. Null when the failure never reached the server.
+    /// </summary>
+    public string? ErrorCode { get; set; }
+
+    /// <summary>True when the monthly scan allowance is gone, so retrying cannot help.</summary>
+    public bool IsScanLimitReached =>
+        string.Equals(ErrorCode, "SCAN_LIMIT_REACHED", StringComparison.OrdinalIgnoreCase);
+
+    public static ReceiptScanResult Failed(string errorMessage, string? errorCode = null) => new()
     {
         IsSuccess = false,
-        ErrorMessage = errorMessage
+        ErrorMessage = errorMessage,
+        ErrorCode = errorCode
     };
 }
 

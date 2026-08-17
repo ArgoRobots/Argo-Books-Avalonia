@@ -747,6 +747,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private CancellationTokenSource? _bulkCancellationSource;
 
     /// <summary>
+    /// Set once the server refuses a scan for the monthly allowance, and shown on every item
+    /// still queued behind it.
+    ///
+    /// Holds the server's own wording rather than a bool, because it names the count, the limit
+    /// and the reset date, and repeating that on each remaining card is more use than a generic
+    /// failure on all of them. Written from several scan tasks at once; a plain reference
+    /// assignment is atomic and they all write the same thing, so the last one wins harmlessly.
+    /// </summary>
+    private string? _bulkScanLimitMessage;
+
+    /// <summary>
     /// Cancels the in-flight single receipt scan. Renewed for each scan/retry and cancelled when the
     /// scan review modal closes, so an aborted scan doesn't keep its API call (and the awaiting
     /// command chain) alive after the user has moved on.
@@ -954,6 +965,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _scannerService ??= CreateScannerService();
         _usageService ??= CreateUsageService();
         _bulkCancellationSource = new CancellationTokenSource();
+        _bulkScanLimitMessage = null;
         var token = _bulkCancellationSource.Token;
 
         if (_usageService != null)
@@ -1101,6 +1113,23 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             item.FileData = null;
 
             // 4. Check usage
+            //
+            // The server is the authority and refuses on its own, so this is here to avoid
+            // sending a request that is certain to be refused. It cannot be relied on alone:
+            // three items scan at once, so the allowance can run out between this check and the
+            // request below. That race is what the _bulkScanLimitMessage guard covers.
+            if (_bulkScanLimitMessage != null)
+            {
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    item.Status = BulkScanStatus.Failed;
+                    item.ErrorMessage = _bulkScanLimitMessage;
+                    BulkScansCompleted++;
+                    BulkScansFailed++;
+                });
+                return;
+            }
+
             if (_usageService != null)
             {
                 var usageCheck = await _usageService.CheckUsageAsync();
@@ -1109,7 +1138,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         item.Status = BulkScanStatus.Failed;
-                        item.ErrorMessage = "Monthly scan limit reached";
+                        item.ErrorMessage = "Monthly scan limit reached".Translate();
                         BulkScansCompleted++;
                         BulkScansFailed++;
                     });
@@ -1141,6 +1170,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             }
             else
             {
+                // Once the allowance is gone every item still queued would be refused too, so
+                // the reason is recorded here and the rest short-circuit rather than each
+                // spending a request to be told the same thing.
+                if (result.IsScanLimitReached)
+                {
+                    _bulkScanLimitMessage = result.ErrorMessage ?? "Monthly scan limit reached".Translate();
+                }
+
                 await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
                 {
                     item.Status = BulkScanStatus.Failed;
