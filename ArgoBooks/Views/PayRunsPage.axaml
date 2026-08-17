@@ -16,7 +16,9 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid RowDefinitions="*">
+    <!-- Frozen behind the upgrade teaser, so the sample figures can be read but nothing on the
+         page can be clicked, sorted or searched. -->
+    <Grid RowDefinitions="*" IsHitTestVisible="{Binding !ShowTeaser}">
         <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
 
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
@@ -82,8 +84,9 @@
                             Command="{Binding OpenYearEndCommand}" />
                 </table:ArgoTable.ExtraButtonsContent>
 
-                <!-- The page stays visible on the free plan. An owner with staff seeing what
-                     it does is the conversion lever; only running a payroll is blocked. -->
+                <!-- Only for a lapsed subscriber, who keeps a usable page because their real runs
+                     and their T4s are still here. A free user who has never run payroll gets the
+                     teaser overlay instead. -->
                 <table:ArgoTable.InfoBannerContent>
                     <Border Background="{DynamicResource SurfaceAltBrush}"
                             Padding="24,14"
@@ -234,6 +237,97 @@
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>
+
+    <!-- Premium teaser overlay, matching the Insights page: a scrim over sample figures rather
+         than a blur, and one card saying what the money buys. -->
+    <Panel IsVisible="{Binding ShowTeaser}">
+        <Border Background="#20000000"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" />
+
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="16"
+                Padding="40"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="420"
+                MaxWidth="500"
+                BoxShadow="0 8 32 0 #40000000">
+            <StackPanel Spacing="20" HorizontalAlignment="Center">
+                <Border Width="64" Height="64"
+                        CornerRadius="32"
+                        Background="{DynamicResource PrimaryLightBrush}"
+                        HorizontalAlignment="Center">
+                    <PathIcon Data="{x:Static icons:Icons.Payments}"
+                              Width="28" Height="28"
+                              Foreground="{DynamicResource PrimaryBrush}" />
+                </Border>
+
+                <TextBlock Text="{loc:Loc 'Unlock Payroll'}"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center" />
+
+                <StackPanel Spacing="10" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'CPP, EI and income tax worked out for you'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'Pay stubs ready to hand out'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'Wages recorded in your books automatically'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{loc:Loc 'T4 slips and the year end file for CRA'}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Says plainly that the figures behind the card are not the owner's, since a
+                     page of wages is the last place to leave that ambiguous. -->
+                <TextBlock Text="{loc:Loc 'The figures behind this card are samples.'}"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center" />
+
+                <Button Classes="primary-button"
+                        HorizontalAlignment="Center"
+                        Padding="32,12"
+                        Command="{Binding UpgradeCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{x:Static icons:Icons.Star}"
+                                  Width="16" Height="16" />
+                        <TextBlock Text="{loc:Loc 'Upgrade to Premium'}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Panel>
     </Panel>
 
 </UserControl>

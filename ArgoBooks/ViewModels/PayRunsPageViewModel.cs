@@ -78,16 +78,28 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Payroll is premium only. Two CRA rate updates a year with hard deadlines is a recurring
     /// maintenance cost, so it sits against recurring revenue.
-    ///
-    /// The page itself stays visible on the free plan rather than being hidden, because an
-    /// owner with staff seeing what it does is the whole conversion lever. Only running a
-    /// payroll is blocked.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowTeaser))]
     [NotifyPropertyChangedFor(nameof(ShowPayrollUpgradePrompt))]
     private bool _hasPremium;
 
-    public bool ShowPayrollUpgradePrompt => !HasPremium;
+    /// <summary>
+    /// Covers the page with the upgrade card, over sample figures, the way the Insights page
+    /// does. Showing what a filled-in payroll looks like sells the feature better than any
+    /// description of it, which is why the sample data exists at all.
+    ///
+    /// Only when there are no real pay runs. Someone whose subscription lapsed still has T4s to
+    /// produce for the year they did pay, and Year end is deliberately not gated, so their page
+    /// has to stay usable. They get the banner below instead.
+    /// </summary>
+    public bool ShowTeaser => !HasPremium && _all.Count == 0;
+
+    /// <summary>The quieter prompt for a lapsed subscriber, whose real runs stay reachable.</summary>
+    public bool ShowPayrollUpgradePrompt => !HasPremium && _all.Count > 0;
+
+    /// <summary>Swapping the plan swaps the page between the sample figures and the real ones.</summary>
+    partial void OnHasPremiumChanged(bool value) => Load();
 
     /// <summary>Raised when the upgrade prompt is clicked, so the shell can open the modal.</summary>
     public event EventHandler? UpgradeRequested;
@@ -418,10 +430,73 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
             _all.AddRange(runs);
         }
 
+        // Both prompts key off whether anything real is here, so they have to be re-read after
+        // the list is rebuilt and not only when the plan changes.
+        OnPropertyChanged(nameof(HasNoPayRuns));
+        OnPropertyChanged(nameof(ShowTeaser));
+        OnPropertyChanged(nameof(ShowPayrollUpgradePrompt));
+
+        if (ShowTeaser)
+        {
+            PopulateSampleData();
+            return;
+        }
+
         UpdateStatistics();
         Filter();
-        OnPropertyChanged(nameof(HasNoPayRuns));
     }
+
+    /// <summary>
+    /// Fills the page with figures for the upgrade teaser to sit over, so a free user sees the
+    /// shape of a payroll rather than an empty table.
+    ///
+    /// Deliberately unmistakable: every row is marked Sample and every amount is a round number.
+    /// These are wages, and a plausible-looking figure someone might read as their own is a
+    /// worse outcome than a less convincing teaser. Nothing here is written anywhere; the rows
+    /// go straight into the display collection and never into <see cref="_all"/>, so no command
+    /// can find a run behind them.
+    /// </summary>
+    private void PopulateSampleData()
+    {
+        ApprovedCount = 3;
+        YearToDateGross = CurrencyService.Format(54000m);
+        YearToDateRemittance = CurrencyService.Format(14850m);
+        RemittanceDue = CurrencyService.Format(4950m);
+        RemittanceDueLabel = "Due to CRA";
+
+        // Semi-monthly, all in the past, so nothing reads as a deadline the owner has missed.
+        var firstOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        DateTime lastMonth = firstOfMonth.AddMonths(-1);
+        DateTime monthBefore = firstOfMonth.AddMonths(-2);
+
+        PayRuns.Clear();
+
+        PayRuns.Add(SampleRun(firstOfMonth.AddDays(-1), lastMonth.AddDays(15), firstOfMonth.AddDays(-1), 9000m, 6480m));
+        PayRuns.Add(SampleRun(lastMonth.AddDays(14), lastMonth, lastMonth.AddDays(14), 9000m, 6480m));
+        PayRuns.Add(SampleRun(lastMonth.AddDays(-1), monthBefore.AddDays(15), lastMonth.AddDays(-1), 8500m, 6140m));
+
+        TotalPages = 1;
+        CurrentPage = 1;
+        PaginationText = PaginationTextHelper.FormatPaginationText(
+            PayRuns.Count, 1, PageSize, 1, "pay run", "pay runs");
+
+        NotifyPaginationChanged();
+    }
+
+    private static PayRunDisplayItem SampleRun(
+        DateTime payDate, DateTime periodStart, DateTime periodEnd, decimal gross, decimal net) => new()
+    {
+        Id = string.Empty,
+        PayDate = payDate.ToString("yyyy-MM-dd"),
+        Period = $"{periodStart:yyyy-MM-dd} to {periodEnd:yyyy-MM-dd}",
+        Employees = "3",
+        Gross = CurrencyService.Format(gross),
+        Net = CurrencyService.Format(net),
+        Status = "Sample",
+
+        // Nothing to view, download or void, and the teaser blocks hit-testing anyway.
+        IsApproved = false,
+    };
 
     private void UpdateStatistics()
     {
@@ -449,6 +524,13 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
 
     private void Filter()
     {
+        // The teaser owns the collection while it is up. Sorting or paging would otherwise clear
+        // the sample rows and leave the upgrade card floating over an empty table.
+        if (ShowTeaser)
+        {
+            return;
+        }
+
         PayRuns.Clear();
 
         IEnumerable<PayRun> filtered = _all;
