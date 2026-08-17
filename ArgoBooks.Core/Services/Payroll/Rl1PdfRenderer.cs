@@ -7,17 +7,19 @@ using QuestPDF.Infrastructure;
 namespace ArgoBooks.Core.Services.Payroll;
 
 /// <summary>
-/// Renders RL-1 slips and the RL-1 Summary as PDFs.
+/// Renders the RL-1 worksheets and summary as PDFs.
 ///
-/// Mirrors <see cref="T4PdfRenderer"/>, with one difference that matters: the RL-1 PDF is not
-/// merely the employee's copy. Under six slips, Revenu Quebec accepts paper, and paper is the
-/// only route this app can offer, because the RL-1 XML specification is not published (it is
-/// issued to registered developers through Revenu Quebec's electronic data acquisition
-/// division). Above five slips the filing must go online, which is why
-/// <see cref="Rl1Service.Validate"/> refuses to pretend otherwise.
+/// Deliberately NOT filable slips, and they say so on the page. Revenu Quebec accepts a paper
+/// slip printed by software only when it carries an authorization number, two letters and seven
+/// digits like FS9999999, which it issues to a developer per taxation year after certifying the
+/// software, plus a two-dimensional barcode on copy 1. Argo Books holds neither, and "the RL
+/// slip does not have an authorization number" heads Revenu Quebec's own list of the most common
+/// reasons a slip is rejected.
 ///
-/// These are laid out to be readable rather than to imitate the pre-printed form, but every box
-/// carries its official letter so an employee can match it against their tax software.
+/// So this takes the same position as <see cref="RoePdfRenderer"/> rather than
+/// <see cref="T4PdfRenderer"/>: a sheet that carries every figure in its official box, laid out
+/// to be read and re-keyed into My Account for businesses. Looking more like the real form would
+/// make it likelier to be mailed, which is the one outcome that wastes the employer's deadline.
 /// </summary>
 public static class Rl1PdfRenderer
 {
@@ -43,7 +45,7 @@ public static class Rl1PdfRenderer
                 {
                     row.RelativeItem().Column(left =>
                     {
-                        left.Item().Text("RL-1").FontSize(22).SemiBold().FontColor(Colors.Blue.Darken2);
+                        left.Item().Text("RL-1 worksheet").FontSize(22).SemiBold().FontColor(Colors.Blue.Darken2);
                         left.Item().Text("Employment and Other Income").FontSize(11);
                     });
 
@@ -54,6 +56,12 @@ public static class Rl1PdfRenderer
                         right.Item().AlignRight().Text("Tax year").FontSize(9).FontColor(Colors.Grey.Darken2);
                     });
                 });
+                // On the page rather than only in the app, because the PDF is what gets saved,
+                // emailed and looked at again in February, by which time whatever the export
+                // screen said is long gone.
+                col.Item().PaddingTop(8).Background(Colors.Amber.Lighten4).Padding(8)
+                    .Text(Rl1Service.FilingNotice).FontSize(8).FontColor(Colors.Grey.Darken4);
+
                 col.Item().PaddingVertical(10).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
             });
 
@@ -170,7 +178,7 @@ public static class Rl1PdfRenderer
                 {
                     row.RelativeItem().Column(left =>
                     {
-                        left.Item().Text("RL-1 SUMMARY").FontSize(20).SemiBold().FontColor(Colors.Blue.Darken2);
+                        left.Item().Text("RL-1 SUMMARY WORKSHEET").FontSize(20).SemiBold().FontColor(Colors.Blue.Darken2);
                         left.Item().Text("Summary of Source Deductions and Employer Contributions").FontSize(11);
                     });
 
@@ -181,6 +189,12 @@ public static class Rl1PdfRenderer
                         right.Item().AlignRight().Text("Tax year").FontSize(9).FontColor(Colors.Grey.Darken2);
                     });
                 });
+                // On the page rather than only in the app, because the PDF is what gets saved,
+                // emailed and looked at again in February, by which time whatever the export
+                // screen said is long gone.
+                col.Item().PaddingTop(8).Background(Colors.Amber.Lighten4).Padding(8)
+                    .Text(Rl1Service.FilingNotice).FontSize(8).FontColor(Colors.Grey.Darken4);
+
                 col.Item().PaddingVertical(10).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
             });
 

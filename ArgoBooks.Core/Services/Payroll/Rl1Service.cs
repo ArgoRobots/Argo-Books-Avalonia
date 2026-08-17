@@ -186,19 +186,13 @@ public class Rl1Service
                 problems.Add($"{who} has no social insurance number, which is required on the RL-1.");
             }
 
+            // Required, unlike the T4, where the whole address block is optional. RL-1.G-V
+            // section 5.27.1: enter "the individual's last name, followed by the first name and
+            // last known address (including the postal code)".
             if (string.IsNullOrWhiteSpace(slip.Address.City))
             {
                 problems.Add($"{who} has no address. Revenu Quebec requires one on every RL-1 slip.");
             }
-        }
-
-        // Paper filing is only allowed under six slips. Above that this app cannot produce what
-        // is needed, and saying so is better than handing over PDFs that will be sent back.
-        if (rl1.Slips.Count > 5)
-        {
-            problems.Add($"There are {rl1.Slips.Count} RL-1 slips. Revenu Quebec requires six or more to be filed "
-                         + "online in an XML file, which Argo Books does not produce. File through your accountant "
-                         + "or Revenu Quebec's own service instead of mailing these.");
         }
 
         if (rl1.Slips.Count == 0)
@@ -208,6 +202,33 @@ public class Rl1Service
 
         return problems;
     }
+
+    /// <summary>
+    /// What these PDFs are, which is not a filable RL-1.
+    ///
+    /// Revenu Quebec accepts three routes and this app is none of them: its own online service,
+    /// software it has authorized, or software the employer developed that meets its
+    /// requirements. A paper slip prepared by software is only accepted when it carries an
+    /// authorization number, two letters and seven digits like FS9999999, which Revenu Quebec
+    /// issues to a developer per taxation year after certifying the software, plus a
+    /// two-dimensional barcode on copy 1. Argo Books holds neither.
+    ///
+    /// "The RL slip does not have an authorization number" is the first entry on Revenu Quebec's
+    /// own list of the most common reasons a slip is rejected.
+    ///
+    /// This used to be a blocking problem raised only above five slips, on the understanding
+    /// that paper was fine below that. It is not: the authorization rule applies to every paper
+    /// slip a piece of software prints, so the old message let four slips through with the
+    /// implication that mailing them would work. Stated as a permanent notice instead, because
+    /// it is a fact about the app rather than a fault in the employer's data, and blocking the
+    /// download would take away the figures they still need in order to file properly.
+    /// </summary>
+    public const string FilingNotice =
+        "These are worksheets, not RL-1 slips that can be filed. Revenu Quebec only accepts a "
+        + "paper slip printed by software if it carries an authorization number and a barcode "
+        + "that Revenu Quebec issues to certified software, and Argo Books has neither. Use "
+        + "these figures to complete the RL-1 in My Account for businesses, or hand them to "
+        + "your accountant.";
 
     /// <summary>Ten digits, then two letters, then four digits. Usually RS, sometimes RR.</summary>
     public static bool IsQuebecIdentificationNumber(string? value)

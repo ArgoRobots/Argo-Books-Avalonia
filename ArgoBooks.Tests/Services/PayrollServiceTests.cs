@@ -463,4 +463,87 @@ public class PayrollServiceTests
     }
 
     #endregion
+
+    #region Remitter types
+
+    /// <summary>
+    /// Every case here is read off CRA's own table of remitter types. The app assumed regular
+    /// for everyone, which is right for most small employers and reports a deadline weeks late
+    /// for an accelerated one, and CRA charges 3% to 10% on a late remittance.
+    /// </summary>
+    [Theory]
+    // Regular: the 15th of the following month.
+    [InlineData(RemitterType.Regular, "2026-08-16", "2026-09-15")]
+    [InlineData(RemitterType.Regular, "2026-09-10", "2026-09-15")]
+    // Quarterly: 15 April, July, October and January.
+    [InlineData(RemitterType.Quarterly, "2026-08-16", "2026-10-15")]
+    [InlineData(RemitterType.Quarterly, "2026-11-02", "2027-01-15")]
+    [InlineData(RemitterType.Quarterly, "2026-04-15", "2026-04-15")]
+    // Accelerated threshold 1: the 25th for the first half, the 10th of the next month for the
+    // second. On 16 August the first half of August has closed and its deadline is 25 August.
+    [InlineData(RemitterType.AcceleratedThreshold1, "2026-08-16", "2026-08-25")]
+    [InlineData(RemitterType.AcceleratedThreshold1, "2026-08-26", "2026-09-10")]
+    public void TheDeadline_FollowsTheRemitterType(RemitterType type, string today, string expected) =>
+        Assert.Equal(
+            DateTime.Parse(expected, System.Globalization.CultureInfo.InvariantCulture),
+            PayrollService.NextRemittance([], DateTime.Parse(today, System.Globalization.CultureInfo.InvariantCulture), type).DueDate);
+
+    /// <summary>
+    /// Threshold 2 is the 3rd WORKING day after each period, so a period ending on a Friday does
+    /// not fall due on the Monday. 7 August 2026 is a Friday, so counting Mon, Tue, Wed gives
+    /// 12 August.
+    /// </summary>
+    [Fact]
+    public void AcceleratedThreshold2_CountsWorkingDaysNotCalendarDays()
+    {
+        DateTime seventh = new(2026, 8, 7);
+        Assert.Equal(DayOfWeek.Friday, seventh.DayOfWeek);
+
+        (_, DateTime due) = PayrollService.NextRemittance(
+            [], new DateTime(2026, 8, 8), RemitterType.AcceleratedThreshold2);
+
+        Assert.Equal(new DateTime(2026, 8, 12), due);
+    }
+
+    /// <summary>
+    /// The amount has to follow the period, not just the deadline. A quarterly remitter's October
+    /// deadline covers July, August and September together, so a run in each must all be counted.
+    /// </summary>
+    [Fact]
+    public void AQuarterlyRemittance_CoversTheWholeQuarter()
+    {
+        var data = new List<PayRun>
+        {
+            RunOn("PR-0001", new DateTime(2026, 7, 10)),
+            RunOn("PR-0002", new DateTime(2026, 8, 10)),
+            RunOn("PR-0003", new DateTime(2026, 9, 10)),
+
+            // October belongs to the NEXT quarter and must not be swept in.
+            RunOn("PR-0004", new DateTime(2026, 10, 10)),
+        };
+
+        (decimal quarterly, DateTime due) = PayrollService.NextRemittance(
+            data, new DateTime(2026, 10, 1), RemitterType.Quarterly);
+
+        (decimal monthly, _) = PayrollService.NextRemittance(
+            data, new DateTime(2026, 10, 1), RemitterType.Regular);
+
+        Assert.Equal(new DateTime(2026, 10, 15), due);
+
+        // Three months against the regular remitter's one.
+        Assert.Equal(monthly * 3m, quarterly);
+    }
+
+    /// <summary>The default has to stay regular, or every existing company file changes meaning.</summary>
+    [Fact]
+    public void TheDefault_IsStillRegular()
+    {
+        var data = new List<PayRun> { RunOn("PR-0001", new DateTime(2026, 8, 14)) };
+
+        Assert.Equal(
+            PayrollService.NextRemittance(data, new DateTime(2026, 8, 16), RemitterType.Regular),
+            PayrollService.NextRemittance(data, new DateTime(2026, 8, 16)));
+    }
+
+    #endregion
 }

@@ -63,6 +63,16 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private string _remittanceDueLabel = "Due to CRA";
 
+    /// <summary>
+    /// Which CRA schedule the date above was worked out from, as a tooltip.
+    ///
+    /// Worth saying out loud rather than leaving as an assumption. The date is right for a
+    /// regular remitter and weeks late for an accelerated one, and the only person who can tell
+    /// the difference is the employer, who was told by CRA.
+    /// </summary>
+    [ObservableProperty]
+    private string _remittanceScheduleHint = string.Empty;
+
     #endregion
 
     [ObservableProperty]
@@ -516,10 +526,16 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
 
         // Read off every run rather than off thisYear, because the deadline in the first half of
         // January covers the previous December.
-        (decimal due, DateTime dueDate) = PayrollService.NextRemittance(_all, DateTime.Today);
+        RemitterType remitter = App.CompanyManager?.CompanyData?.Settings.Company.RemitterType
+                                ?? RemitterType.Regular;
+
+        (decimal due, DateTime dueDate) = PayrollService.NextRemittance(_all, DateTime.Today, remitter);
 
         RemittanceDue = CurrencyService.Format(due);
         RemittanceDueLabel = $"Due to CRA by {dueDate:d MMMM}";
+        RemittanceScheduleHint =
+            $"{remitter.DisplayName()}. {remitter.Description()} Change it under Year end if CRA "
+            + "has you on a different schedule.";
     }
 
     private void Filter()

@@ -184,6 +184,13 @@ public partial class YearEndModalViewModel : ViewModelBase
 
     public bool HasQuebecProblems => QuebecProblems.Count > 0;
 
+    /// <summary>
+    /// What the RL-1 output actually is. Always shown when there are Quebec employees, and not
+    /// in <see cref="QuebecProblems"/>, because it is a fact about this app rather than a fault
+    /// in the employer's data and there is nothing they can do to clear it.
+    /// </summary>
+    public static string QuebecFilingNotice => Rl1Service.FilingNotice;
+
     [ObservableProperty]
     private string _quebecIdentificationNumber = string.Empty;
 
@@ -247,6 +254,25 @@ public partial class YearEndModalViewModel : ViewModelBase
             ? string.Empty
             : "That does not look like an email address.";
 
+    /// <summary>
+    /// How often CRA wants the deductions. Not a filing detail, but this is the only screen that
+    /// holds payroll settings, and the deadline it drives is on the page the Year end button sits
+    /// on, so it is one click from where the question gets asked.
+    /// </summary>
+    [ObservableProperty]
+    private RemitterType _remitterType = RemitterType.Regular;
+
+    public ObservableCollection<RemitterType> RemitterTypes { get; } =
+    [
+        RemitterType.Regular,
+        RemitterType.Quarterly,
+        RemitterType.AcceleratedThreshold1,
+        RemitterType.AcceleratedThreshold2,
+    ];
+
+    /// <summary>The dates in plain words, so nobody has to know what an AMWA is to choose.</summary>
+    public string RemitterTypeDescription => RemitterType.Description();
+
     /// <summary>Stops the setters writing back while Open is filling them in.</summary>
     private bool _loading;
 
@@ -257,6 +283,12 @@ public partial class YearEndModalViewModel : ViewModelBase
     partial void OnContactPhoneChanged(string value) => SaveDetails();
 
     partial void OnContactEmailChanged(string value) => SaveDetails();
+
+    partial void OnRemitterTypeChanged(RemitterType value)
+    {
+        OnPropertyChanged(nameof(RemitterTypeDescription));
+        SaveDetails();
+    }
 
     /// <summary>
     /// Written straight through as they are typed, so the problem list updates live and the
@@ -274,6 +306,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         data.Settings.Company.PayrollContactPhone = ContactPhone.Trim();
         data.Settings.Company.PayrollContactEmail = ContactEmail.Trim();
         data.Settings.Company.QuebecIdentificationNumber = QuebecIdentificationNumber.Trim();
+        data.Settings.Company.RemitterType = RemitterType;
         App.CompanyManager?.MarkAsChanged();
 
         Rebuild();
@@ -326,6 +359,7 @@ public partial class YearEndModalViewModel : ViewModelBase
         ContactName = data?.Settings.Company.PayrollContactName ?? string.Empty;
         ContactPhone = data?.Settings.Company.PayrollContactPhone ?? data?.Settings.Company.Phone ?? string.Empty;
         ContactEmail = data?.Settings.Company.PayrollContactEmail ?? data?.Settings.Company.Email ?? string.Empty;
+        RemitterType = data?.Settings.Company.RemitterType ?? RemitterType.Regular;
         QuebecIdentificationNumber = data?.Settings.Company.QuebecIdentificationNumber ?? string.Empty;
         _loading = false;
 

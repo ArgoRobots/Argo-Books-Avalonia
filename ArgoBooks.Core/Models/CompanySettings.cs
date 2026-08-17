@@ -143,6 +143,17 @@ public class CompanyInfo
     /// </summary>
     [JsonPropertyName("quebecIdentificationNumber")]
     public string? QuebecIdentificationNumber { get; set; }
+
+    /// <summary>
+    /// How often CRA expects the deductions, which it assigns and tells the employer rather than
+    /// anything derivable from the pay runs here.
+    ///
+    /// Defaults to regular. That is where most small employers sit, and it is also the value
+    /// every existing company file will deserialize to, which matches what the app assumed
+    /// before this setting existed.
+    /// </summary>
+    [JsonPropertyName("remitterType")]
+    public Models.Payroll.RemitterType RemitterType { get; set; } = Models.Payroll.RemitterType.Regular;
 }
 
 public class LocalizationSettings

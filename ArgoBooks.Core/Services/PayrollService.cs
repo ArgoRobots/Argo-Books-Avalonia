@@ -215,41 +215,137 @@ public class PayrollService(PayrollRateService? rateService = null)
     /// <summary>
     /// What has to reach CRA next, and by when.
     ///
-    /// A regular remitter sends what they withheld during a month by the 15th of the FOLLOWING
-    /// month, so the two are always a month apart and the useful question is not "what have we
-    /// withheld this month". In the middle of September the deadline that has not passed is 15
-    /// September, and what it covers is AUGUST. Naming September's figure there would show an
-    /// amount that is not yet due while hiding the one that is.
+    /// The deadline is never for the money withheld right now. A regular remitter sends what they
+    /// withheld during a month by the 15th of the FOLLOWING month, so in the middle of September
+    /// the deadline that has not passed is 15 September and what it covers is AUGUST. Naming
+    /// September's figure there would show an amount that is not yet due while hiding the one
+    /// that is.
     ///
-    /// The 15th itself counts as not yet passed. It is the day this matters most: the payment is
-    /// due today rather than overdue, and rolling on to the next month would tell somebody they
-    /// had nothing to pay on the morning they had to pay it.
+    /// The due date itself counts as not yet passed. It is the day this matters most: the payment
+    /// is due today rather than overdue, and rolling on would tell somebody they had nothing to
+    /// pay on the morning they had to pay it.
     ///
     /// Everything except drafts counts, so a voided run and its reversal both appear and cancel,
     /// matching how the year-to-date figures are built.
     /// </summary>
     /// <param name="today">Injected so the boundary can be tested rather than waited for.</param>
-    public static (decimal Amount, DateTime DueDate) NextRemittance(IEnumerable<PayRun> runs, DateTime today)
+    /// <param name="remitterType">
+    /// CRA's assigned frequency. Defaults to regular, which is where most small employers sit,
+    /// but an accelerated remitter's deadline is up to five weeks earlier and assuming regular
+    /// for them reports a date that has already gone by.
+    /// </param>
+    public static (decimal Amount, DateTime DueDate) NextRemittance(
+        IEnumerable<PayRun> runs, DateTime today, RemitterType remitterType = RemitterType.Regular)
     {
         ArgumentNullException.ThrowIfNull(runs);
 
-        DateTime date = today.Date;
-
-        // On or before the 15th the deadline is this month's, covering last month's payroll.
-        // After it, the next deadline is next month's, covering this month's.
-        DateTime dueDate = date.Day <= 15
-            ? new DateTime(date.Year, date.Month, 15)
-            : new DateTime(date.Year, date.Month, 15).AddMonths(1);
-
-        DateTime covered = dueDate.AddMonths(-1);
+        (DateTime start, DateTime end, DateTime dueDate) = NextRemittancePeriod(today.Date, remitterType);
 
         decimal amount = runs
             .Where(r => r.Status != PayRunStatus.Draft
-                        && r.PayDate.Year == covered.Year
-                        && r.PayDate.Month == covered.Month)
+                        && r.PayDate.Date >= start
+                        && r.PayDate.Date <= end)
             .Sum(r => r.TotalRemittance);
 
         return (amount, dueDate);
+    }
+
+    /// <summary>
+    /// The first remitting period whose deadline has not passed, with that deadline.
+    ///
+    /// Walks forward from well before today rather than computing the period from today's date
+    /// directly, because the four schedules divide the calendar differently and only one of them
+    /// has a period per month. Scanning keeps the rule for each schedule in one place and the
+    /// selection identical across all of them.
+    /// </summary>
+    internal static (DateTime Start, DateTime End, DateTime Due) NextRemittancePeriod(
+        DateTime today, RemitterType remitterType)
+    {
+        DateTime cursor = new DateTime(today.Year, today.Month, 1).AddMonths(-6);
+
+        // Eighteen months of lookahead. A quarterly period is the longest, so this cannot run out
+        // before it finds one, and the bound stops a mistake here becoming an infinite loop.
+        for (int i = 0; i < 18; i++)
+        {
+            foreach ((DateTime start, DateTime end, DateTime due) in PeriodsStartingIn(cursor, remitterType))
+            {
+                if (due >= today)
+                {
+                    return (start, end, due);
+                }
+            }
+
+            cursor = cursor.AddMonths(1);
+        }
+
+        DateTime fallback = new DateTime(today.Year, today.Month, 15).AddMonths(1);
+        return (fallback.AddMonths(-2), fallback.AddMonths(-1).AddDays(-1), fallback);
+    }
+
+    /// <summary>
+    /// The remitting periods that BEGIN in the given month, in deadline order.
+    ///
+    /// Read from CRA's own table of remitter types. The quarterly dates are the same for both
+    /// quarterly categories; only the threshold that puts an employer in one differs.
+    /// </summary>
+    private static IEnumerable<(DateTime Start, DateTime End, DateTime Due)> PeriodsStartingIn(
+        DateTime monthStart, RemitterType remitterType)
+    {
+        DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+        switch (remitterType)
+        {
+            case RemitterType.Quarterly:
+                // Only the first month of a quarter opens one.
+                if (monthStart.Month % 3 == 1)
+                {
+                    DateTime quarterEnd = monthStart.AddMonths(3).AddDays(-1);
+                    yield return (monthStart, quarterEnd, new DateTime(quarterEnd.Year, quarterEnd.Month, 15).AddMonths(1));
+                }
+
+                break;
+
+            case RemitterType.AcceleratedThreshold1:
+                yield return (monthStart, monthStart.AddDays(14), new DateTime(monthStart.Year, monthStart.Month, 25));
+                yield return (monthStart.AddDays(15), monthEnd, new DateTime(monthStart.Year, monthStart.Month, 10).AddMonths(1));
+                break;
+
+            case RemitterType.AcceleratedThreshold2:
+                yield return (monthStart, monthStart.AddDays(6), ThirdWorkingDayAfter(monthStart.AddDays(6)));
+                yield return (monthStart.AddDays(7), monthStart.AddDays(13), ThirdWorkingDayAfter(monthStart.AddDays(13)));
+                yield return (monthStart.AddDays(14), monthStart.AddDays(20), ThirdWorkingDayAfter(monthStart.AddDays(20)));
+                yield return (monthStart.AddDays(21), monthEnd, ThirdWorkingDayAfter(monthEnd));
+                break;
+
+            default:
+                yield return (monthStart, monthEnd, new DateTime(monthStart.Year, monthStart.Month, 15).AddMonths(1));
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Three working days on from a date, counting only weekdays.
+    ///
+    /// Statutory holidays are NOT skipped, because CRA's list of the ones it recognises varies by
+    /// province and is not something this app carries. That makes the date it returns the same or
+    /// earlier than the real deadline, never later, which is the safe direction for a figure whose
+    /// only job is to stop somebody paying late.
+    /// </summary>
+    private static DateTime ThirdWorkingDayAfter(DateTime date)
+    {
+        DateTime result = date;
+
+        for (int counted = 0; counted < 3;)
+        {
+            result = result.AddDays(1);
+
+            if (result.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday))
+            {
+                counted++;
+            }
+        }
+
+        return result;
     }
 
     /// <summary>

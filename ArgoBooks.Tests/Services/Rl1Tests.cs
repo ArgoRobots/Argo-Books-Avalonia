@@ -337,30 +337,26 @@ public class Rl1Tests
     public void TheIdentificationNumber_IsTenDigitsThenTwoLettersThenFour(string value, bool expected) =>
         Assert.Equal(expected, Rl1Service.IsQuebecIdentificationNumber(value));
 
-    [Fact]
-    public void MoreThanFiveSlips_SaysSoRatherThanHandingOverPaperThatWillBeReturned()
+    /// <summary>
+    /// The slip count is not what decides whether these PDFs can be filed, and it used to be
+    /// treated as though it were: six or more raised a blocking problem, which left four
+    /// implying that mailing them would work.
+    ///
+    /// It never would. Revenu Quebec accepts a paper slip printed by software only when it
+    /// carries an authorization number, which it issues to a developer per taxation year after
+    /// certifying the software, plus a two-dimensional barcode on copy 1. Argo Books has neither,
+    /// and "the RL slip does not have an authorization number" is the first entry on Revenu
+    /// Quebec's own list of the most common reasons a slip is rejected.
+    ///
+    /// So the count raises nothing either way, and the notice is permanent.
+    /// </summary>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(6)]
+    public void TheSlipCount_DoesNotDecideAnything(int count)
     {
-        var people = Enumerable.Range(1, 6)
-            .Select(i => Person($"EMP-{i:000}", $"Dana Smith{i}"))
-            .ToArray();
-
-        CompanyData data = Data(people);
-
-        foreach (Employee person in people)
-        {
-            data.PayRuns.Add(Run($"PR-{person.Id}", new DateTime(2026, 7, 3), person.Id, 2000m));
-        }
-
-        // Revenu Quebec requires six or more RL slips of one type to be filed online in XML,
-        // and the XML specification is not published, so this app cannot produce it.
-        Assert.Contains(Rl1Service.Validate(data, Built(data)),
-            p => p.Contains("online", StringComparison.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    public void FiveSlips_AreFine()
-    {
-        var people = Enumerable.Range(1, 5)
+        var people = Enumerable.Range(1, count)
             .Select(i => Person($"EMP-{i:000}", $"Dana Smith{i}"))
             .ToArray();
 
@@ -372,6 +368,14 @@ public class Rl1Tests
         }
 
         Assert.Empty(Rl1Service.Validate(data, Built(data)));
+    }
+
+    /// <summary>The notice has to name the reason, or it reads as a disclaimer to skip past.</summary>
+    [Fact]
+    public void TheFilingNotice_SaysTheseAreNotFilableSlips()
+    {
+        Assert.Contains("authorization number", Rl1Service.FilingNotice, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("worksheet", Rl1Service.FilingNotice, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

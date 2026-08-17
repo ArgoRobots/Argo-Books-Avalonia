@@ -42,7 +42,8 @@
                 <controls:StatCard Label="{Binding RemittanceDueLabel}"
                                    Value="{Binding RemittanceDue}"
                                    Icon="{x:Static icons:Icons.Calendar}"
-                                   IconColor="Danger" />
+                                   IconColor="Danger"
+                                   ToolTip.Tip="{Binding RemittanceScheduleHint}" />
             </controls:StatCardsRow>
 
             <table:ArgoTable Grid.Row="1"

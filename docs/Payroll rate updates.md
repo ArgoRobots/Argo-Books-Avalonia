@@ -84,8 +84,30 @@ pages once, so cite the guide rather than a page.
 ### The filing thresholds
 
 Both agencies allow paper only below a slip count and require electronic filing above it. CRA's
-moved from 50 to 5 not long ago, so this is not a constant. The Revenu Québec threshold is
-hardcoded in `Rl1Service.Validate`; CRA's appears only in documentation.
+moved from 50 to 5 not long ago, so this is not a constant. Neither threshold is enforced in
+code any more: CRA's appears only in documentation, and Revenu Québec's stopped mattering once
+the RL-1 output became a worksheet (below).
+
+### The RL-1 authorization number, if that ever changes
+
+Argo Books does not produce a filable RL-1 and says so on the page. Revenu Québec accepts a
+paper slip printed by software only when it carries an authorization number, two letters and
+seven digits like FS9999999, plus a two-dimensional barcode on copy 1. The number is issued to
+the software developer **per taxation year** after Revenu Québec certifies the product, so
+getting one is not a single piece of work: it is an annual renewal that lands on this same
+twice-a-year schedule.
+
+Until that happens the RL-1 PDFs stay worksheets, and `Rl1Service.FilingNotice` is the one place
+that wording lives. If certification is ever obtained, that constant, the two PDF headers and
+`Rl1PdfRenderer`'s class comment are what change.
+
+### The remitter type
+
+CRA assigns it from the average monthly withholding amount two years back, and it decides the
+deadline shown on the Pay runs page. It is a company setting, not a calculation, because a new
+employer has no history to read it from. The four schedules are in `RemitterType` and their due
+dates in `PayrollService.PeriodsStartingIn`; both come straight from CRA's table of remitter
+types and have not moved in years, but the table is worth a glance when the thresholds change.
 
 ### What does not need touching
 
