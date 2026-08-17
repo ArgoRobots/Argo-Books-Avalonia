@@ -81,6 +81,8 @@ public class FileService(
             await WriteJsonAsync(companyDir, "eventLog.json", companyData.EventLog, cancellationToken);
             await WriteJsonAsync(companyDir, "pendingConversions.json", companyData.PendingConversions, cancellationToken);
             await WriteJsonAsync(companyDir, "bankImportSessions.json", companyData.BankImportSessions, cancellationToken);
+            await WriteJsonAsync(companyDir, "employees.json", companyData.Employees, cancellationToken);
+            await WriteJsonAsync(companyDir, "payRuns.json", companyData.PayRuns, cancellationToken);
 
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
@@ -477,6 +479,11 @@ public class FileService(
         var forecastRecordsTask   = ReadJsonAsync<List<Models.Insights.ForecastAccuracyRecord>>(tempDirectory, "forecastRecords.json", cancellationToken);
         var bankImportSessionsTask = ReadJsonAsync<List<Models.BankMatching.BankImportSession>>(tempDirectory, "bankImportSessions.json", cancellationToken);
 
+        // Absent from every file written before payroll shipped, which ReadJsonAsync handles by
+        // returning null, so those open with no employees rather than failing.
+        var employeesTask         = ReadJsonAsync<List<Models.Payroll.Employee>>(tempDirectory, "employees.json", cancellationToken);
+        var payRunsTask           = ReadJsonAsync<List<Models.Payroll.PayRun>>(tempDirectory, "payRuns.json", cancellationToken);
+
         // Validate version BEFORE awaiting the rest. If the file was saved by a newer app
         // version, the other data files may contain enum values or fields this build can't
         // deserialize, and we'd surface that as an opaque JSON exception. Awaiting just the
@@ -489,7 +496,8 @@ public class FileService(
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
             invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
-            forecastRecordsTask, bankImportSessionsTask
+            forecastRecordsTask, bankImportSessionsTask,
+            employeesTask, payRunsTask
         ];
 
         var settings = await settingsTask;
@@ -535,7 +543,9 @@ public class FileService(
             EventLog = eventLogTask.Result ?? [],
             PendingConversions = pendingConversionsTask.Result ?? [],
             ForecastRecords = forecastRecordsTask.Result ?? [],
-            BankImportSessions = bankImportSessionsTask.Result ?? []
+            BankImportSessions = bankImportSessionsTask.Result ?? [],
+            Employees = employeesTask.Result ?? [],
+            PayRuns = payRunsTask.Result ?? []
         };
     }
 
@@ -595,6 +605,12 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "pendingConversions.json", data.PendingConversions, cancellationToken);
         await WriteJsonAsync(companyDirectory, "forecastRecords.json", data.ForecastRecords, cancellationToken);
         await WriteJsonAsync(companyDirectory, "bankImportSessions.json", data.BankImportSessions, cancellationToken);
+
+        // Payroll. Added late, and their absence was silent: CompanyData carried both lists, every
+        // payroll screen read and wrote them happily, and nothing failed. They simply never
+        // reached the .argo file, so every employee and pay run was lost on close.
+        await WriteJsonAsync(companyDirectory, "employees.json", data.Employees, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "payRuns.json", data.PayRuns, cancellationToken);
 
         // Deliberately does NOT call data.MarkAsSaved() here: this only stages JSON into the temp
         // directory, and the data isn't durable until the caller commits the .argo file via
