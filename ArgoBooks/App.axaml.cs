@@ -641,6 +641,15 @@ public partial class App : Application
         if (companyData == null)
             return;
 
+        // Never for the sample company. Its data is time-shifted to look recent on every open, so
+        // its invoices and rentals are permanently "overdue" and its stock permanently low, which
+        // means someone opening the sample to look around is greeted by a stack of warnings about
+        // a business that does not exist. Gated here rather than at each alert because this is the
+        // one entry point for all of them, and the notifications a user's own action produces
+        // ("Password has been set") should still appear.
+        if (CompanyManager?.IsSampleCompany == true)
+            return;
+
         var settings = companyData.Settings.Notifications;
 
         // Only send startup notifications once per day to avoid duplicates
