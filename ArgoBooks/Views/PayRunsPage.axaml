@@ -16,9 +16,10 @@
     </Design.DataContext>
 
     <Panel>
-    <!-- Frozen behind the upgrade teaser, so the sample figures can be read but nothing on the
-         page can be clicked, sorted or searched. -->
-    <Grid RowDefinitions="*" IsHitTestVisible="{Binding !ShowTeaser}">
+    <!-- Frozen and blurred behind the upgrade teaser, so the shape of a filled-in payroll shows
+         through but nothing on the page can be read, clicked, sorted or searched.
+         The blur itself is applied in code-behind, since Effect is not settable from a binding. -->
+    <Grid x:Name="ContentRoot" RowDefinitions="*" IsHitTestVisible="{Binding !ShowTeaser}">
         <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
 
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
@@ -239,8 +240,8 @@
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>
 
-    <!-- Premium teaser overlay, matching the Insights page: a scrim over sample figures rather
-         than a blur, and one card saying what the money buys. -->
+    <!-- Premium teaser overlay, matching the Insights page: the content behind is blurred and
+         darkened by a scrim, with one card over it saying what the money buys. -->
     <Panel IsVisible="{Binding ShowTeaser}">
         <Border Background="#20000000"
                 HorizontalAlignment="Stretch"
