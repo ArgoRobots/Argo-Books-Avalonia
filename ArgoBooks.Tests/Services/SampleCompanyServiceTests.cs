@@ -481,16 +481,30 @@ public class SampleCompanyServiceTests
         Assert.NotEqual(firstPayDate, data.PayRuns.Min(r => r.PayDate));
     }
 
+    /// <summary>
+    /// The guard is on pay runs, not employees.
+    ///
+    /// It used to be on employees, which is what made the sample ship with none: the workbook's
+    /// Employees sheet meant there were always some, so payroll was never added. Existing
+    /// employees are now deliberately topped up rather than treated as a reason to stop, so what
+    /// has to hold instead is that a company which already has payroll is left completely alone.
+    /// </summary>
     [Fact]
-    public void SamplePayroll_LeavesAnExistingCompanyAlone()
+    public void SamplePayroll_DoesNothingWhenPayrollAlreadyExists()
     {
         var data = new CompanyData();
         data.Employees.Add(new Employee { Id = "EMP-900", Name = "Real Person", Province = "AB" });
+        data.PayRuns.Add(new PayRun { Id = "PR-0001", PayDate = Covered, Status = PayRunStatus.Approved });
 
         SampleCompanyService.AddSamplePayroll(data, Covered);
 
-        Assert.Single(data.Employees);
-        Assert.Empty(data.PayRuns);
+        Employee employee = data.Employees.Single();
+
+        Assert.Equal("Real Person", employee.Name);
+        Assert.Equal("AB", employee.Province);
+        Assert.Empty(employee.Sin);
+        Assert.Single(data.PayRuns);
+        Assert.Empty(data.Expenses);
     }
 
     #endregion
