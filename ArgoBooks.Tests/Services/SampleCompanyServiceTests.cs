@@ -340,8 +340,46 @@ public class SampleCompanyServiceTests
         CompanyData data = WithSamplePayroll();
 
         Assert.Equal(3, data.Employees.Count);
-        Assert.Equal(6, data.PayRuns.Count);
+        Assert.NotEmpty(data.PayRuns);
         Assert.All(data.PayRuns, r => Assert.Equal(PayRunStatus.Approved, r.Status));
+    }
+
+    /// <summary>
+    /// The real sample company arrives with employees already imported from the workbook's
+    /// Employees sheet, carrying a name and a salary but nothing payroll needs. This used to see
+    /// them, conclude payroll was set up, and add nothing, so the sample shipped with eight
+    /// nameless employees and no pay runs.
+    /// </summary>
+    [Fact]
+    public void SamplePayroll_CompletesEmployeesThatCameFromTheSpreadsheet()
+    {
+        var data = new CompanyData();
+        data.Settings.Company.Name = "TechFlow Solutions";
+        data.Settings.Localization.Currency = "CAD";
+        data.Employees.Add(new Employee
+        {
+            Id = "EMP-001",
+            Name = "Marcus Johnson",
+            PayType = PayType.Salary,
+            PayRate = 95000m,
+            PayFrequency = PayFrequency.Biweekly,
+        });
+
+        SampleCompanyService.AddSamplePayroll(data, Covered);
+
+        Employee employee = data.Employees.Single();
+
+        // The spreadsheet's own values survive.
+        Assert.Equal("Marcus Johnson", employee.Name);
+        Assert.Equal(95000m, employee.PayRate);
+
+        // What payroll needs and the sheet does not carry is filled in.
+        Assert.NotEmpty(employee.Province);
+        Assert.Equal(9, employee.Sin.Length);
+        Assert.NotEmpty(employee.Address.City);
+
+        Assert.NotEmpty(data.PayRuns);
+        Assert.All(data.PayRuns.SelectMany(r => r.Lines), l => Assert.True(l.GrossPay > 0));
     }
 
     /// <summary>

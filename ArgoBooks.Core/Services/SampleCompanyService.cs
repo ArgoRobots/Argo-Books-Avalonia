@@ -18,6 +18,20 @@ public class SampleCompanyService
     private const string SampleCompanyName = "TechFlow Solutions";
 
     /// <summary>
+    /// How many biweekly pay runs the sample company gets.
+    ///
+    /// Kept low on purpose. The sample's Employees sheet lists eight people on roughly $560,000
+    /// of combined annual salary, against revenue of about $166,000, so the staff list and the
+    /// financials in that workbook were never reconciled with each other. Every pay run adds its
+    /// wages to the books as real expenses, so a full quarter of payroll would roughly double the
+    /// sample's costs and leave the company deeply unprofitable on the dashboard.
+    ///
+    /// Two periods is enough to show a history, a year-to-date figure that accumulates, and a
+    /// remittance due, without rewriting the story the rest of the sample tells.
+    /// </summary>
+    private const int SamplePayPeriods = 2;
+
+    /// <summary>
     /// Creates a new SampleCompanyService instance.
     /// </summary>
     public SampleCompanyService(FileService fileService, SpreadsheetImportService importService)
@@ -459,7 +473,11 @@ public class SampleCompanyService
     }
 
     /// <summary>
-    /// Gives the sample company three employees and three months of payroll.
+    /// Gives the sample company a payroll history.
+    ///
+    /// Employees usually come from the workbook's own Employees sheet, which carries names,
+    /// salaries and hire dates but nothing payroll-specific, so those are topped up here. Only
+    /// when the sheet produced none does this invent its own three.
     ///
     /// The runs are built through <see cref="PayrollService"/> rather than written out by hand,
     /// so every figure is real CRA arithmetic: the year-to-date totals accumulate, the CPP and EI
@@ -473,7 +491,10 @@ public class SampleCompanyService
     /// </summary>
     internal static void AddSamplePayroll(CompanyData data, DateTime referenceDate)
     {
-        if (data.Employees.Count > 0)
+        // Keyed on pay runs, not employees. The sample workbook has an Employees sheet, so this
+        // used to see eight imported employees, decide payroll was already set up, and add
+        // nothing at all.
+        if (data.PayRuns.Count > 0)
         {
             return;
         }
@@ -490,27 +511,34 @@ public class SampleCompanyService
 
         DateTime hired = referenceDate.AddYears(-2);
 
-        data.Employees.AddRange(
-        [
-            SampleEmployee("EMP-001", "Sarah Chen", "111111118", "ON", hired,
-                "118 Bay Street", "Toronto", "M5J2N8",
-                PayType.Salary, 78000m),
+        if (data.Employees.Count == 0)
+        {
+            data.Employees.AddRange(
+            [
+                SampleEmployee("EMP-001", "Sarah Chen", "111111118", "ON", hired,
+                    "118 Bay Street", "Toronto", "M5J2N8",
+                    PayType.Salary, 78000m),
 
-            SampleEmployee("EMP-002", "Marcus Bell", "222222226", "ON", hired.AddMonths(7),
-                "47 King Street East", "Hamilton", "L8N1A9",
-                PayType.Hourly, 32.50m),
+                SampleEmployee("EMP-002", "Marcus Bell", "222222226", "ON", hired.AddMonths(7),
+                    "47 King Street East", "Hamilton", "L8N1A9",
+                    PayType.Hourly, 32.50m),
 
-            SampleEmployee("EMP-003", "Priya Raman", "333333334", "BC", hired.AddMonths(14),
-                "900 Granville Street", "Vancouver", "V6Z1K3",
-                PayType.Salary, 92000m),
-        ]);
+                SampleEmployee("EMP-003", "Priya Raman", "333333334", "BC", hired.AddMonths(14),
+                    "900 Granville Street", "Vancouver", "V6Z1K3",
+                    PayType.Salary, 92000m),
+            ]);
+        }
+        else
+        {
+            CompletePayrollDetails(data.Employees, hired);
+        }
 
         var payroll = new PayrollService();
 
         // Oldest first, because each run's deductions depend on the year-to-date the ones before
         // it produced. Building them newest first would put everybody at a zero starting point
         // and quietly under-deduct against the annual ceilings.
-        for (int period = 5; period >= 0; period--)
+        for (int period = SamplePayPeriods - 1; period >= 0; period--)
         {
             DateTime payDate = referenceDate.AddDays(-14 * period);
 
@@ -537,6 +565,68 @@ public class SampleCompanyService
             // In the list before it is approved, so the next run's year-to-date can see it.
             data.PayRuns.Add(run);
             payroll.ApproveAndRecord(data, run);
+        }
+    }
+
+    /// <summary>
+    /// Fills in what a pay run needs and the Employees sheet does not carry.
+    ///
+    /// The sheet has names, salaries, frequencies and hire dates, but no province, social
+    /// insurance number or address. Province decides which tax table applies, so without it a
+    /// pay run cannot be calculated at all, and the other two are what a T4 is filed on.
+    ///
+    /// Only blanks are filled, so anything the spreadsheet did supply wins.
+    /// </summary>
+    private static void CompletePayrollDetails(List<Employee> employees, DateTime fallbackHireDate)
+    {
+        // Cycled rather than all one province, so the sample exercises more than a single tax
+        // table. Quebec is left out on purpose: it brings QPP, QPIP and a second slip, which is a
+        // lot of machinery to switch on in a file people open to look around.
+        (string Province, string Street, string City, string PostalCode)[] places =
+        [
+            ("ON", "118 Bay Street", "Toronto", "M5J2N8"),
+            ("BC", "900 Granville Street", "Vancouver", "V6Z1K3"),
+            ("AB", "222 5 Avenue SW", "Calgary", "T2P0L4"),
+        ];
+
+        for (int i = 0; i < employees.Count; i++)
+        {
+            Employee employee = employees[i];
+            (string province, string street, string city, string postalCode) = places[i % places.Length];
+
+            if (string.IsNullOrWhiteSpace(employee.Province) || employee.Province == "AB")
+            {
+                employee.Province = province;
+            }
+
+            // Patterned so it reads as a placeholder at a glance, and nine digits so year end
+            // does not warn about every employee in the sample.
+            if (string.IsNullOrWhiteSpace(employee.Sin))
+            {
+                char digit = (char)('1' + (i % 9));
+                employee.Sin = new string(digit, 9);
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.Address.City))
+            {
+                employee.Address = new Models.Common.Address
+                {
+                    Street = street,
+                    City = city,
+                    State = province,
+                    ZipCode = postalCode,
+                    Country = "Canada",
+                };
+            }
+
+            // Only for the record of employment, and only meaningful for salaried staff, whose
+            // pay runs record no hours because none are entered.
+            if (employee.PayType == PayType.Salary && employee.StandardHoursPerWeek is null or 0m)
+            {
+                employee.StandardHoursPerWeek = 37.5m;
+            }
+
+            employee.StartDate ??= fallbackHireDate;
         }
     }
 
