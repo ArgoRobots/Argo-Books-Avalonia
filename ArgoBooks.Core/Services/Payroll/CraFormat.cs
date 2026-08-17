@@ -74,7 +74,21 @@ public static class CraFormat
             return fromAlpha2;
         }
 
-        return NameToAlpha3.Value.TryGetValue(upper, out string? fromName) ? fromName : null;
+        if (NameToAlpha3.Value.TryGetValue(upper, out string? fromName))
+        {
+            return fromName;
+        }
+
+        // Last resort, for the informal names the charts already knew about: America, England,
+        // Korea and the like, which are not what the regional data calls those countries.
+        //
+        // Its result is checked rather than trusted. That lookup falls back to returning the
+        // input lowercased when it does not recognise a name, which would put "germany" in a
+        // field the specification says is a three letter ISO code, so only a value the regional
+        // data confirms is allowed through.
+        string mapped = Data.CountryCodeMapping.GetIsoCode(v).ToUpperInvariant();
+
+        return mapped.Length == 3 && Alpha3Codes.Value.Contains(mapped) ? mapped : null;
     }
 
     /// <summary>
@@ -98,23 +112,14 @@ public static class CraFormat
         ["GREAT BRITAIN"] = "GBR",
     };
 
-    private static readonly Lazy<HashSet<string>> Alpha3Codes = new(() =>
-        [.. Regions.Value.Select(r => r.ThreeLetterISORegionName.ToUpperInvariant())]);
-
-    private static readonly Lazy<Dictionary<string, string>> Alpha2ToAlpha3 = new(() =>
-        Regions.Value
-            .GroupBy(r => r.TwoLetterISORegionName.ToUpperInvariant())
-            .ToDictionary(g => g.Key, g => g.First().ThreeLetterISORegionName.ToUpperInvariant()));
-
-    private static readonly Lazy<Dictionary<string, string>> NameToAlpha3 = new(() =>
-        Regions.Value
-            .GroupBy(r => r.EnglishName.ToUpperInvariant())
-            .ToDictionary(g => g.Key, g => g.First().ThreeLetterISORegionName.ToUpperInvariant()));
-
     /// <summary>
     /// Every region the runtime knows. Built once, and defensively: constructing a RegionInfo
     /// throws for the culture names that do not describe a country, and a country lookup is not
     /// worth failing an export over.
+    ///
+    /// Declared before the three lookups built from it. Static initializers run in declaration
+    /// order, so reading it from above would have the compiler treat it as possibly null even
+    /// though the lambdas do not run until first use.
     /// </summary>
     private static readonly Lazy<List<RegionInfo>> Regions = new(() =>
     {
@@ -139,6 +144,19 @@ public static class CraFormat
 
         return regions;
     });
+
+    private static readonly Lazy<HashSet<string>> Alpha3Codes = new(() =>
+        [.. Regions.Value.Select(r => r.ThreeLetterISORegionName.ToUpperInvariant())]);
+
+    private static readonly Lazy<Dictionary<string, string>> Alpha2ToAlpha3 = new(() =>
+        Regions.Value
+            .GroupBy(r => r.TwoLetterISORegionName.ToUpperInvariant())
+            .ToDictionary(g => g.Key, g => g.First().ThreeLetterISORegionName.ToUpperInvariant()));
+
+    private static readonly Lazy<Dictionary<string, string>> NameToAlpha3 = new(() =>
+        Regions.Value
+            .GroupBy(r => r.EnglishName.ToUpperInvariant())
+            .ToDictionary(g => g.Key, g => g.First().ThreeLetterISORegionName.ToUpperInvariant()));
 
     public static bool IsCanada(string? country) => Alpha3Country(country) == "CAN";
 

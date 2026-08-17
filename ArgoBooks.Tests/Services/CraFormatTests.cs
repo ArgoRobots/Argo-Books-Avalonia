@@ -65,6 +65,18 @@ public class CraFormatTests
     public void UnrecognisedCountryIsOmittedRatherThanGuessed(string typed) =>
         Assert.Null(CraFormat.Alpha3Country(typed));
 
+    /// <summary>
+    /// The informal names the chart mapping already carried. That lookup returns the input
+    /// lowercased when it does not recognise a name, so the one thing this must not do is let
+    /// "germany" through as a country code.
+    /// </summary>
+    [Theory]
+    [InlineData("America", "USA")]
+    [InlineData("England", "GBR")]
+    [InlineData("Korea", "KOR")]
+    public void InformalCountryNamesStillResolve(string typed, string expected) =>
+        Assert.Equal(expected, CraFormat.Alpha3Country(typed));
+
     [Theory]
     [InlineData("ON")]
     [InlineData("qc")]
