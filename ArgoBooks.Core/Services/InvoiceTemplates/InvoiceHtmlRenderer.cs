@@ -408,7 +408,10 @@ public partial class InvoiceHtmlRenderer
                 ["ItemDescription"] = null, // Can be extended for product descriptions
                 ["Quantity"] = item.Quantity.ToString("0.##"),
                 ["UnitPrice"] = $"{currencySymbol}{Money(item.UnitPrice)}",
-                ["Amount"] = $"{currencySymbol}{Money(item.Quantity * item.UnitPrice)}"
+                // LineItem.Subtotal, which is quantity x price LESS the discount and is what the
+                // invoice Subtotal is summed from. Printing quantity x price put an Amount on the
+                // line that did not add up to the total beneath it on a discounted invoice.
+                ["Amount"] = $"{currencySymbol}{Money(item.Subtotal)}"
             }).ToList()
         };
 
