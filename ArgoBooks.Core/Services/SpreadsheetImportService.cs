@@ -3899,13 +3899,24 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var employee = existing ?? new Models.Payroll.Employee();
+
+            // A column the sheet does not carry leaves the stored value alone. Writing every
+            // field unconditionally meant importing an ID plus Notes sheet to annotate staff
+            // turned every hourly employee into a salaried one at nil pay, blanked their social
+            // insurance number and wiped their address: the next pay run would pay them nothing
+            // and their T4 could not be filed. Province already guarded for exactly this.
+            bool Has(params string[] columns) => columns.Any(headers.Contains);
+
             employee.Id = id;
             employee.Name = name;
-            employee.EmployeeNumber = GetString(row, headers, "Employee #");
+
+            if (Has("Employee #"))
+                employee.EmployeeNumber = GetString(row, headers, "Employee #");
 
             // Digits only, the way the employee form stores it. People write it with spaces or
             // dashes, and a T4 will not file unless it is nine digits.
-            employee.Sin = new string(GetString(row, headers, "SIN").Where(char.IsAsciiDigit).ToArray());
+            if (Has("SIN"))
+                employee.Sin = new string(GetString(row, headers, "SIN").Where(char.IsAsciiDigit).ToArray());
 
             var province = GetString(row, headers, "Province of Employment");
             if (!string.IsNullOrWhiteSpace(province))
@@ -3914,50 +3925,82 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // "Salary Type" and "Salary Amount" are the common names elsewhere for what this app
             // calls Pay Type and Pay Rate. Only consulted when the app's own column is absent or
             // empty, so an export from Argo Books still wins.
-            var payTypeText = GetString(row, headers, "Pay Type");
-            if (string.IsNullOrWhiteSpace(payTypeText))
-                payTypeText = GetString(row, headers, "Salary Type");
+            if (Has("Pay Type", "Salary Type"))
+            {
+                var payTypeText = GetString(row, headers, "Pay Type");
+                if (string.IsNullOrWhiteSpace(payTypeText))
+                    payTypeText = GetString(row, headers, "Salary Type");
 
-            // Anything that is not explicitly hourly is salaried, which is what "Annual" means.
-            employee.PayType = payTypeText.Trim().Equals("Hourly", StringComparison.OrdinalIgnoreCase)
-                ? Models.Payroll.PayType.Hourly
-                : Models.Payroll.PayType.Salary;
+                // Anything not explicitly hourly is salaried, which is what "Annual" means.
+                employee.PayType = payTypeText.Trim().Equals("Hourly", StringComparison.OrdinalIgnoreCase)
+                    ? Models.Payroll.PayType.Hourly
+                    : Models.Payroll.PayType.Salary;
+            }
 
-            employee.PayRate = GetDecimal(row, headers, "Pay Rate");
-            if (employee.PayRate == 0m)
-                employee.PayRate = GetDecimal(row, headers, "Salary Amount");
+            if (Has("Pay Rate", "Salary Amount"))
+            {
+                decimal rate = GetDecimal(row, headers, "Pay Rate");
+                if (rate == 0m)
+                    rate = GetDecimal(row, headers, "Salary Amount");
+
+                employee.PayRate = rate;
+            }
 
             // Hyphens and spaces stripped, so "Bi-weekly" and "Semi Monthly" land on the enum
             // rather than silently falling back to the default.
-            var frequencyText = new string(GetString(row, headers, "Pay Frequency")
-                .Where(char.IsAsciiLetter).ToArray());
-            employee.PayFrequency = ParseEnum(frequencyText, Models.Payroll.PayFrequency.Biweekly);
+            if (Has("Pay Frequency"))
+            {
+                var frequencyText = new string(GetString(row, headers, "Pay Frequency")
+                    .Where(char.IsAsciiLetter).ToArray());
+                employee.PayFrequency = ParseEnum(frequencyText, Models.Payroll.PayFrequency.Biweekly);
+            }
 
             // Null rather than zero when the cell is blank. Zero reads as "worked no hours" on a
             // record of employment, which costs the employee their claim.
-            employee.StandardHoursPerWeek =
-                SpreadsheetRowReader.GetNullableDecimal(row, headers, "Standard Hours Per Week");
+            if (Has("Standard Hours Per Week"))
+                employee.StandardHoursPerWeek =
+                    SpreadsheetRowReader.GetNullableDecimal(row, headers, "Standard Hours Per Week");
 
-            employee.FederalClaimAmount = GetDecimal(row, headers, "Federal Claim Amount");
-            employee.ProvincialClaimAmount = GetDecimal(row, headers, "Provincial Claim Amount");
-            employee.OntarioDependants = Math.Max(0, GetInt(row, headers, "Ontario Dependants"));
-            employee.IsCppExempt = ReadBool(row, headers, "CPP Exempt");
-            employee.IsEiExempt = ReadBool(row, headers, "EI Exempt");
-            employee.DentalBenefit = ParseEnum(GetString(row, headers, "Dental Benefit"),
-                Models.Payroll.DentalBenefitCode.NotEligible);
+            if (Has("Federal Claim Amount"))
+                employee.FederalClaimAmount = GetDecimal(row, headers, "Federal Claim Amount");
+
+            if (Has("Provincial Claim Amount"))
+                employee.ProvincialClaimAmount = GetDecimal(row, headers, "Provincial Claim Amount");
+
+            if (Has("Ontario Dependants"))
+                employee.OntarioDependants = Math.Max(0, GetInt(row, headers, "Ontario Dependants"));
+
+            if (Has("CPP Exempt"))
+                employee.IsCppExempt = ReadBool(row, headers, "CPP Exempt");
+
+            if (Has("EI Exempt"))
+                employee.IsEiExempt = ReadBool(row, headers, "EI Exempt");
+
+            if (Has("Dental Benefit"))
+                employee.DentalBenefit = ParseEnum(GetString(row, headers, "Dental Benefit"),
+                    Models.Payroll.DentalBenefitCode.NotEligible);
+
             // "Hire Date" is the usual name for it outside this app.
-            employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date")
-                                 ?? SpreadsheetRowReader.GetNullableDateTime(row, headers, "Hire Date");
-            employee.EndDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "End Date");
+            if (Has("Start Date", "Hire Date"))
+                employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date")
+                                     ?? SpreadsheetRowReader.GetNullableDateTime(row, headers, "Hire Date");
 
-            employee.Address = new Address
+            if (Has("End Date"))
+                employee.EndDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "End Date");
+
+            // Replaced wholesale rather than merged, so a sheet carrying an address is
+            // authoritative for all of it, but only when it carries one at all.
+            if (Has("Street", "City", "Country") || Has(StateVariants) || Has(PostalCodeVariants))
             {
-                Street = GetString(row, headers, "Street"),
-                City = GetString(row, headers, "City"),
-                State = GetStringMulti(row, headers, StateVariants),
-                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
-                Country = GetString(row, headers, "Country")
-            };
+                employee.Address = new Address
+                {
+                    Street = GetString(row, headers, "Street"),
+                    City = GetString(row, headers, "City"),
+                    State = GetStringMulti(row, headers, StateVariants),
+                    ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
+                    Country = GetString(row, headers, "Country")
+                };
+            }
 
             employee.IsArchived = GetString(row, headers, "Status")
                 .Trim().Equals("Archived", StringComparison.OrdinalIgnoreCase);
