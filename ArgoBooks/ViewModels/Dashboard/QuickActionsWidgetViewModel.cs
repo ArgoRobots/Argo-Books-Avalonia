@@ -278,7 +278,7 @@ public partial class QuickActionsWidgetViewModel : WidgetViewModelBase
     [RelayCommand]
     private void NewStockAdjustment()
     {
-        App.NavigationService?.NavigateTo("Adjustments");
+        App.NavigationService?.NavigateTo("StockAdjustments");
         App.StockAdjustmentsModalsViewModel?.OpenAddModal();
     }
 
