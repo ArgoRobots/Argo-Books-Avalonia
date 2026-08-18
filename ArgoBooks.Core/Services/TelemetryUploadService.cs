@@ -308,6 +308,32 @@ public class TelemetryUploadService : ITelemetryUploadService
             durationMs = api.DurationMs,
             success = api.Success,
         },
+        CompanyProfileEvent profile => new
+        {
+            dataId = profile.DataId,
+            timestamp = profile.Timestamp,
+            dataType = "CompanyProfile",
+            companyName = profile.CompanyName,
+            businessType = profile.BusinessType,
+            industry = profile.Industry,
+            country = profile.Country,
+            currency = profile.Currency,
+            language = profile.Language,
+            isSample = profile.IsSample,
+        },
+        StartupEvent startup => new
+        {
+            dataId = startup.DataId,
+            timestamp = startup.Timestamp,
+            dataType = "Startup",
+            toFirstPaintMs = startup.ToFirstPaintMs,
+            toReadyMs = startup.ToReadyMs,
+            coldStart = startup.ColdStart,
+        },
+
+        // Anything with no arm is dropped by the caller's null filter, but the whole batch is
+        // still marked uploaded, so it is discarded permanently rather than retried. Both types
+        // above shipped without one and were never sent at all.
         _ => null,
     };
 }
