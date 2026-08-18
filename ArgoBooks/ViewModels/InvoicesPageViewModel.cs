@@ -558,6 +558,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
+        if (_paymentSavedHandler != null && App.PaymentModalsViewModel != null)
+        {
+            App.PaymentModalsViewModel.PaymentSaved -= _paymentSavedHandler;
+            _paymentSavedHandler = null;
+        }
         if (App.InvoiceModalsViewModel != null)
         {
             App.InvoiceModalsViewModel.InvoiceSaved -= OnInvoiceSaved;
@@ -1511,6 +1516,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Records a payment against this invoice, with the invoice already chosen.
     /// </summary>
+    /// <summary>Held so a cancelled modal's subscription can be detached on the next open.</summary>
+    private EventHandler? _paymentSavedHandler;
+
     [RelayCommand]
     private void RecordPayment(InvoiceDisplayItem? item)
     {
@@ -1519,15 +1527,30 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         PaymentModalsViewModel? payments = App.PaymentModalsViewModel;
         if (payments == null) return;
 
+        // Detach whatever a previous open left behind. PaymentSaved only fires on save, so
+        // cancelling the modal left its handler subscribed and every later payment reloaded the
+        // list once more per cancellation.
+        if (_paymentSavedHandler != null)
+        {
+            payments.PaymentSaved -= _paymentSavedHandler;
+            _paymentSavedHandler = null;
+        }
+
         // Refresh the list once the payment lands so the invoice's status and
         // balance reflect it without waiting for a navigation.
         void OnSaved(object? _, EventArgs __)
         {
-            payments.PaymentSaved -= OnSaved;
+            if (_paymentSavedHandler != null)
+            {
+                payments.PaymentSaved -= _paymentSavedHandler;
+                _paymentSavedHandler = null;
+            }
+
             LoadInvoices();
         }
 
-        payments.PaymentSaved += OnSaved;
+        _paymentSavedHandler = OnSaved;
+        payments.PaymentSaved += _paymentSavedHandler;
         payments.OpenAddModalForInvoice(item.Id);
     }
 
