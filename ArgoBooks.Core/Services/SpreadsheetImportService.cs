@@ -2078,12 +2078,15 @@ public class SpreadsheetImportService
             var rows = GetDataRows(worksheet, headers.Count);
             var sheetName = worksheet.Name;
 
-            // "ID" for every sheet including Invoices, which exports both that (INV-2026-00001)
-            // and "Invoice #" (#INV-2026-00001). The line item and payment sheets reference the
-            // Id, so collecting the display number here matched nothing.
-            var idColumn = "ID";
+            // The Invoices sheet exports both "ID" (INV-2026-00001) and "Invoice #"
+            // (#INV-2026-00001), and the line item and payment sheets reference the ID, so that
+            // is what has to be collected. But ImportInvoices falls back to the number when a
+            // sheet has no ID column, and the schema documents that a sheet carrying only
+            // "Invoice #" still works, so this has to mirror that fallback per row or every
+            // child row of such a sheet is flagged as an orphan.
+            bool invoices = sheetName == "Invoices";
 
-            if (!headers.Contains(idColumn)) continue;
+            if (!headers.Contains("ID") && !(invoices && headers.Contains("Invoice #"))) continue;
 
             var entityType = GetEntityTypeFromSheetName(sheetName);
             if (string.IsNullOrEmpty(entityType)) continue;
@@ -2093,7 +2096,11 @@ public class SpreadsheetImportService
 
             foreach (var row in rows)
             {
-                var id = GetString(row, headers, idColumn);
+                var id = GetString(row, headers, "ID");
+
+                if (string.IsNullOrEmpty(id) && invoices)
+                    id = GetString(row, headers, "Invoice #");
+
                 if (!string.IsNullOrEmpty(id))
                     ids[entityType].Add(id);
             }
