@@ -311,13 +311,35 @@ public class RoeTests
         Assert.Equal(0m, Built(data).TotalInsurableEarnings);
     }
 
+    /// <summary>
+    /// Block 17A is vacation pay paid BECAUSE OF the separation, not the year's vacation pay.
+    ///
+    /// This test previously asserted the sum across every period, which is the one thing Service
+    /// Canada's ROE guide says must not be reported: its chart lists vacation pay "included with
+    /// each pay" as do-not-report, and 17A as the amount payable on layoff or termination. An
+    /// inflated 17A moves the date EI benefits start, so it costs the employee.
+    /// </summary>
     [Fact]
-    public void VacationPay_IsCarriedForBlock17()
+    public void VacationPay_IsTheFinalPeriodOnly_NotTheWholeHistory()
     {
         CompanyData data = Data(Person());
         AddRuns(data, 3, vacation: 80m);
 
-        Assert.Equal(240m, Built(data).VacationPay);
+        Assert.Equal(80m, Built(data).VacationPay);
+    }
+
+    /// <summary>The separation payout is the one that lands in the final period.</summary>
+    [Fact]
+    public void VacationPay_TakesTheSeparationPayout()
+    {
+        CompanyData data = Data(Person());
+        AddRuns(data, 3, vacation: 80m);
+
+        // The most recent period end, which AddRuns lays out first.
+        PayRun finalRun = data.PayRuns.OrderByDescending(r => r.PeriodEnd).First();
+        finalRun.Lines[0].VacationPay = 2400m;
+
+        Assert.Equal(2400m, Built(data).VacationPay);
     }
 
     #endregion

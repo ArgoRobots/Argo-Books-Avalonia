@@ -165,9 +165,17 @@ public class RoeService
             .Take(worksheet.EarningsPeriodCount)
             .Sum(p => p.InsurableEarnings);
 
-        worksheet.VacationPay = periods
-            .SelectMany(p => p.Lines)
-            .Sum(l => l.VacationPay);
+        // The final period only, not the whole history. Service Canada's ROE guide defines block
+        // 17A as vacation pay paid or payable BECAUSE OF the separation, and its chart is explicit
+        // that vacation pay "included with each pay", the usual percentage added to every cheque,
+        // must NOT be reported here. Summing every period reported exactly that.
+        //
+        // The final period is the best the recorded data supports: nothing distinguishes a
+        // termination payout from an ordinary accrual except when it was paid. The two remaining
+        // categories in the guide, a granted leave period and an anniversary payment falling after
+        // the interruption, are future-dated and unknowable from pay runs, which is why the
+        // worksheet asks the employer to confirm the figure.
+        worksheet.VacationPay = periods[0].Lines.Sum(l => l.VacationPay);
 
         return worksheet;
     }

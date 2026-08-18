@@ -52,7 +52,11 @@ public class RoeWorksheet
     /// </summary>
     public List<RoePayPeriod> Periods { get; set; } = [];
 
-    /// <summary>Block 17A. Vacation pay owed or paid on separation.</summary>
+    /// <summary>
+    /// Block 17A. Vacation pay paid or payable BECAUSE OF the separation, which is the final
+    /// period's only. Vacation pay included with every cheque is explicitly excluded by Service
+    /// Canada's ROE guide, so this is not the employee's vacation pay for the year.
+    /// </summary>
     public decimal VacationPay { get; set; }
 
     /// <summary>

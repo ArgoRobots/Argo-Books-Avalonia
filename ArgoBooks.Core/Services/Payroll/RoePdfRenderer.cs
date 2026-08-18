@@ -118,8 +118,17 @@ public static class RoePdfRenderer
                         Line(rows, "15B", $"Total insurable earnings, last {sheet.EarningsPeriodCount} pay periods",
                             Money(sheet.TotalInsurableEarnings), bold: true);
 
-                        Line(rows, "17A", "Vacation pay", Money(sheet.VacationPay));
+                        Line(rows, "17A", "Vacation pay on separation", Money(sheet.VacationPay));
                     });
+
+                    // Block 17A is the one figure here the pay runs cannot settle on their own.
+                    c.Item().PaddingTop(6).Text(
+                            "Block 17A is vacation pay paid because of the separation. This shows the "
+                            + "vacation pay in the final period only: vacation pay included with every "
+                            + "cheque must NOT be reported, and pay for a granted leave period or an "
+                            + "anniversary date after the interruption must be added by hand. Confirm "
+                            + "it before filing.")
+                        .FontSize(9).FontColor(Colors.Grey.Darken2);
 
                     // The two windows are different lengths, which reads like a mistake on the
                     // page unless it is said out loud.
