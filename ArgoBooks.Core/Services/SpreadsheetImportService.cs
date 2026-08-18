@@ -2042,6 +2042,21 @@ public class SpreadsheetImportService
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
                 return ImportEntityResult.Failed;
+            case SpreadsheetSheetType.Employees:
+                // Reachable: ImportSchemaDefinition publishes an Employees schema and the
+                // rescue classifier can return it. Same shape as Customers above.
+                var employee = JsonSerializer.Deserialize<Models.Payroll.Employee>(jsonStr, opts);
+                if (employee != null && !string.IsNullOrEmpty(employee.Id))
+                {
+                    employee.Name = NameOrUnknown(employee.Name);
+                    var existingEmployee = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
+                    if (skipExisting && existingEmployee != null) return ImportEntityResult.SkippedExisting;
+                    if (existingEmployee != null) data.Employees.Remove(existingEmployee);
+                    data.Employees.Add(employee);
+                    return existingEmployee != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
+                }
+                return ImportEntityResult.Failed;
+
             default:
                 return ImportEntityResult.Failed;
         }
