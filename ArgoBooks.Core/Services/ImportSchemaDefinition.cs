@@ -321,7 +321,7 @@ public static class ImportSchemaDefinition
 
             [SpreadsheetSheetType.InvoiceLineItems] =
             [
-                new("Invoice ID", "string", "Identifier of the invoice these lines belong to", Required: true),
+                new("Invoice ID", "string", "Identifier of the invoice these lines belong to", Required: true, JsonName: "invoiceId"),
                 new("Product ID", "string", "Product identifier, if the line is linked to a product", JsonName: "productId"),
                 new("Description", "string", "What the line is for", JsonName: "description"),
                 new("Quantity", "decimal", "Number of units", JsonName: "quantity"),
@@ -335,7 +335,7 @@ public static class ImportSchemaDefinition
 
             [SpreadsheetSheetType.PurchaseOrderLineItems] =
             [
-                new("PO ID", "string", "Purchase order identifier", Required: true),
+                new("PO ID", "string", "Purchase order identifier", Required: true, JsonName: "poId"),
                 new("Product ID", "string", "Product identifier", Required: true, JsonName: "productId"),
                 new("Quantity", "int", "Ordered quantity", JsonName: "quantity"),
                 new("Unit Cost", "decimal", "Cost per unit", JsonName: "unitCost"),
