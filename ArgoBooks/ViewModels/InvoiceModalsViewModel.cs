@@ -305,13 +305,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var accounts = App.CompanyManager?.CompanyData?.Settings.PaymentPortal?.ConnectedAccounts;
             var portal = accounts != null &&
                 (accounts.StripeConnected || accounts.PaypalConnected || accounts.SquareConnected);
+            // So the live recompute can take it off the balance. Fixed for the life of the
+            // dialog, since payments cannot be edited from this screen.
+            decimal paid = string.IsNullOrEmpty(_editingInvoiceId)
+                ? 0m
+                : App.CompanyManager?.CompanyData?.GetInvoice(_editingInvoiceId)?.AmountPaid ?? 0m;
+
             return System.Text.Json.JsonSerializer.Serialize(new
             {
                 symbol = InvoiceCurrencySymbol,
                 code = SelectedCurrencyCode,
                 deposit = SecurityDeposit,
                 portal,
-                passFee = OptPassProcessingFee
+                passFee = OptPassProcessingFee,
+                paid
             });
         }
     }

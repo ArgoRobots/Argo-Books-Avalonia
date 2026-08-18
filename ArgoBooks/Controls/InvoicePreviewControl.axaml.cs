@@ -477,6 +477,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         var deposit = Number(cfg.deposit) || 0;
         var portal = !!cfg.portal;
         var passFee = cfg.passFee !== false;
+        var paid = Number(cfg.paid) || 0;
 
         function num(el) { return el ? (parseFloat((el.textContent || '').replace(/[^0-9.\-]/g, '')) || 0) : 0; }
         function money(a) { return sym + a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -514,7 +515,11 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             var taxableBase = subtotal - discountCalc + feeCalc + shipping;
             var taxAmount = taxMode === 'fixed' ? tax : taxableBase * tax / 100;
             var total = taxableBase + taxAmount + deposit;
-            var balance = total;
+
+            // Less whatever has already been paid. This was 'balance = total', so editing a
+            // part-paid invoice showed Amount to Pay as the full total sitting right beneath the
+            // Amount Paid row. Floored at zero so an overpayment does not render a negative.
+            var balance = Math.max(0, total - paid);
             var procFee = (portal && passFee && balance > 0) ? Math.round((balance * 2.9 / 100 + 0.30) * 100) / 100 : 0;
 
             // The (x%) suffix on the tax label is server-rendered, so it has to be
@@ -522,10 +527,8 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             // Trims trailing zeros to match the C# ""0.##"" format.
             setOut('taxRateLabel', taxMode === 'fixed' ? '' : ' (' + String(parseFloat(tax.toFixed(2))) + '%)');
             setOut('subtotal', money(subtotal));
-            setOut('total', due(total));
             setOut('processingFee', money(procFee));
             setOut('amountToPay', due(balance + procFee));
-            setOut('balance', due(balance));
         };
 
         // Rate placeholder: show a greyed hint (e.g. ""$0.00"") instead of a literal zero, so clicking
