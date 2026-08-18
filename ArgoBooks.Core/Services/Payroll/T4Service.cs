@@ -210,6 +210,36 @@ public class T4Service
                          + "filing was processed, and the submission is rejected without one.");
         }
 
+        // The employer's own address, which BuildSummary writes as prov_cd, pstl_cd and cntry_cd
+        // just as it does an employee's. Only the employees were being checked, so a company that
+        // typed "Alberta" into a free-text province box passed validation, showed no problems, and
+        // had CRA reject the file over a two-letter code of "AL".
+        bool employerCanadian = string.IsNullOrWhiteSpace(t4.EmployerAddress.Country)
+                                || CraFormat.IsCanada(t4.EmployerAddress.Country);
+
+        if (!string.IsNullOrWhiteSpace(t4.EmployerAddress.State)
+            && employerCanadian
+            && !CraFormat.IsProvinceCode(t4.EmployerAddress.State))
+        {
+            problems.Add($"The company province \"{t4.EmployerAddress.State}\" is not a Canadian "
+                         + "province or territory code. Use two letters, such as ON or QC.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(t4.EmployerAddress.ZipCode)
+            && !CraFormat.IsPostalCode(t4.EmployerAddress.ZipCode, t4.EmployerAddress.Country))
+        {
+            problems.Add($"The company postal code \"{t4.EmployerAddress.ZipCode}\" is not in a form "
+                         + "CRA accepts. A Canadian postal code is six characters, such as K1A0B1.");
+        }
+
+        string badEmployer = CraFormat.DisallowedCharacters(
+            t4.EmployerAddress.Street + " " + t4.EmployerAddress.City, address: true);
+
+        if (badEmployer.Length > 0)
+        {
+            problems.Add($"The company address contains {Describe(badEmployer)}, which CRA does not accept.");
+        }
+
         foreach (T4Slip slip in t4.Slips)
         {
             string who = string.IsNullOrWhiteSpace(slip.Surname) ? slip.EmployeeId : slip.Surname;
