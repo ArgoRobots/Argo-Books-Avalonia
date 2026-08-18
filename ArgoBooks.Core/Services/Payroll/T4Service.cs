@@ -45,7 +45,11 @@ public class T4Service
             ContactPhone = company.PayrollContactPhone ?? company.Phone ?? string.Empty,
 
             // Both for the T619 transmittal that wraps the submission rather than for any slip.
-            ContactEmail = company.PayrollContactEmail ?? string.Empty,
+            // Falls back to the company address, matching ContactPhone above and the year end
+            // screen, which shows that fallback in its box. Without it a company that has only a
+            // general email saw a valid address on screen while validation blocked filing over an
+            // empty one, with nothing to say why.
+            ContactEmail = company.PayrollContactEmail ?? company.Email ?? string.Empty,
             LanguageCode = string.Equals(data.Settings.Localization.Language, "French",
                 StringComparison.OrdinalIgnoreCase) ? "F" : "E",
         };
