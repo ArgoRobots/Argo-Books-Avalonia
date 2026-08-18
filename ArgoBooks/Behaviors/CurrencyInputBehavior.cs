@@ -129,9 +129,37 @@ public static class CurrencyInputBehavior
 
         string digits = new(text.Where(char.IsDigit).ToArray());
 
-        // Only the FIRST decimal point counts. A second one is something the user could only
-        // have pasted in, and taking it would move the whole fractional part.
-        int dot = places > 0 ? text.IndexOf('.') : -1;
+        // The decimal separator, which may be the one the machine uses rather than the one the
+        // box was written with. Only '.' was recognised, and every other non-digit was dropped,
+        // so a French or German machine typing "1234,56" had the comma swallowed and the digits
+        // landed as "123,456": a hundredfold error on the way in, which TryParse then read back
+        // faithfully.
+        //
+        // The first separator with no more trailing digits than the currency has decimals. A
+        // grouping separator always has exactly three after it, so this tells them apart without
+        // consulting a culture: "1,234" is a thousand, "1234,56" is a decimal.
+        int dot = -1;
+
+        if (places > 0)
+        {
+            char cultureSeparator = CultureInfo.CurrentCulture.NumberFormat
+                .NumberDecimalSeparator.FirstOrDefault('.');
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] != '.' && text[i] != cultureSeparator)
+                {
+                    continue;
+                }
+
+                if (text[(i + 1)..].Count(char.IsDigit) <= places)
+                {
+                    dot = i;
+                    break;
+                }
+            }
+        }
+
         string wholeText = dot < 0 ? text : text[..dot];
         string whole = new(wholeText.Where(char.IsDigit).ToArray());
         string fraction = dot < 0 ? string.Empty : new(text[(dot + 1)..].Where(char.IsDigit).ToArray());
