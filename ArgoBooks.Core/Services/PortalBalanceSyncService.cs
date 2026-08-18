@@ -187,7 +187,12 @@ public sealed class PortalBalanceSyncService : IDisposable
 
         // Rotated, so more than MaxBatchSize published invoices are all covered across sweeps
         // instead of the first 25 being re-sent forever.
-        int start = _reconcileCursor % candidates.Count;
+        int start;
+        lock (_gate)
+        {
+            start = _reconcileCursor % candidates.Count;
+        }
+
         var items = new List<PortalBalanceSyncItem>();
 
         for (int offset = 0; offset < candidates.Count && items.Count < MaxBatchSize; offset++)
@@ -196,9 +201,17 @@ public sealed class PortalBalanceSyncService : IDisposable
             items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData));
         }
 
-        _reconcileCursor = (start + items.Count) % candidates.Count;
-
-        await SendAsync(items, cancellationToken);
+        // Only on success, and only then. Advancing regardless meant a batch that failed (offline,
+        // 5xx) was not tried again until the cursor had rotated all the way round, which for a
+        // company with several hundred published invoices is many sweeps of the only retry there
+        // is. Under the lock because Queue touches shared state from any thread.
+        if (await SendAsync(items, cancellationToken))
+        {
+            lock (_gate)
+            {
+                _reconcileCursor = (start + items.Count) % candidates.Count;
+            }
+        }
     }
 
     /// <summary>Whether the push landed, so a caller can put its ids back if it did not.</summary>
