@@ -1513,12 +1513,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    /// <summary>
-    /// Records a payment against this invoice, with the invoice already chosen.
-    /// </summary>
     /// <summary>Held so a cancelled modal's subscription can be detached on the next open.</summary>
     private EventHandler? _paymentSavedHandler;
 
+    /// <summary>
+    /// Records a payment against this invoice, with the invoice already chosen.
+    /// </summary>
     [RelayCommand]
     private void RecordPayment(InvoiceDisplayItem? item)
     {
