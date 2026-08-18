@@ -195,10 +195,13 @@ public static class CurrencyInputBehavior
     /// <summary>
     /// Reads a figure back from a formatted box.
     ///
-    /// Invariant first, because that is what the formatter writes. The symbol is stripped rather
-    /// than relying on NumberStyles.AllowCurrencySymbol, which only accepts the CULTURE's symbol:
-    /// a company keeping books in euros on an English Canadian machine would otherwise fail to
-    /// parse its own output and silently read as zero.
+    /// The symbol is stripped rather than relying on NumberStyles.AllowCurrencySymbol, which only
+    /// accepts the CULTURE's symbol: a company keeping books in euros on an English Canadian
+    /// machine would otherwise fail to parse its own output and silently read as zero.
+    ///
+    /// The separator is resolved before parsing rather than by trying one culture then another.
+    /// Falling back does not work here: NumberStyles.Number allows thousands separators, so
+    /// "16129,00" does not fail under InvariantCulture, it succeeds as 1612900.
     /// </summary>
     public static bool TryParse(string? text, out decimal value)
     {
@@ -211,7 +214,39 @@ public static class CurrencyInputBehavior
 
         string cleaned = new(text.Where(c => char.IsDigit(c) || c == '-' || c == '.' || c == ',').ToArray());
 
-        return decimal.TryParse(cleaned, NumberStyles.Number, CultureInfo.InvariantCulture, out value)
-               || decimal.TryParse(cleaned, NumberStyles.Number, CultureInfo.CurrentCulture, out value);
+        if (cleaned.Length == 0)
+        {
+            return false;
+        }
+
+        int lastSeparator = cleaned.LastIndexOfAny(['.', ',']);
+
+        if (lastSeparator >= 0)
+        {
+            string tail = cleaned[(lastSeparator + 1)..];
+            int separatorCount = cleaned.Count(c => c is '.' or ',');
+            bool bothKinds = cleaned.Contains('.') && cleaned.Contains(',');
+
+            // Grouping only when it cannot be a decimal point: both kinds present means the last
+            // one is decimal, and a repeated separator can only be grouping. That leaves a single
+            // separator with exactly three digits after it ("1,234"), which is a thousand to an
+            // English reader and 1.234 to a French one, so the machine's own separator decides.
+            bool isGrouping =
+                !bothKinds
+                && tail.Length == 3
+                && (separatorCount > 1
+                    || !CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator
+                        .Contains(cleaned[lastSeparator]));
+
+            string whole = cleaned[..lastSeparator].Replace(".", string.Empty).Replace(",", string.Empty);
+
+            cleaned = isGrouping || tail.Length == 0
+                ? whole + tail
+                : whole + "." + tail;
+        }
+
+        // Float, not Number: grouping is already gone, and allowing it again would let a stray
+        // separator through as a silent factor of a thousand.
+        return decimal.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
     }
 }
