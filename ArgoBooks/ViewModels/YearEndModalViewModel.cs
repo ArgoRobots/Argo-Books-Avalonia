@@ -602,6 +602,8 @@ public partial class YearEndModalViewModel : ViewModelBase
             EmployerAddress = _return.EmployerAddress,
             ContactName = _return.ContactName,
             ContactPhone = _return.ContactPhone,
+            ContactEmail = _return.ContactEmail,
+            LanguageCode = _return.LanguageCode,
             ReportType = FilingType,
             AmendmentNote = AmendmentNote,
             Slips = SlipsToFile(),
