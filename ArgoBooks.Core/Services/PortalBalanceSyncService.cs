@@ -137,7 +137,18 @@ public sealed class PortalBalanceSyncService : IDisposable
             if (items.Count >= MaxBatchSize) break;
         }
 
-        await SendAsync(items, cancellationToken);
+        // Back into _pending if it did not land. They are taken out before the request so a
+        // concurrent Queue is not lost, which also means nothing else will retry them.
+        if (!await SendAsync(items, cancellationToken))
+        {
+            lock (_gate)
+            {
+                foreach (string id in ids)
+                {
+                    _pending.Add(id);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -181,9 +192,10 @@ public sealed class PortalBalanceSyncService : IDisposable
         await SendAsync(items, cancellationToken);
     }
 
-    private async Task SendAsync(List<PortalBalanceSyncItem> items, CancellationToken cancellationToken)
+    /// <summary>Whether the push landed, so a caller can put its ids back if it did not.</summary>
+    private async Task<bool> SendAsync(List<PortalBalanceSyncItem> items, CancellationToken cancellationToken)
     {
-        if (items.Count == 0) return;
+        if (items.Count == 0) return true;
 
         try
         {
@@ -196,15 +208,18 @@ public sealed class PortalBalanceSyncService : IDisposable
                     $"Portal balance sync rejected: {response.Message}", "PortalBalanceSync");
             }
 
+            return response.Success;
         }
         catch (OperationCanceledException)
         {
-            // Shutdown or a superseding push; the next reconcile covers it.
+            // Shutdown or a superseding push. Not landed, so the caller re-queues.
+            return false;
         }
         catch (Exception ex)
         {
             _errorLogger?.LogWarning(
                 $"Portal balance sync failed: {ex.Message}", "PortalBalanceSync");
+            return false;
         }
     }
 
