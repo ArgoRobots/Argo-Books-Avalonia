@@ -4000,16 +4000,20 @@ public partial class App : Application
                     InvoiceModalsViewModel?.OpenCreateFromRental(rentalParam.RentalRecordId);
                 });
             }
-            else if (param is TransactionNavigationParameter navParam)
+            bool highlighting = false;
+
+            if (param is TransactionNavigationParameter navParam)
             {
                 _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
                 _invoicesPageViewModel.ApplyHighlight();
+                highlighting = true;
             }
             else if (param is Dictionary<string, object?> dict
                 && dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
             {
                 _invoicesPageViewModel.SelectedTabIndex = index;
             }
+
             // The ViewModel is cached across navigations, so without this the page
             // shows whatever it held when it was first built. Refresh reads the
             // current CompanyData, and the portal sync pulls in online payments
@@ -4017,7 +4021,16 @@ public partial class App : Application
             // refreshes these ViewModels again when it completes, so an invoice
             // paid on the portal shows up on arriving here rather than only after
             // visiting Payments or waiting out the 5-minute timer.
-            _invoicesPageViewModel.RefreshInvoicesCommand.Execute(null);
+            //
+            // Skipped when we have just highlighted a row. ApplyHighlight sets IsHighlighted and
+            // then clears HighlightTransactionId, so re-filtering here rebuilt the list with a
+            // null id and every row came back unhighlighted: a Ctrl+K jump to an invoice, or any
+            // drill-down from the dashboard, landed on the right page pointing at nothing. The
+            // list was also being built twice per navigation.
+            if (!highlighting)
+            {
+                _invoicesPageViewModel.RefreshInvoicesCommand.Execute(null);
+            }
             _ = AutoSyncPortalPaymentsAsync();
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
