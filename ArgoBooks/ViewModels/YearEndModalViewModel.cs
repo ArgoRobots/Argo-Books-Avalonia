@@ -332,6 +332,14 @@ public partial class YearEndModalViewModel : ViewModelBase
     {
         CompanyData? data = App.CompanyManager?.CompanyData;
 
+        // Back to an original filing. This view model is a shell singleton, so an amendment
+        // filed earlier in the session left the Amendment radio and its note still set, and
+        // Rebuild deliberately re-applies the previous slip selection by employee id. Reopening
+        // Year end would then export another amended return, or a cancellation, instead of an
+        // original.
+        FilingType = T4ReportType.Original;
+        AmendmentNote = string.Empty;
+
         _refillingYears = true;
         AvailableYears.Clear();
 
