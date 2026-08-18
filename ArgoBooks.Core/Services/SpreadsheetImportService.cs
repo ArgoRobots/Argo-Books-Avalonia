@@ -2063,11 +2063,10 @@ public class SpreadsheetImportService
             var rows = GetDataRows(worksheet, headers.Count);
             var sheetName = worksheet.Name;
 
-            var idColumn = sheetName switch
-            {
-                "Invoices" => "Invoice #",
-                _ => "ID"
-            };
+            // "ID" for every sheet including Invoices, which exports both that (INV-2026-00001)
+            // and "Invoice #" (#INV-2026-00001). The line item and payment sheets reference the
+            // Id, so collecting the display number here matched nothing.
+            var idColumn = "ID";
 
             if (!headers.Contains(idColumn)) continue;
 
