@@ -224,19 +224,20 @@ public static class CurrencyInputBehavior
         if (lastSeparator >= 0)
         {
             string tail = cleaned[(lastSeparator + 1)..];
-            int separatorCount = cleaned.Count(c => c is '.' or ',');
             bool bothKinds = cleaned.Contains('.') && cleaned.Contains(',');
 
             // Grouping only when it cannot be a decimal point: both kinds present means the last
             // one is decimal, and a repeated separator can only be grouping. That leaves a single
-            // separator with exactly three digits after it ("1,234"), which is a thousand to an
-            // English reader and 1.234 to a French one, so the machine's own separator decides.
-            bool isGrouping =
-                !bothKinds
-                && tail.Length == 3
-                && (separatorCount > 1
-                    || !CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator
-                        .Contains(cleaned[lastSeparator]));
+            // separator with exactly three digits after it, which is read as grouping.
+            //
+            // Not the machine's separator, which is the tempting answer and the wrong one. These
+            // boxes are written by CurrencyInfo.Format and Format below, both deliberately
+            // InvariantCulture so a customer-facing invoice never renders a hybrid like
+            // "$1.234,56". A zero-decimal currency therefore sits in the box as "Ft52,000" with
+            // no decimal point at all, and asking a comma-decimal machine would read that as 52.
+            // Money is never quoted to three decimals here either, since Format only ever writes
+            // N0 or N2.
+            bool isGrouping = !bothKinds && tail.Length == 3;
 
             string whole = cleaned[..lastSeparator].Replace(".", string.Empty).Replace(",", string.Empty);
 

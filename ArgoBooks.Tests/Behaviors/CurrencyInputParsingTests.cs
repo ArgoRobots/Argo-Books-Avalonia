@@ -54,15 +54,27 @@ public class CurrencyInputParsingTests
         Assert.Equal(16129.00m, ParseUnder("fr-CA", "16129.00"));
 
     /// <summary>
-    /// The genuinely ambiguous case, and the only one the machine's locale decides: exactly three
-    /// digits after a single separator. A thousand to an English reader, 1.234 to a French one.
+    /// A single separator with exactly three digits after it is grouping on ANY machine.
+    ///
+    /// Deliberately not the machine's own separator. These boxes are written by
+    /// CurrencyInfo.Format, which is InvariantCulture on purpose so a customer-facing invoice
+    /// never renders a hybrid like "$1.234,56". A zero-decimal currency therefore sits in the box
+    /// as "Ft52,000" with no decimal point at all, and asking a comma-decimal machine would read
+    /// that as 52 and write it straight back to the record.
     /// </summary>
-    [Fact]
-    public void ThreeDigitTailFollowsTheMachineLocale()
-    {
-        Assert.Equal(1234m, ParseUnder("en-CA", "1,234"));
-        Assert.Equal(1.234m, ParseUnder("fr-CA", "1,234"));
-    }
+    [Theory]
+    [InlineData("en-CA")]
+    [InlineData("fr-CA")]
+    [InlineData("hu-HU")]
+    public void ThreeDigitTailIsGroupingOnEveryMachine(string culture) =>
+        Assert.Equal(1234m, ParseUnder(culture, "1,234"));
+
+    /// <summary>The zero-decimal currency round trip, which is where this bit first went wrong.</summary>
+    [Theory]
+    [InlineData("hu-HU")]
+    [InlineData("en-CA")]
+    public void ZeroDecimalCurrencyRoundTrips(string culture) =>
+        Assert.Equal(52000m, ParseUnder(culture, "Ft52,000"));
 
     [Theory]
     [InlineData("1,234.56", 1234.56)]
