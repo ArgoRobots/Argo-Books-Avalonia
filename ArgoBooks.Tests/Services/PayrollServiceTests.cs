@@ -534,6 +534,27 @@ public class PayrollServiceTests
         Assert.Equal(monthly * 3m, quarterly);
     }
 
+    /// <summary>
+    /// Which deadline the deductions on a given pay DATE fall under, which is a different question
+    /// from which deadline has not passed yet.
+    ///
+    /// Asking NextRemittance with a pay date answers the wrong one: a regular remitter paid on
+    /// 10 August is inside July's deadline of 15 August, so it returns that, when August's
+    /// deductions are due 15 September.
+    /// </summary>
+    [Theory]
+    [InlineData(RemitterType.Regular, "2026-08-10", "2026-09-15")]
+    [InlineData(RemitterType.Regular, "2026-08-20", "2026-09-15")]
+    [InlineData(RemitterType.Regular, "2026-08-31", "2026-09-15")]
+    [InlineData(RemitterType.Quarterly, "2026-08-10", "2026-10-15")]
+    [InlineData(RemitterType.AcceleratedThreshold1, "2026-08-10", "2026-08-25")]
+    [InlineData(RemitterType.AcceleratedThreshold1, "2026-08-20", "2026-09-10")]
+    public void TheDeadlineForAPayDate_IsThePeriodItFallsIn(RemitterType type, string payDate, string expected) =>
+        Assert.Equal(
+            DateTime.Parse(expected, System.Globalization.CultureInfo.InvariantCulture),
+            PayrollService.RemittanceDueFor(
+                DateTime.Parse(payDate, System.Globalization.CultureInfo.InvariantCulture), type));
+
     /// <summary>The default has to stay regular, or every existing company file changes meaning.</summary>
     [Fact]
     public void TheDefault_IsStillRegular()

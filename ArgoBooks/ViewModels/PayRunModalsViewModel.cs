@@ -628,8 +628,9 @@ public partial class PayRunModalsViewModel : ViewModelBase
         // assuming the 15th. An accelerated remitter's real deadline can be three weeks earlier.
         RemitterType remitter = data.Settings.Company.RemitterType;
 
-        // As at the pay date, not today: this note is about the run being approved.
-        (_, DateTime due) = PayrollService.NextRemittance([_draft], _draft.PayDate, remitter);
+        // The deadline for the period this pay date falls IN. NextRemittance answers a different
+        // question, "which deadline has not passed yet", and returns the previous period's.
+        DateTime due = PayrollService.RemittanceDueFor(_draft.PayDate, remitter);
 
         RemittanceDueNote = $"Due to CRA by {due:d MMMM yyyy}.";
     }

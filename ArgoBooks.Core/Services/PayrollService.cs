@@ -283,6 +283,37 @@ public class PayrollService(PayrollRateService? rateService = null)
     }
 
     /// <summary>
+    /// When the deductions withheld on a given pay date are due.
+    ///
+    /// Not the same question as <see cref="NextRemittance"/>, which asks which deadline has not
+    /// yet passed as of a date. Asking that with a pay date returns the deadline for the PREVIOUS
+    /// period whenever the pay date falls before it: a regular remitter paid on 10 August would be
+    /// told 15 August, which is July's deadline, when August's deductions are due 15 September.
+    /// </summary>
+    public static DateTime RemittanceDueFor(DateTime payDate, RemitterType remitterType)
+    {
+        DateTime date = payDate.Date;
+        DateTime cursor = new DateTime(date.Year, date.Month, 1).AddMonths(-1);
+
+        for (int i = 0; i < 4; i++)
+        {
+            foreach ((DateTime start, DateTime end, DateTime due) in PeriodsStartingIn(cursor, remitterType))
+            {
+                if (date >= start && date <= end)
+                {
+                    return due;
+                }
+            }
+
+            cursor = cursor.AddMonths(1);
+        }
+
+        // Unreachable for the four schedules, which tile the calendar without gaps. The regular
+        // remitter's rule is the safe answer if one ever does not.
+        return new DateTime(date.Year, date.Month, 15).AddMonths(1);
+    }
+
+    /// <summary>
     /// The remitting periods that BEGIN in the given month, in deadline order.
     ///
     /// Read from CRA's own table of remitter types. The quarterly dates are the same for both
