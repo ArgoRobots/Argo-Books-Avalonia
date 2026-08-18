@@ -76,7 +76,12 @@ public static class PayrollCalculator
         (decimal periodicAnnual, decimal currentBonus, decimal priorBonuses) =
             SplitForBonus(input, ytd, gross, periods, enhancedCpp + cpp2);
 
-        decimal annual = periodicAnnual + priorBonuses;
+        // A, for the REGULAR periodic withholding. T4127 chapter 4 step 1 is
+        // A = [P x (I - F - F2 - F5A - U1)] - HD - F1, with no B1 term: year-to-date bonuses
+        // appear only in the bonus calculation below, where they sit on both sides of a
+        // subtraction. Folding B1 in here annualised a bonus that was already taxed in full when
+        // it was paid, so every remaining period of the year re-taxed it.
+        decimal annual = periodicAnnual;
 
         // Annual contributions, for the K2 credit. T4127 expresses this as the period's
         // contribution times the number of periods, capped at the annual maximum, and reduced
@@ -110,7 +115,12 @@ public static class PayrollCalculator
         // which the guide leaves on the same annualised contribution for both steps.
         if (currentBonus > 0)
         {
-            decimal withBonus = annual + currentBonus;
+            // Both of T4127's bonus steps put year-to-date bonuses (B1) into A: step 1 with the
+            // payment being made now, step 2 without it. The difference is the tax on this
+            // payment, and B1 cancels except for the bracket it pushes the bonus into, which is
+            // the whole reason it is there.
+            decimal bonusBase = annual + priorBonuses;
+            decimal withBonus = bonusBase + currentBonus;
 
             if (withBonus <= rates.Federal.FlatBonusCeiling)
             {
@@ -123,11 +133,18 @@ public static class PayrollCalculator
             }
             else
             {
+                // Against the step 2 figure, not the periodic one. They are only the same when
+                // there are no prior bonuses.
+                decimal federalBase =
+                    Math.Max(0, FederalTaxForYear(bonusBase, annualCpp, annualEi, input, rates));
+                decimal provincialBase =
+                    Math.Max(0, ProvincialTaxForYear(bonusBase, annualCpp, annualEi, input, rates, province));
+
                 federal += Round(
-                    Math.Max(0, FederalTaxForYear(withBonus, annualCpp, annualEi, input, rates)) - federalAnnual);
+                    Math.Max(0, FederalTaxForYear(withBonus, annualCpp, annualEi, input, rates)) - federalBase);
                 provincial += Round(
                     Math.Max(0, ProvincialTaxForYear(withBonus, annualCpp, annualEi, input, rates, province))
-                    - provincialAnnual);
+                    - provincialBase);
             }
         }
 

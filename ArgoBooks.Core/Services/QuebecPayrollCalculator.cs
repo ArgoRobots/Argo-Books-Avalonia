@@ -112,17 +112,21 @@ public static class QuebecPayrollCalculator
         (decimal periodicAnnual, decimal bonus, decimal priorBonuses) =
             PayrollCalculator.SplitForBonus(input, ytd, gross, periods, deductibleQpp + workerDeduction);
 
-        decimal annual = periodicAnnual + priorBonuses;
+        // Year-to-date bonuses stay out of the periodic base. They belong to the bonus
+        // calculation below, on both sides of its subtraction, and folding them in here re-taxed
+        // a bonus already taxed in full when it was paid, every period for the rest of the year.
+        decimal annual = periodicAnnual;
         decimal annualTax = AnnualQuebecTax(annual, input, qc);
         decimal tax = Round(annualTax / periods);
 
         if (bonus > 0)
         {
-            decimal withBonus = annual + bonus;
+            decimal bonusBase = annual + priorBonuses;
+            decimal withBonus = bonusBase + bonus;
 
             tax += withBonus <= qc.FlatBonusCeiling
                 ? Round(bonus * qc.FlatBonusRate)
-                : Round(AnnualQuebecTax(withBonus, input, qc) - annualTax);
+                : Round(AnnualQuebecTax(withBonus, input, qc) - AnnualQuebecTax(bonusBase, input, qc));
         }
 
         return tax;
@@ -182,7 +186,8 @@ public static class QuebecPayrollCalculator
         (decimal periodicAnnual, decimal bonus, decimal priorBonuses) =
             PayrollCalculator.SplitForBonus(input, ytd, gross, periods, enhancedQpp + qpp2);
 
-        decimal annual = periodicAnnual + priorBonuses;
+        // As above: the periodic base excludes year-to-date bonuses.
+        decimal annual = periodicAnnual;
 
         decimal annualQpp = Math.Min(qppUncapped * periods, qc.Qpp.MaxContributionEmployee) * (1 - additionalShare);
         decimal annualEi = Math.Min(eiUncapped * periods, qc.EiMaxPremiumEmployee);
@@ -196,11 +201,13 @@ public static class QuebecPayrollCalculator
         // That 10% is a published figure, not the 15% with the abatement applied to it.
         if (bonus > 0)
         {
-            decimal withBonus = annual + bonus;
+            decimal bonusBase = annual + priorBonuses;
+            decimal withBonus = bonusBase + bonus;
 
             tax += withBonus <= rates.Federal.FlatBonusCeiling
                 ? Round(bonus * qc.FederalFlatBonusRate)
-                : Round(AnnualFederalTax(withBonus, annualQpp, annualEi, annualQpip, input, rates, qc) - annualTax);
+                : Round(AnnualFederalTax(withBonus, annualQpp, annualEi, annualQpip, input, rates, qc)
+                        - AnnualFederalTax(bonusBase, annualQpp, annualEi, annualQpip, input, rates, qc));
         }
 
         return tax;
