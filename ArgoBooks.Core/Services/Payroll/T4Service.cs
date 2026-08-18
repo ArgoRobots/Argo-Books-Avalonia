@@ -93,6 +93,17 @@ public class T4Service
         bool quebec = string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase);
         decimal qpip = lines.Sum(l => l.QpipEmployee);
 
+        // Exempt for the WHOLE year, which is what boxes 28 and the nil earnings in 24 and 26
+        // mean. Read from what was actually withheld and not from the employee's current flag:
+        // someone who turns 70 in June has the flag ticked from then on, but contributed from
+        // January to May. Reporting those contributions in box 16 against nil pensionable
+        // earnings with the exemption ticked is the contradiction CRA's PIER review looks for.
+        decimal cppWithheld = lines.Sum(l => l.CppEmployee) + lines.Sum(l => l.Cpp2Employee);
+        decimal eiWithheld = lines.Sum(l => l.EiEmployee);
+
+        bool cppExemptAllYear = employee.IsCppExempt && cppWithheld == 0m;
+        bool eiExemptAllYear = employee.IsEiExempt && eiWithheld == 0m;
+
         return new T4Slip
         {
             EmployeeId = employee.Id,
@@ -126,8 +137,8 @@ public class T4Service
             // way through the year, and reporting their whole salary here would have CRA expect
             // contributions on money that was never pensionable or insurable. The figure looks
             // right either way, which is exactly why it needs pinning.
-            InsurableEarnings = employee.IsEiExempt ? 0m : ceilings.CapEi(gross),
-            PensionableEarnings = employee.IsCppExempt ? 0m : ceilings.CapPensionable(gross),
+            InsurableEarnings = eiExemptAllYear ? 0m : ceilings.CapEi(gross),
+            PensionableEarnings = cppExemptAllYear ? 0m : ceilings.CapPensionable(gross),
 
             QpipPremiums = qpip,
 
@@ -151,8 +162,8 @@ public class T4Service
             QpipInsurableEarnings = quebec && qpip > 0 ? ceilings.CapQpip(gross) : 0m,
             EmployerQpip = lines.Sum(l => l.QpipEmployer),
 
-            CppExemptAllYear = employee.IsCppExempt,
-            EiExemptAllYear = employee.IsEiExempt,
+            CppExemptAllYear = cppExemptAllYear,
+            EiExemptAllYear = eiExemptAllYear,
             DentalBenefit = employee.DentalBenefit,
             EmployerCpp = lines.Sum(l => l.CppEmployer),
             EmployerCpp2 = lines.Sum(l => l.Cpp2Employer),
