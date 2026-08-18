@@ -960,7 +960,8 @@ public partial class App : Application
             _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
             _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
             _customersPageViewModel, _suppliersPageViewModel, _rentalInventoryPageViewModel,
-            _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
+            _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel,
+            _employeesPageViewModel, _payRunsPageViewModel
         })
             (vm as ICleanupViewModel)?.Cleanup();
 
@@ -985,6 +986,8 @@ public partial class App : Application
         _returnsPageViewModel = null;
         _lostDamagedPageViewModel = null;
         _receiptsPageViewModel = null;
+        _employeesPageViewModel = null;
+        _payRunsPageViewModel = null;
 
         // The "N recurring invoices were generated" banner count is process-wide static state. Clear
         // it on a company switch/close so a count produced for the previous company can't surface as a
