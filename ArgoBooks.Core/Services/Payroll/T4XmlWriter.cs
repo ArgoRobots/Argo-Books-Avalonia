@@ -84,7 +84,7 @@ public static class T4XmlWriter
             // sending the slip count would tell CRA to expect that many returns inside.
             new XElement("summ_cnt", "1"),
             new XElement("lang_cd", LanguageCode(t4.LanguageCode)),
-            new XElement("TransmitterName", Required("l1_nm", Text(t4.EmployerName, 35))),
+            new XElement("TransmitterName", Required("l1_nm", Name(t4.EmployerName, 35))),
             new XElement("TransmitterCountryCode", TransmitterCountry(t4)),
             contact);
 
