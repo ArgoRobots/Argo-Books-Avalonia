@@ -427,11 +427,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         && IsOnOrBeforeEndDate(r.Date))
             .Sum(r => ToDisplay(r.EffectiveTotalUSD, r.Date));
 
-        // Invoice-linked only. A revenue-linked payment records money already
-        // counted by its Revenue row above, so including it counts the same
-        // sale twice. Mirrors the InvoiceId exclusion on cashFromRevenue.
+        // Everything except revenue-linked, which is already counted by its own Revenue row.
+        // Tested on RevenueId rather than on HAVING an InvoiceId: an imported payment whose
+        // invoice was not in the file has neither id, and is still real cash.
         var cashFromPayments = companyData.Payments
-            .Where(p => !string.IsNullOrEmpty(p.InvoiceId) && IsOnOrBeforeEndDate(p.Date))
+            .Where(p => string.IsNullOrEmpty(p.RevenueId) && IsOnOrBeforeEndDate(p.Date))
             .Sum(p => ToDisplay(p.EffectiveAmountUSD, p.Date));
 
         var cashPaidForExpenses = companyData.Expenses
@@ -675,11 +675,10 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                         && IsInDateRange(r.Date))
             .Sum(r => ToDisplay(r.EffectiveTotalUSD, r.Date));
 
-        // Invoice-linked only, matching the name and the cashFromSales exclusion
-        // above. Without this a revenue-linked payment is counted alongside its
-        // own Revenue row.
+        // Everything except revenue-linked, matching cashFromSales above and the balance
+        // sheet's cashFromPayments. See the note there on why this tests RevenueId.
         var cashFromInvoicePayments = companyData.Payments
-            .Where(p => !string.IsNullOrEmpty(p.InvoiceId) && IsInDateRange(p.Date))
+            .Where(p => string.IsNullOrEmpty(p.RevenueId) && IsInDateRange(p.Date))
             .Sum(p => ToDisplay(p.EffectiveAmountUSD, p.Date));
 
         var cashPaidForExpenses = companyData.Expenses
