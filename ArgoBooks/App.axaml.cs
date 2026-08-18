@@ -4003,15 +4003,7 @@ public partial class App : Application
                     InvoiceModalsViewModel?.OpenCreateFromRental(rentalParam.RentalRecordId);
                 });
             }
-            bool highlighting = false;
-
-            if (param is TransactionNavigationParameter navParam)
-            {
-                _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
-                _invoicesPageViewModel.ApplyHighlight();
-                highlighting = true;
-            }
-            else if (param is Dictionary<string, object?> dict
+            if (param is Dictionary<string, object?> dict
                 && dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
             {
                 _invoicesPageViewModel.SelectedTabIndex = index;
@@ -4025,15 +4017,20 @@ public partial class App : Application
             // paid on the portal shows up on arriving here rather than only after
             // visiting Payments or waiting out the 5-minute timer.
             //
-            // Skipped when we have just highlighted a row. ApplyHighlight sets IsHighlighted and
-            // then clears HighlightTransactionId, so re-filtering here rebuilt the list with a
-            // null id and every row came back unhighlighted: a Ctrl+K jump to an invoice, or any
-            // drill-down from the dashboard, landed on the right page pointing at nothing. The
-            // list was also being built twice per navigation.
-            if (!highlighting)
+            // It also refreshes the statistics tiles, the recurring badge and the sent count,
+            // which is why it runs on every arrival rather than being skipped when a row is
+            // being highlighted.
+            _invoicesPageViewModel.RefreshInvoicesCommand.Execute(null);
+
+            // After the refresh, never before. ApplyHighlight re-filters and then clears the id,
+            // so a refresh afterwards rebuilds the list with nothing highlighted and the row the
+            // user searched for comes back looking like every other one.
+            if (param is TransactionNavigationParameter navParam)
             {
-                _invoicesPageViewModel.RefreshInvoicesCommand.Execute(null);
+                _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _invoicesPageViewModel.ApplyHighlight();
             }
+
             _ = AutoSyncPortalPaymentsAsync();
             return new InvoicesPage { DataContext = _invoicesPageViewModel };
         });
