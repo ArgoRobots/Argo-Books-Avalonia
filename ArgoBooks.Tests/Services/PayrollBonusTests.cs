@@ -105,6 +105,16 @@ public class PayrollBonusTests
 
         PayrollDeductions before = PayrollCalculator.Calculate(Input(2400m), ytd, rates);
         PayrollDeductions during = PayrollCalculator.Calculate(Input(7400m, bonus: 5000m), ytd, rates);
+
+        // The year-to-date has to move, or the third call never learns a bonus was paid and this
+        // test cannot fail for the reason it exists. It did not, which is how a bonus being
+        // re-taxed in every later period got through with a test named for exactly that.
+        ytd.PensionableEarnings += 7400m;
+        ytd.InsurableEarnings += 7400m;
+        ytd.CppEmployee += during.CppEmployee;
+        ytd.EiEmployee += during.EiEmployee;
+        ytd.NonPeriodicPay += 5000m;
+
         PayrollDeductions after = PayrollCalculator.Calculate(Input(2400m), ytd, rates);
 
         Assert.Equal(before.FederalTax, after.FederalTax);
