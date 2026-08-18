@@ -377,6 +377,11 @@ public partial class YearEndModalViewModel : ViewModelBase
 
     private void Rebuild()
     {
+        // Rebuild runs on every keystroke in the filing-detail boxes, so the ticks have to survive it.
+        HashSet<string> selected = Rows.Where(r => r.IsSelected)
+            .Select(r => r.EmployeeId)
+            .ToHashSet(StringComparer.Ordinal);
+
         Rows.Clear();
         Problems.Clear();
         Warnings.Clear();
@@ -402,6 +407,7 @@ public partial class YearEndModalViewModel : ViewModelBase
                 Ei = CurrencyService.Format(slip.EiPremiums),
                 Tax = CurrencyService.Format(slip.IncomeTaxDeducted),
                 HasSin = slip.Sin.Count(char.IsAsciiDigit) == 9,
+                IsSelected = selected.Contains(slip.EmployeeId),
             });
         }
 
