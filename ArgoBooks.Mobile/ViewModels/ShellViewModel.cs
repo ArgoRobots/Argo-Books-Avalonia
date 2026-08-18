@@ -48,7 +48,10 @@ public partial class ShellViewModel : ViewModelBase
 
     // Shared across every scan (rather than one HttpClient per GeminiReceiptScannerService
     // instance) so repeated scans reuse connections instead of leaking a fresh HttpClient each time.
-    private readonly HttpClient _scanHttpClient = new();
+    //
+    // The timeout must be set here: the scanner only applies its own budget to a client it
+    // constructs itself, so an injected one would keep HttpClient's 100 second default.
+    private readonly HttpClient _scanHttpClient = new() { Timeout = TimeSpan.FromSeconds(180) };
 
     private readonly DashboardViewModel _dashboard;
     private readonly DataHubViewModel _dataHub;
