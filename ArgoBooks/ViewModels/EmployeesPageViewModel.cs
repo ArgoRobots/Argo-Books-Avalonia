@@ -355,9 +355,24 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
                 || e.EmployeeNumber.Contains(q, StringComparison.OrdinalIgnoreCase));
         }
 
-        List<Employee> ordered = filtered
-            .OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+        // Name unless a header says otherwise. The six sortable headers on this page updated the
+        // arrow and did nothing else, because the sort state was never read here.
+        IEnumerable<Employee> sorted = SortDirection == Controls.SortDirection.None
+            ? filtered.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase)
+            : filtered.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<Employee, object?>>
+                {
+                    ["Employee"] = e => e.Name,
+                    ["Province"] = e => e.Province,
+                    ["PayType"] = e => e.PayType,
+                    ["PayRate"] = e => e.PayRate,
+                    ["Frequency"] = e => e.PayFrequency,
+                    ["Status"] = e => e.IsArchived,
+                });
+
+        List<Employee> ordered = sorted.ToList();
 
         TotalPages = Math.Max(1, (int)Math.Ceiling((double)ordered.Count / PageSize));
         if (CurrentPage > TotalPages)
