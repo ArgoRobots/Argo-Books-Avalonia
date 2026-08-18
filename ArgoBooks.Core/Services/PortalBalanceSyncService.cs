@@ -127,6 +127,13 @@ public sealed class PortalBalanceSyncService : IDisposable
         if (companyData == null) return;
 
         var items = new List<PortalBalanceSyncItem>();
+
+        // Tracked separately from ids, because only these are worth putting back. An id that no
+        // longer resolves to an invoice, or to one that was never published, can never produce an
+        // item, so re-queueing it would leave it in _pending for the life of the process and
+        // re-added on every later failure.
+        var sent = new List<string>();
+
         foreach (string id in ids)
         {
             Invoice? invoice = companyData.GetInvoice(id);
@@ -134,6 +141,8 @@ public sealed class PortalBalanceSyncService : IDisposable
             if (!IsPublishedToPortal(invoice)) continue;
 
             items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData));
+            sent.Add(id);
+
             if (items.Count >= MaxBatchSize) break;
         }
 
@@ -143,7 +152,7 @@ public sealed class PortalBalanceSyncService : IDisposable
         {
             lock (_gate)
             {
-                foreach (string id in ids)
+                foreach (string id in sent)
                 {
                     _pending.Add(id);
                 }
