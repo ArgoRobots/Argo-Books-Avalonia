@@ -146,7 +146,12 @@ public partial class App
                     // Generate any recurring invoices that came due while the app was closed.
                     // Draft-first and idempotent: each schedule is keyed on its next date, so this
                     // only produces the occurrences actually missed since the last open.
-                    if (CompanyManager.CompanyData != null)
+                    // Not for the sample company. Its recurring schedules are time-shifted to look
+                    // current on every open, so this generated fresh drafts and announced them
+                    // every single time, and worse, called SaveCompanyAsync on a file the app
+                    // treats as read-only everywhere else. This is the second notification path;
+                    // CheckAndSendNotifications below is gated separately.
+                    if (CompanyManager.CompanyData != null && !CompanyManager.IsSampleCompany)
                     {
                         var generatedRecurring = ArgoBooks.Core.Services.RecurringInvoiceService
                             .GenerateDueInvoices(CompanyManager.CompanyData, DateTime.UtcNow);
