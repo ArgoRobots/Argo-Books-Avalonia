@@ -209,4 +209,172 @@ public class YearEndModalViewModelTests : ModalViewModelTestBase
     }
 
     #endregion
+
+    #region What actually gets filed
+
+    /// <summary>A company complete enough that filing is not blocked on something else.</summary>
+    private YearEndModalViewModel Filable(int employees = 2)
+    {
+        Company.Settings.Company.Name = "Test Company";
+        Company.Settings.Company.Address = "1 Main Street";
+        Company.Settings.Company.City = "Calgary";
+        Company.Settings.Company.ProvinceState = "AB";
+        Company.Settings.Company.Country = "CAN";
+        Company.Settings.Company.PostalCode = "T2P1A1";
+        Company.Settings.Company.PayrollAccountNumber = "123456789RP0001";
+        Company.Settings.Company.PayrollContactName = "Pat Owner";
+        Company.Settings.Company.PayrollContactPhone = "4035551234";
+        Company.Settings.Company.PayrollContactEmail = "pat@example.com";
+
+        for (int i = 1; i <= employees; i++)
+        {
+            string id = $"EMP-{i:000}";
+            Employee person = Person(id);
+            person.Name = $"Employee {i}";
+            person.DentalBenefit = DentalBenefitCode.PayeeOnly;
+
+            Company.Employees.Add(person);
+            Company.PayRuns.Add(Run($"PR-{i:0000}", new DateTime(2026, 7, 3), id));
+        }
+
+        var vm = new YearEndModalViewModel();
+        vm.Open();
+        vm.SelectedYear = 2026;
+        return vm;
+    }
+
+    /// <summary>
+    /// The filing detail boxes write straight through as they are typed, which rebuilds the slip
+    /// table on every keystroke. The ticks have to survive that, or correcting a digit in the
+    /// phone number silently clears the selection and greys out Export with nothing said.
+    /// </summary>
+    [Fact]
+    public void TypingAFilingDetail_KeepsTheSlipsTicked()
+    {
+        YearEndModalViewModel vm = Filable();
+        vm.FilingType = T4ReportType.Amendment;
+
+        Assert.Equal(2, vm.Rows.Count);
+        vm.Rows[0].IsSelected = true;
+        vm.Rows[1].IsSelected = true;
+
+        vm.ContactPhone = "4035551235";
+
+        Assert.Equal(2, vm.Rows.Count);
+        Assert.All(vm.Rows, r => Assert.True(r.IsSelected));
+        Assert.True(vm.CanFile);
+    }
+
+    /// <summary>The other half: an unticked row must not come back ticked.</summary>
+    [Fact]
+    public void TypingAFilingDetail_DoesNotTickAnythingNew()
+    {
+        YearEndModalViewModel vm = Filable();
+
+        vm.Rows[0].IsSelected = true;
+        vm.Rows[1].IsSelected = false;
+
+        vm.ContactName = "Pat O";
+
+        Assert.True(vm.Rows[0].IsSelected);
+        Assert.False(vm.Rows[1].IsSelected);
+    }
+
+    /// <summary>
+    /// This view model is a shell singleton, so an amendment filed earlier in the session is
+    /// still set when the screen is reopened. Left alone, the next export files another amended
+    /// return instead of an original.
+    /// </summary>
+    [Fact]
+    public void ReopeningYearEnd_IsBackToAnOriginalFiling()
+    {
+        YearEndModalViewModel vm = Filable();
+
+        vm.FilingType = T4ReportType.Amendment;
+        vm.AmendmentNote = "Corrected box 14";
+
+        vm.Open();
+
+        Assert.Equal(T4ReportType.Original, vm.FilingType);
+        Assert.Empty(vm.AmendmentNote);
+        Assert.False(vm.IsAmending);
+    }
+
+    /// <summary>
+    /// The contact email reaches the file. It was dropped from the copy that gets written, so
+    /// the screen showed the address, the XML carried an empty element, and CRA rejects a
+    /// submission over exactly that.
+    /// </summary>
+    [Fact]
+    public void TheExportedReturn_CarriesTheContactEmail()
+    {
+        YearEndModalViewModel vm = Filable();
+
+        Core.Models.Payroll.T4Return filing = vm.BuildFilingReturn()!;
+
+        Assert.Equal("pat@example.com", filing.ContactEmail);
+
+        var xml = System.Xml.Linq.XDocument.Parse(
+            Core.Services.Payroll.T4XmlWriter.BuildString(filing));
+
+        System.Xml.Linq.XElement email =
+            xml.Descendants().Single(e => e.Name.LocalName == "cntc_email_area");
+
+        Assert.Equal("pat@example.com", email.Value);
+    }
+
+    /// <summary>
+    /// Every other field on the copy, since the email was not a special case: any of them left
+    /// off exports a file CRA rejects, and none of them fails visibly here.
+    /// </summary>
+    [Fact]
+    public void TheExportedReturn_CarriesEveryEmployerField()
+    {
+        YearEndModalViewModel vm = Filable();
+        vm.FilingType = T4ReportType.Amendment;
+        vm.AmendmentNote = "Corrected box 14";
+        vm.Rows[0].IsSelected = true;
+
+        Core.Models.Payroll.T4Return filing = vm.BuildFilingReturn()!;
+
+        Assert.Equal(2026, filing.TaxYear);
+        Assert.Equal("123456789RP0001", filing.PayrollAccountNumber);
+        Assert.Equal("Test Company", filing.EmployerName);
+        Assert.Equal("T2P1A1", filing.EmployerAddress.ZipCode);
+        Assert.Equal("Pat Owner", filing.ContactName);
+        Assert.Equal("4035551234", filing.ContactPhone);
+        Assert.Equal("pat@example.com", filing.ContactEmail);
+        Assert.False(string.IsNullOrWhiteSpace(filing.LanguageCode));
+        Assert.Equal(T4ReportType.Amendment, filing.ReportType);
+        Assert.Equal("Corrected box 14", filing.AmendmentNote);
+    }
+
+    /// <summary>
+    /// An amendment carries only the ticked employees. Filing the untouched ones again would
+    /// amend slips that were already right.
+    /// </summary>
+    [Fact]
+    public void AnAmendment_CarriesOnlyTheTickedSlips()
+    {
+        YearEndModalViewModel vm = Filable();
+
+        vm.FilingType = T4ReportType.Amendment;
+        vm.Rows[0].IsSelected = true;
+        vm.Rows[1].IsSelected = false;
+
+        T4Slip slip = Assert.Single(vm.BuildFilingReturn()!.Slips);
+        Assert.Equal(vm.Rows[0].EmployeeId, slip.EmployeeId);
+    }
+
+    /// <summary>An original return covers every employee, ticked or not.</summary>
+    [Fact]
+    public void AnOriginalFiling_CarriesEverybody()
+    {
+        YearEndModalViewModel vm = Filable();
+
+        Assert.Equal(T4ReportType.Original, vm.FilingType);
+        Assert.Equal(2, vm.BuildFilingReturn()!.Slips.Count);
+    }
+
+    #endregion
 }

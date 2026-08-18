@@ -598,26 +598,9 @@ public partial class YearEndModalViewModel : ViewModelBase
             return;
         }
 
-        // A separate return object rather than mutating the built one, so the on-screen figures
-        // keep showing the whole year while the file carries only what is being filed. CRA
-        // totals the summary from the slips it accompanies, so the totals follow the selection
-        // by themselves.
-        var filing = new T4Return
-        {
-            TaxYear = _return.TaxYear,
-            PayrollAccountNumber = _return.PayrollAccountNumber,
-            EmployerName = _return.EmployerName,
-            EmployerAddress = _return.EmployerAddress,
-            ContactName = _return.ContactName,
-            ContactPhone = _return.ContactPhone,
-            ContactEmail = _return.ContactEmail,
-            LanguageCode = _return.LanguageCode,
-            ReportType = FilingType,
-            AmendmentNote = AmendmentNote,
-            Slips = SlipsToFile(),
-        };
+        T4Return? filing = BuildFilingReturn();
 
-        if (filing.Slips.Count == 0)
+        if (filing == null || filing.Slips.Count == 0)
         {
             return;
         }
@@ -658,6 +641,32 @@ public partial class YearEndModalViewModel : ViewModelBase
             StatusMessage = "Could not save the XML: {0}".TranslateFormat(ex.Message);
         }
     }
+
+    /// <summary>
+    /// The return that actually gets written, as opposed to the one on screen.
+    ///
+    /// A separate object rather than the built one mutated, so the figures on screen keep
+    /// showing the whole year while the file carries only what is being filed. CRA totals the
+    /// summary from the slips it accompanies, so the totals follow the selection by themselves.
+    ///
+    /// Every field has to be carried across. A field left off is not a compile error and not
+    /// visible anywhere in the app: it is an element CRA rejects the submission over, months
+    /// later. The contact email was missing from here once, which rejected every filing.
+    /// </summary>
+    public T4Return? BuildFilingReturn() => _return == null ? null : new T4Return
+    {
+        TaxYear = _return.TaxYear,
+        PayrollAccountNumber = _return.PayrollAccountNumber,
+        EmployerName = _return.EmployerName,
+        EmployerAddress = _return.EmployerAddress,
+        ContactName = _return.ContactName,
+        ContactPhone = _return.ContactPhone,
+        ContactEmail = _return.ContactEmail,
+        LanguageCode = _return.LanguageCode,
+        ReportType = FilingType,
+        AmendmentNote = AmendmentNote,
+        Slips = SlipsToFile(),
+    };
 
     private static async Task<string?> PickFolderAsync(string title)
     {
