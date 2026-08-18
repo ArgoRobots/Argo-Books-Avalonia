@@ -483,6 +483,15 @@ public partial class PayRunModalsViewModel : ViewModelBase
 
     private void BuildAmountRows(CompanyData data)
     {
+        // What has already been typed, keyed by employee. Next from step 1 rebuilds these rows
+        // every time, so stepping Back to correct a period date and pressing Next again threw
+        // away every hour, bonus and vacation figure already entered, with no warning. The class
+        // note above promises the rows survive stepping back; this is what keeps that true.
+        var typed = AmountRows.ToDictionary(
+            r => r.EmployeeId,
+            r => (r.Hours, r.Bonus, r.VacationPay),
+            StringComparer.Ordinal);
+
         ClearAmountRows();
 
         if (_draft == null)
@@ -511,6 +520,15 @@ public partial class PayRunModalsViewModel : ViewModelBase
                 Bonus = string.Empty,
                 VacationPay = string.Empty,
             };
+
+            // Restored before the handler is attached, so putting the figures back does not
+            // trigger a recalculation per field; the one below covers the whole rebuild.
+            if (typed.TryGetValue(line.EmployeeId, out var previous))
+            {
+                row.Hours = previous.Hours;
+                row.Bonus = previous.Bonus;
+                row.VacationPay = previous.VacationPay;
+            }
 
             row.Changed += OnAmountChanged;
             AmountRows.Add(row);
