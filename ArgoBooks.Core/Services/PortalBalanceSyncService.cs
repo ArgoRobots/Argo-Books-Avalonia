@@ -48,6 +48,9 @@ public sealed class PortalBalanceSyncService : IDisposable
 
     private readonly object _gate = new();
     private readonly HashSet<string> _pending = new(StringComparer.Ordinal);
+
+    /// <summary>Where the next reconcile sweep starts, so batches rotate instead of repeating.</summary>
+    private int _reconcileCursor;
     private CancellationTokenSource? _debounceCts;
     private int _disposed;
 
@@ -138,8 +141,8 @@ public sealed class PortalBalanceSyncService : IDisposable
     }
 
     /// <summary>
-    /// Full sweep of every published invoice that still has a balance, so a
-    /// device that recorded payments while offline catches up.
+    /// Full sweep of every published invoice, so a device that recorded payments while offline
+    /// catches up.
     /// </summary>
     /// <remarks>
     /// Called from the periodic portal sync, which also runs once on company
@@ -154,19 +157,26 @@ public sealed class PortalBalanceSyncService : IDisposable
         CompanyData? companyData = _companyDataProvider();
         if (companyData?.Invoices == null) return;
 
+        // Settled invoices included, not skipped: this sweep is the only retry, and a paid
+        // invoice whose push failed leaves the server chasing a customer who already paid.
+        List<Invoice> candidates = companyData.Invoices
+            .Where(i => i.Status != InvoiceStatus.Draft && IsPublishedToPortal(i))
+            .ToList();
+
+        if (candidates.Count == 0) return;
+
+        // Rotated, so more than MaxBatchSize published invoices are all covered across sweeps
+        // instead of the first 25 being re-sent forever.
+        int start = _reconcileCursor % candidates.Count;
         var items = new List<PortalBalanceSyncItem>();
-        foreach (Invoice invoice in companyData.Invoices)
+
+        for (int offset = 0; offset < candidates.Count && items.Count < MaxBatchSize; offset++)
         {
-            if (invoice.Status == InvoiceStatus.Draft) continue;
-            if (!IsPublishedToPortal(invoice)) continue;
-
-            // A cancelled invoice still needs pushing once so the server stops
-            // chasing it, even though nothing is owed.
-            if (invoice.Balance <= 0 && invoice.Status != InvoiceStatus.Cancelled) continue;
-
+            Invoice invoice = candidates[(start + offset) % candidates.Count];
             items.Add(PaymentPortalService.BuildBalanceSyncItem(invoice, companyData));
-            if (items.Count >= MaxBatchSize) break;
         }
+
+        _reconcileCursor = (start + items.Count) % candidates.Count;
 
         await SendAsync(items, cancellationToken);
     }
@@ -185,6 +195,7 @@ public sealed class PortalBalanceSyncService : IDisposable
                 _errorLogger?.LogWarning(
                     $"Portal balance sync rejected: {response.Message}", "PortalBalanceSync");
             }
+
         }
         catch (OperationCanceledException)
         {
