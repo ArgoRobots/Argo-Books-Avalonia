@@ -3872,14 +3872,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             var id = GetString(row, headers, "ID");
             var name = GetString(row, headers, "Name");
 
-            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
-            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
-                continue;
-
             // A single Name column is what this app exports, but almost nothing else does: payroll
-            // systems, HR exports and this app's own sample workbook all split the name in two.
-            // Without this the row still imports on its ID and lands as a nameless employee, which
-            // is worse than not importing it at all.
+            // systems and HR exports split the name in two. Resolved BEFORE the emptiness test
+            // below, or a sheet with no ID column has both blank on every row and imports nobody,
+            // which is exactly the shape this fallback exists for.
             if (string.IsNullOrWhiteSpace(name))
             {
                 name = string.Join(' ', new[]
@@ -3888,6 +3884,10 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     GetString(row, headers, "Last Name"),
                 }.Where(part => !string.IsNullOrWhiteSpace(part))).Trim();
             }
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             // Numbered off the existing employees rather than an IdCounters entry, because that
