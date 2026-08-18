@@ -624,8 +624,13 @@ public partial class PayRunModalsViewModel : ViewModelBase
         TotalRemittance = CurrencyService.Format(_draft.TotalRemittance);
         TotalCost = CurrencyService.Format(_draft.TotalCost);
 
-        // Regular remitters pay by the 15th of the month after the employees were paid.
-        DateTime due = new DateTime(_draft.PayDate.Year, _draft.PayDate.Month, 1).AddMonths(1).AddDays(14);
+        // CRA runs four schedules, so this follows the employer's assigned type rather than
+        // assuming the 15th. An accelerated remitter's real deadline can be three weeks earlier.
+        RemitterType remitter = data.Settings.Company.RemitterType;
+
+        // As at the pay date, not today: this note is about the run being approved.
+        (_, DateTime due) = PayrollService.NextRemittance([_draft], _draft.PayDate, remitter);
+
         RemittanceDueNote = $"Due to CRA by {due:d MMMM yyyy}.";
     }
 
