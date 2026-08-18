@@ -509,6 +509,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         PayType = e.PayType,
         PayRate = e.PayRate,
         PayFrequency = e.PayFrequency,
+        StandardHoursPerWeek = e.StandardHoursPerWeek,
         FederalClaimAmount = e.FederalClaimAmount,
         ProvincialClaimAmount = e.ProvincialClaimAmount,
         OntarioDependants = e.OntarioDependants,
@@ -539,6 +540,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
         target.PayType = from.PayType;
         target.PayRate = from.PayRate;
         target.PayFrequency = from.PayFrequency;
+        target.StandardHoursPerWeek = from.StandardHoursPerWeek;
         target.FederalClaimAmount = from.FederalClaimAmount;
         target.ProvincialClaimAmount = from.ProvincialClaimAmount;
         target.OntarioDependants = from.OntarioDependants;
