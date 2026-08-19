@@ -23,7 +23,7 @@
 
 ## Prerequisites
 
-- **[.NET 10 SDK]((https://dotnet.microsoft.com/en-us/download/dotnet/10.0))**: Make sure you have the latest .NET 10 SDK installed on your machine.
+- **[.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)**: Make sure you have the latest .NET 10 SDK installed on your machine.
 - **[JetBrains Rider](https://www.jetbrains.com/rider/)**: This is the IDE used for Avalonia UI.
 
 ## Installation
